@@ -7,27 +7,27 @@
 <div class="modal-body">
     <div class="mb-3">
         <span class="badge bg-primary hand" (click)="selectedThreadState = undefined">
-            <fa-icon *ngIf="selectedThreadState == undefined" icon="check"></fa-icon>
+            <fa-icon *ngIf="selectedThreadState == undefined" [icon]="faCheck"></fa-icon>
             All&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpAll }}</span>
         </span>
 
         <span class="badge bg-success hand" (click)="selectedThreadState = ThreadState.Runnable">
-            <fa-icon *ngIf="selectedThreadState === ThreadState.Runnable" icon="check"></fa-icon>
+            <fa-icon *ngIf="selectedThreadState === ThreadState.Runnable" [icon]="faCheck"></fa-icon>
             Runnable&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpRunnable }}</span>
         </span>
 
         <span class="badge bg-info hand" (click)="selectedThreadState = ThreadState.Waiting">
-            <fa-icon *ngIf="selectedThreadState === ThreadState.Waiting" icon="check"></fa-icon>
+            <fa-icon *ngIf="selectedThreadState === ThreadState.Waiting" [icon]="faCheck"></fa-icon>
             Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpWaiting }}</span>
         </span>
 
         <span class="badge bg-warning hand" (click)="selectedThreadState = ThreadState.TimedWaiting">
-            <fa-icon *ngIf="selectedThreadState === ThreadState.TimedWaiting" icon="check"></fa-icon>
+            <fa-icon *ngIf="selectedThreadState === ThreadState.TimedWaiting" [icon]="faCheck"></fa-icon>
             Timed Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpTimedWaiting }}</span>
         </span>
 
         <span class="badge bg-danger hand" (click)="selectedThreadState = ThreadState.Blocked">
-            <fa-icon *ngIf="selectedThreadState === ThreadState.Blocked" icon="check"></fa-icon>
+            <fa-icon *ngIf="selectedThreadState === ThreadState.Blocked" [icon]="faCheck"></fa-icon>
             Blocked&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpBlocked }}</span>
         </span>
     </div>

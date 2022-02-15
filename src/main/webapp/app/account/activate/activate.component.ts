@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { ActivateService } from './activate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { flatMap } from 'rxjs/operators';
+import { mergeMap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-activate',
@@ -32,9 +32,9 @@ export class ActivateComponent implements OnInit {
     }
 
     activateAccount() {
-        this.route.queryParams.pipe(flatMap((params) => this.activateService.get(params.key))).subscribe(
-            () => (this.success = true),
-            () => (this.error = true),
-        );
+        this.route.queryParams.pipe(mergeMap((params) => this.activateService.get(params.key))).subscribe({
+            next: () => (this.success = true),
+            error: () => (this.error = true),
+        });
     }
 }

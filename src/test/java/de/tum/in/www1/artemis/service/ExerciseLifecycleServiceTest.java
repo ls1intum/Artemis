@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ScheduledFuture;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
@@ -22,11 +24,14 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
     private ExerciseLifecycleService exerciseLifecycleService;
 
     @Test
-    public void testScheduleExerciseOnReleaseTask() throws InterruptedException {
+    public void testScheduleExerciseOnReleaseTask() {
         final ZonedDateTime now = ZonedDateTime.now();
 
-        Exercise exercise = new TextExercise().title("ExerciseLifecycleServiceTest:testScheduleExerciseOnReleaseTask").releaseDate(now.plusSeconds(1)).dueDate(now.plusSeconds(2))
-                .assessmentDueDate(now.plusSeconds(3));
+        Exercise exercise = new TextExercise();
+        exercise.setTitle("ExerciseLifecycleServiceTest:testScheduleExerciseOnReleaseTask");
+        exercise.setReleaseDate(now.plus(200, ChronoUnit.MILLIS));
+        exercise.setDueDate(now.plus(400, ChronoUnit.MILLIS));
+        exercise.setAssessmentDueDate(now.plus(600, ChronoUnit.MILLIS));
 
         MutableBoolean releaseTrigger = new MutableBoolean(false);
         MutableBoolean dueTrigger = new MutableBoolean(false);
@@ -40,28 +45,31 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
         assertFalse(dueFuture.isDone());
         assertFalse(assessmentDueFuture.isDone());
 
-        Thread.sleep(1500);
-        assertEqual(releaseTrigger, true);
-        assertEqual(dueTrigger, false);
-        assertEqual(assessmentDueTrigger, false);
+        await().untilAsserted(() -> {
+            assertEqual(releaseTrigger, true);
+            assertEqual(dueTrigger, false);
+            assertEqual(assessmentDueTrigger, false);
+        });
 
         assertTrue(releaseFuture.isDone());
         assertFalse(dueFuture.isDone());
         assertFalse(assessmentDueFuture.isDone());
 
-        Thread.sleep(1000);
-        assertEqual(releaseTrigger, true);
-        assertEqual(dueTrigger, true);
-        assertEqual(assessmentDueTrigger, false);
+        await().untilAsserted(() -> {
+            assertEqual(releaseTrigger, true);
+            assertEqual(dueTrigger, true);
+            assertEqual(assessmentDueTrigger, false);
+        });
 
         assertTrue(releaseFuture.isDone());
         assertTrue(dueFuture.isDone());
         assertFalse(assessmentDueFuture.isDone());
 
-        Thread.sleep(1000);
-        assertEqual(releaseTrigger, true);
-        assertEqual(dueTrigger, true);
-        assertEqual(assessmentDueTrigger, true);
+        await().untilAsserted(() -> {
+            assertEqual(releaseTrigger, true);
+            assertEqual(dueTrigger, true);
+            assertEqual(assessmentDueTrigger, true);
+        });
 
         assertTrue(releaseFuture.isDone());
         assertTrue(dueFuture.isDone());
@@ -73,8 +81,10 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    public void testCancellationOfScheduledTask() throws InterruptedException {
-        Exercise exercise = new TextExercise().title("ExerciseLifecycleServiceTest:testCancellationOfScheduledTask").dueDate(ZonedDateTime.now().plusSeconds(1));
+    public void testCancellationOfScheduledTask() {
+        Exercise exercise = new TextExercise();
+        exercise.setTitle("ExerciseLifecycleServiceTest:testCancellationOfScheduledTask");
+        exercise.setDueDate(ZonedDateTime.now().plus(200, ChronoUnit.MILLIS));
         MutableBoolean trigger = new MutableBoolean(false);
 
         final ScheduledFuture<?> future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, trigger::setTrue);
@@ -83,19 +93,17 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
         assertFalse(future.isCancelled());
         assertEqual(trigger, false);
 
-        Thread.sleep(500);
-
         future.cancel(false);
 
         assertTrue(future.isDone());
         assertTrue(future.isCancelled());
         assertEqual(trigger, false);
 
-        Thread.sleep(750);
-
-        assertTrue(future.isDone());
-        assertTrue(future.isCancelled());
-        assertEqual(trigger, false);
+        await().untilAsserted(() -> {
+            assertTrue(future.isDone());
+            assertTrue(future.isCancelled());
+            assertEqual(trigger, false);
+        });
     }
 
     private void assertEqual(MutableBoolean testBoolean, boolean expected) {

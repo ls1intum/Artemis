@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.metis;
 
 import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_RESULTS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Set;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 
 public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -81,6 +83,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseId = existingExercisePosts.get(0).getExercise().getId();
 
         lectureId = existingLecturePosts.get(0).getLecture().getId();
+
+        GroupNotificationService groupNotificationService = mock(GroupNotificationService.class);
+        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForExercise(any(), any());
+        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForLecture(any(), any());
+        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewCoursePost(any(), any());
+        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(any(), any());
     }
 
     @AfterEach
@@ -100,6 +108,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
         assertThat(existingExercisePosts.size() + 1).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
+        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
     }
 
     @Test
@@ -112,6 +121,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(existingExercisePosts.size()).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
+        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
+
     }
 
     @Test
@@ -124,6 +135,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
         assertThat(existingLecturePosts.size() + 1).isEqualTo(postRepository.findPostsByLectureId(lectureId).size());
+        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
     }
 
     @Test
@@ -136,8 +148,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).collect(Collectors.toList());
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewCoursePost(createdPost, course);
     }
 
     @Test
@@ -151,8 +164,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setDisplayPriority(DisplayPriority.PINNED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).collect(Collectors.toList());
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
     }
 
     @Test
@@ -164,6 +178,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
         assertThat(existingPosts.size()).isEqualTo(postRepository.count());
+        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewAnnouncement(any(), any());
     }
 
     @Test
@@ -173,6 +188,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(existingPosts.size()).isEqualTo(postRepository.count());
+        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 
     @Test
@@ -185,6 +201,30 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setCourseWideContext(CourseWideContext.RANDOM);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
+        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewCoursePost(any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateEmptyPostWithParsingError() throws Exception {
+        Post postToSave = createPostWithoutContext();
+        Exercise exercise = existingExercisePosts.get(0).getExercise();
+        postToSave.setExercise(exercise);
+        postToSave.setContent("");
+
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+
+        Post expectedPost = new Post();
+        expectedPost.setId(createdPost.getId());
+        expectedPost.setAuthor(createdPost.getAuthor());
+        expectedPost.setCourse(course);
+        expectedPost.setExercise(createdPost.getExercise());
+        expectedPost.setTitle(createdPost.getTitle());
+        expectedPost.setCreationDate(createdPost.getCreationDate());
+        // if error occurs during parsing markdown to html, the content will be replaced by an empty string
+        expectedPost.setContent("");
+
+        verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(expectedPost, course);
     }
 
     @Test

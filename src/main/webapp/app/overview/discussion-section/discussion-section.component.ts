@@ -12,6 +12,7 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
+import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -35,6 +36,13 @@ export class DiscussionSectionComponent implements OnInit, AfterViewInit, OnDest
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
 
+    // Icons
+    faPlus = faPlus;
+    faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
+    faGripLinesVertical = faGripLinesVertical;
+    faArrowLeft = faArrowLeft;
+
     constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseManagementService: CourseManagementService, private router: Router) {}
 
     /**
@@ -42,10 +50,10 @@ export class DiscussionSectionComponent implements OnInit, AfterViewInit, OnDest
      * creates the subscription to posts to stay updated on any changes of posts in this course
      */
     ngOnInit(): void {
-        this.paramSubscription = combineLatest(this.activatedRoute.params, this.activatedRoute.queryParams, (params: Params, queryParams: Params) => ({
-            params,
-            queryParams,
-        })).subscribe((routeParams: { params: Params; queryParams: Params }) => {
+        this.paramSubscription = combineLatest({
+            params: this.activatedRoute.params,
+            queryParams: this.activatedRoute.queryParams,
+        }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
             const { params, queryParams } = routeParams;
             const courseId = params.courseId;
             this.currentPostId = +queryParams.postId;

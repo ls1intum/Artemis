@@ -1,4 +1,3 @@
-import * as sinon from 'sinon';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -63,7 +62,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {

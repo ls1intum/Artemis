@@ -42,10 +42,9 @@ public class UMLObject extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof UMLObject)) {
+        if (!(reference instanceof UMLObject referenceObject)) {
             return similarity;
         }
-        UMLObject referenceObject = (UMLObject) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceObject.getName());
 
@@ -60,11 +59,9 @@ public class UMLObject extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLObject)) {
+        if (!(reference instanceof UMLObject referenceObject)) {
             return 0;
         }
-
-        UMLObject referenceObject = (UMLObject) reference;
 
         // To ensure symmetry (i.e. A.similarity(B) = B.similarity(A)) we make sure that this class always has less or equally many elements than the reference class.
         if (getElementCount() > referenceObject.getElementCount()) {
@@ -133,32 +130,6 @@ public class UMLObject extends UMLElement {
     @Override
     public String toString() {
         return "Object " + name;
-    }
-
-    /**
-     * Checks if the UML class or one of its methods/attributes has the given element ID and returns the corresponding element. Otherwise, it returns null.
-     *
-     * @param jsonElementId the id of the UML element that should be returned
-     * @return the UML element if one could be found for the given id, null otherwise
-     */
-    UMLElement getElementByJSONID(String jsonElementId) {
-        if (getJSONElementID().equals(jsonElementId)) {
-            return this;
-        }
-
-        for (UMLObjectAttribute umlAttribute : getAttributes()) {
-            if (umlAttribute.getJSONElementID().equals(jsonElementId)) {
-                return umlAttribute;
-            }
-        }
-
-        for (UMLObjectMethod umlMethod : getMethods()) {
-            if (umlMethod.getJSONElementID().equals(jsonElementId)) {
-                return umlMethod;
-            }
-        }
-
-        return null;
     }
 
     /**

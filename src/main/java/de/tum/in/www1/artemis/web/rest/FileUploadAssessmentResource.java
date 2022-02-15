@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 
 /**
  * REST controller for managing FileUploadAssessment.
@@ -35,9 +36,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, WebsocketMessagingService messagingService,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
         super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository);
+                submissionRepository, singleUserNotificationService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }
@@ -86,10 +87,10 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findOneWithEagerResultAndAssessorAndFeedback(submissionId);
+        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();
-        FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findOneByIdElseThrow(exerciseId);
+        FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(fileUploadExercise, user);
 
         Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate);

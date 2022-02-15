@@ -2,17 +2,19 @@ import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { roundScorePercentSpecifiedByCourseSettings, roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
-export const ABSOLUTE_SCORE = 'absoluteScore';
-export const RELATIVE_SCORE = 'relativeScore';
-export const MAX_POINTS = 'maxPoints';
-export const PRESENTATION_SCORE = 'presentationScore';
-export const REACHABLE_POINTS = 'reachableScore';
-export const CURRENT_RELATIVE_SCORE = 'currentRelativeScore';
+export enum ScoreType {
+    ABSOLUTE_SCORE = 'absoluteScore',
+    RELATIVE_SCORE = 'relativeScore',
+    MAX_POINTS = 'maxPoints',
+    PRESENTATION_SCORE = 'presentationScore',
+    REACHABLE_POINTS = 'reachableScore',
+    CURRENT_RELATIVE_SCORE = 'currentRelativeScore',
+}
 
 @Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {
@@ -56,26 +58,26 @@ export class CourseScoreCalculationService {
                         // In the client, these are now displayed rounded as 1.1 points.
                         // If the student adds up the displayed points, he gets a total of 5.5 points.
                         // In order to get the same total result as the student, we have to round before summing.
-                        pointsAchievedByStudentInCourse += roundScoreSpecifiedByCourseSettings(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise, course);
+                        pointsAchievedByStudentInCourse += roundValueSpecifiedByCourseSettings(score * this.SCORE_NORMALIZATION_VALUE * maxPointsReachableInExercise, course);
                     }
                     presentationScore += participation.presentationScore ? participation.presentationScore : 0;
                 }
             }
         }
-        scores.set(ABSOLUTE_SCORE, roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course));
+        scores.set(ScoreType.ABSOLUTE_SCORE, roundValueSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course));
         if (maxPointsInCourse > 0) {
-            scores.set(RELATIVE_SCORE, roundScorePercentSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxPointsInCourse, course));
+            scores.set(ScoreType.RELATIVE_SCORE, roundScorePercentSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxPointsInCourse, course));
         } else {
-            scores.set(RELATIVE_SCORE, 0);
+            scores.set(ScoreType.RELATIVE_SCORE, 0);
         }
         if (reachableMaxPointsInCourse > 0) {
-            scores.set(CURRENT_RELATIVE_SCORE, roundScorePercentSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / reachableMaxPointsInCourse, course));
+            scores.set(ScoreType.CURRENT_RELATIVE_SCORE, roundScorePercentSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / reachableMaxPointsInCourse, course));
         } else {
-            scores.set(CURRENT_RELATIVE_SCORE, 0);
+            scores.set(ScoreType.CURRENT_RELATIVE_SCORE, 0);
         }
-        scores.set(MAX_POINTS, maxPointsInCourse);
-        scores.set(PRESENTATION_SCORE, presentationScore);
-        scores.set(REACHABLE_POINTS, reachableMaxPointsInCourse);
+        scores.set(ScoreType.MAX_POINTS, maxPointsInCourse);
+        scores.set(ScoreType.PRESENTATION_SCORE, presentationScore);
+        scores.set(ScoreType.REACHABLE_POINTS, reachableMaxPointsInCourse);
         return scores;
     }
 

@@ -30,4 +30,14 @@
         align-items: center;
         min-width: 40px;
     }
+
+    .result {
+        width: unset;
+        z-index: 2;
+    }
+}
+
+.raised-actions {
+    position: relative;
+    z-index: 1;
 }

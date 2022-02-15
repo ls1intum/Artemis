@@ -11,11 +11,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.activity.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.usecase.*;
 
 public class ObjectDiagramParser {
 

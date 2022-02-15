@@ -1,12 +1,17 @@
-<ng-container *ngFor="let block of textResults">
+<ng-container *ngFor="let block of textResults; let i = index">
     <span class="white-space" [ngClass]="block.cssClass" [innerHTML]="block.text"></span>
     <ng-container *ngIf="block.feedback">
         <span [ngClass]="block.iconCssClass" *ngIf="block.icon" [title]="creditsTranslationForTextResultBlock(block)">
             <fa-icon *ngFor="let i of repeatForEachCredit(block)" [icon]="block.icon"></fa-icon>
         </span>
-        <div class="feedback-text mt-1" [ngClass]="block.feedbackCssClass" *ngIf="block.feedback">
-            <b><fa-icon *ngIf="block.circleIcon" [icon]="['far', block.circleIcon]"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
+        <div *ngIf="block.feedback && block.feedback.isSubsequent == undefined" class="feedback-text mt-1" [ngClass]="block.feedbackCssClass">
+            <b><fa-icon *ngIf="block.circleIcon" [icon]="block.circleIcon"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
+            <span [innerHTML]="buildFeedbackTextForReview(block.feedback)" id="text-feedback-{{ i }}"></span>
+        </div>
+        <div *ngIf="block.feedback && block.feedback.isSubsequent" class="feedback-text mt-1 alert alert-secondary">
+            <b><fa-icon *ngIf="block.circleIcon" [icon]="block.circleIcon"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
             <span [innerHTML]="buildFeedbackTextForReview(block.feedback)"></span>
+            <fa-icon class="float-end" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"></fa-icon>
         </div>
     </ng-container>
 </ng-container>

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -31,12 +31,13 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/browser';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-quiz',
@@ -51,7 +52,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
     @ViewChildren(MultipleChoiceQuestionComponent)
@@ -118,6 +119,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     timeoutJustSaved = debounce(() => {
         this.justSaved = false;
     }, 2000);
+
+    // Icons
+    faSync = faSync;
+    faCircleNotch = faCircleNotch;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -230,51 +235,51 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.subscribeToWebsocketChannels();
 
         // load the quiz (and existing submission if quiz has started)
-        this.participationService.findParticipation(this.quizId).subscribe(
-            (response: HttpResponse<StudentParticipation>) => {
+        this.participationService.findParticipationForCurrentUser(this.quizId).subscribe({
+            next: (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
      * loads quizExercise and starts practice mode
      */
     initPracticeMode() {
-        this.quizExerciseService.findForStudent(this.quizId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.findForStudent(this.quizId).subscribe({
+            next: (res: HttpResponse<QuizExercise>) => {
                 if (res.body && res.body.isOpenForPractice) {
                     this.startQuizPreviewOrPractice(res.body);
                 } else {
                     alert('Error: This quiz is not open for practice!');
                 }
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
      * loads quiz exercise and starts preview mode
      */
     initPreview() {
-        this.quizExerciseService.find(this.quizId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.find(this.quizId).subscribe({
+            next: (res: HttpResponse<QuizExercise>) => {
                 this.startQuizPreviewOrPractice(res.body!);
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     initShowSolution() {
-        this.quizExerciseService.find(this.quizId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.find(this.quizId).subscribe({
+            next: (res: HttpResponse<QuizExercise>) => {
                 this.quizExercise = res.body!;
                 this.initQuiz();
                 this.showingResult = true;
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
@@ -313,16 +318,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // submission channel => react to new submissions
             this.jhiWebsocketService.subscribe('/user' + this.submissionChannel);
-            this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe(
-                (payload) => {
+            this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe({
+                next: (payload) => {
                     if (payload.error) {
                         this.onSaveError(payload.error);
                     }
                 },
-                (error) => {
+                error: (error) => {
                     this.onSaveError(error);
                 },
-            );
+            });
 
             // save answers (submissions) through websocket
             this.sendWebsocket = (submission: QuizSubmission) => {
@@ -353,14 +358,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
-            this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
-                (quiz) => {
-                    if (this.waitingForQuizStart && this.quizId === quiz.id) {
-                        this.applyQuizFull(quiz);
-                    }
-                },
-                () => {},
-            );
+            this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
+                if (this.waitingForQuizStart && this.quizId === quiz.id) {
+                    this.applyQuizFull(quiz);
+                }
+            });
         }
     }
 
@@ -379,7 +381,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
                 this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizhasEnded');
+                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
@@ -722,13 +724,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             const course = this.quizExercise.course || this.quizExercise?.exerciseGroup?.exam?.course;
 
             // assign user score (limit decimal places to 2)
-            this.userScore = this.submission.scoreInPoints ? roundScoreSpecifiedByCourseSettings(this.submission.scoreInPoints, course) : 0;
+            this.userScore = this.submission.scoreInPoints ? roundValueSpecifiedByCourseSettings(this.submission.scoreInPoints, course) : 0;
 
             // create dictionary with scores for each question
             this.questionScores = {};
             this.submission.submittedAnswers!.forEach((submittedAnswer) => {
                 // limit decimal places to 2
-                this.questionScores[submittedAnswer.quizQuestion!.id!] = roundScoreSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
+                this.questionScores[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
         }
     }
@@ -830,37 +832,37 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             switch (this.mode) {
                 case 'practice':
                     if (!this.submission.id) {
-                        this.quizParticipationService.submitForPractice(this.submission, this.quizId).subscribe(
-                            (response: HttpResponse<Result>) => {
+                        this.quizParticipationService.submitForPractice(this.submission, this.quizId).subscribe({
+                            next: (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
-                            (error: HttpErrorResponse) => this.onSubmitError(error),
-                        );
+                            error: (error: HttpErrorResponse) => this.onSubmitError(error),
+                        });
                     }
                     break;
                 case 'preview':
                     if (!this.submission.id) {
-                        this.quizParticipationService.submitForPreview(this.submission, this.quizId).subscribe(
-                            (response: HttpResponse<Result>) => {
+                        this.quizParticipationService.submitForPreview(this.submission, this.quizId).subscribe({
+                            next: (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
-                            (error: HttpErrorResponse) => this.onSubmitError(error),
-                        );
+                            error: (error: HttpErrorResponse) => this.onSubmitError(error),
+                        });
                     }
                     break;
                 case 'live':
                     // copy submission and send it through websocket with 'submitted = true'
                     const quizSubmission = new QuizSubmission();
                     quizSubmission.submittedAnswers = this.submission.submittedAnswers;
-                    this.quizParticipationService.submitForLiveMode(quizSubmission, this.quizId).subscribe(
-                        (response: HttpResponse<QuizSubmission>) => {
+                    this.quizParticipationService.submitForLiveMode(quizSubmission, this.quizId).subscribe({
+                        next: (response: HttpResponse<QuizSubmission>) => {
                             this.submission = response.body!;
                             this.isSubmitting = false;
                             this.updateSubmissionTime();
                             this.applySubmission();
                         },
-                        (error: HttpErrorResponse) => this.onSubmitError(error),
-                    );
+                        error: (error: HttpErrorResponse) => this.onSubmitError(error),
+                    });
                     break;
             }
         }
@@ -914,8 +916,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     refreshQuiz(refresh = false) {
         this.refreshingQuiz = refresh;
-        this.quizExerciseService.findForStudent(this.quizId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.findForStudent(this.quizId).subscribe({
+            next: (res: HttpResponse<QuizExercise>) => {
                 const quizExercise = res.body!;
                 if (quizExercise.started) {
                     this.quizExercise = quizExercise;
@@ -923,10 +925,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 }
                 setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
             },
-            () => {
-                // error case
+            error: () => {
                 setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
             },
-        );
+        });
     }
 }

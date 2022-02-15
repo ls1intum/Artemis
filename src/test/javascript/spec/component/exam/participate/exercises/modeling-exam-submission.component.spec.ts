@@ -11,17 +11,11 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -71,14 +65,14 @@ describe('ModelingExamSubmissionComponent', () => {
         });
         it('should initialize', () => {
             fixture.detectChanges();
-            expect(ModelingExamSubmissionComponent).to.be.ok;
+            expect(ModelingExamSubmissionComponent).not.toBeNull();
         });
 
         it('should show exercise title if any', () => {
             comp.exercise.title = 'Test Title';
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.title);
-            expect(el).to.exist;
+            expect(el).not.toBeNull();
         });
 
         it('should show exercise max score if any', () => {
@@ -86,7 +80,7 @@ describe('ModelingExamSubmissionComponent', () => {
             comp.exercise.maxPoints = maxScore;
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points]`));
-            expect(el).to.exist;
+            expect(el).not.toBeNull();
         });
 
         it('should show exercise bonus score if any', () => {
@@ -98,30 +92,30 @@ describe('ModelingExamSubmissionComponent', () => {
             const el = fixture.debugElement.query((de) =>
                 de.nativeElement.textContent.includes(`[${maxScore} artemisApp.examParticipation.points, ${bonusPoints} artemisApp.examParticipation.bonus]`),
             );
-            expect(el).to.exist;
+            expect(el).not.toBeNull();
         });
 
         it('should show modeling editor with correct props when there is submission and exercise', () => {
             fixture.detectChanges();
             const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
-            expect(modelingEditor).to.exist;
-            expect(modelingEditor.componentInstance.umlModel).to.deep.equal({ model: true });
-            expect(modelingEditor.componentInstance.withExplanation).to.equal(true);
-            expect(modelingEditor.componentInstance.explanation).to.equal(mockSubmission.explanationText);
-            expect(modelingEditor.componentInstance.diagramType).to.equal(UMLDiagramType.ClassDiagram);
+            expect(modelingEditor).not.toBeNull();
+            expect(modelingEditor.componentInstance.umlModel).toEqual({ model: true });
+            expect(modelingEditor.componentInstance.withExplanation).toEqual(true);
+            expect(modelingEditor.componentInstance.explanation).toEqual(mockSubmission.explanationText);
+            expect(modelingEditor.componentInstance.diagramType).toEqual(UMLDiagramType.ClassDiagram);
         });
 
         it('should show problem statement if there is any', () => {
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === mockExercise.problemStatement);
-            expect(el).to.exist;
+            expect(el).not.toBeNull();
         });
     });
 
     describe('without exercise', () => {
         it('should not show anything if no exercise', () => {
             fixture.detectChanges();
-            expect(fixture.debugElement.query(() => true)).to.not.exist;
+            expect(fixture.debugElement.query(() => true)).toBeNull();
         });
     });
 
@@ -129,9 +123,9 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should not show anything if no exercise', () => {
             comp.exercise = mockExercise;
             fixture.detectChanges();
-            expect(fixture.debugElement.query(() => true)).to.exist;
+            expect(fixture.debugElement.query(() => true)).not.toBeNull();
             const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
-            expect(modelingEditor).to.not.exist;
+            expect(modelingEditor).toBeNull();
         });
     });
 
@@ -140,12 +134,12 @@ describe('ModelingExamSubmissionComponent', () => {
             resetComponent();
         });
         afterEach(() => {
-            sinon.restore();
+            jest.restoreAllMocks();
         });
         it('should call updateViewFromSubmission', () => {
-            const updateViewStub = sinon.stub(comp, 'updateViewFromSubmission');
+            const updateViewStub = jest.spyOn(comp, 'updateViewFromSubmission');
             comp.ngOnInit();
-            expect(updateViewStub).to.have.been.called;
+            expect(updateViewStub).toHaveBeenCalled();
         });
     });
 
@@ -154,7 +148,7 @@ describe('ModelingExamSubmissionComponent', () => {
             resetComponent();
         });
         it('should return student submission', () => {
-            expect(comp.getSubmission()).to.deep.equal(mockSubmission);
+            expect(comp.getSubmission()).toEqual(mockSubmission);
         });
     });
 
@@ -163,7 +157,7 @@ describe('ModelingExamSubmissionComponent', () => {
             resetComponent();
         });
         it('should return exercise', () => {
-            expect(comp.getExercise()).to.deep.equal(mockExercise);
+            expect(comp.getExercise()).toEqual(mockExercise);
         });
     });
 
@@ -174,7 +168,7 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should update problem statement', () => {
             const newProblemStatement = 'new problem statement';
             comp.updateProblemStatement(newProblemStatement);
-            expect(comp.getExercise().problemStatement).to.equal(newProblemStatement);
+            expect(comp.getExercise().problemStatement).toEqual(newProblemStatement);
         });
     });
 
@@ -184,18 +178,18 @@ describe('ModelingExamSubmissionComponent', () => {
             fixture.detectChanges();
         });
         afterEach(() => {
-            sinon.restore();
+            jest.restoreAllMocks();
         });
         it('should set submission model to new model from modeling editor', () => {
             const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent)).componentInstance;
             const newModel = { newModel: true };
-            const currentModelStub = sinon.stub(modelingEditor, 'getCurrentModel').returns(newModel);
+            const currentModelStub = jest.spyOn(modelingEditor, 'getCurrentModel').mockReturnValue(newModel);
             const explanationText = 'New explanation text';
             comp.explanationText = explanationText;
             comp.updateSubmissionFromView();
-            expect(comp.studentSubmission.model).to.deep.equal(JSON.stringify(newModel));
-            expect(currentModelStub).to.have.been.called;
-            expect(comp.studentSubmission.explanationText).to.equal(explanationText);
+            expect(comp.studentSubmission.model).toEqual(JSON.stringify(newModel));
+            expect(currentModelStub).toHaveBeenCalled();
+            expect(comp.studentSubmission.explanationText).toEqual(explanationText);
         });
     });
 
@@ -205,11 +199,11 @@ describe('ModelingExamSubmissionComponent', () => {
         });
         it('should return true if isSynced false', () => {
             comp.studentSubmission.isSynced = false;
-            expect(comp.hasUnsavedChanges()).to.equal(true);
+            expect(comp.hasUnsavedChanges()).toEqual(true);
         });
         it('should return false if isSynced true', () => {
             comp.studentSubmission.isSynced = true;
-            expect(comp.hasUnsavedChanges()).to.equal(false);
+            expect(comp.hasUnsavedChanges()).toEqual(false);
         });
     });
 
@@ -220,7 +214,7 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should set isSynced to false', () => {
             comp.studentSubmission.isSynced = true;
             comp.modelChanged({} as UMLModel);
-            expect(comp.studentSubmission.isSynced).to.equal(false);
+            expect(comp.studentSubmission.isSynced).toEqual(false);
         });
     });
 
@@ -232,8 +226,8 @@ describe('ModelingExamSubmissionComponent', () => {
             const explanationText = 'New Explanation Text';
             comp.studentSubmission.isSynced = true;
             comp.explanationChanged(explanationText);
-            expect(comp.studentSubmission.isSynced).to.equal(false);
-            expect(comp.explanationText).to.equal(explanationText);
+            expect(comp.studentSubmission.isSynced).toEqual(false);
+            expect(comp.explanationText).toEqual(explanationText);
         });
     });
 });

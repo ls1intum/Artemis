@@ -8,12 +8,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbAlert, NgbCollapse, NgbDropdownModule, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
-import * as chai from 'chai';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
@@ -46,9 +43,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -57,12 +52,9 @@ describe('CourseLectureDetails', () => {
     let lectureUnit1: AttachmentUnit;
     let lectureUnit2: AttachmentUnit;
     let lectureUnit3: TextUnit;
-    let mockRouter: any;
     let debugElement: DebugElement;
 
     beforeEach(() => {
-        mockRouter = sinon.createStubInstance(Router);
-
         const releaseDate = dayjs('18-03-2020', 'DD-MM-YYYY');
 
         const course = new Course();
@@ -129,7 +121,7 @@ describe('CourseLectureDetails', () => {
                 }),
                 MockProvider(AlertService),
                 { provide: FileService, useClass: MockFileService },
-                { provide: Router, useValue: mockRouter },
+                { provide: Router, useValue: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,
@@ -148,14 +140,14 @@ describe('CourseLectureDetails', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
 
-        expect(courseLecturesDetailsComponent).to.be.ok;
+        expect(courseLecturesDetailsComponent).not.toBeNull();
     });
 
     it('should display all three lecture units: 2 attachment units and 1 text unit', fakeAsync(() => {
@@ -163,16 +155,16 @@ describe('CourseLectureDetails', () => {
 
         const attachmentUnits = debugElement.queryAll(By.css('jhi-attachment-unit'));
         const textUnits = debugElement.queryAll(By.css('jhi-text-unit'));
-        expect(attachmentUnits).to.have.lengthOf(2);
-        expect(textUnits).to.have.lengthOf(1);
+        expect(attachmentUnits).toHaveLength(2);
+        expect(textUnits).toHaveLength(1);
     }));
 
     it('should display download PDF button', fakeAsync(() => {
         fixture.detectChanges();
 
         const downloadButton = debugElement.query(By.css('#downloadButton'));
-        expect(downloadButton).to.exist;
-        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).to.be.true;
+        expect(downloadButton).not.toBeNull();
+        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeTrue();
     }));
 
     it('should not display download PDF button', fakeAsync(() => {
@@ -182,19 +174,19 @@ describe('CourseLectureDetails', () => {
         fixture.detectChanges();
 
         const downloadButton = debugElement.query(By.css('#downloadButton'));
-        expect(downloadButton).to.not.exist;
-        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).to.be.false;
+        expect(downloadButton).toBeNull();
+        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeFalse();
     }));
 
     it('should download PDF file', fakeAsync(() => {
         fixture.detectChanges();
 
-        const downloadAttachmentStub = sinon.stub(courseLecturesDetailsComponent, 'downloadMergedFiles');
+        const downloadAttachmentStub = jest.spyOn(courseLecturesDetailsComponent, 'downloadMergedFiles');
         const downloadButton = debugElement.query(By.css('#downloadButton'));
-        expect(downloadButton).to.exist;
+        expect(downloadButton).not.toBeNull();
 
         downloadButton.nativeElement.click();
-        expect(downloadAttachmentStub).to.have.been.calledOnce;
+        expect(downloadAttachmentStub).toHaveBeenCalledTimes(1);
     }));
 });
 

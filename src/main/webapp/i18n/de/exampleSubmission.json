@@ -2,8 +2,9 @@
     "artemisApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Beispielabgabe-Board",
-                "editor": "Beispielabgabe-Editor"
+                "title": "Beispielabgaben",
+                "editor": "Beispielabgabe-Editor",
+                "assessmentTraining": "Das ist ein Beurteilungstraining"
             },
             "legend": {
                 "title": "Legende",
@@ -30,7 +31,10 @@
             "readSuccessfully": "Du hast die Beispielabgabe erfolgreich gelesen und verstanden.",
             "createNew": "Neu erstellen",
             "pageHeader": "Beispiel für eine Textvorlage zur Übung",
-            "usedForTutorial": "Tutor:innen sollen diese Beispielabgabe bewerten",
+            "usedForTutorial": "In Bewertungstraining verwenden",
+            "assessmentTraining": "Bewertungstraining",
+            "readAndConfirm": "Lesen und bestätigen",
+            "assessCorrectly": "Richtig bewerten",
             "createNewSubmission": "Neue Beispielabgabe erstellen",
             "editExampleSubmission": "Beispielabgabe bearbeiten",
             "updateExampleSubmission": "Beispielabgabe aktualisieren",
@@ -45,14 +49,19 @@
             "submitAssessment": "Bewertung einreichen",
             "readAndUnderstood": "Ich habe das Beispiel gelesen und verstanden.",
             "exampleSubmission": "Beispielabgabe",
-            "exampleSubmissions": "Beispielabgaben",
+            "exampleSubmissions": "Beispielabgaben für Bewertungstraining",
             "assessmentInstruction": "Doppelklicke auf ein Element im Modell, um dessen Bewertung zu öffnen und zu bearbeiten.",
             "deleted": "Beispielabgabe gelöscht",
             "assessmentExplanation": "Erklärung",
             "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung",
-            "importExampleSubmission": "Beispielabgabe importieren",
-            "importExampleSubmissionLabel": "Beispielabgabe importieren",
-            "searchSubmission": "Suche nach Einreichung"
+            "useAsExampleSubmission": "Als Beispielabgabe verwenden",
+            "useAsExampleSubmissionLabel": "Als Beispielabgabe verwenden",
+            "searchSubmission": "Suche nach Einreichung",
+            "submissionSize": "Einreichungsgröße",
+            "textSubmissionSizeHint": "Diese Zahl gibt die Anzahl der Wörter im Text an.",
+            "modelingSubmissionSizeHint": "Diese Zahl gibt die Anzahl der im Modell verwendeten Elemente an.",
+            "exampleAssessmentCreated": "Beispielbewertung Erstellt",
+            "exampleAssessmentWarning": "Du musst die Bewertung abschließen, um diese Einreichung im Bewertungstraining zu verwenden."
         },
         "tutorParticipation": {
             "deleted": "Die Tutorteilnahme wurde erfolgreich gelöscht"

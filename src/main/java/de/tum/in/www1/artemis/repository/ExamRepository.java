@@ -29,7 +29,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByCourseId(long courseId);
 
     @Query("""
-            SELECT ex
+            SELECT DISTINCT ex
             FROM Exam ex LEFT JOIN FETCH ex.exerciseGroups eg LEFT JOIN FETCH eg.exercises
             WHERE ex.course.id = :courseId
             """)
@@ -49,9 +49,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "registeredUsers", "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(long examId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "studentExams" })
-    Optional<Exam> findWithStudentExamsById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
     Optional<Exam> findWithStudentExamsExercisesById(long id);

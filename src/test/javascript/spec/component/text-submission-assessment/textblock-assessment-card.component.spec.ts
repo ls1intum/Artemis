@@ -61,7 +61,7 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.detectChanges();
 
         const compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('span').innerText).toEqual(loremIpsum);
+        expect(compiled.querySelector('span').textContent).toEqual(loremIpsum);
     });
 
     it('should only show Feedback Editor if Feedback is set', () => {

@@ -2,10 +2,14 @@ import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Graphs } from 'app/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/entities/course.model';
+import * as shape from 'd3-shape';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
+    styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
 })
 export class CourseManagementOverviewStatisticsComponent implements OnInit, OnChanges {
     @Input()
@@ -13,12 +17,11 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
 
     @Input()
     initialStats: number[] | undefined;
+    @Input()
+    course: Course;
 
     loading = true;
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
-
-    // Histogram-related properties
-    amountOfStudents: string;
 
     // Data
     lineChartLabels: string[] = [];
@@ -31,12 +34,14 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
         group: ScaleType.Ordinal,
         domain: ['rgba(53,61,71,1)'], // color: black
     };
+    curve: any = shape.curveMonotoneX;
+
+    // Icons
+    faSpinner = faSpinner;
 
     constructor(private translateService: TranslateService) {}
 
     ngOnInit() {
-        this.amountOfStudents = this.translateService.instant('artemisApp.courseStatistics.amountOfStudents');
-
         for (let i = 0; i < 4; i++) {
             this.lineChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
         }

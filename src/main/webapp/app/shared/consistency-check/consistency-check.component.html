@@ -17,12 +17,12 @@
             </div>
             <div *ngIf="!isLoading" class="mt-3 text-center">
                 <div *ngIf="inconsistencies != undefined && inconsistencies.length == 0">
-                    <span class="h1 text-success"><fa-icon [icon]="'check'"></fa-icon></span>
+                    <span class="h1 text-success"><fa-icon [icon]="faCheck"></fa-icon></span>
                     <br />
                     <span jhiTranslate="artemisApp.consistencyCheck.noInconsistencies">No inconsistencies found</span>
                 </div>
                 <div *ngIf="inconsistencies != undefined && inconsistencies.length > 0">
-                    <span class="h1 text-danger"><fa-icon [icon]="'times'"></fa-icon></span>
+                    <span class="h1 text-danger"><fa-icon [icon]="faTimes"></fa-icon></span>
                     <br />
                     <span jhiTranslate="artemisApp.consistencyCheck.inconsistenciesFound">Following inconsistencies have been found</span>
                 </div>

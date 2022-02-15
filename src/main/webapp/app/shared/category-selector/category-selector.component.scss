@@ -1,0 +1,39 @@
+jhi-category-selector {
+    .category-chip-list {
+        width: 100%;
+
+        .category-chip {
+            padding: 0 !important;
+            height: 30px !important;
+            border-radius: 0.25rem !important;
+            background: transparent !important;
+
+            .custom-tag {
+                padding: 0.15rem 0.45rem;
+                background: #ccc;
+                border-radius: 0.25rem;
+                color: #fff;
+
+                &:hover {
+                    opacity: 0.8;
+                }
+
+                .category-chip-remove {
+                    color: #fff;
+                }
+            }
+        }
+    }
+
+    .category-chip-input {
+        height: 30px;
+    }
+}
+
+.tag-option {
+    background: #fff;
+
+    &:hover {
+        background: #ccc;
+    }
+}

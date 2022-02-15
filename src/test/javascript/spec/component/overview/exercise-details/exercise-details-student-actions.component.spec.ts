@@ -1,9 +1,5 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
-import { SinonStub, stub } from 'sinon';
 import { Subject, of } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -29,9 +25,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { HttpClient } from '@angular/common/http';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -39,8 +33,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let debugElement: DebugElement;
     let courseExerciseService: CourseExerciseService;
     let profileService: ProfileService;
-    let startExerciseStub: SinonStub;
-    let getProfileInfoSub: SinonStub;
+    let startExerciseStub: jest.SpyInstance;
+    let getProfileInfoSub: jest.SpyInstance;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
     const teamExerciseWithoutTeamAssigned = {
@@ -81,15 +75,15 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
                 profileService = debugElement.injector.get(ProfileService);
 
-                getProfileInfoSub = stub(profileService, 'getProfileInfo');
-                getProfileInfoSub.returns(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
-                startExerciseStub = stub(courseExerciseService, 'startExercise');
+                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+                getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
+                startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
             });
     });
 
     afterEach(() => {
-        startExerciseStub.restore();
-        getProfileInfoSub.restore();
+        startExerciseStub.mockRestore();
+        getProfileInfoSub.mockRestore();
     });
 
     it('should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet', fakeAsync(() => {
@@ -99,10 +93,10 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         tick();
 
         const viewTeamButton = fixture.debugElement.query(By.css('.view-team'));
-        expect(viewTeamButton).to.not.exist;
+        expect(viewTeamButton).toBeNull();
 
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
-        expect(startExerciseButton).to.not.exist;
+        expect(startExerciseButton).toBeNull();
     }));
 
     it('should reflect the correct participation state when a team was assigned to the student', fakeAsync(() => {
@@ -110,13 +104,13 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper()).to.be.equal(ParticipationStatus.NO_TEAM_ASSIGNED);
+        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.NO_TEAM_ASSIGNED);
 
         comp.exercise.studentAssignedTeamId = team.id;
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper()).to.be.equal(ParticipationStatus.UNINITIALIZED);
+        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.UNINITIALIZED);
     }));
 
     it('should show the button "Team" for a team exercise for a student to view his team when assigned to a team', fakeAsync(() => {
@@ -126,7 +120,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         tick();
 
         const viewTeamButton = fixture.debugElement.query(By.css('.view-team'));
-        expect(viewTeamButton).to.exist;
+        expect(viewTeamButton).not.toBeNull();
     }));
 
     it('should show the button "Start exercise" for a team exercise when assigned to a team', fakeAsync(() => {
@@ -136,7 +130,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         tick();
 
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
-        expect(startExerciseButton).to.exist;
+        expect(startExerciseButton).not.toBeNull();
     }));
 
     it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {
@@ -145,29 +139,29 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const participationSubject = new Subject<StudentParticipation>();
 
         comp.exercise = teamExerciseWithTeamAssigned;
-        startExerciseStub.returns(participationSubject);
+        startExerciseStub.mockReturnValue(participationSubject);
         comp.startExercise();
         participationSubject.next(inactivePart);
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper()).to.be.equal(ParticipationStatus.UNINITIALIZED);
-        expect(startExerciseStub).to.have.been.calledOnce;
+        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.UNINITIALIZED);
+        expect(startExerciseStub).toHaveBeenCalledTimes(1);
         participationSubject.next(initPart);
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper()).to.be.equal(ParticipationStatus.INITIALIZED);
+        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.INITIALIZED);
 
         // Check that button "Start exercise" is no longer shown
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
-        expect(startExerciseButton).to.not.exist;
+        expect(startExerciseButton).toBeNull();
 
         // Check that button "Clone repository" is shown
         const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).to.exist;
+        expect(cloneRepositoryButton).not.toBeNull();
 
         fixture.destroy();
         flush();

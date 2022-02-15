@@ -6,6 +6,9 @@ import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model
 import { ActivatedRoute } from '@angular/router';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { TranslateService } from '@ngx-translate/core';
+import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
  * It displays a header bar above the assessment editor with information of locking, as well as offering save/submit/etc buttons.
@@ -27,7 +30,6 @@ export class AssessmentHeaderComponent {
 
     @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;
-    @Input() isAtLeastInstructor: boolean;
     @Input() isTestRun = false;
     @Input() exerciseDashboardLink: string[];
     @Input() canOverride: boolean;
@@ -48,19 +50,23 @@ export class AssessmentHeaderComponent {
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
-    @Output() importExampleSubmission = new EventEmitter<void>();
+    @Output() useAsExampleSubmission = new EventEmitter<void>();
 
     private _highlightDifferences: boolean;
     readonly ExerciseType = ExerciseType;
     readonly ComplaintType = ComplaintType;
     readonly AssessmentType = AssessmentType;
 
+    // Icons
+    faSpinner = faSpinner;
+    faSave = faSave;
+
     @Input() set highlightDifferences(highlightDifferences: boolean) {
         this._highlightDifferences = highlightDifferences;
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
 
-    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
+    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute, private translateService: TranslateService) {
         textAssessmentAnalytics.setComponentRoute(route);
     }
 
@@ -92,6 +98,16 @@ export class AssessmentHeaderComponent {
     sendAssessNextEventToAnalytics() {
         if (this.exercise?.type === ExerciseType.TEXT) {
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ASSESS_NEXT_SUBMISSION);
+        }
+    }
+
+    /**
+     * Opens dialog to verify that instructor wants to use current submission as example submission
+     */
+    onUseAsExampleSolutionClicked() {
+        const verificationMessage = this.translateService.instant('artemisApp.assessment.useAsExampleSubmissionVerificationQuestion');
+        if (confirm(verificationMessage)) {
+            this.useAsExampleSubmission.emit();
         }
     }
 }

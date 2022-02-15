@@ -4,7 +4,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 

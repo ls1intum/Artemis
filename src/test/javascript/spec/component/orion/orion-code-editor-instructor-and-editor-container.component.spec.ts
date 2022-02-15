@@ -15,13 +15,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BehaviorSubject } from 'rxjs';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;

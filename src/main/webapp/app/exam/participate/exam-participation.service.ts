@@ -7,11 +7,9 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { catchError, map } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { addUserIndependentRepositoryUrl } from 'app/overview/participation.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
@@ -24,12 +22,7 @@ export class ExamParticipationService {
         return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
     }
 
-    constructor(
-        private httpClient: HttpClient,
-        private localStorageService: LocalStorageService,
-        private sessionStorage: SessionStorageService,
-        private exerciseService: ExerciseService,
-    ) {}
+    constructor(private httpClient: HttpClient, private localStorageService: LocalStorageService, private sessionStorage: SessionStorageService) {}
 
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';
@@ -95,7 +88,6 @@ export class ExamParticipationService {
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
-                this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
             }),
@@ -107,7 +99,6 @@ export class ExamParticipationService {
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
-                this.adjustRepositoryUrlsForProgrammingExercises(convertedStudentExam);
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
             }),
@@ -132,11 +123,11 @@ export class ExamParticipationService {
             }),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
-                    return throwError(new Error('artemisApp.studentExam.submissionNotInTime'));
+                    return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
                 } else if (error.status === 409 && error.headers.get('x-null-error') === 'error.alreadySubmitted') {
-                    return throwError(new Error('artemisApp.studentExam.alreadySubmitted'));
+                    return throwError(() => new Error('artemisApp.studentExam.alreadySubmitted'));
                 } else {
-                    return throwError(new Error('artemisApp.studentExam.handInFailed'));
+                    return throwError(() => new Error('artemisApp.studentExam.handInFailed'));
                 }
             }),
         );
@@ -210,9 +201,8 @@ export class ExamParticipationService {
     }
 
     private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
-        studentExam.exercises = this.exerciseService.convertExercisesDateFromServer(studentExam.exercises);
+        studentExam.exercises = ExerciseService.convertExercisesDateFromServer(studentExam.exercises);
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
-        this.adjustRepositoryUrlsForProgrammingExercises(studentExam);
         return studentExam;
     }
 
@@ -231,21 +221,6 @@ export class ExamParticipationService {
     private static convertStudentExamDateFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         return studentExam;
-    }
-
-    private adjustRepositoryUrlsForProgrammingExercises(studentExam: StudentExam) {
-        // add user independent repositoryUrl to all student participations
-        if (studentExam.exercises) {
-            studentExam.exercises!.forEach((exercise) => {
-                if (exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations) {
-                    exercise.studentParticipations!.forEach((studentParticipation) => {
-                        if (studentParticipation.type === ParticipationType.PROGRAMMING) {
-                            addUserIndependentRepositoryUrl(studentParticipation);
-                        }
-                    });
-                }
-            });
-        }
     }
 
     public static getSubmissionForExercise(exercise: Exercise) {

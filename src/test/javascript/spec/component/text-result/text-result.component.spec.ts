@@ -14,6 +14,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextResultBlock } from 'app/exercises/text/participate/text-result/text-result-block';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 describe('TextResultComponent', () => {
     let fixture: ComponentFixture<TextResultComponent>;
@@ -130,14 +131,14 @@ describe('TextResultComponent', () => {
 
         expect(textResultBlock.length).toBe(5);
         expect(textResultBlock.cssClass).toBe('text-with-feedback positive-feedback');
-        expect(textResultBlock.icon).toBe('check');
+        expect(textResultBlock.icon).toBe(faCheck);
         expect(textResultBlock.iconCssClass).toBe('feedback-icon positive-feedback');
         expect(textResultBlock.feedbackCssClass).toBe('alert alert-success');
 
         textResultBlock = new TextResultBlock(textBlock, feedbacks[2]);
 
         expect(textResultBlock.cssClass).toBe('text-with-feedback neutral-feedback');
-        expect(textResultBlock.icon).toBe('circle');
+        expect(textResultBlock.icon).toBe(faCircle);
         expect(textResultBlock.iconCssClass).toBe('feedback-icon neutral-feedback');
         expect(textResultBlock.feedbackCssClass).toBe('alert alert-secondary');
 
@@ -151,7 +152,7 @@ describe('TextResultComponent', () => {
         textResultBlock = new TextResultBlock(textBlock, feedback);
 
         expect(textResultBlock.cssClass).toBe('text-with-feedback negative-feedback');
-        expect(textResultBlock.icon).toBe('times');
+        expect(textResultBlock.icon).toBe(faTimes);
         expect(textResultBlock.iconCssClass).toBe('feedback-icon negative-feedback');
         expect(textResultBlock.feedbackCssClass).toBe('alert alert-danger');
     });
@@ -173,5 +174,64 @@ describe('TextResultComponent', () => {
         feedback.gradingInstruction = gradingInstruction;
         textToBeDisplayed = component.buildFeedbackTextForReview(feedback);
         expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.detailText);
+    });
+
+    it('should mark the subsequent feedback', () => {
+        const result = new Result();
+        const submission = new TextSubmission();
+        submission.text = 'submission text';
+
+        const gradingInstruction = {
+            id: 1,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'instruction feedback',
+            usageCount: 1,
+        } as GradingInstruction;
+
+        const blocks = [
+            {
+                id: 'ed462aaf735fe740a260660cbbbfbcc0ee66f98f',
+                text: 'submission',
+                startIndex: 0,
+                endIndex: 10,
+            } as TextBlock,
+            {
+                id: 'ed462aaf735fe740a260660cbcbfbcc0ee66f98a',
+                text: ' text',
+                startIndex: 10,
+                endIndex: 15,
+            } as TextBlock,
+        ];
+
+        const feedback = [
+            {
+                id: 1,
+                detailText: 'feedback1',
+                credits: 1,
+                reference: 'ed462aaf735fe740a260660cbbbfbcc0ee66f98f',
+                gradingInstruction,
+            } as Feedback,
+            {
+                id: 2,
+                detailText: 'feedback2',
+                credits: 1,
+                reference: 'ed462aaf735fe740a260660cbcbfbcc0ee66f98a',
+                gradingInstruction,
+            } as Feedback,
+        ];
+
+        submission.blocks = blocks;
+        result.submission = submission;
+        result.feedbacks = feedback;
+
+        component.result = result;
+
+        expect(component.textResults).toHaveLength(2);
+        expect(component.textResults[0].feedback).not.toBe(undefined);
+        expect(component.textResults[0].feedback!.isSubsequent).toBe(undefined);
+        expect(component.textResults[1].feedback).not.toBe(undefined);
+        expect(component.textResults[1].feedback!.isSubsequent).toBe(true);
     });
 });

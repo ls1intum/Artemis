@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -103,8 +103,20 @@ public class LtiServiceTest {
     public void handleLaunchRequest_InvalidContextLabel() {
         launchRequest.setContext_label("randomLabel");
         var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
-        String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
+        String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest;
         assertThat(exception.getMessage()).isEqualTo(expectedMessage);
+    }
+
+    @Test
+    public void handleLaunchRequest_NoContactEmail() {
+        String expectedMessage = "No email address sent by launch request. Please make sure the user has an accessible email address.";
+        launchRequest.setLis_person_contact_email_primary(null);
+        var exceptionNull = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
+        launchRequest.setLis_person_contact_email_primary("");
+        var exceptionEmpty = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
+
+        assertThat(exceptionNull.getMessage()).isEqualTo(expectedMessage);
+        assertThat(exceptionEmpty.getMessage()).isEqualTo(expectedMessage);
     }
 
     @Test
@@ -155,13 +167,12 @@ public class LtiServiceTest {
         user.setActivated(false);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         when(userRepository.findOneByLogin(username)).thenReturn(Optional.empty());
-        when(userCreationService.createInternalUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null,
-                null, "en")).thenReturn(user);
+        when(userCreationService.createUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null, null,
+                "en", true)).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
         ltiService.handleLaunchRequest(launchRequest, exercise);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
-        verify(userCreationService).activateUser(user);
 
         SecurityContextHolder.clearContext();
         launchRequest.setContext_label("randomLabel");
@@ -178,14 +189,13 @@ public class LtiServiceTest {
         user.setActivated(false);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         when(userRepository.findOneByLogin(username)).thenReturn(Optional.empty());
-        when(userCreationService.createInternalUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null,
-                null, "en")).thenReturn(user);
+        when(userCreationService.createUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null, null,
+                "en", true)).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
         launchRequest.setContext_label("TUMx");
         ltiService.handleLaunchRequest(launchRequest, exercise);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
-        verify(userCreationService).activateUser(user);
 
         SecurityContextHolder.clearContext();
         launchRequest.setContext_label("randomLabel");
@@ -270,13 +280,10 @@ public class LtiServiceTest {
     @Test
     public void verifyRequest_unsuccessfulVerification() {
         ReflectionTestUtils.setField(ltiService, "OAUTH_SECRET", Optional.of("secret"));
-        String url = "http://some.url.com";
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader(anyString())).thenReturn(null);
-        when(request.getRequestURL()).thenReturn(new StringBuffer(url));
-        when(request.getMethod()).thenReturn("GET");
-        when(request.getHeaderNames()).thenReturn(Collections.emptyEnumeration());
-        when(request.getParameterNames()).thenReturn(Collections.emptyEnumeration());
+        String url = "https://some.url.com";
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("GET");
+        request.setRequestURI(url);
         String message = ltiService.verifyRequest(request);
         assertThat("LTI signature verification failed with message: Failed to validate: parameter_absent; error: bad_request, launch result: null").isEqualTo(message);
     }
@@ -293,11 +300,6 @@ public class LtiServiceTest {
         participation.setId(27L);
         Result result = new Result();
         result.setScore(3D);
-        LtiOutcomeUrl ltiOutcomeUrl = new LtiOutcomeUrl();
-        ltiOutcomeUrl.setUrl("https://some.url.com/");
-        ltiOutcomeUrl.setSourcedId("sourceId");
-        ltiOutcomeUrl.setExercise(exercise);
-        ltiOutcomeUrl.setUser(user);
         ltiOutcomeUrlRepositorySetup(user);
         when(resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(27L)).thenReturn(Optional.of(result));
         ltiService.onNewResult(participation);

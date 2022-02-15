@@ -1,16 +1,20 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject, of } from 'rxjs';
+import { Subject, of, Observable } from 'rxjs';
 import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { Course } from 'app/entities/course.model';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { HttpResponse } from '@angular/common/http';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
     let fixture: ComponentFixture<PlagiarismHeaderComponent>;
+    let plagiarismCasesService: PlagiarismCasesService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -22,12 +26,18 @@ describe('Plagiarism Header Component', () => {
         fixture = TestBed.createComponent(PlagiarismHeaderComponent);
         comp = fixture.componentInstance;
 
+        plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         comp.comparison = {
             submissionA: { studentLogin: 'studentA' },
             submissionB: { studentLogin: 'studentB' },
             status: PlagiarismStatus.NONE,
         } as PlagiarismComparison<ModelingSubmissionElement>;
+        comp.course = { id: 1 } as Course;
         comp.splitControlSubject = new Subject<string>();
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should confirm a plagiarism', () => {
@@ -45,12 +55,14 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should update the plagiarism status', fakeAsync(() => {
-        jest.spyOn(comp.http, 'put').mockReturnValue(of({ response: {} }));
+        const updatePlagiarismComparisonStatusStub = jest
+            .spyOn(plagiarismCasesService, 'updatePlagiarismComparisonStatus')
+            .mockReturnValue(of({}) as Observable<HttpResponse<void>>);
         comp.updatePlagiarismStatus(PlagiarismStatus.CONFIRMED);
 
         tick();
 
-        expect(comp.http.put).toHaveBeenCalled();
+        expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalled();
         expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
     }));
 

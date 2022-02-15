@@ -43,7 +43,7 @@
             "hideSampleSolution": "Verberge Beispiellösung"
         },
         "invalid": "(ungültig)",
-        "quizhasEnded": "Quiz ist zu Ende!",
+        "quizHasEnded": "Quiz ist zu Ende!",
         "now": "Läuft"
     }
 }

@@ -1,5 +1,25 @@
-<div class="row">
-    <div class="col-md-7">
-        <canvas baseChart [height]="height" [datasets]="chartData" [labels]="barChartLabels" [options]="barChartOptions" [legend]="chartLegend" [chartType]="barChartType"></canvas>
+<div class="row mb-1">
+    <div #containerRef class="col-md-7 align-items-center">
+        <h6 class="text-center">{{ 'artemisApp.examScores.exerciseGroupTitle' | artemisTranslate: { groupTitle: this.averageScores.title } }}</h6>
+        <ngx-charts-bar-horizontal
+            [view]="[containerRef.offsetWidth, 100]"
+            [results]="ngxData"
+            [scheme]="ngxColor"
+            [xAxis]="true"
+            [yAxis]="true"
+            [xScaleMax]="xScaleMax"
+            [xAxisTickFormatting]="formatTicks"
+            (select)="onSelect($event)"
+        >
+            <ng-template #tooltipTemplate let-model="model">
+                <b>{{ model.name }}</b>
+                <br />
+                <span>
+                    {{ 'artemisApp.examScores.averagePointsTooltip' | artemisTranslate }}: {{ this.lookupAbsoluteValue(model.name) }} ({{
+                        roundAndPerformLocalConversion(model.value)
+                    }}%)
+                </span>
+            </ng-template>
+        </ngx-charts-bar-horizontal>
     </div>
 </div>

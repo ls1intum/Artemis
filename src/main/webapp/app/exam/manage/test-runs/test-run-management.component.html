@@ -47,27 +47,27 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
                         <span>{{ 'global.field.id' | artemisTranslate }}</span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="id">
                         <span jhiTranslate="artemisApp.examManagement.testRun.author"> Author </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="workingTime">
                         <span jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="started">
                         <span jhiTranslate="artemisApp.studentExams.started"> Started </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="submitted">
                         <span jhiTranslate="artemisApp.studentExams.submitted"> Submitted </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-none d-md-table-cell" jhiSortBy="submissionDate">
                         <span jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
-                        <fa-icon [icon]="'sort'"></fa-icon>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th></th>
                 </tr>
@@ -87,7 +87,7 @@
                     <td [width]="350">
                         <div class="w-100 text-end">
                             <div class="btn-group" *ngIf="course?.isAtLeastInstructor">
-                                <ng-container *ngIf="testRun.user && testRun.user.id == instructor.id; else notOwnerOfTestRun">
+                                <ng-container *ngIf="testRun.user?.id == instructor?.id; else notOwnerOfTestRun">
                                     <ng-container *ngIf="!testRun.submitted; else submitted">
                                         <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="['../test-runs/' + testRun.id + '/conduction']">
                                             <span *ngIf="!testRun.started" jhiTranslate="artemisApp.course.startDate">Start</span>
@@ -122,7 +122,7 @@
                                     [dialogError]="dialogError$"
                                     class="btn btn-primary btn-sm me-1 mb-1"
                                 >
-                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
                             </div>
                         </div>

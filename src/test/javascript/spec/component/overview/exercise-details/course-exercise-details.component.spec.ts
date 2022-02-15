@@ -38,12 +38,10 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import * as chai from 'chai';
 import { cloneDeep } from 'lodash-es';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
-import sinonChai from 'sinon-chai';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
@@ -60,9 +58,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -106,6 +102,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockDirective(ExtensionPointDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(NgbTooltip),
+                MockComponent(LtiInitializerComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -168,12 +165,10 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should initialize', fakeAsync(() => {
         fixture.detectChanges();
         tick(500);
-        expect(comp).to.be.ok;
-        expect(comp.showWelcomeAlert).to.be.true;
-        expect(comp.inProductionEnvironment).to.be.false;
-        expect(comp.courseId).to.equal(1);
-        expect(comp.exercise).to.deep.equal(exercise);
-        expect(comp.hasMoreResults).to.be.false;
+        expect(comp.inProductionEnvironment).toBe(false);
+        expect(comp.courseId).toBe(1);
+        expect(comp.exercise).toStrictEqual(exercise);
+        expect(comp.hasMoreResults).toBe(false);
     }));
 
     it('should have student participations', fakeAsync(() => {
@@ -205,29 +200,28 @@ describe('CourseExerciseDetailsComponent', () => {
 
         fixture.detectChanges();
         tick(500);
-        expect(comp).to.be.ok;
 
         // override mock to return exercise with participation
         getExerciseDetailsMock.mockReturnValue(exerciseDetailResponse);
         comp.loadExercise();
         fixture.detectChanges();
-        expect(comp.courseId).to.equal(1);
-        expect(comp.studentParticipation?.exercise?.id).to.equal(exerciseDetail.id);
-        expect(comp.exercise!.studentParticipations![0].results![0]).to.deep.equal(changedResult);
-        expect(comp.hasMoreResults).to.be.false;
-        expect(comp.exerciseRatedBadge(result)).to.equal('bg-info');
+        expect(comp.courseId).toBe(1);
+        expect(comp.studentParticipation?.exercise?.id).toBe(exerciseDetail.id);
+        expect(comp.exercise!.studentParticipations![0].results![0]).toStrictEqual(changedResult);
+        expect(comp.hasMoreResults).toBe(false);
+        expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
     }));
 
     it('should not allow to publish a build plan for text exercises', () => {
         comp.exercise = { ...exercise };
-        expect(comp.publishBuildPlanUrl()).to.be.undefined;
-        expect(comp.projectKey()).to.be.undefined;
-        expect(comp.buildPlanId(new StudentParticipation())).to.be.undefined;
+        expect(comp.publishBuildPlanUrl()).toBe(undefined);
+        expect(comp.projectKey()).toBe(undefined);
+        expect(comp.buildPlanId(new StudentParticipation())).toBe(undefined);
     });
 
     it('should not be a quiz exercise', () => {
         comp.exercise = { ...exercise };
-        expect(comp.quizExerciseStatus).to.be.undefined;
+        expect(comp.quizExerciseStatus).toBe(undefined);
     });
 
     it('should simulate a submission', () => {
@@ -241,7 +235,7 @@ describe('CourseExerciseDetailsComponent', () => {
         );
         comp.simulateSubmission();
 
-        expect(comp.wasSubmissionSimulated).to.be.true;
+        expect(comp.wasSubmissionSimulated).toBe(true);
     });
 
     it('should simulate a result', fakeAsync(() => {
@@ -254,7 +248,7 @@ describe('CourseExerciseDetailsComponent', () => {
         tick();
         flush();
 
-        expect(comp.wasSubmissionSimulated).to.be.false;
-        expect(comp.exercise?.participationStatus).to.equal(ParticipationStatus.EXERCISE_SUBMITTED);
+        expect(comp.wasSubmissionSimulated).toBe(false);
+        expect(comp.exercise?.participationStatus).toBe(ParticipationStatus.EXERCISE_SUBMITTED);
     }));
 });

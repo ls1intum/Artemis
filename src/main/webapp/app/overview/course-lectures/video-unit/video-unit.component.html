@@ -2,7 +2,7 @@
     <div class="card unit-card">
         <div class="card-header unit-card-header row align-content-center" (click)="handleCollapse($event)">
             <h5 class="m-0 fw-medium">
-                <fa-icon class="col-auto me-2" [icon]="'video'" [ngbTooltip]="'artemisApp.videoUnit.tooltip' | artemisTranslate"> </fa-icon>
+                <fa-icon class="col-auto me-2" [icon]="faVideo" [ngbTooltip]="'artemisApp.videoUnit.tooltip' | artemisTranslate"> </fa-icon>
                 {{ videoUnit?.name ? videoUnit.name : '' }}
                 <span
                     *ngIf="!videoUnit?.visibleToStudents"
@@ -15,7 +15,7 @@
         </div>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
             <div class="ratio ratio-16x9">
-                <iframe id="videoFrame" class="rounded" [src]="videoUrl" allow="fullscreen"></iframe>
+                <iframe id="videoFrame" class="rounded" [src]="videoUrl | safeResourceUrl" allow="fullscreen"></iframe>
             </div>
             {{ videoUnit?.description }}
         </div>

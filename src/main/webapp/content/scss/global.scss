@@ -11,7 +11,7 @@
 @import '~highlight.js/styles/vs.css';
 @import '~@swimlane/ngx-datatable/themes/bootstrap.css';
 // Needed for emojis in metis reactions
-@import '~@ctrl/ngx-emoji-mart/picker';
+@import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 
 /* ==============================================================
 Bootstrap tweaks
@@ -313,6 +313,14 @@ Custom alerts for notification
 .alerts {
     .alert {
         text-overflow: ellipsis;
+        display: flex;
+        justify-content: space-between;
+
+        .close {
+            background: none;
+            border: none;
+            font-size: large;
+        }
 
         pre {
             background: none;
@@ -1146,4 +1154,13 @@ Course Info Bar
     max-height: 50vh;
     overflow: scroll;
     padding: 0 0.5rem;
+}
+
+.mat-autocomplete-panel.mat-autocomplete-visible {
+    box-shadow: 3px 3px 6px rgb(100 100 100);
+}
+
+.mat-form-field-outline {
+    top: -0.1em !important;
+    color: #ccc;
 }

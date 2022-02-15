@@ -1,7 +1,7 @@
 <!--Folder-->
-<li (click)="onCollapseExpand()" class="list-group-item list-group-item--folder">
-    <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'chevron-right' : 'chevron-down'" [fixedWidth]="true" class="me-1" size="xs"></fa-icon>
-    <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
+<li (click)="onCollapseExpand()" class="list-group-item list-group-item--folder" id="file-browser-folder">
+    <fa-icon aria-hidden="true" [icon]="item.collapsed ? faChevronRight : faChevronDown" [fixedWidth]="true" class="me-1" size="xs"></fa-icon>
+    <fa-icon aria-hidden="true" [icon]="item.collapsed ? faFolder : faFolderOpen" [fixedWidth]="true"></fa-icon>
     <span class="ms-1 list-group-item__fileName" *ngIf="!isBeingRenamed">{{ item.text }}</span>
     <!-- Renaming folder tree item -->
     <span class="ms-1" *ngIf="isBeingRenamed"
@@ -16,14 +16,14 @@
     <!-- Folder level actions -->
     <span class="file-icons">
         <button [disabled]="disableActions" (click)="setCreatingNodeInFolder($event, FileType.FILE)" class="btn btn-small">
-            <fa-icon [icon]="'file'" title="{{ 'artemisApp.editor.fileBrowser.createFile' | artemisTranslate }}"></fa-icon>
+            <fa-icon id="file-browser-folder-create-file" [icon]="faFile" title="{{ 'artemisApp.editor.fileBrowser.createFile' | artemisTranslate }}"></fa-icon>
         </button>
         <button [disabled]="disableActions" (click)="setCreatingNodeInFolder($event, FileType.FOLDER)" class="btn btn-small">
-            <fa-icon [icon]="'folder'" title="{{ 'artemisApp.editor.fileBrowser.createFolder' | artemisTranslate }}"></fa-icon>
+            <fa-icon [icon]="faFolder" title="{{ 'artemisApp.editor.fileBrowser.createFolder' | artemisTranslate }}"></fa-icon>
         </button>
         <button [disabled]="disableActions || (isCompressed && item.children && item.children.length)" (click)="setRenamingNode($event)" class="btn btn-small">
             <fa-icon
-                [icon]="'edit'"
+                [icon]="faEdit"
                 title="{{
                     (!disableActions && isCompressed && item.children && item.children.length
                         ? 'artemisApp.editor.fileBrowser.renameFolderDisabledTooltip'
@@ -33,7 +33,7 @@
             ></fa-icon>
         </button>
         <button [disabled]="disableActions" (click)="deleteNode($event)" class="btn btn-small">
-            <fa-icon [icon]="'trash'" title="{{ 'artemisApp.editor.fileBrowser.deleteFolder' | artemisTranslate }}"></fa-icon>
+            <fa-icon [icon]="faTrash" title="{{ 'artemisApp.editor.fileBrowser.deleteFolder' | artemisTranslate }}"></fa-icon>
         </button>
     </span>
 </li>

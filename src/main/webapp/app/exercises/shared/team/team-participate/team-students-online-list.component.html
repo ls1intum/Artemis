@@ -9,7 +9,7 @@
                     <div class="bounce3"></div>
                 </div>
                 <ng-template #circle>
-                    <fa-icon class="student-status" [icon]="'circle'" size="sm"></fa-icon>
+                    <fa-icon class="student-status" [icon]="faCircle" size="sm"></fa-icon>
                 </ng-template>
             </div>
             <span class="student-name">{{ student.name }} <span *ngIf="isSelf(student)" class="text-muted">(you)</span></span>
@@ -21,7 +21,7 @@
                 tooltipClass="student-last-action-tooltip"
             >
                 <button class="student-last-action-trigger ms-1">
-                    <fa-icon [icon]="'history'"></fa-icon>
+                    <fa-icon [icon]="faHistory"></fa-icon>
                 </button>
             </span>
         </li>

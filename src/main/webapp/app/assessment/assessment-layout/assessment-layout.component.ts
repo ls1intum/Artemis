@@ -30,7 +30,6 @@ export class AssessmentLayoutComponent {
 
     @Input() isTeamMode: boolean;
     @Input() isAssessor: boolean;
-    @Input() isAtLeastInstructor: boolean;
     @Input() canOverride: boolean;
     @Input() isTestRun = false;
     @Input() isIllegalSubmission: boolean;
@@ -61,5 +60,5 @@ export class AssessmentLayoutComponent {
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<ComplaintResponse>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
-    @Output() importExampleSubmission = new EventEmitter<void>();
+    @Output() useAsExampleSubmission = new EventEmitter<void>();
 }

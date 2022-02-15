@@ -1,4 +1,4 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -13,16 +13,12 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 
-const expect = chai.expect;
-
 describe('TextExercise Service', () => {
-    let injector: TestBed;
     let service: TextExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: TextExercise;
@@ -40,9 +36,8 @@ describe('TextExercise Service', () => {
             ],
         });
         requestResult = {} as HttpResponse<TextExercise>;
-        injector = getTestBed();
-        service = injector.get(TextExerciseService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(TextExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new TextExercise(new Course(), undefined);
         elemDefault.assessmentDueDate = dayjs();
@@ -65,7 +60,7 @@ describe('TextExercise Service', () => {
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            expect(requestResult.body).to.deep.eq(elemDefault);
+            expect(requestResult.body).toEqual(elemDefault);
         });
 
         it('should create a TextExercise', () => {
@@ -77,7 +72,7 @@ describe('TextExercise Service', () => {
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            expect(requestResult.body).to.deep.eq(expected);
+            expect(requestResult.body).toEqual(expected);
         });
 
         it('should update a TextExercise', () => {
@@ -89,7 +84,7 @@ describe('TextExercise Service', () => {
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            expect(requestResult.body).to.deep.eq(expected);
+            expect(requestResult.body).toEqual(expected);
         });
 
         it('should return a list of TextExercise', () => {
@@ -101,14 +96,14 @@ describe('TextExercise Service', () => {
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush([returnedFromService]);
-            expect(requestResult.body).to.deep.equal([expected]);
+            expect(requestResult.body).toEqual([expected]);
         });
 
         it('should delete a TextExercise', () => {
             service.delete(123).subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            expect(requestResult.status).to.equal(200);
+            expect(requestResult.status).toEqual(200);
         });
 
         it('should calculate and return tutor efforts', () => {
@@ -125,7 +120,7 @@ describe('TextExercise Service', () => {
                 },
             ];
             req.flush(returnedFromService);
-            expect(requestResult).to.equal(returnedFromService);
+            expect(requestResult).toEqual(returnedFromService);
         });
 
         it('should import a text exercise', () => {
@@ -135,7 +130,7 @@ describe('TextExercise Service', () => {
                 .import(textExerciseReturned)
                 .pipe(take(1))
                 .subscribe((resp) => {
-                    expect(resp.body).equal(textExerciseReturned);
+                    expect(resp.body).toEqual(textExerciseReturned);
                 });
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(textExerciseReturned);
@@ -148,7 +143,7 @@ describe('TextExercise Service', () => {
                 .reevaluateAndUpdate(textExerciseReturned)
                 .pipe(take(1))
                 .subscribe((resp) => {
-                    expect(resp.body).equal(textExerciseReturned);
+                    expect(resp.body).toEqual(textExerciseReturned);
                 });
             const request = httpMock.expectOne({ method: 'PUT' });
             request.flush(textExerciseReturned);
@@ -163,7 +158,7 @@ describe('TextExercise Service', () => {
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(expectedReturn);
-            expect(requestResult).to.equal(expectedReturn);
+            expect(requestResult).toEqual(expectedReturn);
         });
 
         it('should get plagiarism result', () => {
@@ -174,7 +169,7 @@ describe('TextExercise Service', () => {
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(expectedReturnValue);
-            expect(requestResult).to.equal(expectedReturnValue);
+            expect(requestResult).toEqual(expectedReturnValue);
         });
 
         it('should retrieve TextExercise cluster statistics', () => {
@@ -189,14 +184,14 @@ describe('TextExercise Service', () => {
                 },
             ];
             req.flush(returnedFromService);
-            expect(requestResult).to.equal(returnedFromService);
+            expect(requestResult).toEqual(returnedFromService);
         });
 
         it('should set TextExercise cluster disabled predicate', () => {
             service.setClusterDisabledPredicate(1, 1, true).subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'PATCH' });
             req.flush({});
-            expect(requestResult).to.deep.equal({});
+            expect(requestResult).toEqual({});
         });
     });
 

@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 @Service
 public class NotificationSettingsService {
 
-    private NotificationSettingRepository notificationSettingRepository;
+    private final NotificationSettingRepository notificationSettingRepository;
 
     // notification settings settingIds analogous to client side
     // course wide discussion notification setting group
@@ -29,6 +29,8 @@ public class NotificationSettingsService {
     public final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST = "notification.course-wide-discussion.new-announcement-post";
 
     // exercise notification setting group
+    public final static String NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED = "notification.exercise-notification.exercise-submission-assessed";
+
     public final static String NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED = "notification.exercise-notification.exercise-released";
 
     public final static String NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE = "notification.exercise-notification.exercise-open-for-practice";
@@ -60,6 +62,7 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
             new NotificationSetting(true, true, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST),
             // exercise notification setting group
+            new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED),
             new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED),
             new NotificationSetting(true, false, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE),
             new NotificationSetting(false, false, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL),
@@ -79,6 +82,7 @@ public class NotificationSettingsService {
      * Each SettingId can be based on multiple different NotificationTypes
      */
     private final static Map<String, NotificationType[]> NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP = Map.ofEntries(
+            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED, new NotificationType[] { EXERCISE_SUBMISSION_ASSESSED }),
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED, new NotificationType[] { EXERCISE_RELEASED }),
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, new NotificationType[] { EXERCISE_PRACTICE }),
             Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST, new NotificationType[] { NEW_EXERCISE_POST }),
@@ -95,7 +99,7 @@ public class NotificationSettingsService {
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE, NEW_ANNOUNCEMENT_POST,
-            FILE_SUBMISSION_SUCCESSFUL);
+            FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE);
 
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;
@@ -227,8 +231,7 @@ public class NotificationSettingsService {
         // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
 
         if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(loadedNotificationSettingSet, DEFAULT_NOTIFICATION_SETTINGS)) {
-            Set<NotificationSetting> updatedNotificationSettingSet = new HashSet<>();
-            updatedNotificationSettingSet.addAll(DEFAULT_NOTIFICATION_SETTINGS);
+            Set<NotificationSetting> updatedNotificationSettingSet = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
 
             loadedNotificationSettingSet.forEach(loadedSetting -> {
                 DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {

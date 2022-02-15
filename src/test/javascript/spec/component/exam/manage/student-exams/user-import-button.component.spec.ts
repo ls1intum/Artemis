@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockProvider, MockModule } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateModule } from '@ngx-translate/core';
-import * as sinon from 'sinon';
 import { Exam } from 'app/entities/exam.model';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModule, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -35,7 +34,7 @@ describe('UsersImportButtonComponent', () => {
     it('should initialize', () => {
         const componentInstance = { courseId: Number, exam: Exam };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = sinon.stub(modalService, 'open').returns(<NgbModalRef>{ componentInstance, result });
+        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
 
         comp.openUsersImportDialog(new MouseEvent('click'));
         const openStudentsExamImportDialogButton = fixture.debugElement.query(By.css('jhi-button'));

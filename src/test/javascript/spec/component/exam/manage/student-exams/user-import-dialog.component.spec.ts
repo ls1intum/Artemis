@@ -147,7 +147,7 @@ describe('UsersImportButtonComponent', () => {
         expect(rowNumbersOrNull).toBe(undefined);
     });
 
-    it('should import correctly', function () {
+    it('should import correctly', () => {
         const importedStudents: StudentDTO[] = [
             { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1' },
             { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
@@ -166,7 +166,7 @@ describe('UsersImportButtonComponent', () => {
         expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
     });
 
-    it('should invoke REST call on "Import" but not on "Finish"', function () {
+    it('should invoke REST call on "Import" but not on "Finish"', () => {
         const studentsToImport: StudentDTO[] = [
             { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1' },
             { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },

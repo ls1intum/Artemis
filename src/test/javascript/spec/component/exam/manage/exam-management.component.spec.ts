@@ -1,10 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -28,9 +25,6 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -78,89 +72,72 @@ describe('Exam Management Component', () => {
         eventManager = TestBed.inject(EventManager);
     });
 
-    afterEach(function () {
+    afterEach(() => {
         // completely restore all fakes created through the sandbox
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should call find of courseManagementService to get course on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
+        jest.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
 
         // WHEN
         comp.ngOnInit();
 
         // THEN
-        expect(courseManagementService.find).to.have.been.calledOnce;
-        expect(comp.course).to.eq(course);
+        expect(courseManagementService.find).toHaveBeenCalledTimes(1);
+        expect(comp.course).toEqual(course);
     });
 
     it('should call loadAllExamsForCourse on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
+        jest.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
-        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeExams)));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
 
         // WHEN
         comp.ngOnInit();
 
         // THEN
-        expect(service.findAllExamsForCourse).to.have.been.calledOnce;
-        expect(comp.exams).to.deep.eq([exam]);
+        expect(service.findAllExamsForCourse).toHaveBeenCalledTimes(1);
+        expect(comp.exams).toEqual([exam]);
     });
 
     it('should call getLatestIndividualDate on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
-        sinon.replace(courseManagementService, 'find', sinon.fake.returns(of(responseFakeCourse)));
+        jest.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
-        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeExams)));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
 
         const examInformationDTO = new ExamInformationDTO();
         examInformationDTO.latestIndividualEndDate = dayjs();
         const responseFakeLatestIndividualEndDateOfExam = { body: examInformationDTO } as HttpResponse<ExamInformationDTO>;
-        sinon.replace(service, 'getLatestIndividualEndDateOfExam', sinon.fake.returns(of(responseFakeLatestIndividualEndDateOfExam)));
+        jest.spyOn(service, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(responseFakeLatestIndividualEndDateOfExam));
 
         // WHEN
         comp.ngOnInit();
 
         // THEN
-        expect(service.getLatestIndividualEndDateOfExam).to.have.been.calledOnce;
-        expect(comp.exams[0].latestIndividualEndDate).to.eq(examInformationDTO.latestIndividualEndDate);
+        expect(service.getLatestIndividualEndDateOfExam).toHaveBeenCalledTimes(1);
+        expect(comp.exams[0].latestIndividualEndDate).toEqual(examInformationDTO.latestIndividualEndDate);
     });
 
     it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes ', () => {
         // GIVEN
         comp.course = course;
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
-        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeExams)));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeExams));
 
         // WHEN
         comp.registerChangeInExams();
         eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
 
         // THEN
-        expect(service.findAllExamsForCourse).to.have.been.calledOnce;
-        expect(comp.exams).to.deep.eq([exam]);
-    });
-
-    it('should delete an exam when delete exam is called', () => {
-        // GIVEN
-        comp.exams = [exam];
-        comp.course = course;
-        const responseFakeDelete = {} as HttpResponse<any[]>;
-        const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
-        sinon.replace(service, 'delete', sinon.fake.returns(of(responseFakeDelete)));
-        sinon.replace(service, 'findAllExamsForCourse', sinon.fake.returns(of(responseFakeEmptyExamArray)));
-
-        // WHEN
-        comp.deleteExam(exam.id!);
-
-        // THEN
-        expect(service.delete).to.have.been.calledOnce;
-        expect(comp.exams.length).to.eq(0);
+        expect(service.findAllExamsForCourse).toHaveBeenCalledTimes(1);
+        expect(comp.exams).toEqual([exam]);
     });
 
     it('should return false for examHasFinished when component has no exam information ', () => {
@@ -171,7 +148,7 @@ describe('Exam Management Component', () => {
         const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
-        expect(examHasFinished).to.be.false;
+        expect(examHasFinished).toBeFalse();
     });
 
     it('should return true for examHasFinished when exam is in the past ', () => {
@@ -182,7 +159,7 @@ describe('Exam Management Component', () => {
         const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
-        expect(examHasFinished).to.be.true;
+        expect(examHasFinished).toBeTrue();
     });
 
     it('should return false for examHasFinished when exam is in the future ', () => {
@@ -193,7 +170,7 @@ describe('Exam Management Component', () => {
         const examHasFinished = comp.examHasFinished(exam);
 
         // THEN
-        expect(examHasFinished).to.be.false;
+        expect(examHasFinished).toBeFalse();
     });
 
     it('should return exam.id, when item in the exam table is being tracked ', () => {
@@ -201,17 +178,17 @@ describe('Exam Management Component', () => {
         const itemId = comp.trackId(0, exam);
 
         // THEN
-        expect(itemId).to.eq(exam.id);
+        expect(itemId).toEqual(exam.id);
     });
 
     it('should call sortService when sortRows is called ', () => {
         // GIVEN
-        sinon.replace(sortService, 'sortByProperty', sinon.fake.returns([]));
+        jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
 
         // WHEN
         comp.sortRows();
 
         // THEN
-        expect(sortService.sortByProperty).to.have.been.calledOnce;
+        expect(sortService.sortByProperty).toHaveBeenCalledTimes(1);
     });
 });

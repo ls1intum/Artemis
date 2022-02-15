@@ -1,0 +1,29 @@
+.group-tag-list {
+    width: 100%;
+
+    .group-tag {
+        padding: 0 !important;
+        height: 30px !important;
+        border-radius: 0.25rem !important;
+        background: transparent !important;
+
+        .custom-tag {
+            padding: 0.15rem 0.45rem;
+            background: #0275d8;
+            border-radius: 0.25rem;
+            color: #fff;
+
+            &:hover {
+                opacity: 0.8;
+            }
+
+            .group-tag-remove {
+                color: #fff;
+            }
+        }
+    }
+
+    .group-tag-input {
+        height: 30px;
+    }
+}

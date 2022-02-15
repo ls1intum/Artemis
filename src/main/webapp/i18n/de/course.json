@@ -179,7 +179,16 @@
             "courseAverage": "Kursdurchschnitt",
             "exerciseAverage": "Aufgabendurchschnitt",
             "amountOfStudents": "# Studierende",
-            "activeStudents": "Aktive Studierende"
+            "activeStudents": "Aktive Studierende",
+            "activeStudentsExplanation": "Aktive Studierende sind Studierende, die in der entsprechenden Woche mindestens eine Lösung eingereicht haben.",
+            "average": "Durchschnitt: ",
+            "averageReferenceLineCheckboxLabel": "Zeige den Durchschnitt als Referenz-Linie",
+            "exerciseType": "Aufgabentyp",
+            "programming": "Programmierung",
+            "quiz": "Quiz",
+            "modeling": "Modellierung",
+            "text": "Text",
+            "file-upload": "Dateiupload"
         }
     }
 }

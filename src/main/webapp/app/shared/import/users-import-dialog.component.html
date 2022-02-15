@@ -18,7 +18,7 @@
                     <label class="label-narrow font-weight-bold" jhiTranslate="importUsers.csvFile.label">Select .csv file</label>
                     <jhi-help-icon placement="top" text="importUsers.csvFile.tooltip" class="me-1"></jhi-help-icon>
                 </div>
-                <fa-icon class="loading-spinner ms-1" [icon]="'spinner'" [spin]="true" *ngIf="isParsing"></fa-icon>
+                <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isParsing"></fa-icon>
             </div>
             <div class="mt-2">
                 <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
@@ -81,7 +81,7 @@
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
             <button *ngIf="!hasImported" type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button
                 *ngIf="!hasImported; else buttonAfterImport"
@@ -92,13 +92,13 @@
                 [disabled]="isSubmitDisabled"
                 (click)="importUsers()"
             >
-                <fa-icon [icon]="'upload'" class="me-2"></fa-icon>
+                <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
                 <span jhiTranslate="entity.action.to-import">Import</span>
-                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
             </button>
             <ng-template #buttonAfterImport>
                 <button class="btn btn-success" id="finish-button" (click)="onFinish()">
-                    <fa-icon [icon]="'check'" class="me-2"></fa-icon>
+                    <fa-icon [icon]="faCheck" class="me-2"></fa-icon>
                     <span jhiTranslate="entity.action.finish">Finish</span>
                 </button>
             </ng-template>

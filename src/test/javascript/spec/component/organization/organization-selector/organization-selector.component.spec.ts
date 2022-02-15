@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { of } from 'rxjs';
@@ -10,9 +8,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { Organization } from 'app/entities/organization.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('OrganizationSelectorComponent', () => {
     let component: OrganizationSelectorComponent;
@@ -34,7 +29,7 @@ describe('OrganizationSelectorComponent', () => {
             });
     });
 
-    afterEach(async () => {
+    beforeEach(() => {
         jest.clearAllMocks();
     });
 
@@ -50,7 +45,7 @@ describe('OrganizationSelectorComponent', () => {
         jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of([organization1, organization2]));
 
         fixture.detectChanges();
-        expect(component).to.be.ok;
-        expect(component.availableOrganizations[0]).to.be.eq(organization2);
+        expect(component).not.toBeNull();
+        expect(component.availableOrganizations[0]).toBe(organization2);
     }));
 });

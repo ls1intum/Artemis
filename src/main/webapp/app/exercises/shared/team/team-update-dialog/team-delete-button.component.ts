@@ -5,6 +5,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-team-delete-button',
@@ -19,7 +20,7 @@ import { AlertService } from 'app/core/util/alert.service';
             (delete)="removeTeam()"
             [dialogError]="dialogError$"
         >
-            <fa-icon [icon]="'trash-alt'" class="me-1"></fa-icon>
+            <fa-icon [icon]="faTrashAlt" class="me-1"></fa-icon>
         </button>
     `,
 })
@@ -36,6 +37,9 @@ export class TeamDeleteButtonComponent implements OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    // Icons
+    faTrashAlt = faTrashAlt;
+
     constructor(private alertService: AlertService, private teamService: TeamService) {}
 
     /**
@@ -50,12 +54,12 @@ export class TeamDeleteButtonComponent implements OnDestroy {
      *
      */
     removeTeam = () => {
-        this.teamService.delete(this.exercise, this.team.id!).subscribe(
-            () => {
+        this.teamService.delete(this.exercise, this.team.id!).subscribe({
+            next: () => {
                 this.delete.emit(this.team);
                 this.dialogErrorSource.next('');
             },
-            () => this.alertService.error('artemisApp.team.removeTeam.error'),
-        );
+            error: () => this.alertService.error('artemisApp.team.removeTeam.error'),
+        });
     };
 }

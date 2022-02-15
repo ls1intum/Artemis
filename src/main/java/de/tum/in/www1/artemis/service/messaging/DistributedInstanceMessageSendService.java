@@ -103,8 +103,14 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     @Override
     public void sendExerciseReleaseNotificationSchedule(Long exerciseId) {
-        log.info("Sending prepare notification for exercise {} to broker.", exerciseId);
-        sendMessageDelayed("exercise-notification-schedule", exerciseId);
+        log.info("Sending prepare release notification for exercise {} to broker.", exerciseId);
+        sendMessageDelayed("exercise-released-schedule", exerciseId);
+    }
+
+    @Override
+    public void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId) {
+        log.info("Sending prepare assessed exercise submitted notification for exercise {} to broker.", exerciseId);
+        sendMessageDelayed("assessed-exercise-submission-notification-schedule", exerciseId);
     }
 
     private void sendMessageDelayed(String destination, Long exerciseId) {

@@ -1,11 +1,12 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('FileUploadSubmission Service', () => {
-    let injector: TestBed;
     let service: FileUploadSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: FileUploadSubmission;
@@ -13,10 +14,10 @@ describe('FileUploadSubmission Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [{ provide: AccountService, useClass: MockAccountService }],
         });
-        injector = getTestBed();
-        service = injector.get(FileUploadSubmissionService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(FileUploadSubmissionService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new FileUploadSubmission();
     });

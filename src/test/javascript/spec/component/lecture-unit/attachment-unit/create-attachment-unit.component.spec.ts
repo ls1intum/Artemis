@@ -1,8 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,9 +16,6 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { By } from '@angular/platform-browser';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 @Component({ selector: 'jhi-attachment-unit-form', template: '' })
 class AttachmentUnitFormStubComponent {
     @Input() isEditMode = false;
@@ -37,7 +31,6 @@ class LectureUnitLayoutStubComponent {
 describe('CreateAttachmentUnitComponent', () => {
     let createAttachmentUnitComponentFixture: ComponentFixture<CreateAttachmentUnitComponent>;
     let createAttachmentUnitComponent: CreateAttachmentUnitComponent;
-    const sandbox = sinon.createSandbox();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -86,13 +79,13 @@ describe('CreateAttachmentUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         createAttachmentUnitComponentFixture.detectChanges();
-        expect(createAttachmentUnitComponent).to.be.ok;
+        expect(createAttachmentUnitComponent).not.toBeNull();
     });
 
     it('should upload file, send POST for attachment and post for attachment unit', fakeAsync(() => {
@@ -119,7 +112,7 @@ describe('CreateAttachmentUnitComponent', () => {
         };
 
         const examplePath = '/path/to/file';
-        const uploadFileStub = sandbox.stub(fileUploadService, 'uploadFile').resolves({ path: examplePath });
+        const uploadFileStub = jest.spyOn(fileUploadService, 'uploadFile').mockReturnValue(Promise.resolve({ path: examplePath }));
 
         const attachmentUnit = new AttachmentUnit();
         attachmentUnit.description = formData.formProperties.description;
@@ -128,7 +121,7 @@ describe('CreateAttachmentUnitComponent', () => {
             body: attachmentUnit,
             status: 201,
         });
-        const createAttachmentUnitStub = sandbox.stub(attachmentUnitService, 'create').returns(of(attachmentUnitResponse));
+        const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'create').mockReturnValue(of(attachmentUnitResponse));
 
         const attachment = new Attachment();
         attachment.version = 1;
@@ -141,8 +134,8 @@ describe('CreateAttachmentUnitComponent', () => {
             body: attachment,
             status: 201,
         });
-        const createAttachmentStub = sandbox.stub(attachmentService, 'create').returns(of(attachmentResponse));
-        const navigateSpy = sinon.spy(router, 'navigate');
+        const createAttachmentStub = jest.spyOn(attachmentService, 'create').mockReturnValue(of(attachmentResponse));
+        const navigateSpy = jest.spyOn(router, 'navigate');
         createAttachmentUnitComponentFixture.detectChanges();
 
         const attachmentUnitFormStubComponent: AttachmentUnitFormStubComponent = createAttachmentUnitComponentFixture.debugElement.query(
@@ -151,16 +144,16 @@ describe('CreateAttachmentUnitComponent', () => {
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
 
         createAttachmentUnitComponentFixture.whenStable().then(() => {
-            expect(uploadFileStub).to.have.been.calledWith(formData.fileProperties.file, formData.fileProperties.fileName, { keepFileName: true });
-            expect(createAttachmentUnitStub).to.have.been.calledWith(attachmentUnit, 1);
-            const attachmentArgument: Attachment = createAttachmentStub.getCall(0).args[0];
-            expect(attachmentArgument.name).to.equal(attachment.name);
-            expect(attachmentArgument.releaseDate).to.equal(attachment.releaseDate);
-            expect(attachmentArgument.version).to.equal(attachment.version);
-            expect(attachmentArgument.link).to.equal(attachment.link);
-            expect(attachmentArgument.attachmentUnit).to.deep.equal(attachmentUnit);
-            expect(navigateSpy).to.have.been.calledOnce;
-            navigateSpy.restore();
+            expect(uploadFileStub).toHaveBeenCalledWith(formData.fileProperties.file, formData.fileProperties.fileName, { keepFileName: true });
+            expect(createAttachmentUnitStub).toHaveBeenCalledWith(attachmentUnit, 1);
+            const attachmentArgument: Attachment = createAttachmentStub.mock.calls[0][0];
+            expect(attachmentArgument.name).toEqual(attachment.name);
+            expect(attachmentArgument.releaseDate).toEqual(attachment.releaseDate);
+            expect(attachmentArgument.version).toEqual(attachment.version);
+            expect(attachmentArgument.link).toEqual(attachment.link);
+            expect(attachmentArgument.attachmentUnit).toEqual(attachmentUnit);
+            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            navigateSpy.mockRestore();
         });
     }));
 });

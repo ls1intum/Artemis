@@ -20,14 +20,14 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     Optional<Rating> findRatingByResultId(Long resultId);
 
     /**
-     * Delete all ratings that belong to results of a given participation
-     * @param participationId the Id of the participation where the ratings should be deleted
+     * Delete all ratings that belong to the result of a given participation
+     * @param participationId the id of the participation where the ratings should be deleted
      */
     void deleteByResult_Participation_Id(Long participationId);
 
     /**
      * Delete all ratings that belong to the given result
-     * @param resultId the Id of the result where the rating should be deleted
+     * @param resultId the id of the result where the rating should be deleted
      */
     void deleteByResult_Id(long resultId);
 
@@ -48,7 +48,7 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     /**
      * Count all ratings given to submissions for the given course.
-     * @param courseId the Id of the course for which the ratings are counted
+     * @param courseId the id of the course for which the ratings are counted
      * @return number of total ratings given for the course
      */
     long countByResult_Participation_Exercise_Course_Id(Long courseId);

@@ -5,6 +5,8 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { Result } from 'app/entities/result.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { faExclamationCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckSquare, faSquare } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -47,6 +49,13 @@ export class MultipleChoiceQuestionComponent {
     selectedAnswerOptionsChange = new EventEmitter<AnswerOption[]>();
 
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
+    faExclamationCircle = faExclamationCircle;
+    farSquare = faSquare;
+    farCheckSquare = faCheckSquare;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 

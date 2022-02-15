@@ -8,7 +8,7 @@ export class ShortAnswerMapping implements BaseEntity, CanBecomeInvalid {
     public id?: number;
     public shortAnswerSpotIndex?: number;
     public shortAnswerSolutionIndex?: number;
-    public invalid?: boolean;
+    public invalid = false; // default value
     public solution?: ShortAnswerSolution;
     public spot?: ShortAnswerSpot;
     public question?: ShortAnswerQuestion;
@@ -16,6 +16,5 @@ export class ShortAnswerMapping implements BaseEntity, CanBecomeInvalid {
     constructor(spot: ShortAnswerSpot | undefined, solution: ShortAnswerSolution | undefined) {
         this.spot = spot;
         this.solution = solution;
-        this.invalid = false; // default value
     }
 }

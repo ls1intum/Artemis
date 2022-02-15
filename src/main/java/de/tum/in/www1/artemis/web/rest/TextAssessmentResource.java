@@ -25,8 +25,10 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.AtheneTrackingTokenProvider;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -74,9 +76,10 @@ public class TextAssessmentResource extends AssessmentResource {
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository,
+            SingleUserNotificationService singleUserNotificationService) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository);
+                submissionRepository, singleUserNotificationService);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
@@ -108,7 +111,7 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        Result result = resultRepository.findOneElseThrow(resultId);
+        Result result = resultRepository.findByIdElseThrow(resultId);
         if (!result.getParticipation().getId().equals(participationId)) {
             return badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
         }
@@ -186,11 +189,13 @@ public class TextAssessmentResource extends AssessmentResource {
         // 1. Delete Text blocks
         textBlockService.deleteForSubmission((TextSubmission) submission);
 
-        // 2. Delete Feedbacks
+        // 2. Delete feedback and example assessment
         final var latestResult = submission.getLatestResult();
         if (latestResult != null) {
             latestResult.getFeedbacks().clear();
-            resultRepository.save(latestResult);
+            resultRepository.delete(latestResult);
+            submission.setResults(List.of());
+            submissionRepository.save(submission);
         }
 
         return ResponseEntity.noContent().build();
@@ -215,14 +220,13 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
-        Result result = resultRepository.findOneElseThrow(resultId);
-        if (!(result.getParticipation().getExercise() instanceof TextExercise)) {
+        Result result = resultRepository.findByIdElseThrow(resultId);
+        if (!(result.getParticipation().getExercise() instanceof final TextExercise exercise)) {
             return badRequest("Exercise", "400", "This exercise isn't a TextExercise!");
         }
         else if (!result.getParticipation().getId().equals(participationId)) {
             return badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
         }
-        final TextExercise exercise = (TextExercise) result.getParticipation().getExercise();
         checkAuthorization(exercise, null);
         final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
         ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks(), resultId);
@@ -357,7 +361,9 @@ public class TextAssessmentResource extends AssessmentResource {
             if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
                     && result.getCompletionDate() == null) {
                 // If we already have a result, we need to check if it is locked.
-                return locked(ENTITY_NAME, "alreadyAssessed", "This submission is being assessed by another tutor");
+                return ResponseEntity.status(HttpStatus.LOCKED)
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "alreadyAssessed", "This submission is being assessed by another tutor"))
+                        .build();
             }
 
             textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
@@ -438,10 +444,6 @@ public class TextAssessmentResource extends AssessmentResource {
                 result.setFeedbacks(assessments);
             }
         }
-        if (result == null) {
-            result = new Result();
-            result.setSubmission(textSubmission);
-        }
 
         return ResponseEntity.ok().body(result);
     }
@@ -478,7 +480,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
         if (result != null && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         Set<TextSubmission> textSubmissionSet = this.automaticTextAssessmentConflictService.get().getConflictingSubmissions(feedbackId);
@@ -517,13 +519,11 @@ public class TextAssessmentResource extends AssessmentResource {
 
         final boolean isInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
         if (!firstAssessor.getLogin().equals(user.getLogin()) && !secondAssessor.getLogin().equals(user.getLogin()) && !isInstructorForExercise) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         this.automaticTextAssessmentConflictService.get().solveFeedbackConflict(feedbackConflict);
-
         return ResponseEntity.ok(feedbackConflict);
-
     }
 
     @Override
@@ -552,7 +552,7 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final TextExercise exercise, final List<Feedback> feedbacks) {
         if (textBlocks != null) {
-            List<Feedback> nonGeneralFeedbacks = feedbacks.stream().filter(feedback -> feedback.getReference() != null).collect(Collectors.toList());
+            List<Feedback> nonGeneralFeedbacks = feedbacks.stream().filter(feedback -> feedback.getReference() != null).toList();
             Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity()));
             final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
             final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {

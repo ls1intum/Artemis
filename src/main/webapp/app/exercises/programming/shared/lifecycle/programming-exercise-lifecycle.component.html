@@ -16,7 +16,7 @@
                     <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle" [class.btn-lifecycle--disabled]="readOnly">
-                    <fa-icon [icon]="'cogs'" size="lg"></fa-icon>
+                    <fa-icon [icon]="faCogs" size="lg"></fa-icon>
                 </div>
             </div>
             <jhi-programming-exercise-test-schedule-date-picker
@@ -59,7 +59,7 @@
                         [class.btn-lifecycle--disabled]="readOnly"
                         (click)="!readOnly && toggleAssessmentType()"
                     >
-                        <fa-icon [icon]="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? 'user-check' : 'user-slash'" size="lg"></fa-icon>
+                        <fa-icon [icon]="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? faUserCheck : faUserSlash" size="lg"></fa-icon>
                     </div>
                     <div>
                         {{
@@ -95,7 +95,7 @@
                         [class.btn-lifecycle--disabled]="readOnly"
                         (click)="!readOnly && toggleComplaintsType()"
                     >
-                        <fa-icon [icon]="exercise.allowComplaintsForAutomaticAssessments ? 'user-check' : 'user-slash'" size="lg"></fa-icon>
+                        <fa-icon [icon]="exercise.allowComplaintsForAutomaticAssessments ? faUserCheck : faUserSlash" size="lg"></fa-icon>
                     </div>
                     <div>
                         {{

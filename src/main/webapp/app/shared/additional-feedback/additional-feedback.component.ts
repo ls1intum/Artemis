@@ -1,8 +1,10 @@
 import { Component, Input } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
-import { roundScoreSpecifiedByCourseSettings } from '../util/utils';
+import { roundValueSpecifiedByCourseSettings } from '../util/utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { faCommentDots } from '@fortawesome/free-regular-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-additional-feedback',
@@ -17,8 +19,12 @@ export class AdditionalFeedbackComponent {
     @Input()
     course?: Course;
 
+    // Icons
+    farCommentDots = faCommentDots;
+    faExclamationTriangle = faExclamationTriangle;
+
     // Expose the function to the template
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
     public buildFeedbackTextForReview(feedback: Feedback): string {

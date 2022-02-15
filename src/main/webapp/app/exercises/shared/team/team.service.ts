@@ -10,7 +10,7 @@ import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { createRequestOption } from 'app/shared/util/request.util';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Observable, Subscription } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';

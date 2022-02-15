@@ -1,8 +1,13 @@
 <div class="me-0 row">
-    <div class="col-auto p-0" *ngFor="let reactionCount of reactionCountMap | keyvalue">
-        <button class="reaction-button clickable" [class.reaction-button--reacted]="reactionCount.value.hasReacted" (click)="updateReaction(reactionCount.key)">
-            <ngx-emoji class="emoji" [emoji]="reactionCount.key" [size]="16"></ngx-emoji>
-            <span class="emoji-count" [class.reaction-count--reacted]="reactionCount.value.hasReacted">{{ reactionCount.value.count }}</span>
+    <div class="col-auto p-0" *ngFor="let reactionMetaData of reactionMetaDataMap | keyvalue">
+        <button
+            class="reaction-button clickable"
+            [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
+            (click)="updateReaction(reactionMetaData.key)"
+            [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
+        >
+            <ngx-emoji class="emoji" [emoji]="reactionMetaData.key" [size]="16"> </ngx-emoji>
+            <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">{{ reactionMetaData.value.count }}</span>
         </button>
     </div>
     <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor">
@@ -13,7 +18,7 @@
             [disabled]="!currentUserIsAtLeastTutor"
             (click)="currentUserIsAtLeastTutor && togglePin()"
         >
-            <ngx-emoji class="emoji" [ngbTooltip]="pinTooltip | artemisTranslate" [emoji]="pinEmojiId" [size]="16"></ngx-emoji>
+            <ngx-emoji class="emoji" [emoji]="pinEmojiId" [size]="16" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"> </ngx-emoji>
         </button>
     </div>
     <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
@@ -24,18 +29,18 @@
             [disabled]="!currentUserIsAtLeastTutor"
             (click)="currentUserIsAtLeastTutor && toggleArchive()"
         >
-            <ngx-emoji class="emoji" [ngbTooltip]="archiveTooltip | artemisTranslate" [emoji]="archiveEmojiId" [size]="16"></ngx-emoji>
+            <ngx-emoji class="emoji" [emoji]="archiveEmojiId" [size]="16" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></ngx-emoji>
         </button>
     </div>
     <div class="col-auto px-0">
         <fa-icon
-            [icon]="['far', 'smile']"
+            [icon]="farSmile"
             class="reaction-button me-0 text-secondary clickable"
             [class.open-selector]="showReactionSelector"
             (click)="showReactionSelector = !showReactionSelector"
             cdkOverlayOrigin
             #trigger="cdkOverlayOrigin"
-            [ngbTooltip]="'artemisApp.metis.chooseReaction' | artemisTranslate"
+            [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
         >
         </fa-icon>
     </div>

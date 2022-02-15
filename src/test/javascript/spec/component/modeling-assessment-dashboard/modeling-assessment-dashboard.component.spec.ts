@@ -62,7 +62,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
             declarations: [ModelingAssessmentDashboardComponent],
             providers: [
                 JhiLanguageHelper,
-                { provide: Router, useClass: route },
+                { provide: Router, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },

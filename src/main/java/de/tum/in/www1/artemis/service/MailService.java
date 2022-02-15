@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.EXERCISE_SUBMISSION_ASSESSED;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
+
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -25,8 +28,8 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -65,6 +68,10 @@ public class MailService {
     private static final String NOTIFICATION_URL = "notificationUrl";
 
     private static final String EXERCISE_TYPE = "exerciseType";
+
+    private static final String ASSESSED_SCORE = "assessedScore";
+
+    private static final String RELATIVE_SCORE = "relativeScore";
 
     // Translation that can not be done via i18n Recource Bundle (for Thymeleaf) but has to be set in this service via Java
     private final String newAnnouncementEN = "New announcement \"%s\" in course \"%s\"";
@@ -119,7 +126,6 @@ public class MailService {
      * @param templateName The name of the template
      * @param titleKey The key mapping the title for the subject of the mail
      */
-    @Async
     public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
         Context context = new Context(locale);
@@ -130,25 +136,16 @@ public class MailService {
         sendEmail(user, subject, content, false, true);
     }
 
-    @Async
     public void sendActivationEmail(User user) {
         log.debug("Sending activation email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "mail/activationEmail", "email.activation.title");
     }
 
-    @Async
-    public void sendCreationEmail(User user) {
-        log.debug("Sending creation email to '{}'", user.getEmail());
-        sendEmailFromTemplate(user, "mail/creationEmail", "email.activation.title");
-    }
-
-    @Async
     public void sendPasswordResetMail(User user) {
         log.debug("Sending password reset email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "mail/passwordResetEmail", "email.reset.title");
     }
 
-    @Async
     public void sendSAML2SetPasswordMail(User user) {
         log.debug("Sending SAML2 set password email to '{}'", user.getEmail());
         sendEmailFromTemplate(user, "mail/samlSetPasswordEmail", "email.saml.title");
@@ -165,7 +162,7 @@ public class MailService {
      */
     private String setPostContextAndSubject(Context context, Object notificationSubject, Locale locale) {
         // posts use a different mechanism for the url
-        context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+        context.setVariable(NOTIFICATION_URL, extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
 
         // For Announcement Posts
         String newAnnouncementString = locale.toString().equals("en") ? newAnnouncementEN : newAnnouncementDE;
@@ -181,7 +178,6 @@ public class MailService {
      * @param user who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
-    @Async
     public void sendNotificationEmail(Notification notification, User user, Object notificationSubject) {
         NotificationType notificationType = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
         log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
@@ -198,15 +194,16 @@ public class MailService {
 
         if (notificationSubject instanceof Exercise) {
             context.setVariable(EXERCISE_TYPE, ((Exercise) notificationSubject).getExerciseType());
+            context = checkAndPrepareExerciseSubmissionAssessedCase(notificationType, context, (Exercise) notificationSubject, user);
         }
 
         if (notificationSubject instanceof Post) {
             // posts use a different mechanism for the url
-            context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+            context.setVariable(NOTIFICATION_URL, extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
             subject = setPostContextAndSubject(context, notificationSubject, locale);
         }
         else {
-            context.setVariable(NOTIFICATION_URL, NotificationTarget.extractNotificationUrl(notification, artemisServerUrl.toString()));
+            context.setVariable(NOTIFICATION_URL, extractNotificationUrl(notification, artemisServerUrl.toString()));
         }
         context.setVariable(BASE_URL, artemisServerUrl);
 
@@ -228,8 +225,30 @@ public class MailService {
             case EXERCISE_PRACTICE -> templateEngine.process("mail/notification/exerciseOpenForPracticeEmail", context);
             case NEW_ANNOUNCEMENT_POST -> templateEngine.process("mail/notification/announcementPostEmail", context);
             case FILE_SUBMISSION_SUCCESSFUL -> templateEngine.process("mail/notification/fileSubmissionSuccessfulEmail", context);
+            case EXERCISE_SUBMISSION_ASSESSED -> templateEngine.process("mail/notification/exerciseSubmissionAssessedEmail", context);
+            case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
+    }
+
+    /**
+     * Auxiliary method for EXERCISE_SUBMISSION_ASSESSED case to load the needed score property to use it in the template.
+     *
+     * @param notificationType that needs to be EXERCISE_SUBMISSION_ASSESSED
+     * @param context that should be updated with the score property
+     * @param exercise that holds the needed information: exercise -> studentParticipation -> results (this information was loaded in previous steps)
+     * @param recipientStudent who will receive the email
+     * @return the updated context
+     */
+    private Context checkAndPrepareExerciseSubmissionAssessedCase(NotificationType notificationType, Context context, Exercise exercise, User recipientStudent) {
+        if (notificationType.equals(EXERCISE_SUBMISSION_ASSESSED)) {
+            StudentParticipation studentParticipation = exercise.getStudentParticipations().stream()
+                    .filter(participation -> participation.getStudent().orElseThrow().equals(recipientStudent)).findFirst().orElseThrow();
+            Double score = studentParticipation.findLatestResult().getScore();
+            context.setVariable(ASSESSED_SCORE, score);
+            context.setVariable(RELATIVE_SCORE, exercise.getMaxPoints() / score);
+        }
+        return context;
     }
 
     @Async

@@ -1,22 +1,8 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, Route } from '@angular/router';
+import { Route } from '@angular/router';
 import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
 import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { Organization } from 'app/entities/organization.model';
-
-@Injectable({ providedIn: 'root' })
-export class OrganizationMgmtResolve implements Resolve<Organization> {
-    constructor(private organizationManagementService: OrganizationManagementService) {}
-
-    resolve(route: ActivatedRouteSnapshot) {
-        if (route.params['id']) {
-            return this.organizationManagementService.getOrganizationById(route.params['id']);
-        }
-        return new Organization();
-    }
-}
+import { OrganizationManagementResolve } from 'app/admin/organization-management/organization-management-resolve.service';
 
 export const organizationMgmtRoute: Route[] = [
     {
@@ -36,7 +22,7 @@ export const organizationMgmtRoute: Route[] = [
                 path: 'new',
                 component: OrganizationManagementUpdateComponent,
                 resolve: {
-                    organization: OrganizationMgmtResolve,
+                    organization: OrganizationManagementResolve,
                 },
                 data: {
                     pageTitle: 'organizationManagement.addLabel',
@@ -46,7 +32,7 @@ export const organizationMgmtRoute: Route[] = [
                 path: ':id',
                 component: OrganizationManagementDetailComponent,
                 resolve: {
-                    organization: OrganizationMgmtResolve,
+                    organization: OrganizationManagementResolve,
                 },
                 data: {
                     pageTitle: 'organizationManagement.title',
@@ -56,7 +42,7 @@ export const organizationMgmtRoute: Route[] = [
             {
                 path: ':id',
                 resolve: {
-                    organization: OrganizationMgmtResolve,
+                    organization: OrganizationManagementResolve,
                 },
                 data: {
                     breadcrumbLabelVariable: 'organization.id',

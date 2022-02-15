@@ -1,18 +1,12 @@
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import { Component, Input } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
-import * as chai from 'chai';
 import { ParticipantScoresTablesContainerComponent } from 'app/shared/participant-scores/participant-scores-tables-container/participant-scores-tables-container.component';
 import { NgbButtonsModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Component({ selector: 'jhi-participant-scores-table', template: '<div></div>' })
 class ParticipantScoresTableStubComponent {
@@ -57,13 +51,13 @@ describe('ParticipantScoresTablesContainer', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         // this is just a simple container component so we test that the component renders correctly
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 });

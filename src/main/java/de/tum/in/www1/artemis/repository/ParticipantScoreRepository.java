@@ -4,7 +4,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.*;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,8 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 
 @Repository
@@ -35,6 +38,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     Optional<ParticipantScore> findParticipantScoresByLastResult(Result result);
 
     @NotNull
+    @Override
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAll();
 
@@ -74,14 +78,6 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             """)
     List<Map<String, Object>> findAverageScoreForExercises(@Param("exercises") List<Exercise> exercises);
 
-    @Query("""
-            SELECT p.exercise.id AS exerciseId, AVG(p.lastScore) AS averageScore
-            FROM ParticipantScore p
-            WHERE p.exercise.id IN :exerciseIds
-            GROUP BY p.exercise.id
-            """)
-    List<Map<String, Object>> findAverageScoreForExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
-
     /**
      * Gets average score for a single exercise
      *
@@ -94,14 +90,6 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             WHERE p.exercise.id = :exerciseId
             """)
     Double findAverageScoreForExercise(@Param("exerciseId") Long exerciseId);
-
-    @Query("""
-            SELECT p.exercise.id AS exerciseId, AVG(p.lastPoints) AS averagePoints
-            FROM ParticipantScore p
-            WHERE p.exercise IN :exercises
-            GROUP BY p.exercise.id
-            """)
-    List<Map<String, Object>> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
 
     @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
     default void deleteAllByExerciseIdTransactional(Long exerciseId) {
@@ -132,4 +120,25 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             """)
     List<ScoreDistribution> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Sets the average for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     * using the value provided in averageScoreById
+     *
+     * Quiz Exercises are a special case: They don't have a due date set in the database,
+     * therefore it is hard to tell if they are over, so always calculate a score for them
+     *
+     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
+     * @param averageScoreById the average score for each exercise indexed by exerciseId
+     * @param exercise the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
+     */
+    default void setAverageScoreForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Map<Long, Double> averageScoreById, Exercise exercise) {
+        Double averageScore;
+        if (exercise instanceof QuizExercise) {
+            averageScore = findAverageScoreForExercise(exercise.getId());
+        }
+        else {
+            averageScore = averageScoreById.get(exercise.getId());
+        }
+        exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
+    }
 }

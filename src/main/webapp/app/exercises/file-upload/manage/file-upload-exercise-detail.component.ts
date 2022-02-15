@@ -9,7 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -57,14 +57,14 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         this.fileUploadExerciseService
             .find(exerciseId)
             .pipe(filter((res) => !!res.body))
-            .subscribe(
-                (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
+            .subscribe({
+                next: (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
                     this.isExamExercise = this.fileUploadExercise.exerciseGroup !== undefined;
                     this.course = this.isExamExercise ? this.fileUploadExercise.exerciseGroup?.exam?.course : this.fileUploadExercise.course;
                 },
-                (error: HttpErrorResponse) => onError(this.alertService, error),
-            );
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });

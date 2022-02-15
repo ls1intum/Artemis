@@ -67,8 +67,7 @@ public class RepositoryService {
      * @return Files with code or an exception is thrown
      */
     public Map<String, String> getFilesWithContent(Repository repository) {
-        var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        var files = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
         Map<String, String> fileListWithContent = new HashMap<>();
 
         files.forEach(file -> {
@@ -76,7 +75,7 @@ public class RepositoryService {
                 fileListWithContent.put(file.toString(), FileUtils.readFileToString(file, StandardCharsets.UTF_8));
             }
             catch (IOException e) {
-                log.error("Content of file: {} could not be loaded and throws the following error: {}", file.toString(), e.getMessage());
+                log.error("Content of file: {} could not be loaded and throws the following error: {}", file, e.getMessage());
             }
         });
         return fileListWithContent;
@@ -124,17 +123,16 @@ public class RepositoryService {
 
     /**
      * Gets the files of the repository and checks whether they were changed during a student participation.
-     * Compares the files from the students repository with the files of the template repository.
+     * Compares the files from the students' repository with the files of the template repository.
      *
-     * @param repository the students repository with possibly new files and changed files
+     * @param repository the students' repository with possibly new files and changed files
      * @param templateRepository the template repository with default files on which the student started working on
      * @return a map of files with the information if they were changed/are new.
      */
     public Map<String, Boolean> getFilesWithInformationAboutChange(Repository repository, Repository templateRepository) {
         Map<String, Boolean> filesWithInformationAboutChange = new HashMap<>();
 
-        var repoFiles = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        var repoFiles = gitService.listFilesAndFolders(repository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
 
         Map<String, File> templateRepoFiles = gitService.listFilesAndFolders(templateRepository).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE)
                 .collect(Collectors.toMap(entry -> entry.getKey().toString(), Map.Entry::getKey));
@@ -215,7 +213,7 @@ public class RepositoryService {
      * @param fileMove dto for describing the old and the new filename.
      * @throws FileNotFoundException if the file to rename is not available.
      * @throws FileAlreadyExistsException if the new filename is already taken.
-     * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains .. or /../ or .git)
+     * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
         Optional<File> existingFile = gitService.getFileByName(repository, fileMove.getCurrentFilePath());
@@ -278,7 +276,7 @@ public class RepositoryService {
     }
 
     /**
-     * Commit all staged and unstaged changes in the given repository.
+     * Commit all staged and un-staged changes in the given repository.
      *
      * @param repository for which to execute the commit.
      * @param user the user who has committed the changes in the online editor

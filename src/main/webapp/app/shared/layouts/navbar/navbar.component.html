@@ -9,7 +9,7 @@
             aria-label="Toggle navigation"
             (click)="toggleNavbar()"
         >
-            <fa-icon [icon]="'bars'"></fa-icon>
+            <fa-icon [icon]="faBars"></fa-icon>
         </a>
         <a class="navbar-brand logo float-start" routerLink="/" (click)="collapseNavbar()">
             <div class="row">
@@ -25,7 +25,7 @@
             <li *ngIf="currAccount && !examModeActive()" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 <a class="guided-tour-overview nav-link" routerLink="courses" (click)="collapseNavbar()" id="overview-menu">
                     <span>
-                        <fa-icon [icon]="'th-large'"></fa-icon>
+                        <fa-icon [icon]="faThLarge"></fa-icon>
                         <span jhiTranslate="global.menu.overview">Course Overview</span>
                     </span>
                 </a>
@@ -40,7 +40,7 @@
             >
                 <a *ngIf="!examModeActive()" class="guided-tour-course-admin nav-link" routerLink="course-management" (click)="collapseNavbar()" id="course-admin-menu">
                     <span>
-                        <fa-icon [icon]="'th-list'"></fa-icon>
+                        <fa-icon [icon]="faThList"></fa-icon>
                         <span jhiTranslate="global.menu.course">Course Management</span>
                     </span>
                 </a>
@@ -56,80 +56,80 @@
             >
                 <a *ngIf="!examModeActive()" class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
                     <span>
-                        <fa-icon [icon]="'user-plus'"></fa-icon>
+                        <fa-icon [icon]="faUserPlus"></fa-icon>
                         <span jhiTranslate="global.menu.admin.main">Server Administration</span>
                     </span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
                         <a class="dropdown-item" routerLink="admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'book-open'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faBookOpen" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.upcomingExamsAndExercises">Upcoming Exams & Exercises</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'user'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faUser" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.userManagement">User management</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/organization-management" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'university'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faUniversity" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.organizationManagement">Organization management</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/system-notification-management" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'bell'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faBell" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.systemNotifications">System notifications</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'toggle-on'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faToggleOn" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.featureToggles">Feature Toggles</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/user-statistics" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'eye'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faEye" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.statistics">User statistics</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/metrics" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'tachometer-alt'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faTachometerAlt" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.metrics">Metrics</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/health" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'heart'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faHeart" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.health">Health</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/configuration" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'list'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faList" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.configuration">Configuration</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/audits" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'bell'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faBell" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.audits">Audits</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="admin/logs" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'tasks'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faTasks" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.logs">Logs</span>
                         </a>
                     </li>
                     <li *ngIf="openApiEnabled">
                         <a class="dropdown-item" href="api.html" target="_blank" rel="noreferrer noopener" (click)="collapseNavbar()">
-                            <fa-icon icon="book" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faBook" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.apidocs">API</span>
                         </a>
                     </li>
@@ -140,7 +140,7 @@
             <li ngbDropdown class="nav-item dropdown pointer" display="dynamic" *ngIf="!currAccount && languages && languages.length > 1">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
                     <span>
-                        <fa-icon [icon]="'flag'"></fa-icon>
+                        <fa-icon [icon]="faFlag"></fa-icon>
                         <span jhiTranslate="global.menu.language">Language</span>
                     </span>
                 </a>
@@ -158,14 +158,14 @@
                 ngbDropdown
                 class="nav-item dropdown pointer"
                 display="dynamic"
-                placement="bottom-end"
+                placement="bottom-right"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
                 [autoClose]="true"
             >
                 <a class="guided-tour-account nav-link dropdown-toggle" ngbDropdownToggle id="account-menu">
                     <span *ngIf="!getImageUrl()">
-                        <fa-icon [icon]="'user'"></fa-icon>
+                        <fa-icon [icon]="faUser"></fa-icon>
                         <span jhiTranslate="global.menu.account.main" *ngIf="!currAccount">Account</span>
                         <span *ngIf="currAccount">{{ currAccount.login }}</span>
                     </span>
@@ -176,7 +176,7 @@
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
                         <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
-                            <fa-icon [icon]="'cog'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faCog" [fixedWidth]="true"></fa-icon>
                             <span>{{ 'global.menu.settings' | artemisTranslate }}</span>
                         </a>
                     </li>
@@ -201,19 +201,19 @@
                     <div class="dropdown-divider"></div>
                     <li *ngIf="isRegistrationEnabled">
                         <a class="dropdown-item" routerLink="account/settings" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon icon="wrench" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faWrench" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.account.settings">Settings</span>
                         </a>
                     </li>
                     <li *ngIf="passwordResetEnabled">
                         <a class="dropdown-item" routerLink="account/password" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon icon="lock" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.account.password">Password</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" *ngIf="currAccount" (click)="logout()" id="logout">
-                            <fa-icon [icon]="'sign-out-alt'" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.account.logout">Sign out</span>
                         </a>
                     </li>
@@ -225,9 +225,10 @@
 <div class="breadcrumb-container">
     <div *ngIf="breadcrumbs && breadcrumbs.length > 0">
         <ol class="breadcrumb" *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']">
-            <li *ngFor="let breadcrumb of breadcrumbs" class="breadcrumb-item">
+            <li *ngFor="let breadcrumb of breadcrumbs; let i = index" class="breadcrumb-item">
                 <a
                     class="breadcrumb-link"
+                    id="bread-crumb-{{ i }}"
                     [routerLink]="breadcrumb.uri"
                     routerLinkActive="active"
                     [routerLinkActiveOptions]="{ exact: true }"
@@ -236,6 +237,7 @@
                 >
                 <a
                     class="breadcrumb-link"
+                    id="bread-crumb-plain-{{ i }}"
                     [routerLink]="breadcrumb.uri"
                     routerLinkActive="active"
                     [routerLinkActiveOptions]="{ exact: true }"

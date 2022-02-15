@@ -7,6 +7,8 @@ import { NotificationSetting } from 'app/shared/user-settings/notification-setti
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,
@@ -19,7 +21,17 @@ export enum NotificationSettingsCommunicationChannel {
     styleUrls: ['../user-settings.scss'],
 })
 export class NotificationSettingsComponent extends UserSettingsDirective implements OnInit {
-    constructor(notificationService: NotificationService, userSettingsService: UserSettingsService, changeDetector: ChangeDetectorRef, alertService: AlertService) {
+    // Icons
+    faSave = faSave;
+    faInfoCircle = faInfoCircle;
+
+    constructor(
+        notificationService: NotificationService,
+        userSettingsService: UserSettingsService,
+        changeDetector: ChangeDetectorRef,
+        alertService: AlertService,
+        private notificationSettingsService: NotificationSettingsService,
+    ) {
         super(userSettingsService, alertService, changeDetector);
     }
 
@@ -32,7 +44,18 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
     ngOnInit(): void {
         this.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
         this.changeEventMessage = reloadNotificationSideBarMessage;
-        super.ngOnInit();
+
+        // check if settings are already loaded
+        const newestNotificationSettings: NotificationSetting[] = this.notificationSettingsService.getNotificationSettings();
+        if (newestNotificationSettings.length === 0) {
+            // if no settings are already available load them from the server
+            super.ngOnInit();
+        } else {
+            // else reuse the already available/loaded ones
+            this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(newestNotificationSettings, this.userSettingsCategory);
+            this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
+            this.changeDetector.detectChanges();
+        }
     }
 
     /**
@@ -44,7 +67,7 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
         let settingId = event.currentTarget.id;
         // optionId String could have an appended (e.g.( " email" or " webapp" to specify which option to toggle
         if (settingId.indexOf(' ') !== -1) {
-            settingId = settingId.substr(0, settingId.indexOf(' '));
+            settingId = settingId.slice(0, settingId.indexOf(' '));
         }
         const settingToUpdate = this.settings.find((setting) => setting.settingId === settingId);
         if (!settingToUpdate) {

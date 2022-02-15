@@ -9,7 +9,6 @@ public class UMLObjectAttribute extends UMLAttribute {
     /**
      * empty constructor used to make mockito happy
      */
-
     public UMLObjectAttribute() {
         super();
     }

@@ -1,7 +1,5 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -10,18 +8,14 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../test.module';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('ProgrammingExercise Service', () => {
-    let injector: TestBed;
     let service: ProgrammingExerciseService;
     let httpMock: HttpTestingController;
     let defaultProgrammingExercise: ProgrammingExercise;
@@ -36,12 +30,14 @@ describe('ProgrammingExercise Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        });
-        injector = getTestBed();
-        service = injector.get(ProgrammingExerciseService);
-        httpMock = injector.get(HttpTestingController);
+        })
+            .compileComponents()
+            .then(() => {
+                service = TestBed.inject(ProgrammingExerciseService);
+                httpMock = TestBed.inject(HttpTestingController);
 
-        defaultProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+                defaultProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+            });
     });
 
     describe('Service methods', () => {
@@ -60,7 +56,7 @@ describe('ProgrammingExercise Service', () => {
             service
                 .find(123)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
             tick();
@@ -82,7 +78,7 @@ describe('ProgrammingExercise Service', () => {
             service
                 .automaticSetup(new ProgrammingExercise(undefined, undefined))
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
             tick();
@@ -110,7 +106,7 @@ describe('ProgrammingExercise Service', () => {
             service
                 .findWithTemplateAndSolutionParticipation(expected.id, true)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
             tick();
@@ -137,7 +133,7 @@ describe('ProgrammingExercise Service', () => {
             service
                 .update(expected)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
             tick();
@@ -158,7 +154,7 @@ describe('ProgrammingExercise Service', () => {
             service
                 .updateTimeline(expected)
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).to.deep.equal(expected));
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
             tick();
@@ -184,7 +180,7 @@ describe('ProgrammingExercise Service', () => {
                 .query(expected)
                 .pipe(take(1))
                 .subscribe((resp) => {
-                    expect(resp.body).to.include.deep.members([expected]);
+                    expect(resp.body).toIncludeAllMembers([expected]);
                 });
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush([returnedFromService]);
@@ -201,7 +197,7 @@ describe('ProgrammingExercise Service', () => {
 
         it('should make get request', fakeAsync(() => {
             const expectedBlob = new Blob(['abc', 'cfe']);
-            service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).to.deep.equal(expectedBlob));
+            service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).toEqual(expectedBlob));
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/export-instructor-exercise` });
             req.flush(expectedBlob);
             tick();

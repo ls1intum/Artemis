@@ -43,7 +43,7 @@
                 },
                 "anonymousAssessment": {
                     "title": "Anonyme Bewertung",
-                    "shortDescription": "Anonymes Bewertungsverfahren durch Korrektur Warteschlangen um Vorurteile zu vermeiden.",
+                    "shortDescription": "Anonymes Bewertungsverfahren durch Korrektur-Warteschlangen, um Vorurteile zu vermeiden.",
                     "descriptionTextOne": "Dein Bewertungsteam kann über das Bewertungs-Dashboard auf die Abgaben der Studierenden zugreifen. In diesem Dashboard können sie eine neue Abgabe anfordern, sofern eine für die Bewertung verfügbar ist. Alle Abgaben sind anonymisiert, um Vorurteile oder Bevorzugung von Personen zu vermeiden. Um die Genauigkeit und Konsistenz der Bewertung zu verbessern, kannst du Bewertungsanweisungen, Musterabgaben und Musterbewertungen definieren, um eine gemeinsame Basis für die Benotungserwartungen zu schaffen, bevor die Bewertung beginnt."
                 },
                 "automaticAssessment": {
@@ -64,7 +64,7 @@
                 "complaints": {
                     "title": "Online-Klausureinsicht Anbieten",
                     "shortDescription": "Studierende können ihre Klausur einsehen. Änderungen bei Beschwerden automatisch anwenden.",
-                    "descriptionTextOne": "Nachdem die Ergebnisse veröffentlicht wurden, kannst du einen Zeitraum für die Einsicht der Studierenden festlegen. Jeder Studierende kann seine Klausur bequem von sein Computer aus einsehen und sich die Zeit nehmen, um die Bewertung zu verstehen. Sollten sie der Meinung sein, dass sie einen Fehler gefunden haben, können sie mit der Beschwerdefunktion eine Überprüfung beantragen. Alle Beschwerden werden gesammelt und können auf dem Bewertungsdashboard eingesehen werden. Die Beschwerden werden dann von einer dritten Person (d.h. eine andere als die ursprünglich Bewertende), beurteilt. Diese kann die Bewertung überprüfen und entscheiden, ob sie die Anmerkungen des Studierenden akzeptiert oder ablehnt. Die angegebenen Punkte werden dann automatisch aktualisiert, einschließlich des Ergebnisses der Klausur."
+                    "descriptionTextOne": "Nachdem die Ergebnisse veröffentlicht wurden, kannst du einen Zeitraum für die Einsicht der Studierenden festlegen. Alle Studierenden können die Klausur bequem am eigenen Computer einsehen und sich die Zeit nehmen, um die Bewertung zu verstehen. Sollten sie der Meinung sein, dass sie einen Fehler gefunden haben, können sie mit der Beschwerdefunktion eine Überprüfung beantragen. Alle Beschwerden werden gesammelt und können auf dem Bewertungsdashboard eingesehen werden. Die Beschwerden werden dann von einer dritten Person (d. h. eine andere als die ursprünglich Bewertende), beurteilt. Diese kann die Bewertung überprüfen und entscheiden, ob sie die Beschwerden akzeptiert oder ablehnt. Die angegebenen Punkte werden dann automatisch aktualisiert, einschließlich des Ergebnisses der Klausur."
                 },
                 "statistics": {
                     "title": "Statistiken Erstellen",

@@ -395,8 +395,8 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetCourseForInstructorDashboardWithStats() throws Exception {
-        courseTestService.testGetCourseForInstructorDashboardWithStats();
+    public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
+        courseTestService.testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly();
     }
 
     @Test
@@ -726,32 +726,41 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllCoursesForManagementOverview() throws Exception {
         courseTestService.testGetAllCoursesForManagementOverview();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExercisesForCourseOverview() throws Exception {
         courseTestService.testGetExercisesForCourseOverview();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExerciseStatsForCourseOverview() throws Exception {
         courseTestService.testGetExerciseStatsForCourseOverview();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
         courseTestService.testGetExerciseStatsForCourseOverviewWithPastExercises();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCourseManagementDetailData() throws Exception {
         courseTestService.testGetCourseManagementDetailData();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddUsersToCourseGroup() throws Exception {
+        String group = "students";
+        String registrationNumber1 = "1234567";
+        String registrationNumber2 = "2345678";
+        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2);
     }
 }

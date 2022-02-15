@@ -6,7 +6,7 @@
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex"
         >
-            <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
+            <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
         </button>
         <div class="form-group question-title">
             <input
@@ -57,7 +57,7 @@
             </div>
             <div class="form-group">
                 <div class="delete-button" (click)="deleteQuestion()">
-                    <fa-icon [icon]="'trash'" size="2x"></fa-icon>
+                    <fa-icon [icon]="faTrash" size="2x"></fa-icon>
                 </div>
             </div>
         </div>

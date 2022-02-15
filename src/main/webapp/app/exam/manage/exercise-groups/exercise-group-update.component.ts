@@ -7,6 +7,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { Exam } from 'app/entities/exam.model';
 import { onError } from 'app/shared/util/global.utils';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-group-update',
@@ -17,6 +18,9 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     exam: Exam;
     exerciseGroup: ExerciseGroup;
     isSaving = false;
+    // Icons
+    faBan = faBan;
+    faSave = faSave;
 
     constructor(private route: ActivatedRoute, private router: Router, private exerciseGroupService: ExerciseGroupService, private alertService: AlertService) {}
 
@@ -51,10 +55,10 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseGroup>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (err: HttpErrorResponse) => this.onSaveError(err),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (err: HttpErrorResponse) => this.onSaveError(err),
+        });
     }
 
     private onSaveSuccess() {

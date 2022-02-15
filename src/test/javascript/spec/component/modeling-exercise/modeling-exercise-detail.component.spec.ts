@@ -12,15 +12,9 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
-import sinonChai from 'sinon-chai';
-import * as chai from 'chai';
-import * as sinon from 'sinon';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ModelingExercise Management Detail Component', () => {
     let comp: ModelingExerciseDetailComponent;
@@ -69,8 +63,9 @@ describe('ModelingExercise Management Detail Component', () => {
 
     it('Should load exercise on init', fakeAsync(() => {
         // GIVEN
+        const subscribeSpy = jest.spyOn(eventManager, 'subscribe');
         const headers = new HttpHeaders().append('link', 'link;link');
-        const findStub = sinon.stub(modelingExerciseService, 'find').returns(
+        const findStub = jest.spyOn(modelingExerciseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
                     body: modelingExercise,
@@ -78,25 +73,26 @@ describe('ModelingExercise Management Detail Component', () => {
                 }),
             ),
         );
-        const statisticsServiceStub = sinon.stub(statisticsService, 'getExerciseStatistics').returns(of(modelingExerciseStatistics));
+        const statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(modelingExerciseStatistics));
 
         // WHEN
         comp.ngOnInit();
 
         // THEN
-        expect(findStub).to.have.been.called;
-        expect(statisticsServiceStub).to.have.been.called;
-        expect(comp.modelingExercise).to.deep.equal(modelingExercise);
-        expect(comp.doughnutStats.participationsInPercent).to.equal(100);
-        expect(comp.doughnutStats.resolvedPostsInPercent).to.equal(50);
-        expect(comp.doughnutStats.absoluteAveragePoints).to.equal(5);
-        expect(eventManager.subscribe).to.have.been.calledWith('modelingExerciseListModification');
+        expect(findStub).toHaveBeenCalled();
+        expect(statisticsServiceStub).toHaveBeenCalled();
+        expect(comp.modelingExercise).toEqual(modelingExercise);
+        expect(comp.doughnutStats.participationsInPercent).toEqual(100);
+        expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
+        expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+        expect(subscribeSpy).toHaveBeenCalledWith('modelingExerciseListModification', expect.anything());
         tick();
-        expect(comp.sampleSolutionUML).to.deep.equal(model);
+        expect(comp.sampleSolutionUML).toEqual(model);
     }));
 
     it('should destroy event manager on destroy', () => {
+        const destroySpy = jest.spyOn(eventManager, 'destroy');
         comp.ngOnDestroy();
-        expect(eventManager.destroy).to.have.been.called;
+        expect(destroySpy).toHaveBeenCalled();
     });
 });

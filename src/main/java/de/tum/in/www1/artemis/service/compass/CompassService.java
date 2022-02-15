@@ -26,8 +26,6 @@ public class CompassService {
 
     private final Logger log = LoggerFactory.getLogger(CompassService.class);
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
-
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     private final ModelElementRepository modelElementRepository;
@@ -36,9 +34,8 @@ public class CompassService {
 
     private final FeedbackRepository feedbackRepository;
 
-    public CompassService(ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository,
-            ModelElementRepository modelElementRepository, ModelClusterRepository modelClusterRepository, FeedbackRepository feedbackRepository) {
-        this.modelingExerciseRepository = modelingExerciseRepository;
+    public CompassService(ModelingSubmissionRepository modelingSubmissionRepository, ModelElementRepository modelElementRepository, ModelClusterRepository modelClusterRepository,
+            FeedbackRepository feedbackRepository) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.modelClusterRepository = modelClusterRepository;
         this.modelElementRepository = modelElementRepository;
@@ -69,11 +66,11 @@ public class CompassService {
 
         ModelClusterFactory clusterFactory = new ModelClusterFactory();
         List<ModelCluster> modelClusters = clusterFactory.buildClusters(submissions, modelingExercise);
-        log.info("ModelClusterTimelog: building clusters of {} submissions for modeling exercise {} done in {}", submissions.size(), modelingExercise.getId(),
+        log.info("ModelClusterTimeLog: building clusters of {} submissions for modeling exercise {} done in {}", submissions.size(), modelingExercise.getId(),
                 TimeLogUtil.formatDurationFrom(start));
         modelClusterRepository.saveAll(modelClusters);
         modelElementRepository.saveAll(modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).collect(Collectors.toList()));
-        log.info("ModelClusterTimelog: building and saving clusters of {} submissions for exercise {} done in {}", submissions.size(), modelingExercise.getId(),
+        log.info("ModelClusterTimeLog: building and saving clusters of {} submissions for exercise {} done in {}", submissions.size(), modelingExercise.getId(),
                 TimeLogUtil.formatDurationFrom(start));
 
     }
@@ -84,7 +81,7 @@ public class CompassService {
      *
      * @param modelingSubmission the submission to select feedbacks for
      * @param modelingExercise the modeling exercise to which the submission belongs
-     * @return the semi automatic result that has the feedbacks inside
+     * @return the semi-automatic result that has the feedbacks inside
      */
     public Result getSuggestionResult(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         Result result = getAutomaticResultForSubmission(modelingSubmission);
@@ -102,8 +99,7 @@ public class CompassService {
                 if (modelElement != null) {
                     ModelCluster cluster = modelClusters.get(modelClusters.indexOf(modelElement.getCluster()));
                     Set<ModelElement> similarElements = cluster.getModelElements();
-                    List<String> similarReferences = similarElements.stream().map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId())
-                            .collect(Collectors.toList());
+                    List<String> similarReferences = similarElements.stream().map(element -> element.getModelElementType() + ":" + element.getModelElementId()).toList();
                     List<Feedback> similarFeedbacks = feedbacks.stream().filter(feedback -> similarReferences.contains(feedback.getReference())).collect(Collectors.toList());
                     Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, similarFeedbacks, result);
                     if (suggestedFeedback != null) {
@@ -128,7 +124,7 @@ public class CompassService {
      * submission.
      *
      * @param modelingSubmission the submission for which the result should be obtained
-     * @return the result of the given submission either obtained from the submission or the semi automatic result map, or a newly created one if it does not exist already
+     * @return the result of the given submission either obtained from the submission or the semi-automatic result map, or a newly created one if it does not exist already
      */
     private Result getAutomaticResultForSubmission(ModelingSubmission modelingSubmission) {
         Result result = modelingSubmission.getLatestResult();
@@ -156,25 +152,6 @@ public class CompassService {
             return (modelingExercise.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
         }
         // if the assessment mode is not specified (e.g. for legacy exercises), team exercises are not supported
-        if (modelingExercise.isTeamMode()) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Indicates if the diagram type of the given exercise is supported by Compass. At the moment Compass only support class diagrams.
-     *
-     * @param exerciseId the id of the exercise that should be checked
-     * @return true if the diagram type of the given exercise is supported by Compass, false otherwise
-     */
-    private boolean isSupported(long exerciseId) {
-        Optional<ModelingExercise> optionalModelingExercise = modelingExerciseRepository.findById(exerciseId);
-        if (!optionalModelingExercise.isPresent()) {
-            log.error("Exercise with ID {} could not be found", exerciseId);
-            return false;
-        }
-
-        return isSupported(optionalModelingExercise.get());
+        return !modelingExercise.isTeamMode();
     }
 }

@@ -3,7 +3,7 @@
         <span jhiTranslate="artemisApp.quizExercise.re-evaluate.title" [translateValues]="{ param: quizExercise.course?.title || quizExercise.exerciseGroup?.exam?.title }"> </span>
     </h1>
     <h5 *ngIf="!quizExercise.course">
-        <fa-icon class="text-warning" icon="exclamation-triangle"></fa-icon>
+        <fa-icon class="text-warning" [icon]="faExclamationTriangle"></fa-icon>
         <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.exam"></span>
     </h5>
     <hr />
@@ -13,7 +13,7 @@
             <input type="text" class="form-control" [(ngModel)]="quizExercise.title" placeholder="Quiz Title" style="height: 33px" />
             <span class="input-group-btn">
                 <button class="btn btn-outline-secondary" type="button" (click)="resetQuizTitle()">
-                    <fa-icon [icon]="'undo'"></fa-icon>
+                    <fa-icon [icon]="faUndo"></fa-icon>
                 </button>
             </span>
         </div>
@@ -116,7 +116,7 @@
                         </div>
                     </ng-template>
                     <span *ngIf="!quizIsValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
-                        <fa-icon [icon]="'exclamation-circle'"></fa-icon>
+                        <fa-icon [icon]="faExclamationCircle"></fa-icon>
                         <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                         <span>({{ invalidReasons.length }})</span>
                     </span>

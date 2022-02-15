@@ -1,10 +1,17 @@
 <div class="drag-item" ngClass="{'no-click': clickDisabled}" [ngStyle]="{ 'min-width': minWidth }">
-    <div class="drag-item-picture" *ngIf="dragItem && dragItem.pictureFilePath" dnd-draggable [dragEnabled]="!clickDisabled" [dragData]="dragItem">
+    <div class="drag-item-picture" *ngIf="dragItem && dragItem.pictureFilePath" [cdkDragDisabled]="clickDisabled" [cdkDragData]="dragItem" cdkDrag>
         <jhi-secured-image *ngIf="dragItem.pictureFilePath" [src]="dragItem.pictureFilePath" [mobileDragAndDrop]="isMobile"></jhi-secured-image>
+        <div *cdkDragPlaceholder></div>
     </div>
     <div class="drag-item-text" *ngIf="dragItem && !dragItem.pictureFilePath">
-        <div [fittext]="true" [activateOnResize]="true" [maxFontSize]="17" [minFontSize]="15" [delay]="150">
-            <span dnd-draggable [dragEnabled]="!clickDisabled" [dragData]="dragItem">{{ dragItem.text }}</span>
+        <div [fitText]="true" [activateOnResize]="true" [maxFontSize]="17" [minFontSize]="15" [delay]="150">
+            <div class="drag-box" [cdkDragDisabled]="clickDisabled" [cdkDragData]="dragItem" cdkDrag>
+                <span>{{ dragItem.text }}</span>
+                <div *cdkDragPlaceholder></div>
+                <div *cdkDragPreview matchSize>
+                    <div style="border: 1px solid #000; background: white; color: black; padding: 4px; overflow: hidden; text-overflow: ellipsis">{{ dragItem.text }}</div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="invalid" *ngIf="invalid">

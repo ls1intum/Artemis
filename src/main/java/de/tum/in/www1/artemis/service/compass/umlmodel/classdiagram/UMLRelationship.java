@@ -32,7 +32,6 @@ public class UMLRelationship extends UMLElement implements Serializable {
                 case CLASS_COMPOSITION -> " --◆ ";
                 case CLASS_UNIDIRECTIONAL -> " --> ";
                 case CLASS_BIDIRECTIONAL -> " <-> ";
-                default -> " --- ";
             };
         }
     }
@@ -72,11 +71,9 @@ public class UMLRelationship extends UMLElement implements Serializable {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLRelationship)) {
+        if (!(reference instanceof UMLRelationship referenceRelationship)) {
             return 0;
         }
-
-        UMLRelationship referenceRelationship = (UMLRelationship) reference;
 
         double similarity = 0;
 

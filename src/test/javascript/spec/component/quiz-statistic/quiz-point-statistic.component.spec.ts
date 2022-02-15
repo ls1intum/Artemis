@@ -15,9 +15,11 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const question = { id: 1 } as QuizQuestion;
@@ -56,6 +58,7 @@ describe('QuizExercise Point Statistic Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(QuizPointStatisticComponent, '')
@@ -75,7 +78,7 @@ describe('QuizExercise Point Statistic Component', () => {
         quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         it('should call functions on Init', fakeAsync(() => {
             // setup
             jest.useFakeTimers();
@@ -116,7 +119,7 @@ describe('QuizExercise Point Statistic Component', () => {
         }));
     });
 
-    describe('updateDisplayedTimes', function () {
+    describe('updateDisplayedTimes', () => {
         it('should update remaining time ', () => {
             // setup
             quizExercise.adjustedDueDate = dayjs();
@@ -127,7 +130,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // check
             expect(comp.remainingTimeSeconds).toEqual(-1);
-            expect(comp.remainingTimeText).toEqual(translateService.instant('showStatistic.quizhasEnded'));
+            expect(comp.remainingTimeText).toEqual(translateService.instant('showStatistic.quizHasEnded'));
         });
 
         it('should show remaining time as zero if time unknown', () => {
@@ -143,18 +146,7 @@ describe('QuizExercise Point Statistic Component', () => {
         });
     });
 
-    it('should return remaining Time', () => {
-        // only minutes if time > 2min 30sec
-        expect(comp.relativeTimeText(220)).toEqual('4 min');
-
-        // minutes and seconds if time in minutes between 1 <= x < 2.5
-        expect(comp.relativeTimeText(130)).toEqual('2 min 10 s');
-
-        // only seconds if time < 1min
-        expect(comp.relativeTimeText(50)).toEqual('50 s');
-    });
-
-    describe('loadQuizSuccess', function () {
+    describe('loadQuizSuccess', () => {
         let loadDataSpy: jest.SpyInstance;
         let routerSpy: jest.SpyInstance;
 
@@ -198,31 +190,47 @@ describe('QuizExercise Point Statistic Component', () => {
         });
     });
 
-    it('should calculate the MaxScore', () => {
-        // setup
-        quizExercise.quizQuestions = [{ points: 1 }, { points: 2 }];
-        comp.quizExercise = quizExercise;
+    it('should return remaining Time', () => {
+        // only minutes if time > 2min 30sec
+        expect(comp.relativeTimeText(220)).toEqual('4 min');
 
-        // call
-        const result = comp.calculateMaxScore();
+        // minutes and seconds if time in minutes between 1 <= x < 2.5
+        expect(comp.relativeTimeText(130)).toEqual('2 min 10 s');
 
-        // check
-        expect(result).toBe(3);
+        // only seconds if time < 1min
+        expect(comp.relativeTimeText(50)).toEqual('50 s');
     });
 
-    describe('loadData', function () {
+    it('should calculate the MaxScore if no quiz questions are contained', () => {
+        // setup
+        quizExercise.quizQuestions = undefined;
+        quizExercise.maxPoints = 42;
+        comp.quizExercise = quizExercise;
+        accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+
+        jest.spyOn(comp, 'loadData').mockImplementation();
+
+        // call
+        comp.loadQuizSuccess(quizExercise);
+
+        // check
+        expect(comp.maxScore).toBe(42);
+    });
+
+    describe('loadData', () => {
         it('should set data', () => {
             // setup
             const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
             comp.quizPointStatistic = new QuizPointStatistic();
             comp.quizPointStatistic.pointCounters = pointCounters;
+            comp.maxScore = 4;
 
             // call
             comp.loadData();
 
             // check
             expect(loadDataInDiagramSpy).toHaveBeenCalled();
-            expect(comp.labels).toEqual(['1', '4']);
+            expect(comp.label).toEqual(['[0.5 - 1.5)', '[3.5 - 4]']);
             expect(comp.ratedData).toEqual([2, 5]);
             expect(comp.unratedData).toEqual([3, 6]);
         });

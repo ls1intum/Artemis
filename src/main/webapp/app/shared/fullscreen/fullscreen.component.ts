@@ -1,4 +1,5 @@
 import { Component, ElementRef, Input } from '@angular/core';
+import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 
 @Component({
@@ -12,6 +13,9 @@ export class FullscreenComponent {
 
     @Input()
     mode: 'compact' | 'extended' = 'extended';
+
+    // Icons
+    faCompress = faCompress;
 
     constructor(private fullScreenWrapper: ElementRef) {}
 

@@ -4,6 +4,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
 import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-user-import-button',
@@ -11,7 +12,7 @@ import { Exam } from 'app/entities/exam.model';
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
-            [icon]="'plus'"
+            [icon]="faPlus"
             [title]="'importUsers.buttonLabel'"
             (onClick)="openUsersImportDialog($event)"
         ></jhi-button>
@@ -27,6 +28,9 @@ export class UsersImportButtonComponent {
     @Input() exam: Exam;
 
     @Output() finish: EventEmitter<void> = new EventEmitter();
+
+    // Icons
+    faPlus = faPlus;
 
     constructor(private modalService: NgbModal) {}
 

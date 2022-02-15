@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-text-feedback-conflicts-header',
@@ -17,6 +18,11 @@ export class TextFeedbackConflictsHeaderComponent {
     @Output() discardConflict = new EventEmitter<void>();
 
     currentConflictIndex = 1;
+
+    // Icons
+    faSpinner = faSpinner;
+    faArrowLeft = faArrowLeft;
+    faArrowRight = faArrowRight;
 
     onNextConflict() {
         if (this.currentConflictIndex < this.numberOfConflicts) {

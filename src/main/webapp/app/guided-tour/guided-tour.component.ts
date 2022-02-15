@@ -7,6 +7,20 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
+import {
+    faArrowsAlt,
+    faCheck,
+    faChevronLeft,
+    faChevronRight,
+    faCircleNotch,
+    faClipboardList,
+    faEdit,
+    faHandPointUp,
+    faICursor,
+    faInfoCircle,
+    faPlayCircle,
+    faVideo,
+} from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-guided-tour',
@@ -53,6 +67,20 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private dotArray: Array<ElementRef>;
     public currentStepIndex?: number;
     public nextStepIndex?: number;
+
+    // Icons
+    faEdit = faEdit;
+    faCheck = faCheck;
+    faVideo = faVideo;
+    faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
+    faCircleNotch = faCircleNotch;
+    faInfoCircle = faInfoCircle;
+    faArrowsAlt = faArrowsAlt;
+    faClipboardList = faClipboardList;
+    faICursor = faICursor;
+    faHandPointUp = faHandPointUp;
+    faPlayCircle = faPlayCircle;
 
     constructor(public guidedTourService: GuidedTourService, private accountService: AccountService, private renderer: Renderer2) {}
 
@@ -351,8 +379,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 const height = element.offsetHeight;
                 const tourStep = this.tourStep.nativeElement.getBoundingClientRect();
                 const tourStepPosition = tourStep.top + tourStep.height;
-                const windowHeight = window.innerHeight + window.pageYOffset;
-                elementInViewPort = top >= window.pageYOffset - stepScreenAdjustment && top + height + 10 <= windowHeight && tourStepPosition <= windowHeight;
+                const windowHeight = window.innerHeight + window.scrollY;
+                elementInViewPort = top >= window.scrollY - stepScreenAdjustment && top + height + 10 <= windowHeight && tourStepPosition <= windowHeight;
                 break;
             }
         }

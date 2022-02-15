@@ -5,7 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -16,6 +16,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
+import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -32,6 +33,11 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     isSaving: boolean;
     duration: Duration;
+
+    // Icons
+    faUndo = faUndo;
+    faExclamationCircle = faExclamationCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private quizExerciseService: QuizExerciseService,

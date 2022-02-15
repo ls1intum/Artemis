@@ -1,15 +1,19 @@
 <aside class="plagiarism-sidebar">
     <div class="plagiarism-info-tab" [class.selected]="showRunDetails" (click)="displayRunDetails()">
         <span>Run details</span>
-        <fa-icon icon="chevron-right"></fa-icon>
+        <fa-icon [icon]="faChevronRight"></fa-icon>
+    </div>
+    <div class="filter-disclaimer" *ngIf="casesFiltered">
+        <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle"></fa-icon>
+        <span>{{ 'artemisApp.plagiarism.casesFiltered' | artemisTranslate }}</span>
     </div>
 
     <ul class="plagiarism-list" *ngIf="comparisons && comparisons.length">
         <li
             *ngFor="let comparison of pagedComparisons; let idx = index"
             class="plagiarism-list-item"
-            [class.selected]="!showRunDetails && getPagedIndex(idx) === activeIndex"
-            (click)="selectIndex.emit(getPagedIndex(idx))"
+            [class.selected]="!showRunDetails && comparison.id === activeID"
+            (click)="selectIndex.emit(comparison.id)"
         >
             <div class="plagiarism-list-item-content">
                 <span
@@ -21,12 +25,12 @@
                 ></span>
 
                 <div class="plagiarism-list-item-info">
-                    <span class="plagiarism-name"> #{{ getPagedIndex(idx) + 1 }} </span>
+                    <span class="plagiarism-name"> #{{ getPagedIndex(idx) + 1 + offset }} </span>
 
                     <span class="plagiarism-list-item-students">
-                        <span>{{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknown-student' | artemisTranslate) }}, </span>
+                        <span>{{ comparison.submissionA.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}, </span>
 
-                        <span>{{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknown-student' | artemisTranslate) }}</span>
+                        <span>{{ comparison.submissionB.studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}</span>
                     </span>
                 </div>
             </div>
@@ -35,16 +39,16 @@
     </ul>
 
     <div class="plagiarism-empty" *ngIf="!comparisons || !comparisons.length">
-        {{ 'artemisApp.plagiarism.not-found' | artemisTranslate }}
+        {{ 'artemisApp.plagiarism.notFound' | artemisTranslate }}
     </div>
 
     <div class="plagiarism-paging">
         <div class="plagiarism-paging-left" [class.disabled]="currentPage === 0" (click)="handlePageLeft()">
-            <fa-icon icon="arrow-left"></fa-icon>
+            <fa-icon [icon]="faArrowLeft"></fa-icon>
         </div>
         <div class="plagiarism-paging-center">{{ currentPage + 1 }}/{{ numberOfPages + 1 }}</div>
         <div class="plagiarism-paging-right" [class.disabled]="currentPage === numberOfPages" (click)="handlePageRight()">
-            <fa-icon icon="arrow-right"></fa-icon>
+            <fa-icon [icon]="faArrowRight"></fa-icon>
         </div>
     </div>
 </aside>

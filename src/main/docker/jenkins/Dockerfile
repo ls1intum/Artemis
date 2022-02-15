@@ -7,7 +7,7 @@ USER root
 RUN apt update
 
 # Install Java and Maven dependencies
-RUN apt-get install -y maven
+RUN apt-get install -y maven wget
 RUN cd /usr/lib/jvm && \
     wget https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk-16%2B36/OpenJDK16-jdk_x64_linux_hotspot_16_36.tar.gz && \
     tar -zxf OpenJDK16-jdk_x64_linux_hotspot_16_36.tar.gz \
@@ -22,7 +22,7 @@ RUN apt install -y gcc gdb make libubsan0 liblsan0 libtsan0
 
 # Some packages need to be installed to avoid some known problems for python3.6, see: https://github.com/pyenv/pyenv/wiki/Common-build-problems
 RUN apt install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \
-    libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
+    libreadline-dev libsqlite3-dev curl llvm libncurses5-dev libncursesw5-dev \
     xz-utils tk-dev libffi-dev liblzma-dev
 
  # Install Python3.8

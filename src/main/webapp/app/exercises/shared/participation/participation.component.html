@@ -1,6 +1,6 @@
 <div>
-    <div class="d-flex">
-        <div class="mb-3">
+    <div class="d-flex flex-wrap">
+        <div class="mr-auto flex-fill">
             <h2>
                 <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
             </h2>
@@ -24,8 +24,13 @@
                 </label>
             </div>
         </div>
+        <div *ngIf="exercise?.type !== ExerciseType.QUIZ && exercise?.isAtLeastInstructor" class="p-2">
+            <button class="btn btn-success" [disabled]="isSaving || participationsChangedDueDate.size === 0" (click)="saveChangedDueDates()" jhiTranslate="entity.action.save">
+                Save
+            </button>
+        </div>
         <jhi-programming-exercise-instructor-submission-state
-            class="ms-auto"
+            class="p-2"
             *ngIf="exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING"
             [exercise]="exercise"
         ></jhi-programming-exercise-instructor-submission-state>
@@ -210,9 +215,38 @@
                     </ng-template>
                 </ngx-datatable-column>
 
+                <ngx-datatable-column *ngIf="exercise?.type !== ExerciseType.QUIZ && exercise?.dueDate" [minWidth]="270" [width]="270">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.individualDueDate">Individual DueDate</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('individualDueDate')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-row="row">
+                        <span *ngIf="row" class="btn-group">
+                            <jhi-date-time-picker
+                                [(ngModel)]="row.individualDueDate"
+                                [shouldDisplayTimeZoneWarning]="false"
+                                [min]="exercise.dueDate!"
+                                [disabled]="!exercise.isAtLeastInstructor || isSaving"
+                                (valueChange)="changedIndividualDueDate(row)"
+                            ></jhi-date-time-picker>
+                            &nbsp;
+                            <button
+                                class="btn btn-danger"
+                                *ngIf="exercise?.isAtLeastInstructor && row.individualDueDate"
+                                [disabled]="isSaving"
+                                (click)="removeIndividualDueDate(row)"
+                            >
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                            </button>
+                        </span>
+                    </ng-template>
+                </ngx-datatable-column>
+
                 <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-end">
+                        <div class="text-end">
                             <div class="btn-group">
                                 <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
                                     <jhi-programming-exercise-instructor-trigger-build-button
@@ -223,12 +257,12 @@
                                     >
                                     </jhi-programming-exercise-instructor-trigger-build-button>
                                     <ng-template #triggerLoading>
-                                        <fa-icon [icon]="'circle-notch'" [spin]="true" class="text-secondary"></fa-icon>
+                                        <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-secondary"></fa-icon>
                                     </ng-template>
                                 </ng-container>
                                 <button
                                     *ngIf="exercise.isAtLeastInstructor"
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     [skipFeatureToggle]="exercise.type !== ExerciseType.PROGRAMMING"
                                     jhiDeleteButton
                                     [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
@@ -241,11 +275,11 @@
                                             : undefined
                                     "
                                 >
-                                    <fa-icon [icon]="'times'"></fa-icon>
+                                    <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
                                 <button
                                     *ngIf="exercise?.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     jhiDeleteButton
                                     [actionType]="ActionType.Cleanup"
                                     deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"
@@ -253,10 +287,10 @@
                                     [dialogError]="dialogError"
                                     [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
                                 >
-                                    <fa-icon [icon]="'eraser'"></fa-icon>
+                                    <fa-icon [icon]="faEraser"></fa-icon>
                                 </button>
                                 <button *ngIf="this.presentationScoreEnabled && value.presentationScore !== 1" (click)="addPresentation(value)" class="btn btn-info btn-sm me-1">
-                                    <fa-icon [icon]="'file-powerpoint'"></fa-icon>
+                                    <fa-icon [icon]="faFilePowerpoint"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                                 </button>
                                 <button
@@ -264,7 +298,7 @@
                                     (click)="removePresentation(value)"
                                     class="btn btn-danger btn-sm me-1"
                                 >
-                                    <fa-icon [icon]="'file-powerpoint'"></fa-icon>
+                                    <fa-icon [icon]="faFilePowerpoint"></fa-icon>
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label">Remove presentation</span>
                                 </button>
                             </div>

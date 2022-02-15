@@ -3,9 +3,10 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
+import { faBan, faPencilAlt, faQuestionCircle, faSave, faTrashAlt, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -44,10 +45,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     onEditFeedback = new EventEmitter<number>();
 
     // Expose the function to the template
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     viewOnly: boolean;
     oldFeedback: Feedback;
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
+    faQuestionCircle = faQuestionCircle;
+    faPencilAlt = faPencilAlt;
+    faTrashAlt = faTrashAlt;
+    faExclamationTriangle = faExclamationTriangle;
+
     constructor(private translateService: TranslateService, public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**

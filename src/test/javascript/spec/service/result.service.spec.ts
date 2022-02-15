@@ -1,10 +1,10 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
@@ -36,8 +36,8 @@ describe('ResultService', () => {
             ],
         });
 
-        resultService = getTestBed().get(ResultService);
-        http = getTestBed().get(HttpClient);
+        resultService = TestBed.inject(ResultService);
+        http = TestBed.inject(HttpClient);
     });
 
     const rawExerciseReleaseDate = '2020-03-30T12:00:00Z';

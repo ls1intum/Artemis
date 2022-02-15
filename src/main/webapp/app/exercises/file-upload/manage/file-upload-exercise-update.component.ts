@@ -16,6 +16,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
+import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -37,6 +38,11 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsSampleSolution = [new KatexCommand()];
 
     saveCommand: SaveExerciseCommand<FileUploadExercise>;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
+    faBan = faBan;
+    faSave = faSave;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -68,12 +74,12 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             this.isExamMode = this.fileUploadExercise.exerciseGroup !== undefined;
             if (!this.isExamMode) {
                 this.exerciseCategories = this.fileUploadExercise.categories || [];
-                this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id!).subscribe(
-                    (categoryRes: HttpResponse<string[]>) => {
+                this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id!).subscribe({
+                    next: (categoryRes: HttpResponse<string[]>) => {
                         this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                     },
-                    (error: HttpErrorResponse) => onError(this.alertService, error),
-                );
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
             }
 
             this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType);
@@ -90,13 +96,13 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
 
-        this.saveCommand.save(this.fileUploadExercise, this.notificationText).subscribe(
-            () => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res),
-            () => {
+        this.saveCommand.save(this.fileUploadExercise, this.notificationText).subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (res: HttpErrorResponse) => this.onSaveError(res),
+            complete: () => {
                 this.isSaving = false;
             },
-        );
+        });
     }
 
     /**

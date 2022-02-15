@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -20,7 +20,7 @@ import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exerci
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -43,6 +43,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -78,7 +79,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isAfterAssessmentDueDate: boolean;
     allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
-    showWelcomeAlert = false;
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
@@ -94,6 +94,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public inProductionEnvironment: boolean;
     public noVersionControlAndContinuousIntegrationServerAvailable = false;
     public wasSubmissionSimulated = false;
+
+    // Icons
+    faBook = faBook;
+    faEye = faEye;
+    faWrench = faWrench;
+    faTable = faTable;
+    faListAlt = faListAlt;
+    faSignal = faSignal;
+    faExternalLinkAlt = faExternalLinkAlt;
+    faFileSignature = faFileSignature;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -131,14 +141,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
             if (didExerciseChange || didCourseChange) {
                 this.loadExercise();
-            }
-        });
-
-        this.route.queryParams.subscribe((queryParams) => {
-            if (queryParams['welcome'] === '') {
-                setTimeout(() => {
-                    this.showWelcomeAlert = true;
-                }, 500);
             }
         });
 
@@ -188,7 +190,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
             const isAfterDateForComplaint =
-                (!this.exercise.dueDate || now.isAfter(this.exercise.dueDate)) &&
+                (!this.exercise.dueDate || hasExerciseDueDatePassed(this.exercise, this.studentParticipation)) &&
                 (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
@@ -213,7 +215,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.subscribeToTeamAssignmentUpdates();
 
         // Subscribe for late programming submissions to show the student a success message
-        if (this.exercise.type === ExerciseType.PROGRAMMING && this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs())) {
+        if (this.exercise.type === ExerciseType.PROGRAMMING && hasExerciseDueDatePassed(this.exercise, this.studentParticipation!)) {
             this.subscribeForNewSubmissions();
         }
 
@@ -307,7 +309,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 // Notify student about late submission result
                 if (
                     changedParticipation.exercise?.dueDate &&
-                    changedParticipation.exercise!.dueDate!.isBefore(dayjs()) &&
+                    hasExerciseDueDatePassed(changedParticipation.exercise!, changedParticipation) &&
                     changedParticipation.results?.length! > this.studentParticipation?.results?.length!
                 ) {
                     this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
@@ -343,7 +345,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 .getLatestPendingSubmissionByParticipationId(this.studentParticipation!.id!, this.exercise?.id!, true)
                 .subscribe(({ submission }) => {
                     // Notify about received late submission
-                    if (submission && this.exercise?.dueDate && this.exercise.dueDate.isBefore(submission.submissionDate)) {
+                    if (submission && getExerciseDueDate(this.exercise!, this.studentParticipation)?.isBefore(submission.submissionDate)) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionReceived');
                     }
                 });
@@ -390,17 +392,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (!this.studentParticipation?.submissions || !this.studentParticipation!.submissions![0] || !this.hasResults) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.studentParticipation!.submissions![0].id!).subscribe(
-            (res) => {
+        this.complaintService.findBySubmissionId(this.studentParticipation!.submissions![0].id!).subscribe({
+            next: (res) => {
                 if (!res.body) {
                     return;
                 }
                 this.complaint = res.body;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.onError(err.message);
             },
-        );
+        });
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
             return this.studentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
@@ -476,15 +478,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     simulateSubmission() {
         this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
-        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
-            () => {
+        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe({
+            next: () => {
                 this.wasSubmissionSimulated = true;
                 this.alertService.success('artemisApp.exercise.submissionSuccessful');
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.exercise.submissionUnsuccessful');
             },
-        );
+        });
     }
 
     /**
@@ -494,8 +496,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     simulateResult() {
         this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
-        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
-            (result) => {
+        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe({
+            next: (result) => {
                 // set the value to false in order to deactivate the result button
                 this.wasSubmissionSimulated = false;
 
@@ -507,10 +509,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
                 this.alertService.success('artemisApp.exercise.resultCreationSuccessful');
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.exercise.resultCreationUnsuccessful');
             },
-        );
+        });
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################

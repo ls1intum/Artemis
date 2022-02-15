@@ -26,12 +26,19 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 
+export enum CollapsableCodeEditorElement {
+    FileBrowser,
+    BuildOutput,
+    Instructions,
+}
+
 @Component({
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readonly CommitState = CommitState;
+    readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -61,8 +68,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onCommitStateChange = new EventEmitter<CommitState>();
     @Output()
     onFileChanged = new EventEmitter<void>();
-    @Output()
-    onSelectedFileChanged = new EventEmitter<string>();
     @Output()
     onUpdateFeedback = new EventEmitter<Feedback[]>();
     @Output()
@@ -139,7 +144,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     /**
      * @function onFileChange
      * @desc A file has changed (create, rename, delete), so we have uncommitted changes.
-     * Also all references to a file need to be updated in case of rename,
+     * Also, all references to a file need to be updated in case of rename,
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
     onFileChange<F extends FileChange>([, fileChange]: [string[], F]) {
@@ -159,10 +164,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         }
         this.aceEditor.onFileChange(fileChange);
         this.onFileChanged.emit();
-    }
-
-    onSelectedFileChange(selectedFile: string) {
-        this.onSelectedFileChanged.emit(selectedFile);
     }
 
     /**
@@ -233,8 +234,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         }
     }
 
-    onToggleCollapse(event: InteractableEvent) {
-        this.grid.toggleCollapse(event);
+    onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
+        this.grid.toggleCollapse(event, collapsableElement);
     }
 
     onGridResize(type: ResizeType) {

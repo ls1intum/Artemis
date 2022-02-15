@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
@@ -13,9 +13,19 @@ export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
 
 export interface IComplaintService {
+    isComplaintLockedForLoggedInUser: (complaint: Complaint, exercise: Exercise) => boolean | undefined;
+    isComplaintLockedByLoggedInUser: (complaint: Complaint) => boolean | undefined;
+    isComplaintLocked: (complaint: Complaint) => boolean | undefined;
     create: (complaint: Complaint, examId: number) => Observable<EntityResponseType>;
     findBySubmissionId: (participationId: number) => Observable<EntityResponseType>;
+    getComplaintsForTestRun: (exerciseId: number) => Observable<EntityResponseTypeArray>;
+    getMoreFeedbackRequestsForTutor: (exerciseId: number) => Observable<EntityResponseTypeArray>;
     getNumberOfAllowedComplaintsInCourse: (courseId: number) => Observable<number>;
+    findAllByTutorIdForCourseId: (tutorId: number, courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllByTutorIdForExerciseId: (tutorId: number, exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllByCourseId: (courseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
+    findAllByCourseIdAndExamId: (courseId: number, examId: number) => Observable<EntityResponseTypeArray>;
+    findAllByExerciseId: (exerciseId: number, complaintType: ComplaintType) => Observable<EntityResponseTypeArray>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -26,12 +36,12 @@ export class ComplaintService implements IComplaintService {
     constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}
 
     /**
-     * Checks if a complaint is locked for the currently logged in user
+     * Checks if a complaint is locked for the currently logged-in user
      *
      * A complaint is locked if the associated complaint response is locked
      *
      * @param complaint complaint to check the lock status for
-     * @param exercise exercise used to find out if currently logged in user is instructor
+     * @param exercise exercise used to find out if currently logged-in user is instructor
      */
     isComplaintLockedForLoggedInUser(complaint: Complaint, exercise: Exercise) {
         if (complaint.complaintResponse && complaint.accepted === undefined) {
@@ -42,7 +52,7 @@ export class ComplaintService implements IComplaintService {
     }
 
     /**
-     * Checks if the lock on a complaint is active and if the currently logged in user is the creator of the lock
+     * Checks if the lock on a complaint is active and if the currently logged-in user is the creator of the lock
      * @param complaint complaint to check the lock status for
      */
     isComplaintLockedByLoggedInUser(complaint: Complaint) {
@@ -68,7 +78,7 @@ export class ComplaintService implements IComplaintService {
     /**
      * Create a new complaint.
      * @param complaint
-     * @param examId the Id of the exam
+     * @param examId the id of the exam
      */
     create(complaint: Complaint, examId?: number): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(complaint);
@@ -169,6 +179,37 @@ export class ComplaintService implements IComplaintService {
     findAllByExerciseId(exerciseId: number, complaintType: ComplaintType): Observable<EntityResponseTypeArray> {
         const url = `${this.apiUrl}/exercises/${exerciseId}/complaints?complaintType=${complaintType}`;
         return this.requestComplaintsFromUrl(url);
+    }
+
+    /**
+     * Returns the time needed to evaluate the complaint. If it hasn't been evaluated yet, the difference between the submission time and now is used.
+     * @param complaint for which the response time should be calculated
+     * @return returns the passed time in seconds
+     */
+    getResponseTimeInSeconds(complaint: Complaint): number {
+        if (complaint.accepted !== undefined) {
+            return complaint.complaintResponse?.submittedTime?.diff(complaint.submittedTime, 'seconds') || NaN;
+        } else {
+            return dayjs().diff(complaint.submittedTime, 'seconds');
+        }
+    }
+
+    /**
+     * Determines if the complaint should be highlighted. This is the case if the complaint hasn't been reviewed and was submitted more than one week ago.
+     * @param complaint for which it should be determined if highlighting is needed
+     * @return returns true iff the complaint should be highlighted
+     */
+    shouldHighlightComplaint(complaint: Complaint): boolean {
+        if (complaint.accepted !== undefined) {
+            return false;
+        }
+
+        const complaintSubmittedTime = complaint.submittedTime;
+        if (complaintSubmittedTime) {
+            return dayjs().diff(complaintSubmittedTime, 'days') > 7;
+        }
+
+        return false;
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {

@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -17,16 +17,17 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { FileService } from 'app/shared/http/file.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getLatestSubmissionResult, getFirstResultWithComplaint } from 'app/entities/submission.model';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
-import { Feedback } from 'app/entities/feedback.model';
+import { checkSubsequentFeedbackInAssessment, Feedback } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -57,6 +58,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     private submissionConfirmationText: string;
     private examMode = false;
 
+    // Icons
+    farListAlt = faListAlt;
+
     constructor(
         private route: ActivatedRoute,
         private fileUploadSubmissionService: FileUploadSubmissionService,
@@ -81,8 +85,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         if (Number.isNaN(participationId)) {
             return this.alertService.error('artemisApp.fileUploadExercise.error');
         }
-        this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe(
-            (submission: FileUploadSubmission) => {
+        this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe({
+            next: (submission: FileUploadSubmission) => {
                 // reconnect participation <--> result
                 const tmpResult = getLatestSubmissionResult(submission);
                 if (tmpResult) {
@@ -107,7 +111,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     this.fileUploadExercise &&
                     !!this.fileUploadExercise.dueDate &&
                     !!this.participation.initializationDate &&
-                    dayjs(this.participation.initializationDate).isAfter(this.fileUploadExercise.dueDate);
+                    dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.fileUploadExercise, this.participation));
 
                 this.acceptedFileExtensions = this.fileUploadExercise
                     .filePattern!.split(',')
@@ -125,8 +129,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 }
                 this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
@@ -143,8 +147,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             return;
         }
         this.isSaving = true;
-        this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, file).subscribe(
-            (response) => {
+        this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, file).subscribe({
+            next: (response) => {
                 this.submission = response.body!;
                 this.participation = this.submission.participation as StudentParticipation;
                 // reconnect so that the submission status is displayed correctly in the result.component
@@ -161,7 +165,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 }
                 this.isSaving = false;
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.submission!.submitted = false;
                 const serverError = error.headers.get('X-artemisApp-error');
                 if (serverError) {
@@ -173,7 +177,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submissionFile = undefined;
                 this.isSaving = false;
             },
-        );
+        });
     }
 
     /**
@@ -199,7 +203,11 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * Check whether or not a result exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
-        return this.result ? getUnreferencedFeedback(this.result.feedbacks) : undefined;
+        if (this.result?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(this.result.feedbacks);
+            return getUnreferencedFeedback(this.result.feedbacks);
+        }
+        return undefined;
     }
 
     private setSubmittedFile() {
@@ -226,7 +234,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * The exercise is still active if it's due date hasn't passed yet.
      */
     get isActive(): boolean {
-        return !this.examMode && this.fileUploadExercise && (!this.fileUploadExercise.dueDate || !dayjs(this.fileUploadExercise.dueDate).isBefore(dayjs()));
+        return !this.examMode && this.fileUploadExercise && !hasExerciseDueDatePassed(this.fileUploadExercise, this.participation);
     }
 
     get submitButtonTooltip(): string {

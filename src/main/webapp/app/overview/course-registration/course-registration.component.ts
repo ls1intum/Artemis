@@ -4,27 +4,30 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { matchesRegexFully } from 'app/utils/regex.util';
-import { HttpResponse } from '@angular/common/http';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-course-registration-selector',
     templateUrl: './course-registration.component.html',
 })
 export class CourseRegistrationComponent implements OnInit {
-    courses: Course[];
-    public coursesToSelect: Course[] = [];
-    public userIsAllowedToRegister = false;
-    addedSuccessful = false;
+    coursesToSelect: Course[] = [];
+    userIsAllowedToRegister = false;
     loading = false;
 
-    constructor(private accountService: AccountService, private courseService: CourseManagementService, private profileService: ProfileService) {}
+    // Icons
+    faCheckCircle = faCheckCircle;
+
+    constructor(
+        private accountService: AccountService,
+        private courseService: CourseManagementService,
+        private profileService: ProfileService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
-        this.loading = true;
-        this.courseService.findAllForDashboard().subscribe((res: HttpResponse<Course[]>) => {
-            this.courses = res.body!;
-            this.loadAndFilterCourses();
-        });
+        this.loadRegistrableCourses();
         this.accountService.identity().then((user) => {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 if (profileInfo) {
@@ -34,34 +37,23 @@ export class CourseRegistrationComponent implements OnInit {
         });
     }
 
-    trackCourseById(index: number, item: Course) {
-        return item.id;
-    }
-
-    loadAndFilterCourses() {
+    loadRegistrableCourses() {
+        this.loading = true;
         this.courseService.findAllToRegister().subscribe((registerRes) => {
-            this.coursesToSelect = registerRes
-                .body!.filter((course) => {
-                    return !this.courses.find((el) => el.id === course.id);
-                })
-                .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+            this.coursesToSelect = registerRes.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
             this.loading = false;
         });
     }
 
     registerForCourse(courseId: number) {
-        this.courseService.registerForCourse(courseId).subscribe(
-            () => {
-                this.addedSuccessful = true;
-                this.loading = false;
-                setTimeout(() => {
-                    this.addedSuccessful = false;
-                    this.coursesToSelect = this.coursesToSelect.filter((course) => course.id! !== courseId);
-                }, 3000);
+        this.courseService.registerForCourse(courseId).subscribe({
+            next: () => {
+                this.alertService.success('artemisApp.studentDashboard.register.registerSuccessful');
+                this.coursesToSelect = this.coursesToSelect.filter((course) => course.id !== courseId);
             },
-            () => {
-                this.loading = false;
+            error: (error: string) => {
+                this.alertService.error(error);
             },
-        );
+        });
     }
 }

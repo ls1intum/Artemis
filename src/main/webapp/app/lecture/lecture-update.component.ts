@@ -11,6 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -27,6 +28,10 @@ export class LectureUpdateComponent implements OnInit {
     endDate: string;
 
     domainCommandsDescription = [new KatexCommand()];
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
 
     constructor(
         protected alertService: AlertService,
@@ -80,10 +85,10 @@ export class LectureUpdateComponent implements OnInit {
      * @param result The Http response from the server
      */
     protected subscribeToSaveResponse(result: Observable<HttpResponse<Lecture>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (error: HttpErrorResponse) => this.onSaveError(error),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (error: HttpErrorResponse) => this.onSaveError(error),
+        });
     }
 
     /**

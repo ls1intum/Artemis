@@ -12,6 +12,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course',
@@ -36,6 +37,11 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
 
     courseForGuidedTour?: Course;
 
+    // Icons
+    faPlus = faPlus;
+    faAngleDown = faAngleDown;
+    faAngleUp = faAngleUp;
+
     constructor(
         private examService: ExamManagementService,
         private lectureService: LectureService,
@@ -49,8 +55,8 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
      * loads all courses from courseService
      */
     loadAll() {
-        this.courseManagementService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe(
-            (res: HttpResponse<Course[]>) => {
+        this.courseManagementService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe({
+            next: (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
 
@@ -66,8 +72,8 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 // Load the user group numbers lastly
                 this.fetchUserStats();
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
@@ -95,13 +101,13 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     }
 
                     // Parse years in base 10 by extracting the two digits after the WS or SS prefix
-                    const yearsCompared = parseInt(semesterB.substr(2, 2), 10) - parseInt(semesterA.substr(2, 2), 10);
+                    const yearsCompared = parseInt(semesterB.slice(2, 4), 10) - parseInt(semesterA.slice(2, 4), 10);
                     if (yearsCompared !== 0) {
                         return yearsCompared;
                     }
 
                     // If years are the same, sort WS over SS
-                    return semesterA.substr(0, 2) === 'WS' ? -1 : 1;
+                    return semesterA.slice(0, 2) === 'WS' ? -1 : 1;
                 })
         );
     }
@@ -135,8 +141,8 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
      * Gets the exercises to display from the server and sorts them into coursesWithExercises by course id
      */
     private fetchExercises(): void {
-        this.courseManagementService.getExercisesForManagementOverview(this.showOnlyActive).subscribe(
-            (result: HttpResponse<Course[]>) => {
+        this.courseManagementService.getExercisesForManagementOverview(this.showOnlyActive).subscribe({
+            next: (result: HttpResponse<Course[]>) => {
                 // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
                 result.body!.forEach((course) => {
                     if (course.id) {
@@ -144,32 +150,32 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     }
                 });
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
      * Gets the exercise statistics to display from the server and sorts them into the statistics map by course id
      */
     private fetchExerciseStats(): void {
-        this.courseManagementService.getStatsForManagementOverview(this.showOnlyActive).subscribe(
-            (result: HttpResponse<CourseManagementOverviewStatisticsDto[]>) => {
+        this.courseManagementService.getStatsForManagementOverview(this.showOnlyActive).subscribe({
+            next: (result: HttpResponse<CourseManagementOverviewStatisticsDto[]>) => {
                 result.body!.forEach((statisticsDTO) => {
                     if (statisticsDTO.courseId) {
                         this.statistics[statisticsDTO.courseId] = statisticsDTO;
                     }
                 });
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
      * Gets the amount of users in the user groups to display and sorts them into coursesWithUsers by course id
      */
     private fetchUserStats(): void {
-        this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
-            (result: HttpResponse<Course[]>) => {
+        this.courseManagementService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe({
+            next: (result: HttpResponse<Course[]>) => {
                 // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
                 result.body!.forEach((course) => {
                     if (course.id) {
@@ -177,8 +183,8 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                     }
                 });
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**

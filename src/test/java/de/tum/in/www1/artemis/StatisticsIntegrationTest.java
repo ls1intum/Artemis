@@ -10,10 +10,13 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -44,20 +47,20 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private AnswerPostRepository answerPostRepository;
 
-    Course course;
+    private Course course;
 
-    TextExercise exercise;
+    private TextExercise exercise;
 
-    List<GraphType> artemisGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.LOGGED_IN_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE,
-            GraphType.CONDUCTED_EXAMS, GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
+    private final List<GraphType> artemisGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.LOGGED_IN_USERS, GraphType.RELEASED_EXERCISES,
+            GraphType.EXERCISES_DUE, GraphType.CONDUCTED_EXAMS, GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
             GraphType.CREATED_FEEDBACKS);
 
-    List<GraphType> courseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE, GraphType.CONDUCTED_EXAMS,
-            GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS, GraphType.POSTS,
-            GraphType.RESOLVED_POSTS);
-
-    List<GraphType> exerciseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS,
+    private final List<GraphType> courseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE,
+            GraphType.CONDUCTED_EXAMS, GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS,
             GraphType.POSTS, GraphType.RESOLVED_POSTS);
+
+    private final List<GraphType> exerciseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
+            GraphType.CREATED_FEEDBACKS, GraphType.POSTS, GraphType.RESOLVED_POSTS);
 
     @BeforeEach
     public void initTestCase() {
@@ -102,84 +105,30 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.resetDatabase();
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(SpanType.class)
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testDataForDayEachGraph() throws Exception {
+    public void testDataRangeEachGraph(SpanType span) throws Exception {
+        int expectedResultLength = expectedResultLength(span);
 
-        SpanType span = SpanType.DAY;
         for (GraphType graph : artemisGraphs) {
             int periodIndex = 0;
-            LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parameters.add("span", "" + span);
-            parameters.add("periodIndex", "" + periodIndex);
-            parameters.add("graphType", "" + graph);
+            var parameters = buildParameters(span, periodIndex, graph);
             Integer[] result = request.get("/api/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result.length).isEqualTo(24);
+            assertThat(result.length).isEqualTo(expectedResultLength);
         }
     }
 
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testDataForWeekEachGraph() throws Exception {
-
-        SpanType span = SpanType.WEEK;
-        for (GraphType graph : artemisGraphs) {
-            int periodIndex = 0;
-            LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parameters.add("span", "" + span);
-            parameters.add("periodIndex", "" + periodIndex);
-            parameters.add("graphType", "" + graph);
-            Integer[] result = request.get("/api/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result.length).isEqualTo(7);
-        }
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testDataForMonthEachGraph() throws Exception {
-        ZonedDateTime now = ZonedDateTime.now();
-        SpanType span = SpanType.MONTH;
-        for (GraphType graph : artemisGraphs) {
-            int periodIndex = 0;
-            LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parameters.add("span", "" + span);
-            parameters.add("periodIndex", "" + periodIndex);
-            parameters.add("graphType", "" + graph);
-            Integer[] result = request.get("/api/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
-            var length = (int) ChronoUnit.DAYS.between(now.minusMonths(1), now);
-            assertThat(result.length).isEqualTo(length);
-        }
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testDataForQuarterEachGraph() throws Exception {
-        SpanType span = SpanType.QUARTER;
-        for (GraphType graph : artemisGraphs) {
-            int periodIndex = 0;
-            LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parameters.add("span", "" + span);
-            parameters.add("periodIndex", "" + periodIndex);
-            parameters.add("graphType", "" + graph);
-            Integer[] result = request.get("/api/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result.length).isEqualTo(12);
-        }
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testDataForYearEachGraph() throws Exception {
-
-        SpanType span = SpanType.YEAR;
-        for (GraphType graph : artemisGraphs) {
-            int periodIndex = 0;
-            LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parameters.add("span", "" + span);
-            parameters.add("periodIndex", "" + periodIndex);
-            parameters.add("graphType", "" + graph);
-            Integer[] result = request.get("/api/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result.length).isEqualTo(12);
-        }
+    private int expectedResultLength(SpanType spanType) {
+        return switch (spanType) {
+            case DAY -> 24;
+            case WEEK -> 7;
+            case MONTH -> {
+                ZonedDateTime now = ZonedDateTime.now();
+                yield (int) ChronoUnit.DAYS.between(now.minusMonths(1), now);
+            }
+            case QUARTER, YEAR -> 12;
+        };
     }
 
     @Test
@@ -190,12 +139,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         var view = StatisticsView.COURSE;
         var courseId = course.getId();
         for (GraphType graph : courseGraphs) {
-            LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parameters.add("span", "" + span);
-            parameters.add("periodIndex", "" + periodIndex);
-            parameters.add("graphType", "" + graph);
-            parameters.add("view", "" + view);
-            parameters.add("entityId", "" + courseId);
+            var parameters = buildParameters(span, periodIndex, graph, view, courseId);
             Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result.length).isEqualTo(7);
         }
@@ -209,12 +153,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         var view = StatisticsView.EXERCISE;
         var exerciseId = exercise.getId();
         for (GraphType graph : exerciseGraphs) {
-            LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parameters.add("span", "" + span);
-            parameters.add("periodIndex", "" + periodIndex);
-            parameters.add("graphType", "" + graph);
-            parameters.add("view", "" + view);
-            parameters.add("entityId", "" + exerciseId);
+            var parameters = buildParameters(span, periodIndex, graph, view, exerciseId);
             Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result.length).isEqualTo(7);
         }
@@ -308,5 +247,25 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         expectedScoresResult[5] = 1;
         expectedScoresResult[9] = 1;
         assertThat(result.getScoreDistribution()).isEqualTo(expectedScoresResult);
+    }
+
+    private MultiValueMap<String, String> buildParameters(SpanType span, Integer periodIndex, GraphType graph) {
+        return buildParameters(span, periodIndex, graph, null, null);
+    }
+
+    private MultiValueMap<String, String> buildParameters(SpanType span, Integer periodIndex, GraphType graph, StatisticsView view, Long entityId) {
+        final MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+
+        parameters.add("span", span.toString());
+        parameters.add("periodIndex", periodIndex.toString());
+        parameters.add("graphType", graph.toString());
+        if (view != null) {
+            parameters.add("view", view.toString());
+        }
+        if (entityId != null) {
+            parameters.add("entityId", entityId.toString());
+        }
+
+        return parameters;
     }
 }

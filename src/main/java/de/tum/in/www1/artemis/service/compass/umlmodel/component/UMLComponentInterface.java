@@ -25,13 +25,12 @@ public class UMLComponentInterface extends UMLElement {
      */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLComponentInterface)) {
+        if (!(reference instanceof UMLComponentInterface referenceComponentInterface)) {
             return 0;
         }
 
         double similarity = 0;
 
-        UMLComponentInterface referenceComponentInterface = (UMLComponentInterface) reference;
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceComponentInterface.getName()) * CompassConfiguration.COMPONENT_NAME_WEIGHT;
 
         if (SimilarityUtils.parentsSimilarOrEqual(getParentElement(), referenceComponentInterface.getParentElement())) {
@@ -49,11 +48,9 @@ public class UMLComponentInterface extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLComponentInterface)) {
+        if (!(reference instanceof UMLComponentInterface referenceClass)) {
             return 0;
         }
-
-        UMLComponentInterface referenceClass = (UMLComponentInterface) reference;
 
         double similarity = similarity(referenceClass);
 

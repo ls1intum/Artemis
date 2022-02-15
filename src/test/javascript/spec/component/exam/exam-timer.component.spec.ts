@@ -3,18 +3,13 @@ import { By } from '@angular/platform-browser';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockPipe } from 'ng-mocks';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
-describe('ExamTimerComponent', function () {
+describe('ExamTimerComponent', () => {
     let component: ExamTimerComponent;
     let fixture: ComponentFixture<ExamTimerComponent>;
     let dateService: ArtemisServerDateService;
@@ -39,26 +34,26 @@ describe('ExamTimerComponent', function () {
         jest.spyOn(dateService, 'now').mockReturnValue(now);
         component.criticalTime = dayjs.duration(200);
         component.ngOnInit();
-        expect(component).to.be.ok;
-        expect(component.isCriticalTime).to.be.true;
+        expect(component).not.toBeNull();
+        expect(component.isCriticalTime).toBeTrue();
     });
 
     it('should update display times', () => {
         let duration = dayjs.duration(15, 'minutes');
-        expect(component.updateDisplayTime(duration)).to.equal('15min');
+        expect(component.updateDisplayTime(duration)).toEqual('15min');
         duration = dayjs.duration(-15, 'seconds');
-        expect(component.updateDisplayTime(duration)).to.equal('0min 0s');
+        expect(component.updateDisplayTime(duration)).toEqual('0min 0s');
         duration = dayjs.duration(8, 'minutes');
-        expect(component.updateDisplayTime(duration)).to.equal('8min 0s');
+        expect(component.updateDisplayTime(duration)).toEqual('8min 0s');
         duration = dayjs.duration(45, 'seconds');
-        expect(component.updateDisplayTime(duration)).to.equal('0min 45s');
+        expect(component.updateDisplayTime(duration)).toEqual('0min 45s');
     });
 
     it('should round down to next minute when over 10 minutes', () => {
         let duration = dayjs.duration(629, 'seconds');
-        expect(component.updateDisplayTime(duration)).to.equal('10min');
+        expect(component.updateDisplayTime(duration)).toEqual('10min');
         duration = dayjs.duration(811, 'seconds');
-        expect(component.updateDisplayTime(duration)).to.equal('13min');
+        expect(component.updateDisplayTime(duration)).toEqual('13min');
     });
 
     it('should update time in the template correctly', fakeAsync(() => {
@@ -70,11 +65,11 @@ describe('ExamTimerComponent', function () {
         let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).to.equal('30min');
+        expect(timeShownInTemplate).toEqual('30min');
         tick(100);
         fixture.detectChanges();
         timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).to.equal('25min');
+        expect(timeShownInTemplate).toEqual('25min');
         discardPeriodicTasks();
     }));
 });

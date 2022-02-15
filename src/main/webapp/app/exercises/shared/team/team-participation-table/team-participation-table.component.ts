@@ -2,7 +2,7 @@ import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -16,6 +16,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Participation } from 'app/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -29,6 +31,7 @@ class ExerciseForTeam extends Exercise {
     team: Team;
     participation?: StudentParticipation;
     submission?: Submission;
+    individualDueDate?: dayjs.Dayjs;
 }
 
 @Component({
@@ -47,16 +50,15 @@ export class TeamParticipationTableComponent implements OnInit {
     @Input() isAdmin = false;
     @Input() isTeamOwner = false;
 
-    exercises: ExerciseForTeam[];
+    exercises: ExerciseForTeam[] = [];
+    submissions: Submission[] = [];
     isLoading: boolean;
 
-    constructor(
-        private teamService: TeamService,
-        private exerciseService: ExerciseService,
-        private alertService: AlertService,
-        private router: Router,
-        private accountService: AccountService,
-    ) {}
+    // Icons
+    faFolderOpen = faFolderOpen;
+    faFlag = faFlag;
+
+    constructor(private teamService: TeamService, private alertService: AlertService, private router: Router, private accountService: AccountService) {}
 
     /**
      * Loads all needed data from the server for this component
@@ -71,17 +73,21 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     loadAll() {
         this.isLoading = true;
-        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe((courseResponse) => {
-            this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
-                return {
-                    ...exercise,
-                    isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course!),
-                    isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(exercise.course!),
-                    isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course!),
-                };
-            });
-            this.isLoading = false;
-        }, this.onError);
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe({
+            next: (courseResponse) => {
+                this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
+                    return {
+                        ...exercise,
+                        isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course),
+                        isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(exercise.course),
+                        isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course),
+                    };
+                });
+                this.submissions = this.exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!);
+                this.isLoading = false;
+            },
+            error: (error) => this.onError(error),
+        });
     }
 
     /**
@@ -89,12 +95,15 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param exercises Exercises from the server which to transform
      */
     transformExercisesFromServer(exercises: Exercise[]): ExerciseForTeam[] {
-        return this.exerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
+        return ExerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
             exercise.team = exercise.teams![0];
             const participation = get(exercise, 'studentParticipations[0]', undefined);
             exercise.participation = participation;
+            exercise.individualDueDate = getExerciseDueDate(exercise, exercise.participation);
             exercise.submission = get(exercise, 'participation.submissions[0]', undefined); // only exists for instructor and team tutor
             if (exercise.submission) {
+                exercise.submission.participation = participation;
+
                 setLatestSubmissionResult(exercise.submission, get(exercise, 'participation.results[0]', undefined));
                 // assign this value so that it can be used later on in the view hierarchy (e.g. when updating a result, i.e. overriding an assessment
                 if (exercise.submission.results) {
@@ -176,9 +185,7 @@ export class TeamParticipationTableComponent implements OnInit {
         // Programming exercises can only be assessed by anyone / all other exercises can be assessed by tutors
         // if the exercise due date has passed
         if (exercise.type === ExerciseType.PROGRAMMING || !exercise.isAtLeastInstructor) {
-            if (exercise.dueDate.isBefore(dayjs())) {
-                return false;
-            }
+            return !hasExerciseDueDatePassed(exercise, submission.participation);
         } else if (exercise.isAtLeastInstructor) {
             return false;
         }

@@ -11,6 +11,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse } from 'papaparse';
+import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 const csvColumns = Object.freeze({
     registrationNumber: 'registrationnumber',
@@ -42,7 +43,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     @ViewChild('importForm', { static: false }) importForm: NgForm;
 
     @Input() courseId: number;
-    @Input() courseGroup: String;
+    @Input() courseGroup: string;
     @Input() exam: Exam | undefined;
 
     usersToImport: StudentDTO[] = [];
@@ -55,6 +56,13 @@ export class UsersImportDialogComponent implements OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faBan = faBan;
+    faSpinner = faSpinner;
+    faCheck = faCheck;
+    faCircleNotch = faCircleNotch;
+    faUpload = faUpload;
 
     constructor(
         private activeModal: NgbActiveModal,
@@ -178,15 +186,15 @@ export class UsersImportDialogComponent implements OnDestroy {
     importUsers() {
         this.isImporting = true;
         if (this.courseGroup && !this.exam) {
-            this.courseManagementService.addUsersToGroupInCourse(this.courseId, this.usersToImport, this.courseGroup).subscribe(
-                (res) => this.onSaveSuccess(res),
-                () => this.onSaveError(),
-            );
+            this.courseManagementService.addUsersToGroupInCourse(this.courseId, this.usersToImport, this.courseGroup).subscribe({
+                next: (res) => this.onSaveSuccess(res),
+                error: () => this.onSaveError(),
+            });
         } else if (!this.courseGroup && this.exam) {
-            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.usersToImport).subscribe(
-                (res) => this.onSaveSuccess(res),
-                () => this.onSaveError(),
-            );
+            this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.usersToImport).subscribe({
+                next: (res) => this.onSaveSuccess(res),
+                error: () => this.onSaveError(),
+            });
         } else {
             this.alertService.error('importUsers.genericErrorMessage');
         }

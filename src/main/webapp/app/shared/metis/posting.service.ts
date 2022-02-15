@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Observable } from 'rxjs';
 

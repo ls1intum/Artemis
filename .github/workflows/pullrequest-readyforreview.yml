@@ -17,14 +17,14 @@ jobs:
           repo-token: ${{ secrets.GH_TOKEN_ADD_TO_PROJECT }}
 
       - name: Request Reviews from @ls1intum/artemis Team
-        uses: rowi1de/auto-assign-review-teams@v1.0.2
+        uses: rowi1de/auto-assign-review-teams@v1.1.3
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           teams: "@ls1intum/artemis"
           skip-with-manual-reviewers: 5
 
       - name: Label "ready for review"
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |

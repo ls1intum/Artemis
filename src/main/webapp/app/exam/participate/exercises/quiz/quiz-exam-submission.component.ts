@@ -113,7 +113,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         const element = document.getElementById('question' + questionId);
         if (element) {
             // scroll to correct y
-            const y = element.getBoundingClientRect().top + window.pageYOffset - yOffset;
+            const y = element.getBoundingClientRect().top + window.scrollY - yOffset;
             window.scrollTo({ top: y, behavior: 'smooth' });
         }
     }

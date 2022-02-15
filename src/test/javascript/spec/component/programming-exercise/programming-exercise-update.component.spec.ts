@@ -3,7 +3,7 @@ import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -21,7 +21,7 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -48,6 +48,9 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/submission-policy.model';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import '@angular/localize/init';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -63,7 +66,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
+            imports: [ArtemisTestModule, NgxDatatableModule, OwlDateTimeModule],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
@@ -106,15 +109,17 @@ describe('ProgrammingExercise Management Update Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-        courseService = debugElement.injector.get(CourseManagementService);
-        exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
-        programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+                comp = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+                courseService = debugElement.injector.get(CourseManagementService);
+                exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
+                programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
+            });
     });
 
     describe('save', () => {
@@ -298,10 +303,12 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.GCC);
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.selectedProjectType).toBe(ProjectType.GCC);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
         }));
 
@@ -315,6 +322,20 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
             expect(comp.packageNamePattern).toBe(comp.packageNamePatternForJavaKotlin);
+        }));
+
+        it('Should deactivate SCA for C (FACT)', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.FACT);
+
+            // THEN
+            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
+            expect(comp.selectedProjectType).toBe(ProjectType.FACT);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
         }));
     });
 
@@ -399,6 +420,246 @@ describe('ProgrammingExercise Management Update Component', () => {
             }),
         );
     });
+
+    describe('input error validation', () => {
+        beforeEach(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 123;
+            comp.programmingExercise = entity;
+            comp.programmingExercise.course = course;
+        });
+
+        it('find validation errors for undefined input values', () => {
+            // invalid input
+            comp.programmingExercise.title = undefined;
+            comp.programmingExercise.shortName = undefined;
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.bonusPoints = undefined;
+            comp.programmingExercise.packageName = undefined;
+
+            const reasons: any[] = comp.getInvalidReasons();
+            expect(reasons).toHaveLength(5);
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for empty input strings', () => {
+            // invalid input
+            comp.programmingExercise.title = '';
+            comp.programmingExercise.shortName = '';
+            comp.programmingExercise.packageName = '';
+
+            const reasons: any[] = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.undefined',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for input values not matching the pattern', () => {
+            comp.programmingExercise.title = '%§"$"§';
+            comp.programmingExercise.shortName = '123';
+            comp.programmingExercise.maxPoints = 0;
+            comp.programmingExercise.bonusPoints = -1;
+            comp.programmingExercise.staticCodeAnalysisEnabled = true;
+            comp.programmingExercise.maxStaticCodeAnalysisPenalty = -1;
+
+            const reasons: any[] = comp.getInvalidReasons();
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.pattern',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.pattern',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.customMin',
+                translateValues: {},
+            });
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.maxPenalty.pattern',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for package name not matching the pattern', () => {
+            comp.programmingExercise.packageName = 'de.tum.in';
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.pattern.SWIFT',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.packageName = 'de/';
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.pattern.JAVA',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.pattern.KOTLIN',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language C', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.C;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language Empty', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language Python', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language Assembler', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.ASSEMBLER;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language OCAML', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.OCAML;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('Check that no package name related validation error occurs for language VHDL', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.VHDL;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for invalid auxiliary repositories', () => {
+            comp.auxiliaryRepositoriesValid = false;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
+                translateValues: {},
+            });
+        });
+
+        it('find validation errors for invalid ide selection', () => {
+            comp.programmingExercise.allowOnlineEditor = false;
+            comp.programmingExercise.allowOfflineIde = false;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                translateValues: {},
+            });
+        });
+
+        it('should find no validation errors for valid input', () => {
+            comp.programmingExercise.title = 'New title';
+            comp.programmingExercise.shortName = 'home2';
+            comp.programmingExercise.maxPoints = 10;
+            comp.programmingExercise.bonusPoints = 0;
+            comp.programmingExercise.staticCodeAnalysisEnabled = true;
+            comp.programmingExercise.maxStaticCodeAnalysisPenalty = 60;
+            comp.programmingExercise.allowOfflineIde = true;
+            comp.programmingExercise.allowOnlineEditor = false;
+            comp.programmingExercise.packageName = 'de.tum.in';
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+
+            expect(comp.getInvalidReasons()).toBeEmpty();
+        });
+
+        it('should find validation errors for invalid submission limit value', () => {
+            comp.programmingExercise.submissionPolicy = new LockRepositoryPolicy();
+            comp.programmingExercise.submissionPolicy.submissionLimit = undefined;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.required',
+                translateValues: {},
+            });
+
+            const patternViolatingValues = [0, 501, 30.3];
+            for (const value of patternViolatingValues) {
+                comp.programmingExercise.submissionPolicy.submissionLimit = value;
+                expect(comp.getInvalidReasons()).toContainEqual({
+                    translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning.pattern',
+                    translateValues: {},
+                });
+            }
+        });
+
+        it('should find validation errors invalid submission exceeding penalty', () => {
+            comp.programmingExercise.submissionPolicy = new SubmissionPenaltyPolicy();
+
+            comp.programmingExercise.submissionPolicy.exceedingPenalty = undefined;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.required',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.submissionPolicy.exceedingPenalty = 0;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning.pattern',
+                translateValues: {},
+            });
+        });
+
+        it('should find no package name related validation error for languages that do not need a package name', () => {
+            for (const programmingLanguage of [ProgrammingLanguage.C, ProgrammingLanguage.EMPTY, ProgrammingLanguage.PYTHON]) {
+                comp.programmingExercise.programmingLanguage = programmingLanguage;
+                expect(comp.getInvalidReasons()).not.toContainEqual({
+                    translateKey: 'artemisApp.exercise.form.packageName.undefined',
+                    translateValues: {},
+                });
+            }
+        });
+    });
 });
 
 const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
@@ -441,7 +702,7 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: true,
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [],
+                projectTypes: [ProjectType.FACT, ProjectType.GCC],
             } as ProgrammingLanguageFeature;
         default:
             throw new Error();

@@ -7,17 +7,26 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
     styleUrls: [],
 })
 export class UnreferencedFeedbackComponent {
+    FeedbackType = FeedbackType;
+
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
+
     @Input() busy: boolean;
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
 
-    @Output() feedbacksChange = new EventEmitter<Feedback[]>();
+    /**
+     * In order to make it possible to mark unreferenced feedback based on the correction status, we assign reference ids to the unreferenced feedback
+     */
+    @Input() addReferenceIdForExampleSubmission = false;
 
     @Input() set feedbacks(feedbacks: Feedback[]) {
         this.unreferencedFeedback = [...feedbacks];
     }
+
+    @Output() feedbacksChange = new EventEmitter<Feedback[]>();
+
     public deleteAssessment(assessmentToDelete: Feedback): void {
         const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
         this.unreferencedFeedback.splice(indexToDelete, 1);
@@ -54,8 +63,32 @@ export class UnreferencedFeedbackComponent {
         const feedback = new Feedback();
         feedback.credits = 0;
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+
+        // Assign the next id to the unreferenced feedback
+        if (this.addReferenceIdForExampleSubmission) {
+            feedback.reference = this.generateNewUnreferencedFeedbackReference().toString();
+        }
+
         this.unreferencedFeedback.push(feedback);
         this.validateFeedback();
         this.feedbacksChange.emit(this.unreferencedFeedback);
+    }
+
+    /**
+     * Generate the new reference, by computing what is currently the maximum reference within all feedback and add 1
+     */
+    private generateNewUnreferencedFeedbackReference(): number {
+        if (this.unreferencedFeedback.length === 0) {
+            return 1;
+        }
+
+        const references = this.unreferencedFeedback.map((feedback) => {
+            const id = +(feedback.reference ?? '0');
+            if (isNaN(id)) {
+                return 0;
+            }
+            return id;
+        });
+        return Math.max(...references.concat([0])) + 1;
     }
 }

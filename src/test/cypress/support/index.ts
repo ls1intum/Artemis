@@ -40,4 +40,12 @@ Cypress.on('window:before:load', (win) => {
         cy.now('task', 'warn', msg);
     });
 });
+
+/**
+ * We have to disable all service workers because the test will fail with a security exception and translations will also not be resolved properly otherwise.
+ * For some reason this does not work when I add it to the hook above.
+ */
+Cypress.on('window:before:load', (win) => {
+    delete win.navigator.__proto__.serviceWorker;
+});
 /*eslint-enable */

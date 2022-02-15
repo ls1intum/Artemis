@@ -38,17 +38,14 @@ export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, Text
     public explanation?: string;
     public points?: number;
     public scoringType?: ScoringType;
-    public randomizeOrder?: boolean;
-    public invalid?: boolean;
+    public randomizeOrder = true; // default value
+    public invalid = false; // default value
     public quizQuestionStatistic?: QuizQuestionStatistic;
     public exercise?: QuizExercise;
-    public exportQuiz?: boolean;
+    public exportQuiz = false; // default value
     public type?: QuizQuestionType;
 
     protected constructor(type: QuizQuestionType) {
         this.type = type;
-        this.randomizeOrder = true; // default value
-        this.invalid = false; // default value
-        this.exportQuiz = false; // default value
     }
 }

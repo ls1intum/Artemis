@@ -39,7 +39,7 @@ describe('LearningGoalCardComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
 

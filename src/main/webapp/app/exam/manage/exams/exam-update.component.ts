@@ -7,9 +7,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
@@ -18,6 +19,11 @@ export class ExamUpdateComponent implements OnInit {
     exam: Exam;
     course: Course;
     isSaving: boolean;
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private route: ActivatedRoute,
@@ -30,13 +36,13 @@ export class ExamUpdateComponent implements OnInit {
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
-            this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe(
-                (response: HttpResponse<Course>) => {
+            this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
+                next: (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
                     this.course = response.body!;
                 },
-                (err: HttpErrorResponse) => onError(this.alertService, err),
-            );
+                error: (err: HttpErrorResponse) => onError(this.alertService, err),
+            });
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
             }
@@ -65,10 +71,10 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     subscribeToSaveResponse(result: Observable<HttpResponse<Exam>>) {
-        result.subscribe(
-            () => this.onSaveSuccess(),
-            (err: HttpErrorResponse) => this.onSaveError(err),
-        );
+        result.subscribe({
+            next: () => this.onSaveSuccess(),
+            error: (err: HttpErrorResponse) => this.onSaveError(err),
+        });
     }
 
     private onSaveSuccess() {

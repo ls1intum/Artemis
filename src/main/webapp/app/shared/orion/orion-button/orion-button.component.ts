@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
@@ -13,9 +14,12 @@ export class OrionButtonComponent {
     @Input() smallButton = false;
     @Input() disabled = false;
     // Disable by feature toggle.
-    @Input() featureToggle: FeatureToggle = FeatureToggle.PROGRAMMING_EXERCISES;
+    @Input() featureToggle: FeatureToggle = FeatureToggle.ProgrammingExercises;
     // Indirect handler to disable clicking while loading
     @Output() clickHandler = new EventEmitter<void>();
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor() {}
 

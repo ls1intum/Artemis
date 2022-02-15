@@ -1,4 +1,4 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -15,7 +15,7 @@ describe('User Management Detail Component', () => {
         children: [],
     } as any as ActivatedRoute;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [UserManagementDetailComponent],
@@ -28,7 +28,7 @@ describe('User Management Detail Component', () => {
         })
             .overrideTemplate(UserManagementDetailComponent, '')
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(UserManagementDetailComponent);

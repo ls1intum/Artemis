@@ -31,8 +31,6 @@ public class ComplaintService {
 
     private final ResultRepository resultRepository;
 
-    private final ResultService resultService;
-
     private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
@@ -40,11 +38,10 @@ public class ComplaintService {
     private final ExamRepository examRepository;
 
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            ResultService resultService, CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository) {
+            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
-        this.resultService = resultService;
         this.courseRepository = courseRepository;
         this.examRepository = examRepository;
         this.userRepository = userRepository;
@@ -184,7 +181,7 @@ public class ComplaintService {
         final List<ExerciseMapEntry> numberOfMoreFeedbackRequestsOfExercise;
         final List<ExerciseMapEntry> numberOfMoreFeedbackResponsesOfExercise;
 
-        Set<Long> exerciseIds = exercises.stream().map(exercise -> exercise.getId()).collect(Collectors.toSet());
+        Set<Long> exerciseIds = exercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
 
         if (examMode) {
             numberOfComplaintsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(exerciseIds, ComplaintType.COMPLAINT);
@@ -200,10 +197,10 @@ public class ComplaintService {
             numberOfMoreFeedbackRequestsOfExercise = complaintRepository.countComplaintsByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
             numberOfMoreFeedbackResponsesOfExercise = complaintResponseRepository.countComplaintsByExerciseIdsAndComplaintComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
         }
-        var numberOfComplaintsMap = numberOfComplaintsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
-        var numberOfComplaintResponsesMap = numberOfComplaintResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
-        var numberOfMoreFeedbackRequestsMap = numberOfMoreFeedbackRequestsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
-        var numberOfMoreFeedbackResponsesMap = numberOfMoreFeedbackResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, entry -> entry.getValue()));
+        var numberOfComplaintsMap = numberOfComplaintsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, ExerciseMapEntry::getValue));
+        var numberOfComplaintResponsesMap = numberOfComplaintResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, ExerciseMapEntry::getValue));
+        var numberOfMoreFeedbackRequestsMap = numberOfMoreFeedbackRequestsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, ExerciseMapEntry::getValue));
+        var numberOfMoreFeedbackResponsesMap = numberOfMoreFeedbackResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, ExerciseMapEntry::getValue));
         exercises.forEach(exercise -> {
             exercise.setNumberOfOpenComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L) - numberOfComplaintResponsesMap.getOrDefault(exercise.getId(), 0L));
             exercise.setNumberOfComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L));

@@ -1,5 +1,8 @@
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
 
@@ -7,18 +10,20 @@ import { generateUUID } from '../../support/utils';
 const courseManagementRequests = artemis.requests.courseManagement;
 
 // page objects
-const examStartEnd = artemis.pageobjects.examStartEnd;
-const textEditor = artemis.pageobjects.textExercise.editor;
+const courseOverview = artemis.pageobjects.course.overview;
+const examNavigationBar = artemis.pageobjects.exam.navigationBar;
+const examStartEnd = artemis.pageobjects.exam.startEnd;
+const textEditor = artemis.pageobjects.exercise.text.editor;
 
-describe('Exam management', () => {
-    let course: any;
+describe('Exam date verification', () => {
+    let course: Course;
     let examTitle: string;
 
     before(() => {
         cy.login(artemis.users.getAdmin());
         courseManagementRequests.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequests.addStudentToCourse(course.id, artemis.users.getStudentOne().username);
+            courseManagementRequests.addStudentToCourse(course.id!, artemis.users.getStudentOne().username);
         });
     });
 
@@ -28,8 +33,7 @@ describe('Exam management', () => {
     });
 
     describe('Exam timing', () => {
-        let exam: any;
-        let textExercise: any;
+        let exam: Exam;
         it('Does not show exam before visible date', () => {
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -59,15 +63,14 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(exam, artemis.users.getStudentOne());
                 cy.login(artemis.users.getStudentOne(), `/courses/${course.id}`);
                 cy.url().should('contain', `${course.id}`);
-                cy.contains('Exams').click();
-                cy.url().should('contain', '/exams');
-                cy.contains(examTitle).should('exist').click();
+                courseOverview.openExamsTab();
+                courseOverview.openExam(exam.id!);
                 cy.url().should('contain', `/exams/${exam.id}`);
             });
         });
 
         it('Student can start after start Date', () => {
-            let exerciseGroup: any;
+            let exerciseGroup: ExerciseGroup;
             const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
@@ -80,56 +83,56 @@ describe('Exam management', () => {
                 courseManagementRequests.registerStudentForExam(exam, student);
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise({ exerciseGroup }).then((exerciseResponse) => {
-                        textExercise = exerciseResponse.body;
+                    courseManagementRequests.createTextExercise({ exerciseGroup }).then(() => {
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
-                        cy.contains(exam.title).click();
+                        courseOverview.openExam(exam.id!);
                         cy.url().should('contain', `/exams/${exam.id}`);
-                        cy.contains('Welcome to ' + exam.title).should('be.visible');
+                        cy.contains(exam.title!).should('be.visible');
                         examStartEnd.startExam();
-                        cy.contains('Exam Overview').should('exist');
-                        cy.contains(textExercise.title).should('be.visible').click();
+                        examNavigationBar.openExerciseAtIndex(0);
                         cy.fixture('loremIpsum.txt').then((submission) => {
                             textEditor.typeSubmission(submission);
                         });
-                        textEditor.submit();
+                        examNavigationBar.clickSave();
                     });
                 });
             });
         });
 
         it('Exam ends after end time', () => {
-            let exerciseGroup: any;
+            let exerciseGroup: ExerciseGroup;
+            const examEnd = dayjs().add(30, 'seconds');
             const student = artemis.users.getStudentOne();
             const examContent = new CypressExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
-                .endDate(dayjs().add(30, 'seconds'))
+                .endDate(examEnd)
                 .build();
             courseManagementRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
                 courseManagementRequests.registerStudentForExam(exam, student);
                 courseManagementRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     exerciseGroup = groupResponse.body;
-                    courseManagementRequests.createTextExercise({ exerciseGroup }).then((response) => {
-                        textExercise = response.body;
+                    courseManagementRequests.createTextExercise({ exerciseGroup }).then(() => {
                         courseManagementRequests.generateMissingIndividualExams(exam);
                         courseManagementRequests.prepareExerciseStartForExam(exam);
                         cy.login(student, `/courses/${course.id}/exams`);
-                        cy.contains(exam.title).click();
-                        cy.contains('Welcome to ' + exam.title).should('be.visible');
+                        courseOverview.openExam(exam.id!);
+                        cy.contains(exam.title!).should('be.visible');
                         examStartEnd.startExam();
-                        cy.contains(textExercise.title).should('be.visible').click();
+                        examNavigationBar.openExerciseAtIndex(0);
                         cy.fixture('loremIpsum.txt').then((submissionText) => {
                             textEditor.typeSubmission(submissionText);
                         });
-                        cy.contains('Save').click();
-                        cy.contains('This is the end of ' + exam.title, { timeout: 40000 });
+                        examNavigationBar.clickSave();
+                        if (examEnd.isAfter(dayjs())) {
+                            cy.wait(examEnd.diff(dayjs()));
+                        }
+                        cy.get('#exam-finished-title').should('contain.text', exam.title, { timeout: 40000 });
                         examStartEnd.finishExam();
-                        cy.get('.alert').contains('Your exam was submitted successfully.');
                     });
                 });
             });
@@ -144,7 +147,7 @@ describe('Exam management', () => {
     after(() => {
         if (!!course) {
             cy.login(artemis.users.getAdmin());
-            courseManagementRequests.deleteCourse(course.id);
+            courseManagementRequests.deleteCourse(course.id!);
         }
     });
 });

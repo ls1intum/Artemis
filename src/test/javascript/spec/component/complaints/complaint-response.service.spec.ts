@@ -1,40 +1,42 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 
 describe('ComplaintResponseService', () => {
-    let testBed: TestBed;
     let complaintResponseService: ComplaintResponseService;
     let httpTestingController: HttpTestingController;
     let defaultComplaintResponse: ComplaintResponse;
+    let accountService: AccountService;
     let expectedComplaintResponse: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
             providers: [MockProvider(AccountService)],
-        });
-        expectedComplaintResponse = {} as HttpResponse<ComplaintResponse>;
+        })
+            .compileComponents()
+            .then(() => {
+                expectedComplaintResponse = {} as HttpResponse<ComplaintResponse>;
+                complaintResponseService = TestBed.inject(ComplaintResponseService);
+                httpTestingController = TestBed.inject(HttpTestingController);
+                accountService = TestBed.inject(AccountService);
 
-        testBed = getTestBed();
-        complaintResponseService = testBed.get(ComplaintResponseService);
-        httpTestingController = testBed.get(HttpTestingController);
-
-        defaultComplaintResponse = new ComplaintResponse();
-        defaultComplaintResponse.id = 1;
-        defaultComplaintResponse.lockEndDate = dayjs();
-        defaultComplaintResponse.submittedTime = dayjs();
-        defaultComplaintResponse.complaint = new Complaint();
-        defaultComplaintResponse.complaint.id = 1;
+                defaultComplaintResponse = new ComplaintResponse();
+                defaultComplaintResponse.id = 1;
+                defaultComplaintResponse.lockEndDate = dayjs();
+                defaultComplaintResponse.submittedTime = dayjs();
+                defaultComplaintResponse.complaint = new Complaint();
+                defaultComplaintResponse.complaint.id = 1;
+            });
     });
 
     afterEach(() => {
@@ -43,7 +45,6 @@ describe('ComplaintResponseService', () => {
     });
 
     function setupLockTest(loginOfLoggedInUser: string, loggedInUserIsInstructor: boolean, loginOfReviewer: string, lockActive: boolean) {
-        const accountService = testBed.get(AccountService);
         jest.spyOn(accountService, 'userIdentity', 'get').mockImplementation(function getterFn() {
             const user = new User();
             user.login = loginOfLoggedInUser;

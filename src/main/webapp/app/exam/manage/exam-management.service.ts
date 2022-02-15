@@ -4,7 +4,7 @@ import { filter, map, tap } from 'rxjs/operators';
 
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { StudentDTO } from 'app/entities/student-dto.model';
@@ -14,7 +14,7 @@ import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 
 type EntityResponseType = HttpResponse<Exam>;
@@ -236,7 +236,7 @@ export class ExamManagementService {
      * Generate all student exams for all registered students of the exam.
      * @param courseId
      * @param examId
-     * @returns a list with the generate student exams
+     * @returns a list with the generated student exams
      */
     generateStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, {}, { observe: 'response' });
@@ -276,7 +276,7 @@ export class ExamManagementService {
      * Generate missing student exams for newly added students of the exam.
      * @param courseId
      * @param examId
-     * @returns a list with the generate student exams
+     * @returns a list with the generated student exams
      */
     generateMissingStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-missing-student-exams`, {}, { observe: 'response' });
@@ -388,18 +388,7 @@ export class ExamManagementService {
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
         return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' }).pipe(
             filter((res) => !!res.body),
-            tap((res) =>
-                res.body!.forEach((submission: Submission) => {
-                    // reconnect some associations
-                    const latestResult = getLatestSubmissionResult(submission);
-                    if (latestResult) {
-                        latestResult.submission = submission;
-                        latestResult.participation = submission.participation;
-                        submission.participation!.results = [latestResult!];
-                        setLatestSubmissionResult(submission, latestResult);
-                    }
-                }),
-            ),
+            tap((res) => reconnectSubmissions(res.body!)),
         );
     }
 

@@ -1,17 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     let comp: ProgrammingExerciseInstructionStepWizardComponent;
@@ -53,12 +48,12 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         fixture.detectChanges();
 
         const steps = debugElement.queryAll(By.css(stepWizardStep));
-        expect(steps).to.have.lengthOf(2);
+        expect(steps).toHaveLength(2);
 
         // BubbleSort has a failed icon.
-        expect(steps[0].query(By.css('.text-danger'))).to.exist;
+        expect(steps[0].query(By.css('.text-danger'))).not.toBeNull();
         // MergeSort has a success icon.
-        expect(steps[1].query(By.css('.text-success'))).to.exist;
+        expect(steps[1].query(By.css('.text-success'))).not.toBeNull();
     });
 
     it('Should not show any icons for empty tasks list', () => {
@@ -74,6 +69,6 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         fixture.detectChanges();
 
         const steps = debugElement.queryAll(By.css(stepWizardStep));
-        expect(steps).to.have.lengthOf(0);
+        expect(steps).toHaveLength(0);
     });
 });

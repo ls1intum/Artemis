@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -14,7 +17,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -35,6 +37,8 @@ public class SubmissionService {
     private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
     private final ExamDateService examDateService;
+
+    private final ExerciseDateService exerciseDateService;
 
     private final CourseRepository courseRepository;
 
@@ -58,8 +62,8 @@ public class SubmissionService {
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ComplaintRepository complaintRepository) {
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
+            ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -68,6 +72,7 @@ public class SubmissionService {
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
         this.examDateService = examDateService;
+        this.exerciseDateService = exerciseDateService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.complaintRepository = complaintRepository;
@@ -79,16 +84,13 @@ public class SubmissionService {
      * @param exercise      the exercise for which a submission should be saved
      * @param submission    the submission that should be saved
      * @param currentUser   the current user with groups and authorities
-     * @param <T>           The type of the return type of the requesting route so that the
-     *                      response can be returned there
-     * @return an Optional with a typed ResponseEntity. If it is empty all checks passed
      */
-    public <T> Optional<ResponseEntity<T>> checkSubmissionAllowance(Exercise exercise, Submission submission, User currentUser) {
+    public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // Fetch course from database to make sure client didn't change groups
         final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
         final var course = courseRepository.findByIdElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
-            return Optional.of(forbidden());
+            throw new AccessForbiddenException();
         }
 
         // Fetch the submission with the corresponding participation if the id is set (on update) and check that the
@@ -97,24 +99,22 @@ public class SubmissionService {
         if (submission.getId() != null) {
             Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
             if (existingSubmission.isEmpty()) {
-                return Optional.of(forbidden());
+                throw new AccessForbiddenException();
             }
 
             StudentParticipation participation = (StudentParticipation) existingSubmission.get().getParticipation();
             if (participation != null) {
                 Optional<User> user = participation.getStudent();
                 if (user.isPresent() && !user.get().equals(currentUser)) {
-                    return Optional.of(forbidden());
+                    throw new AccessForbiddenException();
                 }
 
                 Optional<Team> team = participation.getTeam();
                 if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
-                    return Optional.of(forbidden());
+                    throw new AccessForbiddenException();
                 }
             }
         }
-
-        return Optional.empty();
     }
 
     /**
@@ -178,9 +178,7 @@ public class SubmissionService {
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, int correctionRound) {
-        Random random = new Random();
-        List<StudentParticipation> participations;
-
+        final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
             // No manual result means that no user has started an assessment for the corresponding submission yet.
@@ -188,10 +186,11 @@ public class SubmissionService {
                     correctionRound);
         }
         else {
-            // Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for
-            // the
-            // corresponding submission yet.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exercise.getId());
+            // Get all participations of submissions that are submitted and do not already have a manual result.
+            // No manual result means that no user has started an assessment for the corresponding submission yet.
+            // Does not fetch participations for which the due date has not yet passed.
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDate(exercise.getId(),
+                    ZonedDateTime.now());
         }
 
         List<Submission> submissionsWithoutResult = participations.stream().map(Participation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
@@ -204,14 +203,16 @@ public class SubmissionService {
                     .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRepository.getUser())).collect(Collectors.toList());
         }
 
+        if (exercise.getDueDate() != null) {
+            submissionsWithoutResult = selectOnlySubmissionsBeforeDueDate(submissionsWithoutResult);
+        }
+
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
-
-        submissionsWithoutResult = selectOnlySubmissionsBeforeDueDateOrAll(submissionsWithoutResult, exercise.getDueDate());
-
-        var submissionWithoutResult = submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
-        return Optional.of(submissionWithoutResult);
+        else {
+            return Optional.of(submissionsWithoutResult.get(ThreadLocalRandom.current().nextInt(submissionsWithoutResult.size())));
+        }
     }
 
     /**
@@ -346,7 +347,7 @@ public class SubmissionService {
     /**
      * Copies the content of one result to another, and adds the second result to the submission.
      *
-     * @param submission the submission which both results belong to, the newResult comes after the oldResult in the resultlist
+     * @param submission the submission which both results belong to, the newResult comes after the oldResult in the result list
      * @param newResult the result where the content is set
      * @param oldResult the result from which the content is copied from
      * @return the newResult
@@ -518,24 +519,27 @@ public class SubmissionService {
      * Filters the submissions to contain only in-time submissions if there are any.
      * If not, the original list is returned.
      * @param submissions The submissions to filter
-     * @param dueDate The due-date to filter by
      * @param <T> Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}
      * @return The filtered list of submissions
      */
-    protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDateOrAll(List<T> submissions, ZonedDateTime dueDate) {
-        if (dueDate == null) {
-            // this is an edge case, then basically all submissions are before due date
-            return submissions;
-        }
-
-        boolean hasInTimeSubmissions = submissions.stream().anyMatch(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate));
-        if (hasInTimeSubmissions) {
-            return submissions.stream().filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate))
-                    .collect(Collectors.toList());
+    protected <T extends Submission> List<T> selectOnlySubmissionsBeforeDueDate(List<T> submissions) {
+        final List<T> submissionsBeforeDueDate = submissions.stream().filter(this::isBeforeDueDate).toList();
+        if (!submissionsBeforeDueDate.isEmpty()) {
+            return submissionsBeforeDueDate;
         }
         else {
             return submissions;
         }
+    }
+
+    /**
+     * Checks if the submission was created before the due date of the exercise.
+     * @param submission a student’s submission
+     * @return true, if the submission date was before the due date or the exercise has no due date.
+     */
+    private boolean isBeforeDueDate(Submission submission) {
+        return exerciseDateService.getDueDate(submission.getParticipation())
+                .map(dueDate -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
     }
 
     /**
@@ -686,21 +690,10 @@ public class SubmissionService {
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         PageRequest sorted = PageRequest.of(search.getPage() - 1, search.getPageSize(), sorting);
         String searchTerm = search.getSearchTerm();
-
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exerciseId, searchTerm, sorted);
 
-        List<Submission> submissions = new ArrayList<>();
-
-        for (StudentParticipation participation : studentParticipationPage.getContent()) {
-            Optional<Submission> optionalSubmission = participation.findLatestSubmission();
-
-            if (!optionalSubmission.isEmpty()) {
-                submissions.add(optionalSubmission.get());
-            }
-        }
-
-        final Page<Submission> submissionPage = new PageImpl<>(submissions, sorted, submissions.size());
-
+        var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
+        final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, sorted, latestSubmissions.size());
         return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
 }

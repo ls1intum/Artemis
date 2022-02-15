@@ -10,6 +10,7 @@ import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
+import { faDownload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -40,6 +41,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         return !!this.apollonEditor && !![...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships].length;
     }
 
+    // Icons
+    faDownload = faDownload;
+    faQuestionCircle = faQuestionCircle;
+
     constructor(
         private apollonDiagramService: ApollonDiagramService,
         private alertService: AlertService,
@@ -57,8 +62,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             const id = Number(params['id']);
             this.courseId = Number(params['courseId']);
 
-            this.apollonDiagramService.find(id, this.courseId).subscribe(
-                (response) => {
+            this.apollonDiagramService.find(id, this.courseId).subscribe({
+                next: (response) => {
                     const diagram = response.body!;
 
                     this.apollonDiagram = diagram;
@@ -67,10 +72,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     this.initializeApollonEditor(model);
                     this.setAutoSaveTimer();
                 },
-                () => {
+                error: () => {
                     this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
                 },
-            );
+            });
         });
 
         this.languageHelper.language.subscribe((languageKey: string) => {
@@ -121,10 +126,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        this.apollonDiagramService.update(updatedDiagram, this.courseId).subscribe(
-            () => this.setAutoSaveTimer(),
-            () => this.alertService.error('artemisApp.apollonDiagram.update.error'),
-        );
+        this.apollonDiagramService.update(updatedDiagram, this.courseId).subscribe({
+            next: () => this.setAutoSaveTimer(),
+            error: () => this.alertService.error('artemisApp.apollonDiagram.update.error'),
+        });
     }
 
     /**

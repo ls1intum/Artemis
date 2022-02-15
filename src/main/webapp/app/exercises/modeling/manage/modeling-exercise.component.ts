@@ -5,7 +5,7 @@ import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
@@ -14,6 +14,9 @@ import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/m
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -22,6 +25,15 @@ import { EventManager } from 'app/core/util/event-manager.service';
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
     filteredModelingExercises: ModelingExercise[];
+    // Icons
+    faPlus = faPlus;
+    faSort = faSort;
+    faTable = faTable;
+    farListAlt = faListAlt;
+    faBook = faBook;
+    faUsers = faUsers;
+    faWrench = faWrench;
+    faTimes = faTimes;
 
     constructor(
         public exerciseService: ExerciseService,
@@ -42,8 +54,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe(
-            (res: HttpResponse<ModelingExercise[]>) => {
+        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe({
+            next: (res: HttpResponse<ModelingExercise[]>) => {
                 this.modelingExercises = res.body!;
                 // reconnect exercise with course
                 this.modelingExercises.forEach((exercise) => {
@@ -53,8 +65,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 this.applyFilter();
                 this.emitExerciseCount(this.modelingExercises.length);
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     protected applyFilter(): void {
@@ -76,16 +88,16 @@ export class ModelingExerciseComponent extends ExerciseComponent {
      * @param modelingExerciseId id of the exercise that will be deleted
      */
     deleteModelingExercise(modelingExerciseId: number) {
-        this.modelingExerciseService.delete(modelingExerciseId).subscribe(
-            () => {
+        this.modelingExerciseService.delete(modelingExerciseId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',
                     content: 'Deleted an modelingExercise',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     protected getChangeEventName(): string {

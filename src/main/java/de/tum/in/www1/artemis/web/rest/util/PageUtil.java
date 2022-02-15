@@ -1,0 +1,19 @@
+package de.tum.in.www1.artemis.web.rest.util;
+
+import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+
+public class PageUtil {
+
+    @NotNull
+    public static PageRequest createPageRequest(PageableSearchDTO<String> search) {
+        var sortOptions = Sort.by(Exercise.ExerciseSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
+        return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
+    }
+}

@@ -66,6 +66,12 @@ export class ArtemisNavigationUtilService {
             this.navigateBackWithOptional(['course-management', exercise.course!.id!.toString(), exercise.type! + '-exercises'], exercise.id?.toString());
         }
     }
+
+    replaceNewWithIdInUrl(url: string, id: number) {
+        const newUrl = url.slice(0, -3) + id;
+        const regex = /http(s)?:\/\/([a-zA-Z0-9\.\:]*)(?<rest>\/.*)/;
+        this.location.go(newUrl.match(regex)!.groups!.rest);
+    }
 }
 
 export const navigateToExampleSubmissions = (router: Router, exercise: Exercise): void => {

@@ -2,7 +2,7 @@
     <h2>
         <span id="organization-management-page-heading" jhiTranslate="organizationManagement.title">Organization management</span>
         <button class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="organizationManagement.addLabel">Add organization</span>
+            <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="organizationManagement.addLabel">Add organization</span>
         </button>
     </h2>
     <jhi-alert-error></jhi-alert-error>
@@ -40,11 +40,11 @@
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit" [routerLink]="['./', organization.id]" class="btn btn-info btn-sm">
-                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <fa-icon [icon]="faEye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </button>
                             <button type="submit" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
-                                <fa-icon [icon]="'wrench'"></fa-icon>
+                                <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
                             <button
@@ -54,7 +54,7 @@
                                 (delete)="deleteOrganization(organization.id!)"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="'times'"></fa-icon>
+                                <fa-icon [icon]="faTimes"></fa-icon>
                             </button>
                         </div>
                     </td>

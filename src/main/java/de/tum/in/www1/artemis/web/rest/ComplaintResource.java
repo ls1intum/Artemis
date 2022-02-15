@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.ok;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -26,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -97,7 +95,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
-        Result result = resultRepository.findOneElseThrow(complaint.getResult().getId());
+        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
@@ -136,7 +134,7 @@ public class ComplaintResource {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
-        Result result = resultRepository.findOneElseThrow(complaint.getResult().getId());
+        Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
         authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
@@ -163,7 +161,7 @@ public class ComplaintResource {
 
         Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
         if (optionalComplaint.isEmpty()) {
-            return ok();
+            return ResponseEntity.ok().build();
         }
         Complaint complaint = optionalComplaint.get();
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -172,7 +170,7 @@ public class ComplaintResource {
         var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
         var isAtLeastTA = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         if (!isOwner && !isAtLeastTA) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);

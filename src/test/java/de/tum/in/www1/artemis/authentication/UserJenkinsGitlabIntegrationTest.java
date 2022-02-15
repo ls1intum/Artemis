@@ -61,19 +61,19 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUser_asAdmin_isSuccessful() throws Exception {
         userTestService.updateUser_asAdmin_isSuccessful();
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUserInvalidId() throws Exception {
         userTestService.updateUserInvalidId();
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUserExistingEmail() throws Exception {
         userTestService.updateUserExistingEmail();
     }
@@ -85,13 +85,13 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateUser_asInstructor_forbidden() throws Exception {
         request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void updateUser_asTutor_forbidden() throws Exception {
         request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
@@ -192,13 +192,13 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_isSuccessful() throws Exception {
         userTestService.deleteUser_isSuccessful();
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_failToGetUserIdInGitlab() throws Exception {
         User student = userTestService.student;
         gitlabRequestMockProvider.mockDeleteVcsUserFailToGetUserId(student.getLogin());
@@ -206,19 +206,19 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
         userTestService.deleteUser_doesntExistInUserManagement_isSuccessful();
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_FailsInExternalCiUserManagement_isNotSuccessful() throws Exception {
         userTestService.deleteUser_FailsInExternalCiUserManagement_isNotSuccessful();
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
         userTestService.deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful();
     }
@@ -287,6 +287,18 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @WithMockUser(username = "student1", roles = "USER")
     public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserNotificationDate_asStudent_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void updateUserNotificationVisibility_showAll_asStudent_isSuccessful() throws Exception {
+        userTestService.updateUserNotificationVisibilityShowAllAsStudentIsSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void updateUserNotificationVisibility_hideUntil_asStudent_isSuccessful() throws Exception {
+        userTestService.updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful();
     }
 
     @Test
@@ -399,5 +411,29 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         assertThat(userInDB.get().getLogin()).isEqualTo(user.getLogin());
 
         verify(gitlabRequestMockProvider.getMockedUserApi()).blockUser(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUser() throws Exception {
+        userTestService.initializeUser(true);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUserWithoutFlag() throws Exception {
+        userTestService.initializeUserWithoutFlag();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUserNonLTI() throws Exception {
+        userTestService.initializeUserNonLTI();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void initializeUserExternal() throws Exception {
+        userTestService.initializeUserExternal();
     }
 }

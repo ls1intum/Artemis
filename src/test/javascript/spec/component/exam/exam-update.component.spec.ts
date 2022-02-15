@@ -1,7 +1,4 @@
 import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -21,7 +18,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Component } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -31,15 +28,12 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 @Component({
     template: '',
 })
 class DummyComponent {}
 
-describe('Exam Update Component', function () {
+describe('Exam Update Component', () => {
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
@@ -133,16 +127,16 @@ describe('Exam Update Component', function () {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(fixture).to.be.ok;
-        expect(component.exam).to.exist;
-        expect(component.exam.course).to.deep.equal(course);
-        expect(component.exam.gracePeriod).to.equal(180);
-        expect(component.exam.numberOfCorrectionRoundsInExam).to.equal(1);
+        expect(fixture).not.toBeNull();
+        expect(component.exam).not.toBeNull();
+        expect(component.exam.course).toEqual(course);
+        expect(component.exam.gracePeriod).toEqual(180);
+        expect(component.exam.numberOfCorrectionRoundsInExam).toEqual(1);
     });
 
     it('should validate the dates correctly', () => {
@@ -150,47 +144,47 @@ describe('Exam Update Component', function () {
         exam.startDate = dayjs().add(2, 'hours');
         exam.endDate = dayjs().add(3, 'hours');
         fixture.detectChanges();
-        expect(component.isValidConfiguration).is.true;
+        expect(component.isValidConfiguration).toBeTrue();
 
         exam.publishResultsDate = dayjs().add(4, 'hours');
         exam.examStudentReviewStart = dayjs().add(5, 'hours');
         exam.examStudentReviewEnd = dayjs().add(6, 'hours');
         fixture.detectChanges();
-        expect(component.isValidConfiguration).is.true;
+        expect(component.isValidConfiguration).toBeTrue();
 
         exam.visibleDate = undefined;
         exam.startDate = undefined;
         exam.endDate = undefined;
         fixture.detectChanges();
-        expect(component.isValidConfiguration).is.false;
+        expect(component.isValidConfiguration).toBeFalse();
 
         exam.visibleDate = dayjs().add(1, 'hours');
         exam.startDate = dayjs().add(2, 'hours');
         exam.endDate = dayjs().add(3, 'hours');
         exam.examStudentReviewEnd = undefined;
         fixture.detectChanges();
-        expect(component.isValidConfiguration).is.false;
+        expect(component.isValidConfiguration).toBeFalse();
 
         exam.examStudentReviewStart = dayjs().add(6, 'hours');
         exam.examStudentReviewEnd = dayjs().add(5, 'hours');
         fixture.detectChanges();
-        expect(component.isValidConfiguration).is.false;
+        expect(component.isValidConfiguration).toBeFalse();
 
         exam.examStudentReviewStart = undefined;
         fixture.detectChanges();
-        expect(component.isValidConfiguration).is.false;
+        expect(component.isValidConfiguration).toBeFalse();
     });
 
     it('should update', fakeAsync(() => {
         fixture.detectChanges();
 
-        const updateSpy = sinon.spy(examManagementService, 'update');
+        const updateSpy = jest.spyOn(examManagementService, 'update');
 
         // trigger save
         component.save();
         tick();
-        expect(updateSpy).to.have.been.calledOnce;
-        expect(component.isSaving).is.false;
+        expect(updateSpy).toHaveBeenCalledTimes(1);
+        expect(component.isSaving).toBeFalse();
     }));
 
     it('should correctly catch HTTPError when updating the exam', fakeAsync(() => {
@@ -198,29 +192,29 @@ describe('Exam Update Component', function () {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         fixture.detectChanges();
 
-        const alertServiceSpy = sinon.spy(alertService, 'error');
-        const updateStub = sinon.stub(examManagementService, 'update').returns(throwError(httpError));
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const updateStub = jest.spyOn(examManagementService, 'update').mockReturnValue(throwError(() => httpError));
 
         // trigger save
         component.save();
         tick();
-        expect(alertServiceSpy).to.have.been.calledOnce;
-        expect(component.isSaving).is.false;
+        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(component.isSaving).toBeFalse();
 
-        updateStub.restore();
+        updateStub.mockRestore();
     }));
 
     it('should create', fakeAsync(() => {
         exam.id = undefined;
         fixture.detectChanges();
 
-        const createSpy = sinon.spy(examManagementService, 'create');
+        const createSpy = jest.spyOn(examManagementService, 'create');
 
         // trigger save
         component.save();
         tick();
-        expect(createSpy).to.have.been.calledOnce;
-        expect(component.isSaving).is.false;
+        expect(createSpy).toHaveBeenCalledTimes(1);
+        expect(component.isSaving).toBeFalse();
     }));
 
     it('should correctly catch HTTPError when creating the exam', fakeAsync(() => {
@@ -228,15 +222,15 @@ describe('Exam Update Component', function () {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         fixture.detectChanges();
 
-        const alertServiceSpy = sinon.spy(alertService, 'error');
-        const createStub = sinon.stub(examManagementService, 'create').returns(throwError(httpError));
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const createStub = jest.spyOn(examManagementService, 'create').mockReturnValue(throwError(() => httpError));
 
         // trigger save
         component.save();
         tick();
-        expect(alertServiceSpy).to.have.been.calledOnce;
-        expect(component.isSaving).is.false;
+        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(component.isSaving).toBeFalse();
 
-        createStub.restore();
+        createStub.mockRestore();
     }));
 });

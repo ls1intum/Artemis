@@ -1,5 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -16,9 +14,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('CourseManagementExerciseRowComponent', () => {
     let fixture: ComponentFixture<CourseManagementExerciseRowComponent>;
@@ -60,6 +55,6 @@ describe('CourseManagementExerciseRowComponent', () => {
         component.ngOnChanges();
         component.statistic = exerciseStatisticsDTO;
         component.ngOnChanges();
-        expect(component.averageScoreNumerator).to.equal(5);
+        expect(component.averageScoreNumerator).toEqual(5);
     });
 });

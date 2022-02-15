@@ -4,6 +4,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { faSmile } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -15,6 +16,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     archiveTooltip: string;
     displayPriority: DisplayPriority;
     readonly DisplayPriority = DisplayPriority;
+
+    // Icons
+    farSmile = faSmile;
+
     constructor(metisService: MetisService) {
         super(metisService);
     }

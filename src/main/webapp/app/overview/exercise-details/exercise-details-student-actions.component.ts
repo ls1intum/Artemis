@@ -1,6 +1,5 @@
 import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
-import dayjs from 'dayjs';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
+import dayjs from 'dayjs/esm';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
@@ -14,6 +13,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
+import { faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -41,6 +42,14 @@ export class ExerciseDetailsStudentActionsComponent {
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
+    // Icons
+    faFolderOpen = faFolderOpen;
+    faUsers = faUsers;
+    faEye = faEye;
+    faPlayCircle = faPlayCircle;
+    faSignal = faSignal;
+    faRedo = faRedo;
+
     constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
 
     /**
@@ -53,7 +62,7 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     /**
-     * see exercise-utils -> isStartExerciseAvailable
+     * see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
         return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
@@ -86,10 +95,10 @@ export class ExerciseDetailsStudentActionsComponent {
 
         this.exercise.loading = true;
         this.courseExerciseService
-            .startExercise(this.courseId, this.exercise.id!)
+            .startExercise(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
-            .subscribe(
-                (participation) => {
+            .subscribe({
+                next: (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
@@ -102,10 +111,10 @@ export class ExerciseDetailsStudentActionsComponent {
                         }
                     }
                 },
-                () => {
+                error: () => {
                     this.alertService.warning('artemisApp.exercise.startError');
                 },
-            );
+            });
     }
 
     /**
@@ -114,10 +123,10 @@ export class ExerciseDetailsStudentActionsComponent {
     resumeProgrammingExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
-            .resumeProgrammingExercise(this.courseId, this.exercise.id!)
+            .resumeProgrammingExercise(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
-            .subscribe(
-                (participation: StudentParticipation) => {
+            .subscribe({
+                next: (participation: StudentParticipation) => {
                     if (participation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
                         participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
@@ -126,10 +135,10 @@ export class ExerciseDetailsStudentActionsComponent {
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
                 },
-                (error) => {
+                error: (error) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
-            );
+            });
     }
 
     /**
@@ -139,6 +148,20 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     participationStatusWrapper(): ParticipationStatus {
         return participationStatus(this.exercise);
+    }
+
+    /**
+     * Display the 'open code editor' or 'clone repo' buttons if
+     * - the participation is initialized (build plan exists, no clean up happened), or
+     * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
+     */
+    shouldDisplayIDEButtons(): boolean {
+        const status = participationStatus(this.exercise);
+        return (
+            (status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && !isStartExerciseAvailable(this.exercise))) &&
+            !!this.exercise.studentParticipations &&
+            this.exercise.studentParticipations!.length > 0
+        );
     }
 
     /**

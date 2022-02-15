@@ -2,8 +2,6 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { ChartsModule } from 'ng2-charts';
-import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
@@ -22,6 +20,9 @@ import { OrionCourseExerciseDetailsComponent } from 'app/orion/participation/ori
 import { isOrion } from 'app/shared/orion/orion';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
+import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
 
 const routes: Routes = [
     {
@@ -48,8 +49,6 @@ const routes: Routes = [
         ArtemisCourseExerciseRowModule,
         ArtemisSharedModule,
         ArtemisSharedComponentModule,
-        ChartsModule,
-        ClipboardModule,
         ArtemisSharedPipesModule,
         ArtemisResultModule,
         ArtemisSidePanelModule,
@@ -62,8 +61,9 @@ const routes: Routes = [
         ArtemisProgrammingExerciseInstructionsRenderModule,
         RouterModule.forChild(routes),
         ArtemisMarkdownModule,
+        SubmissionResultStatusModule,
     ],
-    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
+    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
 })
 export class CourseExerciseDetailsModule {}

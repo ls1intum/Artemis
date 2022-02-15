@@ -1,0 +1,77 @@
+version: '2.4'
+services:
+    artemis-mysql:
+        extends:
+            file: ../mysql.yml
+            service: artemis-mysql
+        healthcheck:
+            test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+            interval: 1s
+            timeout: 3s
+            retries: 30
+
+    artemis-app:
+        build:
+            # This is required to copy the Artemis war file properly into the container
+            context: ../../../..
+            dockerfile: src/main/docker/Dockerfile
+        volumes:
+            - ../../resources/config/application-prod.yml:/home/artemis/application-prod.yml:ro
+            - ./application.yml:/home/artemis/application.yml:ro
+        environment:
+            _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
+            JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
+            spring.profiles.active: "prod,bamboo,bitbucket,jira,artemis"
+            spring.datasource.url: "${DATASOURCE_URL}"
+            spring.datasource.username: root
+            spring.datasource.password: ""
+            artemis.user-management.internal-admin.username: "${ADMIN_USERNAME}"
+            artemis.user-management.internal-admin.password: "${ADMIN_PASSWORD}"
+            artemis.user-management.external.url: "${UM_URL}"
+            artemis.user-management.external.user: "${UM_USER}"
+            artemis.user-management.external.password: "${UM_PASSWORD}"
+            artemis.version-control.url: "${SCM_URL}"
+            artemis.version-control.user: "${SCM_USER}"
+            artemis.version-control.password: "${SCM_PASSWORD}"
+            artemis.continuous-integration.url: "${CI_URL}"
+            artemis.continuous-integration.user: "${CI_USER}"
+            artemis.continuous-integration.password: "${CI_PASSWORD}"
+            artemis.continuous-integration.token: "${CI_TOKEN}"
+            artemis.continuous-integration.artemis-authentication-token-value: "${CI_AUTH_TOKEN}"
+            server.url: "${SERVER_URL}"
+            server.port: "${SERVER_PORT}"
+        ports:
+            - ${SERVER_PORT}:${SERVER_PORT}
+        networks:
+            - artemis
+        depends_on:
+            artemis-mysql:
+                condition: service_healthy
+
+    artemis-cypress:
+        # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
+        image: cypress/browsers:node16.5.0-chrome94-ff93
+        depends_on:
+            - artemis-app
+            - artemis-mysql
+        environment:
+            - CYPRESS_baseUrl
+            - CYPRESS_adminUsername
+            - CYPRESS_adminPassword
+            - CYPRESS_username
+            - CYPRESS_password
+            - CYPRESS_allowGroupCustomization
+            - CYPRESS_studentGroupName
+            - CYPRESS_tutorGroupName
+            - CYPRESS_editorGroupName
+            - CYPRESS_instructorGroupName
+        # Wait up to 5 minutes until Artemis has booted
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm exec -- wait-on -i 1000 -t 300000 http://artemis-app:${SERVER_PORT} && npm run cypress:run"
+        volumes:
+            - ../../../../:/app/artemis
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"

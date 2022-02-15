@@ -8,6 +8,7 @@
     </h2>
     <jhi-alert></jhi-alert>
     <jhi-data-table
+        id="registered-students"
         [isLoading]="isLoading"
         [isSearching]="isSearching"
         [searchFailed]="searchFailed"
@@ -102,7 +103,7 @@
                                 (delete)="removeFromGroup(value)"
                                 [dialogError]="dialogError$"
                             >
-                                <fa-icon [icon]="'user-slash'" class="me-1"></fa-icon>
+                                <fa-icon [icon]="faUserSlash" class="me-1"></fa-icon>
                             </button>
                         </div>
                     </ng-template>

@@ -16,9 +16,9 @@
                 "cancel": "Abbrechen",
                 "noCourse": "Keine Kurse für eine Registrierung verfügbar",
                 "courseLoading": "Kurse werden geladen...",
-                "pleaseSelectCourse": "# Wähle einen Kurs aus",
                 "courseSignupConfirmationTitle": "Bestätigung der Kursteilnahme"
-            }
+            },
+            "course": "Kurs"
         },
         "courseOverview": {
             "noDescription": "Keine Beschreibung verfügbar",
@@ -33,11 +33,13 @@
                 "discussion": "Diskussion"
             },
             "exerciseList": {
+                "filter": "Filter ({{ num }})",
                 "releaseDate": "Veröffentlichungsdatum",
                 "dueDate": "Einreichungsfrist",
                 "unreleased": "Keine Unveröffentlichten",
                 "fullScore": "Keine mit voller Punktzahl",
                 "overdue": "Keine Überfälligen",
+                "optional": "Keine Optionalen",
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
                 "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",
@@ -89,6 +91,7 @@
                 "totalScore": "Gesamtpunktzahl",
                 "totalPresentationScore": "Dein gesamtes Präsentationsergebnis: {{ number }}",
                 "presentationScoreBonus": "Benötigtes Präsentationsergebnis für den Bonus: {{ number }}",
+                "hideNotIncludedInScoreExercises": "Keine Optionalen",
                 "exerciseCount": "{{ number }} {{ type }}",
                 "yourPoints": "Deine Punktzahl: {{ number }}",
                 "reachablePoints": "Erreichbare Punktzahl: {{ number }} ({{ relative }}%)",
@@ -112,7 +115,20 @@
                 "bonus": "Aktuelle Bonuspunkte",
                 "gradeInfo": "(basierend auf der erreichbaren Punktzahl)",
                 "gradeHelp": "Die Note basiert auf der von dir erreichbaren Punktzahl. Sie kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
-                "bonusHelp": "Die Bonuspunkte basieren auf der von dir erreichbaren Punktzahl. Sie können sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden."
+                "bonusHelp": "Die Bonuspunkte basieren auf der von dir erreichbaren Punktzahl. Sie können sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",
+                "programmingExerciseFailedTests": "{{ tests }} Tests fehlgeschlagen ({{ percentage }}%)",
+                "programmingExercisePassedTests": "{{ tests }} Tests erfolgreich ({{ percentage }}%)",
+                "programmingPointLabel": "Programmieraufgaben Punkte",
+                "quizPointLabel": "Quizaufgaben Punkte",
+                "modelingPointLabel": "Modellierungsaufgaben Punkte",
+                "textPointLabel": "Textaufgaben Punkte",
+                "fileUploadPointLabel": "Dateiupload-Aufgaben Punkte",
+                "missingPointsLabel": "Fehlende Punkte",
+                "achievedPointsLabel": "Erreichte Punkte",
+                "includeStandardCategories": "Verberge Artemis Standard-Kategorien:",
+                "includeIndividualCategories": "Zeige kurs-spezifische Kategorien:",
+                "includeAllCategories": "Wähle alle Optionen",
+                "exercisesWithNoCategories": "Aufgaben ohne Kategorien"
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",

@@ -4,6 +4,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-exercise-download',
@@ -13,8 +14,8 @@ import { AlertService } from 'app/core/util/alert.service';
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [icon]="'download'"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
+            [icon]="faDownload"
             [title]="'artemisApp.programmingExercise.export.downloadExercise'"
             (onClick)="exportExercise()"
         ></jhi-button>
@@ -27,6 +28,9 @@ export class ProgrammingExerciseInstructorExerciseDownloadComponent {
 
     @Input()
     exerciseId: number;
+
+    // Icons
+    faDownload = faDownload;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
 

@@ -3,9 +3,6 @@ import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
-import { SinonStub, stub } from 'sinon';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockCacheableImageService } from '../../helpers/mocks/service/mock-cacheable-image.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -15,23 +12,20 @@ import { CacheableImageService } from 'app/shared/image/cacheable-image.service'
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('SecuredImageComponent', () => {
     let comp: SecuredImageComponent;
     let fixture: ComponentFixture<SecuredImageComponent>;
     let debugElement: DebugElement;
     let cacheableImageService: CacheableImageService;
 
-    let loadCachedLocalStorageStub: SinonStub;
-    let loadCachedSessionStorageStub: SinonStub;
-    let loadWithoutCacheStub: SinonStub;
+    let loadCachedLocalStorageStub: jest.SpyInstance;
+    let loadCachedSessionStorageStub: jest.SpyInstance;
+    let loadWithoutCacheStub: jest.SpyInstance;
 
     // @ts-ignore
     global.URL.createObjectURL = jest.fn();
 
-    let endLoadingProcessStub: SinonStub;
+    let endLoadingProcessStub: jest.SpyInstance;
 
     const src = 'this/is/a/fake/url';
     const base64String =
@@ -54,24 +48,24 @@ describe('SecuredImageComponent', () => {
 
                 cacheableImageService = debugElement.injector.get(CacheableImageService);
 
-                loadCachedLocalStorageStub = stub(cacheableImageService, 'loadCachedLocalStorage');
-                loadCachedSessionStorageStub = stub(cacheableImageService, 'loadCachedSessionStorage');
-                loadWithoutCacheStub = stub(cacheableImageService, 'loadWithoutCache');
+                loadCachedLocalStorageStub = jest.spyOn(cacheableImageService, 'loadCachedLocalStorage');
+                loadCachedSessionStorageStub = jest.spyOn(cacheableImageService, 'loadCachedSessionStorage');
+                loadWithoutCacheStub = jest.spyOn(cacheableImageService, 'loadWithoutCache');
 
-                endLoadingProcessStub = stub(comp.endLoadingProcess, 'emit');
+                endLoadingProcessStub = jest.spyOn(comp.endLoadingProcess, 'emit');
             });
     });
 
     afterEach(() => {
-        loadCachedSessionStorageStub.restore();
-        loadCachedLocalStorageStub.restore();
-        loadWithoutCacheStub.restore();
-        endLoadingProcessStub.restore();
+        loadCachedSessionStorageStub.mockRestore();
+        loadCachedLocalStorageStub.mockRestore();
+        loadWithoutCacheStub.mockRestore();
+        endLoadingProcessStub.mockRestore();
     });
 
     it('should not use cache if cache strategy is set to none', () => {
         comp.cachingStrategy = CachingStrategy.NONE;
-        loadWithoutCacheStub.returns(of(base64String));
+        loadWithoutCacheStub.mockReturnValue(of(base64String));
 
         // @ts-ignore
         comp.src = src;
@@ -79,15 +73,15 @@ describe('SecuredImageComponent', () => {
         triggerChanges(comp);
         fixture.detectChanges();
 
-        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
-        expect(loadWithoutCacheStub).to.have.been.calledOnceWithExactly(src);
-        expect(loadCachedSessionStorageStub).not.to.have.been.called;
-        expect(loadCachedLocalStorageStub).not.to.have.been.called;
+        expect(endLoadingProcessStub).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
+        expect(loadWithoutCacheStub).toHaveBeenCalledWith(src);
+        expect(loadCachedSessionStorageStub).not.toHaveBeenCalled();
+        expect(loadCachedLocalStorageStub).not.toHaveBeenCalled();
     });
 
     it('should use the local storage as a cache if selected as the storage strategy', () => {
         comp.cachingStrategy = CachingStrategy.LOCAL_STORAGE;
-        loadCachedLocalStorageStub.returns(of(base64String));
+        loadCachedLocalStorageStub.mockReturnValue(of(base64String));
 
         // @ts-ignore
         comp.src = src;
@@ -95,15 +89,15 @@ describe('SecuredImageComponent', () => {
         triggerChanges(comp);
         fixture.detectChanges();
 
-        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
-        expect(loadWithoutCacheStub).not.to.have.been.called;
-        expect(loadCachedSessionStorageStub).not.to.have.been.called;
-        expect(loadCachedLocalStorageStub).to.have.been.calledOnceWithExactly(src);
+        expect(endLoadingProcessStub).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
+        expect(loadWithoutCacheStub).not.toHaveBeenCalled();
+        expect(loadCachedSessionStorageStub).not.toHaveBeenCalled();
+        expect(loadCachedLocalStorageStub).toHaveBeenCalledWith(src);
     });
 
     it('should use the session storage as a cache if selected as the storage strategy', () => {
         comp.cachingStrategy = CachingStrategy.SESSION_STORAGE;
-        loadCachedSessionStorageStub.returns(of(base64String));
+        loadCachedSessionStorageStub.mockReturnValue(of(base64String));
 
         // @ts-ignore
         comp.src = src;
@@ -111,14 +105,14 @@ describe('SecuredImageComponent', () => {
         triggerChanges(comp);
         fixture.detectChanges();
 
-        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
-        expect(loadWithoutCacheStub).not.to.have.been.called;
-        expect(loadCachedSessionStorageStub).to.have.been.calledOnceWithExactly(src);
-        expect(loadCachedLocalStorageStub).not.to.have.been.called;
+        expect(endLoadingProcessStub).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
+        expect(loadWithoutCacheStub).not.toHaveBeenCalled();
+        expect(loadCachedSessionStorageStub).toHaveBeenCalledWith(src);
+        expect(loadCachedLocalStorageStub).not.toHaveBeenCalled();
     });
 
     it('should use the session storage as a cache as the default storage strategy', () => {
-        loadCachedSessionStorageStub.returns(of(base64String));
+        loadCachedSessionStorageStub.mockReturnValue(of(base64String));
 
         // @ts-ignore
         comp.src = src;
@@ -126,9 +120,9 @@ describe('SecuredImageComponent', () => {
         triggerChanges(comp);
         fixture.detectChanges();
 
-        expect(endLoadingProcessStub).to.have.been.calledOnceWithExactly(ImageLoadingStatus.SUCCESS);
-        expect(loadWithoutCacheStub).not.to.have.been.called;
-        expect(loadCachedSessionStorageStub).to.have.been.calledOnceWithExactly(src);
-        expect(loadCachedLocalStorageStub).not.to.have.been.called;
+        expect(endLoadingProcessStub).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
+        expect(loadWithoutCacheStub).not.toHaveBeenCalled();
+        expect(loadCachedSessionStorageStub).toHaveBeenCalledWith(src);
+        expect(loadCachedLocalStorageStub).not.toHaveBeenCalled();
     });
 });

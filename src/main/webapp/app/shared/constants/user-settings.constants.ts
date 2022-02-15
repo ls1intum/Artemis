@@ -14,6 +14,7 @@ export enum SettingId {
     NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST = 'notification.course-wide-discussion.new-announcement-post',
 
     // exercise notification setting group
+    NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED = 'notification.exercise-notification.exercise-submission-assessed',
     NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED = 'notification.exercise-notification.exercise-released',
     NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE = 'notification.exercise-notification.exercise-open-for-practice',
     NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL = 'notification.exercise-notification.file-submission-successful',
@@ -27,6 +28,7 @@ export enum SettingId {
 
     // editor notification setting group
     NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED = 'notification.editor-notification.programming-test-cases-changed',
+
     // instructor notification setting group
     NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED = 'notification.instructor-notification.course-and-exam-archiving-started',
 }

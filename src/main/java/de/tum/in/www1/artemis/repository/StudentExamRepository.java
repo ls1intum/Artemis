@@ -209,7 +209,12 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             }
             return studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
         }
-        return exercise.getDueDate();
+        else if (participation.getIndividualDueDate() != null) {
+            return participation.getIndividualDueDate();
+        }
+        else {
+            return exercise.getDueDate();
+        }
     }
 
     /**

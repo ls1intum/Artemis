@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { partition } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
@@ -22,10 +21,12 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-courses',
     templateUrl: './assessment-dashboard.component.html',
+    styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
 })
 export class AssessmentDashboardComponent implements OnInit {
@@ -36,9 +37,8 @@ export class AssessmentDashboardComponent implements OnInit {
     courseId: number;
     examId: number;
     exerciseGroupId: number;
-    unfinishedExercises: Exercise[] = [];
-    finishedExercises: Exercise[] = [];
-    exercises: Exercise[] = [];
+    allExercises: Exercise[] = [];
+    currentlyShownExercises: Exercise[] = [];
     numberOfSubmissions = new DueDateStat();
     totalNumberOfAssessments = new DueDateStat();
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
@@ -51,7 +51,8 @@ export class AssessmentDashboardComponent implements OnInit {
     ratings = new AssessmentDashboardInformationEntry(0, 0);
 
     totalAssessmentPercentage = 0;
-    showFinishedExercises = false;
+    hideFinishedExercises = true;
+    hideOptional = false;
 
     stats = new StatsForDashboard();
 
@@ -69,6 +70,9 @@ export class AssessmentDashboardComponent implements OnInit {
     toggelingSecondCorrectionButton = false;
 
     tutorIssues: TutorIssue[] = [];
+
+    // Icons
+    faSort = faSort;
 
     constructor(
         private courseService: CourseManagementService,
@@ -90,7 +94,6 @@ export class AssessmentDashboardComponent implements OnInit {
         this.isExamMode = !!this.examId;
         if (this.isExamMode) {
             this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
-            this.showFinishedExercises = this.isTestRun;
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
         this.loadAll();
@@ -103,7 +106,7 @@ export class AssessmentDashboardComponent implements OnInit {
      */
     loadAll() {
         if (this.isExamMode) {
-            this.showFinishedExercises = true;
+            this.hideFinishedExercises = false;
             this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId, this.examId, this.isTestRun).subscribe((res: HttpResponse<Exam>) => {
                 this.exam = res.body!;
                 this.course = Course.from(this.exam.course!);
@@ -116,7 +119,6 @@ export class AssessmentDashboardComponent implements OnInit {
 
                 // get all exercises
                 const exercises: Exercise[] = [];
-                // eslint-disable-next-line chai-friendly/no-unused-expressions
                 this.exam.exerciseGroups!.forEach((exerciseGroup) => {
                     if (exerciseGroup.exercises) {
                         exercises.push(...exerciseGroup.exercises);
@@ -130,8 +132,8 @@ export class AssessmentDashboardComponent implements OnInit {
 
                 this.extractExercises(exercises);
             });
-            this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId, this.examId).subscribe(
-                (res: HttpResponse<StatsForDashboard>) => {
+            this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId, this.examId).subscribe({
+                next: (res: HttpResponse<StatsForDashboard>) => {
                     this.stats = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.stats.numberOfSubmissions;
                     this.numberOfAssessmentsOfCorrectionRounds = this.stats.numberOfAssessmentsOfCorrectionRounds;
@@ -166,19 +168,19 @@ export class AssessmentDashboardComponent implements OnInit {
                     }
                     this.computeIssuesWithTutorPerformance();
                 },
-                (response: string) => this.onError(response),
-            );
+                error: (response: string) => this.onError(response),
+            });
         } else {
-            this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe(
-                (res: HttpResponse<Course>) => {
+            this.courseService.getCourseWithInterestingExercisesForTutors(this.courseId).subscribe({
+                next: (res: HttpResponse<Course>) => {
                     this.course = Course.from(res.body!);
                     this.extractExercises(this.course.exercises);
                 },
-                (response: string) => this.onError(response),
-            );
+                error: (response: string) => this.onError(response),
+            });
 
-            this.courseService.getStatsForTutors(this.courseId).subscribe(
-                (res: HttpResponse<StatsForDashboard>) => {
+            this.courseService.getStatsForTutors(this.courseId).subscribe({
+                next: (res: HttpResponse<StatsForDashboard>) => {
                     this.stats = StatsForDashboard.from(res.body!);
                     this.numberOfSubmissions = this.stats.numberOfSubmissions;
                     this.totalNumberOfAssessments = this.stats.totalNumberOfAssessments;
@@ -223,8 +225,8 @@ export class AssessmentDashboardComponent implements OnInit {
                     this.guidedTourService.componentPageLoaded();
                     this.computeIssuesWithTutorPerformance();
                 },
-                (response: string) => this.onError(response),
-            );
+                error: (response: string) => this.onError(response),
+            });
         }
     }
 
@@ -296,39 +298,53 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     /**
-     * devides exercises into finished and unfinished exercises.
+     * divides exercises into finished and unfinished exercises.
      *
      * @param exercises - the exercises that should get filtered
      * @private
      */
     private extractExercises(exercises?: Exercise[]) {
         if (exercises && exercises.length > 0) {
-            const [finishedExercises, unfinishedExercises] = partition(
-                exercises,
-                (exercise) =>
-                    // finds if all assessments for all correctionRounds are finished
-                    ((exercise.numberOfAssessmentsOfCorrectionRounds
-                        ?.map((round) => round.inTime === exercise.numberOfSubmissions?.inTime)
-                        .reduce((acc, current) => acc && current) &&
-                        exercise.totalNumberOfAssessments?.inTime === exercise.numberOfSubmissions?.inTime) ||
-                        exercise.allowComplaintsForAutomaticAssessments) &&
-                    exercise.numberOfOpenComplaints === 0 &&
-                    exercise.numberOfOpenMoreFeedbackRequests === 0,
-            );
-            this.finishedExercises = finishedExercises;
-            this.unfinishedExercises = unfinishedExercises;
+            this.allExercises = exercises;
+            this.currentlyShownExercises = this.getUnfinishedExercises(exercises);
             // sort exercises by type to get a better overview in the dashboard
-            this.sortService.sortByProperty(this.unfinishedExercises, 'type', true);
+            this.sortService.sortByProperty(this.currentlyShownExercises, 'type', true);
             this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
             this.updateExercises();
         }
+    }
+
+    private getUnfinishedExercises(exercises?: Exercise[]) {
+        const filteredExercises = exercises?.filter(
+            (exercise) =>
+                (!exercise.allowComplaintsForAutomaticAssessments && this.hasUnfinishedAssessments(exercise)) ||
+                exercise.numberOfOpenComplaints !== 0 ||
+                exercise.numberOfOpenMoreFeedbackRequests !== 0,
+        );
+
+        return filteredExercises ? filteredExercises : [];
+    }
+
+    private hasUnfinishedAssessments(exercise: Exercise): boolean {
+        return (
+            exercise.numberOfAssessmentsOfCorrectionRounds?.map((round) => round.inTime !== exercise.numberOfSubmissions?.inTime).reduce((acc, cur) => acc || cur) ||
+            exercise.totalNumberOfAssessments?.inTime !== exercise.numberOfSubmissions?.inTime
+        );
     }
 
     /**
      * Toggle the option to show finished exercises.
      */
     triggerFinishedExercises() {
-        this.showFinishedExercises = !this.showFinishedExercises;
+        this.hideFinishedExercises = !this.hideFinishedExercises;
+        this.updateExercises();
+    }
+
+    /**
+     * Toggle the option to hide optional exercises.
+     */
+    triggerOptionalExercises() {
+        this.hideOptional = !this.hideOptional;
         this.updateExercises();
     }
 
@@ -336,10 +352,9 @@ export class AssessmentDashboardComponent implements OnInit {
      * update the exercise array based on the option show finished exercises
      */
     updateExercises() {
-        if (this.showFinishedExercises) {
-            this.exercises = this.unfinishedExercises.concat(this.finishedExercises);
-        } else {
-            this.exercises = this.unfinishedExercises;
+        this.currentlyShownExercises = this.hideFinishedExercises ? this.getUnfinishedExercises(this.allExercises) : this.allExercises;
+        if (this.hideOptional) {
+            this.currentlyShownExercises = this.currentlyShownExercises.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
         }
     }
 
@@ -352,23 +367,23 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.exercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
+        this.sortService.sortByProperty(this.currentlyShownExercises, this.exercisesSortingPredicate, this.exercisesReverseOrder);
     }
 
     toggleSecondCorrection(exerciseId: number) {
         this.toggelingSecondCorrectionButton = true;
-        const currentExercise = this.exercises.find((exercise) => exercise.id === exerciseId)!;
-        const index = this.exercises.indexOf(currentExercise);
-        this.exerciseService.toggleSecondCorrection(exerciseId).subscribe(
-            (res: Boolean) => {
-                this.exercises[index].secondCorrectionEnabled = !this.exercises[index].secondCorrectionEnabled;
+        const currentExercise = this.currentlyShownExercises.find((exercise) => exercise.id === exerciseId)!;
+        const index = this.currentlyShownExercises.indexOf(currentExercise);
+        this.exerciseService.toggleSecondCorrection(exerciseId).subscribe({
+            next: (res: Boolean) => {
+                this.currentlyShownExercises[index].secondCorrectionEnabled = !this.currentlyShownExercises[index].secondCorrectionEnabled;
                 currentExercise!.secondCorrectionEnabled = res as boolean;
                 this.toggelingSecondCorrectionButton = false;
             },
-            (err: string) => {
+            error: (err: string) => {
                 this.onError(err);
             },
-        );
+        });
     }
 
     getAssessmentDashboardLinkForExercise(exercise: Exercise): string[] {

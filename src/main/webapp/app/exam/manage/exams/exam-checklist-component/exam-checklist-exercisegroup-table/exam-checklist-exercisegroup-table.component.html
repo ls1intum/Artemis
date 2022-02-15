@@ -40,14 +40,14 @@
                     <fa-icon
                         *ngIf="!column.noExercises && !column.exerciseGroupPointsEqual"
                         ngbTooltip="Exercises within this group do not have the same number of maximum points!"
-                        [icon]="'exclamation-triangle'"
+                        [icon]="faExclamationTriangle"
                         style="color: rgba(255, 193, 7, 0.6)"
                         class="warning"
                     ></fa-icon>
                     <fa-icon
                         *ngIf="column.noExercises"
                         ngbTooltip="This exercise group does not contain any exercises!"
-                        [icon]="'exclamation-triangle'"
+                        [icon]="faExclamationTriangle"
                         style="color: rgba(255, 193, 7, 0.6)"
                         class="warning"
                     ></fa-icon>

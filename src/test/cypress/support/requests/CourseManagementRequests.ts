@@ -1,19 +1,25 @@
+import { Participation } from 'app/entities/participation/participation.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Exam } from 'app/entities/exam.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Course } from 'app/entities/course.model';
 import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
-import courseTemplate from '../../fixtures/requests/course.json';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';
-import day from 'dayjs';
+import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
-import exerciseGroup from '../../fixtures/requests/exerciseGroup_template.json';
 import assessment_submission from '../../fixtures/programming_exercise_submissions/assessment/submission.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
 import multipleChoiceSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceSubmission_template.json';
 import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures/shortAnswerSubmission_template.json';
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
 import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
@@ -29,13 +35,13 @@ export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 export class CourseManagementRequests {
     /**
      * Deletes the course with the specified id.
-     * @param id the course id
+     * @param courseId the course id
      * @returns <Chainable> request response
      */
-    deleteCourse(id: number) {
+    deleteCourse(courseId: number) {
         // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
         cy.wait(100);
-        return cy.request({ method: DELETE, url: COURSE_BASE + id });
+        return cy.request({ method: DELETE, url: COURSE_BASE + courseId });
     }
 
     /**
@@ -43,35 +49,36 @@ export class CourseManagementRequests {
      * @param customizeGroups whether the predefined groups should be used (so we dont have to wait more than a minute between course and programming exercise creation)
      * @param courseName the title of the course (will generate default name if not provided)
      * @param courseShortName the short name (will generate default name if not provided)
+     * @param start the start date of the course (default: now() - 2 hours)
+     * @param end the end date of the course (default: now() + 2 hours)
      * @returns <Chainable> request response
      */
-    createCourse(customizeGroups = false, courseName = 'Cypress course' + generateUUID(), courseShortName = 'cypress' + generateUUID()) {
-        let course = { ...courseTemplate, title: courseName, shortName: courseShortName };
+    createCourse(
+        customizeGroups = false,
+        courseName = 'Cypress course' + generateUUID(),
+        courseShortName = 'cypress' + generateUUID(),
+        start = day().subtract(2, 'hours'),
+        end = day().add(2, 'hours'),
+    ): Cypress.Chainable<Cypress.Response<Course>> {
+        const course = new Course();
+        course.title = courseName;
+        course.shortName = courseShortName;
+        course.testCourse = true;
+        course.startDate = start;
+        course.endDate = end;
+
         const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
         if (customizeGroups && allowGroupCustomization) {
-            course = {
-                ...course,
-                customizeGroupNames: true,
-                studentGroupName: Cypress.env('studentGroupName'),
-                teachingAssistantGroupName: Cypress.env('tutorGroupName'),
-                editorGroupName: Cypress.env('editorGroupName'),
-                instructorGroupName: Cypress.env('instructorGroupName'),
-            };
+            course.studentGroupName = Cypress.env('studentGroupName');
+            course.teachingAssistantGroupName = Cypress.env('tutorGroupName');
+            course.editorGroupName = Cypress.env('editorGroupName');
+            course.instructorGroupName = Cypress.env('instructorGroupName');
         }
         return cy.request({
             url: BASE_API + 'courses',
             method: POST,
             body: course,
         });
-    }
-
-    /**
-     * Deletes the programming exercise with the specified id.
-     * @param id the exercise id
-     * @returns <Chainable> request response
-     */
-    deleteProgrammingExercise(id: number) {
-        return cy.request({ method: DELETE, url: PROGRAMMING_EXERCISE_BASE + id + '?deleteStudentReposBuildPlans=true&deleteBaseReposBuildPlans=true' });
     }
 
     /**
@@ -88,7 +95,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     createProgrammingExercise(
-        body: { course: any } | { exerciseGroup: any },
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
         scaMaxPenalty?: number,
         releaseDate = day(),
         dueDate = day().add(1, 'day'),
@@ -97,7 +104,7 @@ export class CourseManagementRequests {
         packageName = 'de.test',
         assessmentDate = day().add(2, 'days'),
         assessmentType = CypressAssessmentType.AUTOMATIC,
-    ) {
+    ): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
         const template = {
             ...programmingExerciseTemplate,
             title,
@@ -105,12 +112,12 @@ export class CourseManagementRequests {
             packageName,
             assessmentType: CypressAssessmentType[assessmentType],
         };
-        const exercise: any = Object.assign({}, template, body);
+        const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         if (!isExamExercise) {
-            exercise.releaseDate = dayjsToString(releaseDate);
-            exercise.dueDate = dayjsToString(dueDate);
-            exercise.assessmentDueDate = dayjsToString(assessmentDate);
+            exercise.releaseDate = releaseDate;
+            exercise.dueDate = dueDate;
+            exercise.assessmentDueDate = assessmentDate;
         }
 
         if (scaMaxPenalty) {
@@ -138,22 +145,12 @@ export class CourseManagementRequests {
         });
     }
 
-    updateProgrammingExerciseDueDate(exercise: any, due = day()) {
-        exercise.dueDate = dayjsToString(due);
-        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
-    }
-
-    updateProgrammingExerciseAssessmentDueDate(exercise: any, due = day()) {
-        exercise.assessmentDueDate = dayjsToString(due);
-        return this.updateExercise(exercise, CypressExerciseType.PROGRAMMING);
-    }
-
-    updateModelingExerciseDueDate(exercise: any, due = day()) {
-        exercise.dueDate = dayjsToString(due);
+    updateModelingExerciseDueDate(exercise: ModelingExercise, due = day()) {
+        exercise.dueDate = due;
         return this.updateExercise(exercise, CypressExerciseType.MODELING);
     }
 
-    private updateExercise(exercise: any, type: CypressExerciseType) {
+    private updateExercise(exercise: Exercise, type: CypressExerciseType) {
         let url: string;
         switch (type) {
             case CypressExerciseType.PROGRAMMING:
@@ -189,8 +186,8 @@ export class CourseManagementRequests {
     /**
      * Adds the specified user to the tutor group in the course
      */
-    addTutorToCourse(course: any, user: CypressCredentials) {
-        return this.addUserToCourse(course.id, user.username, 'tutors');
+    addTutorToCourse(course: Course, user: CypressCredentials) {
+        return this.addUserToCourse(course.id!, user.username, 'tutors');
     }
 
     /**
@@ -209,44 +206,45 @@ export class CourseManagementRequests {
      * @param exam the exam object created by a {@link CypressExamBuilder}
      * @returns <Chainable> request response
      */
-    createExam(exam: any) {
-        return cy.request({ url: COURSE_BASE + exam.course.id + '/exams', method: POST, body: exam });
+    createExam(exam: Exam) {
+        return cy.request({ url: COURSE_BASE + exam.course!.id + '/exams', method: POST, body: exam });
     }
 
     /**
      * Deletes the exam with the given parameters
      * @returns <Chainable> request response
      * */
-    deleteExam(exam: any) {
-        return cy.request({ method: DELETE, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id });
+    deleteExam(exam: Exam) {
+        return cy.request({ method: DELETE, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id });
     }
 
     /**
      * register the student for the exam
      * @returns <Chainable> request response
      */
-    registerStudentForExam(exam: any, student: CypressCredentials) {
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/students/' + student.username });
+    registerStudentForExam(exam: Exam, student: CypressCredentials) {
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/students/' + student.username });
     }
 
     /**
      * add exercise group to exam
      * @returns <Chainable> request response
      * */
-    addExerciseGroupForExam(exam: any, title = 'group' + generateUUID(), mandatory = true) {
+    addExerciseGroupForExam(exam: Exam, title = 'group' + generateUUID(), mandatory = true) {
+        const exerciseGroup = new ExerciseGroup();
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
     }
 
     /**
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      */
-    createTextExercise(body: { course: any } | { exerciseGroup: any }, title = 'Text exercise ' + generateUUID()) {
-        const template: any = { ...textExerciseTemplate, title };
-        const textExercise: any = Object.assign({}, template, body);
+    createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text exercise ' + generateUUID()) {
+        const template = { ...textExerciseTemplate, title };
+        const textExercise = Object.assign({}, template, body);
         return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
     }
 
@@ -254,25 +252,25 @@ export class CourseManagementRequests {
      * generate all missing individual exams
      * @returns <Chainable> request response
      */
-    generateMissingIndividualExams(exam: any) {
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/generate-missing-student-exams' });
+    generateMissingIndividualExams(exam: Exam) {
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/generate-missing-student-exams' });
     }
 
     /**
      * Prepares individual exercises for exam start
      * @returns <Chainable> request response
      */
-    prepareExerciseStartForExam(exam: any) {
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
+    prepareExerciseStartForExam(exam: Exam) {
+        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
     createModelingExercise(
-        body: { course: any } | { exerciseGroup: any },
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
         title = 'Cypress modeling exercise ' + generateUUID(),
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
         assessmentDueDate = day().add(2, 'days'),
-    ) {
+    ): Cypress.Chainable<Cypress.Response<ModelingExercise>> {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
@@ -295,8 +293,8 @@ export class CourseManagementRequests {
         });
     }
 
-    updateModelingExerciseAssessmentDueDate(exercise: any, due = day()) {
-        exercise.assessmentDueDate = dayjsToString(due);
+    updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = day()) {
+        exercise.assessmentDueDate = due;
         return this.updateExercise(exercise, CypressExerciseType.MODELING);
     }
 
@@ -307,13 +305,13 @@ export class CourseManagementRequests {
         });
     }
 
-    makeModelingExerciseSubmission(exerciseID: number, participation: any) {
+    makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
         return cy.request({
             url: `${EXERCISE_BASE}${exerciseID}/modeling-submissions`,
             method: PUT,
             body: {
                 ...modelingExerciseSubmissionTemplate,
-                id: participation.submissions[0].id,
+                id: participation.submissions![0].id,
                 participation,
             },
         });
@@ -336,7 +334,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     createQuizExercise(
-        body: { course: any } | { exerciseGroup: any },
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
         quizQuestions: [any],
         title = 'Cypress quiz exercise' + generateUUID(),
         releaseDate = day(),
@@ -378,9 +376,9 @@ export class CourseManagementRequests {
         });
     }
 
-    evaluateExamQuizzes(exam: any) {
+    evaluateExamQuizzes(exam: Exam) {
         return cy.request({
-            url: `${COURSE_BASE}${exam.course.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
+            url: `${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
             method: POST,
         });
     }
@@ -402,8 +400,8 @@ export class CourseManagementRequests {
         const submittedAnswers = [
             {
                 ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
-                quizQuestion: quizExercise.quizQuestions[0],
-                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
+                quizQuestion: quizExercise.quizQuestions![0],
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option].body),
             },
         ];
         const multipleChoiceSubmission = {
@@ -426,7 +424,12 @@ export class CourseManagementRequests {
         const submittedTexts = textAnswers.map((answer, index) => {
             return {
                 text: answer,
-                spot: quizExercise.quizQuestions[0].spots[index],
+                spot: {
+                    id: quizExercise.quizQuestions[0].spots[index].id,
+                    spotNr: quizExercise.quizQuestions[0].spots[index].spotNr,
+                    width: quizExercise.quizQuestions[0].spots[index].width,
+                    invalid: quizExercise.quizQuestions[0].spots[index].invalid,
+                },
             };
         });
         const submittedAnswers = [
@@ -454,20 +457,20 @@ export class CourseManagementRequests {
         });
     }
 
-    startExerciseParticipation(courseId: number, exerciseId: number) {
+    startExerciseParticipation(exerciseId: number) {
         return cy.request({
-            url: `${COURSE_BASE}${courseId}/exercises/${exerciseId}/participations`,
+            url: EXERCISE_BASE + exerciseId + '/participations',
             method: POST,
         });
     }
 
-    updateTextExerciseDueDate(exercise: any, due = day()) {
-        exercise.dueDate = dayjsToString(due);
+    updateTextExerciseDueDate(exercise: TextExercise, due = day()) {
+        exercise.dueDate = due;
         return this.updateExercise(exercise, CypressExerciseType.TEXT);
     }
 
-    updateTextExerciseAssessmentDueDate(exercise: any, due = day()) {
-        exercise.assessmentDueDate = dayjsToString(due);
+    updateTextExerciseAssessmentDueDate(exercise: TextExercise, due = day()) {
+        exercise.assessmentDueDate = due;
         return this.updateExercise(exercise, CypressExerciseType.TEXT);
     }
 
@@ -478,7 +481,7 @@ export class CourseManagementRequests {
         });
     }
 
-    createLecture(course: any, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
+    createLecture(course: Course, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
         const lecture = {
             ...lectureTemplate,
             course,

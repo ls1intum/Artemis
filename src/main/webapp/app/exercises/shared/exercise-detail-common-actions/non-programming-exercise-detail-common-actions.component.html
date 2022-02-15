@@ -2,41 +2,41 @@
     <div>
         <!-- Edit -->
         <a *ngIf="exercise.isAtLeastEditor" [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
         </a>
 
         <!-- Participations  -->
         <a *ngIf="course" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
         </a>
 
         <!-- Teams -->
         <a *ngIf="exercise.teamMode && exercise.isAtLeastTutor" [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'users'"></fa-icon>
+            <fa-icon [icon]="faUsers"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
         </a>
 
         <!-- Exercise Dashboard -->
         <a [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'list-alt'"></fa-icon>
+            <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
         </a>
 
         <!-- Scores -->
-        <a *ngIf="course && exercise.isAtLeastInstructor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'table'"></fa-icon>
+        <a *ngIf="course && exercise.isAtLeastTutor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
+            <fa-icon [icon]="faTable"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
         </a>
 
         <!--Statistics -->
         <a *ngIf="exercise.isAtLeastTutor && course" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="'chart-bar'"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+            <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
         </a>
 
         <!--Submissions -->
         <a *ngIf="exercise.isAtLeastInstructor && course" [routerLink]="baseResource + 'submissions'" class="btn btn-success btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+            <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
         </a>
 
@@ -47,7 +47,7 @@
             class="btn btn-success btn-sm me-1"
             style="margin-bottom: 10px"
         >
-            <fa-icon [icon]="'book'"></fa-icon>
+            <fa-icon [icon]="faBook"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
         </a>
 
@@ -57,7 +57,7 @@
             [routerLink]="baseResource + 'tutor-effort-statistics'"
             class="btn btn-success btn-sm me-1 mb-2"
         >
-            <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <fa-icon [icon]="faChartBar"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</span>
         </a>
 
@@ -67,7 +67,7 @@
             [routerLink]="baseResource + 'text-cluster-statistics'"
             class="btn btn-success btn-sm me-1 mb-2"
         >
-            <fa-icon [icon]="'chart-bar'"></fa-icon>
+            <fa-icon [icon]="faChartBar"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.clusterStatistics.title">Cluster Statistics</span>
         </a>
 
@@ -83,7 +83,7 @@
             (delete)="deleteExercise()"
             [dialogError]="dialogError$"
         >
-            <fa-icon [icon]="'times'"></fa-icon>
+            <fa-icon [icon]="faTimes"></fa-icon>
         </button>
     </div>
 

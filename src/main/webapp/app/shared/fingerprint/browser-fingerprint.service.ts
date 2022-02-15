@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { LocalStorageService } from 'ngx-webstorage';
-import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
 import { v4 as uuid } from 'uuid';
 
 @Injectable({ providedIn: 'root' })
@@ -17,8 +17,8 @@ export class BrowserFingerprintService {
     }
 
     private setFingerprint(): void {
-        FingerprintJS.load().then((fp: { get: () => Promise<any> }) => {
-            fp.get().then((result) => {
+        FingerprintJS.load().then((fingerprint: { get: () => Promise<GetResult> }) => {
+            fingerprint.get().then((result) => {
                 const visitorId = result.visitorId;
                 this.fingerprint.next(visitorId);
             });

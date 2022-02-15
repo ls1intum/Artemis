@@ -15,6 +15,8 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { MockProvider } from 'ng-mocks';
+import { ChangeDetectorRef } from '@angular/core';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -45,6 +47,7 @@ describe('QuizExercise Statistic Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(QuizStatisticComponent, '')
@@ -65,7 +68,7 @@ describe('QuizExercise Statistic Component', () => {
         quizServiceFindSpy.mockClear();
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         let loadQuizSuccessSpy: jest.SpyInstance;
         let loadDataSpy: jest.SpyInstance;
 
@@ -73,8 +76,8 @@ describe('QuizExercise Statistic Component', () => {
             loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
             loadDataSpy = jest.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5 },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6 },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;
@@ -114,23 +117,20 @@ describe('QuizExercise Statistic Component', () => {
         }));
     });
 
-    describe('loadQuizSuccess', function () {
-        let calculateMaxScoreSpy: jest.SpyInstance;
+    describe('loadQuizSuccess', () => {
         let loadDataSpy: jest.SpyInstance;
 
         beforeEach(() => {
-            calculateMaxScoreSpy = jest.spyOn(comp, 'calculateMaxScore').mockReturnValue(32);
             loadDataSpy = jest.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5 },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6 },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;
         });
 
         afterEach(() => {
-            calculateMaxScoreSpy.mockClear();
             loadDataSpy.mockClear();
         });
 
@@ -143,8 +143,7 @@ describe('QuizExercise Statistic Component', () => {
 
             // check
             expect(comp.quizExercise).toBe(quizExercise);
-            expect(calculateMaxScoreSpy).toHaveBeenCalled();
-            expect(comp.maxScore).toEqual(32);
+            expect(comp.maxScore).toEqual(11);
             expect(loadDataSpy).toHaveBeenCalled();
         });
 
@@ -161,17 +160,22 @@ describe('QuizExercise Statistic Component', () => {
         });
     });
 
-    describe('calculateMaxScore', function () {
+    describe('calculateMaxScore', () => {
         it('should return MaxScore by looping over scores', () => {
             // setup
-            quizExercise.quizQuestions = [{ points: 1 }, { points: 2 }];
+            quizExercise.quizQuestions = [
+                { points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
+            ];
             comp.quizExercise = quizExercise;
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            jest.spyOn(comp, 'loadData').mockImplementation();
 
             // call
-            const result = comp.calculateMaxScore();
+            comp.loadQuizSuccess(quizExercise);
 
             // check
-            expect(result).toBe(3);
+            expect(comp.maxScore).toBe(3);
         });
 
         it('should return MaxScore be using quizExercise.maxScore', () => {
@@ -179,20 +183,22 @@ describe('QuizExercise Statistic Component', () => {
             quizExercise.quizQuestions = undefined;
             quizExercise.maxPoints = 42;
             comp.quizExercise = quizExercise;
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            jest.spyOn(comp, 'loadData').mockImplementation();
 
             // call
-            const result = comp.calculateMaxScore();
+            comp.loadQuizSuccess(quizExercise);
 
             // check
-            expect(result).toBe(42);
+            expect(comp.maxScore).toBe(42);
         });
     });
 
-    describe('loadData', function () {
+    describe('loadData', () => {
         beforeEach(() => {
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5 },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6 },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;
@@ -200,7 +206,7 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should use values of quizExercise and rated data', () => {
             // setup
-            const updateChartSpy = jest.spyOn(comp, 'updateChart');
+            const updateChartSpy = jest.spyOn(comp, 'loadDataInDiagram');
             comp.rated = true;
             comp.maxScore = 1;
 
@@ -230,7 +236,7 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should use defaults if no quizQuestions are not set', () => {
             // setup
-            const updateChartSpy = jest.spyOn(comp, 'updateChart');
+            const updateChartSpy = jest.spyOn(comp, 'loadDataInDiagram');
             quizExercise.quizQuestions = [];
             comp.rated = true;
             comp.maxScore = 1;

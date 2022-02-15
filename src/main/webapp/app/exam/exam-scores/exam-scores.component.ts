@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { forkJoin, Subscription, of } from 'rxjs';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExportToCsv } from 'export-to-csv';
 import {
@@ -13,15 +13,12 @@ import {
     ExerciseGroup,
     StudentResult,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ChartDataSets, ChartOptions, ChartType, defaults, helpers, LinearTickOptions } from 'chart.js';
-import { BaseChartDirective, Label } from 'ng2-charts';
-import { DataSet } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { captureException } from '@sentry/browser';
@@ -30,13 +27,26 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation, sum } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
+import { ScaleType, Color } from '@swimlane/ngx-charts';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { GraphColors } from 'app/entities/statistics.model';
+import { GradeStep } from 'app/entities/grade-step.model';
+
+export enum MedianType {
+    PASSED,
+    OVERALL,
+    SUBMITTED,
+}
 
 @Component({
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./exam-scores.component.scss'],
+    styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
     public examScoreDTO: ExamScoreDTO;
@@ -47,9 +57,32 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     // TODO: Cache already calculated filter dependent statistics
     public aggregatedExamResults: AggregatedExamResult;
     public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
-    public binWidth = 5;
+    readonly binWidth = 5;
     public histogramData: number[] = Array(100 / this.binWidth).fill(0);
     public noOfExamsFiltered: number;
+
+    // ngx
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
+    yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
+    xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
+    yScaleMax: number;
+    ngxColor = {
+        name: 'Exam statistics',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [],
+    } as Color;
+    activeEntries: NgxChartsSingleSeriesDataEntry[] = [];
+    dataLabelFormatting = this.formatDataLabel.bind(this);
+    showOverallMedian: boolean; // Indicates whether the median of all exams is currently highlighted
+    showOverallMedianCheckbox = true; // Indicates whether the checkbox for toggling the highlighting of overallChartMedian is currently visible to the user
+    overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
+    overallChartMedianType: MedianType; // We need to distinguish the different overall medians for the toggling
+    showPassedMedian: boolean; // Same as above for the median of all passed exams
+    showPassedMedianCheckbox: boolean; // Same as above for the checkbox corresponding to passedMedian
+
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly medianType = MedianType;
 
     // exam score dtos
     studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
@@ -60,13 +93,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public filterForSubmittedExams = false;
     public filterForNonEmptySubmissions = false;
 
-    // Histogram related properties
-    public barChartOptions: ChartOptions = {};
-    public barChartLabels: Label[] = [];
-    public barChartType: ChartType = 'bar';
-    public barChartLegend = false;
-    public barChartData: ChartDataSets[] = [];
-
     gradingScaleExists = false;
     gradingScale?: GradingScale;
     isBonus?: boolean;
@@ -75,7 +101,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     course?: Course;
 
-    @ViewChild(BaseChartDirective) chart: BaseChartDirective;
+    // Icons
+    faSort = faSort;
+    faDownload = faDownload;
+    faTimes = faTimes;
+    faCheckCircle = faCheckCircle;
 
     private languageChangeSubscription?: Subscription;
     constructor(
@@ -90,9 +120,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
         private courseManagementService: CourseManagementService,
+        private router: Router,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit() {
+        this.generateDefaultNgxChartsSetting();
         this.route.params.subscribe((params) => {
             const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
             // alternative exam scores calculation using participant scores table
@@ -105,8 +138,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
             this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
 
-            forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe(
-                ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
+            forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
+                next: ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
                     this.examScoreDTO = getExamScoresResponse!.body!;
                     if (this.examScoreDTO) {
                         this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
@@ -145,18 +178,31 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         // Exam statistics must only be calculated once as they are not filter dependent
                         this.calculateExamStatistics();
                         this.calculateFilterDependentStatistics();
+                        const medianType = this.gradingScaleExists && !this.isBonus ? MedianType.PASSED : MedianType.OVERALL;
+                        // if a grading scale exists and the scoring type is not bonus, per default the median of all passed exams is shown.
+                        // We need to set the value for the overall median in order to show it next to the check box
+                        if (medianType === MedianType.PASSED) {
+                            this.showPassedMedianCheckbox = true;
+                            // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
+                            this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
+                            this.showOverallMedian = false;
+                        }
+                        this.determineAndHighlightChartMedian(medianType);
                     }
                     this.isLoading = false;
                     this.createChart();
+                    this.setupChartColoring();
+                    this.setupAxisLabels();
                     this.changeDetector.detectChanges();
                     this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
         });
 
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe(() => {
+            this.setupAxisLabels();
             this.changeDetector.detectChanges();
         });
     }
@@ -170,6 +216,22 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     toggleFilterForSubmittedExam() {
         this.filterForSubmittedExams = !this.filterForSubmittedExams;
         this.calculateFilterDependentStatistics();
+        const overallMedianType = this.filterForSubmittedExams ? MedianType.SUBMITTED : MedianType.OVERALL;
+        /*
+        if a grading scale exists that is not configured as bonus, we have to update the
+        overall median value as we only encounter submitted exams now.
+        For the median of all passed exams this is not necessary, as an exam can only pass
+        if it is submitted.
+         */
+        if (this.gradingScaleExists && !this.isBonus) {
+            this.setOverallChartMedianDependingOfExamsIncluded(overallMedianType);
+            this.showOverallMedian = false;
+            this.showPassedMedian = true;
+            this.determineAndHighlightChartMedian(MedianType.PASSED);
+        } else {
+            this.showOverallMedian = true;
+            this.determineAndHighlightChartMedian(overallMedianType);
+        }
         this.changeDetector.detectChanges();
     }
 
@@ -185,88 +247,50 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     private createChart() {
-        const labels: string[] = [];
         if (this.gradingScaleExists) {
             this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
-                labels[i] = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
-                labels[i] += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
-                labels[i] += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
-                labels[i] += ` {${gradeStep.gradeName}}`;
+                let label = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
+                label += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
+                label += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
+                label += ` {${gradeStep.gradeName}}`;
+                this.ngxData[i].name = label;
             });
         } else {
             for (let i = 0; i < this.histogramData.length; i++) {
-                labels[i] = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
-                labels[i] += i === this.histogramData.length - 1 ? ']' : ')';
+                let label = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
+                label += i === this.histogramData.length - 1 ? ']' : ')';
+
+                this.ngxData[i].name = label;
             }
         }
-        this.barChartLabels = labels;
 
-        const component = this;
+        this.ngxData = [...this.ngxData];
+    }
 
-        this.barChartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            legend: {
-                align: 'start',
-                position: 'bottom',
-            },
-            scales: {
-                yAxes: [
-                    {
-                        scaleLabel: {
-                            display: true,
-                            labelString: this.translateService.instant('artemisApp.examScores.yAxes'),
-                        },
-                        ticks: {
-                            maxTicksLimit: 11,
-                            beginAtZero: true,
-                            precision: 0,
-                            min: 0,
-                            max: this.calculateTickMax(),
-                        } as LinearTickOptions,
-                    },
-                ],
-                xAxes: [
-                    {
-                        scaleLabel: {
-                            display: true,
-                            labelString: this.translateService.instant('artemisApp.examScores.xAxes'),
-                        },
-                    },
-                ],
-            },
-            hover: {
-                animationDuration: 0,
-            },
-            animation: {
-                duration: 1,
-                onComplete() {
-                    const chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
-
-                    ctx.font = helpers.fontString(defaults.global.defaultFontSize, defaults.global.defaultFontStyle, defaults.global.defaultFontFamily);
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
-
-                    this.data.datasets.forEach(function (dataset: DataSet, j: number) {
-                        const meta = chartInstance.controller.getDatasetMeta(j);
-                        meta.data.forEach(function (bar: any, index: number) {
-                            const data = dataset.data[index];
-                            ctx.fillText(data, bar._model.x, bar._model.y - 20);
-                            ctx.fillText(`(${component.roundAndPerformLocalConversion((data * 100) / component.noOfExamsFiltered)}%)`, bar._model.x, bar._model.y - 5);
-                        });
-                    });
-                },
-            },
-        };
-
-        this.barChartData = [
-            {
-                label: '# of students',
-                data: this.histogramData,
-                backgroundColor: 'rgba(0,0,0,0.5)',
-            },
-        ];
+    /**
+     * Calculate statistics on exercise group and exercise granularity. These statistics are filter dependent.
+     * @param exerciseGroupResults Data structure holding the aggregated points and number of participants
+     */
+    private calculateExerciseGroupStatistics(exerciseGroupResults: AggregatedExerciseGroupResult[]) {
+        for (const groupResult of exerciseGroupResults) {
+            // For average points for exercise groups
+            if (groupResult.noOfParticipantsWithFilter) {
+                groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
+                groupResult.averagePercentage = (groupResult.averagePoints / groupResult.maxPoints) * 100;
+                if (this.gradingScaleExists) {
+                    const gradeStep = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, groupResult.averagePercentage);
+                    groupResult.averageGrade = gradeStep!.gradeName;
+                }
+            }
+            // Calculate average points for exercises
+            groupResult.exerciseResults.forEach((exResult: AggregatedExerciseResult) => {
+                if (exResult.noOfParticipantsWithFilter) {
+                    exResult.averagePoints = exResult.totalPoints / exResult.noOfParticipantsWithFilter;
+                    exResult.averagePercentage = (exResult.averagePoints / exResult.maxPoints) * 100;
+                }
+            });
+        }
+        this.aggregatedExerciseGroupResults = exerciseGroupResults;
     }
 
     /**
@@ -275,11 +299,19 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     findGradeStepIndex(percentage: number): number {
         let index = 0;
-        this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
-            if (this.gradingSystemService.matchGradePercentage(gradeStep, percentage)) {
-                index = i;
+        if (this.gradingScaleExists) {
+            this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
+                if (this.gradingSystemService.matchGradePercentage(gradeStep, percentage)) {
+                    index = i;
+                }
+            });
+        } else {
+            index = Math.floor(percentage / this.binWidth);
+            if (index >= 100 / this.binWidth) {
+                // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
+                index = 100 / this.binWidth - 1;
             }
-        });
+        }
         return index;
     }
 
@@ -289,8 +321,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * 2. Distribution of scores
      */
     private calculateFilterDependentStatistics() {
+        this.generateDefaultNgxChartsSetting();
         if (this.gradingScaleExists) {
             this.histogramData = Array(this.gradingScale!.gradeSteps.length);
+            this.ngxData = [];
+            for (let i = 0; i < this.gradingScale!.gradeSteps.length; i++) {
+                this.ngxData.push({ name: i.toString(), value: 0 });
+            }
         }
         this.histogramData.fill(0);
 
@@ -314,16 +351,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 continue;
             }
             // Update histogram data structure
-            let histogramIndex: number;
-            if (this.gradingScaleExists) {
-                histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
-            } else {
-                histogramIndex = Math.floor(studentResult.overallScoreAchieved! / this.binWidth);
-                if (histogramIndex >= 100 / this.binWidth) {
-                    // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
-                    histogramIndex = 100 / this.binWidth - 1;
-                }
-            }
+            const histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
+            this.ngxData[histogramIndex].value++;
             this.histogramData[histogramIndex]++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
                 continue;
@@ -359,12 +388,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
-
-        if (this.chart) {
-            this.chart.options!.scales!.yAxes![0]!.ticks!.max = this.calculateTickMax();
-            this.barChartData[0].data = this.histogramData;
-            this.chart.update(0);
-        }
+        this.createChart();
+        this.yScaleMax = this.calculateTickMax();
     }
 
     /**
@@ -591,32 +616,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return examStatistics;
     }
 
-    /**
-     * Calculate statistics on exercise group and exercise granularity. These statistics are filter dependent.
-     * @param exerciseGroupResults Data structure holding the aggregated points and number of participants
-     */
-    private calculateExerciseGroupStatistics(exerciseGroupResults: AggregatedExerciseGroupResult[]) {
-        for (const groupResult of exerciseGroupResults) {
-            // For average points for exercise groups
-            if (groupResult.noOfParticipantsWithFilter) {
-                groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
-                groupResult.averagePercentage = (groupResult.averagePoints / groupResult.maxPoints) * 100;
-                if (this.gradingScaleExists) {
-                    const gradeStep = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, groupResult.averagePercentage);
-                    groupResult.averageGrade = gradeStep!.gradeName;
-                }
-            }
-            // Calculate average points for exercises
-            groupResult.exerciseResults.forEach((exResult) => {
-                if (exResult.noOfParticipantsWithFilter) {
-                    exResult.averagePoints = exResult.totalPoints / exResult.noOfParticipantsWithFilter;
-                    exResult.averagePercentage = (exResult.averagePoints / exResult.maxPoints) * 100;
-                }
-            });
-        }
-        this.aggregatedExerciseGroupResults = exerciseGroupResults;
-    }
-
     sortRows() {
         this.sortService.sortByProperty(this.examScoreDTO.studentResults, this.predicate, this.reverse);
         this.changeDetector.detectChanges();
@@ -670,13 +669,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return this.localeConversionService.toLocaleString(numberToLocalize, this.course!.accuracyOfScores!);
     }
 
-    /**
-     * Localizes a percent number, e.g. switching the decimal separator
-     */
-    localizePercent(numberToLocalize: number): string {
-        return this.localeConversionService.toLocalePercentageString(numberToLocalize, this.course!.accuracyOfScores!);
-    }
-
     private convertToCSVRow(studentResult: StudentResult) {
         const csvRow: any = {
             name: studentResult.name ? studentResult.name : '',
@@ -690,9 +682,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (exerciseResult) {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = exerciseResult.title ? exerciseResult.title : '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] =
-                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedPoints, this.course));
+                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(exerciseResult.achievedPoints, this.course));
                 csvRow[exerciseGroup.title + ' Achieved Score (%)'] =
-                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(exerciseResult.achievedScore, this.course));
+                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(exerciseResult.achievedScore, this.course));
             } else {
                 csvRow[exerciseGroup.title + ' Assigned Exercise'] = '';
                 csvRow[exerciseGroup.title + ' Achieved Points'] = '';
@@ -701,9 +693,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         });
 
         csvRow.overAllPoints =
-            studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course));
+            studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course));
         csvRow.overAllScore =
-            studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course));
+            studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course));
         if (this.gradingScaleExists) {
             if (this.isBonus) {
                 csvRow['Overall Bonus Points'] = studentResult.overallGrade;
@@ -718,8 +710,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return csvRow;
     }
 
-    roundAndPerformLocalConversion(points: number | undefined) {
-        return this.localize(roundScoreSpecifiedByCourseSettings(points, this.course));
+    /**
+     * Rounds given points according to the course specific rounding settings
+     * @param points the points that should be rounded
+     * @returns localized string representation of the rounded points
+     */
+    roundAndPerformLocalConversion(points: number | undefined): string {
+        return this.localize(roundValueSpecifiedByCourseSettings(points, this.course));
     }
 
     /**
@@ -736,8 +733,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
         }
         for (const studentResult of this.studentResults) {
-            const overAllPoints = roundScoreSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course);
-            const overallScore = roundScoreSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course);
+            const overAllPoints = roundValueSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course);
+            const overallScore = roundValueSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course);
 
             const regularCalculation = {
                 scoreAchieved: overallScore,
@@ -751,8 +748,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
                 this.logErrorOnSentry(errorMessage);
             } else {
-                examScoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course);
-                examScoreDTO.pointsAchieved = roundScoreSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course);
+                examScoreDTO.scoreAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course);
+                examScoreDTO.pointsAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course);
 
                 if (Math.abs(examScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
                     const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
@@ -772,5 +769,195 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     logErrorOnSentry(errorMessage: string) {
         captureException(new Error(errorMessage));
+    }
+
+    /**
+     * Formats the datalabel for every bar in order to satisfy the following pattern:
+     * number of submissions (percentage of submissions)
+     * @param submissionCount the number of submissions that fall in the grading step
+     * @returns string containing the number of submissions + (percentage of submissions)
+     */
+    formatDataLabel(submissionCount: number): string {
+        const percentage = this.noOfExamsFiltered && this.noOfExamsFiltered > 0 ? this.roundAndPerformLocalConversion((submissionCount * 100) / this.noOfExamsFiltered) : 0;
+        return submissionCount + ' (' + percentage + '%)';
+    }
+
+    /**
+     * fill ngxData with a default configuration. The assignment of the names is only a placeholder,
+     * they will be set to default labels in createChart.
+     * If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
+     * If no grading key exists, this default configuration is presented to the user.
+     * @private
+     */
+    private generateDefaultNgxChartsSetting(): void {
+        this.ngxData = [];
+        for (let i = 0; i < 100 / this.binWidth; i++) {
+            this.ngxData.push({ name: i.toString(), value: 0 });
+        }
+    }
+
+    /**
+     * Sets up the bar coloring
+     * If no grading scale exists, all bars representing a score < 40% are colored yellow in order to visualize that this is a critical performance
+     * If a grading scale exists that is bonus, all bars with a lower bound < 40% are colored yellow as well
+     * If a grading scale exists that is not bonus, all bars representing a score that does not pass the exam are colored red
+     * In either case, all bars above the thresholds remain grey
+     * @private
+     */
+    private setupChartColoring(): void {
+        this.ngxColor.domain = [];
+        if (!this.gradingScaleExists) {
+            for (let i = 0; i < 100 / this.binWidth; i++) {
+                if (i < 40 / this.binWidth) {
+                    this.ngxColor.domain.push(GraphColors.YELLOW);
+                } else {
+                    this.ngxColor.domain.push(GraphColors.GREY);
+                }
+            }
+        } else {
+            this.gradingScale!.gradeSteps.forEach((gradeStep) => {
+                const color = this.getGradeStepColor(gradeStep);
+                this.ngxColor.domain.push(color);
+            });
+        }
+
+        this.ngxData = [...this.ngxData];
+    }
+
+    /**
+     * Auxiliary method in order to keep the chart translation sensitive
+     * @private
+     */
+    private setupAxisLabels(): void {
+        this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
+        this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
+
+        if (this.gradingScaleExists && !this.isBonus) {
+            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
+        } else if (this.gradingScaleExists && this.isBonus) {
+            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
+        }
+    }
+
+    /**
+     * Handles the click event on a chart bar. The user is then delegated to the participant scores page of the exam
+     */
+    onSelect() {
+        if (this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+            this.router.navigate(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
+        }
+    }
+
+    /**
+     * Method that handles the toggling of a median highlighting in the chart.
+     * If no grading scale exists, the user can only toggle the overall score median.
+     * If a grading scale exists, the user can switch between the overall score median and the median of the scores of all passed exams.
+     * Per default, the latter is selected in this case.
+     * @param medianType an enum indicating if the user toggles the overall median or the passed median
+     */
+    toggleMedian(medianType: MedianType): void {
+        switch (medianType) {
+            case MedianType.PASSED:
+                this.showPassedMedian = !this.showPassedMedian;
+                // The user selects the passed median to be highlighted, therefore we deactivate the highlighting of the other one
+                if (this.showPassedMedian) {
+                    this.showOverallMedian = false;
+                }
+                break;
+            case MedianType.OVERALL:
+            case MedianType.SUBMITTED:
+                this.showOverallMedian = !this.showOverallMedian;
+                // The user selects the overall median to be highlighted, therefore we deactivate the highlighting of the other one
+                if (this.showOverallMedian) {
+                    this.showPassedMedian = false;
+                }
+                break;
+        }
+        if (this.showPassedMedian || this.showOverallMedian) {
+            this.determineAndHighlightChartMedian(medianType);
+        } else {
+            this.activeEntries = [];
+        }
+    }
+
+    /**
+     * Auxiliary method that determines the median to be highlighted in the chart
+     * It identifies the bar representing the corresponding median type and
+     * highlights it by making all other chart bars a bit more transparent
+     * @param medianType enum representing the type of median to be highlighted
+     * @private
+     */
+    private determineAndHighlightChartMedian(medianType: MedianType): void {
+        let chartMedian;
+        if (medianType === MedianType.PASSED) {
+            const passedMedian = this.aggregatedExamResults.medianRelativePassed;
+            chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course) : 0;
+            this.showPassedMedian = true;
+        } else {
+            this.setOverallChartMedianDependingOfExamsIncluded(medianType);
+            chartMedian = this.overallChartMedian;
+            this.showOverallMedian = true;
+        }
+        const index = this.findGradeStepIndex(chartMedian);
+        const medianChartBar = this.ngxData[index];
+
+        // Highlighting a bar only makes sense if this bar is representing a value > 0
+        if (medianChartBar.value === 0) {
+            // In addition, it would be confusing to give the user the opportunity to toggle a highlighting in this case so we hide the corresponding checkbox
+            if (medianType === MedianType.PASSED) {
+                this.showPassedMedianCheckbox = false;
+            } else {
+                this.showOverallMedianCheckbox = false;
+            }
+            this.activeEntries = [];
+        } else {
+            /*
+            The median value for passed exams does not change by any filter configuration, therefore the corresponding flag won't get updated after init.
+            The median value for all exams does change depending on if only submitted exams are included or not. Here we have to update the flag if the bar
+            represents a value > 0
+             */
+            if (medianType !== MedianType.PASSED) {
+                this.showOverallMedianCheckbox = true;
+            }
+            this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
+        }
+    }
+
+    /**
+     * Auxiliary method that sets overallChartMedian depending on if only submitted exams are included or not
+     * @param medianType enum indicating if the median of all exams should be shown or only of submitted exams
+     * @private
+     */
+    private setOverallChartMedianDependingOfExamsIncluded(medianType: MedianType): void {
+        if (medianType === MedianType.OVERALL) {
+            const overallMedian = this.aggregatedExamResults.medianRelativeTotal;
+            this.overallChartMedian = overallMedian ? roundValueSpecifiedByCourseSettings(overallMedian, this.course) : 0;
+        } else {
+            const submittedMedian = this.aggregatedExamResults.medianRelative;
+            this.overallChartMedian = submittedMedian ? roundValueSpecifiedByCourseSettings(submittedMedian, this.course) : 0;
+        }
+        this.overallChartMedianType = medianType;
+    }
+
+    /**
+     * Auxiliary method that returns the bar color of the grade step in the chart
+     * @param gradeStep the grade step that should be colored
+     * @returns string representation of the color
+     * @private
+     */
+    private getGradeStepColor(gradeStep: GradeStep): GraphColors {
+        if (this.isBonus) {
+            if (gradeStep.gradeName === '0') {
+                return GraphColors.YELLOW;
+            } else {
+                return GraphColors.GREY;
+            }
+        } else {
+            if (gradeStep.isPassingGrade) {
+                return GraphColors.GREY;
+            } else {
+                return GraphColors.RED;
+            }
+        }
     }
 }

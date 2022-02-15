@@ -10,6 +10,7 @@ import { forkJoin, Subject } from 'rxjs';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { captureException } from '@sentry/browser';
 import { isEqual } from 'lodash-es';
+import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -27,6 +28,11 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faPencilAlt = faPencilAlt;
 
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private learningGoalService: LearningGoalService, private alertService: AlertService) {}
 
@@ -48,13 +54,13 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLearningGoal(learningGoalId: number) {
-        this.learningGoalService.delete(learningGoalId, this.courseId).subscribe(
-            () => {
+        this.learningGoalService.delete(learningGoalId, this.courseId).subscribe({
+            next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     getLearningGoalCourseProgress(learningGoal: LearningGoal) {
@@ -85,8 +91,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
+            .subscribe({
+                next: ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
                         const learningGoalProgress = learningGoalProgressResponse.body!;
                         this.learningGoalIdToLearningGoalCourseProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
@@ -97,8 +103,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     }
                     this.testIfScoreUsingParticipantScoresTableDiffers();
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     /**

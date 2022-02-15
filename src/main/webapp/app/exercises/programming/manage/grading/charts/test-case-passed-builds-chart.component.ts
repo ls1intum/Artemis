@@ -11,7 +11,7 @@ import { round } from 'app/shared/util/utils';
         </div>
     `,
     styles: [
-        '.chart-body { border-radius: 4px; background-color: #999; height: 10px; width: 100px; overflow: hidden; position: relative; }',
+        '.chart-body { border-radius: 4px; background-color: #999; height: 10px; max-width: 100px; overflow: hidden; position: relative; }',
         '.passed-bar { position: absolute; top: 0; left: 0; height: 10px; background-color: #28a745 }',
         '.failed-bar { position: absolute; top: 0; height: 10px; background-color: #dc3545 }',
     ],

@@ -10,7 +10,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -20,6 +19,7 @@ import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/ma
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -119,7 +119,7 @@ describe('ProgrammingExercise Management Component', () => {
 
     it('Should not reset exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(exerciseService, 'reset').mockReturnValue(throwError(httpErrorResponse));
+        jest.spyOn(exerciseService, 'reset').mockReturnValue(throwError(() => httpErrorResponse));
         const mockSubscriber = jest.fn();
         comp.dialogError$.subscribe(mockSubscriber);
 
@@ -156,7 +156,7 @@ describe('ProgrammingExercise Management Component', () => {
 
     it('Should not delete exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(httpErrorResponse));
+        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(() => httpErrorResponse));
         const mockSubscriber = jest.fn();
         comp.dialogError$.subscribe(mockSubscriber);
 

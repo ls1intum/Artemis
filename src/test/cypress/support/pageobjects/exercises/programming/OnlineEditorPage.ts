@@ -1,9 +1,7 @@
+import { DELETE } from './../../../constants';
 import { artemis } from './../../../ArtemisTesting';
-import { CypressExerciseType } from '../../../requests/CourseManagementRequests';
 import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
-
-const buildingAndTesting = 'Building and testing...';
 
 /**
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
@@ -20,6 +18,7 @@ export class OnlineEditorPage {
      * Focuses the code editor content to allow typing into it.
      */
     focusCodeEditor() {
+        // The ace editor is an external element, so we can't freely add ids here
         return cy.get('#ace-code-editor').find('.ace_content').click();
     }
 
@@ -58,9 +57,9 @@ export class OnlineEditorPage {
      * @param name the file name
      */
     deleteFile(name: string) {
-        cy.intercept('DELETE', '/api/repository/*/**').as('deleteFile');
-        this.findFile(name).find('[data-icon="trash"]').click();
-        cy.get('[jhitranslate="artemisApp.editor.fileBrowser.delete"]').click();
+        cy.intercept(DELETE, BASE_API + 'repository/*/**').as('deleteFile');
+        this.findFile(name).find('#file-browser-file-delete').click();
+        cy.get('#delete-file').click();
         cy.wait('@deleteFile').its('response.statusCode').should('eq', 200);
         this.findFileBrowser().contains(name).should('not.exist');
     }
@@ -70,7 +69,7 @@ export class OnlineEditorPage {
      * @returns the root element of a file in the filebrowser
      */
     private findFile(name: string) {
-        return this.findFileBrowser().contains(name).parent();
+        return this.findFileBrowser().contains(name).parents('#file-browser-file');
     }
 
     /**
@@ -85,9 +84,7 @@ export class OnlineEditorPage {
      */
     submit() {
         cy.get('#submit_button').click();
-        this.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should('be.visible');
-        this.getBuildOutput().contains(buildingAndTesting).should('be.visible');
-        this.getResultPanel().contains('GRADED', { timeout: 140000 }).should('be.visible');
+        cy.get('#result-score-graded', { timeout: 140000 }).should('contain.text', 'GRADED').and('be.visible');
     }
 
     /**
@@ -101,10 +98,10 @@ export class OnlineEditorPage {
         const postRequestId = 'createFile' + fileName;
         const getRequestId = 'getFile' + fileName;
         const requestPath = BASE_API + 'repository/*/file?file=' + filePath;
-        cy.get('.file-icons').children('button').first().click().wait(500);
+        cy.get('[id="file-browser-folder-create-file"]').eq(2).click().wait(500);
         cy.intercept(POST, requestPath).as(postRequestId);
         cy.intercept(GET, requestPath).as(getRequestId);
-        cy.get('jhi-code-editor-file-browser-create-node').type(fileName).wait(500).type('{enter}');
+        cy.get('#file-browser-create-node').type(fileName).wait(500).type('{enter}');
         cy.wait('@' + postRequestId)
             .its('response.statusCode')
             .should('eq', 200);
@@ -118,21 +115,14 @@ export class OnlineEditorPage {
      * @returns the root element of the result panel. This can be used for further querying inside this panel
      */
     getResultPanel() {
-        return cy.get('jhi-updating-result');
+        return cy.get('#result');
     }
 
     /**
-     * @returns the root element of the panel on the right, which shows all instructions
+     * @returns the element containing the result score percentage.
      */
-    getInstructionsPanel() {
-        return cy.get('#cardInstructions');
-    }
-
-    /**
-     * @returns returns all instruction symbols. Each test has one instruction symbol with its state (questionmark, cross or checkmark)
-     */
-    getInstructionSymbols() {
-        return this.getInstructionsPanel().get('.stepwizard-row').find('.stepwizard-step');
+    getResultScorePercentage() {
+        return cy.get('#result-score-percentage');
     }
 
     /**
@@ -141,14 +131,18 @@ export class OnlineEditorPage {
     getBuildOutput() {
         return cy.get('#cardBuildOutput');
     }
+
+    toggleCompressFileTree() {
+        return cy.get('#compress_tree').click();
+    }
 }
 
 /**
  * General method for entering, submitting and verifying something in the online editor.
  */
 export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, packageName: string, submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
-    // We create an empty file so that the file browser does not create an extra subfolder when all files are deleted
-    editorPage.createFileInRootPackage('placeholderFile', packageName);
+    // Decompress the file tree to access the parent folder
+    editorPage.toggleCompressFileTree();
     // We delete all existing files, so we can create new files and don't have to delete their already existing content
     editorPage.deleteFile('Client.java');
     editorPage.deleteFile('BubbleSort.java');
@@ -161,15 +155,16 @@ export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, pac
 /**
  * Starts the participation in the test programming exercise.
  */
-export function startParticipationInProgrammingExercise(courseName: string, programmingExerciseName: string, credentials: CypressCredentials) {
-    const courseOverview = artemis.pageobjects.courseOverview;
+export function startParticipationInProgrammingExercise(courseId: number, exerciseId: number, credentials: CypressCredentials) {
+    const courseOverview = artemis.pageobjects.course.overview;
+    const courses = artemis.pageobjects.course.list;
     cy.login(credentials, '/');
     cy.url().should('include', '/courses');
     cy.log('Participating in the programming exercise as a student...');
-    cy.contains(courseName).parents('.card-header').click();
+    courses.openCourse(courseId!);
     cy.url().should('include', '/exercises');
-    courseOverview.startExercise(programmingExerciseName, CypressExerciseType.PROGRAMMING);
-    courseOverview.openRunningProgrammingExercise(programmingExerciseName);
+    courseOverview.startExercise(exerciseId);
+    courseOverview.openRunningProgrammingExercise(exerciseId);
 }
 
 /**

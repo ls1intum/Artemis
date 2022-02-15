@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { ConfigurationService } from './configuration.service';
 import { Bean, PropertySource } from './configuration.model';
+import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-configuration',
@@ -13,6 +14,9 @@ export class ConfigurationComponent implements OnInit {
     beansFilter = '';
     beansAscending = true;
     propertySources: PropertySource[] = [];
+
+    // Icons
+    faSort = faSort;
 
     constructor(private configurationService: ConfigurationService) {}
 

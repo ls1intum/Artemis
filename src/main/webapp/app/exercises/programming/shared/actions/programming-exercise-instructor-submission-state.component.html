@@ -1,6 +1,6 @@
 <div *ngIf="buildingSummary; else loadingState" class="d-flex">
     <div id="result-eta" *ngIf="hasBuildingSubmissions" class="badge bg-secondary d-flex flex-column justify-content-between me-3">
-        <fa-icon [icon]="'clock'"></fa-icon>
+        <fa-icon [icon]="faClock"></fa-icon>
         <span
             [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
             [innerHTML]="'artemisApp.programmingExercise.resultETA' | artemisTranslate: { eta: resultEtaInMs | duration }"
@@ -31,13 +31,13 @@
         class="ms-3"
         [disabled]="!hasFailedSubmissions"
         [isLoading]="isBuildingFailedSubmissions"
-        [icon]="'redo'"
+        [icon]="faRedo"
         [title]="'artemisApp.programmingExercise.resubmitFailed'"
         [tooltip]="'artemisApp.programmingExercise.resubmitFailedTooltip'"
-        [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+        [featureToggle]="FeatureToggle.ProgrammingExercises"
         (onClick)="triggerBuildOfFailedSubmissions()"
     ></jhi-button>
 </div>
 <ng-template #loadingState>
-    <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+    <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
 </ng-template>

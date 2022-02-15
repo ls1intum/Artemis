@@ -14,7 +14,7 @@
             </div>
             <div class="col-3 align-self-start">
                 <a class="btn btn-primary btn-circle grow center-link" [routerLink]="['/course-management', courseId, 'goal-management', 'create']">
-                    <fa-icon [icon]="'plus'"></fa-icon>
+                    <fa-icon [icon]="faPlus"></fa-icon>
                 </a>
             </div>
         </div>
@@ -36,14 +36,14 @@
                 (delete)="deleteLearningGoal(learningGoal.id!)"
                 [dialogError]="dialogError$"
             >
-                <fa-icon [icon]="'times'"></fa-icon>
+                <fa-icon [icon]="faTimes"></fa-icon>
             </button>
             <a
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                 class="btn btn-sm btn-primary"
                 [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
             >
-                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                <fa-icon [icon]="faPencilAlt"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
             </a>
         </jhi-learning-goal-card>

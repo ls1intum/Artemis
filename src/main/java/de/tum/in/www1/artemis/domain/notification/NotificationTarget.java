@@ -1,58 +1,155 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import com.google.gson.Gson;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
-import de.tum.in.www1.artemis.domain.metis.Post;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Class representing the target property of a notification
- * Do not convert it into a java record. This does not work currently and will break the (de)serialization
- * e.g. used for JSON/GSON (de)serialization
+ * This helper class is used to store transient information related to the notification,
+ * especially regarding the creation of valid URLs/Links on the server side for emails
+ * NotificationTargets are intended to have different attributes, i.e. many will be null
  */
-public final class NotificationTarget {
+@JsonInclude(NON_NULL) // needed for ObjectMapper to ignore null values
+public class NotificationTarget {
 
-    private final int id;
+    private final Logger log = LoggerFactory.getLogger(NotificationTarget.class);
 
-    private final String entity;
+    private String message;
 
-    private final int course;
+    private Long identifier; // based on the notification subject e.g. programmingExercise.getId()
 
-    // public NotificationTarget(String message, int id, String entity, int course, String mainPage) {
-    public NotificationTarget(int id, String entity, int course) {
-        this.id = id;
+    private String entity; // infix of the URL e.g. programming-exercises
+
+    private Long courseId; // will be "course" in toJsonString()
+
+    private String mainPage; // infix of the URL e.g. course-management
+
+    private String problemStatement;
+
+    private Long exerciseId; // will be "exercise" in toJsonString()
+
+    private Long examId; // will be "exam" in toJsonString()
+
+    private Long lectureId; // will stay "lectureId" in toJsonString()
+
+    public NotificationTarget() {
+        // intentionally empty. e.g. used for cases without courseId
+    }
+
+    public NotificationTarget(Long identifier, Long courseId) {
+        this.identifier = identifier;
+        this.courseId = courseId;
+    }
+
+    public NotificationTarget(String entity, Long courseId, String mainPage) {
         this.entity = entity;
-        this.course = course;
+        this.courseId = courseId;
+        this.mainPage = mainPage;
+    }
+
+    public NotificationTarget(String message, Long identifier, String entity, Long courseId, String mainPage) {
+        this.message = message;
+        this.identifier = identifier;
+        this.entity = entity;
+        this.courseId = courseId;
+        this.mainPage = mainPage;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    @JsonProperty("id")
+    public Long getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(Long identifier) {
+        this.identifier = identifier;
+    }
+
+    public String getEntity() {
+        return entity;
+    }
+
+    public void setEntity(String entity) {
+        this.entity = entity;
+    }
+
+    @JsonProperty("course")
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
+    }
+
+    public String getMainPage() {
+        return mainPage;
+    }
+
+    public void setMainPage(String mainPage) {
+        this.mainPage = mainPage;
+    }
+
+    public String getProblemStatement() {
+        return problemStatement;
+    }
+
+    public void setProblemStatement(String problemStatement) {
+        this.problemStatement = problemStatement;
+    }
+
+    @JsonProperty("exercise")
+    public Long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(Long exerciseId) {
+        this.exerciseId = exerciseId;
+    }
+
+    @JsonProperty("exam")
+    public Long getExamId() {
+        return examId;
+    }
+
+    public void setExamId(Long examId) {
+        this.examId = examId;
+    }
+
+    @JsonProperty("lecture")
+    public Long getLectureId() {
+        return lectureId;
+    }
+
+    public void setLectureId(Long lectureId) {
+        this.lectureId = lectureId;
     }
 
     /**
-     * Extracts a viable URL from the provided notification and baseUrl
-     * @param notification which target property will be used for creating the URL
-     * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
-     * @return viable URL to the notification related page
+     * @return the NotificationTarget as a JSON String
+     * This is needed to stay consistent with the legacy implementation & data in the DB
      */
-    public static String extractNotificationUrl(Notification notification, String baseUrl) {
-        Gson gson = new Gson();
-        NotificationTarget target = gson.fromJson(notification.getTarget(), NotificationTarget.class);
-        return target.turnToUrl(baseUrl);
-    }
-
-    /**
-     * Extracts a viable URL from the provided notification that is based on a Post and baseUrl
-     * @param post which information will be needed to created the URL
-     * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
-     * @return viable URL to the notification related page
-     */
-    public static String extractNotificationUrl(Post post, String baseUrl) {
-        // e.g. http://localhost:8080/courses/1/discussion?searchText=%2382 for announcement post
-        return baseUrl + "/courses/" + post.getCourse().getId() + "/discussion?searchText=%23" + post.getId();
-    }
-
-    /**
-     * Turns the notification target into a viable URL
-     * @param baseUrl is the prefix for the URL (e.g. "http://localhost:9000/courses")
-     * @return the extracted viable URL
-     */
-    private String turnToUrl(String baseUrl) {
-        return baseUrl + "/courses/" + course + "/" + entity + "/" + id;
+    public String toJsonString() {
+        String result = null;
+        try {
+            result = new ObjectMapper().writeValueAsString(this);
+        }
+        catch (JsonProcessingException exception) {
+            log.error(exception.getMessage(), exception);
+        }
+        return result;
     }
 }

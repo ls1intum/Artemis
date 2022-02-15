@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.enumeration.FeedbackType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus.*;
+import static de.tum.in.www1.artemis.service.TutorParticipationService.FeedbackCorrectionErrorType.*;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -11,7 +15,6 @@ import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.databind.Obj
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
@@ -44,7 +47,7 @@ public class TutorParticipationService {
     /**
      * Wraps the information of tutor feedback validation (during tutor training).
      */
-    class FeedbackCorrectionError {
+    static class FeedbackCorrectionError {
 
         public String reference;
 
@@ -64,23 +67,11 @@ public class TutorParticipationService {
     }
 
     /**
-     * Get one tutorParticipations by id.
-     *
-     * @param id the id of the entity
-     * @return the entity
-     */
-    public TutorParticipation findOne(Long id) {
-        log.debug("Request to get TutorParticipation : {}", id);
-        Optional<TutorParticipation> tutorParticipation = tutorParticipationRepository.findById(id);
-        return tutorParticipation.orElse(null);
-    }
-
-    /**
      * Given an exercise and a tutor, it retrieves the participation of the tutor for that exercise. If there isn't any participation in the database, it returns a participation
      * with status NOT_PARTICIPATED
      *
      * @param exercise the exercise we want to retrieve the tutor participation
-     * @param tutor    the tutor of who we want to retrieve the participation
+     * @param tutor    the tutor of whom we want to retrieve the participation
      * @return a tutor participation object for the pair (exercise, tutor) passed as argument
      */
     public TutorParticipation findByExerciseAndTutor(Exercise exercise, User tutor) {
@@ -88,7 +79,7 @@ public class TutorParticipationService {
 
         if (participation == null) {
             participation = new TutorParticipation();
-            participation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
+            participation.setStatus(NOT_PARTICIPATED);
         }
         return participation;
     }
@@ -99,47 +90,43 @@ public class TutorParticipationService {
      * has to train reviewing some example submissions, and assessing others. If no example submissions are available, because the instructor hasn't created any, then she goes
      * directly to the next step, that allows her to assess students' participations
      *
-     * @param exercise the exercise the tutor is going to participate to
-     * @param tutor    the tutor who is going to participate to the exercise
+     * @param exercise the exercise the tutor is going to participate in
+     * @param tutor    the tutor who is going to participate in the exercise
      * @return a TutorParticipation for the exercise
      */
     public TutorParticipation createNewParticipation(Exercise exercise, User tutor) {
         TutorParticipation tutorParticipation = new TutorParticipation();
         Long exampleSubmissionsCount = exampleSubmissionRepository.countAllByExerciseId(exercise.getId());
-        tutorParticipation.setStatus(exampleSubmissionsCount == 0 ? TutorParticipationStatus.TRAINED : TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        tutorParticipation.setStatus(exampleSubmissionsCount == 0 ? TRAINED : REVIEWED_INSTRUCTIONS);
         tutorParticipation.setTutor(tutor);
         tutorParticipation.setAssessedExercise(exercise);
         return tutorParticipationRepository.saveAndFlush(tutorParticipation);
     }
 
     /**
-     * Validates tutor feedback.
+     * Validates if tutor feedback matches instructor feedback.
      * Validation rules:
-     * - There should exist a corresponding instructor feedback that references the same object
-     * - If instructor feedback has a grading instruction associated with it, so must the tutor feedback
      * - The feedback should have the same creditCount(score)
+     * - If instructor feedback has a grading instruction associated with it, so must the tutor feedback
+     * - Tutor feedback is not allowed to have negative score without feedback content
      *
      * @return error type if feedback is invalid, `Optional.empty()` otherwise.
      */
-    private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, List<Feedback> instructorFeedback) {
-        Optional<Feedback> maybeMatchingInstructorFeedback = instructorFeedback.stream().filter(feedback -> Objects.equals(tutorFeedback.getReference(), feedback.getReference()))
-                .findFirst();
-
-        // In case there is no instructor feedback that is referencing the same element (text/model), return unnecessary feedback.
-        if (maybeMatchingInstructorFeedback.isEmpty()) {
-            return Optional.of(FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK);
+    private Optional<FeedbackCorrectionErrorType> tutorFeedbackMatchesInstructorFeedback(Feedback tutorFeedback, Feedback instructorFeedback) {
+        // If instructor feedback score is different from tutor one, return incorrect score.
+        boolean equalCredits = Double.compare(instructorFeedback.getCredits(), tutorFeedback.getCredits()) == 0;
+        if (!equalCredits) {
+            return Optional.of(FeedbackCorrectionErrorType.INCORRECT_SCORE);
         }
 
-        var matchingInstructorFeedback = maybeMatchingInstructorFeedback.get();
-
-        if (matchingInstructorFeedback.getGradingInstruction() != null) {
+        if (instructorFeedback.getGradingInstruction() != null) {
             // If instructor used grading instruction while creating the feedback but the tutor didn't use it, return missing grading instruction.
             if (tutorFeedback.getGradingInstruction() == null) {
                 return Optional.of(FeedbackCorrectionErrorType.MISSING_GRADING_INSTRUCTION);
             }
 
             // If instructor used different grading instruction, return incorrect grading instruction.
-            if (!Objects.equals(matchingInstructorFeedback.getGradingInstruction().getId(), tutorFeedback.getGradingInstruction().getId())) {
+            if (!Objects.equals(instructorFeedback.getGradingInstruction().getId(), tutorFeedback.getGradingInstruction().getId())) {
                 return Optional.of(FeedbackCorrectionErrorType.INCORRECT_GRADING_INSTRUCTION);
             }
         }
@@ -150,36 +137,73 @@ public class TutorParticipationService {
             return Optional.of(FeedbackCorrectionErrorType.EMPTY_NEGATIVE_FEEDBACK);
         }
 
-        // If instructor feedback score is different from tutor one, return incorrect score.
-        boolean equalCredits = Double.compare(matchingInstructorFeedback.getCredits(), tutorFeedback.getCredits()) == 0;
-        if (!equalCredits) {
-            return Optional.of(FeedbackCorrectionErrorType.INCORRECT_SCORE);
-        }
-
         return Optional.empty();
     }
 
-    private boolean isValidTutorialExampleSubmission(List<Feedback> tutorFeedback, List<Feedback> instructorFeedback) {
-        boolean equalFeedbackCount = instructorFeedback.size() == tutorFeedback.size();
-        boolean allTutorFeedbackAreCorrect = tutorFeedback.stream().map(feedback -> checkTutorFeedbackForErrors(feedback, instructorFeedback)).allMatch(Optional::isEmpty);
-        return equalFeedbackCount && allTutorFeedbackAreCorrect;
+    private Optional<FeedbackCorrectionErrorType> checkTutorFeedbackForErrors(Feedback tutorFeedback, List<Feedback> instructorFeedback) {
+        List<Feedback> matchingInstructorFeedback = instructorFeedback.stream().filter(feedback -> {
+            // If tutor feedback is unreferenced, then instructor feedback is a potential match if it is also unreferenced
+            if (tutorFeedback.getType() == MANUAL_UNREFERENCED) {
+                return feedback.getType() == MANUAL_UNREFERENCED;
+            }
+
+            // For other feedback, both feedback have to reference the same element
+            return Objects.equals(tutorFeedback.getReference(), feedback.getReference());
+        }).toList();
+
+        // If there are no potential matches, then the feedback is unnecessary
+        if (matchingInstructorFeedback.isEmpty()) {
+            return Optional.of(UNNECESSARY_FEEDBACK);
+        }
+
+        // If tutor feedback is unreferenced, then look for the first match and remove it from the next subsequent matches
+        if (tutorFeedback.getType() == MANUAL_UNREFERENCED) {
+            var hasMatchingInstructorFeedback = matchingInstructorFeedback.stream().anyMatch(feedback -> {
+                var isMatch = tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback).isEmpty();
+
+                // This instructor feedback can not be used to match other tutor unreferenced feedback
+                if (isMatch) {
+                    instructorFeedback.remove(feedback);
+                }
+                return isMatch;
+            });
+            if (hasMatchingInstructorFeedback) {
+                return Optional.empty();
+            }
+
+            // Return the highest priority error (the closest instructor feedback match)
+            return matchingInstructorFeedback.stream().map(feedback -> tutorFeedbackMatchesInstructorFeedback(tutorFeedback, feedback).get()).max(Comparator.naturalOrder());
+        }
+        else {
+            if (matchingInstructorFeedback.size() > 1) {
+                throw new IllegalStateException("Multiple instructor feedback exist with the same reference");
+            }
+
+            return tutorFeedbackMatchesInstructorFeedback(tutorFeedback, matchingInstructorFeedback.get(0));
+        }
     }
 
     /**
      * Validates the tutor example submission. If invalid, throw bad request exception with information which feedback are incorrect.
      */
     private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
-        var tutorFeedback = tutorExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
-        var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
-
-        if (isValidTutorialExampleSubmission(tutorFeedback, instructorFeedback)) {
-            return;
+        var latestResult = tutorExampleSubmission.getSubmission().getLatestResult();
+        if (latestResult == null) {
+            throw new BadRequestAlertException("The training  does not contain an assessment", ENTITY_NAME, "invalid_assessment");
         }
+        var tutorFeedback = latestResult.getFeedbacks();
+        var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
+        boolean equalFeedbackCount = instructorFeedback.size() == tutorFeedback.size();
+
+        var unreferencedInstructorFeedbackCount = instructorFeedback.stream().filter(feedback -> feedback.getType() == MANUAL_UNREFERENCED).toList().size();
+        var unreferencedTutorFeedback = tutorFeedback.stream().filter(feedback -> feedback.getType() == MANUAL_UNREFERENCED).toList();
 
         // If invalid, get all incorrect feedback and send an array of the corresponding `FeedbackCorrectionError`s to the client.
-        // Pack this information into bad request exception.
         var wrongFeedback = tutorFeedback.stream().flatMap(feedback -> {
-            var validationError = checkTutorFeedbackForErrors(feedback, instructorFeedback);
+            // If current tutor feedback is unreferenced and there are already more than enough unreferenced feedback provided, mark this feedback as unnecessary.
+            var unreferencedTutorFeedbackCount = unreferencedTutorFeedback.indexOf(feedback) + 1;
+            var validationError = unreferencedTutorFeedbackCount > unreferencedInstructorFeedbackCount ? Optional.of(UNNECESSARY_FEEDBACK)
+                    : checkTutorFeedbackForErrors(feedback, instructorFeedback);
             if (validationError.isEmpty()) {
                 return Stream.empty();
             }
@@ -187,13 +211,20 @@ public class TutorParticipationService {
             var objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
             try {
                 // Build JSON string for the corresponding `FeedbackCorrectionError` object.
+                // TODO: I think we should let Spring automatically convert it to Json
                 var feedbackCorrectionErrorJSON = objectWriter.writeValueAsString(new FeedbackCorrectionError(feedback.getReference(), validationError.get()));
                 return Stream.of(feedbackCorrectionErrorJSON);
             }
             catch (JsonProcessingException e) {
+                log.warn("JsonProcessingException in validateTutorialExampleSubmission: {}", e.getMessage());
                 return Stream.empty();
             }
         }).collect(Collectors.joining(","));
+        if (wrongFeedback.isBlank() && equalFeedbackCount) {
+            return;
+        }
+
+        // Pack this information into bad request exception.
         throw new BadRequestAlertException("{\"errors\": [" + wrongFeedback + "]}", ENTITY_NAME, "invalid_assessment");
     }
 
@@ -220,8 +251,8 @@ public class TutorParticipationService {
 
         ExampleSubmission originalExampleSubmission = exampleSubmissionFromDatabase.get();
 
-        // Cannot start an example submission if the tutor hasn't participated to the exercise yet
-        if (existingTutorParticipation.getStatus() == TutorParticipationStatus.NOT_PARTICIPATED) {
+        // Cannot start an example submission if the tutor hasn't participated in the exercise yet
+        if (existingTutorParticipation.getStatus() == NOT_PARTICIPATED) {
             throw new BadRequestAlertException("The tutor needs review the instructions before assessing example submissions", ENTITY_NAME, "wrongStatus");
         }
 
@@ -244,7 +275,7 @@ public class TutorParticipationService {
                 // We are only interested in example submissions with an assessment as these are the ones that can be reviewed/assessed by tutors.
                 // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
                 // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed
-                // to asses student submissions in the assessment dashboard.
+                // to assess student submissions in the assessment dashboard.
                 .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getLatestResult() != null
                         && Boolean.TRUE.equals(exSub.getSubmission().getLatestResult().isExampleResult()))
                 .count();
@@ -254,7 +285,7 @@ public class TutorParticipationService {
          * When the tutor has read and assessed all the exercises, the tutor status goes to the next step.
          */
         if (numberOfAlreadyAssessedSubmissions >= numberOfExampleSubmissionsForTutor) {
-            existingTutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
+            existingTutorParticipation.setStatus(TRAINED);
         }
 
         // keep example submission set reference with loaded submission.results to reconnect after save response from DB

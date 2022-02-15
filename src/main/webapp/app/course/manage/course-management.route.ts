@@ -1,11 +1,5 @@
-import { Injectable } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
-import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Observable, of } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from './course-management.service';
 import { CourseManagementComponent } from './course-management.component';
 import { CourseDetailComponent } from './detail/course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
@@ -21,26 +15,8 @@ import { CourseManagementStatisticsComponent } from './course-management-statist
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
-
-@Injectable({ providedIn: 'root' })
-export class CourseResolve implements Resolve<Course> {
-    constructor(private service: CourseManagementService) {}
-
-    /**
-     * Resolves the route by extracting the courseId and returns the course with that Id if it exists
-     * and creates a new course otherwise
-     * @param route - contains the information about the route to be resolved
-     */
-    resolve(route: ActivatedRouteSnapshot): Observable<Course> {
-        if (route.params['courseId']) {
-            return this.service.find(route.params['courseId']).pipe(
-                filter((response: HttpResponse<Course>) => response.ok),
-                map((course: HttpResponse<Course>) => course.body!),
-            );
-        }
-        return of(new Course());
-    }
-}
+import { PlagiarismCasesComponent } from 'app/course/plagiarism-cases/plagiarism-cases.component';
+import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 
 export const courseManagementState: Routes = [
     {
@@ -65,7 +41,7 @@ export const courseManagementState: Routes = [
         path: ':courseId',
         component: CourseDetailComponent,
         resolve: {
-            course: CourseResolve,
+            course: CourseManagementResolve,
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
@@ -92,10 +68,19 @@ export const courseManagementState: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':courseId/plagiarism-cases',
+        component: PlagiarismCasesComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.cases.pageTitle',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered
         path: ':courseId',
         resolve: {
-            course: CourseResolve,
+            course: CourseManagementResolve,
         },
         children: [
             {

@@ -1,5 +1,5 @@
-import { ComponentFixture, fakeAsync, TestBed, tick, getTestBed } from '@angular/core/testing';
-import dayjs from 'dayjs';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
@@ -24,7 +24,6 @@ import { HttpResponse } from '@angular/common/http';
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
     let fixture: ComponentFixture<LectureAttachmentsComponent>;
-    let injector: TestBed;
     let fileUploaderService: FileUploaderService;
     let attachmentService: AttachmentService;
     let attachmentServiceFindAllByLectureIdStub: jest.SpyInstance;
@@ -104,9 +103,8 @@ describe('LectureAttachmentsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LectureAttachmentsComponent);
                 comp = fixture.componentInstance;
-                injector = getTestBed();
-                fileUploaderService = injector.get(FileUploaderService);
-                attachmentService = injector.get(AttachmentService);
+                fileUploaderService = TestBed.inject(FileUploaderService);
+                attachmentService = TestBed.inject(AttachmentService);
                 attachmentServiceFindAllByLectureIdStub = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: [...attachments] })));
             });
     });
@@ -226,7 +224,7 @@ describe('LectureAttachmentsComponent', () => {
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
         } as Attachment;
-        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
+        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
         comp.deleteAttachment(toDelete);
         expect(comp.attachments.length).toBe(1);
         expect(attachmentServiceDeleteStub).toHaveBeenCalledTimes(1);

@@ -3,6 +3,6 @@
  */
 export class TextExerciseExampleSubmissionsPage {
     clickCreateExampleSubmission() {
-        cy.get('[jhitranslate="artemisApp.modelingExercise.createExampleSubmission"]').click();
+        cy.get('#create-example-submission').click();
     }
 }

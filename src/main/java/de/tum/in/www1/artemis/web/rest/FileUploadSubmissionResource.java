@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.io.IOException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -29,6 +27,8 @@ import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -40,8 +40,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
-
-    private static final String ENTITY_NAME = "fileUploadSubmission";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -90,7 +88,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
         long start = System.currentTimeMillis();
 
-        final var exercise = fileUploadExerciseRepository.findOneByIdElseThrow(exerciseId);
+        final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
@@ -98,23 +96,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // the exercise needs to be the same as the one referenced in the path via exerciseId
         if (fileUploadSubmission.getParticipation() != null && fileUploadSubmission.getParticipation().getExercise() != null
                 && !fileUploadSubmission.getParticipation().getExercise().getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400", "ExerciseId in Body doesn't match ExerciseId in path!");
+            throw new BadRequestAlertException("ExerciseId in Body doesn't match ExerciseId in path!", "exerciseId", "400");
         }
 
         // Apply further checks if it is an exam submission
-        Optional<ResponseEntity<FileUploadSubmission>> examSubmissionAllowanceFailure = examSubmissionService.checkSubmissionAllowance(exercise, user);
-        if (examSubmissionAllowanceFailure.isPresent()) {
-            return examSubmissionAllowanceFailure.get();
-        }
+        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
         fileUploadSubmission = (FileUploadSubmission) examSubmissionService.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
 
         // Check if the user is allowed to submit
-        Optional<ResponseEntity<FileUploadSubmission>> submissionAllowanceFailure = fileUploadSubmissionService.checkSubmissionAllowance(exercise, fileUploadSubmission, user);
-        if (submissionAllowanceFailure.isPresent()) {
-            return submissionAllowanceFailure.get();
-        }
+        fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
 
         // Check the file size
         if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
@@ -123,9 +115,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Check the pattern
-        final var splittedFileName = file.getOriginalFilename().split("\\.");
-        final var fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
-        final var filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
+        final String[] splittedFileName = file.getOriginalFilename().split("\\.");
+        final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
+        final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
         if (!fileSuffix.matches(filePattern)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .headers(HeaderUtil.createAlert(applicationName, "The uploaded file has the wrong type!", "fileUploadSubmissionIllegalFileType")).build();
@@ -168,7 +160,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
-        var fileUploadSubmission = fileUploadSubmissionRepository.findOne(submissionId);
+        var fileUploadSubmission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
 
@@ -217,7 +209,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasRole('TA')")
-    // TODO: separate this into 2 calls, one for instructors (with all submissions) and one for tutors (only the submissions for the requesting tutor)
     public ResponseEntity<List<Submission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all file upload submissions");
@@ -239,7 +230,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
-            return badRequest();
+            throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.setGradingCriteria(gradingCriteria);
@@ -296,7 +287,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
         if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise))) {
-            return forbidden();
+            throw new AccessForbiddenException("participation", participationId);
         }
 
         Optional<FileUploadSubmission> optionalSubmission = participation.findLatestSubmission();

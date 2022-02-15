@@ -25,6 +25,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/exercises
    user/exam_mode
    user/orion
+   user/discussion
 
 
 .. toctree::
@@ -35,6 +36,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    dev/setup
    dev/guidelines
    dev/system-design
+   dev/migration
    dev/use-local-user-management
    dev/saml2-shibboleth
    Guided Tour <dev/guided-tour>
@@ -49,3 +51,4 @@ All these exercises are supposed to be run either live in the lecture with insta
 
    admin/registration
    admin/accessRights
+   admin/troubleshooting

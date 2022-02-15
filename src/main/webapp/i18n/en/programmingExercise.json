@@ -163,13 +163,20 @@
                 "charts": {
                     "title": "Charts",
                     "preview": "Preview",
+                    "resetFilter": "Reset Filter",
                     "testCaseWeights": {
                         "title": "Weight Distribution",
-                        "description": "The distribution of test case weights in the exercise. This shows how much impact any test case has on the overall score of a student. The first bar accounts just for the weight, and the second bar also includes the bonus points given for a test case.<br/>Hover over a colored block to see more details."
+                        "description": "The distribution of test case weights in the exercise. This shows how much impact any test case has on the overall score of a student. The first bar accounts just for the weight, and the second bar also includes the bonus points given for a test case.<br/>Hover over a colored block to see more details.",
+                        "weight": "Weight",
+                        "weightTooltip": "Weight: {{ percentage }}% of all weights.",
+                        "weightAndBonus": "Weight & Bonus",
+                        "weightAndBonusTooltip": "Weight & Bonus: {{ percentage }}% of all weights and bonuses."
                     },
                     "testCasePoints": {
                         "title": "Total Points",
-                        "description": "The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of <b>all</b> students. This chart only shows the positive points achieved by passing test cases and hides potential negative points of code quality penalties.<br/>Hover over a colored block to see more details."
+                        "description": "The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of <b>all</b> students. This chart only shows the positive points achieved by passing test cases and hides potential negative points of code quality penalties.<br/>Hover over a colored block to see more details.",
+                        "points": "Points",
+                        "pointsTooltip": "Points: {{ percentage }}% of all exercise points."
                     },
                     "categoryDistribution": {
                         "title": "Category Distribution",
@@ -289,6 +296,7 @@
             "unlockAllRepositoriesSuccess": "The repositories are now being unlocked. Please be patient for a while. You will soon be notified whether the operation was successful.",
             "lockAllRepositoriesSuccess": "The repositories are now being locked. Please be patient for a while. You will soon be notified whether the operation was successful.",
             "auxiliaryRepository": {
+                "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
@@ -330,10 +338,10 @@
                 "submissionPenalty": {
                     "optionLabel": "Submission Penalty",
                     "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
-                    "exceedingLimitDescription": "The amount of points that is deducted from the result score for each submission exceeding the submission limit. Enter any amount of points greater than or equal 0.",
+                    "exceedingLimitDescription": "The amount of points that is deducted from the result score for each submission exceeding the submission limit. Enter any amount of points greater than 0.",
                     "penaltyInputFieldValidationWarning": {
-                        "min": "The penalty must be greater than or equal 0!",
-                        "required": "The penalty must be set!"
+                        "pattern": "The penalty must be a number greater than 0.",
+                        "required": "The penalty must be set."
                     },
                     "penaltyInfoLabel": "Exceeding Penalty",
                     "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."

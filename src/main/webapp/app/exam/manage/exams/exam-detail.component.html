@@ -8,56 +8,43 @@
             <hr />
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
-            <div>
-                <a
-                    *ngIf="isAtLeastInstructor"
-                    [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']"
-                    class="btn btn-primary mt-1"
-                >
-                    <fa-icon [icon]="'table'"></fa-icon>
+            <div *ngIf="exam.course?.isAtLeastInstructor">
+                <a [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']" class="btn btn-primary mt-1">
+                    <fa-icon [icon]="faTable"></fa-icon>
                     <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
                 </a>
-                <a id="editButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning mt-1">
-                    <fa-icon [icon]="'wrench'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+                <a id="editButton" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning mt-1">
+                    <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                 </a>
-
-                <a id="studentExamsButton" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="'eye'"></fa-icon>
+                <a id="studentExamsButton" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faEye"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                 </a>
-
-                <a id="assessment-dashboard-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary mt-1">
-                    <fa-icon [icon]="'th-list'"></fa-icon>
+                <a id="assessment-dashboard-button" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary mt-1">
+                    <fa-icon [icon]="faThList"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
                 </a>
-
-                <a id="scores-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="'eye'"></fa-icon>
+                <a id="scores-button" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faEye"></fa-icon>
                     <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
                 </a>
-
-                <a *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('grading-system')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="'clipboard'"></fa-icon>
+                <a [routerLink]="getExamRoutesByIdentifier('grading-system')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faClipboard"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
                 </a>
-
-                <a id="exercises-button-groups" *ngIf="isAtLeastEditor" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary mt-1">
-                    <fa-icon [icon]="'list-alt'"></fa-icon>
+                <a id="exercises-button-groups" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary mt-1">
+                    <fa-icon [icon]="faListAlt"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
                 </a>
-
-                <a id="testrun-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="'user'"></fa-icon>
+                <a id="testrun-button" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faUser"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
                 </a>
-
-                <a id="students-button" *ngIf="isAtLeastInstructor" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="'user'"></fa-icon>
+                <a id="students-button" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faUser"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                 </a>
-
                 <button
-                    *ngIf="isAtLeastInstructor"
                     jhiDeleteButton
                     [actionType]="resetType"
                     [buttonSize]="buttonSize"
@@ -67,22 +54,31 @@
                     (delete)="resetExam()"
                     [dialogError]="dialogError$"
                     class="btn mt-1"
+                    style="margin-right: 0 !important"
                 >
-                    <fa-icon [icon]="'undo'"></fa-icon>
+                    <fa-icon [icon]="faUndo"></fa-icon>
                 </button>
-
-                <div class="mt-1" *ngIf="exam && isExamOver && exam.course" class="my-2 me-1">
+                <button
+                    jhiDeleteButton
+                    [buttonSize]="buttonSize"
+                    [entityTitle]="exam.title || ''"
+                    deleteQuestion="artemisApp.examManagement.delete.question"
+                    deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
+                    (delete)="deleteExam(exam.id!)"
+                    [dialogError]="dialogError$"
+                    class="btn mt-1"
+                >
+                    <fa-icon [icon]="faTimes"></fa-icon>
+                </button>
+                <div *ngIf="exam && isExamOver && exam.course" class="mt-1 d-inline">
                     <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam" [course]="exam.course"></jhi-course-exam-archive-button>
                 </div>
             </div>
             <hr />
-            <!-- Exam Checklist -->
-            <div *ngIf="isAtLeastInstructor && exam">
-                <jhi-exam-checklist [isAtLeastInstructor]="isAtLeastInstructor" [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam"></jhi-exam-checklist>
+            <div *ngIf="exam?.course?.isAtLeastInstructor">
+                <jhi-exam-checklist [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam"></jhi-exam-checklist>
             </div>
-
             <h3>Exam Details:</h3>
-
             <dl class="row-md jh-entity-details markdown-preview">
                 <dt *ngIf="exam.course"><span jhiTranslate="artemisApp.exam.course">Course</span></dt>
                 <dd *ngIf="exam.course">
@@ -96,43 +92,43 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.examiner">Examiner</span></dt>
                 <dd>
-                    <span *ngIf="exam.examiner">{{ exam.examiner }}</span>
-                    <span *ngIf="!exam.examiner" jhiTranslate="artemisApp.exam.notSet"></span>
+                    <span *ngIf="exam.examiner; else examinerNotSet">{{ exam.examiner }}</span>
+                    <ng-template #examinerNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.moduleNumber">Module Number</span></dt>
                 <dd>
-                    <span *ngIf="exam.moduleNumber">{{ exam.moduleNumber }}</span>
-                    <span *ngIf="!exam.moduleNumber" jhiTranslate="artemisApp.exam.notSet"></span>
+                    <span *ngIf="exam.moduleNumber; else moduleNumberNotSet">{{ exam.moduleNumber }}</span>
+                    <ng-template #moduleNumberNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.visibleDate">Visible from</span></dt>
                 <dd>
-                    <span *ngIf="exam.visibleDate">{{ exam.visibleDate | artemisDate }}</span>
-                    <span *ngIf="!exam.visibleDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                    <span *ngIf="exam.visibleDate; else visibleDateNotSet">{{ exam.visibleDate | artemisDate }}</span>
+                    <ng-template #visibleDateNotSet><span jhiTranslate="artemisApp.exercise.dateNotSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exam.startDate">Start Date</span></dt>
                 <dd>
-                    <span *ngIf="exam.startDate">{{ exam.startDate | artemisDate }}</span>
-                    <span *ngIf="!exam.startDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                    <span *ngIf="exam.startDate; else startDateNotSet">{{ exam.startDate | artemisDate }}</span>
+                    <ng-template #startDateNotSet><span jhiTranslate="artemisApp.exercise.dateNotSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exam.endDate">End Date</span></dt>
                 <dd>
-                    <span *ngIf="exam.endDate">{{ exam.endDate | artemisDate }}</span>
-                    <span *ngIf="!exam.endDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                    <span *ngIf="exam.endDate; else endDateNotSet">{{ exam.endDate | artemisDate }}</span>
+                    <ng-template #endDateNotSet><span jhiTranslate="artemisApp.exercise.dateNotSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exam.publishResultsDate">Release Date of Results</span></dt>
                 <dd>
-                    <span *ngIf="exam.publishResultsDate">{{ exam.publishResultsDate | artemisDate }}</span>
-                    <span *ngIf="!exam.publishResultsDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                    <span *ngIf="exam.publishResultsDate; else publishResultDateNotSet">{{ exam.publishResultsDate | artemisDate }}</span>
+                    <ng-template #publishResultDateNotSet><span jhiTranslate="artemisApp.exercise.dateNotSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exam.examStudentReviewStart">Begin of Student Review</span></dt>
                 <dd>
-                    <span *ngIf="exam.examStudentReviewStart">{{ exam.examStudentReviewStart | artemisDate }}</span>
-                    <span *ngIf="!exam.examStudentReviewStart" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                    <span *ngIf="exam.examStudentReviewStart; else examStudentReviewStartNotSet">{{ exam.examStudentReviewStart | artemisDate }}</span>
+                    <ng-template #examStudentReviewStartNotSet><span jhiTranslate="artemisApp.exercise.dateNotSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exam.examStudentReviewEnd">examStudentReviewEnd</span></dt>
                 <dd>
-                    <span *ngIf="exam.examStudentReviewEnd">{{ exam.examStudentReviewEnd | artemisDate }}</span>
-                    <span *ngIf="!exam.examStudentReviewEnd" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                    <span *ngIf="exam.examStudentReviewEnd; else examStudentReviewEndNotSet">{{ exam.examStudentReviewEnd | artemisDate }}</span>
+                    <ng-template #examStudentReviewEndNotSet><span jhiTranslate="artemisApp.exercise.dateNotSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</span></dt>
                 <dd>
@@ -140,18 +136,18 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum number of points in exam</span></dt>
                 <dd>
-                    <span *ngIf="exam.maxPoints">{{ exam.maxPoints }}</span>
-                    <span *ngIf="!exam.maxPoints" jhiTranslate="artemisApp.exam.notSet"></span>
+                    <span *ngIf="exam.maxPoints; else maxPointsNotSet">{{ exam.maxPoints }}</span>
+                    <ng-template #maxPointsNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam">Number of exercises in exam</span></dt>
                 <dd>
-                    <span *ngIf="exam.numberOfExercisesInExam">{{ exam.numberOfExercisesInExam }}</span>
-                    <span *ngIf="!exam.numberOfExercisesInExam" jhiTranslate="artemisApp.exam.notSet"></span>
+                    <span *ngIf="exam.numberOfExercisesInExam; else numberOfExercisesInExamNotSet">{{ exam.numberOfExercisesInExam }}</span>
+                    <ng-template #numberOfExercisesInExamNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam">Number of correction rounds in exam</span></dt>
                 <dd>
-                    <span *ngIf="exam.numberOfCorrectionRoundsInExam">{{ exam.numberOfCorrectionRoundsInExam }}</span>
-                    <span *ngIf="!exam.numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.exam.notSet"></span>
+                    <span *ngIf="exam.numberOfCorrectionRoundsInExam; else numberOfCorrectionRoundsInExamNotSet">{{ exam.numberOfCorrectionRoundsInExam }}</span>
+                    <ng-template #numberOfCorrectionRoundsInExamNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder">Randomize order of exercise groups</span></dt>
                 <dd>
@@ -159,24 +155,28 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.examStudents.registeredStudents">Registered students</span></dt>
                 <dd>
-                    <span *ngIf="exam.numberOfRegisteredUsers">{{ exam.numberOfRegisteredUsers }}</span>
-                    <span *ngIf="!exam.numberOfRegisteredUsers">{{ 0 }}</span>
+                    <span *ngIf="exam.numberOfRegisteredUsers; else numberOfRegisteredUsersNotSet">{{ exam.numberOfRegisteredUsers }}</span>
+                    <ng-template #numberOfRegisteredUsersNotSet>{{ 0 }}</ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.startText">Exam start text</span></dt>
-                <dd *ngIf="formattedStartText" class="editor-outline-background" [innerHTML]="formattedStartText"></dd>
-                <span *ngIf="!formattedStartText" jhiTranslate="artemisApp.exam.notSet"></span>
+                <dd *ngIf="formattedStartText; else formattedStartTextNotSet" class="editor-outline-background" [innerHTML]="formattedStartText"></dd>
+                <ng-template #formattedStartTextNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
 
                 <dt><span jhiTranslate="artemisApp.examManagement.confirmationStartText">Exam start confirmation text</span></dt>
-                <dd *ngIf="formattedConfirmationStartText" class="editor-outline-background" [innerHTML]="formattedConfirmationStartText"></dd>
-                <span *ngIf="!formattedConfirmationStartText" jhiTranslate="artemisApp.exam.notSet"></span>
+                <dd
+                    *ngIf="formattedConfirmationStartText; else formattedConfirmationStartTextNotSet"
+                    class="editor-outline-background"
+                    [innerHTML]="formattedConfirmationStartText"
+                ></dd>
+                <ng-template #formattedConfirmationStartTextNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
 
                 <dt><span jhiTranslate="artemisApp.examManagement.endText">Exam end text</span></dt>
-                <dd *ngIf="formattedEndText" class="editor-outline-background" [innerHTML]="formattedEndText"></dd>
-                <span *ngIf="!formattedEndText" jhiTranslate="artemisApp.exam.notSet"></span>
+                <dd *ngIf="formattedEndText; else formattedEndTextNotSet" class="editor-outline-background" [innerHTML]="formattedEndText"></dd>
+                <ng-template #formattedEndTextNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
 
                 <dt><span jhiTranslate="artemisApp.examManagement.confirmationEndText">Exam end confirmation text</span></dt>
-                <dd *ngIf="formattedConfirmationEndText" class="editor-outline-background" [innerHTML]="formattedConfirmationEndText"></dd>
-                <span *ngIf="!formattedConfirmationEndText" jhiTranslate="artemisApp.exam.notSet"></span>
+                <dd *ngIf="formattedConfirmationEndText; else formattedConfirmationEndTextNotSet" class="editor-outline-background" [innerHTML]="formattedConfirmationEndText"></dd>
+                <ng-template #formattedConfirmationEndTextNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
             </dl>
         </div>
     </div>

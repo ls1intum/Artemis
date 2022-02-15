@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 

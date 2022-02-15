@@ -1,5 +1,5 @@
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -8,12 +8,13 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',
     template: `
         <button class="btn btn-info btn-sm me-1" (click)="exportResults()">
-            <fa-icon [icon]="'download'"></fa-icon>
+            <fa-icon [icon]="faDownload"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
         </button>
     `,
@@ -22,6 +23,9 @@ import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-po
 export class ExerciseScoresExportButtonComponent {
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
     @Input() exercise: Exercise | ProgrammingExercise;
+
+    // Icons
+    faDownload = faDownload;
 
     constructor(private resultService: ResultService, private alertService: AlertService) {}
 
@@ -120,7 +124,7 @@ export class ExerciseScoresExportButtonComponent {
     ): string {
         const result = resultWithPoints.result;
         const { participantName, participantIdentifier } = participation;
-        const score = roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise));
+        const score = roundValueSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise));
 
         const columns = [participantName, participantIdentifier, score, resultWithPoints.totalPoints];
 

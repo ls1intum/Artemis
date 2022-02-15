@@ -3,7 +3,7 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -89,7 +89,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
 
-            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(throwError(new HttpErrorResponse({ status: 500 })));
+            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             jest.spyOn(comp, 'closeModal');
             // WHEN
             comp.saveAll();

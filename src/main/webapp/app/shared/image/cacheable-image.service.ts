@@ -1,11 +1,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Cacheable, DOMStorageStrategy } from 'ts-cacheable';
+import { Cacheable, LocalStorageStrategy } from 'ts-cacheable';
 import { HttpClient } from '@angular/common/http';
 import { Observable, pipe, Subject, Subscription, UnaryFunction } from 'rxjs';
 import { distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
-import { blobToBase64String } from 'blob-util';
 import { SessionStorageStrategy } from 'app/shared/image/session-storage-strategy';
+import { blobToBase64String } from 'app/utils/blob-util';
 
 const logoutSubject = new Subject<void>();
 
@@ -50,7 +50,7 @@ export class CacheableImageService implements ICacheableImageService, OnDestroy 
      * @param url
      */
     @Cacheable({
-        storageStrategy: DOMStorageStrategy,
+        storageStrategy: LocalStorageStrategy,
         cacheBusterObserver: logoutSubject.asObservable(),
         maxCacheCount: 30,
     })

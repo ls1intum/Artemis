@@ -1,29 +1,10 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, Route } from '@angular/router';
-import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
+import { Route } from '@angular/router';
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
-import { Observable, of } from 'rxjs';
+import { UserManagementResolve } from 'app/admin/user-management/user-management-resolve.service';
 
-@Injectable({ providedIn: 'root' })
-export class UserMgmtResolve implements Resolve<User> {
-    constructor(private userService: UserService) {}
-
-    /**
-     * Resolve route to find the user before the route is activated
-     * @param route  contains the information about a route associated with a component loaded in an outlet at a particular dayjs in time
-     */
-    resolve(route: ActivatedRouteSnapshot): Observable<User> {
-        if (route.params['login']) {
-            return this.userService.find(route.params['login']);
-        }
-        return of(new User());
-    }
-}
-
-export const userMgmtRoute: Route[] = [
+export const userManagementRoute: Route[] = [
     {
         path: 'user-management',
         component: UserManagementComponent,
@@ -43,7 +24,7 @@ export const userMgmtRoute: Route[] = [
                 path: 'new',
                 component: UserManagementUpdateComponent,
                 resolve: {
-                    user: UserMgmtResolve,
+                    user: UserManagementResolve,
                 },
                 data: {
                     pageTitle: 'userManagement.home.createLabel',
@@ -53,7 +34,7 @@ export const userMgmtRoute: Route[] = [
                 path: ':login',
                 component: UserManagementDetailComponent,
                 resolve: {
-                    user: UserMgmtResolve,
+                    user: UserManagementResolve,
                 },
                 data: {
                     pageTitle: 'userManagement.home.title',
@@ -63,7 +44,7 @@ export const userMgmtRoute: Route[] = [
                 // Create a new path without a component defined to prevent resolver caching and the UserManagementDetailComponent from being always rendered
                 path: ':login',
                 resolve: {
-                    user: UserMgmtResolve,
+                    user: UserManagementResolve,
                 },
                 children: [
                     {

@@ -29,6 +29,21 @@ artemis:
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
+    continuous-integration:
+        # Defines the used docker images for certain programming languages
+        build:
+            images:
+                JAVA: "ls1tum/artemis-maven-template:java17-3"
+                KOTLIN: "ls1tum/artemis-maven-template:java17-3"
+                EMPTY: "ls1tum/artemis-maven-template:java17-3"
+                PYTHON: "ls1tum/artemis-python-docker:latest"
+                C: "ls1tum/artemis-c-docker:latest"
+                C_FACT: "sharingcodeability/fact:latest"
+                HASKELL: "tumfpv/fpv-stack:8.8.4"
+                VHDL: "tizianleonhardt/era-artemis-vhdl:latest"
+                ASSEMBLER: "tizianleonhardt/era-artemis-assembler:latest"
+                SWIFT: "norionomura/swiftlint:latest"
+                OCAML: "ls1tum/artemis-ocaml-docker:v1"
 
 management:
     endpoints:
@@ -47,6 +62,10 @@ management:
     info:
         git:
             mode: full
+        java:
+            enabled: true
+        env:
+            enabled: true
     health:
         mail:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
@@ -122,6 +141,10 @@ spring:
     main:
         allow-bean-definition-overriding: true
         lazy-initialization: false
+        allow-circular-references: true # TODO: we should deactivate this in the future, however currently securityConfiguration has a circular dependency to itself
+    mvc:
+        pathmatch:
+            matching-strategy: ant_path_matcher # TODO: we should update all paths to support PathPatternParser, in particular ClientForwardResource
     task:
         execution:
             thread-name-prefix: artemis-task-

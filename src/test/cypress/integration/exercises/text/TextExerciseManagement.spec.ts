@@ -1,8 +1,11 @@
+import { Interception } from 'cypress/types/net-stubbing';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Course } from 'app/entities/course.model';
 import { BASE_API } from '../../../support/constants';
 import { DELETE } from '../../../support/constants';
 import { generateUUID } from '../../../support/utils';
 import { artemis } from '../../../support/ArtemisTesting';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 // The user management object
 const users = artemis.users;
@@ -11,15 +14,15 @@ const users = artemis.users;
 const courseManagement = artemis.requests.courseManagement;
 
 // PageObjects
-const textCreation = artemis.pageobjects.textExercise.creation;
-const exampleSubmissions = artemis.pageobjects.textExercise.exampleSubmissions;
-const exampleSubmissionCreation = artemis.pageobjects.textExercise.exampleSubmissionCreation;
+const textCreation = artemis.pageobjects.exercise.text.creation;
+const exampleSubmissions = artemis.pageobjects.exercise.text.exampleSubmissions;
+const exampleSubmissionCreation = artemis.pageobjects.exercise.text.exampleSubmissionCreation;
 const navigationBar = artemis.pageobjects.navigationBar;
-const courseManagementPage = artemis.pageobjects.courseManagement;
-const courseManagementExercises = artemis.pageobjects.courseManagementExercises;
+const courseManagementPage = artemis.pageobjects.course.management;
+const courseManagementExercises = artemis.pageobjects.course.managementExercises;
 
 describe('Text exercise management', () => {
-    let course: any;
+    let course: Course;
 
     before(() => {
         cy.login(users.getAdmin());
@@ -31,8 +34,8 @@ describe('Text exercise management', () => {
     it('Creates a text exercise in the UI', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
-        courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
-        cy.get('[jhitranslate="artemisApp.textExercise.home.createLabel"]').click();
+        courseManagementPage.openExercisesOfCourse(course.shortName!);
+        cy.get('#create-text-exercise').click();
 
         // Fill out text exercise form
         const exerciseTitle = 'text exercise' + generateUUID();
@@ -46,8 +49,11 @@ describe('Text exercise management', () => {
         const exampleSolution = 'E = mc^2';
         textCreation.typeProblemStatement(problemStatement);
         textCreation.typeExampleSolution(exampleSolution);
-        cy.get('[jhitranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"]').should('be.visible');
-        textCreation.create();
+        cy.get('#example-submission-message').should('be.visible');
+        let exercise: TextExercise;
+        textCreation.create().then((request: Interception) => {
+            exercise = request.response!.body;
+        });
 
         // Create an example submission
         exampleSubmissions.clickCreateExampleSubmission();
@@ -56,40 +62,43 @@ describe('Text exercise management', () => {
         exampleSubmissionCreation.showsExampleSolution(exampleSolution);
         const submission = 'This is an\nexample\nsubmission';
         exampleSubmissionCreation.typeExampleSubmission(submission);
-        exampleSubmissionCreation.clickCreateNewExampleSubmission().its('response.body.submission.text').should('eq', submission);
-
-        // Make sure example submission is shown in the list
-        cy.contains('Example Submissions Board').click();
-        cy.contains('Example Submission 1').should('be.visible');
+        exampleSubmissionCreation.clickCreateNewExampleSubmission().then((request: Interception) => {
+            expect(request.response!.statusCode).to.eq(200);
+            expect(request.response!.body.submission.text).to.equal(submission);
+        });
 
         // Make sure text exercise is shown in exercises list
-        cy.visit(`course-management/${course.id}/exercises`);
-        courseManagementExercises.getExerciseRowRootElement(exerciseTitle).should('be.visible');
+        cy.visit(`course-management/${course.id}/exercises`).then(() => {
+            courseManagementExercises.getExerciseRowRootElement(exercise.id!).should('be.visible');
+        });
     });
 
     describe('Text exercise deletion', () => {
-        const exerciseTitle = 'Text exercise' + generateUUID();
+        let exercise: TextExercise;
 
         beforeEach(() => {
             cy.login(users.getAdmin(), '/');
-            courseManagement.createTextExercise({ course }, exerciseTitle);
+            courseManagement.createTextExercise({ course }).then((response: Cypress.Response<TextExercise>) => {
+                exercise = response.body;
+            });
         });
 
         it('Deletes an existing text exercise', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.title, course.shortName);
-            courseManagementExercises.clickDeleteExercise(exerciseTitle);
+            courseManagementPage.openExercisesOfCourse(course.shortName!);
+            courseManagementExercises.clickDeleteExercise(exercise.id!);
+            cy.get('#confirm-exercise-name').type(exercise.title!);
             cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
-            cy.get('[type="text"], [name="confirmExerciseName"]').type(exerciseTitle).type('{enter}');
+            cy.get('#delete').click();
             cy.wait('@deleteTextExercise');
-            cy.contains(exerciseTitle).should('not.exist');
+            courseManagementExercises.getExerciseRowRootElement(exercise.id!).should('not.exist');
         });
     });
 
     after(() => {
         if (!!course) {
             cy.login(users.getAdmin());
-            courseManagement.deleteCourse(course.id);
+            courseManagement.deleteCourse(course.id!);
         }
     });
 });

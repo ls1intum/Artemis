@@ -1,5 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { Injectable, Injector } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -11,7 +11,7 @@ import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export const mockTeamStudents = [
     { id: 1, firstName: 'John', lastName: 'Doe', name: 'John Doe', login: 'ga12abc', email: 'john.doe@example.com', visibleRegistrationNumber: '01234567' },
@@ -175,7 +175,7 @@ export class MockTeamService implements ITeamService {
 
 @Injectable()
 export class TeamRequestInterceptorMock implements HttpInterceptor {
-    constructor(private injector: Injector) {}
+    constructor() {}
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         if (request.url && request.url.indexOf(`${TeamService.resourceUrl(mockExercise.id!)}/${mockTeamFromServer.id}`) > -1) {

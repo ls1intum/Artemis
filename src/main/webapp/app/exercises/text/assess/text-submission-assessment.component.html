@@ -7,7 +7,6 @@
     [nextSubmissionBusy]="nextSubmissionBusy"
     [isTeamMode]="!!exercise?.teamMode"
     [isAssessor]="isAssessor"
-    [isAtLeastInstructor]="exercise?.isAtLeastInstructor || false"
     [canOverride]="canOverride"
     [result]="result"
     [assessmentsAreValid]="assessmentsAreValid"
@@ -24,7 +23,7 @@
     (nextSubmission)="nextSubmission()"
     [(highlightDifferences)]="highlightDifferences"
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
-    (importExampleSubmission)="importStudentSubmissionAsExampleSubmission()"
+    (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>
@@ -49,10 +48,10 @@
             <!--endregion-->
 
             <!--region Right Panel-->
-            <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+            <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
             <span right-header jhiTranslate="artemisApp.textAssessment.instructions">Instructions</span>
             <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
-            <jhi-assessment-instructions right-body [exercise]="exercise!" class="markdown-preview"></jhi-assessment-instructions>
+            <jhi-assessment-instructions id="instructions-card" right-body [exercise]="exercise!" class="markdown-preview"></jhi-assessment-instructions>
             <!--endregion-->
         </jhi-resizeable-container>
     </div>

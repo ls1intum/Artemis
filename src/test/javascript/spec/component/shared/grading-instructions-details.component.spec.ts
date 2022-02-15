@@ -71,7 +71,7 @@ describe('Grading Instructions Management Component', () => {
         gradingCriterionWithoutId = { title: 'testCriteria', structuredGradingInstructions: [gradingInstructionWithoutId] };
     });
 
-    describe('OnInit', function () {
+    describe('OnInit', () => {
         it('should initialize the component', fakeAsync(() => {
             // WHEN
             component.ngOnInit();

@@ -23,12 +23,11 @@ export class QuizExerciseService {
      * @param quizExercise the quiz exercise that should be created
      */
     create(quizExercise: QuizExercise): Observable<EntityResponseType> {
-        const copy = this.exerciseService.convertDateFromClient(quizExercise);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http.post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        const copy = ExerciseService.convertDateFromClient(quizExercise);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -38,12 +37,11 @@ export class QuizExerciseService {
      */
     update(quizExercise: QuizExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        const copy = this.exerciseService.convertDateFromClient(quizExercise);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<QuizExercise>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        const copy = ExerciseService.convertDateFromClient(quizExercise);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .put<QuizExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -51,10 +49,9 @@ export class QuizExerciseService {
      * @param quizExerciseId the id of the quiz exercise that should be found
      */
     find(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -62,10 +59,9 @@ export class QuizExerciseService {
      * @param quizExerciseId the id of the quiz exercise for which the statistics should be recalculated
      */
     recalculate(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/recalculate-statistics`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/recalculate-statistics`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -75,10 +71,9 @@ export class QuizExerciseService {
      * @param courseId the course for which the quiz exercises should be returned
      */
     findForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<QuizExercise[]>(`api/courses/${courseId}/quiz-exercises`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
-        );
+        return this.http
+            .get<QuizExercise[]>(`api/courses/${courseId}/quiz-exercises`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
     /**
@@ -88,10 +83,9 @@ export class QuizExerciseService {
      * @param examId the exam for which the quiz exercises should be returned
      */
     findForExam(examId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<QuizExercise[]>(`api/${examId}/quiz-exercises`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
-        );
+        return this.http
+            .get<QuizExercise[]>(`api/${examId}/quiz-exercises`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
     /**
@@ -99,10 +93,9 @@ export class QuizExerciseService {
      * @param quizExerciseId the id of the quiz exercise that should be loaded
      */
     findForStudent(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/for-student`, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/for-student`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -110,10 +103,9 @@ export class QuizExerciseService {
      * @param quizExerciseId the id of the quiz exercise that should be opened for practice
      */
     openForPractice(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http.put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/open-for-practice`, null, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/open-for-practice`, null, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -121,10 +113,9 @@ export class QuizExerciseService {
      * @param quizExerciseId the id of the quiz exercise that should be started
      */
     start(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http.put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/start-now`, null, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/start-now`, null, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -132,20 +123,18 @@ export class QuizExerciseService {
      * @param quizExerciseId the id of the quiz exercise that should be set visible
      */
     setVisible(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http.put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, null, { observe: 'response' }).pipe(
-            map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)),
-            map((res: EntityResponseType) => this.exerciseService.convertExerciseCategoriesFromServer(res)),
-        );
+        return this.http
+            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, null, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
      * Load all quiz exercises
      */
     query(): Observable<EntityArrayResponseType> {
-        return this.http.get<QuizExercise[]>(this.resourceUrl, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)),
-            map((res: EntityArrayResponseType) => this.exerciseService.convertExerciseCategoryArrayFromServer(res)),
-        );
+        return this.http
+            .get<QuizExercise[]>(this.resourceUrl, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.exerciseService.processExerciseEntityArrayResponse(res)));
     }
 
     /**

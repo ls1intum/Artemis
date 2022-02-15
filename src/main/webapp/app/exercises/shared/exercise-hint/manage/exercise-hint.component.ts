@@ -9,6 +9,7 @@ import { ExerciseHintService } from './exercise-hint.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-hint',
@@ -23,6 +24,12 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     paramSub: Subscription;
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
 
     constructor(private route: ActivatedRoute, protected exerciseHintService: ExerciseHintService, private alertService: AlertService, protected eventManager: EventManager) {}
 
@@ -58,12 +65,12 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
                 filter((res: HttpResponse<ExerciseHint[]>) => res.ok),
                 map((res: HttpResponse<ExerciseHint[]>) => res.body),
             )
-            .subscribe(
-                (res: ExerciseHint[]) => {
+            .subscribe({
+                next: (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
-            );
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     /**
@@ -90,15 +97,15 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
      * @param exerciseHintId the id of the exercise hint that we want to delete
      */
     deleteExerciseHint(exerciseHintId: number) {
-        this.exerciseHintService.delete(exerciseHintId).subscribe(
-            () => {
+        this.exerciseHintService.delete(exerciseHintId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseHintListModification',
                     content: 'Deleted an exerciseHint',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

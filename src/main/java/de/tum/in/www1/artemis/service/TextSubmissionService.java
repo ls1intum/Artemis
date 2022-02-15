@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.toList;
-
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -14,7 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -33,16 +32,19 @@ public class TextSubmissionService extends SubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final ExerciseDateService exerciseDateService;
+
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
             UserRepository userRepository, Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService,
-            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
+            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
+            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                courseRepository, participationRepository, complaintRepository);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
         this.submissionVersionService = submissionVersionService;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -55,21 +57,20 @@ public class TextSubmissionService extends SubmissionService {
      */
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var dueDate = textExercise.getDueDate();
         final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(textExercise, principal.getName());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
         }
         final var participation = optionalParticipation.get();
+        final var dueDate = exerciseDateService.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
-        if (textExercise.isCourseExercise()) {
-            if (dueDate != null && participation.getInitializationDate().isBefore(dueDate) && dueDate.isBefore(ZonedDateTime.now())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-            }
+        if (textExercise.isCourseExercise() && dueDate.isPresent() && participation.getInitializationDate().isBefore(dueDate.get())
+                && dueDate.get().isBefore(ZonedDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (textExercise.isExamExercise() || !textExercise.isEnded()) {
+        if (textExercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             textSubmission.setSubmitted(true);
         }
         textSubmission = save(textSubmission, participation, textExercise, principal);
@@ -157,57 +158,6 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     /**
-     * Given an exercise id and a tutor id, it returns all the text submissions where the tutor has a result associated
-     *
-     * @param exerciseId - the id of the exercise we are looking for
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @param tutor - the tutor we are interested in
-     * @param examMode - flag should be set to ignore the test run submissions
-     * @return a list of text Submissions
-     */
-    public List<TextSubmission> getAllTextSubmissionsAssessedByTutorWithForExercise(Long exerciseId, User tutor, boolean examMode, int correctionRound) {
-        var submissions = super.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, tutor, examMode, correctionRound);
-        return submissions.stream().map(submission -> (TextSubmission) submission).collect(toList());
-    }
-
-    /**
-     * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted submissions
-     *
-     * @param exerciseId    - the id of the exercise we are interested into
-     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @param examMode - set flag to ignore test run submissions
-     * @return a list of text submissions for the given exercise id
-     */
-    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly, boolean examMode) {
-        // Instructors assume to see all submissions on the submissions page independent whether they already have results or not.
-        List<StudentParticipation> participations;
-        if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
-        }
-        else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        }
-
-        List<TextSubmission> textSubmissions = new ArrayList<>();
-
-        for (StudentParticipation participation : participations) {
-            // We don't have illegal submissions for text exercises
-            Optional<Submission> optionalTextSubmission = participation.findLatestSubmission();
-
-            if (optionalTextSubmission.isEmpty()) {
-                continue;
-            }
-
-            if (submittedOnly && !Boolean.TRUE.equals(optionalTextSubmission.get().isSubmitted())) {
-                continue;
-            }
-
-            textSubmissions.add((TextSubmission) optionalTextSubmission.get());
-        }
-        return textSubmissions;
-    }
-
-    /**
      * Find a text submission of the given exercise that still needs to be assessed and lock it to prevent other tutors from receiving and assessing it.
      *
      * @param textExercise the exercise the submission should belong to
@@ -227,11 +177,9 @@ public class TextSubmissionService extends SubmissionService {
      *
      * @param textSubmission textSubmission to be locked
      * @param correctionRound get submission with results in the correction round
-     * @return a locked modeling submission that needs an assessment
      */
-    public TextSubmission lockTextSubmissionToBeAssessed(TextSubmission textSubmission, int correctionRound) {
+    public void lockTextSubmissionToBeAssessed(TextSubmission textSubmission, int correctionRound) {
         lockSubmission(textSubmission, correctionRound);
-        return textSubmission;
     }
 
     public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {

@@ -1,4 +1,6 @@
-<button class="btn btn-success mt-4" (click)="addUnreferencedFeedback()" [disabled]="readOnly">{{ 'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate }}</button>
+<button id="add-unreferenced-feedback" class="btn btn-success mt-4" (click)="addUnreferencedFeedback()" [disabled]="readOnly">
+    {{ 'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate }}
+</button>
 <ng-container *ngIf="!busy">
     <div class="row mt-4">
         <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
@@ -9,7 +11,7 @@
         </div>
         <div *ngFor="let assessment of unreferencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
             <jhi-assessment-detail
-                *ngIf="assessment.reference == null"
+                *ngIf="assessment.type === FeedbackType.MANUAL_UNREFERENCED"
                 [(assessment)]="unreferencedFeedback[i]"
                 (assessmentChange)="updateAssessment(assessment)"
                 (deleteAssessment)="deleteAssessment($event)"

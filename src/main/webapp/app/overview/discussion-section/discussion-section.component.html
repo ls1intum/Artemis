@@ -2,7 +2,7 @@
 <div *ngIf="course" class="h-100">
     <div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-discussion">
         <div class="draggable-left">
-            <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
+            <fa-icon [icon]="faGripLinesVertical"></fa-icon>
         </div>
         <div class="card">
             <!-- header -->
@@ -12,14 +12,14 @@
                         <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.discussion.label">Discussion</h5>
                     </div>
                     <div class="col-auto">
-                        <fa-icon [icon]="'chevron-right'"></fa-icon>
+                        <fa-icon [icon]="faChevronRight"></fa-icon>
                     </div>
                 </div>
             </div>
             <!-- body -->
             <div class="card-body pt-0">
                 <div class="my-2" *ngIf="currentPost !== undefined; else threadView">
-                    <fa-icon [icon]="'arrow-left'" (click)="resetCurrentPost()" class="back-button me-2 clickable"> </fa-icon>
+                    <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable"> </fa-icon>
                     <span class="back-instruction">{{ 'artemisApp.metis.post.showAllPosts' | artemisTranslate }}</span>
                     <jhi-posting-thread [post]="currentPost" [showAnswers]="true"></jhi-posting-thread>
                 </div>
@@ -35,7 +35,7 @@
                 <div class="row mt-2" *ngIf="createdPost">
                     <div class="col-12">
                         <button class="btn btn-sm btn-primary" (click)="createEditModal.open()">
-                            <fa-icon [icon]="'plus'"></fa-icon>
+                            <fa-icon [icon]="faPlus"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                         </button>
                         <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
@@ -50,9 +50,9 @@
     <!-- collapsed posts -->
     <ng-template #collapsedPosts>
         <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.discussion.show' | artemisTranslate">
-            <fa-icon class="expand-postings-icon" [icon]="'chevron-left'"></fa-icon>
+            <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
             <span class="h5" jhiTranslate="artemisApp.metis.discussion.label"></span>
-            <fa-icon class="expand-postings-icon" [icon]="'chevron-left'"></fa-icon>
+            <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
         </div>
     </ng-template>
 </div>

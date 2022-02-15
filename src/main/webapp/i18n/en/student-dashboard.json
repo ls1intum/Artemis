@@ -14,11 +14,11 @@
                 "registerSuccessful": "Registration successful",
                 "signUpForCourse": "Register",
                 "cancel": "Cancel",
-                "noCourse": "No courses available to register for",
+                "noCourse": "No courses available for registration",
                 "courseLoading": "Courses are loading...",
-                "pleaseSelectCourse": "# Select a course",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
-            }
+            },
+            "course": "Course"
         },
         "courseOverview": {
             "noDescription": "No description available",
@@ -33,11 +33,13 @@
                 "discussion": "Discussion"
             },
             "exerciseList": {
+                "filter": "Filter ({{ num }})",
                 "releaseDate": "Release Date",
                 "dueDate": "Due Date",
                 "unreleased": "Hide unreleased",
                 "fullScore": "Hide full points",
                 "overdue": "Hide overdue",
+                "optional": "Hide optional",
                 "noExerciseDate": "No date associated",
                 "exerciseGroupHeader": "Exercises: {{ total }}",
                 "currentExerciseGroupHeader": "Current exercise active until {{ date }}:",
@@ -91,6 +93,7 @@
                 "totalScore": "Your overall points",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
+                "hideNotIncludedInScoreExercises": "Hide Optional",
                 "exerciseCount": "{{ number }} {{type}}",
                 "yourPoints": "Your points: {{ number }}",
                 "reachablePoints": "Attainable points: {{ number }} ({{ relative }}%)",
@@ -114,7 +117,20 @@
                 "bonus": "Current bonus points",
                 "gradeInfo": "(based on attainable points)",
                 "gradeHelp": "The grade is based on your attainable points. It could change until the end of the course when more exercises have been assessed.",
-                "bonusHelp": "The bonus points are based on your attainable points. They could change until the end of the course when more exercises have been assessed."
+                "bonusHelp": "The bonus points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
+                "programmingExerciseFailedTests": "{{ tests }} tests failed ({{ percentage }}%)",
+                "programmingExercisePassedTests": "{{ tests }} tests passed ({{ percentage }}%)",
+                "programmingPointLabel": "Programming Points",
+                "quizPointLabel": "Quiz Points",
+                "modelingPointLabel": "Modeling Points",
+                "textPointLabel": "Text Points",
+                "fileUploadPointLabel": "File upload Points",
+                "missingPointsLabel": "Missing Points",
+                "achievedPointsLabel": "Achieved Points",
+                "includeStandardCategories": "Hide Artemis standard categories:",
+                "includeIndividualCategories": "Include course specific categories:",
+                "includeAllCategories": "Select all options",
+                "exercisesWithNoCategories": "Exercises with no categories"
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",

@@ -1,0 +1,203 @@
+:host {
+    display: flex;
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    padding: 5px;
+    text-align: center;
+
+    > div {
+        width: 100%;
+        position: relative;
+
+        img.ngx-ic-source-image {
+            max-width: 100%;
+            max-height: 100%;
+            transform-origin: center;
+        }
+    }
+
+    .ngx-ic-overlay {
+        position: absolute;
+        pointer-events: none;
+        touch-action: none;
+        outline: var(--cropper-overlay-color, white) solid 100vw;
+        top: 0;
+        left: 0;
+    }
+
+    .ngx-ic-cropper {
+        position: absolute;
+        display: flex;
+        color: #53535c;
+        background: transparent;
+        outline: rgba(255, 255, 255, 0.3) solid 100vw;
+        outline: var(--cropper-outline-color, rgba(255, 255, 255, 0.3)) solid 100vw;
+        touch-action: none;
+
+        @media (orientation: portrait) {
+            outline-width: 100vh;
+        }
+
+        &:after {
+            position: absolute;
+            content: '';
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+            border: dashed 1px;
+            opacity: 0.75;
+            color: inherit;
+            z-index: 1;
+        }
+
+        .ngx-ic-move {
+            width: 100%;
+            cursor: move;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        &:focus {
+            .ngx-ic-move {
+                border-color: dodgerblue;
+                border-width: 2px;
+            }
+        }
+
+        .ngx-ic-resize {
+            position: absolute;
+            display: inline-block;
+            line-height: 6px;
+            padding: 8px;
+            opacity: 0.85;
+            z-index: 1;
+
+            .ngx-ic-square {
+                display: inline-block;
+                background: #53535c;
+                width: 6px;
+                height: 6px;
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                box-sizing: content-box;
+            }
+
+            &.ngx-ic-topleft {
+                top: -12px;
+                left: -12px;
+                cursor: nwse-resize;
+            }
+
+            &.ngx-ic-top {
+                top: -12px;
+                left: calc(50% - 12px);
+                cursor: ns-resize;
+            }
+
+            &.ngx-ic-topright {
+                top: -12px;
+                right: -12px;
+                cursor: nesw-resize;
+            }
+
+            &.ngx-ic-right {
+                top: calc(50% - 12px);
+                right: -12px;
+                cursor: ew-resize;
+            }
+
+            &.ngx-ic-bottomright {
+                bottom: -12px;
+                right: -12px;
+                cursor: nwse-resize;
+            }
+
+            &.ngx-ic-bottom {
+                bottom: -12px;
+                left: calc(50% - 12px);
+                cursor: ns-resize;
+            }
+
+            &.ngx-ic-bottomleft {
+                bottom: -12px;
+                left: -12px;
+                cursor: nesw-resize;
+            }
+
+            &.ngx-ic-left {
+                top: calc(50% - 12px);
+                left: -12px;
+                cursor: ew-resize;
+            }
+        }
+
+        .ngx-ic-resize-bar {
+            position: absolute;
+            z-index: 1;
+
+            &.ngx-ic-top {
+                top: -11px;
+                left: 11px;
+                width: calc(100% - 22px);
+                height: 22px;
+                cursor: ns-resize;
+            }
+
+            &.ngx-ic-right {
+                top: 11px;
+                right: -11px;
+                height: calc(100% - 22px);
+                width: 22px;
+                cursor: ew-resize;
+            }
+
+            &.ngx-ic-bottom {
+                bottom: -11px;
+                left: 11px;
+                width: calc(100% - 22px);
+                height: 22px;
+                cursor: ns-resize;
+            }
+
+            &.ngx-ic-left {
+                top: 11px;
+                left: -11px;
+                height: calc(100% - 22px);
+                width: 22px;
+                cursor: ew-resize;
+            }
+        }
+
+        &.ngx-ic-round {
+            outline-color: transparent;
+
+            &:after {
+                border-radius: 100%;
+                box-shadow: 0 0 0 100vw rgba(255, 255, 255, 0.3);
+                box-shadow: 0 0 0 100vw (var(--cropper-outline-color, rgba(255, 255, 255, 0.3)));
+
+                @media (orientation: portrait) {
+                    box-shadow: 0 0 0 100vh rgba(255, 255, 255, 0.3);
+                    box-shadow: 0 0 0 100vh (var(--cropper-outline-color, rgba(255, 255, 255, 0.3)));
+                }
+            }
+
+            .ngx-ic-move {
+                border-radius: 100%;
+            }
+        }
+    }
+
+    &.disabled {
+        .ngx-ic-cropper {
+            .ngx-ic-resize,
+            .ngx-ic-resize-bar,
+            .ngx-ic-move {
+                display: none;
+            }
+        }
+    }
+}

@@ -1,7 +1,4 @@
-import * as sinon from 'sinon';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
-import sinonChai from 'sinon-chai';
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -24,10 +21,8 @@ import { GradeDTO } from 'app/entities/grade-step.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 let fixture: ComponentFixture<ExamPointsSummaryComponent>;
 let component: ExamPointsSummaryComponent;
@@ -129,7 +124,7 @@ const gradeDto = {
     isPassingGrade: true,
 } as GradeDTO;
 
-describe('ExamPointsSummaryComponent', function () {
+describe('ExamPointsSummaryComponent', () => {
     let gradingSystemService: GradingSystemService;
 
     beforeEach(() => {
@@ -140,9 +135,13 @@ describe('ExamPointsSummaryComponent', function () {
         })
             .compileComponents()
             .then(() => {
+                const course = new Course();
+                course.id = 1;
+                course.accuracyOfScores = 2;
+
                 fixture = TestBed.createComponent(ExamPointsSummaryComponent);
                 component = fixture.componentInstance;
-                component.courseId = 1;
+                component.course = course;
                 component.exam = exam;
                 component.exercises = exercises;
                 component.gradingScaleExists = false;
@@ -151,57 +150,59 @@ describe('ExamPointsSummaryComponent', function () {
     });
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     it('should handle error correctly', () => {
-        const gradingSystemServiceMatchPercentageErrorStub = sinon.stub(gradingSystemService, 'matchPercentageToGradeStepForExam').returns(throwError({ status: 404 }));
+        const gradingSystemServiceMatchPercentageErrorStub = jest
+            .spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam')
+            .mockReturnValue(throwError(() => ({ status: 404 })));
 
         fixture.detectChanges();
 
-        expect(fixture).to.be.ok;
-        expect(gradingSystemServiceMatchPercentageErrorStub).to.have.been.calledOnce;
-        expect(component.gradingScaleExists).to.be.false;
+        expect(fixture).not.toBeNull();
+        expect(gradingSystemServiceMatchPercentageErrorStub).toHaveBeenCalledTimes(1);
+        expect(component.gradingScaleExists).toBeFalse();
     });
 
     it('should calculate exam grade correctly', () => {
-        const gradingSystemServiceMatchPercentageStub = sinon
-            .stub(gradingSystemService, 'matchPercentageToGradeStepForExam')
-            .returns(of(new HttpResponse<GradeDTO>({ body: gradeDto })));
+        const gradingSystemServiceMatchPercentageStub = jest
+            .spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam')
+            .mockReturnValue(of(new HttpResponse<GradeDTO>({ body: gradeDto })));
         const achievedPointsRelative = (component.calculatePointsSum() / component.calculateMaxPointsSum()) * 100;
 
         fixture.detectChanges();
 
-        expect(fixture).to.be.ok;
-        expect(gradingSystemServiceMatchPercentageStub).to.have.been.calledOnceWithExactly(1, 1, achievedPointsRelative);
-        expect(component.gradingScaleExists).to.be.true;
-        expect(component.isBonus).to.be.false;
-        expect(component.grade).to.equal(gradeDto.gradeName);
-        expect(component.hasPassed).to.equal(gradeDto.isPassingGrade);
+        expect(fixture).not.toBeNull();
+        expect(gradingSystemServiceMatchPercentageStub).toHaveBeenCalledWith(1, 1, achievedPointsRelative);
+        expect(component.gradingScaleExists).toBeTrue();
+        expect(component.isBonus).toBeFalse();
+        expect(component.grade).toEqual(gradeDto.gradeName);
+        expect(component.hasPassed).toEqual(gradeDto.isPassingGrade);
     });
 
-    it('should initialize and calculate scores correctly', function () {
+    it('should initialize and calculate scores correctly', () => {
         fixture.detectChanges();
-        expect(fixture).to.be.ok;
-        expect(component.calculateAchievedPoints(programmingExerciseTwo)).to.equal(0);
-        expect(component.calculateAchievedPoints(textExercise)).to.equal(20);
-        expect(component.calculateAchievedPoints(notIncludedTextExercise)).to.equal(10);
-        expect(component.calculateAchievedPoints(bonusTextExercise)).to.equal(10);
-        expect(component.calculateAchievedPoints(quizExercise)).to.equal(2);
-        expect(component.calculateAchievedPoints(modelingExercise)).to.equal(3.3);
-        expect(component.calculateAchievedPoints(programmingExercise)).to.equal(0);
+        expect(fixture).not.toBeNull();
+        expect(component.calculateAchievedPoints(programmingExerciseTwo)).toEqual(0);
+        expect(component.calculateAchievedPoints(textExercise)).toEqual(20);
+        expect(component.calculateAchievedPoints(notIncludedTextExercise)).toEqual(10);
+        expect(component.calculateAchievedPoints(bonusTextExercise)).toEqual(10);
+        expect(component.calculateAchievedPoints(quizExercise)).toEqual(2);
+        expect(component.calculateAchievedPoints(modelingExercise)).toEqual(3.33);
+        expect(component.calculateAchievedPoints(programmingExercise)).toEqual(0);
 
-        expect(component.calculatePointsSum()).to.equal(35.3);
-        expect(component.calculateMaxPointsSum()).to.equal(40);
-        expect(component.calculateMaxBonusPointsSum()).to.equal(20);
+        expect(component.calculatePointsSum()).toEqual(35.33);
+        expect(component.calculateMaxPointsSum()).toEqual(40);
+        expect(component.calculateMaxBonusPointsSum()).toEqual(20);
     });
 
-    it('should display 0 if no exercises are present', function () {
+    it('should display 0 if no exercises are present', () => {
         component.exercises = [];
         fixture.detectChanges();
-        expect(fixture).to.be.ok;
+        expect(fixture).not.toBeNull();
 
-        expect(component.calculatePointsSum()).to.equal(0);
-        expect(component.calculateMaxPointsSum()).to.equal(0);
+        expect(component.calculatePointsSum()).toEqual(0);
+        expect(component.calculateMaxPointsSum()).toEqual(0);
     });
 });

@@ -13,7 +13,7 @@ import {
     ViewEncapsulation,
 } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AceEditorComponent } from 'ng2-ace-editor';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
@@ -27,6 +27,7 @@ import { cloneDeep } from 'lodash-es';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateTextHintExplanation, parseTextHintExplanation } from 'app/shared/util/markdown.util';
+import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -83,6 +84,17 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     textParts: (string | undefined)[][];
 
     backupQuestion: ShortAnswerQuestion;
+
+    // Icons
+    faBan = faBan;
+    faTrash = faTrash;
+    faUndo = faUndo;
+    faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
+    faBars = faBars;
+    faUnlink = faUnlink;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
@@ -487,7 +499,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
     onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
-        let dragItem = dragEvent.dragData;
+        let dragItem = dragEvent.item.data;
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.shortAnswerQuestion.solutions?.find((originalDragItem) =>
             dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID,
@@ -713,13 +725,13 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function setContent
+     * @function setQuestionText
      * @desc sets the new text as question.text and updates the UI (through textParts)
-     * @param id
+     * @param textPartId
      */
-    setQuestionText(id: string): void {
-        const rowColumn: string[] = id.split('-').slice(1);
-        this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(id)).value;
+    setQuestionText(textPartId: string): void {
+        const rowColumn: string[] = textPartId.split('-').slice(1);
+        this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(textPartId)).value;
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text);
     }

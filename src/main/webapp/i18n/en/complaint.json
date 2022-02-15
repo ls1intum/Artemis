@@ -8,10 +8,10 @@
             "info": "The complaint limit refers to open and rejected complaints. If your complaint is accepted it will not count towards this total.",
             "description": "You may submit up to {{ maxComplaintNumber }} complaints in this course.",
             "descriptionExam": "You can submit one complaint for each manually assessed exercise in this exam.",
-            "descriptionExtended": "Every student is allowed to submit up to {{ maxComplaintNumber }} complaints in this course. You still have <strong style=color:red;>{{ allowedComplaints }}</strong> complaints left.",
+            "descriptionExtended": "Every student is allowed to complain once per exercise. In total {{ maxComplaintNumber }} complaints are possible in this course. You still have <strong style=color:red;>{{ allowedComplaints }}</strong> complaints left.",
             "descriptionTeam": "Your team may submit up to {{ maxComplaintNumber }} complaints in this course.",
-            "descriptionTeamExtended": "Every team is allowed to submit up to {{ maxComplaintNumber }} complaints in this course. Your team still has <strong style=color:red;>{{ allowedComplaints }}</strong> complaints left.",
-            "exclusivityDisclaimer": "Complaints and More Feature Requests are exclusive to each other. You can only submit one or the other.",
+            "descriptionTeamExtended": "Every team is allowed to complain once per exercise. In total {{ maxComplaintNumber }} complaints are possible in this course. Your team still has <strong style=color:red;>{{ allowedComplaints }}</strong> complaints left.",
+            "exclusivityDisclaimer": "Complaints and More Feedback Requests are exclusive to each other. You can only submit one or the other.",
             "beDescriptive": "Please describe in detail why the assessment is wrong. Your complaint will then be evaluated by a second reviewer.",
             "beDescriptiveTeam": "Please describe in detail why the assessment is wrong. Your submission will then be re-evaluated by your tutor.",
             "alreadySubmittedSubmissionAuthor": "You have already submitted a complaint",
@@ -38,6 +38,7 @@
                 "actions": "Actions",
                 "title": "List of complaints",
                 "dateAndTime": "Date and Time",
+                "responseTime": "Response time",
                 "status": "Status",
                 "noReply": "No reply yet",
                 "accepted": "Accepted",
@@ -45,7 +46,8 @@
                 "showAddressedComplaints": "Show addressed complaints",
                 "noComplaintsToShow": "There are no complaints to show at the moment"
             },
-            "review": "Review Complaint"
+            "review": "Review Complaint",
+            "oneWeekUnanswered": "Complaints should be answered within one week if possible!"
         },
         "moreFeedback": {
             "title": "More Feedback Request",

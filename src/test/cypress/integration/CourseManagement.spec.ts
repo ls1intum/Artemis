@@ -1,8 +1,12 @@
+import { Interception } from 'cypress/types/net-stubbing';
+import { COURSE_BASE } from './../support/requests/CourseManagementRequests';
+import { GET, BASE_API, POST } from './../support/constants';
 import { artemis } from '../support/ArtemisTesting';
 import { CourseManagementPage } from '../support/pageobjects/course/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../support/requests/ArtemisRequests';
 import { generateUUID } from '../support/utils';
+import { Course } from 'app/entities/course.model';
 
 // Requests
 const artemisRequests: ArtemisRequests = new ArtemisRequests();
@@ -12,19 +16,15 @@ const courseManagementPage: CourseManagementPage = new CourseManagementPage();
 const navigationBar: NavigationBar = new NavigationBar();
 
 // Common primitives
-let uid: string;
 let courseName: string;
 let courseShortName: string;
 
 // Selectors
-const fieldTitle = '#field_title';
-const shortName = '#field_shortName';
-const saveEntity = '#save-entity';
-const modalDeleteButton = '.modal-footer > .btn-danger';
+const modalDeleteButton = '#delete';
 
 describe('Course management', () => {
     beforeEach(() => {
-        uid = generateUUID();
+        const uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
         cy.login(artemis.users.getAdmin(), '/');
@@ -34,21 +34,17 @@ describe('Course management', () => {
         let courseId: number;
 
         beforeEach(() => {
-            artemisRequests.courseManagement
-                .createCourse(false, courseName, courseShortName)
-                .its('body')
-                .then((body) => {
-                    expect(body).property('id').to.be.a('number');
-                    courseId = body.id;
-                });
+            artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response: Cypress.Response<Course>) => {
+                courseId = response.body!.id!;
+            });
         });
 
-        it('Adds a student manually to the course', function () {
+        it('Adds a student manually to the course', () => {
             const username = artemis.users.getStudentOne().username;
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(courseId);
-            cy.intercept('GET', '/api/users/search*').as('getStudentQuery');
-            cy.intercept('POST', '/api/courses/*/students/' + username).as('addStudentQuery');
+            cy.intercept(GET, BASE_API + 'users/search*').as('getStudentQuery');
+            cy.intercept(POST, COURSE_BASE + '*/students/' + username).as('addStudentQuery');
             cy.get('#typeahead-basic').type(username);
             cy.wait('@getStudentQuery');
             cy.get('#ngb-typeahead-0')
@@ -56,7 +52,7 @@ describe('Course management', () => {
                 .should('be.visible')
                 .click();
             cy.wait('@addStudentQuery');
-            cy.get('[deletequestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"]').should('be.visible');
+            cy.get('#registered-students').contains(username).should('be.visible');
         });
 
         after(() => {
@@ -69,22 +65,19 @@ describe('Course management', () => {
     describe('Course creation', () => {
         let courseId: number;
 
-        it('Creates a new course', function () {
+        it('Creates a new course', () => {
             navigationBar.openCourseManagement();
             courseManagementPage.openCourseCreation();
-            cy.get(fieldTitle).type(courseName);
-            cy.get(shortName).type(courseShortName);
+            cy.get('#field_title').type(courseName);
+            cy.get('#field_shortName').type(courseShortName);
             cy.get('#field_testCourse').check();
             cy.get('#field_customizeGroupNamesEnabled').uncheck();
-            cy.intercept('POST', '/api/courses').as('createCourseQuery');
-            cy.get(saveEntity).click();
-            cy.wait('@createCourseQuery')
-                .its('response.body')
-                .then((body) => {
-                    expect(body).property('id').to.be.a('number');
-                    courseId = body.id;
-                });
-            courseManagementPage.getCourseCard(courseName, courseShortName).should('be.visible');
+            cy.intercept(POST, BASE_API + 'courses').as('createCourseQuery');
+            cy.get('#save-entity').click();
+            cy.wait('@createCourseQuery').then((request: Interception) => {
+                courseId = request.response!.body.id!;
+            });
+            courseManagementPage.getCourseCard(courseShortName).should('be.visible');
         });
 
         after(() => {
@@ -99,14 +92,14 @@ describe('Course management', () => {
             artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).its('status').should('eq', 201);
         });
 
-        it('Deletes an existing course', function () {
+        it('Deletes an existing course', () => {
             navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseName, courseShortName);
-            cy.get('.btn-danger').click();
+            courseManagementPage.openCourse(courseShortName);
+            cy.get('#delete-course').click();
             cy.get(modalDeleteButton).should('be.disabled');
-            cy.get('[name="confirmExerciseName"]').type(courseName);
+            cy.get('#confirm-exercise-name').type(courseName);
             cy.get(modalDeleteButton).should('not.be.disabled').click();
-            cy.contains(courseManagementPage.courseSelector(courseName, courseShortName)).should('not.exist');
+            courseManagementPage.getCourseCard(courseShortName).should('not.exist');
         });
     });
 });

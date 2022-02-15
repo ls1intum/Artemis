@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { UserService } from 'app/core/user/user.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
@@ -17,6 +18,10 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
         { name: 'INFO', value: SystemNotificationType.INFO },
         { name: 'WARNING', value: SystemNotificationType.WARNING },
     ];
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
 
     constructor(
         private userService: UserService,
@@ -55,15 +60,15 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.notification.id) {
-            this.systemNotificationService.update(this.notification).subscribe(
-                () => this.onSaveSuccess(),
-                () => this.onSaveError(),
-            );
+            this.systemNotificationService.update(this.notification).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
         } else {
-            this.systemNotificationService.create(this.notification).subscribe(
-                () => this.onSaveSuccess(),
-                () => this.onSaveError(),
-            );
+            this.systemNotificationService.create(this.notification).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
         }
     }
 

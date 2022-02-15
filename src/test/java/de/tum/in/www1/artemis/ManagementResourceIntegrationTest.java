@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.Instant;
@@ -64,7 +63,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
     @Test
@@ -88,7 +87,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         mockTriggerFailedBuild(participation);
 
         // Try to access 5 different endpoints with programming feature toggle enabled
-        request.put("/api/courses/" + course.getId() + "/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.OK);
+        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.OK);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
         request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.OK);
@@ -96,13 +95,13 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK);
 
         var features = new HashMap<Feature, Boolean>();
-        features.put(Feature.PROGRAMMING_EXERCISES, false);
+        features.put(Feature.ProgrammingExercises, false);
         request.put("/api/management/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
-        assertThat(featureToggleService.isFeatureEnabled(Feature.PROGRAMMING_EXERCISES)).as("Feature was disabled").isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
         // Try to access 5 different endpoints with programming feature toggle disabled
-        request.put("/api/courses/" + course.getId() + "/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.FORBIDDEN);
+        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.FORBIDDEN);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.FORBIDDEN);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
         request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.FORBIDDEN);
@@ -110,7 +109,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.FORBIDDEN);
 
         // Reset
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
     @Test

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
 
 import { createRequestOption } from 'app/shared/util/request.util';
@@ -37,8 +37,8 @@ export class AttachmentService {
         return this.http.put<Attachment>(this.resourceUrl, copy, { params: options, observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Attachment>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    find(attachmentId: number): Observable<EntityResponseType> {
+        return this.http.get<Attachment>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
@@ -54,8 +54,8 @@ export class AttachmentService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(attachmentId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' });
     }
 
     convertDateFromClient(attachment: Attachment): Attachment {

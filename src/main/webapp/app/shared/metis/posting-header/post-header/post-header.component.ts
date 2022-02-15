@@ -4,6 +4,7 @@ import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseWideContext } from '../../metis.util';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-post-header',
@@ -15,6 +16,9 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     isAtLeastInstructorInCourse: boolean;
     readonly CourseWideContext = CourseWideContext;
+
+    // Icons
+    faPencilAlt = faPencilAlt;
 
     constructor(protected metisService: MetisService) {
         super(metisService);

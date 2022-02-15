@@ -168,18 +168,6 @@ During the exam creation and configuration, you can create your exam and configu
 .. note::
     Artemis locks and unlocks the student repositories automatically based on the individual exam start and end date. These buttons are typically not necessary unless something went wrong.
 
-.. _evaluate_quiz_exercises:
-
-- Additionally, once the :ref:`exam conduction <exam_conduction>` ends, you can click on |evaluate_quizzes|. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result.
-
-.. note::
-    If you do not press this button, the students quiz exercises will not be graded.
-
-- After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate all submissions with 0 points for unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
-
-.. note::
-    If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
-
 .. figure:: instructor/student_exams.png
    :alt: Student Exam Page
    :align: center
@@ -261,6 +249,18 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 - The :ref:`assessment <exam_assessment>` process is anonymized. Artemis omits personal student data from the assessors.
 - The *Assessment Dashboard* provides an overview over the current assessment progress per exercise. For each exercise, you can view how many submissions have already been assessed and how many are still left. The status of the student complaints is also displayed here.
+
+.. _evaluate_quiz_exercises:
+
+- Additionally, once the :ref:`exam conduction <exam_conduction>` ends, you can click on |evaluate_quizzes|. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result.
+
+.. note::
+    If you do not press this button, the students quiz exercises will not be graded.
+
+- After the :ref:`exam conduction <exam_conduction>` ends, you can click on |assess_unsubmitted_student_exams|. This action will automatically evaluate all submissions with 0 points for unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
+
+.. note::
+    If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
 
 .. figure:: instructor/assessment_dashboard.png
    :alt: Assessment Dashboard

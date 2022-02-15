@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.Optional;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -21,7 +20,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -45,9 +46,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, StudentParticipationRepository studentParticipationRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository);
+                submissionRepository, singleUserNotificationService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.ltiService = ltiService;
@@ -71,7 +72,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
         if (!programmingExercise.areManualResultsAllowed()) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise, assessmentUpdate);
@@ -140,11 +141,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(programmingExercise, user);
         if (!assessmentService.isAllowedToCreateOrOverrideResult(existingManualResult, programmingExercise, participation, user, isAtLeastInstructor)) {
             log.debug("The user {} is not allowed to override the assessment for the participation {} for User {}", user.getLogin(), participation.getId(), user.getLogin());
-            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+            throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
         if (!programmingExercise.areManualResultsAllowed()) {
-            return forbidden("assessment", "assessmentSaveNotAllowed", "Creating manual results is disabled for this exercise!");
+            throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
         if (Boolean.FALSE.equals(newManualResult.isRated())) {
             throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");
@@ -187,6 +188,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         if (submit) {
             newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId());
+            Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
+            if (optionalStudent.isPresent()) {
+                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(programmingExercise, optionalStudent.get(), newManualResult);
+            }
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {

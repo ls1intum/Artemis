@@ -8,9 +8,6 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { restore, stub } from 'sinon';
 import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
@@ -22,9 +19,6 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate-warning.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('QuizExercise Re-evaluate Warning Component', () => {
     let comp: QuizReEvaluateWarningComponent;
@@ -61,15 +55,15 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
         // initial value
         comp.quizExercise = quizExercise;
-        stub(quizService, 'find').returns(of(new HttpResponse({ body: quizExercise })));
+        jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
-        restore();
+        jest.restoreAllMocks();
     });
 
     it('Should initialize quiz exercise', () => {
         comp.ngOnInit();
-        expect(comp.backUpQuiz).to.equal(quizExercise);
+        expect(comp.backUpQuiz).toEqual(quizExercise);
     });
 });

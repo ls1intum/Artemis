@@ -1,5 +1,3 @@
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -8,7 +6,6 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
-import * as chai from 'chai';
 import { HttpResponse } from '@angular/common/http';
 import { ExamParticipantScoresComponent } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -16,9 +13,6 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Component({ selector: 'jhi-participant-scores-tables-container', template: '<div></div>' })
 class ParticipantScoresTableContainerStubComponent {
@@ -69,13 +63,13 @@ describe('ExamParticipantScores', () => {
             });
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
+        expect(component).not.toBeNull();
     });
 
     it('should load date when initialized', () => {
@@ -85,7 +79,7 @@ describe('ExamParticipantScores', () => {
 
         const course = new Course();
         course.accuracyOfScores = 1;
-        sinon.stub(courseManagementService, 'find').returns(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         // stub find all of exam
         const participantScoreDTO = new ParticipantScoreDTO();
@@ -95,7 +89,7 @@ describe('ExamParticipantScores', () => {
             body: [participantScoreDTO],
             status: 200,
         });
-        const findAllOfExamStub = sinon.stub(participantScoreService, 'findAllOfExam').returns(of(findAllOfExamResponse));
+        const findAllOfExamStub = jest.spyOn(participantScoreService, 'findAllOfExam').mockReturnValue(of(findAllOfExamResponse));
         // stub find average of exam
         const participantScoreAverageDTO = new ParticipantScoreAverageDTO();
         participantScoreAverageDTO.userName = 'test';
@@ -104,29 +98,31 @@ describe('ExamParticipantScores', () => {
             body: [participantScoreAverageDTO],
             status: 200,
         });
-        const findAverageOfExamPerParticipantStub = sinon.stub(participantScoreService, 'findAverageOfExamPerParticipant').returns(of(findAverageOfExamPerParticipantResponse));
+        const findAverageOfExamPerParticipantStub = jest
+            .spyOn(participantScoreService, 'findAverageOfExamPerParticipant')
+            .mockReturnValue(of(findAverageOfExamPerParticipantResponse));
         // stub find average of exam
         const findAverageOfExamResponse: HttpResponse<number> = new HttpResponse({
             body: 99,
             status: 200,
         });
-        const findAverageOfExamStub = sinon.stub(participantScoreService, 'findAverageOfExam').returns(of(findAverageOfExamResponse));
+        const findAverageOfExamStub = jest.spyOn(participantScoreService, 'findAverageOfExam').mockReturnValue(of(findAverageOfExamResponse));
 
         const gradingScaleResponseForExam: HttpResponse<GradingScale> = new HttpResponse({
             body: new GradingScale(),
             status: 200,
         });
-        const findGradingScaleForExamStub = sinon.stub(gradingSystemService, 'findGradingScaleForExam').returns(of(gradingScaleResponseForExam));
+        const findGradingScaleForExamStub = jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(gradingScaleResponseForExam));
 
         fixture.detectChanges();
 
-        expect(component.participantScores).to.deep.equal([participantScoreDTO]);
-        expect(component.participantScoresAverage).to.deep.equal([participantScoreAverageDTO]);
-        expect(component.avgScore).to.equal(99);
-        expect(component.avgRatedScore).to.equal(99);
-        expect(findAllOfExamStub).to.have.been.called;
-        expect(findAverageOfExamPerParticipantStub).to.have.been.called;
-        expect(findAverageOfExamStub).to.have.been.called;
-        expect(findGradingScaleForExamStub).to.have.been.called;
+        expect(component.participantScores).toEqual([participantScoreDTO]);
+        expect(component.participantScoresAverage).toEqual([participantScoreAverageDTO]);
+        expect(component.avgScore).toEqual(99);
+        expect(component.avgRatedScore).toEqual(99);
+        expect(findAllOfExamStub).toHaveBeenCalled();
+        expect(findAverageOfExamPerParticipantStub).toHaveBeenCalled();
+        expect(findAverageOfExamStub).toHaveBeenCalled();
+        expect(findGradingScaleForExamStub).toHaveBeenCalled();
     });
 });

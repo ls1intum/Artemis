@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { userMgmtRoute } from 'app/admin/user-management/user-management.route';
+import { userManagementRoute } from 'app/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/admin/system-notification-management/system-notification-management.route';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { upcomingExamsAndExercisesRoute } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.route';
@@ -80,7 +80,7 @@ export const adminState: Routes = [
                 },
             },
             ...organizationMgmtRoute,
-            ...userMgmtRoute,
+            ...userManagementRoute,
             ...systemNotificationManagementRoute,
             upcomingExamsAndExercisesRoute,
         ],

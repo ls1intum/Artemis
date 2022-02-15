@@ -47,6 +47,9 @@ public abstract class Participation extends DomainObject implements Participatio
     @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
+    @Column(name = "individual_due_date")
+    private ZonedDateTime individualDueDate;
+
     // information whether this participation belongs to a test run exam, not relevant for course exercises
     @Column(name = "test_run")
     private Boolean testRun = false;
@@ -124,6 +127,19 @@ public abstract class Participation extends DomainObject implements Participatio
 
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
+    }
+
+    public ZonedDateTime getIndividualDueDate() {
+        return individualDueDate;
+    }
+
+    public Participation individualDueDate(ZonedDateTime individualDueDate) {
+        this.individualDueDate = individualDueDate;
+        return this;
+    }
+
+    public void setIndividualDueDate(ZonedDateTime individualDueDate) {
+        this.individualDueDate = individualDueDate;
     }
 
     public boolean isTestRun() {
@@ -214,7 +230,7 @@ public abstract class Participation extends DomainObject implements Participatio
         }
 
         List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
-                .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).collect(Collectors.toList());
+                .sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
 
         if (sortedResultsWithCompletionDate.size() == 0) {
             return null;

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -14,13 +12,18 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Rating;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RatingService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -64,8 +67,8 @@ public class RatingResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
         // TODO allow for Instructors
-        if (!checkIfUserIsOwnerOfSubmission(resultId) && !authCheckService.isAdmin()) {
-            return forbidden();
+        if (!authCheckService.isAdmin()) {
+            checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         }
         Optional<Rating> rating = ratingService.findRatingByResultId(resultId);
         return ResponseEntity.ok(rating);
@@ -83,10 +86,7 @@ public class RatingResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Rating> createRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) throws URISyntaxException {
         checkRating(ratingValue);
-        if (!checkIfUserIsOwnerOfSubmission(resultId)) {
-            return forbidden();
-        }
-
+        checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         Rating savedRating = ratingService.saveRating(resultId, ratingValue);
         return ResponseEntity.created(new URI("/api/results/" + savedRating.getId() + "/rating")).body(savedRating);
     }
@@ -108,10 +108,7 @@ public class RatingResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Rating> updateRatingForResult(@PathVariable long resultId, @PathVariable int ratingValue) {
         checkRating(ratingValue);
-        if (!checkIfUserIsOwnerOfSubmission(resultId)) {
-            return forbidden();
-        }
-
+        checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         Rating savedRating = ratingService.updateRating(resultId, ratingValue);
         return ResponseEntity.ok(savedRating);
     }
@@ -125,27 +122,23 @@ public class RatingResource {
     @GetMapping("/course/{courseId}/rating")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Rating>> getRatingForInstructorDashboard(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
-
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<Rating> responseRatings = ratingService.getAllRatingsByCourse(courseId);
-
         return ResponseEntity.ok(responseRatings);
     }
 
     /**
-     * Check if currently logged in user in the owner of the participation
+     * Check if currently logged in user in the owner of the participation, if this is not the case throw an AccessForbiddenException
      *
      * @param resultId - Id of the result that the participation belongs to
-     * @return False if User is not Owner, True otherwise
      */
-    private boolean checkIfUserIsOwnerOfSubmission(Long resultId) {
+    private void checkIfUserIsOwnerOfSubmissionElseThrow(Long resultId) {
         User user = userRepository.getUser();
-        Result result = resultRepository.findOneElseThrow(resultId);
-        return authCheckService.isOwnerOfParticipation((StudentParticipation) result.getParticipation(), user);
+        Result result = resultRepository.findByIdElseThrow(resultId);
+        if (!authCheckService.isOwnerOfParticipation((StudentParticipation) result.getParticipation(), user)) {
+            log.warn("User {} has tried to access rating for result {}", user.getLogin(), resultId);
+            throw new AccessForbiddenException();
+        }
     }
 }

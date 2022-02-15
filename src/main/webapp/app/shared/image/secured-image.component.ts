@@ -3,7 +3,7 @@ import { BehaviorSubject, isObservable, Observable, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
-import { base64StringToBlob } from 'blob-util';
+import { base64StringToBlob } from 'app/utils/blob-util';
 
 // Status that is emitted to the client to describe the loading status of the picture
 export const enum ImageLoadingStatus {
@@ -33,7 +33,7 @@ export enum CachingStrategy {
             <img [attr.src]="dataUrl | async" alt="alt" />
         </ng-template>
         <ng-template [ngIf]="this.mobileDragAndDrop">
-            <img [attr.src]="dataUrl | async" class="dnd-drag-start" draggable="true" alt="alt" dnd-draggable />
+            <img [attr.src]="dataUrl | async" class="dnd-drag-start" draggable="true" alt="alt" cdkDrag />
         </ng-template>
     `,
 })

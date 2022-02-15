@@ -1,4 +1,5 @@
-import { IconName, IconProp } from '@fortawesome/fontawesome-svg-core';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faCheck, faCheckCircle, faCircle, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { convertToHtmlLinebreaks, escapeString } from 'app/utils/text.utils';
@@ -47,22 +48,22 @@ export class TextResultBlock {
     get icon(): IconProp | undefined {
         switch (this.feedbackType) {
             case FeedbackType.POSITIVE:
-                return 'check';
+                return faCheck;
             case FeedbackType.NEGATIVE:
-                return 'times';
+                return faTimes;
             case FeedbackType.NEUTRAL:
-                return 'circle';
+                return faCircle;
         }
     }
 
-    get circleIcon(): IconName | undefined {
+    get circleIcon(): IconProp | undefined {
         switch (this.feedbackType) {
             case FeedbackType.POSITIVE:
-                return 'check-circle';
+                return faCheckCircle;
             case FeedbackType.NEGATIVE:
-                return 'times-circle';
+                return faTimesCircle;
             case FeedbackType.NEUTRAL:
-                return 'dot-circle';
+                return faDotCircle;
         }
     }
 

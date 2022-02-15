@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CreateTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-text-unit/create-text-unit.component';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
@@ -11,13 +8,10 @@ import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 @Component({ selector: 'jhi-text-unit-form', template: '' })
 class TextUnitFormStubComponent {
@@ -33,7 +27,6 @@ class LectureUnitLayoutStubComponent {
 describe('CreateTextUnitComponent', () => {
     let createTextUnitComponentFixture: ComponentFixture<CreateTextUnitComponent>;
     let createTextUnitComponent: CreateTextUnitComponent;
-    const sandbox = sinon.createSandbox();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -80,14 +73,14 @@ describe('CreateTextUnitComponent', () => {
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', fakeAsync(() => {
         createTextUnitComponentFixture.detectChanges();
         tick();
-        expect(createTextUnitComponent).to.be.ok;
+        expect(createTextUnitComponent).not.toBeNull();
     }));
 
     it('should send POST request upon form submission and navigate', fakeAsync(() => {
@@ -110,8 +103,8 @@ describe('CreateTextUnitComponent', () => {
             status: 200,
         });
 
-        const createStub = sandbox.stub(textUnitService, 'create').returns(of(response));
-        const navigateSpy = sinon.spy(router, 'navigate');
+        const createStub = jest.spyOn(textUnitService, 'create').mockReturnValue(of(response));
+        const navigateSpy = jest.spyOn(router, 'navigate');
 
         createTextUnitComponentFixture.detectChanges();
         tick();
@@ -120,9 +113,9 @@ describe('CreateTextUnitComponent', () => {
         textUnitForm.formSubmitted.emit(formDate);
 
         createTextUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).to.have.been.calledOnce;
-            expect(navigateSpy).to.have.been.calledOnce;
-            navigateSpy.restore();
+            expect(createStub).toHaveBeenCalledTimes(1);
+            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            navigateSpy.mockRestore();
         });
     }));
 });

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.stream.Collectors;
@@ -170,7 +170,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testAdminGetsResultsFromAllCourses() throws Exception {
         database.addCourseInOtherInstructionGroupAndExercise("Programming");
         final var search = database.configureSearch("Programming");

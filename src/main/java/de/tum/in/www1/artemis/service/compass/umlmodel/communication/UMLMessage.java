@@ -4,9 +4,9 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 
 public class UMLMessage {
 
-    private String name;
+    private final String name;
 
-    private Direction direction;
+    private final Direction direction;
 
     public UMLMessage(String name, Direction direction) {
         this.name = name;

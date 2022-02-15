@@ -25,11 +25,10 @@
             },
             "allowedCommonJsDependencies": [
               "sockjs-client",
-              "chart.js",
+              "hoist-non-react-statics",
               "showdown-highlight",
               "brace/mode/markdown",
               "export-to-csv",
-              "@ls1intum/apollon",
               "prop-types",
               "dayjs/locale/de",
               "brace/mode/java",
@@ -75,7 +74,14 @@
           },
           "configurations": {
             "production": {
-              "optimization": true,
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "outputHashing": "all",
               "sourceMap": true,
               "namedChunks": false,
@@ -88,13 +94,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2.7mb",
-                  "maximumError": "3.2mb"
+                  "maximumWarning": "2mb",
+                  "maximumError": "2.2mb"
                 },
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "1mb",
-                  "maximumError": "2mb"
+                  "maximumError": "1.6mb"
                 }
               ]
             },
@@ -137,6 +143,11 @@
   "defaultProject": "artemis",
   "cli": {
     "analytics": false,
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "cache": {
+      "enabled": true,
+      "path": ".cache",
+      "environment": "all"
+    }
   }
 }

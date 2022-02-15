@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges } from '@angular/core';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -9,28 +9,55 @@ import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
-export class ExerciseScoresChartComponent implements AfterViewInit {
+export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     @Input()
+    filteredExerciseIDs: number[];
+
     courseId: number;
     isLoading = false;
-    public exerciseScores: ExerciseScoresDTO[] = [];
+    exerciseScores: ExerciseScoresDTO[] = [];
+    excludedExerciseScores: ExerciseScoresDTO[] = [];
+    visibleExerciseScores: ExerciseScoresDTO[] = [];
+
+    // Ideally I would design the filter as map from ExerciseType to boolean.
+    // But I observed some unexpected casting of the ExerciseType in the ExerciseDTO
+    // that leads to the following situation: When trying to look up a value given an ExerciseType in a map with structure: ExerciseType -> boolean
+    // instead of comparing the string value of the enum, the enum key was taken as string and then used as key for the map
+    // E.g. ExerciseType.PROGRAMMING would lead to chartFilter.get('PROGRAMMING') instead of chartFilter.get('programming')
+    // This way, never a value was returned as the map did not contain such key
+    chartFilter: Map<string, boolean> = new Map();
+    numberOfActiveFilters = 0;
+    typeSet: Set<ExerciseType> = new Set();
+
+    readonly Math = Math;
+    readonly ExerciseType = ExerciseType;
+
+    // Icons
+    faFilter = faFilter;
 
     // ngx
     ngxData: any[] = [];
     backUpData: any[] = [];
-    xAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.xAxis');
-    yAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yAxis');
-    ngxColor = { name: 'Performance in Exercises', selectable: true, group: ScaleType.Ordinal, domain: ['#87ceeb', '#fa8072', '#32cd32'] } as Color; // colors: blue, red, green
+    xAxisLabel: string;
+    yAxisLabel: string;
+    ngxColor = {
+        name: 'Performance in Exercises',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: ['#87ceeb', '#fa8072', '#32cd32'],
+    } as Color; // colors: blue, red, green
     backUpColor = cloneDeep(this.ngxColor);
-    yourScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel');
-    averageScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel');
-    maximumScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.maximumScoreLabel');
+    yourScoreLabel: string;
+    averageScoreLabel: string;
+    maximumScoreLabel: string;
     maxScale = 101;
 
     constructor(
@@ -39,7 +66,11 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
         private alertService: AlertService,
         private exerciseScoresChartService: ExerciseScoresChartService,
         private translateService: TranslateService,
-    ) {}
+    ) {
+        this.translateService.onLangChange.subscribe(() => {
+            this.setTranslations();
+        });
+    }
 
     ngAfterViewInit() {
         this.activatedRoute.parent?.parent?.params.subscribe((params) => {
@@ -48,6 +79,10 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
                 this.loadDataAndInitializeChart();
             }
         });
+    }
+
+    ngOnChanges(): void {
+        this.initializeChart();
     }
 
     private loadDataAndInitializeChart(): void {
@@ -59,18 +94,24 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (exerciseScoresResponse) => {
+            .subscribe({
+                next: (exerciseScoresResponse) => {
                     this.exerciseScores = exerciseScoresResponse.body!;
                     this.initializeChart();
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     private initializeChart(): void {
+        this.setTranslations();
+        this.exerciseScores = this.exerciseScores.concat(this.excludedExerciseScores);
+        this.excludedExerciseScores = this.exerciseScores.filter((score) => this.filteredExerciseIDs.includes(score.exerciseId!));
+        this.exerciseScores = this.exerciseScores.filter((score) => !this.filteredExerciseIDs.includes(score.exerciseId!));
+        this.visibleExerciseScores = Array.of(...this.exerciseScores);
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
+        this.initializeFilterOptions();
         this.addData(sortedExerciseScores);
     }
 
@@ -155,5 +196,55 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
      */
     navigateToExercise(exerciseId: number): void {
         this.router.navigate(['courses', this.courseId, 'exercises', exerciseId]);
+    }
+
+    /**
+     * Set up initial filter for the line chart
+     * @private
+     */
+    private initializeFilterOptions(): void {
+        this.typeSet = new Set(this.exerciseScores.map((score) => score.exerciseType));
+        this.typeSet.forEach((type) => {
+            this.chartFilter.set(type.toLowerCase().replace('_', '-'), true);
+        });
+        this.numberOfActiveFilters = this.typeSet.size;
+    }
+
+    /**
+     * Handles selection or deselection of specific exercise type
+     * @param type the ExerciseType the user changed the filter for
+     */
+    toggleExerciseType(type: ExerciseType): void {
+        const convertedType = type.toLowerCase().replace('_', '-');
+        const isIncluded = this.chartFilter.get(convertedType);
+        this.chartFilter.set(convertedType, !isIncluded);
+        this.visibleExerciseScores = this.exerciseScores.filter((score) => this.chartFilter.get(score.exerciseType.toLowerCase().replace('_', '-')));
+        this.numberOfActiveFilters += !isIncluded ? 1 : -1;
+        // we show all the exercises ordered by their release data
+        const sortedExerciseScores = sortBy(this.visibleExerciseScores, (exerciseScore) => exerciseScore.releaseDate);
+        this.addData(sortedExerciseScores);
+    }
+
+    /**
+     * Auxiliary method that instantiated the translations for the exercise.
+     * As we subscribe to language changes, this ensures that the chart is translated instantly if the user changes the language
+     * @private
+     */
+    private setTranslations(): void {
+        this.xAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.xAxis');
+        this.yAxisLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yAxis');
+
+        this.yourScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.yourScoreLabel');
+        this.averageScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.averageScoreLabel');
+        this.maximumScoreLabel = this.translateService.instant('artemisApp.exercise-scores-chart.maximumScoreLabel');
+
+        if (this.ngxData.length > 0) {
+            const labels = [this.yourScoreLabel, this.averageScoreLabel, this.maximumScoreLabel];
+
+            labels.forEach((label, index) => {
+                this.ngxData[index].name = label;
+            });
+            this.ngxData = [...this.ngxData];
+        }
     }
 }

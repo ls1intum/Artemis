@@ -5,9 +5,10 @@ import { User } from 'app/core/user/user.model';
 import { orderBy } from 'lodash-es';
 import { Observable } from 'rxjs';
 import { map, throttleTime } from 'rxjs/operators';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-team-students-online-list',
@@ -26,6 +27,10 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     onlineTeamStudents: OnlineTeamStudent[] = [];
     typingTeamStudents: OnlineTeamStudent[] = [];
     websocketTopic: string;
+
+    // Icons
+    faCircle = faCircle;
+    faHistory = faHistory;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
 
@@ -49,13 +54,13 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         this.jhiWebsocketService
             .receive(this.websocketTopic)
             .pipe(map(this.convertOnlineTeamStudentsFromServer))
-            .subscribe(
-                (students: OnlineTeamStudent[]) => {
+            .subscribe({
+                next: (students: OnlineTeamStudent[]) => {
                     this.onlineTeamStudents = students;
                     this.computeTypingTeamStudents();
                 },
-                (error) => console.error(error),
-            );
+                error: (error) => console.error(error),
+            });
         setTimeout(() => {
             this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
         }, 700);
@@ -63,10 +68,10 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     private setupTypingIndicatorSender() {
         if (this.typing$) {
-            this.typing$.pipe(throttleTime(this.sendTypingInterval)).subscribe(
-                () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
-                (error) => console.error(error),
-            );
+            this.typing$.pipe(throttleTime(this.sendTypingInterval)).subscribe({
+                next: () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
+                error: (error) => console.error(error),
+            });
         }
     }
 

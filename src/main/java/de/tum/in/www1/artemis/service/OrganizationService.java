@@ -37,9 +37,7 @@ public class OrganizationService {
      */
     public void index(final Organization organization) {
         log.debug("Start indexing for organization: {}", organization.getName());
-        organization.getUsers().forEach(user -> {
-            userRepository.removeOrganizationFromUser(user.getId(), organization);
-        });
+        organization.getUsers().forEach(user -> userRepository.removeOrganizationFromUser(user.getId(), organization));
         userRepository.findAllMatchingEmailPattern(organization.getEmailPattern()).forEach(user -> {
             log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
             userRepository.addOrganizationToUser(user.getId(), organization);
@@ -64,7 +62,7 @@ public class OrganizationService {
      */
     public Organization add(Organization organization) {
         Organization addedOrganization = save(organization);
-        addedOrganization = organizationRepository.findOneWithEagerUsersAndCoursesOrElseThrow(addedOrganization.getId());
+        addedOrganization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(addedOrganization.getId());
         index(addedOrganization);
         return addedOrganization;
     }
@@ -79,7 +77,7 @@ public class OrganizationService {
     public Organization update(Organization organization) {
         log.debug("Request to update Organization : {}", organization);
         boolean indexingRequired = false;
-        var oldOrganization = organizationRepository.findOneWithEagerUsersAndCoursesOrElseThrow(organization.getId());
+        var oldOrganization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(organization.getId());
         if (!oldOrganization.getEmailPattern().equals(organization.getEmailPattern())) {
             indexingRequired = true;
         }
@@ -100,15 +98,11 @@ public class OrganizationService {
      * @param organizationId the id of the organization to delete
      */
     public void deleteOrganization(Long organizationId) {
-        final Organization organization = organizationRepository.findOneWithEagerUsersAndCoursesOrElseThrow(organizationId);
+        final Organization organization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(organizationId);
 
         // we make sure to delete all relations before deleting the organization
-        organization.getUsers().forEach(user -> {
-            userRepository.removeOrganizationFromUser(user.getId(), organization);
-        });
-        organization.getCourses().forEach(course -> {
-            courseRepository.removeOrganizationFromCourse(course.getId(), organization);
-        });
+        organization.getUsers().forEach(user -> userRepository.removeOrganizationFromUser(user.getId(), organization));
+        organization.getCourses().forEach(course -> courseRepository.removeOrganizationFromCourse(course.getId(), organization));
 
         organizationRepository.delete(organization);
     }

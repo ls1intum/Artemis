@@ -73,7 +73,7 @@
                                 {{ attachment.name }}
                             </a>
                             <a class="text-primary" *ngIf="isDownloadingLink === attachment.link">
-                                <fa-icon [icon]="'spinner'" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
+                                <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon> {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
                             </a>
                             <span class="ms-1 badge bg-info">
                                 {{ attachmentExtension(attachment) | uppercase }}

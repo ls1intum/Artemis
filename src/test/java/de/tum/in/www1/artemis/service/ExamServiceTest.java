@@ -68,7 +68,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testSetExamProperties() {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
@@ -101,7 +101,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCanGetCurrentAndUpcomingExams() {
         List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams();
         assertThat(exams.size()).isEqualTo(2);
@@ -110,7 +110,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void validateForStudentExamGeneration_differentCalculationTypesInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -126,7 +126,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void validateForStudentExamGeneration_differentPointsInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 9);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -142,7 +142,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void validateForStudentExamGeneration_differentBonusInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -158,7 +158,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void validateForStudentExamGeneration_tooManyPointsInMandatoryExercises_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -174,7 +174,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void validateForStudentExamGeneration_tooFewPointsInExercisesGroups_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -190,7 +190,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void getChecklistStatsEmpty() {
         // check if general method works. More sophisticated test are within the ExamIntegrationTests
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1);

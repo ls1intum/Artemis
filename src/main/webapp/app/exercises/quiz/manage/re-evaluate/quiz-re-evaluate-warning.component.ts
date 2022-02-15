@@ -8,6 +8,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
@@ -31,6 +32,13 @@ export class QuizReEvaluateWarningComponent implements OnInit {
 
     quizExercise: QuizExercise;
     backUpQuiz: QuizExercise;
+
+    // Icons
+    faBan = faBan;
+    faSpinner = faSpinner;
+    faTimes = faTimes;
+    faCheck = faCheck;
+    faCheckCircle = faCheckCircle;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -239,16 +247,16 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     confirmChange(): void {
         this.busy = true;
 
-        this.quizReEvaluateService.update(this.quizExercise).subscribe(
-            () => {
+        this.quizReEvaluateService.update(this.quizExercise).subscribe({
+            next: () => {
                 this.busy = false;
                 this.successful = true;
             },
-            () => {
+            error: () => {
                 this.busy = false;
                 this.failed = true;
             },
-        );
+        });
     }
 
     /**

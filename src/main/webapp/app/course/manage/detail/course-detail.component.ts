@@ -13,6 +13,21 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import {
+    faChartBar,
+    faClipboard,
+    faComments,
+    faEye,
+    faFilePdf,
+    faFlag,
+    faGraduationCap,
+    faHeartBroken,
+    faListAlt,
+    faTable,
+    faTimes,
+    faUserCheck,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -45,6 +60,21 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     paramSub: Subscription;
+
+    // Icons
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
+    faTable = faTable;
+    faUserCheck = faUserCheck;
+    faFlag = faFlag;
+    faListAlt = faListAlt;
+    faChartBar = faChartBar;
+    faFilePdf = faFilePdf;
+    faComments = faComments;
+    faClipboard = faClipboard;
+    faGraduationCap = faGraduationCap;
+    faHeartBroken = faHeartBroken;
 
     constructor(
         private eventManager: EventManager,
@@ -95,13 +125,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.course = courseResponse.body!;
         });
         // fetch statistics separately because it takes quite long for larger courses
-        this.courseService.getCourseStatisticsForDetailView(courseId).subscribe(
-            (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
+        this.courseService.getCourseStatisticsForDetailView(courseId).subscribe({
+            next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
                 this.courseDTO = courseResponse.body!;
                 this.activeStudents = courseResponse.body!.activeStudents;
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
@@ -109,16 +139,16 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * @param courseId id the course that will be deleted
      */
     deleteCourse(courseId: number) {
-        this.courseService.delete(courseId).subscribe(
-            () => {
+        this.courseService.delete(courseId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',
                     content: 'Deleted an course',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
         this.router.navigate(['/course-management']);
     }
 }

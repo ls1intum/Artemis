@@ -41,8 +41,8 @@
                 "minlength": "Der Name muss mindestens 3 Zeichen lang sein."
             },
             "teamName": {
-                "missingTeamName": "Alle Studierenden müssen einem Teamnamen zuordnet sein.",
-                "pattern": "Der Teamname muss mit einem Buchstaben beginnen."
+                "missingTeamName": "Studierende:r {{ studentName }} in Eintrag {{ entryNr }} ist kein Teamname zugeordnet.",
+                "pattern": "Der Teamname {{ teamName }} in Eintrag {{ entryNr }} beginnt nicht mit einem Buchstaben."
             },
             "shortName": {
                 "label": "Kurzname",
@@ -63,7 +63,10 @@
                 "all": "Alle Teams",
                 "own": "Eigene Teams"
             },
-            "missingUserNameOrId": "Studierende müssen entweder einen Login oder eine Matrikelnummer haben.",
+            "invalidFileType": "Ungültiger Dateityp für den Team Import: {{ fileType }}",
+            "invalidCsvHeader": "Die CSV Datei muss folgende Kopfzeile haben: {{ expectedHeader }}",
+            "invalidCsvLine": "Zeile {{ line }} ist falsch formatiert",
+            "missingUserNameOrId": "Der/Die Studierende in Eintrag {{ entryNr }} hat weder einen Login noch eine Matrikelnummer.",
             "noStudentsAddedYet": "Noch keine Studierenden hinzugefügt.",
             "addStudentToTeam": "Studierende zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {
@@ -104,7 +107,7 @@
                 "buttonLabel": "Importiere Teams",
                 "dialogTitle": "Importiere Teams nach:",
                 "introTextExercise": "Dieser Dialog kann dazu verwendet werden, Teams einer anderen Übung dieses Kurses in diese Übung zu importieren.",
-                "introTextFile": "Dieser Dialog kann dazu verwendet werden, Teams aus einer Datei in diese Übung zu importieren.",
+                "introTextFile": "Dieser Dialog kann dazu verwendet werden, Teams aus einer .json oder .csv Datei in diese Übung zu importieren.",
                 "error": "Teams konnten nicht importiert werden. Bitte versuche es nochmal.",
                 "fromAnExercise": "Von einer Übung",
                 "fromAFile": "Aus einer Datei"

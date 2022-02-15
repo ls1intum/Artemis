@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { forkJoin, of, Subscription, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { take } from 'rxjs/operators';
@@ -23,6 +23,8 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
+import { faCodeBranch, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 
 /**
  * Filter properties for a result
@@ -65,6 +67,14 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     isAdmin = false;
 
+    // Icons
+    faDownload = faDownload;
+    faSync = faSync;
+    faFolderOpen = faFolderOpen;
+    faListAlt = faListAlt;
+    faCodeBranch = faCodeBranch;
+    farFileCode = faFileCode;
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
@@ -90,7 +100,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             const findCourse = this.courseService.find(params['courseId']);
             const findExercise = this.exerciseService.find(params['exerciseId']);
 
-            forkJoin(findCourse, findExercise).subscribe(([courseRes, exerciseRes]) => {
+            forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.

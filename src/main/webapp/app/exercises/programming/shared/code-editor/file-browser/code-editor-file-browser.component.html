@@ -2,17 +2,17 @@
     <div class="card-header d-flex justify-content-center bg-primary text-white" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title justify-content-center">
             <span *ngIf="!collapsed">
-                <fa-icon [icon]="'folder-open'"></fa-icon>
+                <fa-icon [icon]="faFolderOpen"></fa-icon>
                 <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
             </span>
             <span class="collapsed-file-browser" *ngIf="collapsed">
-                <fa-icon class="top-icon" [icon]="'chevron-right'"></fa-icon>
+                <fa-icon class="top-icon" [icon]="faChevronRight"></fa-icon>
                 <span class="header" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
-                <fa-icon [icon]="'folder-open'" class="fa-rotate-270" id="panel-symbol"></fa-icon>
-                <fa-icon class="bottom-icon" [icon]="'chevron-right'"></fa-icon>
+                <fa-icon [icon]="faFolderOpen" class="fa-rotate-270" id="panel-symbol"></fa-icon>
+                <fa-icon class="bottom-icon" [icon]="faChevronRight"></fa-icon>
             </span>
         </h3>
-        <fa-icon class="ms-auto clickable" [icon]="'chevron-left'"></fa-icon>
+        <fa-icon class="ms-auto clickable" [icon]="faChevronLeft"></fa-icon>
     </div>
 
     <!-- Root actions -->
@@ -24,8 +24,8 @@
             (click)="setCreatingFileInRoot(FileType.FILE)"
             title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
         >
-            <fa-icon [icon]="'plus'"></fa-icon>
-            <fa-icon [icon]="'file'" class="ms-1"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <fa-icon [icon]="faFile" class="ms-1"></fa-icon>
         </button>
         <button
             id="create_folder_root"
@@ -34,8 +34,8 @@
             (click)="setCreatingFileInRoot(FileType.FOLDER)"
             title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
         >
-            <fa-icon [icon]="'plus'"></fa-icon>
-            <fa-icon [icon]="'folder'" class="ms-1"></fa-icon>
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <fa-icon [icon]="faFolder" class="ms-1"></fa-icon>
         </button>
         <button
             id="compress_tree"
@@ -44,7 +44,7 @@
             (click)="toggleTreeCompress()"
             title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
         >
-            <fa-icon [icon]="compressFolders ? 'angle-double-up' : 'angle-double-down'"></fa-icon>
+            <fa-icon [icon]="compressFolders ? faAngleDoubleUp : faAngleDoubleDown"></fa-icon>
         </button>
     </div>
 
@@ -59,10 +59,10 @@
                 (onCreateFile)="onCreateFile($event)"
             ></jhi-code-editor-file-browser-create-node>
         </ng-container>
-        <ngx-treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
+        <treeview *ngIf="!isLoadingFiles" #treeview [maxHeight]="treeViewMaxHeight" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </treeview>
         <!-- Loading files indicator -->
         <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.loadingFiles">Loading file</span>
         </div>
     </div>
@@ -70,7 +70,7 @@
 </div>
 
 <!--Treeview Item Template-->
-<ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
+<ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
     <!--file-->
     <jhi-code-editor-file-browser-folder
         *ngIf="repositoryFiles[item.value] === FileType.FOLDER"

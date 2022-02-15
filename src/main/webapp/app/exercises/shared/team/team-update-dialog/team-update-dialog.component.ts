@@ -12,6 +12,7 @@ import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model'
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { faBan, faExclamationTriangle, faSave, faSpinner, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
 export type StudentTeamConflict = { studentLogin: string; teamId: string };
 
@@ -46,6 +47,14 @@ export class TeamUpdateDialogComponent implements OnInit {
     private shortNameValidator = new Subject<string>();
     readonly shortNameAlreadyTakenErrorCode = 'alreadyTaken';
     readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
+    faSpinner = faSpinner;
+    faExclamationTriangle = faExclamationTriangle;
+    faTrashAlt = faTrashAlt;
+
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal) {}
 
     /**
@@ -192,10 +201,10 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     private subscribeToSaveResponse(team: Observable<HttpResponse<Team>>) {
         this.isSaving = true;
-        team.subscribe(
-            (res) => this.onSaveSuccess(res),
-            (error) => this.onSaveError(error),
-        );
+        team.subscribe({
+            next: (res) => this.onSaveSuccess(res),
+            error: (error) => this.onSaveError(error),
+        });
     }
 
     /**
@@ -232,15 +241,12 @@ export class TeamUpdateDialogComponent implements OnInit {
                 debounceTime(500),
                 switchMap((shortName) => this.teamService.existsByShortName(this.exercise.course!, shortName)),
             )
-            .subscribe(
-                (alreadyTakenResponse) => {
-                    const alreadyTaken = alreadyTakenResponse.body;
-                    const errors = alreadyTaken
-                        ? { ...this.shortNameControl.errors, [this.shortNameAlreadyTakenErrorCode]: alreadyTaken }
-                        : omit(this.shortNameControl.errors, this.shortNameAlreadyTakenErrorCode);
-                    this.shortNameControl.setErrors(isEmpty(errors) ? null : errors);
-                },
-                () => {},
-            );
+            .subscribe((alreadyTakenResponse) => {
+                const alreadyTaken = alreadyTakenResponse.body;
+                const errors = alreadyTaken
+                    ? { ...this.shortNameControl.errors, [this.shortNameAlreadyTakenErrorCode]: alreadyTaken }
+                    : omit(this.shortNameControl.errors, this.shortNameAlreadyTakenErrorCode);
+                this.shortNameControl.setErrors(isEmpty(errors) ? null : errors);
+            });
     }
 }

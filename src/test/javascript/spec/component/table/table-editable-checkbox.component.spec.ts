@@ -2,12 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
-import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { TableEditableCheckboxComponent } from 'app/shared/table/table-editable-checkbox.component';
-
-const expect = chai.expect;
 
 describe('TableEditableFieldComponent', () => {
     let comp: TableEditableCheckboxComponent;
@@ -16,7 +13,7 @@ describe('TableEditableFieldComponent', () => {
 
     const tableCheckbox = '.table-editable-field__checkbox';
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisTableModule],
         })
@@ -37,18 +34,18 @@ describe('TableEditableFieldComponent', () => {
         fixture.detectChanges();
 
         await fixture.whenStable;
-        expect(checkbox).to.exist;
-        expect(checkbox.nativeElement.checked).to.be.true;
+        expect(checkbox).not.toBeNull();
+        expect(checkbox.nativeElement.checked).toBeTrue();
 
         checkbox.nativeElement.click();
 
         await fixture.whenStable;
 
-        expect(comp.value).to.be.true;
-        expect(checkbox).to.exist;
-        expect(checkbox.nativeElement.checked).to.be.false;
+        expect(comp.value).toBeTrue();
+        expect(checkbox).not.toBeNull();
+        expect(checkbox.nativeElement.checked).toBeFalse();
 
         // Send one update value after click.
-        expect(fakeUpdateValue.emit.mock.calls.length).to.equal(1);
+        expect(fakeUpdateValue.emit.mock.calls.length).toEqual(1);
     });
 });

@@ -7,7 +7,7 @@ import { MockPostService } from '../../../../helpers/mocks/service/mock-post.ser
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/shared/metis/metis.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MockComponent } from 'ng-mocks';
 import { PostComponent } from 'app/shared/metis/post/post.component';
@@ -78,7 +78,7 @@ describe('PostingThreadComponent', () => {
             });
     });
 
-    afterEach(function () {
+    afterEach(() => {
         jest.restoreAllMocks();
     });
     it('should be initialized correctly for users that are at least tutors in course', () => {

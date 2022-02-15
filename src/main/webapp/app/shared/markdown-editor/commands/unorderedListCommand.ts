@@ -1,8 +1,9 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faListUl } from '@fortawesome/free-solid-svg-icons';
 import { Command } from './command';
 
 export class UnorderedListCommand extends Command {
-    buttonIcon = 'list-ul' as IconProp;
+    buttonIcon = faListUl as IconProp;
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.unorderedList';
 
     /**

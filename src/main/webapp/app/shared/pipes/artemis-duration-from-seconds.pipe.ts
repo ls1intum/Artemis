@@ -1,5 +1,12 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
+type Duration = {
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+};
+
 @Pipe({ name: 'artemisDurationFromSeconds' })
 export class ArtemisDurationFromSecondsPipe implements PipeTransform {
     private readonly secondsInDay = 60 * 60 * 24;
@@ -18,52 +25,70 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
             return '0min 0s';
         }
 
+        const duration = this.secondsToDuration(seconds);
+
+        if (short) {
+            return ArtemisDurationFromSecondsPipe.handleShortFormat(duration);
+        } else {
+            return ArtemisDurationFromSecondsPipe.handleLongFormat(duration);
+        }
+    }
+
+    /**
+     * Converts the duration in seconds into a duration of full days, hours, minutes, and seconds.
+     * @param seconds the total seconds of the duration.
+     */
+    public secondsToDuration(seconds: number): Duration {
         const days = Math.floor(seconds / this.secondsInDay);
         const hours = Math.floor((seconds % this.secondsInDay) / this.secondsInHour);
         const minutes = Math.floor((seconds % this.secondsInHour) / this.secondsInMinute);
         seconds = seconds % this.secondsInMinute;
 
-        if (short) {
-            return this.handleShortFormat(days, hours, minutes, seconds);
+        return {
+            days,
+            hours,
+            minutes,
+            seconds,
+        };
+    }
+
+    /**
+     * Converts the duration into its total number of seconds.
+     * @param duration for which the total number of seconds should be determined.
+     */
+    public durationToSeconds(duration: Duration): number {
+        return duration.days * this.secondsInDay + duration.hours * this.secondsInHour + duration.minutes * this.secondsInMinute + duration.seconds;
+    }
+
+    /**
+     * Converts the given duration into a human-readable short format as required by {@link transform}.
+     * @param duration that should be converted into a human-readable format.
+     * @private
+     */
+    private static handleShortFormat(duration: Duration): string {
+        if (duration.days > 0) {
+            return `${duration.days}d ${duration.hours}h`;
+        } else if (duration.hours > 0) {
+            return `${duration.hours}h ${duration.minutes}min`;
+        } else if (duration.minutes >= 10) {
+            return `${duration.minutes}min`;
         } else {
-            return this.handleLongFormat(days, hours, minutes, seconds);
+            return `${duration.minutes}min ${duration.seconds}s`;
         }
     }
 
     /**
-     * Converts seconds into the human readable format HH:mm.
-     * This notation is used in working time management for student exams.
-     * Example: 4200 seconds are converted into 01:10.
-     * @param seconds {number} to be converted into the HH:mm format
+     * Converts the given duration into a human-readable long format as required by {@link transform}.
+     * @param duration that should be converted into a human-readable format.
+     * @private
      */
-    toHHmmNotation(seconds: number): string {
-        if (!seconds || seconds <= 0) {
-            return '00:00';
-        }
-        const hours = Math.floor(seconds / this.secondsInHour);
-        const minutes = Math.floor((seconds - hours * this.secondsInHour) / this.secondsInMinute);
-        return (hours < 10 ? '0' : '') + hours + ':' + (minutes < 10 ? '0' : '') + minutes;
-    }
-
-    private handleShortFormat(days: number, hours: number, minutes: number, seconds: number): string {
-        if (days > 0) {
-            return days + 'd ' + hours + 'h';
-        } else if (hours > 0) {
-            return hours + 'h ' + minutes + 'min';
-        } else if (minutes >= 10) {
-            return minutes + 'min';
+    private static handleLongFormat(duration: Duration): string {
+        if (duration.days > 0) {
+            return `${duration.days}d ${duration.hours}h ${duration.minutes}min ${duration.seconds}s`;
+        } else if (duration.hours > 0) {
+            return `${duration.hours}h ${duration.minutes}min ${duration.seconds}s`;
         } else {
-            return minutes + 'min ' + seconds + 's';
+            return `${duration.minutes}min ${duration.seconds}s`;
         }
-    }
-
-    private handleLongFormat(days: number, hours: number, minutes: number, seconds: number): string {
-        if (days > 0) {
-            return days + 'd ' + hours + 'h ' + minutes + 'min ' + seconds + 's';
-        }
-        if (hours > 0) {
-            return hours + 'h ' + minutes + 'min ' + seconds + 's';
-        }
-        return minutes + 'min ' + seconds + 's';
     }
 }

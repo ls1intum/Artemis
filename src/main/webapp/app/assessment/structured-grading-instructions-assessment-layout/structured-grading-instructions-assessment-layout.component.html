@@ -1,5 +1,5 @@
 <div *ngIf="allowDrop" class="alert alert-info">
-    <fa-icon [icon]="'info-circle'"></fa-icon>
+    <fa-icon [icon]="faInfoCircle"></fa-icon>
     <span>{{ 'artemisApp.exercise.dragDropInstruction' | artemisTranslate }}</span>
 </div>
 <div *ngFor="let criterion of criteria; let criterionIndex = index">
@@ -13,14 +13,15 @@
             id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
             [style.background-color]="setInstrColour(instruction)"
         >
-            <table class="table" style="margin: 1px">
+            <table class="table layout-table">
                 <tbody>
                     <tr>
-                        <td width="4%" [innerHTML]="setScore(instruction.credits)"></td>
+                        <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
                         <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
                         <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
-                        <td width="4%" style="position: relative; white-space: nowrap">
-                            <span>{{ instruction.usageCount }}</span>
+                        <td class="td-usage-count">
+                            <span *ngIf="instruction!.usageCount && instruction!.usageCount !== 0; else usageCountInfinity">{{ instruction.usageCount }}</span>
+                            <ng-template #usageCountInfinity>&#8734;</ng-template>
                             <jhi-help-icon placement="top" text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
                         </td>
                     </tr>

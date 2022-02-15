@@ -2,7 +2,7 @@
     <h2>
         <span id="metrics-page-heading" jhiTranslate="metrics.title" data-cy="metricsPageHeading">Application Metrics</span>
 
-        <button class="btn btn-primary float-right" (click)="refresh()"><fa-icon icon="sync"></fa-icon> <span jhiTranslate="metrics.refresh.button">Refresh</span></button>
+        <button class="btn btn-primary float-right" (click)="refresh()"><fa-icon [icon]="faSync"></fa-icon> <span jhiTranslate="metrics.refresh.button">Refresh</span></button>
     </h2>
 
     <h3 jhiTranslate="metrics.jvm.title">JVM Metrics</h3>

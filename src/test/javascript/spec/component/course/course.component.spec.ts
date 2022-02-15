@@ -1,6 +1,7 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -17,17 +18,9 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import * as chai from 'chai';
-import dayjs from 'dayjs';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
-import * as sinon from 'sinon';
-import { stub } from 'sinon';
-import sinonChai from 'sinon-chai';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -35,9 +28,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { Component } from '@angular/core';
+import { of } from 'rxjs';
+import dayjs from 'dayjs/esm';
 
-chai.use(sinonChai);
-const expect = chai.expect;
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
 const endDate2 = dayjs().subtract(1, 'days');
@@ -67,6 +61,11 @@ const course1 = { id: 1, exams, exercises: [exercise1] };
 const course2 = { id: 2, exercises: [exercise2] };
 const courses: Course[] = [course1, course2];
 
+@Component({
+    template: '',
+})
+class DummyComponent {}
+
 describe('CoursesComponent', () => {
     let component: CoursesComponent;
     let fixture: ComponentFixture<CoursesComponent>;
@@ -74,13 +73,14 @@ describe('CoursesComponent', () => {
     let courseScoreCalculationService: CourseScoreCalculationService;
     let serverDateService: ArtemisServerDateService;
     let exerciseService: ExerciseService;
-    const router = new MockRouter();
+    let router: Router;
+    let location: Location;
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
             declarations: [
                 CoursesComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -99,8 +99,7 @@ describe('CoursesComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseRowComponent },
-                { provide: AlertService, useClass: MockAlertService },
-                { provide: Router, useValue: router },
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
@@ -108,6 +107,8 @@ describe('CoursesComponent', () => {
                 fixture = TestBed.createComponent(CoursesComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
+                router = TestBed.inject(Router);
+                location = TestBed.inject(Location);
                 TestBed.inject(GuidedTourService);
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
@@ -119,37 +120,37 @@ describe('CoursesComponent', () => {
 
     afterEach(() => {
         component.ngOnDestroy();
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
     describe('OnInit', () => {
         it('Should call loadAndFilterCourses on init', () => {
-            const loadAndFilterCoursesSpy = sinon.spy(component, 'loadAndFilterCourses');
+            const loadAndFilterCoursesSpy = jest.spyOn(component, 'loadAndFilterCourses');
 
             component.ngOnInit();
 
-            expect(loadAndFilterCoursesSpy).to.have.been.called;
+            expect(loadAndFilterCoursesSpy).toHaveBeenCalled();
         });
 
         it('Should load courses on init', () => {
-            const findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
-            const courseScoreCalculationServiceStub = stub(courseScoreCalculationService, 'setCourses');
-            const serverDateServiceStub = stub(serverDateService, 'now');
-            const findNextRelevantExerciseSpy = sinon.spy(component, 'findNextRelevantExercise');
-            findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-            serverDateServiceStub.returns(dayjs());
+            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+            const courseScoreCalculationServiceSpy = jest.spyOn(courseScoreCalculationService, 'setCourses');
+            const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
+            const findNextRelevantExerciseSpy = jest.spyOn(component, 'findNextRelevantExercise');
+            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
+            serverDateServiceSpy.mockReturnValue(dayjs());
 
             component.ngOnInit();
 
-            expect(findAllForDashboardStub).to.have.been.called;
-            expect(findNextRelevantExerciseSpy).to.have.been.called;
-            expect(component.courses).to.equal(courses);
-            expect(courseScoreCalculationServiceStub).to.have.been.called;
-            expect(component.exams.length).to.equal(2);
-            expect(component.exams).to.contain(exam1);
-            expect(component.exams).to.contain(exam2);
-            expect(component.nextRelevantExams?.length).to.equal(1);
-            expect(component.nextRelevantExams?.[0]).to.equal(exam1);
+            expect(findAllForDashboardSpy).toHaveBeenCalled();
+            expect(findNextRelevantExerciseSpy).toHaveBeenCalled();
+            expect(component.courses).toEqual(courses);
+            expect(courseScoreCalculationServiceSpy).toHaveBeenCalled();
+            expect(component.exams.length).toEqual(2);
+            expect(component.exams).toContain(exam1);
+            expect(component.exams).toContain(exam2);
+            expect(component.nextRelevantExams?.length).toEqual(1);
+            expect(component.nextRelevantExams?.[0]).toEqual(exam1);
         });
 
         it('Should load exercises on init', () => {
@@ -162,28 +163,29 @@ describe('CoursesComponent', () => {
                 }
             };
 
-            const findAllForDashboardStub = stub(courseService, 'findAllForDashboard');
-            const getNextExerciseForHoursStub = stub(exerciseService, 'getNextExerciseForHours').callsFake(mockFunction);
-            const serverDateServiceStub = stub(serverDateService, 'now');
+            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+            const getNextExerciseForHoursSpy = jest.spyOn(exerciseService, 'getNextExerciseForHours').mockImplementation(mockFunction);
+            const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
 
-            findAllForDashboardStub.returns(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-
-            serverDateServiceStub.returns(dayjs());
+            findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
+            serverDateServiceSpy.mockReturnValue(dayjs());
 
             component.ngOnInit();
 
-            expect(getNextExerciseForHoursStub).to.have.been.calledWith(course1.exercises);
-            expect(component.nextRelevantExercise).to.equal(exercise2);
-            expect(component.nextRelevantCourse).to.equal(exercise2.course);
+            expect(getNextExerciseForHoursSpy).toHaveBeenCalledWith(course1.exercises);
+            expect(component.nextRelevantExercise).toEqual(exercise2);
+            expect(component.nextRelevantCourse).toEqual(exercise2.course);
         });
     });
 
-    it('Should load next relevant exam', () => {
-        const navigateSpy = sinon.spy(router, 'navigate');
+    it('Should load next relevant exam', fakeAsync(() => {
+        const navigateSpy = jest.spyOn(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
         component.nextRelevantExams = [exam1];
         component.openExam();
+        tick();
 
-        expect(navigateSpy).to.have.been.calledWith(['courses', 1, 'exams', 3]);
-    });
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 3]);
+        expect(location.path()).toEqual('/courses/1/exams/3');
+    }));
 });

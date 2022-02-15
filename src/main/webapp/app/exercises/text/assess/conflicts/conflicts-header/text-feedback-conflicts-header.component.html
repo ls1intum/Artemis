@@ -1,21 +1,21 @@
 <h3 class="top-container">
     <div class="row-container" *ngIf="numberOfConflicts">
         <button class="btn btn-primary" (click)="onPrevConflict()">
-            <fa-icon icon="arrow-left"></fa-icon>
+            <fa-icon [icon]="faArrowLeft"></fa-icon>
         </button>
         <span class="ms-3 me-3">{{ currentConflictIndex }}/{{ [numberOfConflicts] }}</span>
         <button class="btn btn-primary" (click)="onNextConflict()">
-            <fa-icon icon="arrow-right"></fa-icon>
+            <fa-icon [icon]="faArrowRight"></fa-icon>
         </button>
     </div>
     <jhi-alert></jhi-alert>
     <div class="row-container">
         <button class="btn ms-2 btn-primary" *ngIf="haveRights" (click)="overrideLeftSubmission.emit()" [disabled]="isOverrideDisabled">
-            <fa-icon *ngIf="overrideBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+            <fa-icon *ngIf="overrideBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.textAssessment.conflict.overrideAssessment">Override Left Assessment</span>
         </button>
         <button class="btn ms-2 btn-primary" *ngIf="haveRights" (click)="discardConflict.emit()" [disabled]="isMarkingDisabled">
-            <fa-icon *ngIf="markBusy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
+            <fa-icon *ngIf="markBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.textAssessment.conflict.discard">Discard</span>
         </button>
     </div>

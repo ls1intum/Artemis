@@ -6,13 +6,13 @@ import static org.springframework.ldap.query.LdapQueryBuilder.query;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,3 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,20 +22,16 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
 describe('CreateExerciseUnitComponent', () => {
     let createExerciseUnitComponentFixture: ComponentFixture<CreateExerciseUnitComponent>;
     let createExerciseUnitComponent: CreateExerciseUnitComponent;
-    const sandbox = sinon.createSandbox();
 
     let courseManagementService;
-    let findWithExercisesStub: sinon.SinonStub;
+    let findWithExercisesStub: jest.SpyInstance;
 
     let exerciseUnitService;
-    let findAllByLectureIdStub: sinon.SinonStub;
-    let createStub: sinon.SinonStub;
+    let findAllByLectureIdStub: jest.SpyInstance;
+    let createStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -91,20 +84,20 @@ describe('CreateExerciseUnitComponent', () => {
                 createExerciseUnitComponentFixture = TestBed.createComponent(CreateExerciseUnitComponent);
                 createExerciseUnitComponent = createExerciseUnitComponentFixture.componentInstance;
                 courseManagementService = TestBed.inject(CourseManagementService);
-                findWithExercisesStub = sandbox.stub(courseManagementService, 'findWithExercises');
+                findWithExercisesStub = jest.spyOn(courseManagementService, 'findWithExercises');
                 exerciseUnitService = TestBed.inject(ExerciseUnitService);
-                findAllByLectureIdStub = sandbox.stub(exerciseUnitService, 'findAllByLectureId');
-                createStub = sandbox.stub(exerciseUnitService, 'create');
+                findAllByLectureIdStub = jest.spyOn(exerciseUnitService, 'findAllByLectureId');
+                createStub = jest.spyOn(exerciseUnitService, 'create');
             });
     });
 
-    afterEach(function () {
-        sandbox.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
         createExerciseUnitComponentFixture.detectChanges();
-        expect(createExerciseUnitComponent).to.be.ok;
+        expect(createExerciseUnitComponent).not.toBeNull();
     });
 
     it('should send POST requests for selected course exercises', fakeAsync(() => {
@@ -121,7 +114,7 @@ describe('CreateExerciseUnitComponent', () => {
         modelingExercise.id = 5;
         course.exercises = [textExercise, programmingExercise, quizExercise, fileUploadExercise, modelingExercise];
 
-        findWithExercisesStub.returns(
+        findWithExercisesStub.mockReturnValue(
             of(
                 new HttpResponse({
                     body: course,
@@ -130,7 +123,7 @@ describe('CreateExerciseUnitComponent', () => {
             ),
         );
 
-        findAllByLectureIdStub.returns(
+        findAllByLectureIdStub.mockReturnValue(
             of(
                 new HttpResponse({
                     body: [],
@@ -139,7 +132,7 @@ describe('CreateExerciseUnitComponent', () => {
             ),
         );
 
-        createStub.returns(
+        createStub.mockReturnValue(
             of(
                 new HttpResponse({
                     body: new ExerciseUnit(),
@@ -149,17 +142,17 @@ describe('CreateExerciseUnitComponent', () => {
         );
 
         createExerciseUnitComponentFixture.detectChanges();
-        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation.length).to.equal(5);
+        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation.length).toEqual(5);
 
         const tableRows = createExerciseUnitComponentFixture.debugElement.queryAll(By.css('tbody > tr'));
-        expect(tableRows.length).to.equal(5);
+        expect(tableRows.length).toEqual(5);
         tableRows[0].nativeElement.click(); // textExercise
         tableRows[1].nativeElement.click(); // programmingExercise
         tableRows[2].nativeElement.click(); // quizExercise
-        expect(createExerciseUnitComponent.exercisesToCreateUnitFor.length).to.equal(3);
-        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[0].id).to.equal(textExercise.id);
-        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[1].id).to.equal(programmingExercise.id);
-        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[2].id).to.equal(quizExercise.id);
+        expect(createExerciseUnitComponent.exercisesToCreateUnitFor.length).toEqual(3);
+        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[0].id).toEqual(textExercise.id);
+        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[1].id).toEqual(programmingExercise.id);
+        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[2].id).toEqual(quizExercise.id);
 
         const createButton = createExerciseUnitComponentFixture.debugElement.nativeElement.querySelector('#createButton');
 
@@ -167,7 +160,7 @@ describe('CreateExerciseUnitComponent', () => {
         createButton.click();
 
         createExerciseUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).to.have.been.calledThrice;
+            expect(createStub).toHaveBeenCalledTimes(3);
         });
     }));
 });

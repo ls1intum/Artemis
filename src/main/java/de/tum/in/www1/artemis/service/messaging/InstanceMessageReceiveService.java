@@ -9,10 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -111,9 +108,13 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processCancelRemoveNonActivatedUser((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic("exercise-notification-schedule").addMessageListener(message -> {
+        hazelcastInstance.<Long>getTopic("exercise-released-notification-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleNotification((message.getMessageObject()));
+            processScheduleExerciseReleasedNotification((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("assessed-exercise-submission-notification-schedule").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleAssessedExerciseSubmittedNotification((message.getMessageObject()));
         });
     }
 
@@ -192,9 +193,15 @@ public class InstanceMessageReceiveService {
         userScheduleService.cancelScheduleRemoveNonActivatedUser(user);
     }
 
-    public void processScheduleNotification(Long exerciseId) {
-        log.info("Received schedule update for exercise {} notification ", exerciseId);
+    public void processScheduleExerciseReleasedNotification(Long exerciseId) {
+        log.info("Received schedule update for exercise {} released notification ", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        notificationScheduleService.updateScheduling(exercise);
+        notificationScheduleService.updateSchedulingForReleasedExercises(exercise);
+    }
+
+    public void processScheduleAssessedExerciseSubmittedNotification(Long exerciseId) {
+        log.info("Received schedule update for assessed exercise submitted {} notification ", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        notificationScheduleService.updateSchedulingForAssessedExercisesSubmissions(exercise);
     }
 }

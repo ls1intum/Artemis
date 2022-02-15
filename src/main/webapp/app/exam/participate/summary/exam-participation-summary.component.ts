@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
@@ -9,6 +9,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -34,13 +36,21 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     collapsedExerciseIds: number[] = [];
 
-    courseId: number;
+    private courseId: number;
+    course: Course;
 
     isTestRun = false;
 
     testRunConduction = false;
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
+
+    // Icons
+    faFolderOpen = faFolderOpen;
+    faInfoCircle = faInfoCircle;
+    faPrint = faPrint;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService, private courseManagementService: CourseManagementService) {}
 
@@ -54,13 +64,16 @@ export class ExamParticipationSummaryComponent implements OnInit {
         // courseId is not part of the exam or the exercise
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.setExamWithOnlyIdAndStudentReviewPeriod();
-        let course;
-        this.courseManagementService.find(this.courseId).subscribe((courseResponse) => (course = courseResponse.body!));
-        for (const exercise of this.studentExam.exercises!) {
+        // load course for the exercise
+        this.courseManagementService.find(this.courseId).subscribe((courseResponse) => {
+            const course = courseResponse.body!;
+            this.examWithOnlyIdAndStudentReviewPeriod.course = course;
+            this.course = course;
+        });
+        for (const exercise of this.studentExam.exercises ?? []) {
             exercise.studentParticipations!.first()!.exercise = exercise;
             exercise.exerciseGroup!.exam = this.examWithOnlyIdAndStudentReviewPeriod;
         }
-        this.examWithOnlyIdAndStudentReviewPeriod.course = course;
     }
 
     getIcon(exerciseType: ExerciseType) {

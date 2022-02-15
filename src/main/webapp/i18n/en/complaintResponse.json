@@ -8,7 +8,7 @@
             "lockInformationYou": "Locked by YOU until {{endDate}}",
             "notUnlocked": "Not Locked",
             "lockStatus": "Lock Status",
-            "notAllowedToRespond": "You are not allowed to respond to the complaint or more feedback request!\nFor team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself.\nFor individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself.\nFor exam test runs, the original assessor is allowed to respond to complaints.\nComplaints on automatic assessments can be answered by any tutor."
+            "notAllowedToRespond": "You are not allowed to respond to the complaint or more feedback request!\nFor team exercises, the team tutor is the assessor and handles both complaints and feedback requests themself.\nFor individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor themself.\nFor exam test runs, the original assessor is allowed to respond to complaints.\nComplaints on automatic assessments can be answered by any tutor."
         },
         "complaintResponse": {
             "title": "Complaint's response",

@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';

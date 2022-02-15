@@ -1,14 +1,11 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { OtherModelElementCount } from 'app/entities/modeling-submission.model';
+import { ModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import interact from 'interactjs';
-import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/shared/constants/modeling.constants';
-import $ from 'jquery';
-import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -22,37 +19,11 @@ export interface DropInfo {
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
 })
-export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, OnChanges {
-    apollonEditor?: ApollonEditor;
-    elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
-    referencedFeedbacks: Feedback[] = [];
-    unreferencedFeedbacks: Feedback[] = [];
-    firstCorrectionRoundColor = '#3e8acc';
-    secondCorrectionRoundColor = '#ffa561';
-
-    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
-    @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
-    @Input() model: UMLModel;
-    @Input() explanation: string;
-    @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
-    @Input() centeredElementId: string;
-    @Input() elementCounts?: OtherModelElementCount[];
-    @Input() course?: Course;
-
-    feedbacks: Feedback[];
-    @Input() set resultFeedbacks(feedback: Feedback[]) {
-        this.feedbacks = feedback;
-        this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
-        this.updateApollonAssessments(this.referencedFeedbacks);
-    }
-
-    @Input() diagramType?: UMLDiagramType;
+export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Input() maxScore: number;
     @Input() maxBonusPoints = 0;
     @Input() totalScore: number;
     @Input() title: string;
-    @Input() resizeOptions: { horizontalResize?: boolean; verticalResize?: boolean };
-    @Input() readOnly = false;
     @Input() enablePopups = true;
     @Input() displayPoints = true;
     @Input() highlightDifferences: boolean;
@@ -60,7 +31,26 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
-    constructor(private alertService: AlertService, private renderer: Renderer2, private artemisTranslatePipe: ArtemisTranslatePipe) {}
+    @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
+    @Input() elementCounts?: ModelElementCount[];
+    @Input() course?: Course;
+
+    @Input() set resultFeedbacks(feedback: Feedback[]) {
+        this.feedbacks = feedback;
+        this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+        this.updateApollonAssessments(this.referencedFeedbacks);
+    }
+
+    feedbacks: Feedback[];
+    elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
+    referencedFeedbacks: Feedback[] = [];
+    unreferencedFeedbacks: Feedback[] = [];
+    firstCorrectionRoundColor = '#3e8acc';
+    secondCorrectionRoundColor = '#ffa561';
+
+    constructor(private artemisTranslatePipe: ArtemisTranslatePipe) {
+        super();
+    }
 
     ngAfterViewInit(): void {
         if (this.feedbacks) {
@@ -77,34 +67,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.updateElementCounts(this.elementCounts);
         }
         this.applyStateConfiguration();
-        if (this.resizeOptions) {
-            interact('.resizable')
-                .resizable({
-                    edges: { left: false, right: this.resizeOptions.horizontalResize && '.draggable-right', bottom: this.resizeOptions.verticalResize, top: false },
-                    modifiers: [
-                        interact.modifiers!.restrictSize({
-                            min: { width: MODELING_EDITOR_MIN_WIDTH, height: MODELING_EDITOR_MIN_HEIGHT },
-                            max: { width: MODELING_EDITOR_MAX_WIDTH, height: MODELING_EDITOR_MAX_HEIGHT },
-                        }),
-                    ],
-                    inertia: true,
-                })
-                .on('resizestart', function (event: any) {
-                    event.target.classList.add('card-resizable');
-                })
-                .on('resizeend', function (event: any) {
-                    event.target.classList.remove('card-resizable');
-                })
-                .on('resizemove', (event: any) => {
-                    const target = event.target;
-                    if (this.resizeOptions.horizontalResize) {
-                        target.style.width = event.rect.width + 'px';
-                    }
-                    if (this.resizeOptions.verticalResize) {
-                        target.style.height = event.rect.height + 'px';
-                    }
-                });
-        }
+        this.setupInteract();
     }
 
     ngOnDestroy() {
@@ -118,7 +81,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.apollonEditor!.model = changes.model.currentValue;
             this.handleFeedback();
         }
-        if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
+        if (changes.feedbacks && changes.feedbacks.currentValue && this.umlModel) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
             this.applyStateConfiguration();
@@ -130,11 +93,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 this.applyStateConfiguration();
             }
         }
-        if (changes.centeredElementId) {
-            if (this.centeredElementId) {
-                this.scrollIntoView(this.centeredElementId);
-            }
-        }
         if (changes.highlightDifferences) {
             this.updateApollonAssessments(this.referencedFeedbacks);
         }
@@ -142,7 +100,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     /**
      * Initializes the Apollon editor after updating the Feedback accordingly. It also subscribes to change
-     * events of Apollon an passes them on to parent components.
+     * events of Apollon and passes them on to parent components.
      */
     private initializeApollonEditor() {
         if (this.apollonEditor) {
@@ -154,7 +112,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
             readonly: this.readOnly,
-            model: this.model,
+            model: this.umlModel,
             type: this.diagramType || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups,
         });
@@ -175,9 +133,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (this.highlightedElements) {
             this.updateHighlightedElements(this.highlightedElements);
         }
-        if (this.centeredElementId) {
-            setTimeout(() => this.scrollIntoView(this.centeredElementId), 0);
-        }
     }
 
     /**
@@ -185,7 +140,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * element feedback mapping.
      * Returns an array containing all feedback entries from the mapping.
      */
-    private generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
+    generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
         const newElementFeedback = new Map();
         for (const assessment of assessments) {
             let feedback = this.elementFeedback.get(assessment.modelElementId);
@@ -230,13 +185,13 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!feedbacks) {
             return feedbacks;
         }
-        if (!this.model || !this.model.elements) {
+        if (!this.umlModel || !this.umlModel.elements) {
             return [];
         }
 
-        let availableIds: string[] = this.model.elements.map((element) => element.id);
-        if (this.model.relationships) {
-            availableIds = availableIds.concat(this.model.relationships.map((relationship) => relationship.id));
+        let availableIds: string[] = this.umlModel.elements.map((element) => element.id);
+        if (this.umlModel.relationships) {
+            availableIds = availableIds.concat(this.umlModel.relationships.map((relationship) => relationship.id));
         }
         return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
     }
@@ -284,9 +239,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     /**
      * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
      *
-     * @param newElements a map of elementIds -> highlight color
+     * @param newElementCounts a map of elementIds -> highlight color
      */
-    private updateElementCounts(newElementCounts: OtherModelElementCount[]) {
+    private updateElementCounts(newElementCounts: ModelElementCount[]) {
         if (!newElementCounts) {
             return;
         }
@@ -307,37 +262,27 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
-    private scrollIntoView(elementId: string) {
-        const element = this.editorContainer.nativeElement as HTMLElement;
-        const matchingElement = $(element).find(`#${elementId}`).get(0);
-        if (matchingElement) {
-            matchingElement.scrollIntoView({ block: 'center', inline: 'center' });
-        }
-    }
-
     /**
      * Converts a given feedback list to Apollon assessments and updates the model of Apollon with the new assessments.
      * @param feedbacks the feedback list to convert and pass on to Apollon
      */
     private updateApollonAssessments(feedbacks: Feedback[]) {
-        if (!feedbacks || !this.model) {
+        if (!feedbacks || !this.umlModel) {
             return;
         }
 
-        this.model.assessments = feedbacks.map<Assessment>((feedback) => {
-            return {
-                modelElementId: feedback.referenceId!,
-                elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
-                score: feedback.credits!,
-                feedback: feedback.text || undefined,
-                label: this.calculateLabel(feedback),
-                labelColor: this.calculateLabelColor(feedback),
-                correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
-                dropInfo: this.calculateDropInfo(feedback),
-            };
-        });
+        this.umlModel.assessments = feedbacks.map<Assessment>((feedback) => ({
+            modelElementId: feedback.referenceId!,
+            elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
+            score: feedback.credits!,
+            feedback: feedback.text || undefined,
+            label: this.calculateLabel(feedback),
+            labelColor: this.calculateLabelColor(feedback),
+            correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+            dropInfo: this.calculateDropInfo(feedback),
+        }));
         if (this.apollonEditor) {
-            this.apollonEditor!.model = this.model;
+            this.apollonEditor!.model = this.umlModel;
         }
     }
 

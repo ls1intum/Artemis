@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIF
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
@@ -27,11 +28,11 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -67,7 +68,7 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
-    private final ExamDateService examDateService;
+    private final ExerciseDateService exerciseDateService;
 
     private final SubmissionPolicyService submissionPolicyService;
 
@@ -78,7 +79,7 @@ public class ProgrammingExerciseGradingService {
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExamDateService examDateService,
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -93,13 +94,14 @@ public class ProgrammingExerciseGradingService {
         this.auditEventRepository = auditEventRepository;
         this.groupNotificationService = groupNotificationService;
         this.resultService = resultService;
-        this.examDateService = examDateService;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
-     * Use the given requestBody to extract the relevant information from it. Fetch and attach the result's feedback items to it. For programming exercises the test cases are
+     * Uses the given requestBody to extract the relevant information from it.
+     * Fetches and attaches the result's feedback items to it. For programming exercises the test cases are
      * extracted from the feedbacks & the result is updated with the information from the test cases.
      *
      * @param participation the participation for which the build was finished
@@ -109,68 +111,83 @@ public class ProgrammingExerciseGradingService {
     public Optional<Result> processNewProgrammingExerciseResult(@NotNull ProgrammingExerciseParticipation participation, @NotNull Object requestBody) {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
-        Result newResult;
+        Result newResult = null;
         try {
             newResult = continuousIntegrationService.get().onBuildCompleted(participation, requestBody);
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Result for participation " + participation.getId() + " could not be created", ex);
-            return Optional.empty();
         }
 
-        if (newResult != null) {
-            ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-            boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
-            boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
-            // Find out which test cases were executed and calculate the score according to their status and weight.
-            // This needs to be done as some test cases might not have been executed.
-            // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
-            if (isSolutionParticipation) {
-                extractTestCasesFromResult(programmingExercise, newResult);
-            }
-            newResult = calculateScoreForResult(newResult, programmingExercise, !isSolutionParticipation && !isTemplateParticipation);
+        return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
+    }
 
-            // Note: This programming submission might already have multiple results, however they do not contain the assessor or the feedback
-            var programmingSubmission = (ProgrammingSubmission) newResult.getSubmission();
+    /**
+     * Fetches and attaches the result's feedback items to it. For programming exercises the test cases are
+     * extracted from the feedbacks & the result is updated with the information from the test cases.
+     *
+     * @param participation the new result should belong to.
+     * @param newResult that contains the build result with its feedbacks.
+     * @return the result after processing and persisting.
+     */
+    private Result processNewProgrammingExerciseResult(final ProgrammingExerciseParticipation participation, final Result newResult) {
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        boolean isSolutionParticipation = participation instanceof SolutionProgrammingExerciseParticipation;
+        boolean isTemplateParticipation = participation instanceof TemplateProgrammingExerciseParticipation;
+        boolean isStudentParticipation = !isSolutionParticipation && !isTemplateParticipation;
 
-            // If the solution participation was updated, also trigger the template participation build.
-            if (isSolutionParticipation) {
-                // This method will return without triggering the build if the submission is not of type TEST.
-                triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
-            }
-
-            if (!isTemplateParticipation && !isSolutionParticipation) {
-                // When a student receives a new result, we want to check whether we need to lock the participation
-                // repository when a lock repository policy is present. At this point, we know that the programming
-                // exercise exists.
-                SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
-                if (submissionPolicy instanceof LockRepositoryPolicy policy) {
-                    submissionPolicyService.handleLockRepositoryPolicy(newResult, (Participation) participation, policy);
-                }
-
-                if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
-                    // Note: in this case, we do not want to save the newResult, but we only want to update the latest semi-automatic one
-                    Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), newResult,
-                            programmingExercise);
-                    // Adding back dropped submission
-                    updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-                    programmingSubmissionRepository.save(programmingSubmission);
-                    resultRepository.save(updatedLatestSemiAutomaticResult);
-                    return Optional.of(updatedLatestSemiAutomaticResult);
-                }
-            }
-
-            // Finally save the new result once and make sure the order column between submission and result is maintained
-            newResult.setSubmission(null); // workaround to avoid org.hibernate.HibernateException: null index column for collection:
-                                           // de.tum.in.www1.artemis.domain.Submission.results
-            newResult = resultRepository.save(newResult);
-            newResult.setSubmission(programmingSubmission);
-            programmingSubmission.addResult(newResult);
-            programmingSubmissionRepository.save(programmingSubmission);
+        // Find out which test cases were executed and calculate the score according to their status and weight.
+        // This needs to be done as some test cases might not have been executed.
+        // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
+        if (isSolutionParticipation) {
+            extractTestCasesFromResult(programmingExercise, newResult);
         }
 
-        return Optional.ofNullable(newResult);
+        Result processedResult = calculateScoreForResult(newResult, programmingExercise, isStudentParticipation);
+
+        // Note: This programming submission might already have multiple results, however they do not contain the assessor or the feedback
+        var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
+
+        // If the solution participation was updated, also trigger the template participation build.
+        if (isSolutionParticipation) {
+            // This method will return without triggering the build if the submission is not of type TEST.
+            triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
+        }
+
+        if (isStudentParticipation) {
+            // When a student receives a new result, we want to check whether we need to lock the participation
+            // repository when a lock repository policy is present. At this point, we know that the programming
+            // exercise exists.
+            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
+            if (submissionPolicy instanceof LockRepositoryPolicy policy) {
+                submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
+            }
+
+            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
+                // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
+                Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult,
+                        programmingExercise);
+                // Adding back dropped submission
+                updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
+                programmingSubmissionRepository.save(programmingSubmission);
+                resultRepository.save(updatedLatestSemiAutomaticResult);
+
+                return updatedLatestSemiAutomaticResult;
+            }
+        }
+
+        // Finally, save the new result once and make sure the order column between submission and result is maintained
+
+        // workaround to avoid org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.Submission.results
+        processedResult.setSubmission(null);
+
+        processedResult = resultRepository.save(processedResult);
+        processedResult.setSubmission(programmingSubmission);
+        programmingSubmission.addResult(processedResult);
+        programmingSubmissionRepository.save(programmingSubmission);
+
+        return processedResult;
     }
 
     /**
@@ -193,7 +210,7 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
 
         // copy all feedback from the automatic result
-        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+        List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).toList();
         latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
 
         String resultString = updateManualResultString(newAutomaticResult.getResultString(), latestSemiAutomaticResult, programmingExercise);
@@ -259,67 +276,158 @@ public class ProgrammingExerciseGradingService {
      */
     public Result calculateScoreForResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = testCases;
+        final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate;
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         if (isStudentParticipation) {
-            testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+            testCasesForCurrentDate = filterTestCasesForCurrentDate(result.getParticipation(), testCases);
+        }
+        else {
+            testCasesForCurrentDate = testCases;
         }
         return calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, isStudentParticipation);
     }
 
     /**
-     * Updates <b>all</b> latest automatic results of the given exercise with the information of the exercises test cases. This update includes:
-     * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
-     * - Checking the due date and the visibility.
-     * - Recalculating the score based based on the successful test cases weight vs the total weight of all test cases.
+     * Updates <b>all</b> latest results of the given exercise with the information of the exercises test cases.
+     * <p>
+     * This update includes:
+     * <ul>
+     *     <li>Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs).</li>
+     *     <li>Checking the due date and the visibility.</li>
+     *     <li>Recalculating the score based on the successful test cases weight vs the total weight of all test cases.</li>
+     * </ul>
      *
-     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change
+     * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change.
      *
-     * @param exercise the exercise whose results should be updated
-     * @return the results of the exercise that have been updated
+     * @param exercise whose results should be updated.
+     * @return the results of the exercise that have been updated.
      */
-    public List<Result> updateAllResults(ProgrammingExercise exercise) {
-        Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+    public List<Result> updateAllResults(final ProgrammingExercise exercise) {
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
 
-        ArrayList<Result> updatedResults = new ArrayList<>();
+        final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
 
-        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
-                    calculateScoreForResult(testCases, testCases, result, exercise, false);
-                    updatedResults.add(result);
-                });
-        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
-                .flatMap(p -> Optional.ofNullable(p.findLatestLegalResult())).ifPresent(result -> {
-                    calculateScoreForResult(testCases, testCases, result, exercise, false);
-                    updatedResults.add(result);
-                });
-
-        // filter the test cases for the student results if necessary
-        Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = filterTestCasesForCurrentDate(exercise, testCases);
+        final List<StudentParticipation> studentParticipations = new ArrayList<>();
         // We only update the latest automatic results here, later manual assessments are not affected
-        List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId());
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacks(exercise.getId()));
+        // Also update manual results
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId()));
 
-        for (StudentParticipation studentParticipation : participations) {
-            Result result = studentParticipation.findLatestLegalResult();
-            if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, true);
-                updatedResults.add(result);
-            }
-        }
+        final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
 
-        // Update also manual results
-        List<StudentParticipation> participationsWithManualResult = studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacks(exercise.getId());
-        for (StudentParticipation studentParticipation : participationsWithManualResult) {
-            Result result = studentParticipation.findLatestLegalResult();
-            if (result != null) {
-                calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, false);
-                updatedResults.add(result);
-            }
-        }
-
-        return updatedResults;
+        return Stream.concat(updatedTemplateAndSolutionResult, updatedStudentResults).toList();
     }
 
+    /**
+     * Updates the latest results of all participations that do not have an individual due date. This includes the template and solution participation.
+     * <p>
+     * For details what will be updated for individual results, see {@link ProgrammingExerciseGradingService#updateAllResults}.
+     * @param exercise whose results should be updated.
+     * @return the results of the exercise that have been updated.
+     */
+    public List<Result> updateResultsOnlyRegularDueDateParticipations(final ProgrammingExercise exercise) {
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+
+        final Stream<Result> updatedTemplateAndSolutionResult = updateTemplateAndSolutionResults(exercise, testCases);
+
+        final List<StudentParticipation> studentParticipations = new ArrayList<>();
+        // We only update the latest automatic results here, later manual assessments are not affected
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithLatestAutomaticResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
+        // Also update manual results
+        studentParticipations.addAll(studentParticipationRepository.findByExerciseIdWithManualResultAndFeedbacksWithoutIndividualDueDate(exercise.getId()));
+
+        final Stream<Result> updatedStudentResults = updateResults(exercise, testCases, studentParticipations);
+
+        return Stream.concat(updatedTemplateAndSolutionResult, updatedStudentResults).toList();
+    }
+
+    /**
+     * Updates the latest result scores of the given participation.
+     * <p>
+     * For details what will be updated, see {@link ProgrammingExerciseGradingService#updateAllResults}.
+     * @param participation for which the results should be updated.
+     * @return a list of updated results (maximum two: latest automatic, and latest manual result).
+     */
+    public List<Result> updateParticipationResults(final ProgrammingExerciseStudentParticipation participation) {
+        final ProgrammingExercise exercise = participation.getProgrammingExercise();
+        final Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
+        final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);
+
+        final Optional<Result> updatedAutomaticResult = studentParticipationRepository.findByIdWithLatestAutomaticResultAndFeedbacks(participation.getId())
+                .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
+        final Optional<Result> updatedManualResult = studentParticipationRepository.findByIdWithManualResultAndFeedbacks(participation.getId())
+                .flatMap(studentParticipation -> updateLatestResult(exercise, studentParticipation, testCases, testCasesBeforeDueDate, testCasesAfterDueDate, true));
+
+        return Stream.of(updatedAutomaticResult, updatedManualResult).flatMap(Optional::stream).toList();
+    }
+
+    /**
+     * Updates the latest results for the given participations.
+     * @param exercise the participations belong to.
+     * @param allTestCases of the programming exercise.
+     * @param participations for which the latest results should be updated.
+     * @return all results that have been updated.
+     */
+    private Stream<Result> updateResults(final ProgrammingExercise exercise, final Set<ProgrammingExerciseTestCase> allTestCases, final List<StudentParticipation> participations) {
+        final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(allTestCases, true);
+        final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(allTestCases, false);
+
+        return participations.stream().map(participation -> updateLatestResult(exercise, participation, allTestCases, testCasesBeforeDueDate, testCasesAfterDueDate, true))
+                .flatMap(Optional::stream);
+    }
+
+    /**
+     * Updates the latest results for the template and solution participation.
+     * @param exercise the template and solution belong to.
+     * @param testCases of the exercise.
+     * @return a stream of results that have been updated.
+     *         (maximum length two; if template and/or solution do not have a results, then fewer)
+     */
+    private Stream<Result> updateTemplateAndSolutionResults(final ProgrammingExercise exercise, final Set<ProgrammingExerciseTestCase> testCases) {
+        final Optional<Result> templateResult = templateProgrammingExerciseParticipationRepository
+                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .flatMap(templateParticipation -> updateLatestResult(exercise, templateParticipation, testCases, testCases, testCases, false));
+
+        final Optional<Result> solutionResult = solutionProgrammingExerciseParticipationRepository
+                .findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(exercise.getId())
+                .flatMap(solutionParticipation -> updateLatestResult(exercise, solutionParticipation, testCases, testCases, testCases, false));
+
+        return Stream.of(templateResult, solutionResult).flatMap(Optional::stream);
+    }
+
+    /**
+     * Updates the score for the latest result of the given participation.
+     * @param exercise the participation belongs to.
+     * @param participation of a student in the exercise.
+     * @param allTestCases of this exercise.
+     * @param testCasesBeforeDueDate the test cases that are visible to the student before the due date.
+     * @param testCasesAfterDueDate the test cases that are visible to the student after the due date.
+     * @param applySubmissionPolicy true, if submission policies should be taken into account when updating the score.
+     * @return the latest result with an updated score, or nothing if the participation had no results.
+     */
+    private Optional<Result> updateLatestResult(ProgrammingExercise exercise, Participation participation, Set<ProgrammingExerciseTestCase> allTestCases,
+            Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate, Set<ProgrammingExerciseTestCase> testCasesAfterDueDate, boolean applySubmissionPolicy) {
+        final Result result = participation.findLatestLegalResult();
+        if (result == null) {
+            return Optional.empty();
+        }
+
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
+        final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = isBeforeDueDate ? testCasesBeforeDueDate : testCasesAfterDueDate;
+
+        calculateScoreForResult(allTestCases, testCasesForCurrentDate, result, exercise, applySubmissionPolicy);
+
+        return Optional.of(result);
+    }
+
+    /**
+     * Creates an audit event logging that a re-evaluation was triggered.
+     * @param user who triggered the re-evaluation.
+     * @param exercise for which the evaluation was triggered.
+     * @param course the exercise belongs to.
+     * @param results of the exercise.
+     */
     public void logReEvaluate(User user, ProgrammingExercise exercise, Course course, List<Result> results) {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.RE_EVALUATE_RESULTS, "exercise=" + exercise.getTitle(), "course=" + course.getTitle(),
                 "results=" + results.size());
@@ -329,12 +437,21 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Filter all test cases from the score calculation that are never visible or ones with visibility "after due date" if the due date has not yet passed.
-     * @param exercise to which the test cases belong to.
      * @param testCases which should be filtered.
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
-    private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCases) {
-        boolean isBeforeDueDate = !examDateService.isExerciseWorkingPeriodOver(exercise);
+    private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(Participation participation, Set<ProgrammingExerciseTestCase> testCases) {
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
+        return filterTestCasesForStudents(testCases, isBeforeDueDate);
+    }
+
+    /**
+     * Filters the test cases to only include the ones a student should be able to see.
+     * @param testCases all test cases of an exercise.
+     * @param isBeforeDueDate true, if the due date has not yet passed.
+     * @return a set of test cases that are visible to the student.
+     */
+    private Set<ProgrammingExerciseTestCase> filterTestCasesForStudents(final Set<ProgrammingExerciseTestCase> testCases, boolean isBeforeDueDate) {
         return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
     }
 
@@ -344,17 +461,18 @@ public class ProgrammingExerciseGradingService {
      * @param testCasesForCurrentDate Test cases for the exercise for the current date
      * @param result The result to be updated
      * @param exercise The current exercise
+     * @param applySubmissionPolicy true, if submission policies should be taken into account when updating the score.
      * @return The updated result
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
-        // Distinguish between static code analysis feedback, test case feedback and manual feedback
         List<Feedback> testCaseFeedback = new ArrayList<>();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
         for (var feedback : result.getFeedbacks()) {
             if (feedback.getType() != FeedbackType.AUTOMATIC) {
                 continue;
             }
+
             if (feedback.isStaticCodeAnalysisFeedback()) {
                 staticCodeAnalysisFeedback.add(feedback);
             }
@@ -372,13 +490,11 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
-        if (testCasesForCurrentDate.size() > 0 && testCaseFeedback.size() > 0 && result.getFeedbacks().size() > 0) {
+        if (!testCasesForCurrentDate.isEmpty() && !testCaseFeedback.isEmpty() && !result.getFeedbacks().isEmpty()) {
             retainAutomaticFeedbacksWithTestCase(result, testCases);
 
             // Copy the visibility from test case to corresponding feedback
             setVisibilityForFeedbacksWithTestCase(result, testCases);
-
-            Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
 
             // Add feedbacks for tests that were not executed ("test was not executed").
             createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
@@ -391,26 +507,37 @@ public class ProgrammingExerciseGradingService {
                 submissionPolicyService.createFeedbackForPenaltyPolicy(result, penaltyPolicy);
             }
 
-            // Recalculate the achieved score by including the test cases individual weight.
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
-            updateScore(result, successfulTestCases, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
-
-            // Create a new result string that reflects passed, failed & not executed test cases.
-            updateResultString(result, successfulTestCases, testCasesForCurrentDate, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+            final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
+            updateScore(result, testCases, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+            updateResultString(result, testCasesForCurrentDate, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
-        else if (testCases.size() > 0 && result.getFeedbacks().size() > 0 && testCaseFeedback.size() > 0) {
-            removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
-
-            // Add feedbacks for all duplicate test cases
-            boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
-
-            // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
-            updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+        else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {
+            addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback, applySubmissionPolicy);
         }
-        // Case 3: If there is no test case feedback, the build has failed or it has previously fallen under case 2. In this case we just return the original result without
+        // Case 3: If there is no test case feedback, the build has failed, or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
+
         return result;
+    }
+
+    /**
+     * Adds the appropriate feedback to the result in case the automatic tests were not executed.
+     * @param result to which the feedback should be added.
+     * @param exercise to which the result belongs to.
+     * @param staticCodeAnalysisFeedback that has been created for this result.
+     * @param applySubmissionPolicy if the submission policy of the exercise should be applied.
+     */
+    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback,
+            boolean applySubmissionPolicy) {
+        removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
+
+        // Add feedbacks for all duplicate test cases
+        boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
+
+        // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
+        updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
     }
 
     /**
@@ -446,19 +573,18 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Check which tests were not executed and add a new Feedback for them to the exercise.
-     *
+     * Checks which tests were not executed and add a new Feedback for them to the exercise.
      * @param result   of the build run.
      * @param allTests of the given programming exercise.
      */
     private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> allTests) {
         List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(wasNotExecuted(result))
-                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).collect(Collectors.toList());
+                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).toList();
         result.addFeedbacks(feedbacksForNotExecutedTestCases);
     }
 
     /**
-     * Check which feedback entries have the same name and therefore indicate multiple testcases with the same name.
+     * Checks which feedback entries have the same name and therefore indicate multiple testcases with the same name.
      * These duplicate testcases are added as a feedback element to the result.
      * The instructor and tutors are notified via a group notification.
      *
@@ -477,14 +603,17 @@ public class ProgrammingExerciseGradingService {
             String duplicateDetailText = "This is a duplicate test case. Please review all your test cases and verify that your test cases have unique names!";
             List<Feedback> feedbacksForDuplicateTestCases = duplicateFeedbackNames.stream()
                     .map(feedbackName -> new Feedback().type(FeedbackType.AUTOMATIC).text(feedbackName + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false))
-                    .collect(Collectors.toList());
+                    .toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
+
             // Enables to view the result details in case all test cases are positive
             result.setHasFeedback(true);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
             groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+
             return true;
         }
+
         return false;
     }
 
@@ -492,74 +621,20 @@ public class ProgrammingExerciseGradingService {
      * Update the score given the positive tests score divided by all tests' score.
      * Takes weight, bonus multiplier and absolute bonus points into account.
      * All tests in this case does not include ones with visibility=never.
-     *
      * @param result                     of the build run.
+     * @param allTestCases               of a given programming exercise.
      * @param successfulTestCases        test cases with positive feedback.
-     * @param allTests                   of a given programming exercise.
      * @param staticCodeAnalysisFeedback of a given programming exercise.
      * @param programmingExercise        the given programming exercise.
      * @param hasDuplicateTestCases      indicates duplicate test cases.
      */
-    private void updateScore(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests,
-            List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
-
-        if (hasDuplicateTestCases || successfulTestCases.isEmpty()) {
+    private void updateScore(final Result result, final Set<ProgrammingExerciseTestCase> allTestCases, final Set<ProgrammingExerciseTestCase> successfulTestCases,
+            final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
+        if (hasDuplicateTestCases) {
             result.setScore(0D);
         }
         else {
-            double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
-            // Checks if weightSum == 0. We can't use == operator since we are comparing doubles
-            if (Precision.equals(weightSum, 0, 1E-8)) {
-                result.setScore(0D);
-                return;
-            }
-
-            // calculate the achieved points from the passed test cases
-            double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
-                double testWeight = test.getWeight() * test.getBonusMultiplier();
-                double testPoints = testWeight / weightSum * programmingExercise.getMaxPoints();
-                double testPointsWithBonus = testPoints + test.getBonusPoints();
-                // Update credits of related feedback
-                // We need to compare testcases via lowercase, because the testcaseRepository is case-insensitive
-                result.getFeedbacks().stream().filter(fb -> fb.getType() == FeedbackType.AUTOMATIC && fb.getText().equalsIgnoreCase(test.getTestName())).findFirst()
-                        .ifPresent(feedback -> feedback.setCredits(testPointsWithBonus));
-                return testPointsWithBonus;
-            }).sum();
-
-            /*
-             * The points are capped by the maximum achievable points. The cap is applied before the static code analysis penalty is subtracted as otherwise the penalty won't have
-             * any effect in some cases. For example with maxPoints=20, successfulTestPoints=30 and penalty=10, a student would still receive the full 20 points, if the points are
-             * not capped before the penalty is subtracted. With the implemented order in place successfulTestPoints will be capped to 20 points first, then the penalty is
-             * subtracted resulting in 10 points.
-             */
-            double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
-
-            if (successfulTestPoints > maxPoints) {
-                successfulTestPoints = maxPoints;
-            }
-            if (Double.isNaN(successfulTestPoints)) {
-                successfulTestPoints = 0.0;
-            }
-
-            // if static code analysis is enabled, reduce the points by the calculated penalty
-            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())
-                    && Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(1) > 0) {
-                successfulTestPoints -= calculateStaticCodeAnalysisPenalty(staticCodeAnalysisFeedback, programmingExercise);
-            }
-
-            // If the submission policy should be enforced, we deduct the calculated deduction
-            // from the overall score
-            if (applySubmissionPolicy && programmingExercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy penaltyPolicy) {
-                successfulTestPoints -= submissionPolicyService.calculateSubmissionPenalty(result.getParticipation(), penaltyPolicy);
-            }
-
-            if (successfulTestPoints < 0) {
-                successfulTestPoints = 0;
-            }
-
-            // The score is calculated as a percentage of the maximum points
-            double score = successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
-
+            double score = calculateScore(programmingExercise, allTestCases, result, successfulTestCases, staticCodeAnalysisFeedback, applySubmissionPolicy);
             result.setScore(score);
         }
 
@@ -571,18 +646,169 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
+     * Calculates the score of automatic test cases for the given result with possible penalties applied.
+     * @param programmingExercise the result belongs to.
+     * @param allTests that should be considered in the score calculation.
+     * @param result for which a score should be calculated.
+     * @param successfulTestCases all test cases that passed for the submission.
+     * @param staticCodeAnalysisFeedback that has been created for the submission.
+     * @param applySubmissionPolicy true, if penalties from submission policies should be applied.
+     * @return the final total score that should be given to the result.
+     */
+    private double calculateScore(final ProgrammingExercise programmingExercise, final Set<ProgrammingExerciseTestCase> allTests, final Result result,
+            final Set<ProgrammingExerciseTestCase> successfulTestCases, final List<Feedback> staticCodeAnalysisFeedback, boolean applySubmissionPolicy) {
+        if (successfulTestCases.isEmpty()) {
+            return 0;
+        }
+
+        final double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+
+        double successfulTestPoints = calculateSuccessfulTestPoints(programmingExercise, result, successfulTestCases, allTests.size(), weightSum);
+        successfulTestPoints -= calculateTotalPenalty(programmingExercise, result.getParticipation(), staticCodeAnalysisFeedback, applySubmissionPolicy);
+
+        if (successfulTestPoints < 0) {
+            successfulTestPoints = 0;
+        }
+
+        // The score is calculated as a percentage of the maximum points
+        return successfulTestPoints / programmingExercise.getMaxPoints() * 100.0;
+    }
+
+    /**
+     * Calculates the total points that should be given for the successful test cases.
+     *
+     * Additionally, updates the feedback in the result for each passed test case with the points
+     * received for that specific test case.
+     *
+     * Does not apply any penalties to the score yet.
+     *
+     * @param programmingExercise which the result belongs to.
+     * @param result for which the points should be calculated.
+     * @param successfulTestCases all test cases the submission passed.
+     * @param totalTestCaseCount the total number of relevant test cases. This might not be the total
+     *                           number of test cases in the exercise as some test cases are ignored
+     *                           for the calculation before the exercise due date.
+     * @param weightSum the sum of test case weights of all test cases that have to be considered.
+     * @return the total score for this result without penalty deductions.
+     */
+    private double calculateSuccessfulTestPoints(final ProgrammingExercise programmingExercise, final Result result, final Set<ProgrammingExerciseTestCase> successfulTestCases,
+            int totalTestCaseCount, double weightSum) {
+        double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
+            double credits = calculatePointsForSuccessfulTestCase(result, programmingExercise, test, totalTestCaseCount, weightSum);
+            setCreditsForTestCaseFeedback(result, test, credits);
+            return credits;
+        }).sum();
+
+        return capPointsAtMaximum(programmingExercise, successfulTestPoints);
+    }
+
+    /**
+     * Caps the points at the maximum achievable number.
+     *
+     * The cap should be applied before the static code analysis penalty is subtracted as otherwise the penalty won't have any effect in some cases.
+     * For example with maxPoints=20, points=30 and penalty=10, a student would still receive the full 20 points, if the points are not
+     * capped before the penalty is subtracted. With the implemented order in place points will be capped to 20 points first, then the penalty is subtracted
+     * resulting in 10 points.
+     *
+     * @param programmingExercise Used to determine the maximum allowed number of points.
+     * @param points A number of points that may potentially be higher than allowed.
+     * @return The number of points, but no more than the exercise allows for.
+     */
+    private double capPointsAtMaximum(final ProgrammingExercise programmingExercise, double points) {
+        double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+        double cappedPoints = points;
+
+        if (Double.isNaN(points)) {
+            cappedPoints = 0;
+        }
+        else if (points > maxPoints) {
+            cappedPoints = maxPoints;
+        }
+
+        return cappedPoints;
+    }
+
+    /**
+     * Updates the feedback corresponding to the test case with the given credits.
+     * @param result which should be updated.
+     * @param testCase the feedback that should be updated corresponds to.
+     * @param credits that should be set in the feedback.
+     */
+    private void setCreditsForTestCaseFeedback(final Result result, final ProgrammingExerciseTestCase testCase, double credits) {
+        // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
+        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getText().equalsIgnoreCase(testCase.getTestName())).findFirst()
+                .ifPresent(feedback -> feedback.setCredits(credits));
+    }
+
+    /**
+     * Calculates the points that should be awarded for a successful test case.
+     * @param result used to determine if the calculation is performed for the solution.
+     * @param programmingExercise the result belongs to.
+     * @param test for which the points should be calculated.
+     * @param totalTestCaseCount in the given exercise.
+     * @param weightSum of all test cases in the exercise.
+     * @return the points which should be awarded for successfully completing the test case.
+     */
+    private double calculatePointsForSuccessfulTestCase(final Result result, final ProgrammingExercise programmingExercise, final ProgrammingExerciseTestCase test,
+            int totalTestCaseCount, double weightSum) {
+        final boolean isWeightSumZero = Precision.equals(weightSum, 0, 1E-8);
+        final double testPoints;
+
+        // A weight-sum of zero would let the solution show an error to the instructor as the solution score must be
+        // 100% of all reachable points. To prevent this, we weigh all test cases equally in such a case.
+        if (isWeightSumZero && result.getParticipation() instanceof SolutionProgrammingExerciseParticipation) {
+            testPoints = (1.0 / totalTestCaseCount) * programmingExercise.getMaxPoints();
+        }
+        else if (isWeightSumZero) {
+            // this test case must have zero weight as well; avoid division by zero
+            testPoints = 0D;
+        }
+        else {
+            double testWeight = test.getWeight() * test.getBonusMultiplier();
+            testPoints = (testWeight / weightSum) * programmingExercise.getMaxPoints();
+        }
+
+        return testPoints + test.getBonusPoints();
+    }
+
+    /**
+     * Calculates a total penalty that should be applied to the score.
+     *
+     * This includes the penalties from static code analysis and of submission policies.
+     *
+     * @param programmingExercise the participation belongs to.
+     * @param participation for which should be checked for possible penalties.
+     * @param staticCodeAnalysisFeedback automatic feedback from static code analysis.
+     * @param applySubmissionPolicy determines if the submission policy should be applied.
+     * @return a total penalty that should be deducted from the score.
+     */
+    private double calculateTotalPenalty(final ProgrammingExercise programmingExercise, final Participation participation, final List<Feedback> staticCodeAnalysisFeedback,
+            boolean applySubmissionPolicy) {
+        double penalty = 0;
+
+        int maxStaticCodeAnalysisPenalty = Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(100);
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && maxStaticCodeAnalysisPenalty > 0) {
+            penalty += calculateStaticCodeAnalysisPenalty(staticCodeAnalysisFeedback, programmingExercise);
+        }
+
+        if (applySubmissionPolicy && programmingExercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy penaltyPolicy) {
+            penalty += submissionPolicyService.calculateSubmissionPenalty(participation, penaltyPolicy);
+        }
+
+        return penalty;
+    }
+
+    /**
      * Calculates the total penalty over all static code analysis issues
      * @param staticCodeAnalysisFeedback The list of static code analysis feedback
      * @param programmingExercise The current exercise
      * @return The sum of all penalties, capped at the maximum allowed penalty
      */
-    private double calculateStaticCodeAnalysisPenalty(List<Feedback> staticCodeAnalysisFeedback, ProgrammingExercise programmingExercise) {
+    private double calculateStaticCodeAnalysisPenalty(final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
+        final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
         double codeAnalysisPenaltyPoints = 0;
 
-        var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
-
         for (var category : staticCodeAnalysisService.findByExerciseId(programmingExercise.getId())) {
-
             if (!category.getState().equals(CategoryState.GRADED)) {
                 continue;
             }
@@ -623,22 +849,21 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Update the result's result string given the successful tests vs. all tests (x of y passed).
-     *
      * @param result                of the build run.
+     * @param allTestCases          of the given programming exercise.
      * @param successfulTestCases   test cases with positive feedback.
-     * @param allTests              of the given programming exercise.
      * @param scaFeedback           for the result
      * @param exercise              to which this result and the test cases belong
      * @param hasDuplicateTestCases indicates duplicate test cases
      */
-    private void updateResultString(Result result, Set<ProgrammingExerciseTestCase> successfulTestCases, Set<ProgrammingExerciseTestCase> allTests, List<Feedback> scaFeedback,
-            ProgrammingExercise exercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
+    private void updateResultString(final Result result, final Set<ProgrammingExerciseTestCase> allTestCases, final Set<ProgrammingExerciseTestCase> successfulTestCases,
+            final List<Feedback> scaFeedback, final ProgrammingExercise exercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
         if (hasDuplicateTestCases) {
             result.setResultString("Error: Found duplicated tests!");
         }
         else {
             // Create a new result string that reflects passed, failed & not executed test cases.
-            String newResultString = successfulTestCases.size() + " of " + allTests.size() + " passed";
+            String newResultString = successfulTestCases.size() + " of " + allTestCases.size() + " passed";
 
             // Show number of found quality issues if static code analysis is enabled
             if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
@@ -679,7 +904,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);
-        result.hasFeedback(staticCodeAnalysisFeedback.size() > 0);
+        result.hasFeedback(!staticCodeAnalysisFeedback.isEmpty());
         result.setScore(0D);
     }
 
@@ -711,45 +936,33 @@ public class ProgrammingExerciseGradingService {
      * @return The statistics object
      */
     public ProgrammingExerciseGradingStatisticsDTO generateGradingStatistics(Long exerciseId) {
-        var statistics = new ProgrammingExerciseGradingStatisticsDTO();
-
-        var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
-
-        statistics.setNumParticipations(results.size());
-
-        var testCases = testCaseService.findByExerciseId(exerciseId);
-        var categories = staticCodeAnalysisService.findByExerciseId(exerciseId);
-
         // number of passed and failed tests per test case
-        var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
-
-        // number of students per amount of detected issues per category
-        var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
-
-        // init for each test case
-        for (var testCase : testCases) {
+        final var testCases = testCaseService.findByExerciseId(exerciseId);
+        final var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
+        for (ProgrammingExerciseTestCase testCase : testCases) {
             testCaseStatsMap.put(testCase.getTestName(), new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
         }
 
-        // init for each category
-        for (var category : categories) {
+        // number of students per amount of detected issues per category
+        final var categories = staticCodeAnalysisService.findByExerciseId(exerciseId);
+        final var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
+        for (StaticCodeAnalysisCategory category : categories) {
             categoryIssuesStudentsMap.put(category.getName(), new HashMap<>());
         }
 
-        for (var result : results) {
-
+        final var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(exerciseId);
+        for (Result result : results) {
             // number of detected issues per category for this result
-            var categoryIssuesMap = new HashMap<String, Integer>();
-
+            final var categoryIssuesMap = new HashMap<String, Integer>();
             for (var feedback : result.getFeedbacks()) {
-                // analyse the feedback and add to the statistics
-                addFeedbackToStatistics(feedback, categoryIssuesMap, testCaseStatsMap);
+                addFeedbackToStatistics(categoryIssuesMap, testCaseStatsMap, feedback);
             }
 
-            // merge the student specific issue map with the overall students issue map
-            mergeCategoryIssuesMaps(categoryIssuesStudentsMap, categoryIssuesMap);
+            mergeCategoryIssuesMap(categoryIssuesStudentsMap, categoryIssuesMap);
         }
 
+        final var statistics = new ProgrammingExerciseGradingStatisticsDTO();
+        statistics.setNumParticipations(results.size());
         statistics.setTestCaseStatsMap(testCaseStatsMap);
         statistics.setCategoryIssuesMap(categoryIssuesStudentsMap);
 
@@ -757,74 +970,43 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Merge the result issues map with the overall issues map
-     * @param categoryIssuesStudentsMap The overall issues map for all students
-     * @param categoryIssuesMap The issues map for one students
+     * Merges the result map of a single student with the overall issues map
+     * @param issuesAllStudents The overall issues map for all students
+     * @param issuesSingleStudent The issues map for one student
      */
-    private void mergeCategoryIssuesMaps(Map<String, Map<Integer, Integer>> categoryIssuesStudentsMap, Map<String, Integer> categoryIssuesMap) {
-        for (var entry : categoryIssuesMap.entrySet()) {
-            // key: category, value: number of issues
+    private void mergeCategoryIssuesMap(final Map<String, Map<Integer, Integer>> issuesAllStudents, final Map<String, Integer> issuesSingleStudent) {
+        for (var entry : issuesSingleStudent.entrySet()) {
+            final String category = entry.getKey();
+            final Integer issueCount = entry.getValue();
 
-            if (categoryIssuesStudentsMap.containsKey(entry.getKey())) {
-                var issuesStudentsMap = categoryIssuesStudentsMap.get(entry.getKey());
-                // add 1 to the number of students for the category & issues
-                if (issuesStudentsMap.containsKey(entry.getValue())) {
-                    issuesStudentsMap.merge(entry.getValue(), 1, Integer::sum);
-                }
-                else {
-                    issuesStudentsMap.put(entry.getValue(), 1);
-                }
-            }
-            else {
-                // create a new issues map for this category
-                var issuesStudentsMap = new HashMap<Integer, Integer>();
-                issuesStudentsMap.put(entry.getValue(), 1);
-                categoryIssuesStudentsMap.put(entry.getKey(), issuesStudentsMap);
-            }
+            issuesAllStudents.putIfAbsent(category, new HashMap<>());
+
+            var issuesStudentsMap = issuesAllStudents.get(category);
+            issuesStudentsMap.putIfAbsent(issueCount, 0);
+            // add 1 to the number of students for the category & issues
+            issuesStudentsMap.merge(issueCount, 1, Integer::sum);
         }
     }
 
     /**
      * Analyses the feedback and updates the statistics maps
-     * @param feedback The given feedback object
      * @param categoryIssuesMap The issues map for sca statistics
      * @param testCaseStatsMap The map for test case statistics
+     * @param feedback The given feedback object
      */
-    private void addFeedbackToStatistics(Feedback feedback, Map<String, Integer> categoryIssuesMap,
-            Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
+    private void addFeedbackToStatistics(final Map<String, Integer> categoryIssuesMap, final Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap,
+            final Feedback feedback) {
         if (feedback.isStaticCodeAnalysisFeedback()) {
-            // sca feedback
-            var categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
+            String categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
             if ("".equals(categoryName)) {
-                return; // this feedback belongs to no category
+                return;
             }
-
-            // add 1 to the issues for this category
-            if (categoryIssuesMap.containsKey(categoryName)) {
-                categoryIssuesMap.merge(categoryName, 1, Integer::sum);
-            }
-            else {
-                categoryIssuesMap.put(categoryName, 1);
-            }
-
+            categoryIssuesMap.compute(categoryName, (category, count) -> count == null ? 1 : count + 1);
         }
-        else if (feedback.getType().equals(FeedbackType.AUTOMATIC)) {
-            // test case feedback
-            var testName = feedback.getText();
-
-            // add 1 to the passed or failed amount for this test case
-            // dependant on the positive flag of the feedback
-            if (testCaseStatsMap.containsKey(testName)) {
-                if (Boolean.TRUE.equals(feedback.isPositive())) {
-                    testCaseStatsMap.get(testName).increaseNumPassed();
-                }
-                else {
-                    testCaseStatsMap.get(testName).increaseNumFailed();
-                }
-            }
-            else {
-                testCaseStatsMap.put(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(feedback.isPositive() ? 1 : 0, feedback.isPositive() ? 0 : 1));
-            }
+        else if (FeedbackType.AUTOMATIC.equals(feedback.getType())) {
+            String testName = feedback.getText();
+            testCaseStatsMap.putIfAbsent(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
+            testCaseStatsMap.get(testName).updateWithFeedback(feedback);
         }
     }
 }

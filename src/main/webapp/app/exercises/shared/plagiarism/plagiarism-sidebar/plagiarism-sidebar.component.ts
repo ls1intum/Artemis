@@ -3,6 +3,7 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-sidebar',
@@ -10,8 +11,10 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
     templateUrl: './plagiarism-sidebar.component.html',
 })
 export class PlagiarismSidebarComponent implements OnChanges {
-    @Input() activeIndex: number;
+    @Input() activeID: number;
     @Input() comparisons?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[];
+    @Input() casesFiltered = false;
+    @Input() offset = 0;
 
     @Input() showRunDetails: boolean;
     @Output() showRunDetailsChange = new EventEmitter<boolean>();
@@ -20,6 +23,8 @@ export class PlagiarismSidebarComponent implements OnChanges {
 
     readonly CONFIRMED = PlagiarismStatus.CONFIRMED;
     readonly DENIED = PlagiarismStatus.DENIED;
+
+    faExclamationTriangle = faExclamationTriangle;
 
     /**
      * Index of the currently selected result page.
@@ -40,6 +45,11 @@ export class PlagiarismSidebarComponent implements OnChanges {
      * Number of comparisons per page.
      */
     public pageSize = 100;
+
+    // Icons
+    faChevronRight = faChevronRight;
+    faArrowLeft = faArrowLeft;
+    faArrowRight = faArrowRight;
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.comparisons) {

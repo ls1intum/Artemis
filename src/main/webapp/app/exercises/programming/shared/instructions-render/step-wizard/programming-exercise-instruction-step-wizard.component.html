@@ -14,10 +14,10 @@
                     [class.stepwizard-step--no-result]="step.done === TestCaseState.NO_RESULT"
                     (click)="showDetailsForTests(step.tests)"
                 >
-                    <fa-icon [icon]="'check'" size="lg" class="text-success" *ngIf="step.done === TestCaseState.SUCCESS"></fa-icon>
-                    <fa-icon [icon]="'times'" size="lg" class="text-danger" *ngIf="step.done === TestCaseState.FAIL"></fa-icon>
+                    <fa-icon [icon]="faCheck" size="lg" class="text-success" *ngIf="step.done === TestCaseState.SUCCESS"></fa-icon>
+                    <fa-icon [icon]="faTimes" size="lg" class="text-danger" *ngIf="step.done === TestCaseState.FAIL"></fa-icon>
                     <fa-icon
-                        [icon]="'question'"
+                        [icon]="faQuestion"
                         size="lg"
                         class="text-secondary"
                         *ngIf="step.done === TestCaseState.NOT_EXECUTED || step.done === TestCaseState.NO_RESULT"

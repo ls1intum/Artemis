@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
+import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-organization-management',
@@ -13,6 +14,12 @@ export class OrganizationManagementComponent implements OnInit {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faEye = faEye;
+    faWrench = faWrench;
 
     constructor(private organizationService: OrganizationManagementService) {}
 
@@ -29,15 +36,15 @@ export class OrganizationManagementComponent implements OnInit {
     }
 
     deleteOrganization(organizationId: number) {
-        this.organizationService.deleteOrganization(organizationId).subscribe(
-            () => {
+        this.organizationService.deleteOrganization(organizationId).subscribe({
+            next: () => {
                 this.dialogErrorSource.next('');
                 this.organizations = this.organizations.filter((org) => org.id !== organizationId);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next('An error occurred while removing the organization: ' + error.message);
             },
-        );
+        });
     }
 
     /**

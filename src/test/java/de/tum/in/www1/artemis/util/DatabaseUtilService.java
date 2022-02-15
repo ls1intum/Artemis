@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.fail;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -535,7 +536,7 @@ public class DatabaseUtilService {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
-        TextExercise textExercise = textExerciseRepository.findByCourseId(course1.getId()).stream().findFirst().get();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         VideoUnit videoUnit = createVideoUnit();
         TextUnit textUnit = createTextUnit();
         AttachmentUnit attachmentUnit = createAttachmentUnit();
@@ -592,6 +593,8 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
+        modelingExercise.setSampleSolutionModel("Example solution model");
+        modelingExercise.setSampleSolutionExplanation("Example Solution");
         addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
@@ -599,6 +602,7 @@ public class DatabaseUtilService {
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
+        textExercise.setSampleSolution("Sample Solution");
         addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
@@ -747,15 +751,15 @@ public class DatabaseUtilService {
         List<Post> posts = createPostsWithinCourse();
 
         // add answer for one post in each context (lecture, exercise, course-wide)
-        Post lecturePost = posts.stream().filter(coursePost -> (coursePost.getLecture() != null)).collect(Collectors.toList()).get(0);
+        Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
         lecturePost.setAnswers(createBasicAnswers(lecturePost));
         postRepository.save(lecturePost);
 
-        Post exercisePost = posts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList()).get(0);
+        Post exercisePost = posts.stream().filter(coursePost -> coursePost.getExercise() != null).findFirst().orElseThrow();
         exercisePost.setAnswers(createBasicAnswers(exercisePost));
         postRepository.save(exercisePost);
 
-        Post courseWidePost = posts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).collect(Collectors.toList()).get(0);
+        Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).findFirst().orElseThrow();
         courseWidePost.setAnswers(createBasicAnswers(courseWidePost));
         postRepository.save(courseWidePost);
 
@@ -1185,6 +1189,14 @@ public class DatabaseUtilService {
 
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    public StudentExam addStudentExamWithUser(Exam exam, User user, int additionalWorkingTime) {
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExam.setUser(user);
+        studentExam.setWorkingTime((int) Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds() + additionalWorkingTime);
         studentExamRepository.save(studentExam);
         return studentExam;
     }
@@ -2287,7 +2299,7 @@ public class DatabaseUtilService {
         switch (exerciseType) {
             case "modeling":
                 course = addCourseWithOneModelingExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     StudentParticipation participation = createAndSaveParticipationForExercise(exercise, "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
@@ -2298,7 +2310,7 @@ public class DatabaseUtilService {
                 return course;
             case "programming":
                 course = addCourseWithOneProgrammingExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     ProgrammingSubmission submission = new ProgrammingSubmission();
                     addProgrammingSubmission((ProgrammingExercise) exercise, submission, "student" + j);
@@ -2306,7 +2318,7 @@ public class DatabaseUtilService {
                 return course;
             case "text":
                 course = addCourseWithOneFinishedTextExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     TextSubmission textSubmission = ModelFactory.generateTextSubmission("Text" + j + j, null, true);
                     saveTextSubmission((TextExercise) exercise, textSubmission, "student" + j);
@@ -2314,7 +2326,7 @@ public class DatabaseUtilService {
                 return course;
             case "file-upload":
                 course = addCourseWithFileUploadExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
 
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
@@ -3491,7 +3503,7 @@ public class DatabaseUtilService {
         storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));
     }
 
-    public void createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
+    public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
         textSubmission = textSubmissionRepo.save(textSubmission);
 
@@ -3500,6 +3512,7 @@ public class DatabaseUtilService {
 
         studentParticipationRepo.save(studentParticipation);
         textSubmissionRepo.save(textSubmission);
+        return textSubmission;
     }
 
     public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
@@ -3590,7 +3603,7 @@ public class DatabaseUtilService {
     }
 
     public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
-        try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path)))) {
+        try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path), StandardCharsets.UTF_8))) {
             List<String[]> rows = reader.readAll();
             // delete first row with column headers
             rows.remove(0);

@@ -1,6 +1,6 @@
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 
-export class OtherModelElementCount {
+export class ModelElementCount {
     elementId: string;
     numberOfOtherElements: number;
 }
@@ -8,7 +8,7 @@ export class OtherModelElementCount {
 export class ModelingSubmission extends Submission {
     public model?: string;
     public explanationText?: string;
-    public similarElements?: OtherModelElementCount[];
+    public similarElements?: ModelElementCount[];
     constructor() {
         super(SubmissionExerciseType.MODELING);
     }

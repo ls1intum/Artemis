@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 @Pipe({ name: 'durationTo' })
 export class DurationPipe implements PipeTransform {

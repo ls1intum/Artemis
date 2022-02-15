@@ -38,7 +38,7 @@ describe('UpcomingExamsAndExercisesComponent', () => {
     });
 
     describe('OnInit', () => {
-        it('Should call load exercises and exams on init', function () {
+        it('Should call load exercises and exams on init', () => {
             // WHEN
             component.ngOnInit();
 

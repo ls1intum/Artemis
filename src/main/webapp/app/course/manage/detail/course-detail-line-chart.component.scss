@@ -1,3 +1,4 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
 .course-detail-parent-container {
     flex-direction: column;
     width: 100% !important;
@@ -16,4 +17,36 @@
 
 .hide-arrow {
     visibility: hidden;
+}
+
+.chart-title-line {
+    margin-top: 15px;
+}
+
+.chart-explanation-tooltip {
+    padding-left: 6px;
+}
+
+.spinner {
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+}
+
+.checkbox-label {
+    margin-left: 0.25rem;
+}
+
+:host ::ng-deep .refline-label {
+    font-size: larger !important;
+    font-weight: bolder;
+}
+
+:host ::ng-deep .refline-path {
+    stroke-width: 2 !important;
+    stroke-dasharray: 10 !important;
+    stroke-dashoffset: 0 !important;
+    stroke: $primary !important;
 }

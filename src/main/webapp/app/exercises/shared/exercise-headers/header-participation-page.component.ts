@@ -1,9 +1,10 @@
 import { Component, Input, OnChanges, OnInit, ViewEncapsulation } from '@angular/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Exercise, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 
 @Component({
     selector: 'jhi-header-participation-page',
@@ -21,6 +22,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
 
+    dueDate?: dayjs.Dayjs;
     getIcon = getIcon;
 
     constructor() {}
@@ -29,8 +31,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      * Sets the status badge and categories of the exercise on init
      */
     ngOnInit(): void {
-        this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise?.categories || [];
+        this.ngOnChanges();
     }
 
     /**
@@ -52,12 +53,13 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      */
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise?.categories || [];
+        this.exerciseCategories = this.exercise.categories || [];
+        this.dueDate = getExerciseDueDate(this.exercise, this.participation);
     }
 
     private setExerciseStatusBadge(): void {
         if (this.exercise) {
-            this.exerciseStatusBadge = dayjs(this.exercise.dueDate!).isBefore(dayjs()) ? 'bg-danger' : 'bg-success';
+            this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.participation) ? 'bg-danger' : 'bg-success';
         }
     }
 }

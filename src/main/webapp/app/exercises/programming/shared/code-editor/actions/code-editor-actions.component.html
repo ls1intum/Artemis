@@ -3,7 +3,7 @@
         id="resolve_conflict_button"
         type="button"
         class="btn btn-danger navbar-btn me-3"
-        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="disableActions"
         (click)="resetRepository()"
         data-toggle="tooltip"
@@ -11,11 +11,11 @@
         title="{{ 'artemisApp.editor.conflict.resetRepository' | artemisTranslate }}"
     >
         <span *ngIf="isResolvingConflict; else notResolvingConflict">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span>
         </span>
         <ng-template #notResolvingConflict>
-            <fa-icon [icon]="'times'"> </fa-icon>
+            <fa-icon [icon]="faTimes"> </fa-icon>
             <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve conflict</span>
         </ng-template>
     </button>
@@ -25,7 +25,7 @@
         id="refresh_button"
         type="button"
         class="btn btn-primary navbar-btn me-3"
-        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
         (click)="onRefresh()"
         data-toggle="tooltip"
@@ -33,11 +33,11 @@
         title="{{ 'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate }}"
     >
         <span *ngIf="editorState === EditorState.REFRESHING; else notRefreshing">
-            <fa-icon [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
             <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
         </span>
         <ng-template #notRefreshing>
-            <fa-icon [icon]="['fas', 'sync']"></fa-icon>
+            <fa-icon [icon]="faSync"></fa-icon>
             <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span>
         </ng-template>
     </button>
@@ -45,7 +45,7 @@
         id="submit_button"
         type="button"
         class="guided-tour-submit-button btn btn-success navbar-btn"
-        [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [overwriteDisabled]="
             disableActions ||
             editorState === EditorState.REFRESHING ||
@@ -58,7 +58,7 @@
         title="{{ 'artemisApp.editor.submitDescription' | artemisTranslate }}"
     >
         <span>
-            <fa-icon [icon]="['far', 'play-circle']"></fa-icon>
+            <fa-icon [icon]="farPlayCircle"></fa-icon>
             <span jhiTranslate="artemisApp.editor.submit">Submit</span>
         </span>
     </button>

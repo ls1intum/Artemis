@@ -22,11 +22,9 @@ public class FlowchartFlowline extends UMLElement {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof FlowchartFlowline)) {
+        if (!(reference instanceof FlowchartFlowline referenceFlowline)) {
             return 0;
         }
-
-        FlowchartFlowline referenceFlowline = (FlowchartFlowline) reference;
 
         double similarity = 0;
 

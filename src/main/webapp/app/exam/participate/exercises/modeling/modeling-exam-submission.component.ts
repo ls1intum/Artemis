@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -31,6 +32,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     explanationText: string; // current explanation text
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);

@@ -3,15 +3,6 @@
  */
 export class ExamManagementPage {
     /**
-     * Searches for an exam with the provided title and returns a pageobject for further interactions.
-     * @param examTitle the title of the exam.
-     * @returns the pageobject which represents this exam row
-     */
-    getExamRow(examTitle: string) {
-        return new ExamRow(this.getExamRowRoot(examTitle));
-    }
-
-    /**
      * Searches for an exam with the provided title.
      * @param examTitle the title of the exam.
      * @returns the row element of the found exam
@@ -22,20 +13,21 @@ export class ExamManagementPage {
 
     /**
      * Deletes the exam with the specified title.
-     * @param examTitle the exam title
+     * @param examId the exam ID
+     * @param examTitle the exam ID
      */
-    deleteExam(examTitle: string) {
-        this.getExamRowRoot(examTitle).find('[deleteconfirmationtext="artemisApp.examManagement.delete.typeNameToConfirm"]').click();
-        cy.get('.modal-footer').find('.btn-danger').should('be.disabled');
-        cy.get('.modal-body').find('input').type(examTitle);
-        cy.get('.modal-footer').find('.btn-danger').should('not.be.disabled').click();
+    deleteExam(examId: string, examTitle: string) {
+        cy.get('#delete-exam-' + examId).click();
+        cy.get('#delete').should('be.disabled');
+        cy.get('#confirm-exercise-name').type(examTitle);
+        cy.get('#delete').should('not.be.disabled').click();
     }
 
     /**
      * Clicks the create new exam button.
      */
     createNewExam() {
-        cy.get('.create-exam').click();
+        cy.get('#create-exam').click();
     }
 
     /**
@@ -44,41 +36,36 @@ export class ExamManagementPage {
      * @returns the element
      */
     getExamSelector(examTitle: string) {
-        return cy.get('jhi-exam-management').contains(examTitle);
-    }
-}
-
-/**
- * Pageobject for a table row in the exams table.
- */
-export class ExamRow {
-    readonly root;
-
-    /**
-     * @param root the root <tr> element of the exam
-     */
-    constructor(root: Cypress.Chainable<JQuery<HTMLTableRowElement>>) {
-        this.root = root;
+        return cy.get('#exams-table').contains(examTitle);
     }
 
     /**
      * Opens the exercise groups page.
      */
-    openExerciseGroups() {
-        this.root.contains('Exercise Groups').click();
+    openExerciseGroups(examId: number) {
+        cy.get(`#exercises-button-${examId}-groups`).click();
     }
 
     /**
      * Opens the student registration page.
      */
-    openStudentRegistration() {
-        this.root.contains('Students').click();
+    openStudentRegistration(examId: number) {
+        cy.get(`#student-button-${examId}`).click();
     }
 
     /**
      * Opens the student exams page.
      */
-    openStudenExams() {
-        this.root.contains('Student Exams').click();
+    openStudenExams(examId: number) {
+        cy.get(`#student-exams-${examId}`).click();
+    }
+
+    /**
+     * Opens the exam assessment dashboard
+     * @param examId the id of the exam
+     * @param timeout how long to wait for the assessment dashboard button
+     */
+    openAssessmentDashboard(examId: number, timeout: number) {
+        cy.get('#exercises-button-' + examId, { timeout }).click();
     }
 }

@@ -1,7 +1,7 @@
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exam } from 'app/entities/exam.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
@@ -19,7 +19,6 @@ import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 describe('Exam Participation Service', () => {
-    let injector: TestBed;
     let service: ExamParticipationService;
     let httpMock: HttpTestingController;
     let exam: Exam;
@@ -36,10 +35,9 @@ describe('Exam Participation Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(ExamParticipationService);
-        httpMock = injector.get(HttpTestingController);
-        localStorage = injector.get(LocalStorageService);
+        service = TestBed.inject(ExamParticipationService);
+        httpMock = TestBed.inject(HttpTestingController);
+        localStorage = TestBed.inject(LocalStorageService);
 
         exam = new Exam();
         studentExam = new StudentExam();

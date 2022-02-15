@@ -7,7 +7,7 @@
             {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
         </ng-container>
         <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
-            <fa-icon [icon]="'print'"></fa-icon>
+            <fa-icon [icon]="faPrint"></fa-icon>
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF">Export PDF</span>
         </button>
     </h2>
@@ -15,14 +15,14 @@
 <jhi-exam-information [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
 <div class="mb-4 text-center" *ngIf="studentExam && studentExam.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
     <a class="btn btn-success" style="cursor: default; pointer-events: none">
-        {{ 'artemisApp.examManagement.studentReviewEnabled' | artemisTranslate }}
+        {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
     </a>
 </div>
-<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam">
-    <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam" [courseId]="courseId"></jhi-exam-points-summary>
+<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam && course">
+    <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam" [course]="course"></jhi-exam-points-summary>
 </div>
 <div *ngIf="!resultsPublished" class="mb-0">
-    <fa-icon [icon]="'info-circle'" class="info-icon"></fa-icon>
+    <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
     {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
 </div>
 <div *ngFor="let exercise of studentExam.exercises; let i = index">
@@ -51,13 +51,13 @@
                 [attr.aria-expanded]="!isCollapsed(exercise.id!)"
                 [attr.aria-controls]="isCollapsed(exercise.id!)"
             >
-                <fa-icon size="2x" [icon]="isCollapsed(exercise.id!) ? 'angle-right' : 'angle-down'"></fa-icon>
+                <fa-icon size="2x" [icon]="isCollapsed(exercise.id!) ? faAngleRight : faAngleDown"></fa-icon>
             </button>
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id!)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
                 <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary float-end" [routerLink]="generateLink(exercise)">
-                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                     <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
                 </a>
             </div>

@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -24,13 +24,13 @@ import { Result } from 'app/entities/result.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { getLatestSubmissionResult, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -52,7 +52,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     assessmentsAreValid: boolean;
     invalidError?: string;
     isAssessor = true;
-    isAtLeastInstructor = false;
     busy = true;
     showResult = true;
     complaint: Complaint;
@@ -73,6 +72,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     highlightDifferences = false;
 
     private cancelConfirmationText: string;
+
+    // Icons
+    farListAlt = faListAlt;
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,
@@ -107,7 +109,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
             if (queryParams.get('correction-round')) {
@@ -148,14 +149,14 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe(
-            (submission: FileUploadSubmission) => {
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
+            next: (submission: FileUploadSubmission) => {
                 this.initializePropertiesFromSubmission(submission);
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
                 this.location.go(newUrl);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 this.loadingInitialSubmission = false;
                 if (error.status === 404) {
                     // there is no submission waiting for assessment at the moment
@@ -167,18 +168,18 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
                 }
             },
-        );
+        });
     }
 
     private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
             .get(submissionId, this.correctionRound, this.resultId)
             .pipe(filter((res) => !!res))
-            .subscribe(
-                (res) => {
+            .subscribe({
+                next: (res) => {
                     this.initializePropertiesFromSubmission(res.body!);
                 },
-                (error: HttpErrorResponse) => {
+                error: (error: HttpErrorResponse) => {
                     this.loadingInitialSubmission = false;
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
@@ -186,7 +187,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                         onError(this.alertService, error);
                     }
                 },
-            );
+            });
     }
 
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
@@ -194,6 +195,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.submission = submission;
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
+        /**
+         * CARE: Setting access rights for exercises should not happen this way and is a workaround.
+         *       The access rights should always be set when loading the exercise/course in the service!
+         * Problem: For a reason, which I do not understand, the exercise is undefined when the exercise is loaded
+         *       leading to {@link AccountService#setAccessRightsForExerciseAndReferencedCourse} skipping setting the
+         *       access rights.
+         *       This problem reoccurs in {@link CodeEditorTutorAssessmentContainerComponent#handleReceivedSubmission}
+         */
+        this.accountService.setAccessRightsForExercise(this.exercise);
         this.course = getCourseFromExercise(this.exercise);
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
         if (this.resultId > 0) {
@@ -251,8 +261,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     assessNext() {
         this.isLoading = true;
         this.unreferencedFeedback = [];
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe(
-            (response: FileUploadSubmission) => {
+        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe({
+            next: (response: FileUploadSubmission) => {
                 this.isLoading = false;
                 this.unassessedSubmission = response;
 
@@ -270,7 +280,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 );
                 this.router.navigate(url);
             },
-            (error: HttpErrorResponse) => {
+            error: (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
                     this.hasNewSubmissions = false;
@@ -279,7 +289,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                     onError(this.alertService, error);
                 }
             },
-        );
+        });
     }
 
     onSaveAssessment() {
@@ -287,17 +297,17 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.fileUploadAssessmentService
             .saveAssessment(this.assessments, this.submission.id!)
             .pipe(finalize(() => (this.isLoading = false)))
-            .subscribe(
-                (result: Result) => {
+            .subscribe({
+                next: (result: Result) => {
                     this.result = result;
                     this.alertService.clear();
                     this.alertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
-                () => {
+                error: () => {
                     this.alertService.clear();
                     this.alertService.error('artemisApp.assessment.messages.saveFailed');
                 },
-            );
+            });
     }
 
     onSubmitAssessment() {
@@ -310,15 +320,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.fileUploadAssessmentService
             .saveAssessment(this.assessments, this.submission.id!, true)
             .pipe(finalize(() => (this.isLoading = false)))
-            .subscribe(
-                (result: Result) => {
+            .subscribe({
+                next: (result: Result) => {
                     this.result = result;
                     this.updateParticipationWithResult();
                     this.alertService.clear();
                     this.alertService.success('artemisApp.assessment.messages.submitSuccessful');
                 },
-                (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
-            );
+                error: (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+            });
     }
 
     /**
@@ -346,17 +356,17 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     getComplaint(): void {
-        this.complaintService.findBySubmissionId(this.submission.id!).subscribe(
-            (res) => {
+        this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
+            next: (res) => {
                 if (!res.body) {
                     return;
                 }
                 this.complaint = res.body;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 onError(this.alertService, err);
             },
-        );
+        });
     }
 
     navigateBack() {
@@ -405,9 +415,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private checkPermissions() {
         this.isAssessor = this.result?.assessor?.id === this.userId;
-        if (this.exercise) {
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(getCourseFromExercise(this.exercise));
-        }
     }
 
     /**
@@ -419,7 +426,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
      */
     get canOverride(): boolean {
         if (this.exercise) {
-            if (this.isAtLeastInstructor) {
+            if (this.exercise.isAtLeastInstructor) {
                 // Instructors can override any assessment at any time.
                 return true;
             }
@@ -454,14 +461,14 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.fileUploadAssessmentService
             .updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id!)
             .pipe(finalize(() => (this.isLoading = false)))
-            .subscribe(
-                (response) => {
+            .subscribe({
+                next: (response) => {
                     this.result = response.body!;
                     this.updateParticipationWithResult();
                     this.alertService.clear();
                     this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
-                (httpErrorResponse: HttpErrorResponse) => {
+                error: (httpErrorResponse: HttpErrorResponse) => {
                     this.alertService.clear();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {
@@ -470,11 +477,19 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                         this.alertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
                     }
                 },
-            );
+            });
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(this.isAtLeastInstructor, this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
+        return !isAllowedToModifyFeedback(
+            this.exercise?.isAtLeastInstructor ?? false,
+            this.isTestRun,
+            this.isAssessor,
+            this.hasAssessmentDueDatePassed,
+            this.result,
+            this.complaint,
+            this.exercise,
+        );
     }
 
     private onError(error: string) {

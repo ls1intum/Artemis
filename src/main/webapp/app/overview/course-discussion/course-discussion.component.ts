@@ -13,6 +13,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 interface ContextFilterOption {
     courseId?: number;
@@ -57,6 +58,14 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
 
+    // Icons
+    faPlus = faPlus;
+    faTimes = faTimes;
+    faFilter = faFilter;
+    faSearch = faSearch;
+    faLongArrowAltUp = faLongArrowAltUp;
+    faLongArrowAltDown = faLongArrowAltDown;
+
     constructor(
         protected metisService: MetisService,
         private activatedRoute: ActivatedRoute,
@@ -70,14 +79,10 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
      * creates the subscription to posts to stay updated on any changes of posts in this course
      */
     ngOnInit(): void {
-        this.paramSubscription = combineLatest(
-            this.activatedRoute.parent!.parent!.params,
-            this.activatedRoute.parent!.parent!.queryParams,
-            (params: Params, queryParams: Params) => ({
-                params,
-                queryParams,
-            }),
-        ).subscribe((routeParams: { params: Params; queryParams: Params }) => {
+        this.paramSubscription = combineLatest({
+            params: this.activatedRoute.parent!.parent!.params,
+            queryParams: this.activatedRoute.parent!.parent!.queryParams,
+        }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
             const { params, queryParams } = routeParams;
             const courseId = params.courseId;
             this.searchText = queryParams.searchText;

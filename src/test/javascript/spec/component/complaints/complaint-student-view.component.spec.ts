@@ -4,7 +4,7 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import { ArtemisTestModule } from '../../test.module';
 import { Exercise } from 'app/entities/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { Exam } from 'app/entities/exam.model';
@@ -20,8 +20,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ComplaintsStudentViewComponent', () => {
     const complaintTimeLimitDays = 7;
@@ -60,6 +61,7 @@ describe('ComplaintsStudentViewComponent', () => {
             declarations: [
                 ComplaintsStudentViewComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
                 MockComponent(ComplaintsFormComponent),
                 MockComponent(ComplaintRequestComponent),
                 MockComponent(ComplaintResponseComponent),
@@ -325,5 +327,17 @@ describe('ComplaintsStudentViewComponent', () => {
         tick(100);
 
         expect(component.timeOfComplaintValid).toBe(false);
+    }));
+
+    it('complaint should be possible with long assessment periods', fakeAsync(() => {
+        component.exercise = { ...courseExercise, assessmentDueDate: dayjs().subtract(3, 'day') };
+        component.result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day') };
+
+        fixture.detectChanges();
+        tick(100);
+
+        expect(component.showSection).toBe(true);
+        expect(component.timeOfComplaintValid).toBe(true);
+        expect(component.timeOfFeedbackRequestValid).toBe(true);
     }));
 });

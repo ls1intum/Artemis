@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement, EventEmitter } from '@angular/core';
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CreateFileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';

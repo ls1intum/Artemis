@@ -1,37 +1,38 @@
-import { async } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import { SinonStub, stub } from 'sinon';
+import { TestBed } from '@angular/core/testing';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { PasswordService } from 'app/account/password/password.service';
+import { HttpClient } from '@angular/common/http';
 
-chai.use(sinonChai);
-const expect = chai.expect;
-
-describe('ActivateService', () => {
+describe('PasswordService', () => {
     let passwordService: PasswordService;
-    let httpService: MockHttpService;
-    let postStub: SinonStub;
+    let httpService: HttpClient;
+    let postStub: jest.SpyInstance;
 
     const postURL = SERVER_API_URL + 'api/account/change-password';
 
-    beforeEach(async(() => {
-        httpService = new MockHttpService();
-        // @ts-ignore
-        passwordService = new PasswordService(httpService);
-        postStub = stub(httpService, 'post');
-    }));
-
-    afterEach(() => {
-        postStub.restore();
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [{ provide: HttpClient, useClass: MockHttpService }],
+        })
+            .compileComponents()
+            .then(() => {
+                passwordService = TestBed.inject(PasswordService);
+                httpService = TestBed.inject(HttpClient);
+                postStub = jest.spyOn(httpService, 'post');
+            });
     });
 
-    it('should set a new password for the current user', async () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should set a new password for the current user', () => {
         const newPassword = 'newPassword';
         const currentPassword = 'currentPassword';
 
-        await passwordService.save(newPassword, currentPassword);
+        passwordService.save(newPassword, currentPassword).subscribe();
 
-        expect(postStub).to.have.been.calledOnceWithExactly(postURL, { currentPassword, newPassword });
+        expect(postStub).toHaveBeenCalledTimes(1);
+        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword });
     });
 });

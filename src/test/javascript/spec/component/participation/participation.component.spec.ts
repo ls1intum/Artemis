@@ -7,9 +7,10 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { Team } from 'app/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
@@ -31,6 +32,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -50,6 +52,7 @@ describe('ParticipationComponent', () => {
                 ParticipationComponent,
                 MockComponent(AlertComponent),
                 MockComponent(DataTableComponent),
+                MockComponent(FormDateTimePickerComponent),
                 MockComponent(ProgrammingExerciseInstructorSubmissionStateComponent),
                 MockComponent(ProgrammingExerciseInstructorTriggerBuildButtonComponent),
                 MockComponent(TeamStudentsListComponent),
@@ -205,6 +208,96 @@ describe('ParticipationComponent', () => {
         });
     });
 
+    it('should add participations with updated due dates to the changed map', () => {
+        expect(component.participationsChangedDueDate).toEqual(new Map());
+
+        const participation1 = participationWithIndividualDueDate(1, dayjs());
+        component.changedIndividualDueDate(participation1);
+        expect(component.participationsChangedDueDate.get(1)).toEqual(participation1);
+
+        // should overwrite the other one, as they have got the same id
+        const participation1Copy = participationWithIndividualDueDate(1, dayjs().add(2, 'days'));
+        component.changedIndividualDueDate(participation1Copy);
+
+        const expectedMap = new Map();
+        expectedMap.set(1, participation1Copy);
+        expect(component.participationsChangedDueDate).toEqual(expectedMap);
+
+        const participation2 = participationWithIndividualDueDate(2, undefined);
+        component.changedIndividualDueDate(participation2);
+
+        const expectedMap2 = new Map();
+        expectedMap2.set(1, participation1Copy);
+        expectedMap2.set(2, participation2);
+        expect(component.participationsChangedDueDate).toEqual(expectedMap2);
+    });
+
+    it('should add participations to the changed map when removing their due date', () => {
+        const participation1 = participationWithIndividualDueDate(1, dayjs());
+        component.removeIndividualDueDate(participation1);
+
+        const expectedMap = new Map();
+        expectedMap.set(1, participationWithIndividualDueDate(1, undefined));
+
+        expect(component.participationsChangedDueDate).toEqual(expectedMap);
+    });
+
+    it('should send all changed participations to the server when updating their due dates', fakeAsync(() => {
+        const participation1 = participationWithIndividualDueDate(1, dayjs());
+        const participation2 = participationWithIndividualDueDate(2, dayjs());
+        const participation2NoDueDate = participationWithIndividualDueDate(2, undefined);
+
+        component.exercise = new TextExercise(undefined, undefined);
+        component.exercise.id = 20;
+        component.participations = [participation1, participation2];
+
+        component.changedIndividualDueDate(participation1);
+        component.removeIndividualDueDate(participation2);
+
+        const expectedMap = new Map();
+        expectedMap.set(1, participation1);
+        expectedMap.set(2, participationWithIndividualDueDate(2, undefined));
+        expect(component.participationsChangedDueDate).toEqual(expectedMap);
+
+        const updateDueDateStub = jest
+            .spyOn(participationService, 'updateIndividualDueDates')
+            .mockReturnValue(of(new HttpResponse({ body: [participation1, participation2NoDueDate] })));
+        const expectedSent = [participation1, participation2NoDueDate];
+
+        component.saveChangedDueDates();
+        tick();
+
+        expect(updateDueDateStub).toHaveBeenCalledTimes(1);
+        expect(updateDueDateStub).toHaveBeenCalledWith(component.exercise, expectedSent);
+        expect(component.participations).toEqual(expectedSent);
+        expect(component.participationsChangedDueDate).toEqual(new Map());
+        expect(component.isSaving).toBe(false);
+    }));
+
+    it('should remove a participation from the change map when it has been deleted', fakeAsync(() => {
+        const participation1 = participationWithIndividualDueDate(1, dayjs());
+        component.changedIndividualDueDate(participation1);
+
+        const expectedMap = new Map();
+        expectedMap.set(1, participation1);
+        expect(component.participationsChangedDueDate).toEqual(expectedMap);
+
+        const deleteStub = jest.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse()));
+
+        component.deleteParticipation(1, {});
+        tick();
+
+        expect(deleteStub).toHaveBeenCalledTimes(1);
+        expect(component.participationsChangedDueDate).toEqual(new Map());
+    }));
+
+    const participationWithIndividualDueDate = (participationId: number, dueDate?: dayjs.Dayjs): StudentParticipation => {
+        const participation = new StudentParticipation();
+        participation.id = participationId;
+        participation.individualDueDate = dueDate;
+        return participation;
+    };
+
     describe('Presentation Score', () => {
         let updateStub: jest.SpyInstance;
 
@@ -258,7 +351,7 @@ describe('ParticipationComponent', () => {
             tick();
 
             expect(updateStub).toHaveBeenCalledTimes(1);
-            expect(updateStub).toHaveBeenCalledWith(exercise.id, participation);
+            expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
         }));
 
         it('should not add a presentation score if the feature is disabled', fakeAsync(() => {
@@ -279,7 +372,7 @@ describe('ParticipationComponent', () => {
             tick();
 
             expect(updateStub).toHaveBeenCalledTimes(1);
-            expect(updateStub).toHaveBeenCalledWith(exercise.id, participation);
+            expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
         }));
 
         it('should do nothing on removal of a presentation score if the feature is disabled', fakeAsync(() => {

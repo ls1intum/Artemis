@@ -1,30 +1,23 @@
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
-import * as sinon from 'sinon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { NgbCollapse, NgbModal, NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
-import { AceEditorModule } from 'ng2-ace-editor';
-import { DndModule } from 'ng2-dnd';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SimpleChange } from '@angular/core';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
-import { stub } from 'sinon';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -56,7 +49,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, AceEditorModule, DndModule, NgbPopoverModule],
+            imports: [ArtemisTestModule, MockModule(FormsModule), AceEditorModule, MockModule(DragDropModule)],
             declarations: [
                 ShortAnswerQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -78,8 +71,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.detectChanges();
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize with different question texts', () => {
@@ -91,7 +84,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['This', 'is', 'a', '[-spot 12]', 'regarding', 'this', 'question.'],
             ['Another', '[-spot 8]', 'is', 'in', 'the', 'line', 'above'],
         ];
-        expect(component.textParts).to.deep.equal(expectedTextParts);
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // test a long method with multiple indentations and concatenated words
         component.shortAnswerQuestion.text =
@@ -153,7 +146,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['}'],
             ['To', 'define', 'the', 'solution', 'for', 'the', 'input', 'fields', 'you', 'need', 'to', 'create', 'a', 'mapping', '(multiple', 'mapping', 'also', 'possible):'],
         ];
-        expect(component.textParts).to.deep.equal(expectedTextParts);
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // tests simple indentation
         component.shortAnswerQuestion.text =
@@ -162,7 +155,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.ngOnInit();
 
         expectedTextParts = [['[-spot 5]'], ['    [-spot 6]'], ['        [-spot 7]'], ['            [-spot 8]'], ['                [-spot 9]'], ['                    [-spot 10]']];
-        expect(component.textParts).to.deep.equal(expectedTextParts);
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // classic java main method test
         component.shortAnswerQuestion.text =
@@ -181,7 +174,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['    }'],
             ['}'],
         ];
-        expect(component.textParts).to.deep.equal(expectedTextParts);
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // test multiple line parameter for method header
         component.shortAnswerQuestion.text =
@@ -204,7 +197,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['        System.out.', '[-spot 4]', '("', '[-spot 5]', '");'],
             ['}'],
         ];
-        expect(component.textParts).to.deep.equal(expectedTextParts);
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // test nested arrays
         component.shortAnswerQuestion.text =
@@ -221,7 +214,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ["    ['", '[-spot 2]', "'],"],
             ['];'],
         ];
-        expect(component.textParts).to.deep.equal(expectedTextParts);
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // test textual enumeration
         component.shortAnswerQuestion.text =
@@ -244,7 +237,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['-', 'third', 'major', 'point'],
             ['        -', 'first', 'very', 'not', 'major', 'point,', 'super', 'indented'],
         ];
-        expect(component.textParts).to.deep.equal(expectedTextParts);
+        expect(component.textParts).toEqual(expectedTextParts);
     });
 
     it('should invoke ngOnChanges', () => {
@@ -254,7 +247,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should react to a solution being dropped on a spot', () => {
-        const questionUpdatedSpy = sinon.spy(component.questionUpdated, 'emit');
+        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
         const solution = new ShortAnswerSolution();
         solution.id = 2;
         solution.text = 'solution text';
@@ -266,14 +259,18 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const mapping2 = new ShortAnswerMapping(spot3, shortAnswerSolution1);
         const alternativeMapping = new ShortAnswerMapping(new ShortAnswerSpot(), new ShortAnswerSolution());
         component.shortAnswerQuestion.correctMappings = [mapping1, mapping2, alternativeMapping];
-        const event = { dragData: shortAnswerSolution1 };
+        const event = {
+            item: {
+                data: shortAnswerSolution1,
+            },
+        };
 
         fixture.detectChanges();
         component.onDragDrop(spot, event);
 
         const expectedMapping = new ShortAnswerMapping(spot, shortAnswerSolution1);
-        expect(component.shortAnswerQuestion.correctMappings.pop()).to.deep.equal(expectedMapping);
-        expect(questionUpdatedSpy).to.have.been.calledOnce;
+        expect(component.shortAnswerQuestion.correctMappings.pop()).toEqual(expectedMapping);
+        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should setup question editor', () => {
@@ -285,30 +282,30 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.detectChanges();
 
         component.setupQuestionEditor();
-        expect(component.numberOfSpot).to.equal(3);
-        expect(component.optionsWithID).to.deep.equal(['[-option 0]', '[-option 1]']);
+        expect(component.numberOfSpot).toBe(3);
+        expect(component.optionsWithID).toEqual(['[-option 0]', '[-option 1]']);
     });
 
     it('should open', () => {
         const content = {};
         const modalService = TestBed.inject(NgbModal);
-        const modalSpy = sinon.spy(modalService, 'open');
+        const modalSpy = jest.spyOn(modalService, 'open');
         component.open(content);
-        expect(modalSpy).to.have.been.calledOnce;
+        expect(modalSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should add spot to cursor', () => {
         component.numberOfSpot = 2;
 
         component.addSpotAtCursor();
-        expect(component.numberOfSpot).to.equal(3);
-        expect(component.firstPressed).to.equal(2);
+        expect(component.numberOfSpot).toBe(3);
+        expect(component.firstPressed).toBe(2);
     });
 
     it('should add option', () => {
         component.addOption();
 
-        expect(component.firstPressed).to.equal(2);
+        expect(component.firstPressed).toBe(2);
     });
 
     it('should add and delete text solution', () => {
@@ -319,11 +316,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.addTextSolution();
 
-        expect(component.shortAnswerQuestion.solutions!.length).to.equal(3); // 2 -> 3
+        expect(component.shortAnswerQuestion.solutions!.length).toBe(3); // 2 -> 3
 
         component.deleteSolution(shortAnswerSolution2);
 
-        expect(component.shortAnswerQuestion.solutions!.length).to.equal(2); // 3 -> 2
+        expect(component.shortAnswerQuestion.solutions!.length).toBe(2); // 3 -> 2
     });
 
     it('should add spot at cursor visual mode', () => {
@@ -339,7 +336,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 return true;
             },
         } as unknown as HTMLElement;
-        stub(document, 'getElementById').returns(returnValue);
+        jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
 
         const range = {
             cloneRange(): Range {
@@ -373,7 +370,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 return [];
             },
         } as unknown as Selection;
-        stub(window, 'getSelection').returns(nodeValue);
+        jest.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
 
         const returnHTMLDivElement = {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -382,7 +379,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             },
             innerHTML: 'innerHTML',
         } as unknown as HTMLDivElement;
-        stub(document, 'createElement').returns(returnHTMLDivElement);
+        jest.spyOn(document, 'createElement').mockReturnValue(returnHTMLDivElement);
 
         const markdownHelper = {
             length: 1,
@@ -392,7 +389,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             },
         } as string;
         jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
-        const questionUpdated = sinon.spy(component.questionUpdated, 'emit');
+        const questionUpdated = jest.spyOn(component.questionUpdated, 'emit');
 
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
@@ -400,15 +397,15 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.addSpotAtCursorVisualMode();
 
-        expect(component.numberOfSpot).to.equal(2);
-        expect(component.firstPressed).to.equal(2);
-        expect(questionUpdated).to.be.calledThrice;
+        expect(component.numberOfSpot).toBe(2);
+        expect(component.firstPressed).toBe(2);
+        expect(questionUpdated).toHaveBeenCalledTimes(3);
     });
 
     it('should delete question', () => {
-        const questionDeleted = sinon.spy(component.questionDeleted, 'emit');
+        const questionDeleted = jest.spyOn(component.questionDeleted, 'emit');
         component.deleteQuestion();
-        expect(questionDeleted).to.have.been.calledOnce;
+        expect(questionDeleted).toHaveBeenCalledTimes(1);
     });
 
     it('should toggle preview', () => {
@@ -422,21 +419,21 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.correctMappings.push(mapping);
 
         component.togglePreview();
-        expect(component.textParts.length).to.equal(1);
+        expect(component.textParts.length).toBe(1);
         const firstElement = component.textParts.pop();
-        expect(firstElement!.length).to.equal(1);
-        expect(firstElement).to.deep.equal(['<p>This is the text of a question</p>']);
+        expect(firstElement!.length).toBe(1);
+        expect(firstElement).toEqual(['<p>This is the text of a question</p>']);
     });
 
     it('should move the question in different ways', () => {
-        const eventUpSpy = sinon.spy(component.questionMoveUp, 'emit');
-        const eventDownSpy = sinon.spy(component.questionMoveDown, 'emit');
+        const eventUpSpy = jest.spyOn(component.questionMoveUp, 'emit');
+        const eventDownSpy = jest.spyOn(component.questionMoveDown, 'emit');
 
         component.moveUp();
         component.moveDown();
 
-        expect(eventUpSpy).to.be.calledOnce;
-        expect(eventDownSpy).to.be.calledOnce;
+        expect(eventUpSpy).toHaveBeenCalledTimes(1);
+        expect(eventDownSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should reset the question', () => {
@@ -450,13 +447,13 @@ describe('ShortAnswerQuestionEditComponent', () => {
         backup.spots = [];
         backup.text = 'This is the text of a backup question';
         backup.explanation = 'I dont know';
-        backup.hint = 'hinty';
+        backup.hint = 'hint';
         component.backupQuestion = backup;
 
         component.resetQuestion();
 
-        expect(component.shortAnswerQuestion.title).to.equal(backup.title);
-        expect(component.shortAnswerQuestion.text).to.equal(backup.text);
+        expect(component.shortAnswerQuestion.title).toBe(backup.title);
+        expect(component.shortAnswerQuestion.text).toBe(backup.text);
     });
 
     it('should reset spot', () => {
@@ -467,7 +464,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.resetSpot(modifiedSpot);
 
-        expect(component.shortAnswerQuestion.spots[0].spotNr).to.equal(0);
+        expect(component.shortAnswerQuestion.spots[0].spotNr).toBe(0);
     });
 
     it('should delete spot', () => {
@@ -475,31 +472,31 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.deleteSpot(spot1);
 
-        expect(component.shortAnswerQuestion.spots.length).to.equal(1);
-        expect(component.shortAnswerQuestion.spots[0]).to.deep.equal(spot2);
+        expect(component.shortAnswerQuestion.spots.length).toBe(1);
+        expect(component.shortAnswerQuestion.spots[0]).toEqual(spot2);
     });
 
     it('should set question text', () => {
         const text = 'This is a text for a test';
         const returnValue = { value: text } as unknown as HTMLElement;
-        const getNavigationStub = stub(document, 'getElementById').returns(returnValue);
+        const getNavigationSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
         const array = ['0'];
         component.textParts = [array, array];
         fixture.detectChanges();
 
         component.setQuestionText('0-0-0-0');
 
-        expect(getNavigationStub).to.have.been.calledOnce;
+        expect(getNavigationSpy).toHaveBeenCalledTimes(1);
         const splitString = ['This', 'is', 'a', 'text', 'for', 'a', 'test'];
-        expect(component.textParts.pop()).to.deep.equal(splitString);
+        expect(component.textParts.pop()).toEqual(splitString);
     });
 
     it('should toggle exact match', () => {
-        const questionUpdated = sinon.spy(component.questionUpdated, 'emit');
+        const questionUpdated = jest.spyOn(component.questionUpdated, 'emit');
 
         component.toggleExactMatchCheckbox(true);
 
-        expect(component.shortAnswerQuestion.similarityValue).to.equal(100);
-        expect(questionUpdated).to.be.calledOnce;
+        expect(component.shortAnswerQuestion.similarityValue).toBe(100);
+        expect(questionUpdated).toHaveBeenCalledTimes(1);
     });
 });

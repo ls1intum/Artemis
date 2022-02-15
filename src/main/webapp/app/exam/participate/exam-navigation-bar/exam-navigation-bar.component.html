@@ -18,7 +18,7 @@
                     [ngbTooltip]="'artemisApp.examParticipation.examOverview' | artemisTranslate"
                     (click)="changePage(true, -1)"
                 >
-                    <fa-icon [icon]="'bars'"></fa-icon>
+                    <fa-icon [icon]="faBars"></fa-icon>
                 </button>
             </div>
             <div class="navigation-item">
@@ -39,6 +39,7 @@
                     "
                 >
                     <button
+                        id="exam-exercise-{{ i }}"
                         class="btn w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
                         [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate"
@@ -64,10 +65,10 @@
     <div class="col">
         <div class="row justify-content-end align-items-start pe-2">
             <div class="d-flex mb-2 justify-content-end">
-                <button *ngIf="!overviewPageOpen" [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
+                <button id="save" *ngIf="!overviewPageOpen" [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
                     {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
                 </button>
-                <button class="btn btn-danger ms-2" (click)="handInEarly()">
+                <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()">
                     {{ 'artemisApp.examParticipation.handInEarly' | artemisTranslate }}
                 </button>
             </div>

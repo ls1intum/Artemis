@@ -24,22 +24,44 @@ Course Info Bar
 }
 
 .tab-bar-course-overview {
-    // ensure enough vertical space below for absolutely positioned exercise controls
-    // when tab bar is shown on course overview page
-    @media (max-width: 1200px) {
-        min-height: 100px;
-        padding-bottom: 40px;
+    > div:first-child {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+
+        > div:first-child {
+            display: flex;
+            align-items: center;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-right: 3px;
+            margin-left: 3px;
+        }
     }
 
-    @media (max-width: 600px) {
-        min-height: 140px;
-        padding-bottom: 80px;
+    > div:first-child.no-indent {
+        justify-content: start;
+
+        .controls {
+            padding-right: 0.5rem;
+            margin-right: 0;
+        }
     }
 }
 
-.exercise-controls {
-    @media (max-width: 600px) {
-        margin-top: -40px;
+@media screen and (max-width: 991px) {
+    .tab-bar-course-overview > div:first-child {
+        flex-wrap: wrap;
+
+        .controls {
+            padding-right: 0.5rem;
+            margin-right: 0;
+        }
     }
 }
 
@@ -134,6 +156,7 @@ Course Info Bar
         display: flex;
         align-items: center;
         justify-content: center;
+        margin-bottom: 20px;
 
         .chart-text {
             position: absolute;
@@ -152,12 +175,6 @@ Course Info Bar
         margin-right: -12px;
         border-bottom: 1px solid $light-border-color;
     }
-}
-
-.exercise-controls {
-    position: absolute;
-    top: -64px;
-    right: -14px;
 }
 
 .course-information {

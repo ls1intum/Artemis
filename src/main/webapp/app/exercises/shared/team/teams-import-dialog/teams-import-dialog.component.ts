@@ -10,6 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash-es';
 import { User } from 'app/core/user/user.model';
+import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-teams-import-dialog',
@@ -55,6 +56,12 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    // Icons
+    faBan = faBan;
+    faSpinner = faSpinner;
+    faCircleNotch = faCircleNotch;
+    faUpload = faUpload;
+
     constructor(private teamService: TeamService, private activeModal: NgbActiveModal, private alertService: AlertService) {}
 
     /**
@@ -79,17 +86,17 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.sourceTeams = undefined;
         this.loadingSourceTeams = true;
         this.loadingSourceTeamsFailed = false;
-        this.teamService.findAllByExerciseId(sourceExercise.id!).subscribe(
-            (teamsResponse) => {
+        this.teamService.findAllByExerciseId(sourceExercise.id!).subscribe({
+            next: (teamsResponse) => {
                 this.sourceTeams = teamsResponse.body!;
                 this.computeSourceTeamsFreeOfConflicts();
                 this.loadingSourceTeams = false;
             },
-            () => {
+            error: () => {
                 this.loadingSourceTeams = false;
                 this.loadingSourceTeamsFailed = true;
             },
-        );
+        });
     }
 
     /**
@@ -271,16 +278,16 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         }
         if (this.showImportFromExercise) {
             this.isImporting = true;
-            this.teamService.importTeamsFromSourceExercise(this.exercise, this.sourceExercise!, this.importStrategy!).subscribe(
-                (res) => this.onSaveSuccess(res),
-                (error) => this.onSaveError(error),
-            );
+            this.teamService.importTeamsFromSourceExercise(this.exercise, this.sourceExercise!, this.importStrategy!).subscribe({
+                next: (res) => this.onSaveSuccess(res),
+                error: (error) => this.onSaveError(error),
+            });
         } else if (this.sourceTeams) {
             this.resetConflictingSets();
-            this.teamService.importTeams(this.exercise, this.sourceTeams, this.importStrategy!).subscribe(
-                (res) => this.onSaveSuccess(res),
-                (error) => this.onSaveError(error),
-            );
+            this.teamService.importTeams(this.exercise, this.sourceTeams, this.importStrategy!).subscribe({
+                next: (res) => this.onSaveSuccess(res),
+                error: (error) => this.onSaveError(error),
+            });
         }
     }
 

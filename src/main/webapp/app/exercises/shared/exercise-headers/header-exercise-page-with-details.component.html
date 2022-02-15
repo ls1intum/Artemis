@@ -1,8 +1,8 @@
-<div class="course-info-bar" *ngIf="exercise">
+<div class="course-info-bar" *ngIf="exercise" id="exercise-header">
     <div class="row">
         <div class="col general-info">
             <h3>
-                <fa-icon *ngIf="displayBackButton" [icon]="'arrow-left'" (click)="onBackClick()" class="back-button me-2"></fa-icon>
+                <fa-icon *ngIf="displayBackButton" [icon]="faArrowLeft" (click)="onBackClick()" class="back-button me-2"></fa-icon>
                 <ng-content select="[pagetitle]"></ng-content>
                 <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
             </h3>
@@ -23,9 +23,9 @@
             </ng-template>
             <ng-template #courseMode>
                 <h4>
-                    <span class="me-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (exercise.dueDate | artemisDate) || 'N/A' }} </span>
-                    <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ exercise.dueDate | artemisTimeAgo }}
+                    <span class="me-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (dueDate | artemisDate) || 'N/A' }} </span>
+                    <span *ngIf="dueDate" [ngClass]="exerciseStatusBadge" class="badge">
+                        {{ dueDate | artemisTimeAgo }}
                     </span>
                 </h4>
                 <h4 *ngIf="exercise.assessmentDueDate">
@@ -94,7 +94,7 @@
                                     : '')
                         }}
                         <fa-icon
-                            icon="question-circle"
+                            [icon]="faQuestionCircle"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}"
                             placement="top"
                         ></fa-icon>

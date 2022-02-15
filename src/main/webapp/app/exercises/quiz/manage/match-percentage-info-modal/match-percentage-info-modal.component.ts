@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -6,6 +7,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './match-percentage-info-modal.component.html',
 })
 export class MatchPercentageInfoModalComponent {
+    // Icons
+    farQuestionCircle = faQuestionCircle;
     constructor(private modalService: NgbModal) {}
 
     /**

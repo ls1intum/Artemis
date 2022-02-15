@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
@@ -89,7 +90,7 @@ public class JenkinsBuildPlanService {
     /**
      * Creates a build plan for the programming exercise
      * @param exercise the programming exercise
-     * @param planKey the name of th eplan
+     * @param planKey the name of the plan
      * @param repositoryURL the url of the vcs repository
      * @param testRepositoryURL the url of the tests vcs repository
      */
@@ -98,11 +99,12 @@ public class JenkinsBuildPlanService {
         testRepositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(testRepositoryURL);
 
         var programmingLanguage = exercise.getProgrammingLanguage();
-        var statisCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
+        var staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
         var isSequentialTestRuns = exercise.hasSequentialTestRuns();
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, statisCodeAnalysisEnabled, isSequentialTestRuns);
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), testRepositoryURL, repositoryURL,
+                staticCodeAnalysisEnabled, isSequentialTestRuns);
 
         var jobFolder = exercise.getProjectKey();
         var job = jobFolder + "-" + planKey;

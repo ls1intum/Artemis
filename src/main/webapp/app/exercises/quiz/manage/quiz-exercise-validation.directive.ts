@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Directive } from '@angular/core';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -14,15 +14,8 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { captureException } from '@sentry/browser';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
+import { ValidationReason } from 'app/entities/exercise.model';
 
-interface Warning {
-    translateKey: string;
-    translateValues: any;
-}
-export interface Reason {
-    translateKey: string;
-    translateValues: any;
-}
 type InvalidFlaggedQuestions = {
     [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
 };
@@ -45,8 +38,8 @@ export abstract class QuizExerciseValidationDirective {
     savedEntity: QuizExercise;
     isExamMode: boolean;
 
-    invalidReasons: Reason[];
-    invalidWarnings: Warning[];
+    invalidReasons: ValidationReason[];
+    invalidWarnings: ValidationReason[];
 
     protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
     pendingChangesCache: boolean;
@@ -125,7 +118,7 @@ export abstract class QuizExerciseValidationDirective {
                         shortAnswerQuestion.correctMappings &&
                         shortAnswerQuestion.correctMappings.length > 0 &&
                         this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion) &&
-                        this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
+                        this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots!) &&
                         this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLengthThreshold).length === 0 &&
@@ -156,7 +149,7 @@ export abstract class QuizExerciseValidationDirective {
      * Get the reasons, why the quiz needs warnings
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-    computeInvalidWarnings(): Warning[] {
+    computeInvalidWarnings(): ValidationReason[] {
         const invalidWarnings = !this.quizExercise
             ? []
             : this.quizExercise.quizQuestions
@@ -170,15 +163,15 @@ export abstract class QuizExerciseValidationDirective {
                   })
                   .filter(Boolean);
 
-        return invalidWarnings as Warning[];
+        return invalidWarnings as ValidationReason[];
     }
 
     /**
      * Get the reasons, why the quiz is invalid
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-    computeInvalidReasons(): Reason[] {
-        const invalidReasons = new Array<Reason>();
+    computeInvalidReasons(): ValidationReason[] {
+        const invalidReasons = new Array<ValidationReason>();
         if (!this.quizExercise) {
             return [];
         }
@@ -316,13 +309,13 @@ export abstract class QuizExerciseValidationDirective {
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots)) {
+                if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings!, shortAnswerQuestion.spots!)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings)) {
+                if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings!)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot',
                         translateValues: { index: index + 1 },
@@ -340,7 +333,7 @@ export abstract class QuizExerciseValidationDirective {
                         translateValues: { index: index + 1, threshold: this.maxLengthThreshold },
                     });
                 }
-                if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings)) {
+                if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings!)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
                         translateValues: { index: index + 1 },
@@ -367,7 +360,7 @@ export abstract class QuizExerciseValidationDirective {
                   })
                   .filter(Boolean);
 
-        return invalidReasons.concat(invalidFlaggedReasons as Reason[]);
+        return invalidReasons.concat(invalidFlaggedReasons as ValidationReason[]);
     }
 
     /**

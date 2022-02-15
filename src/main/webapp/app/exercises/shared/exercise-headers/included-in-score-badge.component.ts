@@ -36,9 +36,9 @@ export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy {
         }
     }
 
-    private setBadgeAttributes() {
+    private setBadgeAttributes(): void {
         if (!this.includedInOverallScore) {
-            return '';
+            return;
         }
 
         switch (this.includedInOverallScore) {
@@ -58,6 +58,5 @@ export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy {
                 this.translatedTooltip = this.translateService.instant('artemisApp.exercise.notIncludedTooltip');
                 break;
         }
-        return;
     }
 }

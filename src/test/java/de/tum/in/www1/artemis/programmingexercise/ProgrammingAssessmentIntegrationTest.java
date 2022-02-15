@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -120,7 +119,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
@@ -157,7 +156,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void updateAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
@@ -175,7 +174,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void updateAssessmentAfterComplaint_dueDateNotPassed_forbidden() throws Exception {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
@@ -193,7 +192,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void updateAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
         Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
@@ -212,60 +211,60 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
         overrideAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_submitInstructorPossible() throws Exception {
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testOverrideAssessment_submitSameTutorNoAssessmentDueDatePossible() throws Exception {
         database.updateAssessmentDueDate(programmingExercise.getId(), null);
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void programmingExerciseManualResult_noManualReviewsAllowed_forbidden() throws Exception {
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.FORBIDDEN);
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void programmingExerciseManualResult_submissionNotModified() throws Exception {
         ProgrammingSubmission newSubmission = new ProgrammingSubmission().commitHash("asdf");
         manualResult.setSubmission(newSubmission);
@@ -281,7 +280,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_save() throws Exception {
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
@@ -292,7 +291,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_submit() throws Exception {
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
@@ -313,7 +312,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -336,7 +335,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -360,7 +359,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
@@ -374,7 +373,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_NotIncludedExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -403,7 +402,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_withResultOver100Percent() throws Exception {
         List<Feedback> feedbacks = new ArrayList<>();
         // Check that result is over 100% -> 105
@@ -436,7 +435,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_resultHasAutomaticFeedback() throws Exception {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.AUTOMATIC));
@@ -459,7 +458,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
         manualResult.setParticipation(participation);
@@ -468,7 +467,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
         Result result = new Result();
         Feedback feedback = new Feedback();
@@ -512,7 +511,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void updateManualProgrammingExerciseResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
@@ -549,7 +548,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void updateManualProgrammingExerciseResult_newResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
@@ -571,25 +570,25 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     public void cancelOwnAssessmentAsStudent() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void cancelOwnAssessmentAsTutor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = "tutor2", roles = "TA")
     public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
@@ -911,10 +910,10 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(value = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testdeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
-        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().findFirst().orElseThrow();
 
         database.addAutomaticAssessmentToExercise(exercise);
         database.addAutomaticAssessmentToExercise(exercise);

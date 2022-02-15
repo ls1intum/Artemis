@@ -7,7 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 const PERSONAL_PARTICIPATION_TOPIC = `/user/topic/newResults`;

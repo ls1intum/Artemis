@@ -1,26 +1,26 @@
 <div class="editable-instruction-container__status__container">
     <ng-container *ngIf="invalidTestCases.length + missingTestCases.length > 0; else testCasesOk">
         <div id="instruction_analysis_test-case-issues" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'exclamation-triangle'" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
         </div>
     </ng-container>
     <ng-template #testCasesOk>
         <div id="instruction_analysis_test-case-ok" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'check-circle'" class="text-success me-1"></fa-icon>
+            <fa-icon [icon]="faCheckCircle" class="text-success me-1"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test cases ok.</span>
         </div>
     </ng-template>
 
     <ng-container *ngIf="invalidHints.length > 0; else hintsOk">
         <div id="instruction_analysis_hint-issues" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'exclamation-triangle'" class="text-warning me-1" [ngbTooltip]="hintsTooltipContent"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="hintsTooltipContent"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.issues">Hints issues.</span>
         </div>
     </ng-container>
     <ng-template #hintsOk>
         <div id="instruction_analysis_hint-ok" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="'check-circle'" class="text-success me-1"></fa-icon>
+            <fa-icon [icon]="faCheckCircle" class="text-success me-1"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.ok">Hints ok.</span>
         </div>
     </ng-template>

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -202,17 +203,19 @@ public class UserService {
     }
 
     /**
-     * Request password reset for user email
+     * Set password reset data for a user if eligible
      *
-     * @param mail to find user
-     * @return user if user exists otherwise null
+     * @param user user requesting reset
+     * @return true if the user is eligible
      */
-    public Optional<User> requestPasswordReset(String mail) {
-        return userRepository.findOneByEmailIgnoreCase(mail).filter(User::getActivated).map(user -> {
+    public boolean prepareUserForPasswordReset(User user) {
+        if (user.getActivated() && user.isInternal()) {
             user.setResetKey(RandomUtil.generateResetKey());
             user.setResetDate(Instant.now());
-            return saveUser(user);
-        });
+            saveUser(user);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -350,8 +353,8 @@ public class UserService {
                 }
 
                 // Use empty password, so that we don't store the credentials of Jira users in the Artemis DB
-                User user = userCreationService.createInternalUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
-                        registrationNumber, null, "en");
+                User user = userCreationService.createUser(ldapUser.getUsername(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                        registrationNumber, null, "en", false);
                 if (useExternalUserManagement) {
                     artemisAuthenticationProvider.createUserInExternalUserManagement(user);
                 }
@@ -591,7 +594,7 @@ public class UserService {
      *       @param courseGroupName        the courseGroup the user has to be added to
      *       @param courseGroupRole        the courseGroupRole enum
      *       @param login                  the login of the user
-     *       @return the found student, otherwise returns an emtpy optional
+     *       @return the found student, otherwise returns an empty optional
      *
      * */
     public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login) {
@@ -635,4 +638,7 @@ public class UserService {
         return Optional.empty();
     }
 
+    public void updateUserNotificationVisibility(Long userId, ZonedDateTime hideUntil) {
+        userRepository.updateUserNotificationVisibility(userId, hideUntil);
+    }
 }

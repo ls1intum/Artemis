@@ -1,3 +1,4 @@
+<jhi-assessment-warning *ngIf="exercise && exercise.isAtLeastInstructor" [exercise]="exercise" [submissions]="submissions"></jhi-assessment-warning>
 <jhi-data-table [isLoading]="isLoading" [showPageSizeDropdownAndSearchField]="false" [allEntities]="exercises">
     <ng-template let-settings="settings" let-controls="controls">
         <ngx-datatable
@@ -38,11 +39,11 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="dueDate" [minWidth]="160" [width]="160" [maxWidth]="160" [frozenLeft]="true">
+            <ngx-datatable-column prop="individualDueDate" [minWidth]="160" [width]="160" [maxWidth]="160" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('dueDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.dueDate"> Due Date </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('dueDate')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('individualDueDate')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="me-5">
@@ -75,7 +76,7 @@
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <ng-container *ngIf="value.participation; else participationIdUnavailable">
                         <div *ngIf="exercise.isAtLeastInstructor; else displayId">
-                            <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', value.id, 'participations', value.participation.id, 'submissions']">
+                            <a [routerLink]="['/course-management', course.id, value.type + '-exercises', value.id, 'participations', value.participation.id, 'submissions']">
                                 {{ value.participation.id }}
                             </a>
                         </div>
@@ -122,16 +123,16 @@
                         >
                             <a
                                 [class.disabled]="isAssessmentButtonDisabled(value, value.submission)"
-                                [routerLink]="getAssessmentLink(exercise, value.participation, value.submission)"
+                                [routerLink]="getAssessmentLink(value, value.participation, value.submission)"
                                 class="btn btn-warning btn-sm"
-                                ><fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                                ><fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                                 {{ 'artemisApp.exerciseAssessmentDashboard.' + assessmentAction(value.submission) + 'Assessment' | artemisTranslate }}</a
                             >
                         </div>
                         <fa-icon
                             class="mx-3"
                             *ngIf="value.submission?.result?.hasComplaint"
-                            [icon]="'flag'"
+                            [icon]="faFlag"
                             ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.complaintOrMoreFeedbackRequest' | artemisTranslate }}"
                         ></fa-icon>
                     </div>

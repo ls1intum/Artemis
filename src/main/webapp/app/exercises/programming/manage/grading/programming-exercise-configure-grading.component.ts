@@ -23,6 +23,8 @@ import {
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 
 /**
  * Describes the editableField
@@ -35,6 +37,17 @@ export enum EditableField {
     PENALTY = 'penalty',
     MAX_PENALTY = 'maxPenalty',
     STATE = 'state',
+}
+export enum ChartFilterType {
+    TEST_CASES,
+    CATEGORIES,
+}
+
+enum TestCaseView {
+    TABLE,
+    CHART,
+    BACKUP,
+    SAVE_VALUES,
 }
 
 const DefaultFieldValues = {
@@ -64,9 +77,21 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     testCasesValue: ProgrammingExerciseTestCase[] = [];
     changedTestCaseIds: number[] = [];
-    filteredTestCases: ProgrammingExerciseTestCase[] = [];
+    // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
+    filteredTestCasesForTable: ProgrammingExerciseTestCase[] = [];
+    filteredTestCasesForCharts: ProgrammingExerciseTestCase[] = [];
+    // backup in order to restore the setting before filtering by chart interaction
+    backupTestCases: ProgrammingExerciseTestCase[] = [];
 
-    staticCodeAnalysisCategories: StaticCodeAnalysisCategory[] = [];
+    // The event emitters emit this value in order to indicate this component to reset the corresponding table view
+    readonly RESET_TABLE = ProgrammingGradingChartsDirective.RESET_TABLE;
+    readonly chartFilterType = ChartFilterType;
+
+    // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
+    staticCodeAnalysisCategoriesForTable: StaticCodeAnalysisCategory[] = [];
+    staticCodeAnalysisCategoriesForCharts: StaticCodeAnalysisCategory[] = [];
+    // backup in order to restore the setting before filtering by chart interaction
+    backupStaticCodeAnalysisCategories: StaticCodeAnalysisCategory[] = [];
     changedCategoryIds: number[] = [];
 
     buildAfterDueDateActive: boolean;
@@ -89,6 +114,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     submissionPolicy?: SubmissionPolicy;
     hadPolicyBefore: boolean;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
+    faSquare = faSquare;
 
     /**
      * Returns the value of testcases
@@ -267,7 +296,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             // Only mark the testcase as changed, if the field has changed.
             if (newValue !== editedTestCase[field]) {
                 this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
-                this.testCases = this.testCases.map((testCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
+                this.updateAllTestCaseViewsAfterEditing(editedTestCase, field, newValue);
             }
             return newValue;
         };
@@ -286,9 +315,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             // Only mark the category as changed, if the field has changed.
             if (newValue !== editedCategory[field]) {
                 this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
-                this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories.map((category) =>
-                    category.id !== editedCategory.id ? category : { ...category, [field]: newValue },
-                );
+                this.updateStaticCodeAnalysisCategories(editedCategory, field, newValue);
             }
             return newValue;
         };
@@ -334,7 +361,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const saveTestCases = this.gradingService.updateTestCase(this.programmingExercise.id!, testCaseUpdates).pipe(
             tap((updatedTestCases: ProgrammingExerciseTestCase[]) => {
                 // From successfully updated test cases from dirty checking list.
-                this.changedTestCaseIds = _differenceWith(this.changedTestCaseIds, updatedTestCases, (id: number, testCase: ProgrammingExerciseTestCase) => testCase.id === id);
+                this.changedTestCaseIds = _differenceWith(
+                    this.changedTestCaseIds,
+                    updatedTestCases,
+                    (testCaseId: number, testCase: ProgrammingExerciseTestCase) => testCase.id === testCaseId,
+                );
 
                 // Generate the new list of test cases with the updated weights and notify the test case service.
                 const newTestCases = _unionBy(updatedTestCases, this.testCases, 'id');
@@ -367,12 +398,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     saveCategories() {
         this.isSaving = true;
 
-        this.staticCodeAnalysisCategories = this.staticCodeAnalysisCategories.map((category) =>
+        this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map((category) =>
             category.state === StaticCodeAnalysisCategoryState.Graded ? category : { ...category, penalty: 0, maxPenalty: 0 },
         );
 
         const categoriesToUpdate = _intersectionWith(
-            this.staticCodeAnalysisCategories,
+            this.backupStaticCodeAnalysisCategories,
             this.changedCategoryIds,
             (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number) => codeAnalysisCategory.id === id,
         );
@@ -381,10 +412,15 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const saveCodeAnalysis = this.gradingService.updateCodeAnalysisCategories(this.programmingExercise.id!, categoryUpdates).pipe(
             tap((updatedCategories: StaticCodeAnalysisCategory[]) => {
                 // From successfully updated categories from dirty checking list.
-                this.changedCategoryIds = _differenceWith(this.changedCategoryIds, updatedCategories, (id: number, category: StaticCodeAnalysisCategory) => category.id === id);
+                this.changedCategoryIds = _differenceWith(
+                    this.changedCategoryIds,
+                    updatedCategories,
+                    (categoryId: number, category: StaticCodeAnalysisCategory) => category.id === categoryId,
+                );
 
                 // Generate the new list of categories.
-                this.staticCodeAnalysisCategories = _unionBy(updatedCategories, this.staticCodeAnalysisCategories, 'id');
+                this.staticCodeAnalysisCategoriesForTable = _unionBy(updatedCategories, this.backupStaticCodeAnalysisCategories, 'id');
+                this.setChartAndBackupCategoryView();
 
                 // Find out if there are test cases that were not updated, show an error.
                 const notUpdatedCategories = _differenceBy(categoriesToUpdate, updatedCategories, 'id');
@@ -439,7 +475,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             .pipe(
                 tap((categories: StaticCodeAnalysisCategory[]) => {
                     this.alertService.success(`artemisApp.programmingExercise.configureGrading.categories.resetSuccessful`);
-                    this.staticCodeAnalysisCategories = categories;
+                    this.staticCodeAnalysisCategoriesForTable = categories;
+                    this.setChartAndBackupCategoryView();
                     this.loadStatistics(this.programmingExercise.id!);
                 }),
                 catchError(() => {
@@ -552,7 +589,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Executes filtering on all available test cases with the specified params.
      */
     updateTestCaseFilter = () => {
-        this.filteredTestCases = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
+        this.filteredTestCasesForTable = !this.showInactiveValue && this.testCases ? this.testCases.filter(({ active }) => active) : this.testCases;
+        this.filteredTestCasesForCharts = this.filteredTestCasesForTable;
+        this.backupTestCases = this.filteredTestCasesForTable;
     };
 
     /**
@@ -617,9 +656,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     iconForSortPropField(table: 'testCases' | 'codeAnalysis', prop: string) {
         const propSort = this.tableSorts[table].find((e) => e.prop === prop);
         if (!propSort) {
-            return 'sort';
+            return faSort;
         }
-        return propSort.dir === 'asc' ? 'sort-up' : 'sort-down';
+        return propSort.dir === 'asc' ? faSortUp : faSortDown;
     }
 
     /**
@@ -677,7 +716,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.gradingService
             .getCodeAnalysisCategories(this.programmingExercise.id!)
             .pipe(
-                tap((categories) => (this.staticCodeAnalysisCategories = categories)),
+                tap((categories) => {
+                    this.staticCodeAnalysisCategoriesForTable = categories;
+                    this.setChartAndBackupCategoryView();
+                }),
                 catchError(() => of(null)),
             )
             .subscribe();
@@ -745,5 +787,87 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     getEventValue(event: Event) {
         const element = event.target as HTMLInputElement;
         return element.value;
+    }
+
+    /**
+     * Auxiliary method that handles the filtering of a table if the user clicks a specific test case or sca category in the respective chart
+     * @param testCaseId the id of the test case that is clicked
+     * @param filterType enum indicating whether test cases or static code analysis categories are filtered
+     */
+    filterByChart(testCaseId: number, filterType: ChartFilterType): void {
+        const filterFunction = (part: any) => part.id === testCaseId;
+        if (filterType === ChartFilterType.TEST_CASES) {
+            this.filteredTestCasesForTable = this.backupTestCases;
+            if (testCaseId !== this.RESET_TABLE) {
+                this.filteredTestCasesForTable = this.filteredTestCasesForTable.filter(filterFunction);
+            }
+        } else {
+            this.staticCodeAnalysisCategoriesForTable = this.backupStaticCodeAnalysisCategories;
+            if (testCaseId !== this.RESET_TABLE) {
+                this.staticCodeAnalysisCategoriesForTable = this.staticCodeAnalysisCategoriesForTable.filter(filterFunction);
+            }
+        }
+    }
+
+    /**
+     * Updates all different views on the test cases after a test case is edited by the user in the table
+     * @param editedTestCase the edited test case
+     * @param field the field that is edited
+     * @param newValue the newly inserted value
+     * @private
+     */
+    private updateAllTestCaseViewsAfterEditing(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: any): void {
+        const testCaseDisplayTypes = [TestCaseView.TABLE, TestCaseView.CHART, TestCaseView.BACKUP, TestCaseView.SAVE_VALUES];
+        testCaseDisplayTypes.forEach((testCaseDisplayType) => this.updateTestCases(editedTestCase, field, newValue, testCaseDisplayType));
+    }
+
+    /**
+     * Auxiliary method in order to prevent further code duplication for the updating of the test case views;
+     * @param editedTestCase the edited test case
+     * @param field the field that is edited
+     * @param newValue the newly inserted value
+     * @param displayType enum indicating which view is updated
+     * @private
+     */
+    private updateTestCases(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: any, displayType: TestCaseView): void {
+        const filterFunction = (testCase: ProgrammingExerciseTestCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue });
+        switch (displayType) {
+            case TestCaseView.TABLE:
+                this.filteredTestCasesForTable = this.filteredTestCasesForTable.map(filterFunction);
+                break;
+            case TestCaseView.CHART:
+                this.filteredTestCasesForCharts = this.filteredTestCasesForCharts.map(filterFunction);
+                break;
+            case TestCaseView.BACKUP:
+                this.backupTestCases = this.backupTestCases.map(filterFunction);
+                break;
+            case TestCaseView.SAVE_VALUES:
+                this.testCasesValue = this.testCases.map(filterFunction);
+                break;
+        }
+    }
+
+    /**
+     * Auxiliary method that updates all different views on the static code analysis categories if a category is updated by the user in the table
+     * @param editedCategory the edited category
+     * @param field the field that is edited
+     * @param newValue the newly inserted value
+     * @private
+     */
+    private updateStaticCodeAnalysisCategories(editedCategory: StaticCodeAnalysisCategory, field: EditableField, newValue: any): void {
+        const filterFunction = (category: StaticCodeAnalysisCategory) => (category.id !== editedCategory.id ? category : { ...category, [field]: newValue });
+
+        this.staticCodeAnalysisCategoriesForTable = this.staticCodeAnalysisCategoriesForTable.map(filterFunction);
+        this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map(filterFunction);
+        this.staticCodeAnalysisCategoriesForCharts = this.backupStaticCodeAnalysisCategories;
+    }
+
+    /**
+     * Auxiliary method that sets the chart and backup view on the static code analysis categories
+     * @private
+     */
+    private setChartAndBackupCategoryView(): void {
+        this.staticCodeAnalysisCategoriesForCharts = this.staticCodeAnalysisCategoriesForTable;
+        this.backupStaticCodeAnalysisCategories = this.staticCodeAnalysisCategoriesForTable;
     }
 }

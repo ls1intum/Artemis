@@ -18,35 +18,22 @@ export class ArtemisQuizService {
         if (quizExercise.quizQuestions) {
             // shuffle questions
             if (quizExercise.randomizeQuestionOrder) {
-                this.shuffle(quizExercise.quizQuestions);
+                quizExercise.quizQuestions?.shuffle();
             }
 
             // shuffle answerOptions / dragItems within questions
             quizExercise.quizQuestions.forEach((question) => {
                 if (question.randomizeOrder) {
                     if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                        this.shuffle((question as MultipleChoiceQuestion).answerOptions!);
+                        (question as MultipleChoiceQuestion).answerOptions?.shuffle();
                     } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                        this.shuffle((question as DragAndDropQuestion).dragItems!);
+                        (question as DragAndDropQuestion).dragItems?.shuffle();
                     } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     } else {
                         captureException(new Error('Unknown question type: ' + question));
                     }
                 }
             }, this);
-        }
-    }
-
-    /**
-     * Shuffles array in place.
-     * @param {Array} items An array containing the items.
-     */
-    shuffle<T>(items: T[]) {
-        for (let i = items.length - 1; i > 0; i--) {
-            const pickedIndex = Math.floor(Math.random() * (i + 1));
-            const picked = items[pickedIndex];
-            items[pickedIndex] = items[i];
-            items[i] = picked;
         }
     }
 }

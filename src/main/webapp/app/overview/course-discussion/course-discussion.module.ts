@@ -9,6 +9,9 @@ const routes: Routes = [
     {
         path: '',
         pathMatch: 'full',
+        data: {
+            pageTitle: 'artemisApp.metis.discussion.label',
+        },
         component: CourseDiscussionComponent,
     },
 ];

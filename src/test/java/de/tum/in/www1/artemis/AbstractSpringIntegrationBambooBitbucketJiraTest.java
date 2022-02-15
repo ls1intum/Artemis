@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static tech.jhipster.config.JHipsterConstants.*;
 
@@ -233,31 +232,32 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     private void mockImportRepositories(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported) throws Exception {
         final var projectKey = exerciseToBeImported.getProjectKey();
-        final var templateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
-        final var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
-        final var testsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
+        var exerciseRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
+        var solutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
+        var testRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
 
-        var nextParticipationId = sourceExercise.getTemplateParticipation().getId() + 1;
-        final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
+        // take the latest participationId because we assume that it increases in the database for the participations in the imported exercises
+        var nextParticipationId = Math.max(sourceExercise.getSolutionParticipation().getId(), sourceExercise.getTemplateParticipation().getId()) + 1;
+        final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
+        final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
         final var artemisTestsHookPath = artemisServerUrl + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
 
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);
-        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, templateRepoName);
+        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, exerciseRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, solutionRepoName);
-        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testsRepoName);
+        bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testRepoName);
         bitbucketRequestMockProvider.mockDefaultBranch("master", exerciseToBeImported.getProjectKey());
         for (AuxiliaryRepository repository : sourceExercise.getAuxiliaryRepositories()) {
             final var auxRepoName = exerciseToBeImported.generateRepositoryName(repository.getName());
             bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, auxRepoName);
         }
-        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
-        bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, exerciseRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, exerciseRepoName, artemisTemplateHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
-        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
-        bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, testRepoName, artemisTestsHookPath);
     }
 
     private void mockCloneAndEnableAllBuildPlans(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi, boolean shouldPlanEnableFail)

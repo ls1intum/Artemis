@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-system-notification',
@@ -102,9 +103,9 @@ export class SystemNotificationComponent implements OnInit {
     private setAlertIcon(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
-                this.alertIcon = 'exclamation-triangle';
+                this.alertIcon = faExclamationTriangle;
             } else {
-                this.alertIcon = 'info-circle';
+                this.alertIcon = faInfoCircle;
             }
         }
     }

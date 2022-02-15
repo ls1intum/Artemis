@@ -11,6 +11,7 @@ import { ExternalSubmissionService } from 'app/exercises/shared/external-submiss
 import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
@@ -28,6 +29,10 @@ export class ExternalSubmissionDialogComponent implements OnInit {
     userId: number;
     isAssessor: boolean;
     complaint: Complaint;
+
+    // Icons
+    faSave = faSave;
+    faBan = faBan;
 
     constructor(
         private participationService: ParticipationService,
@@ -74,10 +79,10 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      * @param { Observable<HttpResponse<Result>> } result - Observable of Http request
      */
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
-        result.subscribe(
-            (res) => this.onSaveSuccess(res),
-            () => this.onSaveError(),
-        );
+        result.subscribe({
+            next: (res) => this.onSaveSuccess(res),
+            error: () => this.onSaveError(),
+        });
     }
 
     /**

@@ -7,7 +7,7 @@ import { CommitState, DomainType, EditorState } from 'app/exercises/programming/
 import { Exercise, getCourseFromExercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
@@ -76,14 +76,21 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
         const dueDateHasPassed = !this.exercise.dueDate || dayjs(this.exercise.dueDate).isBefore(dayjs());
         this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
-
-        const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
-        this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
+        this.updateDomain();
     }
 
     onActivate() {
         super.onActivate();
         this.instructions.updateMarkdown();
+        this.updateDomain();
+    }
+
+    /**
+     * Updates the domain to set the active student participation
+     */
+    updateDomain() {
+        const participation = { ...this.studentParticipation, exercise: this.exercise } as StudentParticipation;
+        this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 
     /**

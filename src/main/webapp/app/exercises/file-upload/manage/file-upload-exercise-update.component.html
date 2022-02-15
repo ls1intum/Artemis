@@ -17,7 +17,7 @@
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-category-selector
-                [exerciseCategories]="exerciseCategories"
+                [categories]="exerciseCategories"
                 [existingCategories]="existingCategories"
                 (selectedCategories)="updateCategories($event)"
             ></jhi-category-selector>
@@ -118,7 +118,7 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
             <fa-icon
-                [icon]="'question-circle'"
+                [icon]="faQuestionCircle"
                 class="text-secondary"
                 placement="top"
                 ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | artemisTranslate }}"
@@ -158,7 +158,7 @@
     </div>
     <div>
         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button
             type="submit"
@@ -167,7 +167,7 @@
             [disabled]="editForm.form.invalid || isSaving || fileUploadExercise.dueDateError || fileUploadExercise.assessmentDueDateError"
             class="btn btn-primary"
         >
-            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>
 </form>

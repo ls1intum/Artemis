@@ -8,24 +8,24 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class SyntaxTree extends UMLDiagram {
 
-    private final List<SyntaxTreeNonterminal> nonterminals;
+    private final List<SyntaxTreeNonterminal> nonTerminals;
 
     private final List<SyntaxTreeTerminal> terminals;
 
     private final List<SyntaxTreeLink> links;
 
-    public SyntaxTree(long modelSubmissionId, List<SyntaxTreeNonterminal> nonterminals, List<SyntaxTreeTerminal> terminals, List<SyntaxTreeLink> links) {
+    public SyntaxTree(long modelSubmissionId, List<SyntaxTreeNonterminal> nonTerminals, List<SyntaxTreeTerminal> terminals, List<SyntaxTreeLink> links) {
         super(modelSubmissionId);
-        this.nonterminals = nonterminals;
+        this.nonTerminals = nonTerminals;
         this.terminals = terminals;
         this.links = links;
     }
 
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
-        for (SyntaxTreeNonterminal nonterminal : getNonterminals()) {
-            if (nonterminal.getJSONElementID().equals(jsonElementId)) {
-                return nonterminal;
+        for (SyntaxTreeNonterminal nonTerminal : getNonTerminals()) {
+            if (nonTerminal.getJSONElementID().equals(jsonElementId)) {
+                return nonTerminal;
             }
         }
         for (SyntaxTreeTerminal terminal : getTerminals()) {
@@ -41,8 +41,8 @@ public class SyntaxTree extends UMLDiagram {
         return null;
     }
 
-    public List<SyntaxTreeNonterminal> getNonterminals() {
-        return nonterminals;
+    public List<SyntaxTreeNonterminal> getNonTerminals() {
+        return nonTerminals;
     }
 
     public List<SyntaxTreeTerminal> getTerminals() {
@@ -56,7 +56,7 @@ public class SyntaxTree extends UMLDiagram {
     @Override
     protected List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
-        modelElements.addAll(nonterminals);
+        modelElements.addAll(nonTerminals);
         modelElements.addAll(terminals);
         modelElements.addAll(links);
         return modelElements;

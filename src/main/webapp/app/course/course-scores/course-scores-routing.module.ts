@@ -3,14 +3,14 @@ import { CourseScoresComponent } from 'app/course/course-scores/course-scores.co
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { CourseResolve } from 'app/course/manage/course-management.route';
+import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 
 const routes: Routes = [
     {
         path: ':courseId/scores',
         component: CourseScoresComponent,
         resolve: {
-            course: CourseResolve,
+            course: CourseManagementResolve,
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],

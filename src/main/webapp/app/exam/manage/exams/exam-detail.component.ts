@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -9,7 +9,8 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
+import { faClipboard, faEye, faListAlt, faTable, faThList, faTimes, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -21,19 +22,29 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     formattedConfirmationStartText?: SafeHtml;
     formattedEndText?: SafeHtml;
     formattedConfirmationEndText?: SafeHtml;
-    isAtLeastEditor = false;
-    isAtLeastInstructor = false;
     isExamOver = true;
     resetType = ActionType.Reset;
     buttonSize = ButtonSize.MEDIUM;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    // Icons
+    faTimes = faTimes;
+    faUndo = faUndo;
+    faEye = faEye;
+    faWrench = faWrench;
+    faUser = faUser;
+    faTable = faTable;
+    faListAlt = faListAlt;
+    faClipboard = faClipboard;
+    faThList = faThList;
+
     constructor(
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
         private accountService: AccountService,
         private examManagementService: ExamManagementService,
+        private router: Router,
     ) {}
 
     /**
@@ -42,8 +53,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
-            this.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.exam.course);
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exam.course);
             this.formattedStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
             this.formattedConfirmationStartText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationStartText);
             this.formattedEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
@@ -70,12 +79,26 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      * Reset an exam with examId by deleting all studentExams and participations
      */
     resetExam(): void {
-        this.examManagementService.reset(this.exam.course!.id!, this.exam.id!).subscribe(
-            (res: HttpResponse<Exam>) => {
+        this.examManagementService.reset(this.exam.course!.id!, this.exam.id!).subscribe({
+            next: (res: HttpResponse<Exam>) => {
                 this.dialogErrorSource.next('');
                 this.exam = res.body!;
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
+     * Function is called when the delete button is pressed for an exam
+     * @param examId Id to be deleted
+     */
+    deleteExam(examId: number): void {
+        this.examManagementService.delete(this.exam.course!.id!, examId).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.router.navigate(['/course-management', this.exam.course!.id!, 'exams']);
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

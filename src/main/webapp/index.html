@@ -22,20 +22,20 @@
         <!-- jhipster-needle-add-resources-to-root - JHipster will add new resources here -->
     </head>
     <body>
-        <!--[if lt IE 9]>
-            <p class="browserupgrade">
-                You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.
-            </p>
-        <![endif]-->
         <jhi-main>
             <div>
-                <div id="jhipster-error" style="display: none">
+                <div id="loading-error" style="display: none">
                     <!-- This content is for troubleshooting purpose and will be removed when app renders -->
                     <h1>An error has occurred while loading and displaying the Artemis website :-(</h1>
                     <p>Troubleshooting:</p>
-                    <p>1. Please try out a different browser (the latest Google Chrome version is always a good choice).</p>
-                    <p>2. Make sure you have a stable Internet connection.</p>
-                    <p>3. Consider to switch to a different computer (try out a desktop/laptop environment, in case you experience problems on a mobile device).</p>
+                    <p>1. Try to reload the page</p>
+                    <p>
+                        2. Please <a href="https://browsehappy.com">upgrade your browser</a>: the latest version of
+                        <a href="https://www.chromium.org/getting-involved/download-chromium">Chromium</a> based browsers such as Google Chrome or Microsoft Edge is always a good
+                        choice. The latest version of Firefox and Safari is also supported.
+                    </p>
+                    <p>3. Make sure you have a stable Internet connection.</p>
+                    <p>4. Consider to switch to a different computer (try out a desktop/laptop environment, in case you experience problems on a mobile device).</p>
                     <!-- end of troubleshooting content -->
                 </div>
             </div>
@@ -43,13 +43,13 @@
         <noscript>
             <h1>You must enable javascript to view this page.</h1>
         </noscript>
-        <script type="text/javascript" language="javascript">
+        <script type="text/javascript">
             // show an error message if the app loading takes more than 5 sec
             window.onload = function () {
-                setTimeout(showError, 4000);
+                setTimeout(showError, 5000);
             };
             function showError() {
-                var errorElm = document.getElementById('jhipster-error');
+                var errorElm = document.getElementById('loading-error');
                 if (errorElm && errorElm.style) {
                     errorElm.style.display = 'block';
                 }

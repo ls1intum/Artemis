@@ -1,8 +1,9 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TreeviewItem } from 'ngx-treeview';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-node.component';
+import { faChevronDown, faChevronRight, faEdit, faFile, faFolder, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-folder',
@@ -15,7 +16,16 @@ export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserN
     @Input() onCollapseExpand: () => void;
     @Input() isCompressed = false;
     @Input() disableActions: boolean;
-    @Output() onSetCreatingNodeInFolder = new EventEmitter<{ item: TreeviewItem; fileType: FileType }>();
+    @Output() onSetCreatingNodeInFolder = new EventEmitter<{ item: TreeviewItem<string>; fileType: FileType }>();
+
+    // Icons
+    faTrash = faTrash;
+    faEdit = faEdit;
+    faFolder = faFolder;
+    faFile = faFile;
+    faChevronRight = faChevronRight;
+    faChevronDown = faChevronDown;
+    faFolderOpen = faFolderOpen;
 
     setCreatingNodeInFolder(event: any, fileType: FileType) {
         event.stopPropagation();

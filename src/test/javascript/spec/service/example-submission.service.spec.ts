@@ -1,13 +1,8 @@
-import { getTestBed, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
-import * as chai from 'chai';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -15,11 +10,12 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
-
-const expect = chai.expect;
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { StringCountService } from 'app/exercises/text/participate/string-count.service';
+import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('Example Submission Service', () => {
-    let injector: TestBed;
     let httpMock: HttpTestingController;
     let service: ExampleSubmissionService;
     let expectedResult: any;
@@ -29,15 +25,10 @@ describe('Example Submission Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [{ provide: ExerciseService, useClass: MockExerciseService }, MockProvider(StringCountService)],
         });
-        injector = getTestBed();
-        service = injector.get(ExampleSubmissionService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(ExampleSubmissionService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         expectedResult = {} as HttpResponse<ExampleSubmission[]>;
         elemDefault = new ExampleSubmission();
@@ -88,7 +79,7 @@ describe('Example Submission Service', () => {
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
             tick();
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         }));
 
         it('should update an example submission', fakeAsync(() => {
@@ -102,7 +93,7 @@ describe('Example Submission Service', () => {
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
             tick();
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         }));
 
         it('should delete an example submission', fakeAsync(() => {
@@ -112,7 +103,7 @@ describe('Example Submission Service', () => {
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
             tick();
-            expect(expectedResult).to.be.true;
+            expect(expectedResult).toBe(true);
         }));
 
         it('should return an example submission', fakeAsync(() => {
@@ -126,8 +117,9 @@ describe('Example Submission Service', () => {
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
             tick();
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         }));
+
         it('should import an example submission', fakeAsync(() => {
             const exerciseId = 1;
             const returnedFromService = { ...elemDefault };
@@ -139,7 +131,7 @@ describe('Example Submission Service', () => {
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
             tick();
-            expect(expectedResult.body).to.deep.equal(expected);
+            expect(expectedResult.body).toEqual(expected);
         }));
     });
 });

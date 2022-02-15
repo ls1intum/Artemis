@@ -3,21 +3,26 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { generate } from 'app/exercises/quiz/manage/temp-id';
 
 export interface CanBecomeInvalid {
-    invalid?: boolean;
+    invalid: boolean;
 }
 
-export class DropLocation implements BaseEntity, CanBecomeInvalid {
+export class BaseEntityWithTempId implements BaseEntity {
     public id?: number;
     public tempID?: number;
+    constructor() {
+        this.tempID = generate();
+    }
+}
+
+export class DropLocation extends BaseEntityWithTempId implements CanBecomeInvalid {
     public posX?: number;
     public posY?: number;
     public width?: number;
     public height?: number;
-    public invalid?: boolean;
+    public invalid = false; // default value
     public question?: DragAndDropQuestion;
 
     constructor() {
-        this.tempID = generate();
-        this.invalid = false; // default value
+        super();
     }
 }

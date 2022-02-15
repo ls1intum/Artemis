@@ -1,10 +1,10 @@
 import { TranslateService } from '@ngx-translate/core';
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { map, take } from 'rxjs/operators';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -13,7 +13,6 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockRouter } from '../helpers/mocks/mock-router';
 
 describe('Course Service', () => {
-    let injector: TestBed;
     let service: CourseManagementService;
     let httpMock: HttpTestingController;
     let elemDefault: Course;
@@ -28,9 +27,8 @@ describe('Course Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(CourseManagementService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(CourseManagementService);
+        httpMock = TestBed.inject(HttpTestingController);
         currentDate = dayjs();
 
         elemDefault = new Course();

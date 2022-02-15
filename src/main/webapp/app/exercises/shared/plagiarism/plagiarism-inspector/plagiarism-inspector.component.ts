@@ -17,6 +17,10 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { SimilarityRange } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
+import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -49,7 +53,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Index of the currently selected comparison.
      */
-    selectedComparisonIndex: number;
+    selectedComparisonId: number;
 
     /**
      * True, if the plagiarism details tab is active.
@@ -90,6 +94,22 @@ export class PlagiarismInspectorComponent implements OnInit {
      * The minimumSize option is only configurable, if this value is true.
      */
     enableMinimumSize = false;
+    /**
+     * Comparisons that are currently visible (might differ from the original set as filtering can be applied)
+     */
+    visibleComparisons?: PlagiarismComparison<any>[];
+    chartFilterApplied = false;
+    /**
+     * Offset of the currently visible comparisons to the original set in order to keep the numbering even if comparisons are filtered
+     */
+    sidebarOffset = 0;
+
+    readonly FeatureToggle = FeatureToggle;
+
+    // Icons
+    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
+    faChevronRight = faChevronRight;
 
     constructor(
         private route: ActivatedRoute,
@@ -99,6 +119,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         private textExerciseService: TextExerciseService,
         private websocketService: JhiWebsocketService,
         private translateService: TranslateService,
+        private inspectorService: PlagiarismInspectorService,
     ) {}
 
     ngOnInit() {
@@ -167,24 +188,24 @@ export class PlagiarismInspectorComponent implements OnInit {
 
         switch (this.exercise.type) {
             case ExerciseType.MODELING: {
-                this.modelingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
-                    (result) => this.handlePlagiarismResult(result),
-                    () => (this.detectionInProgress = false),
-                );
+                this.modelingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
+                    next: (result) => this.handlePlagiarismResult(result),
+                    error: () => (this.detectionInProgress = false),
+                });
                 return;
             }
             case ExerciseType.PROGRAMMING: {
-                this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
-                    (result) => this.handlePlagiarismResult(result),
-                    () => (this.detectionInProgress = false),
-                );
+                this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
+                    next: (result) => this.handlePlagiarismResult(result),
+                    error: () => (this.detectionInProgress = false),
+                });
                 return;
             }
             case ExerciseType.TEXT: {
-                this.textExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe(
-                    (result) => this.handlePlagiarismResult(result),
-                    () => (this.detectionInProgress = false),
-                );
+                this.textExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
+                    next: (result) => this.handlePlagiarismResult(result),
+                    error: () => (this.detectionInProgress = false),
+                });
                 return;
             }
             default: {
@@ -208,8 +229,8 @@ export class PlagiarismInspectorComponent implements OnInit {
         }
     }
 
-    selectComparisonAtIndex(index: number) {
-        this.selectedComparisonIndex = index;
+    selectComparisonWithID(id: number) {
+        this.selectedComparisonId = id;
         this.showRunDetails = false;
     }
 
@@ -219,15 +240,15 @@ export class PlagiarismInspectorComponent implements OnInit {
     checkPlagiarismJPlagReport(options?: PlagiarismOptions) {
         this.detectionInProgress = true;
 
-        this.programmingExerciseService.checkPlagiarismJPlagReport(this.exercise.id!, options).subscribe(
-            (response: HttpResponse<Blob>) => {
+        this.programmingExerciseService.checkPlagiarismJPlagReport(this.exercise.id!, options).subscribe({
+            next: (response: HttpResponse<Blob>) => {
                 this.detectionInProgress = false;
                 downloadZipFileFromResponse(response);
             },
-            () => {
+            error: () => {
                 this.detectionInProgress = false;
             },
-        );
+        });
     }
 
     isProgrammingExercise() {
@@ -241,15 +262,15 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = true;
 
         if (this.exercise.type === ExerciseType.TEXT) {
-            this.textExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-                (result) => this.handlePlagiarismResult(result),
-                () => (this.detectionInProgress = false),
-            );
+            this.textExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
+                next: (result) => this.handlePlagiarismResult(result),
+                error: () => (this.detectionInProgress = false),
+            });
         } else {
-            this.programmingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-                (result) => this.handlePlagiarismResult(result),
-                () => (this.detectionInProgress = false),
-            );
+            this.programmingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
+                next: (result) => this.handlePlagiarismResult(result),
+                error: () => (this.detectionInProgress = false),
+            });
         }
     }
 
@@ -259,10 +280,10 @@ export class PlagiarismInspectorComponent implements OnInit {
     checkPlagiarismModeling(options?: PlagiarismOptions) {
         this.detectionInProgress = true;
 
-        this.modelingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe(
-            (result: ModelingPlagiarismResult) => this.handlePlagiarismResult(result),
-            () => (this.detectionInProgress = false),
-        );
+        this.modelingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
+            next: (result: ModelingPlagiarismResult) => this.handlePlagiarismResult(result),
+            error: () => (this.detectionInProgress = false),
+        });
     }
 
     handlePlagiarismResult(result: ModelingPlagiarismResult | TextPlagiarismResult) {
@@ -273,11 +294,19 @@ export class PlagiarismInspectorComponent implements OnInit {
         }
 
         this.plagiarismResult = result;
-        this.selectedComparisonIndex = 0;
+        this.selectedComparisonId = this.plagiarismResult.comparisons[0].id;
+        this.visibleComparisons = result.comparisons;
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {
-        result.comparisons = result.comparisons.sort((a, b) => b.similarity - a.similarity);
+        result.comparisons = result.comparisons.sort((a, b) => {
+            // if the cases share the same similarity, we sort by the id
+            if (b.similarity - a.similarity === 0) {
+                return b.id - a.id;
+            } else {
+                return b.similarity - a.similarity;
+            }
+        });
     }
 
     /**
@@ -330,18 +359,58 @@ export class PlagiarismInspectorComponent implements OnInit {
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
     getMinimumSizeTooltip() {
-        const tooltip = 'artemisApp.plagiarism.minimum-size-tooltip';
+        const tooltip = 'artemisApp.plagiarism.minimumSizeTooltip';
 
         switch (this.exercise.type) {
             case ExerciseType.TEXT: {
-                return tooltip + '-text';
+                return tooltip + 'Text';
             }
             case ExerciseType.MODELING: {
-                return tooltip + '-modeling';
+                return tooltip + 'Modeling';
             }
             default: {
                 return tooltip;
             }
         }
+    }
+
+    /**
+     * Filters the comparisons visible in {@link PlagiarismSidebarComponent} according to the selected similarity range
+     * selected by the user in the chart
+     * @param range the range selected by the user in the chart by clicking on a chart bar
+     */
+    filterByChart(range: SimilarityRange): void {
+        this.visibleComparisons = this.inspectorService.filterComparisons(range, this.plagiarismResult?.comparisons);
+        const index = this.plagiarismResult?.comparisons.indexOf(this.visibleComparisons[0]) ?? 0;
+        this.sidebarOffset = index !== -1 ? index : 0;
+        this.chartFilterApplied = true;
+    }
+
+    /**
+     * Resets the filter applied by chart interaction
+     */
+    resetFilter(): void {
+        this.visibleComparisons = this.plagiarismResult?.comparisons;
+        this.chartFilterApplied = false;
+        this.sidebarOffset = 0;
+    }
+
+    /**
+     * Auxiliary method called if the "Run details" Button is clicked
+     * This additional logic is necessary in order to update the {@link PlagiarismRunDetailsComponent#bucketDTOs}
+     * @param flag emitted by {@link PlagiarismSidebarComponent#showRunDetailsChange}
+     */
+    showSimilarityDistribution(flag: boolean): void {
+        this.resetFilter();
+        this.getLatestPlagiarismResult();
+        this.showRunDetails = flag;
+    }
+
+    /**
+     * Auxiliary method that returns the comparison currently selected by the user
+     */
+    getSelectedComparison(): PlagiarismComparison<any> {
+        // as the id is unique, the filtered array should always have length 1
+        return this.visibleComparisons!.filter((comparison) => comparison.id === this.selectedComparisonId)[0];
     }
 }

@@ -58,6 +58,12 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     emailSupport: true,
                 },
                 {
+                    key: 'exerciseSubmissionAssessed',
+                    descriptionKey: 'exerciseSubmissionAssessedDescription',
+                    settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED,
+                    emailSupport: true,
+                },
+                {
                     key: 'fileSubmissionSuccessful',
                     descriptionKey: 'fileSubmissionSuccessfulDescription',
                     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL,

@@ -10,6 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/metis.util';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
+import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 
 const TITLE_MAX_LENGTH = 200;
 const DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK = 800;
@@ -38,6 +39,10 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly EditType = PostingEditType;
+
+    // Icons
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
 
     constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, private router: Router) {
         super(metisService, modalService, formBuilder);

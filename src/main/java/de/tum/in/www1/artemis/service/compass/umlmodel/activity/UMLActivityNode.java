@@ -15,7 +15,7 @@ public class UMLActivityNode extends UMLActivityElement implements Serializable 
         ACTIVITY_INITIAL_NODE, ACTIVITY_FINAL_NODE, ACTIVITY_ACTION_NODE, ACTIVITY_OBJECT_NODE, ACTIVITY_FORK_NODE, ACTIVITY_JOIN_NODE, ACTIVITY_DECISION_NODE, ACTIVITY_MERGE_NODE
     }
 
-    private UMLActivityNodeType type;
+    private final UMLActivityNodeType type;
 
     public UMLActivityNode(String name, String jsonElementID, UMLActivityNodeType type) {
         super(name, jsonElementID);
@@ -25,11 +25,9 @@ public class UMLActivityNode extends UMLActivityElement implements Serializable 
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof UMLActivityNode)) {
+        if (!(reference instanceof UMLActivityNode referenceNode)) {
             return 0;
         }
-
-        UMLActivityNode referenceNode = (UMLActivityNode) reference;
 
         if (!Objects.equals(getType(), referenceNode.getType())) {
             return 0;

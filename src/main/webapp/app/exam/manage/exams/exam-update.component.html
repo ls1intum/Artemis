@@ -126,7 +126,7 @@
                 <div class="col-sm-6">
                     <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
                     <fa-icon
-                        [icon]="'exclamation-triangle'"
+                        [icon]="faExclamationTriangle"
                         class="text-warning"
                         placement="top"
                         ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}"
@@ -163,10 +163,10 @@
             </div>
             <div>
                 <button type="button" class="btn btn-secondary" (click)="previousState()">
-                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
+                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
                 </button>
-                <button type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
-                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                <button id="save-exam" type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
                 <ng-template #renderedWarning>
                     <div>{{ 'artemisApp.examManagement.reviewDatesInvalidExplanation' | artemisTranslate }}</div>

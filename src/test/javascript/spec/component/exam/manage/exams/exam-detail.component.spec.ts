@@ -21,19 +21,14 @@ import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import * as chai from 'chai';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import * as sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-
-chai.use(sinonChai);
-const expect = chai.expect;
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 @Component({
     template: '',
@@ -59,6 +54,7 @@ describe('ExamDetailComponent', () => {
                     { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams', component: DummyComponent },
                 ]),
                 HttpClientTestingModule,
             ],
@@ -93,10 +89,7 @@ describe('ExamDetailComponent', () => {
                         snapshot: {},
                     },
                 },
-                MockProvider(AccountService, {
-                    isAtLeastInstructorInCourse: () => true,
-                    isAtLeastEditorInCourse: () => true,
-                }),
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(ArtemisMarkdownService, {
                     safeHtmlForMarkdown: () => exampleHTML,
                 }),
@@ -115,6 +108,8 @@ describe('ExamDetailComponent', () => {
         // reset exam
         exam.id = 1;
         exam.course = new Course();
+        exam.course.isAtLeastInstructor = true;
+        exam.course.isAtLeastEditor = true;
         exam.course.id = 1;
         exam.title = 'Example Exam';
         exam.numberOfRegisteredUsers = 3;
@@ -123,17 +118,17 @@ describe('ExamDetailComponent', () => {
         examDetailComponent.exam = exam;
     });
 
-    afterEach(function () {
-        sinon.restore();
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should load exam from route and display it to user', () => {
         examDetailComponentFixture.detectChanges();
-        expect(examDetailComponent).to.be.ok;
+        expect(examDetailComponent).not.toBeNull();
         // stand in for other properties too who are simply loaded from the exam and displayed in spans
         const titleSpan = examDetailComponentFixture.debugElement.query(By.css('#examTitle')).nativeElement;
-        expect(titleSpan).to.be.ok;
-        expect(titleSpan.innerHTML).to.equal(exam.title);
+        expect(titleSpan).not.toBeNull();
+        expect(titleSpan.innerHTML).toEqual(exam.title);
     });
 
     it('should correctly route to edit subpage', fakeAsync(() => {
@@ -142,7 +137,7 @@ describe('ExamDetailComponent', () => {
         const editButton = examDetailComponentFixture.debugElement.query(By.css('#editButton')).nativeElement;
         editButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).to.equal('/course-management/1/exams/1/edit');
+            expect(location.path()).toEqual('/course-management/1/exams/1/edit');
         });
     }));
 
@@ -152,7 +147,7 @@ describe('ExamDetailComponent', () => {
         const studentExamsButton = examDetailComponentFixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
         studentExamsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).to.equal('/course-management/1/exams/1/student-exams');
+            expect(location.path()).toEqual('/course-management/1/exams/1/student-exams');
         });
     }));
 
@@ -162,7 +157,7 @@ describe('ExamDetailComponent', () => {
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
         dashboardButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).to.equal('/course-management/1/exams/1/assessment-dashboard');
+            expect(location.path()).toEqual('/course-management/1/exams/1/assessment-dashboard');
         });
     }));
 
@@ -172,7 +167,7 @@ describe('ExamDetailComponent', () => {
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
         dashboardButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).to.equal('/course-management/1/exams/1/exercise-groups');
+            expect(location.path()).toEqual('/course-management/1/exams/1/exercise-groups');
         });
     }));
 
@@ -182,7 +177,7 @@ describe('ExamDetailComponent', () => {
         const scoresButton = examDetailComponentFixture.debugElement.query(By.css('#scores-button')).nativeElement;
         scoresButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).to.equal('/course-management/1/exams/1/scores');
+            expect(location.path()).toEqual('/course-management/1/exams/1/scores');
         });
     }));
 
@@ -192,7 +187,7 @@ describe('ExamDetailComponent', () => {
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#students-button')).nativeElement;
         studentsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).to.equal('/course-management/1/exams/1/students');
+            expect(location.path()).toEqual('/course-management/1/exams/1/students');
         });
     }));
 
@@ -202,26 +197,42 @@ describe('ExamDetailComponent', () => {
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#testrun-button')).nativeElement;
         studentsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).to.equal('/course-management/1/exams/1/test-runs');
+            expect(location.path()).toEqual('/course-management/1/exams/1/test-runs');
         });
     }));
 
     it('should return general routes correctly', () => {
         const route = examDetailComponent.getExamRoutesByIdentifier('edit');
-        expect(JSON.stringify(route)).to.be.equal(JSON.stringify(['/course-management', exam.course!.id, 'exams', exam.id, 'edit']));
+        expect(JSON.stringify(route)).toEqual(JSON.stringify(['/course-management', exam.course!.id, 'exams', exam.id, 'edit']));
     });
 
     it('Should reset an exam when reset exam is called', () => {
         // GIVEN
         examDetailComponent.exam = { ...exam, studentExams: [{ id: 1 }] };
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
-        sinon.replace(service, 'reset', sinon.fake.returns(of(responseFakeReset)));
+        jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
+        jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
 
         // WHEN
         examDetailComponent.resetExam();
 
         // THEN
-        expect(service.reset).to.have.been.calledOnce;
-        expect(examDetailComponent.exam).to.deep.eq(exam);
+        expect(service.reset).toHaveBeenCalledTimes(1);
+        expect(examDetailComponent.exam).toEqual(exam);
+    });
+
+    it('should delete an exam when delete exam is called', () => {
+        // GIVEN
+        examDetailComponent.exam = exam;
+        const responseFakeDelete = {} as HttpResponse<any[]>;
+        const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
+        jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
+
+        // WHEN
+        examDetailComponent.deleteExam(exam.id!);
+
+        // THEN
+        expect(service.delete).toHaveBeenCalledTimes(1);
     });
 });

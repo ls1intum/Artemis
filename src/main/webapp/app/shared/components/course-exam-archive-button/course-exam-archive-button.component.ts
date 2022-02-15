@@ -8,12 +8,13 @@ import { tap } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ButtonSize } from '../button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
+import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS';
@@ -23,7 +24,7 @@ export type CourseExamArchiveState = {
 @Component({
     selector: 'jhi-course-exam-archive-button',
     templateUrl: './course-exam-archive-button.component.html',
-    styles: [],
+    styleUrls: ['./course-exam-archive-button.component.scss'],
 })
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
@@ -51,6 +52,12 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    // Icons
+    faDownload = faDownload;
+    faCircleNotch = faCircleNotch;
+    faEraser = faEraser;
+    faArchive = faArchive;
 
     constructor(
         private courseService: CourseManagementService,
@@ -201,15 +208,15 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     downloadArchive() {
         if (this.archiveMode === 'Exam' && this.exam) {
-            this.examService.downloadExamArchive(this.course.id!, this.exam.id!).subscribe(
-                (response) => downloadZipFileFromResponse(response),
-                () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
-            );
+            this.examService.downloadExamArchive(this.course.id!, this.exam.id!).subscribe({
+                next: (response) => downloadZipFileFromResponse(response),
+                error: () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
+            });
         } else {
-            this.courseService.downloadCourseArchive(this.course.id!).subscribe(
-                (response) => downloadZipFileFromResponse(response),
-                () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
-            );
+            this.courseService.downloadCourseArchive(this.course.id!).subscribe({
+                next: (response) => downloadZipFileFromResponse(response),
+                error: () => this.alertService.error('artemisApp.courseExamArchive.archiveDownloadError'),
+            });
         }
     }
 
@@ -228,14 +235,14 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.courseService.cleanupCourse(this.course.id!).subscribe(
-            () => {
+        this.courseService.cleanupCourse(this.course.id!).subscribe({
+            next: () => {
                 this.alertService.success('artemisApp.programmingExercise.cleanup.successMessage');
                 this.dialogErrorSource.next('');
             },
-            (error) => {
+            error: (error) => {
                 this.dialogErrorSource.next(error.error.title);
             },
-        );
+        });
     }
 }

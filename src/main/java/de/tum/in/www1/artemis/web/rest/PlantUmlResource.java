@@ -66,5 +66,8 @@ public class PlantUmlResource {
         public static final String GENERATE_PNG = "/png";
 
         public static final String GENERATE_SVG = "/svg";
+
+        private Endpoints() {
+        }
     }
 }

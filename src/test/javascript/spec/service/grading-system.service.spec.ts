@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -9,7 +9,6 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
 describe('Grading System Service', () => {
-    let injector: TestBed;
     let service: GradingSystemService;
     let httpMock: HttpTestingController;
     let elemDefault: GradingScale;
@@ -44,9 +43,8 @@ describe('Grading System Service', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, RouterTestingModule],
         });
-        injector = getTestBed();
-        service = injector.get(GradingSystemService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(GradingSystemService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new GradingScale();
     });

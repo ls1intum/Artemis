@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
@@ -8,7 +8,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import * as helper from 'app/shared/util/download.util';
@@ -16,7 +16,6 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';
 
 describe('ModelingExercise Service', () => {
-    let injector: TestBed;
     let service: ModelingExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingExercise;
@@ -33,10 +32,9 @@ describe('ModelingExercise Service', () => {
                 { provide: Router, useClass: MockRouter },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(ModelingExerciseService);
+        service = TestBed.inject(ModelingExerciseService);
         service.resourceUrl = 'resourceUrl';
-        httpMock = injector.get(HttpTestingController);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined);
         elemDefault.dueDate = dayjs();
@@ -106,7 +104,7 @@ describe('ModelingExercise Service', () => {
     }));
 
     it('should convert model to pdf', fakeAsync(() => {
-        spyOn(helper, 'downloadStream').and.returnValue({});
+        jest.spyOn(helper, 'downloadStream').mockReturnValue();
         const blob = new Blob(['test'], { type: 'text/html' }) as File;
         service.convertToPdf('model1', 'filename').subscribe((resp) => expect(resp).resolves);
 

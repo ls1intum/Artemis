@@ -7,7 +7,7 @@
     [class.btn-sm]="smallButton"
     (click)="handleClick()"
 >
-    <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+    <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch"></fa-icon>
     <span *ngIf="!buttonLoading" class="intellij-logo"></span>
     <span>{{ buttonLabel }}</span>
 </button>

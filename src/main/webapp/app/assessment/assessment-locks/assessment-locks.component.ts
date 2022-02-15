@@ -13,6 +13,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-assessment-locks',
@@ -36,6 +37,10 @@ export class AssessmentLocksComponent implements OnInit {
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
+
+    // Icons
+    faBan = faBan;
+    faFolderOpen = faFolderOpen;
 
     constructor(
         private route: ActivatedRoute,
@@ -74,12 +79,12 @@ export class AssessmentLocksComponent implements OnInit {
         } else {
             lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId);
         }
-        lockedSubmissionsObservable.subscribe(
-            (response: HttpResponse<Submission[]>) => {
+        lockedSubmissionsObservable.subscribe({
+            next: (response: HttpResponse<Submission[]>) => {
                 this.submissions.push(...(response.body ?? []));
             },
-            (response: string) => this.onError(response),
-        );
+            error: (response: string) => this.onError(response),
+        });
     }
 
     /**

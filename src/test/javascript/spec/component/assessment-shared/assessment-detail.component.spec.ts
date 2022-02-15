@@ -4,7 +4,7 @@ import { MockComponent, MockModule, MockPipe, MockDirective, MockProvider } from
 import { Feedback } from 'app/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
@@ -25,6 +25,7 @@ describe('Assessment Detail Component', () => {
                 AssessmentDetailComponent,
                 MockComponent(GradingInstructionLinkIconComponent),
                 MockComponent(FaIconComponent),
+                MockComponent(FaLayersComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
                 MockComponent(AssessmentCorrectionRoundBadgeComponent),

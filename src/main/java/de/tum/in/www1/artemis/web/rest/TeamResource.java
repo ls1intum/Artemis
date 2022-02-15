@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException.NOT_ALLOWED;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.StringUtil.stripIllegalCharacters;
 
 import java.net.URI;
@@ -29,7 +27,10 @@ import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.SubmissionService;
+import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -163,7 +164,7 @@ public class TeamResource {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         if (!team.getShortName().equals(existingTeam.get().getShortName())) {
-            return forbidden(ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");
+            throw new BadRequestAlertException("The team's short name cannot be changed after the team has been created.", ENTITY_NAME, "shortNameChangeNotAllowed");
         }
         // Remove illegal characters from the long name
         team.setName(stripIllegalCharacters(team.getName()));
@@ -177,13 +178,13 @@ public class TeamResource {
 
         // User must be (1) at least instructor or (2) TA but the owner of the team
         if (!isAtLeastInstructor && !isAtLeastTeachingAssistantAndOwner) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         // The team owner can only be changed by instructors
         final boolean ownerWasChanged = !Objects.equals(existingTeam.get().getOwner(), team.getOwner());
         if (!isAtLeastInstructor && ownerWasChanged) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
@@ -230,7 +231,7 @@ public class TeamResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && !team.hasStudent(user)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
         team.filterSensitiveInformation();
         return ResponseEntity.ok().body(team);
@@ -247,11 +248,8 @@ public class TeamResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
         teams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
@@ -270,18 +268,12 @@ public class TeamResource {
     public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.info("REST request to delete Team with id {} in exercise with id {}", teamId, exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Team> optionalTeam = teamRepository.findById(teamId);
-        if (optionalTeam.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Team team = optionalTeam.get();
+        Team team = teamRepository.findByIdElseThrow(teamId);
         if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         // Create audit event for team delete action
         var logMessage = "Delete Team with id " + teamId + " in exercise with id " + exerciseId;
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_TEAM, logMessage);
@@ -309,10 +301,7 @@ public class TeamResource {
     public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long courseId, @RequestParam("shortName") String shortName) {
         log.debug("REST request to check Team existence for course with id {} for shortName : {}", courseId, shortName);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         return ResponseEntity.ok().body(teamRepository.existsByExerciseCourseIdAndShortName(courseId, shortName));
     }
 
@@ -333,11 +322,8 @@ public class TeamResource {
         if (loginOrName.length() < 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         return ResponseEntity.ok().body(teamService.searchByLoginOrNameInCourseForExerciseTeam(course, exercise, loginOrName));
     }
@@ -357,10 +343,7 @@ public class TeamResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-
-        if (!authCheckService.isAtLeastEditorForExercise(exercise, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("The exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
@@ -400,10 +383,8 @@ public class TeamResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise destinationExercise = exerciseRepository.findByIdElseThrow(destinationExerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, destinationExercise, user);
 
-        if (!authCheckService.isAtLeastEditorForExercise(destinationExercise, user)) {
-            return forbidden();
-        }
         if (destinationExerciseId == sourceExerciseId) {
             throw new BadRequestAlertException("The source and destination exercise must be different.", ENTITY_NAME, "sourceDestinationExerciseNotDifferent");
         }
@@ -446,7 +427,7 @@ public class TeamResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
-            throw new AccessForbiddenException(NOT_ALLOWED);
+            throw new AccessForbiddenException();
         }
 
         // Get all team instances in course with the given team short name

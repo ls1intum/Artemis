@@ -11,9 +11,8 @@ export const COURSE_STUDENTS = (courseId, username) => `${COURSES}/${courseId}/s
 export const COURSE_TUTORS = (courseId, username) => `${COURSES}/${courseId}/tutors/${username}`;
 export const COURSE_INSTRUCTORS = (courseId, username) => `${COURSES}/${courseId}/instructors/${username}`;
 export const EXERCISES = (courseId) => `${COURSE(courseId)}/exercises`;
-export const EXERCISE = (courseId, exerciseId) => `${EXERCISES(courseId)}/${exerciseId}`;
 export const PARTICIPATION = (exerciseId) => `/exercises/${exerciseId}/participation`;
-export const PARTICIPATIONS = (courseId, exerciseId) => `${EXERCISE(courseId, exerciseId)}/participations`;
+export const PARTICIPATIONS = (exerciseId) => `/exercises/${exerciseId}/participations`;
 export const FILES = (participationId) => `/repository/${participationId}/files`;
 export const COMMIT = (participationId) => `/repository/${participationId}/commit`;
 export const NEW_FILE = (participationId) => `/repository/${participationId}/file`;

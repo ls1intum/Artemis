@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -8,10 +6,6 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FileService } from 'app/shared/http/file.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { By } from '@angular/platform-browser';
-import * as sinon from 'sinon';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('FileUploadExamSummaryComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSummaryComponent>;
@@ -37,18 +31,18 @@ describe('FileUploadExamSummaryComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).to.be.ok;
-        expect(component.attachmentExtension(component.submission.filePath!)).to.equal('N/A');
+        expect(component).not.toBeNull();
+        expect(component.attachmentExtension(component.submission.filePath!)).toEqual('N/A');
     });
 
     it('should correctly display the filepath', () => {
         component.submission.filePath = 'filePath.pdf';
-        const downloadFileSpy = sinon.spy(fileService, 'downloadFileWithAccessToken');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileWithAccessToken');
         fixture.detectChanges();
-        expect(component.attachmentExtension(component.submission.filePath!)).to.equal('pdf');
+        expect(component.attachmentExtension(component.submission.filePath!)).toEqual('pdf');
         const downloadFile = fixture.debugElement.query(By.css('#downloadFileButton'));
-        expect(downloadFile).to.exist;
+        expect(downloadFile).not.toBeNull();
         downloadFile.nativeElement.click();
-        expect(downloadFileSpy).to.have.been.calledOnce;
+        expect(downloadFileSpy).toHaveBeenCalledTimes(1);
     });
 });

@@ -1,10 +1,13 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../course-management.service';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
+import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import * as shape from 'd3-shape';
+import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -23,7 +26,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
 
     LEFT = false;
     RIGHT = true;
-    displayedNumberOfWeeks = 16;
+    displayedNumberOfWeeks = 17;
     showsCurrentWeek = true;
 
     // Chart related
@@ -38,7 +41,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['rgba(53,61,71,1)'],
+        domain: [GraphColors.DARK_BLUE],
     };
     legend = false;
     xAxis = true;
@@ -58,6 +61,14 @@ export class CourseDetailLineChartComponent implements OnChanges {
     ];
     // Used for storing absolute values to display in tooltip
     absoluteSeries = [{}];
+    curve: any = shape.curveMonotoneX;
+    average = { name: 'Average', value: 0 };
+    showAverage = true;
+
+    // Icons
+    faSpinner = faSpinner;
+    faArrowLeft = faArrowLeft;
+    faArrowRight = faArrowRight;
 
     constructor(private service: CourseManagementService, private translateService: TranslateService) {}
 
@@ -91,10 +102,15 @@ export class CourseDetailLineChartComponent implements OnChanges {
      */
     private processDataAndCreateChart(array: number[]) {
         if (this.numberOfStudentsInCourse > 0) {
+            const allValues = [];
             for (let i = 0; i < array.length; i++) {
-                this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course);
+                allValues.push(roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course));
+                this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
+            const currentAverage = this.computeAverage(allValues);
+            this.average.name = currentAverage.toFixed(2) + '%';
+            this.average.value = currentAverage;
         } else {
             for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
                 this.dataCopy[0].series[i]['value'] = 0;
@@ -143,5 +159,23 @@ export class CourseDetailLineChartComponent implements OnChanges {
     findAbsoluteValue(model: any) {
         const result: any = this.absoluteSeries.find((entry: any) => entry.name === model.name);
         return result ? result.absoluteValue : '/';
+    }
+
+    /**
+     * Computes the average of the given number array
+     * @param array of numbers the average should be returned
+     * @returns average of the number array
+     * @private
+     */
+    private computeAverage(array: number[]): number {
+        const sum = array.reduce((num1, num2) => num1 + num2, 0);
+        return sum / array.length;
+    }
+
+    /**
+     * Switches the visibility state for the reference line in the chart
+     */
+    toggleAverageLine(): void {
+        this.showAverage = !this.showAverage;
     }
 }

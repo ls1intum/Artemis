@@ -27,26 +27,26 @@
         (click)="saveInstructions($event)"
         class="btn btn-light editable-instruction-container__save"
     >
-        <fa-icon *ngIf="!savingInstructions" [icon]="'save'" class="me-2"></fa-icon>
-        <fa-icon *ngIf="savingInstructions" [icon]="'circle-notch'" [spin]="true" class="me-2"></fa-icon>
+        <fa-icon *ngIf="!savingInstructions" [icon]="faSave" class="me-2"></fa-icon>
+        <fa-icon *ngIf="savingInstructions" [icon]="faCircleNotch" [spin]="true" class="me-2"></fa-icon>
         <span jhiTranslate="entity.action.save"></span>
     </button>
     <div *ngIf="showStatus" class="card-footer text-nowrap editable-instruction-container__status">
         <div class="instructions-status">
             <div *ngIf="!unsavedChangesValue && !savingInstructions">
-                <fa-icon [icon]="'check-circle'" class="text-success me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | artemisTranslate }}"></fa-icon>
+                <fa-icon [icon]="faCheckCircle" class="text-success me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | artemisTranslate }}"></fa-icon>
                 <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saved">Saved.</span>
             </div>
             <div *ngIf="unsavedChangesValue && !savingInstructions">
                 <fa-icon
-                    [icon]="'exclamation-triangle'"
+                    [icon]="faExclamationTriangle"
                     class="text-warning me-1"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.editable.unsavedTooltip' | artemisTranslate }}"
                 ></fa-icon>
                 <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.unsaved">Unsaved.</span>
             </div>
             <div *ngIf="savingInstructions">
-                <fa-icon [icon]="'circle-notch'" class="me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savingTooltip' | artemisTranslate }}"></fa-icon>
+                <fa-icon [icon]="faCircleNotch" class="me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savingTooltip' | artemisTranslate }}"></fa-icon>
                 <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saving">Saving...</span>
             </div>
         </div>
@@ -61,5 +61,5 @@
         ></jhi-programming-exercise-instruction-instructor-analysis>
     </div>
     <!-- Required for resizing; don't remove empty span -->
-    <fa-icon *ngIf="enableResize" [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
+    <fa-icon *ngIf="enableResize" [icon]="faGripLines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
 </div>

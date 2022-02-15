@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,16 +11,23 @@ import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choi
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { blueColor, greenColor, QuestionStatisticComponent, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
+import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
     templateUrl: './multiple-choice-question-statistic.component.html',
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
     providers: [QuizStatisticUtil],
 })
 export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticComponent {
     question: MultipleChoiceQuestion;
 
     answerTextRendered: SafeHtml[];
+
+    // Icons
+    faSync = faSync;
+    faCheckCircle = faCheckCircle;
+    faTimesCircle = faTimesCircle;
 
     constructor(
         route: ActivatedRoute,
@@ -31,8 +38,9 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
         jhiWebsocketService: JhiWebsocketService,
         private quizStatisticUtil: QuizStatisticUtil,
         private artemisMarkdown: ArtemisMarkdownService,
+        protected changeDetector: ChangeDetectorRef,
     ) {
-        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService);
+        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService, changeDetector);
     }
 
     /**

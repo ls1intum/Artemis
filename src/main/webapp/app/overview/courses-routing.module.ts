@@ -2,12 +2,12 @@ import { RouterModule, Routes } from '@angular/router';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
-import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 
 const routes: Routes = [
     {
@@ -82,6 +82,10 @@ const routes: Routes = [
             pageTitle: 'artemisApp.gradingSystem.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'courses/:courseId/plagiarism',
+        loadChildren: () => import('app/course/plagiarism-cases/plagiarism-cases.module').then((m) => m.PlagiarismCasesModule),
     },
 ];
 

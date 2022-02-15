@@ -2,10 +2,10 @@
  * A class which encapsulates UI selectors and actions for the static code analysis feedback modal in the online editor.
  */
 export class ScaFeedbackModal {
-    private readonly feedbackSelector = '.feedback-item, .alert-success';
+    private readonly feedbackSelector = '#feedback-message';
 
     shouldShowPointChart() {
-        cy.get('jhi-chart').find('canvas').should('be.visible');
+        cy.get('#feedback-chart').should('be.visible');
     }
 
     shouldShowFeedback(numberOfPassedTests: number, points: string) {
@@ -14,19 +14,20 @@ export class ScaFeedbackModal {
     }
 
     shouldShowCodeIssue(feedbackText: string, pointReduction: string) {
-        cy.get('.feedback-text')
+        // This is a workaround to avoid Cypress only returning the first element matching the id
+        cy.get('[id="feedback-text"]')
             .contains(feedbackText)
             .scrollIntoView()
             .should('be.visible')
-            .parents('.feedback-item')
-            .find('.feedback-points')
+            .parents(this.feedbackSelector)
+            .find('#feedback-points')
             .scrollIntoView()
             .should('contain.text', `-${pointReduction}P`)
             .and('be.visible');
     }
 
     closeModal() {
-        cy.get('.modal-footer').find('.btn').click();
-        cy.get('.modal').should('not.exist');
+        cy.get('#feedback-close').click();
+        cy.get('#result-detail-body').should('not.exist');
     }
 }

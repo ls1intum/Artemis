@@ -4,8 +4,7 @@ import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
 import { AlertService } from 'app/core/util/alert.service';
 import { BehaviorSubject, fromEvent, Observable, Subject } from 'rxjs';
-import { filter, flatMap, map, switchMap } from 'rxjs/operators';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { filter, mergeMap, map, switchMap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
@@ -790,10 +789,10 @@ export class GuidedTourService {
                     this.restartIsLoading = true;
                     const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
                     this.participationService
-                        .findParticipation(this.currentExercise.id!)
+                        .findParticipationForCurrentUser(this.currentExercise.id!)
                         .pipe(
                             map((response: HttpResponse<StudentParticipation>) => response.body!),
-                            flatMap((participation) =>
+                            mergeMap((participation) =>
                                 this.participationService.deleteForGuidedTour(participation.id!, {
                                     deleteBuildPlan: isProgrammingExercise,
                                     deleteRepository: isProgrammingExercise,
@@ -801,31 +800,31 @@ export class GuidedTourService {
                             ),
                             switchMap(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)),
                         )
-                        .subscribe(
-                            () => {
+                        .subscribe({
+                            next: () => {
                                 this.navigateToUrlAfterRestart(`/courses/${this.currentCourse!.id}/exercises`);
                             },
-                            () => {
+                            error: () => {
                                 // start tour in case the participation was deleted otherwise
                                 this.restartIsLoading = false;
                                 this.startTour();
                             },
-                        );
+                        });
                     break;
                 // Reset tutor assessment participation
                 case ResetParticipation.TUTOR_ASSESSMENT:
                     this.restartIsLoading = true;
-                    this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe(
-                        () => {
+                    this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe({
+                        next: () => {
                             this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
                                 this.navigateToUrlAfterRestart('/course-management');
                             });
                         },
-                        () => {
+                        error: () => {
                             this.restartIsLoading = false;
                             this.startTour();
                         },
-                    );
+                    });
                     break;
                 case ResetParticipation.NONE:
                     this.startTour();

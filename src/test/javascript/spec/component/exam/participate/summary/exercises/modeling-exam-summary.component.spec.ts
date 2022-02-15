@@ -5,12 +5,7 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import * as chai from 'chai';
 import { MockComponent } from 'ng-mocks';
-import sinonChai from 'sinon-chai';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ModelingExamSummaryComponent', () => {
     let fixture: ComponentFixture<ModelingExamSummaryComponent>;
@@ -31,15 +26,15 @@ describe('ModelingExamSummaryComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(ModelingExamSummaryComponent).to.be.ok;
+        expect(ModelingExamSummaryComponent).not.toBeNull();
     });
 
     it('should show no submission when there is no uml model', () => {
         fixture.detectChanges();
         const el = fixture.debugElement.query((de) => de.nativeElement.textContent === 'No submission');
-        expect(el).to.be.not.null;
+        expect(el).not.toBeNull();
         const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
-        expect(modelingEditor).to.not.exist;
+        expect(modelingEditor).toBeNull();
     });
 
     it('should show modeling editor with correct props when there is submission and exercise', () => {
@@ -50,12 +45,12 @@ describe('ModelingExamSummaryComponent', () => {
         comp.submission = mockSubmission;
         fixture.detectChanges();
         const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
-        expect(modelingEditor).to.exist;
+        expect(modelingEditor).not.toBeNull();
         const modelingEditorComponent = modelingEditor.componentInstance;
-        expect(modelingEditorComponent.diagramType).to.equal(UMLDiagramType.ClassDiagram);
-        expect(modelingEditorComponent.umlModel).to.deep.equal({ model: true });
-        expect(modelingEditorComponent.readOnly).to.equal(true);
-        expect(modelingEditorComponent.withExplanation).to.equal(!!mockSubmission.explanationText);
-        expect(modelingEditorComponent.explanation).to.equal(mockSubmission.explanationText);
+        expect(modelingEditorComponent.diagramType).toEqual(UMLDiagramType.ClassDiagram);
+        expect(modelingEditorComponent.umlModel).toEqual({ model: true });
+        expect(modelingEditorComponent.readOnly).toEqual(true);
+        expect(modelingEditorComponent.withExplanation).toEqual(!!mockSubmission.explanationText);
+        expect(modelingEditorComponent.explanation).toEqual(mockSubmission.explanationText);
     });
 });

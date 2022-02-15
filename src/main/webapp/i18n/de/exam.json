@@ -48,15 +48,14 @@
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
-            "examStudentReviewEnabled": "Einsichtnahme ist möglich",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl registrierter Studierender",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
             "exercise": "Aufgabe {{nr}}",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
-            "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebene Hilfsmittel bearbeitet habe.",
-            "notConfirmed": "Bitte setze einen Haken in das Kästchen um fortzufahren.",
+            "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebenen Hilfsmittel bearbeitet habe.",
+            "notConfirmed": "Bitte setze einen Haken in das Kästchen, um fortzufahren.",
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "notSet": "Nicht gesetzt",
             "startExamToolTip": "Button wird 5 Minuten vor der Klausur aktiviert.",
@@ -83,7 +82,18 @@
         },
         "examScores": {
             "xAxes": "Ergebnis in %",
+            "xAxesSuffix": " + {Notenname}",
+            "xAxesSuffixBonus": " + {Bonuspunkte}",
             "yAxes": "Anzahl Teilnehmende",
+            "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagram hervor: {{ median }}%",
+            "highlightOverallMedian": "Hebe Median aller Klausuren im Diagram hervor: {{ median }}%",
+            "criticalPerformance": "Bedenkliche Leistung",
+            "uncriticalPerformance": "Undbedenkliche Leistung",
+            "noGradingScaleExplanation": "Eine Leistung gilt als bedenklich falls sie unter 40% der maximal zu erreichenden Punktzahl erzielt und somit in den meisten Fällen zum Nichtbestehen einer Klausur führen würde. Andernfalls gilt eine Leistung als unbedenklich.",
+            "sufficientPerformance": "Ausreichende Leistung",
+            "insufficientPerformance": "Ungenügende Leistung",
+            "gradingScaleExplanationNotBonus": "Eine Leistung gilt als ungenügend falls sie nicht zum Bestehen der Klausur genügt. Andernfalls gilt eine Leistung als ausreichend.",
+            "gradingScaleExplanationBonus": "Eine Leistung gilt als bedenklich falls sie keine Bonuspunkte erzielt. Andernfalls gilt eine Leistung als unbedenklich.",
             "maxPoints": "Maximale Punktzahl",
             "title": "Klausurergebnisse",
             "examStatisticsTitle": "Klausurstatistik",
@@ -123,7 +133,8 @@
             "registered": "Angemeldete Studierende",
             "noExerciseGroups": "Aufgabengruppen",
             "submittedColumn": "Abgegeben",
-            "totalColumn": "Total"
+            "totalColumn": "Total",
+            "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
@@ -224,6 +235,8 @@
             "unlockAllRepositoriesFailure": "Es gab einen Fehler beim Entsperren der Repositories:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
             "lockAllRepositoriesFailure": "Es gab einen Fehler beim Sperren der Repositories:\n {{message}}",
+            "setWorkingTime": "Absolut:",
+            "setWorkingTimeRelative": "Verlängerung relativ zur normalen Bearbeitungszeit:",
             "removeAllStudents": {
                 "title": "Entferne alle Studierenden",
                 "question": "Bist du sicher, dass du <strong class='text-danger'>alle Studierenden</strong> von der Klausur abmelden möchtest?",
@@ -272,7 +285,7 @@
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
             "confirmationEndText": "Bestätigungstext zum Klausurende",
-            "assessmentDashboard": "Bewertungs-Dashboard",
+            "assessmentDashboard": "Bewertung",
             "examChecklist": "Klausurcheckliste",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
@@ -395,7 +408,7 @@
                     "exerciseStart": "Aufgabengruppe",
                     "exercise": "Aufgabenvariante.",
                     "exercises": "Aufgabenvarianten.",
-                    "leastonestudent": "Mindestens ein Studierender angemeldet zur Klausur",
+                    "leastonestudent": "Es gibt bereits angemeldete Studierende",
                     "studentsregistered": "Aktuelle Anzahl angemeldeter Studierender:",
                     "allexamsgenerated": "Alle Klausuren generiert für alle angemeldeten Studierenden",
                     "pulishingdateset": "Veröffentlichungsdatum der Ergebnisse gesetzt",
@@ -430,7 +443,7 @@
             "type": "Typ",
             "title": "Titel",
             "result": "Ergebnis",
-            "reviewer": "Reviewer",
+            "reviewer": "Reviewer:in",
             "openSubmission": "Einreichung öffnen",
             "openAssessment": " Bewertung öffnen",
             "openLatestAssessment": "Aktuellste Bewertung öffnen",
@@ -446,6 +459,35 @@
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+        },
+        "examStatus": {
+            "columnTitle": "Klausurstatus",
+            "preparation": {
+                "examPreparation": "Klausurvorbereitung",
+                "configureExercises": "Konfiguriere Klausuraufgaben: {{ amount }} Aufgabengruppen",
+                "registerStudents": "Registriere Studierende: {{ registered }} registiert",
+                "generateStudentExams": "Generiere Klausuren: ",
+                "registered": "{{ generated }} von {{ total }}",
+                "notRegistered": "Keine Studierenden registriert",
+                "prepareExerciseStart": "Bereite Aufgabenstart vor"
+            },
+            "conduction": {
+                "examConduction": "Klausurdurchführung",
+                "startedExams": "Begonnene Klausuren",
+                "submittedExams": "Abgegebene Klausuren"
+            },
+            "correction": {
+                "examCorrection": "Klausurkorrektur",
+                "correctionRoundProgress": "Korrekturfortschritt in Runde {{ index }}",
+                "publishResultDate": "Veröffentlichung der Ergebnisse",
+                "notSet": "Nicht gesetzt",
+                "examReview": "Klausureinsicht",
+                "unset": "Nicht angesetzt",
+                "planned": "Geplant",
+                "running": "Im Gange",
+                "finished": "Abgeschlossen",
+                "complaints": "Beschwerden"
+            }
         }
     }
 }

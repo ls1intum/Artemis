@@ -14,31 +14,34 @@
         <jhi-alert></jhi-alert>
         <p [jhiTranslate]="deleteQuestion" [translateValues]="{ title: entityTitle }">Are you sure you want to delete?</p>
         <div *ngIf="additionalChecks">
-            <div *ngFor="let checkKey of objectKeys(additionalChecks)">
+            <div *ngFor="let checkKey of objectKeys(additionalChecks); let i = index">
                 <div class="checkbox" *ngIf="additionalChecks[checkKey]">
                     <label class="control-label text-danger">
-                        <input type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{ additionalChecks[checkKey] | artemisTranslate }}
+                        <input id="additional-check-{{ i }}" type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{
+                            additionalChecks[checkKey] | artemisTranslate
+                        }}
                     </label>
                 </div>
             </div>
         </div>
         <div class="form-group" *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)">
             <label class="text-danger" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
-            <input type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
+            <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
         </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled">
-            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button
+            id="delete"
             type="submit"
             class="btn btn-danger"
             [style.cursor]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled ? 'not-allowed' : 'pointer'"
             [disabled]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled"
             [ngSwitch]="actionType"
         >
-            <span *ngIf="submitDisabled"><fa-icon [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="'times'"></fa-icon>&nbsp;
+            <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faTimes"></fa-icon>&nbsp;
             <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.action.delete">Delete</span>
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
             <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.action.cleanup">Cleanup</span>

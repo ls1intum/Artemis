@@ -23,6 +23,10 @@
                 "label": "Entferne Präsentation",
                 "error": "Die Präsentation konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
+            "updateDueDates": {
+                "success": "Die individuellen Abgabefristen wurden für {{ count }} Teilnehmende aktualisiert.",
+                "error": "Die individuellen Abgabefristen konnten nicht aktualisiert werden."
+            },
             "detail": {
                 "title": "Teilnahme"
             },
@@ -30,6 +34,7 @@
             "buildPlanId": "Build-Plan-Link",
             "initializationState": "Status",
             "initializationDate": "Teilnahme Start",
+            "individualDueDate": "Abgabefrist",
             "initializationNotYetStarted": "Noch nicht gestartet",
             "presentationScore": "Präsentationsergebnis",
             "results": "Ergebnisse",

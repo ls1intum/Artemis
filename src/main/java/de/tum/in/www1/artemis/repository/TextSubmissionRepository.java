@@ -78,13 +78,13 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
 
     @NotNull
     default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(long resultId) {
-        return findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId)
+        return findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId) // TODO should be EntityNotFoundException
                 .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given result.", "textSubmission", "textSubmissionNotFound"));
     }
 
     @NotNull
     default TextSubmission findByIdWithEagerParticipationExerciseResultAssessorElseThrow(long submissionId) {
-        return findByIdWithEagerParticipationExerciseResultAssessor(submissionId)
+        return findByIdWithEagerParticipationExerciseResultAssessor(submissionId) // TODO should be EntityNotFoundException
                 .orElseThrow(() -> new BadRequestAlertException("No text submission found for the given submission.", "textSubmission", "textSubmissionNotFound"));
     }
 
@@ -97,7 +97,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
         return findByIdWithEagerParticipationExerciseResultAssessor(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
     }
 
-    default TextSubmission findWithEagerResultsAndFeedbackAndTextBlocksByIdElseThrow(long submissionId) {
+    default TextSubmission findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(long submissionId) {
         return findWithEagerResultsAndFeedbackAndTextBlocksById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
     }
 }

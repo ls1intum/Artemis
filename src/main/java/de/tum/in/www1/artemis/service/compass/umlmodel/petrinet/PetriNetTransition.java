@@ -34,10 +34,9 @@ public class PetriNetTransition extends UMLElement {
     public double similarity(Similarity<UMLElement> reference) {
         double similarity = 0;
 
-        if (!(reference instanceof PetriNetTransition)) {
+        if (!(reference instanceof PetriNetTransition referenceTransition)) {
             return similarity;
         }
-        PetriNetTransition referenceTransition = (PetriNetTransition) reference;
 
         similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceTransition.getName());
 
@@ -52,11 +51,9 @@ public class PetriNetTransition extends UMLElement {
      */
     @Override
     public double overallSimilarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof PetriNetTransition)) {
+        if (!(reference instanceof PetriNetTransition referenceTransition)) {
             return 0;
         }
-
-        PetriNetTransition referenceTransition = (PetriNetTransition) reference;
 
         double similarity = similarity(referenceTransition);
 

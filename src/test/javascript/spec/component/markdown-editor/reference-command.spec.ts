@@ -1,17 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import * as chai from 'chai';
-import sinonChai from 'sinon-chai';
 
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
-import * as sinon from 'sinon';
 import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
-
-chai.use(sinonChai);
-const expect = chai.expect;
 
 describe('ReferenceCommand', () => {
     let comp: MarkdownEditorComponent;
@@ -19,10 +13,10 @@ describe('ReferenceCommand', () => {
     let referenceCommand = new ReferenceCommand();
 
     afterEach(() => {
-        sinon.restore();
+        jest.restoreAllMocks();
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
         })
@@ -39,7 +33,7 @@ describe('ReferenceCommand', () => {
         comp.ngAfterViewInit();
 
         referenceCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).to.equal('> Reference');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('> Reference');
     });
 
     it('should remove > Reference on execute when reference is selected', () => {
@@ -47,7 +41,7 @@ describe('ReferenceCommand', () => {
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('> lorem');
         referenceCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).to.equal('lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
     });
 
     it('should add > on execute when text is selected', () => {
@@ -55,6 +49,6 @@ describe('ReferenceCommand', () => {
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('lorem');
         referenceCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).to.equal('> lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('> lorem');
     });
 });

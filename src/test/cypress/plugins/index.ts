@@ -15,19 +15,18 @@
 /**
  * @type {Cypress.PluginConfig}
  */
-/*eslint-disable */
-module.exports = (on, config) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+module.exports = (on: (arg0: string, arg1: {}) => void, config: any) => {
     // `on` is used to hook into various events Cypress emits
     // `config` is the resolved Cypress config
-    on(`task`, {
-        error(message) {
+    on('task', {
+        error(message: string) {
             console.error('\x1b[31m', 'ERROR: ', message, '\x1b[0m');
             return null;
         },
-        warn(message) {
+        warn(message: string) {
             console.error('\x1b[33m', 'WARNING: ', message, '\x1b[0m');
             return null;
         },
     });
 };
-/*eslint-enable */

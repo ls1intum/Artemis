@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { faWrench } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 
 @Component({
@@ -8,6 +9,8 @@ import { User } from 'app/core/user/user.model';
 })
 export class UserManagementDetailComponent implements OnInit {
     user: User;
+    // Icons
+    faWrench = faWrench;
 
     constructor(private route: ActivatedRoute) {}
 

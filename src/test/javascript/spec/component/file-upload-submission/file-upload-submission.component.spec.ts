@@ -21,7 +21,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -41,6 +41,10 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { FileService } from 'app/shared/http/file.service';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
@@ -54,7 +58,7 @@ describe('FileUploadSubmissionComponent', () => {
     const result = { id: 1 } as Result;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([routes[0]])],
             declarations: [
                 FileUploadSubmissionComponent,
@@ -287,4 +291,116 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should mark the subsequent feedback', () => {
+        const gradingInstruction = {
+            id: 1,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'instruction feedback',
+            usageCount: 1,
+        } as GradingInstruction;
+
+        const feedbacks = [
+            {
+                id: 1,
+                detailText: 'feedback1',
+                credits: 1,
+                gradingInstruction,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            } as Feedback,
+            {
+                id: 2,
+                detailText: 'feedback2',
+                credits: 1,
+                gradingInstruction,
+                type: FeedbackType.MANUAL_UNREFERENCED,
+            } as Feedback,
+        ];
+
+        comp.result = new Result();
+        comp.result.feedbacks = feedbacks;
+
+        const unreferencedFeedback = comp.unreferencedFeedback;
+
+        expect(unreferencedFeedback).not.toBe(undefined);
+        expect(unreferencedFeedback).toHaveLength(2);
+        expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
+        expect(unreferencedFeedback![1].isSubsequent).toBe(true);
+    });
+
+    it('should download file', () => {
+        const fileService = TestBed.inject(FileService);
+        const fileServiceStub = jest.spyOn(fileService, 'downloadFileWithAccessToken').mockImplementation();
+
+        comp.downloadFile('');
+
+        expect(fileServiceStub).toHaveBeenCalledTimes(1);
+    });
+
+    it('should decide over deactivation correctly', () => {
+        const submission = createFileUploadSubmission();
+
+        expect(comp.canDeactivate()).toBe(true);
+
+        submission.submitted = true;
+        comp.submission = submission;
+
+        expect(comp.canDeactivate()).toBe(true);
+
+        comp.submissionFile = new File([''], 'exampleSubmission.png');
+
+        expect(comp.canDeactivate()).toBe(true);
+
+        submission.submitted = false;
+        comp.submission = submission;
+
+        expect(comp.canDeactivate()).toBe(false);
+    });
+
+    it('should set alert correctly', () => {
+        // Ignore window confirm
+        window.confirm = () => {
+            return false;
+        };
+        const fileName = 'exampleSubmission';
+        comp.submissionFile = new File([''], fileName, { type: 'application/pdf' });
+        const submission = createFileUploadSubmission();
+        submission.filePath = 'test/exampleSubmission.pdf';
+        submission.participation = new StudentParticipation();
+        submission.participation.exercise = fileUploadExercise;
+        submission.participation.exercise.exerciseGroup = new ExerciseGroup();
+        const jhiWarningSpy = jest.spyOn(alertService, 'warning');
+        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+        fixture.detectChanges();
+
+        comp.submitExercise();
+
+        expect(comp.isActive).toBe(false);
+        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
+
+        submission.participation.exercise = undefined;
+        comp.ngOnInit();
+        fixture.detectChanges();
+        comp.submitExercise();
+
+        expect(comp.isActive).toBe(false);
+        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
+    });
+
+    it('should set file name and type correctly', () => {
+        const fileName = 'exampleSubmission';
+        comp.submissionFile = new File([''], fileName, { type: 'application/pdf' });
+        const submission = createFileUploadSubmission();
+        submission.filePath = 'test/exampleSubmission.pdf';
+        comp.submission = submission;
+        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+        fixture.detectChanges();
+
+        comp.submitExercise();
+
+        expect(comp.submittedFileName).toBe(fileName + '.pdf');
+        expect(comp.submittedFileExtension).toBe('pdf');
+    });
 });
