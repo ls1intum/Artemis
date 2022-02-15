@@ -53,6 +53,7 @@ export class ArtemisPageobjects {
     exam = {
         creation: new ExamCreationPage(),
         management: new ExamManagementPage(),
+        details: new ExamDetailsPage(),
         startEnd: new ExamStartEndPage(),
         navigationBar: new ExamNavigationBar(),
         exerciseGroups: new ExamExerciseGroupsPage(),
