@@ -593,6 +593,8 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
+        modelingExercise.setSampleSolutionModel("Example solution model");
+        modelingExercise.setSampleSolutionExplanation("Example Solution");
         addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
@@ -600,6 +602,7 @@ public class DatabaseUtilService {
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
+        textExercise.setSampleSolution("Sample Solution");
         addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
@@ -748,15 +751,15 @@ public class DatabaseUtilService {
         List<Post> posts = createPostsWithinCourse();
 
         // add answer for one post in each context (lecture, exercise, course-wide)
-        Post lecturePost = posts.stream().filter(coursePost -> (coursePost.getLecture() != null)).collect(Collectors.toList()).get(0);
+        Post lecturePost = posts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList().get(0);
         lecturePost.setAnswers(createBasicAnswers(lecturePost));
         postRepository.save(lecturePost);
 
-        Post exercisePost = posts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList()).get(0);
+        Post exercisePost = posts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList().get(0);
         exercisePost.setAnswers(createBasicAnswers(exercisePost));
         postRepository.save(exercisePost);
 
-        Post courseWidePost = posts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).collect(Collectors.toList()).get(0);
+        Post courseWidePost = posts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).toList().get(0);
         courseWidePost.setAnswers(createBasicAnswers(courseWidePost));
         postRepository.save(courseWidePost);
 

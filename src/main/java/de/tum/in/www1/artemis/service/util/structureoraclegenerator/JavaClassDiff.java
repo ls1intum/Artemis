@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import com.thoughtworks.qdox.model.*;
 
@@ -93,7 +93,7 @@ public class JavaClassDiff {
      * @return True, if the solution type is an interface and the template is not, false if they are both interfaces or not.
      */
     private boolean isInterfaceDifferent() {
-        return (templateClass == null ? solutionClass.isInterface() : (solutionClass.isInterface() && !templateClass.isInterface()));
+        return isValueDifferent(JavaClass::isInterface);
     }
 
     /**
@@ -102,7 +102,7 @@ public class JavaClassDiff {
      * @return True, if the solution type is an enum and the template is not, false if they are both enums or not.
      */
     private boolean isEnumDifferent() {
-        return (templateClass == null ? solutionClass.isEnum() : (solutionClass.isEnum() && !templateClass.isEnum()));
+        return isValueDifferent(JavaClass::isEnum);
     }
 
     /**
@@ -111,7 +111,11 @@ public class JavaClassDiff {
      * @return True, if the solution type is abstract and the template is not, false if they are both abstract or not abstract.
      */
     private boolean isAbstractDifferent() {
-        return (templateClass == null ? solutionClass.isAbstract() : (solutionClass.isAbstract() && !templateClass.isAbstract()));
+        return isValueDifferent(JavaClass::isAbstract);
+    }
+
+    private boolean isValueDifferent(Function<JavaClass, Boolean> valueGetter) {
+        return templateClass == null ? valueGetter.apply(solutionClass) : (valueGetter.apply(solutionClass) && !valueGetter.apply(templateClass));
     }
 
     /**
@@ -130,7 +134,7 @@ public class JavaClassDiff {
         }
 
         if (templateSuperClass == null) {
-            // there was not super class in the template
+            // there was no superclass in the template
             if (solutionSuperClass == null) {
                 return "";
             }
@@ -141,7 +145,7 @@ public class JavaClassDiff {
         else {
             // there was a superclass and it might have changed
             if (solutionSuperClass == null) {
-                return "Object";    // we explicitely need to test this case
+                return "Object";    // we explicitly need to test this case
             }
             else {
                 return solutionSuperClass.getSimpleName();
@@ -300,45 +304,30 @@ public class JavaClassDiff {
     }
 
     private boolean annotationsAreEqual(List<JavaAnnotation> solutionAnnotations, List<JavaAnnotation> templateAnnotations) {
-        if (solutionAnnotations == null && templateAnnotations == null) {
-            return true;
-        }
-        else if (solutionAnnotations == null || templateAnnotations == null) {
-            return false; // only one of them is null, the other is not
-        }
-        // If both have no annotations, then their annotations are the same.
-        if (solutionAnnotations.isEmpty() && templateAnnotations.isEmpty()) {
-            return true;
-        }
-
-        // If the number of the annotations is not equal, then their annotations are not the same.
-        if (solutionAnnotations.size() != templateAnnotations.size()) {
-            return false;
-        }
-
-        // Otherwise, check if the list of the solution annotations contains all the template annotations.
-        return solutionAnnotations.stream().map(annotation -> annotation.getType().getSimpleName()).collect(Collectors.toList())
-                .containsAll(templateAnnotations.stream().map(annotation -> annotation.getType().getSimpleName()).collect(Collectors.toList()));
+        return checkListEquality(solutionAnnotations.stream().map(annotation -> annotation.getType().getSimpleName()).toList(),
+                templateAnnotations.stream().map(annotation -> annotation.getType().getSimpleName()).toList());
     }
 
     private boolean modifiersAreEqual(List<String> solutionModifiers, List<String> templateModifiers) {
-        if (solutionModifiers == null && templateModifiers == null) {
+        return checkListEquality(solutionModifiers, templateModifiers);
+    }
+
+    private <T> boolean checkListEquality(List<T> solutionList, List<T> templateList) {
+        if (solutionList == null && templateList == null) {
             return true;
         }
-        else if (solutionModifiers == null || templateModifiers == null) {
+        else if (solutionList == null || templateList == null) {
             return false; // only one of them is null, the other is not
         }
-        // If both have no annotations, then their annotations are the same.
-        if (solutionModifiers.isEmpty() && templateModifiers.isEmpty()) {
+        // If both have no content, then their content is the same.
+        if (solutionList.isEmpty() && templateList.isEmpty()) {
             return true;
         }
-
-        // If the number of the annotations is not equal, then their annotations are not the same.
-        if (solutionModifiers.size() != templateModifiers.size()) {
+        // If the size is not equal, then they are not the same.
+        if (solutionList.size() != templateList.size()) {
             return false;
         }
-
-        return solutionModifiers.containsAll(templateModifiers);
+        return solutionList.containsAll(templateList);
     }
 
     /**
@@ -352,8 +341,8 @@ public class JavaClassDiff {
     private static boolean parameterTypesAreEqual(JavaExecutable solutionExecutable, JavaExecutable templateExecutable) {
         // Create lists containing only the parameter type names for both the executable.
         // This is done to work with them more easily, since types are uniquely identified only by their names.
-        List<String> solutionParams = solutionExecutable.getParameters().stream().map(JavaParameter::getName).collect(Collectors.toList());
-        List<String> templateParams = templateExecutable.getParameters().stream().map(JavaParameter::getName).collect(Collectors.toList());
+        List<String> solutionParams = solutionExecutable.getParameters().stream().map(JavaParameter::getName).toList();
+        List<String> templateParams = templateExecutable.getParameters().stream().map(JavaParameter::getName).toList();
 
         // If both executables have no parameters, then their parameters are the same.
         if (solutionParams.isEmpty() && templateParams.isEmpty()) {

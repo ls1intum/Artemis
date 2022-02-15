@@ -84,7 +84,7 @@ export class OnlineEditorPage {
      */
     submit() {
         cy.get('#submit_button').click();
-        this.getResultPanel().contains('GRADED', { timeout: 140000 }).should('be.visible');
+        cy.get('#result-score-graded', { timeout: 140000 }).should('contain.text', 'GRADED').and('be.visible');
     }
 
     /**
@@ -116,6 +116,13 @@ export class OnlineEditorPage {
      */
     getResultPanel() {
         return cy.get('#result');
+    }
+
+    /**
+     * @returns the element containing the result score percentage.
+     */
+    getResultScorePercentage() {
+        return cy.get('#result-score-percentage');
     }
 
     /**
