@@ -99,12 +99,16 @@ test {
 }
 
 task testReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/tests")
+    destinationDirectory = file("$buildDir/reports/tests")
     reportOn test
 }
 
 jacoco {
     toolVersion = "0.8.7"
+}
+
+jar {
+    enabled = false
 }
 
 private excludedClassFilesForReport(classDirectories) {

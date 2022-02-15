@@ -285,7 +285,7 @@
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
             "confirmationEndText": "Bestätigungstext zum Klausurende",
-            "assessmentDashboard": "Bewertungs-Dashboard",
+            "assessmentDashboard": "Bewertung",
             "examChecklist": "Klausurcheckliste",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
@@ -479,6 +479,8 @@
             "correction": {
                 "examCorrection": "Klausurkorrektur",
                 "correctionRoundProgress": "Korrekturfortschritt in Runde {{ index }}",
+                "publishResultDate": "Veröffentlichung der Ergebnisse",
+                "notSet": "Nicht gesetzt",
                 "examReview": "Klausureinsicht",
                 "unset": "Nicht angesetzt",
                 "planned": "Geplant",

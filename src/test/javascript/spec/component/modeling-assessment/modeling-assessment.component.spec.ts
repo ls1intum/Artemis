@@ -2,8 +2,8 @@ import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ApollonEditor, UMLDiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { UMLDiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
+import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
@@ -11,6 +11,8 @@ import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ModelElementCount } from 'app/entities/modeling-submission.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 describe('ModelingAssessmentComponent', () => {
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
@@ -73,7 +75,13 @@ describe('ModelingAssessmentComponent', () => {
     };
 
     const mockModel = generateMockModel('elementId1', 'elementId2', 'relationshipId');
-    const mockFeedbackWithReference = { text: 'FeedbackWithReference', referenceId: 'relationshipId', reference: 'reference', credits: 30 } as Feedback;
+    const mockFeedbackWithReference = {
+        text: 'FeedbackWithReference',
+        referenceId: 'relationshipId',
+        reference: 'reference',
+        credits: 30,
+        correctionStatus: 'CORRECT',
+    } as Feedback;
     const mockFeedbackWithReferenceCopied = {
         text: 'FeedbackWithReference Copied',
         referenceId: 'relationshipId',
@@ -82,9 +90,17 @@ describe('ModelingAssessmentComponent', () => {
         copiedFeedbackId: 12,
     } as Feedback;
     const mockFeedbackWithoutReference = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
-    const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference' };
+    const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
     const mockValidFeedbacks = [mockFeedbackWithReference, mockFeedbackWithoutReference];
     const mockFeedbacks = [...mockValidFeedbacks, mockFeedbackInvalid];
+
+    const mockFeedbackWithGradingInstruction = {
+        text: 'FeedbackWithGradingInstruction',
+        referenceId: 'relationshipId',
+        reference: 'reference',
+        credits: 30,
+        gradingInstruction: new GradingInstruction(),
+    } as Feedback;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -104,7 +120,7 @@ describe('ModelingAssessmentComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should show  title if any', () => {
+    it('should show title if any', () => {
         const title = 'Test Title';
         comp.title = title;
         fixture.detectChanges();
@@ -165,6 +181,65 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.feedbacks).toEqual(mockFeedbacks);
     });
 
+    it('should filter references by result feedbacks', () => {
+        expect(comp.referencedFeedbacks).toBeEmpty();
+        expect(comp.feedbacks).toBe(undefined);
+
+        comp.umlModel = mockModel;
+        comp.resultFeedbacks = mockFeedbacks;
+
+        expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference, mockFeedbackInvalid]);
+        expect(comp.feedbacks).toEqual(mockFeedbacks);
+    });
+
+    it('should calculate drop info', () => {
+        const spy = jest.spyOn(translatePipe, 'transform');
+        comp.umlModel = mockModel;
+        comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
+
+        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.messages.removeAssessmentInstructionLink');
+        expect(spy).toHaveBeenCalledWith('artemisApp.exercise.assessmentInstruction');
+        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.feedbackHint');
+        expect(mockModel.assessments[0].dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
+
+        // toHaveBeenCalledTimes(5): 2 from calculateLabel() + 3 from calculateDropInfo()
+        expect(spy).toHaveBeenCalledTimes(5);
+    });
+
+    it('should update element counts', () => {
+        function getElementCounts(model: UMLModel): ModelElementCount[] {
+            // Not sure whether this is the correct logic to build OtherModelElementCounts.
+            return model.elements.map((el) => ({
+                elementId: el.id,
+                numberOfOtherElements: model.elements.length - 1,
+            }));
+        }
+
+        comp.umlModel = mockModel;
+        const elementCounts = getElementCounts(mockModel);
+        comp.elementCounts = elementCounts;
+
+        const spy = jest.spyOn(translatePipe, 'transform');
+
+        fixture.detectChanges();
+
+        elementCounts.forEach((elementCount) =>
+            expect(spy).toHaveBeenCalledWith('modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCount.numberOfOtherElements }),
+        );
+
+        expect(spy).toHaveBeenCalledTimes(elementCounts.length);
+    });
+
+    it('should generate feedback from assessment', () => {
+        comp.umlModel = mockModel;
+        comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
+
+        fixture.detectChanges();
+
+        comp.generateFeedbackFromAssessment(mockModel.assessments);
+        expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
+    });
+
     it('should highlight elements', () => {
         const highlightedElements = new Map();
         highlightedElements.set('elementId1', 'red');
@@ -190,7 +265,7 @@ describe('ModelingAssessmentComponent', () => {
         const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
         const changes = { model: { currentValue: newModel } as SimpleChange };
         fixture.detectChanges();
-        const apollonSpy = jest.spyOn(comp.apollonEditor as ApollonEditor, 'model', 'set');
+        const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
         comp.ngOnChanges(changes);
         expect(apollonSpy).toHaveBeenCalledWith(newModel);
     });

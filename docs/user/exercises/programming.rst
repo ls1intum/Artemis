@@ -89,11 +89,10 @@ The online editor displays only visible files, to avoid showing for example ``.g
 This also means that other config files, like SwiftLint's ``.swiftlint.yml`` file, are not shown. Those files currently
 can only be accessed via your own IDE.
 
-Testing with Artemis Java Test Sandbox
+Testing with Ares
 --------------------------------------
 
-Artemis Java Test Sandbox *(abbr. AJTS)* is a JUnit 5 extension for easy and secure Java testing
-on Artemis.
+Ares is a JUnit 5 extension for easy and secure Java testing on Artemis.
 
 Its main features are
 
@@ -104,13 +103,13 @@ Its main features are
   or pointing to a possible location that caused an Exception
 * utilities to test exercises using System.out and System.in comfortably
 
-**For more information see** `AJTS GitHub <https://github.com/ls1intum/artemis-java-test-sandbox>`__
+**For more information see** `Ares GitHub <https://github.com/ls1intum/Ares>`__
 
 Best practices for writing test cases
 -------------------------------------
 
 The following sections describe best practices for writing test cases.
-The examples and explanations are specifically written for Java (using AJTS/JUnit5), but the practices can also be generalized
+The examples and explanations are specifically written for Java (using Ares/JUnit5), but the practices can also be generalized
 for other programming languages.
 
 .. include:: test-case-best-practices.inc

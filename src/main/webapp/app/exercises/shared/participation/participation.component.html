@@ -246,7 +246,7 @@
 
                 <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-end">
+                        <div class="text-end">
                             <div class="btn-group">
                                 <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
                                     <jhi-programming-exercise-instructor-trigger-build-button

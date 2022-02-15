@@ -185,7 +185,7 @@ public class ProgrammingExerciseExportService {
 
             // Export student repositories and add them to list
             var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, exportErrors).stream()
-                    .filter(Objects::nonNull).collect(Collectors.toList());
+                    .filter(Objects::nonNull).toList();
             pathsToBeZipped.addAll(exportedStudentRepositoryFiles);
         }
 
@@ -592,14 +592,14 @@ public class ProgrammingExerciseExportService {
         // is Java or Kotlin programming language
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN) {
             // Filter all Eclipse .project files
-            List<String> eclipseProjectFiles = allRepoFiles.stream().filter(file -> file.endsWith(".project")).collect(Collectors.toList());
+            List<String> eclipseProjectFiles = allRepoFiles.stream().filter(file -> file.endsWith(".project")).toList();
 
             for (String eclipseProjectFilePath : eclipseProjectFiles) {
                 addParticipantIdentifierToEclipseProjectName(repository, participantIdentifier, eclipseProjectFilePath);
             }
 
             // Filter all pom.xml files
-            List<String> pomFiles = allRepoFiles.stream().filter(file -> file.endsWith("pom.xml")).collect(Collectors.toList());
+            List<String> pomFiles = allRepoFiles.stream().filter(file -> file.endsWith("pom.xml")).toList();
             for (String pomFilePath : pomFiles) {
                 addParticipantIdentifierToMavenProjectName(repository, participantIdentifier, pomFilePath);
             }
