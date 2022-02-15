@@ -1,15 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.lecture;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+package de.tum.in.www1.artemis.lecture.web.rest;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
@@ -21,10 +10,20 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
-@Deprecated // Moved to Lecture microservice. To be removed
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class TextUnitResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -63,20 +62,20 @@ public class TextUnitResource {
         }
         TextUnit textUnit = optionalTextUnit.get();
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
         return ResponseEntity.ok().body(textUnit);
     }
 
     /**
-     * PUT /lectures/:lectureId/text-units : Updates an existing text unit
+     * PUT lectures/:lectureId/text-units : Updates an existing text unit
      *
      * @param lectureId      the id of the lecture to which the text unit belongs to update
      * @param textUnit the text unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
      */
-    @PutMapping("/lectures/{lectureId}/text-units")
+    @PutMapping("lectures/{lectureId}/text-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) {
         log.debug("REST request to update an text unit : {}", textUnit);
@@ -84,7 +83,7 @@ public class TextUnitResource {
             throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idnull");
         }
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
@@ -93,14 +92,14 @@ public class TextUnitResource {
     }
 
     /**
-     * POST /lectures/:lectureId/text-units : creates a new text unit.
+     * POST lectures/:lectureId/text-units : creates a new text unit.
      *
      * @param lectureId      the id of the lecture to which the text unit should be added
      * @param textUnit the text unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new text unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures/{lectureId}/text-units")
+    @PostMapping("lectures/{lectureId}/text-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
         log.debug("REST request to create TextUnit : {}", textUnit);
@@ -113,14 +112,14 @@ public class TextUnitResource {
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         textUnit.setLecture(null);
-        textUnit = textUnitRepository.saveAndFlush(textUnit);
-        textUnit.setLecture(lecture);
+        TextUnit savedTextUnit = textUnitRepository.saveAndFlush(textUnit);
+        savedTextUnit.setLecture(lecture);
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
         TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);

@@ -167,8 +167,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringDevelopmentTest
                 HttpStatus.CREATED);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
 
-        // TODO uncomment when lecture units are moved to the service
-        // request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        // request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachment.getId(), HttpStatus.NOT_FOUND, Attachment.class);
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, Attachment.class);
     }
 }

@@ -1,11 +1,12 @@
-package de.tum.in.www1.artemis;
+package de.tum.in.www1.artemis.lecture;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,15 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-// Moved to Lecture microservice. To be removed
-public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class ExerciseUnitIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
     private CourseRepository courseRepository;
@@ -29,34 +28,9 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private UserRepository userRepo;
 
-    @Autowired
-    private TextExerciseRepository textExerciseRepository;
-
-    @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
-
-    @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private FileUploadExerciseRepository fileUploadExerciseRepository;
-
     private Course course1;
 
     private Lecture lecture1;
-
-    private TextExercise textExercise;
-
-    private ModelingExercise modelingExercise;
-
-    private ProgrammingExercise programmingExercise;
-
-    private FileUploadExercise fileUploadExercise;
-
-    private QuizExercise quizExercise;
 
     @BeforeEach
     public void initTestCase() throws Exception {
@@ -64,12 +38,6 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
-
-        this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
-        this.fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
-        this.programmingExercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course1).stream().findFirst().get();
-        this.quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
-        this.modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
 
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("student42"));
@@ -132,7 +100,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -143,17 +111,17 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
                 HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createExerciseUnit_notExistingLectureId_shouldReturnNotFound() throws Exception {
+    public void createExerciseUnit_notExistingLectureId_shouldReturnBadRequest() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        request.postWithResponseBody("/api/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -162,33 +130,8 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteExercise_exerciseConnectedWithExerciseUnit_shouldDeleteExerciseUnit() throws Exception {
-        Set<Exercise> exercisesOfCourse = course1.getExercises();
-        Set<ExerciseUnit> persistedExerciseUnits = new HashSet<>();
-
-        for (Exercise exerciseOfCourse : exercisesOfCourse) {
-            ExerciseUnit exerciseUnit = new ExerciseUnit();
-            exerciseUnit.setExercise(exerciseOfCourse);
-            ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
-                    HttpStatus.CREATED);
-            persistedExerciseUnits.add(persistedExerciseUnit);
-        }
-        assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
-
-        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
-        request.delete("/api/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
-        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
-        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
-
-        List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
-        assertThat(exerciseUnitsOfLecture).isEmpty();
-
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -206,14 +149,9 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         }
         assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
 
-        for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
-            request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
-        }
-
-        for (Exercise exercise : exercisesOfCourse) {
-            request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
-        }
-
+         for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
+             request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);
+         }
     }
 
 }
