@@ -16,13 +16,14 @@
         ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="instructorDashboard.loadingStudents">Loading the results of all students...</span></span
     >
     <div class="row d-flex align-items-center">
-        <div class="col-8">
+        <div class="col-9">
             <div class="text-center">
                 <h4 jhiTranslate="instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
             </div>
-            <jhi-participant-scores-distribution [gradingScale]="gradingScale" [scores]="scoresToDisplay"></jhi-participant-scores-distribution>
+            <jhi-participant-scores-distribution *ngIf="scoresToDisplay" [gradingScale]="gradingScale" [scores]="scoresToDisplay" [scoreToHighlight]="valueToHighlight">
+            </jhi-participant-scores-distribution>
         </div>
-        <div class="col-4">
+        <div class="col-3">
             <table class="table table-bordered table-sm table-striped">
                 <thead class="table-dark">
                     <tr>
@@ -45,16 +46,22 @@
                     </tr>
                     <tr>
                         <th>
-                            <span jhiTranslate="instructorDashboard.statisticsTable.averagePoints">Average points (score)</span>
+                            <label class="d-flex align-items-center">
+                                <input type="checkbox" [checked]="highlightedType === highlightValue.AVERAGE" (click)="highlightBar(highlightValue.AVERAGE)" />
+                                <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.averagePoints">Average points (score)</span>
+                            </label>
                         </th>
-                        <td>{{ this.averagePointsIncluded }} ({{ this.averageScoreIncluded }}%)</td>
+                        <td id="average_points" [ngClass]="highlightedType">{{ this.averagePointsIncluded }} ({{ this.averageScoreIncluded }}%)</td>
                         <td>{{ this.averagePointsTotal }} ({{ this.averageScoreTotal }}%)</td>
                     </tr>
                     <tr>
                         <th>
-                            <span (click)="onSelect($event)" style="cursor: pointer" jhiTranslate="instructorDashboard.statisticsTable.medianPoints">Median points (score)</span>
+                            <label class="d-flex align-items-center">
+                                <input type="checkbox" [checked]="highlightedType === highlightValue.MEDIAN" (click)="highlightBar(highlightValue.MEDIAN)" />
+                                <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.medianPoints">Median points (score)</span>
+                            </label>
                         </th>
-                        <td>{{ this.medianPointsIncluded }} ({{ this.medianScoreIncluded }}%)</td>
+                        <td id="median_points" [ngClass]="highlightedType">{{ this.medianPointsIncluded }} ({{ this.medianScoreIncluded }}%)</td>
                         <td>{{ this.medianPointsTotal }} ({{ this.medianScoreTotal }}%)</td>
                     </tr>
                     <tr>

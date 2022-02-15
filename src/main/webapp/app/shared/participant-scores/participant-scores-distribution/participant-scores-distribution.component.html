@@ -12,6 +12,9 @@
         [yScaleMax]="yScaleMax"
         [showDataLabel]="true"
         [animations]="false"
+        [dataLabelFormatting]="dataLabelFormatting"
+        [showDataLabel]="!isCourseScore"
+        (select)="onChartClick()"
         class="row"
     >
         <ng-template #tooltipTemplate let-model="model">
@@ -26,7 +29,7 @@
 
         <div class="ms-4 color-box sufficient-performance"></div>
         <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
-        <jhi-help-icon class="ms-2" placement="right auto" text="{{ gradingKeyTooltip }}"></jhi-help-icon>
+        <jhi-help-icon class="ms-2" placement="right auto" text="{{ helpIconTooltip }}"></jhi-help-icon>
     </div>
     <div *ngIf="!gradingScaleExists || isBonus" class="d-flex justify-content-center align-items-center">
         <div class="color-box critical-performance"></div>
@@ -34,6 +37,6 @@
 
         <div class="ms-4 color-box sufficient-performance"></div>
         <span class="ms-2">{{ 'artemisApp.examScores.uncriticalPerformance' | artemisTranslate }}</span>
-        <jhi-help-icon class="ms-2" placement="right auto" text="{{ gradingKeyTooltip }}"></jhi-help-icon>
+        <jhi-help-icon class="ms-2" placement="right auto" text="{{ helpIconTooltip }}"></jhi-help-icon>
     </div>
 </div>

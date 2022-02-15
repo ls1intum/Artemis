@@ -25,16 +25,12 @@ import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { declareExerciseType } from 'app/entities/exercise.model';
-import { mean, median, standardDeviation, sum } from 'simple-statistics';
+import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
-import { ScaleType, Color } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { GraphColors } from 'app/entities/statistics.model';
-import { GradeStep } from 'app/entities/grade-step.model';
 
 export enum MedianType {
     PASSED,
@@ -57,23 +53,14 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     // TODO: Cache already calculated filter dependent statistics
     public aggregatedExamResults: AggregatedExamResult;
     public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
-    readonly binWidth = 5;
-    public histogramData: number[] = Array(100 / this.binWidth).fill(0);
     public noOfExamsFiltered: number;
 
-    // ngx
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
-    yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-    xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
-    yScaleMax: number;
-    ngxColor = {
-        name: 'Exam statistics',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
-    activeEntries: NgxChartsSingleSeriesDataEntry[] = [];
     dataLabelFormatting = this.formatDataLabel.bind(this);
+    navigateToParticipantScores = this.onSelect.bind(this);
+    scores: number[];
+    lastCalculatedMedianType: MedianType;
+    highlightedValue: number | undefined;
+
     showOverallMedian: boolean; // Indicates whether the median of all exams is currently highlighted
     showOverallMedianCheckbox = true; // Indicates whether the checkbox for toggling the highlighting of overallChartMedian is currently visible to the user
     overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
@@ -125,7 +112,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.generateDefaultNgxChartsSetting();
         this.route.params.subscribe((params) => {
             const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
             // alternative exam scores calculation using participant scores table
@@ -190,9 +176,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.determineAndHighlightChartMedian(medianType);
                     }
                     this.isLoading = false;
-                    this.createChart();
-                    this.setupChartColoring();
-                    this.setupAxisLabels();
                     this.changeDetector.detectChanges();
                     this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
                 },
@@ -202,7 +185,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe(() => {
-            this.setupAxisLabels();
             this.changeDetector.detectChanges();
         });
     }
@@ -241,32 +223,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.changeDetector.detectChanges();
     }
 
-    private calculateTickMax() {
-        const max = Math.max(...this.histogramData);
-        return Math.ceil((max + 1) / 10) * 10 + 20;
-    }
-
-    private createChart() {
-        if (this.gradingScaleExists) {
-            this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
-                let label = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
-                label += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
-                label += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
-                label += ` {${gradeStep.gradeName}}`;
-                this.ngxData[i].name = label;
-            });
-        } else {
-            for (let i = 0; i < this.histogramData.length; i++) {
-                let label = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
-                label += i === this.histogramData.length - 1 ? ']' : ')';
-
-                this.ngxData[i].name = label;
-            }
-        }
-
-        this.ngxData = [...this.ngxData];
-    }
-
     /**
      * Calculate statistics on exercise group and exercise granularity. These statistics are filter dependent.
      * @param exerciseGroupResults Data structure holding the aggregated points and number of participants
@@ -294,42 +250,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Find the grade step index for the corresponding grade step to the given percentage
-     * @param percentage the percentage which will be mapped to a grade step
-     */
-    findGradeStepIndex(percentage: number): number {
-        let index = 0;
-        if (this.gradingScaleExists) {
-            this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
-                if (this.gradingSystemService.matchGradePercentage(gradeStep, percentage)) {
-                    index = i;
-                }
-            });
-        } else {
-            index = Math.floor(percentage / this.binWidth);
-            if (index >= 100 / this.binWidth) {
-                // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
-                index = 100 / this.binWidth - 1;
-            }
-        }
-        return index;
-    }
-
-    /**
      * Calculates filter dependent exam statistics. Must be triggered if filter settings change.
      * 1. The average points and number of participants for each exercise group and exercise
      * 2. Distribution of scores
      */
     private calculateFilterDependentStatistics() {
-        this.generateDefaultNgxChartsSetting();
-        if (this.gradingScaleExists) {
-            this.histogramData = Array(this.gradingScale!.gradeSteps.length);
-            this.ngxData = [];
-            for (let i = 0; i < this.gradingScale!.gradeSteps.length; i++) {
-                this.ngxData.push({ name: i.toString(), value: 0 });
-            }
-        }
-        this.histogramData.fill(0);
+        this.noOfExamsFiltered = 0;
+        const scoresToVisualize: number[] = [];
 
         // Create data structures holding the statistics for all exercise groups and exercises
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
@@ -350,10 +277,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (!studentResult.submitted && this.filterForSubmittedExams) {
                 continue;
             }
-            // Update histogram data structure
-            const histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
-            this.ngxData[histogramIndex].value++;
-            this.histogramData[histogramIndex]++;
+            scoresToVisualize.push(studentResult.overallScoreAchieved ?? 0);
+            this.noOfExamsFiltered++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
                 continue;
             }
@@ -384,12 +309,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        this.noOfExamsFiltered = sum(this.histogramData);
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
-        this.createChart();
-        this.yScaleMax = this.calculateTickMax();
+        this.scores = [...scoresToVisualize];
     }
 
     /**
@@ -783,63 +706,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * fill ngxData with a default configuration. The assignment of the names is only a placeholder,
-     * they will be set to default labels in createChart.
-     * If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
-     * If no grading key exists, this default configuration is presented to the user.
-     * @private
-     */
-    private generateDefaultNgxChartsSetting(): void {
-        this.ngxData = [];
-        for (let i = 0; i < 100 / this.binWidth; i++) {
-            this.ngxData.push({ name: i.toString(), value: 0 });
-        }
-    }
-
-    /**
-     * Sets up the bar coloring
-     * If no grading scale exists, all bars representing a score < 40% are colored yellow in order to visualize that this is a critical performance
-     * If a grading scale exists that is bonus, all bars with a lower bound < 40% are colored yellow as well
-     * If a grading scale exists that is not bonus, all bars representing a score that does not pass the exam are colored red
-     * In either case, all bars above the thresholds remain grey
-     * @private
-     */
-    private setupChartColoring(): void {
-        this.ngxColor.domain = [];
-        if (!this.gradingScaleExists) {
-            for (let i = 0; i < 100 / this.binWidth; i++) {
-                if (i < 40 / this.binWidth) {
-                    this.ngxColor.domain.push(GraphColors.YELLOW);
-                } else {
-                    this.ngxColor.domain.push(GraphColors.GREY);
-                }
-            }
-        } else {
-            this.gradingScale!.gradeSteps.forEach((gradeStep) => {
-                const color = this.getGradeStepColor(gradeStep);
-                this.ngxColor.domain.push(color);
-            });
-        }
-
-        this.ngxData = [...this.ngxData];
-    }
-
-    /**
-     * Auxiliary method in order to keep the chart translation sensitive
-     * @private
-     */
-    private setupAxisLabels(): void {
-        this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-        this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
-
-        if (this.gradingScaleExists && !this.isBonus) {
-            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
-        } else if (this.gradingScaleExists && this.isBonus) {
-            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
-        }
-    }
-
-    /**
      * Handles the click event on a chart bar. The user is then delegated to the participant scores page of the exam
      */
     onSelect() {
@@ -876,7 +742,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if (this.showPassedMedian || this.showOverallMedian) {
             this.determineAndHighlightChartMedian(medianType);
         } else {
-            this.activeEntries = [];
+            this.highlightedValue = undefined;
         }
     }
 
@@ -889,6 +755,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     private determineAndHighlightChartMedian(medianType: MedianType): void {
         let chartMedian;
+        this.lastCalculatedMedianType = medianType;
         if (medianType === MedianType.PASSED) {
             const passedMedian = this.aggregatedExamResults.medianRelativePassed;
             chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course) : 0;
@@ -898,29 +765,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             chartMedian = this.overallChartMedian;
             this.showOverallMedian = true;
         }
-        const index = this.findGradeStepIndex(chartMedian);
-        const medianChartBar = this.ngxData[index];
-
-        // Highlighting a bar only makes sense if this bar is representing a value > 0
-        if (medianChartBar.value === 0) {
-            // In addition, it would be confusing to give the user the opportunity to toggle a highlighting in this case so we hide the corresponding checkbox
-            if (medianType === MedianType.PASSED) {
-                this.showPassedMedianCheckbox = false;
-            } else {
-                this.showOverallMedianCheckbox = false;
-            }
-            this.activeEntries = [];
-        } else {
-            /*
-            The median value for passed exams does not change by any filter configuration, therefore the corresponding flag won't get updated after init.
-            The median value for all exams does change depending on if only submitted exams are included or not. Here we have to update the flag if the bar
-            represents a value > 0
-             */
-            if (medianType !== MedianType.PASSED) {
-                this.showOverallMedianCheckbox = true;
-            }
-            this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
-        }
+        this.highlightedValue = chartMedian;
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -939,24 +785,21 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.overallChartMedianType = medianType;
     }
 
-    /**
-     * Auxiliary method that returns the bar color of the grade step in the chart
-     * @param gradeStep the grade step that should be colored
-     * @returns string representation of the color
-     * @private
-     */
-    private getGradeStepColor(gradeStep: GradeStep): GraphColors {
-        if (this.isBonus) {
-            if (gradeStep.gradeName === '0') {
-                return GraphColors.YELLOW;
+    handleHighlightingCallback(isHighlighted: boolean) {
+        if (!isHighlighted) {
+            if (this.lastCalculatedMedianType === MedianType.PASSED) {
+                this.showPassedMedianCheckbox = false;
             } else {
-                return GraphColors.GREY;
+                this.showOverallMedianCheckbox = false;
             }
         } else {
-            if (gradeStep.isPassingGrade) {
-                return GraphColors.GREY;
-            } else {
-                return GraphColors.RED;
+            /*
+            The median value for passed exams does not change by any filter configuration, therefore the corresponding flag won't get updated after init.
+            The median value for all exams does change depending on if only submitted exams are included or not. Here we have to update the flag if the bar
+            represents a value > 0
+            */
+            if (this.lastCalculatedMedianType !== MedianType.PASSED) {
+                this.showOverallMedianCheckbox = true;
             }
         }
     }

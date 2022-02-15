@@ -28,6 +28,7 @@ import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/m
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -224,6 +225,7 @@ describe('CourseScoresComponent', () => {
             declarations: [
                 CourseScoresComponent,
                 MockComponent(AlertComponent),
+                MockComponent(ParticipantScoresDistributionComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(OrionFilterDirective),

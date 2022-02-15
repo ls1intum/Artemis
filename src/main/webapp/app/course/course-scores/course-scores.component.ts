@@ -35,9 +35,16 @@ export const SCORE_KEY = 'Score';
 export const GRADE_KEY = 'Grades';
 export const BONUS_KEY = 'Bonus Points';
 
+enum HighlightValue {
+    AVERAGE = 'average',
+    MEDIAN = 'median',
+    NONE = 'none',
+}
+
 @Component({
     selector: 'jhi-course-scores',
     templateUrl: './course-scores.component.html',
+    styleUrls: ['./course-scores.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
@@ -86,6 +93,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     maxGrade?: string;
     averageGrade?: string;
     scoresToDisplay: number[];
+    valueToHighlight: number | undefined;
+    highlightedType = HighlightValue.NONE;
 
     numberOfReleasedExercises: number;
     averageScoreIncluded = 0;
@@ -100,6 +109,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     standardDeviationPointsIncluded = 0;
     standardDeviationPointsTotal = 0;
+
+    readonly highlightValue = HighlightValue;
 
     private languageChangeSubscription?: Subscription;
 
@@ -251,7 +262,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.calculateAverageAndMedianScores();
             // this.createChart(this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course)));
             this.scoresToDisplay = this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course));
-            this.changeDetector.detectChanges();
+            this.highlightBar(HighlightValue.AVERAGE);
         });
     }
 
@@ -874,7 +885,23 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.standardDeviationPointsTotal = round(standardDeviation(achievedPointsTotal), 2);
     }
 
-    onSelect(event: any) {
-        console.log(event);
+    highlightBar(type: HighlightValue) {
+        if (this.highlightedType === type) {
+            this.valueToHighlight = undefined;
+            this.highlightedType = HighlightValue.NONE;
+            this.changeDetector.detectChanges();
+            return;
+        }
+        switch (type) {
+            case HighlightValue.AVERAGE:
+                this.valueToHighlight = this.averageScoreIncluded;
+                this.highlightedType = HighlightValue.AVERAGE;
+                break;
+            case HighlightValue.MEDIAN:
+                this.valueToHighlight = this.medianScoreIncluded;
+                this.highlightedType = HighlightValue.MEDIAN;
+                break;
+        }
+        this.changeDetector.detectChanges();
     }
 }

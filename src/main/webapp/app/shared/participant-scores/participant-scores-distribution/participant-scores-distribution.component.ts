@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -12,7 +12,7 @@ import { GraphColors } from 'app/entities/statistics.model';
     templateUrl: './participant-scores-distribution.component.html',
     styleUrls: ['./participant-score-distribution.component.scss', '../../chart/vertical-bar-chart.scss'],
 })
-export class ParticipantScoresDistributionComponent implements OnInit {
+export class ParticipantScoresDistributionComponent implements OnInit, OnChanges {
     @Input()
     scores: number[];
 
@@ -21,25 +21,39 @@ export class ParticipantScoresDistributionComponent implements OnInit {
 
     @Input()
     isCourseScore = true;
+
+    @Input()
+    dataLabelFormatting?: (submissionCount: number) => string;
+
+    @Input()
+    onSelect?: (event?: any) => any;
+
+    @Input()
+    scoreToHighlight?: number;
+
+    @Output()
+    scoreHighlightingVisible: EventEmitter<boolean> = new EventEmitter<boolean>();
+
     gradingScaleExists = false;
     isBonus?: boolean;
     ngxData: NgxChartsSingleSeriesDataEntry[];
-    histogramData: number[];
     yScaleMax: number;
     height = 500;
 
     yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
     xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
 
-    gradingKeyTooltip: string;
+    helpIconTooltip: string;
 
     readonly binWidth = 5;
+
     ngxColor = {
         name: 'Participation scores distribution',
         selectable: true,
         group: ScaleType.Ordinal,
         domain: [],
     } as Color;
+    backupDomain: string[];
 
     constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService) {}
 
@@ -47,6 +61,9 @@ export class ParticipantScoresDistributionComponent implements OnInit {
         this.translateService.onLangChange.subscribe(() => {
             this.setupAxisLabels();
         });
+    }
+
+    ngOnChanges() {
         if (this.gradingScale) {
             this.gradingScaleExists = true;
             this.isBonus = this.gradingScale.gradeType === GradeType.BONUS;
@@ -57,7 +74,8 @@ export class ParticipantScoresDistributionComponent implements OnInit {
         }
         this.createChart(this.scores);
         this.yScaleMax = this.calculateTickMax();
-        this.determineHelpIconTooltip();
+        this.helpIconTooltip = this.determineHelpIconTooltip();
+        this.highlightScore();
     }
 
     /**
@@ -70,19 +88,15 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     private generateDefaultNgxChartsSetting(): void {
         this.ngxData = [];
         if (this.gradingScaleExists) {
-            this.histogramData = Array(this.gradingScale!.gradeSteps.length);
             this.ngxData = [];
             for (let i = 0; i < this.gradingScale!.gradeSteps.length; i++) {
                 this.ngxData.push({ name: i.toString(), value: 0 });
             }
         } else {
-            this.histogramData = Array(100 / this.binWidth);
             for (let i = 0; i < 100 / this.binWidth; i++) {
                 this.ngxData.push({ name: i.toString(), value: 0 });
             }
         }
-
-        this.histogramData.fill(0);
         this.createChartLabels();
     }
 
@@ -96,9 +110,9 @@ export class ParticipantScoresDistributionComponent implements OnInit {
                 this.ngxData[i].name = label;
             });
         } else {
-            for (let i = 0; i < this.histogramData.length; i++) {
+            for (let i = 0; i < this.ngxData.length; i++) {
                 let label = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
-                label += i === this.histogramData.length - 1 ? ']' : ')';
+                label += i === this.ngxData.length - 1 ? ']' : ')';
 
                 this.ngxData[i].name = label;
             }
@@ -129,39 +143,34 @@ export class ParticipantScoresDistributionComponent implements OnInit {
         return index;
     }
 
-    addToHistogram(percentage: number) {
+    private addToHistogram(percentage: number) {
         // Update histogram data structure
         const histogramIndex = this.findGradeStepIndex(percentage);
         this.ngxData[histogramIndex].value++;
-        this.histogramData[histogramIndex]++;
     }
 
-    createChart(scores: number[]) {
+    private createChart(scores: number[]) {
         this.generateDefaultNgxChartsSetting();
         this.setupChartColoring();
         this.setupAxisLabels();
-
         scores.forEach((score) => this.addToHistogram(score));
     }
 
     private calculateTickMax() {
-        const max = Math.max(...this.histogramData);
+        const histogramData = this.ngxData.map((dataPack) => dataPack.value);
+        const max = Math.max(...histogramData);
         return Math.ceil((max + 1) / 10) * 10 + 20;
     }
 
-    private determineHelpIconTooltip() {
+    private determineHelpIconTooltip(): string {
         if (this.gradingScaleExists) {
             if (this.isBonus) {
-                this.gradingKeyTooltip = 'artemisApp.examScores.gradingScaleExplanationBonus';
-            } else if (this.isCourseScore) {
-                this.gradingKeyTooltip = 'instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus';
+                return 'artemisApp.examScores.gradingScaleExplanationBonus';
             } else {
-                this.gradingKeyTooltip = 'artemisApp.examScores.gradingScaleExplanationNotBonus';
+                return this.getHelpIconTooltipNotBonus();
             }
-        } else if (this.isCourseScore) {
-            this.gradingKeyTooltip = 'instructorDashboard.courseScoreChart.noGradingScaleExplanation';
         } else {
-            this.gradingKeyTooltip = 'artemisApp.examScores.noGradingScaleExplanation';
+            return this.getHelpIconNoGradingScale();
         }
     }
 
@@ -211,7 +220,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
                 this.ngxColor.domain.push(color);
             });
         }
-
+        this.backupDomain = this.ngxColor.domain;
         this.ngxData = [...this.ngxData];
     }
 
@@ -227,6 +236,46 @@ export class ParticipantScoresDistributionComponent implements OnInit {
             this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
         } else if (this.gradingScaleExists && this.isBonus) {
             this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
+        }
+    }
+
+    private getHelpIconTooltipNotBonus(): string {
+        if (this.isCourseScore) {
+            return 'instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus';
+        } else {
+            return 'artemisApp.examScores.gradingScaleExplanationNotBonus';
+        }
+    }
+
+    private getHelpIconNoGradingScale(): string {
+        if (this.isCourseScore) {
+            return 'instructorDashboard.courseScoreChart.noGradingScaleExplanation';
+        } else {
+            return 'artemisApp.examScores.noGradingScaleExplanation';
+        }
+    }
+
+    private highlightScore() {
+        if (this.scoreToHighlight === undefined) {
+            this.ngxColor.domain = this.backupDomain;
+            this.ngxData = [...this.ngxData];
+            return;
+        }
+        const index = this.findGradeStepIndex(this.scoreToHighlight);
+        const bar = this.ngxData[index];
+
+        if (bar.value > 0) {
+            this.ngxColor.domain[index] = GraphColors.LIGHT_BLUE;
+            this.ngxData = [...this.ngxData];
+            this.scoreHighlightingVisible.emit(true);
+        } else {
+            this.scoreHighlightingVisible.emit(false);
+        }
+    }
+
+    onChartClick() {
+        if (this.onSelect) {
+            this.onSelect!();
         }
     }
 }
