@@ -78,7 +78,7 @@ describe('CoursesComponent', () => {
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
             declarations: [

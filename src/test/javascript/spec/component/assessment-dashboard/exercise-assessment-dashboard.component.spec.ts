@@ -95,6 +95,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let tutorParticipationService: TutorParticipationService;
 
     let guidedTourService: GuidedTourService;
+
+    let accountService: AccountService;
+
     const result1 = { id: 11 } as Result;
     const result2 = { id: 12 } as Result;
     const exam = { id: 13, numberOfCorrectionRoundsInExam: 2 } as Exam;
@@ -286,6 +289,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
                 modelingSubmissionStubWithoutAssessment.mockReturnValue(of(modelingSubmission));
                 comp.submissionsWithComplaints = [submissionWithComplaintDTO];
+
+                accountService = TestBed.inject(AccountService);
             });
     });
 
@@ -312,7 +317,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
-        modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(lockLimitErrorResponse));
+        modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
         comp.loadAll();
@@ -384,7 +389,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     describe('test calls for all exercise types', () => {
         it('fileuploadSubmission', () => {
-            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(lockLimitErrorResponse));
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
             modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
             exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
@@ -396,7 +401,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
 
         it('textSubmission', () => {
-            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(lockLimitErrorResponse));
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
 
             exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: textExercise, headers: new HttpHeaders() })));
 
@@ -407,7 +412,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
 
         it('programmingSubmission', () => {
-            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(lockLimitErrorResponse));
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
 
             exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise, headers: new HttpHeaders() })));
 
@@ -573,6 +578,45 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.openExampleSubmission(submission!.id, true, true);
             expect(navigateSpy).toHaveBeenCalledWith([`/course-management/${courseId}/${exercise.type}-exercises/${exercise.id}/example-submissions/${submission.id}`], {
                 queryParams: { readOnly: true, toComplete: true },
+            });
+        });
+    });
+
+    describe('pie chart interaction', () => {
+        let event: { value?: number; name?: string };
+
+        it('should not navigate if user is not instructor', () => {
+            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            event = { value: 60 };
+
+            comp.navigateToExerciseSubmissionOverview(event);
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not navigate if user is instructor but clicked the chart legend', () => {
+            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            event = { name: 'assessed submissions' };
+
+            comp.navigateToExerciseSubmissionOverview(event);
+
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should navigate if user is instructor and clicked pie part', () => {
+            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            event = { value: 40 };
+
+            const exercises = [programmingExercise, modelingExercise, textExercise, fileUploadExercise];
+
+            exercises.forEach((preparedExercise) => {
+                comp.exercise = preparedExercise;
+                comp.exerciseId = preparedExercise.id!;
+                comp.courseId = 42;
+
+                comp.navigateToExerciseSubmissionOverview(event);
+
+                expect(navigateSpy).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions']);
             });
         });
     });

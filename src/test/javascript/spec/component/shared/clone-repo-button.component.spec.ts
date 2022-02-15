@@ -11,7 +11,7 @@ import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-ac
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { AlertService } from 'app/core/util/alert.service';
-import { of, BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -37,6 +37,12 @@ describe('JhiCloneRepoButtonComponent', () => {
     let localStorageUseSshStoreStub: jest.SpyInstance;
 
     const info: ProfileInfo = {
+        externalCredentialProvider: '',
+        externalPasswordResetLinkMap: new Map<string, string>([
+            ['en', ''],
+            ['de', ''],
+        ]),
+        useExternal: false,
         activeProfiles: [],
         allowedMinimumOrionVersion: '',
         buildPlanURLTemplate: '',

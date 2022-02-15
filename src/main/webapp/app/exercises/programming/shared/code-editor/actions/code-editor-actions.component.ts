@@ -152,12 +152,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
 
     executeRefresh() {
         this.editorState = EditorState.REFRESHING;
-        this.repositoryService.pull().subscribe(
-            () => {
+        this.repositoryService.pull().subscribe({
+            next: () => {
                 this.onRefreshFiles.emit();
                 this.editorState = EditorState.CLEAN;
             },
-            (error: Error) => {
+            error: (error: Error) => {
                 this.editorState = EditorState.UNSAVED_CHANGES;
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('refreshFailed' + error.message);
@@ -165,7 +165,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                     this.onError.emit('refreshFailed');
                 }
             },
-        );
+        });
     }
 
     onSave() {
@@ -186,14 +186,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 tap((fileSubmission: FileSubmission) => {
                     this.onSavedFiles.emit(fileSubmission);
                 }),
-                catchError((error) => {
+                catchError((error: Error) => {
                     this.editorState = EditorState.UNSAVED_CHANGES;
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('saveFailed' + error.message);
                     } else {
                         this.onError.emit('saveFailed');
                     }
-                    return throwError(error);
+                    return throwError(() => error);
                 }),
             );
         }
@@ -232,9 +232,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                     }
                 }),
             )
-            .subscribe(
-                () => {},
-                (error) => {
+            .subscribe({
+                error: (error: Error) => {
                     this.commitState = CommitState.UNCOMMITTED_CHANGES;
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('commitFailed' + error.message);
@@ -242,21 +241,21 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                         this.onError.emit('commitFailed');
                     }
                 },
-            );
+            });
     }
 
     resetRepository() {
         const modal = this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
         modal.componentInstance.shouldReset.subscribe(() => {
-            this.repositoryService.resetRepository().subscribe(
-                () => {
+            this.repositoryService.resetRepository().subscribe({
+                next: () => {
                     this.conflictService.notifyConflictState(GitConflictState.OK);
                     this.executeRefresh();
                 },
-                () => {
+                error: () => {
                     this.onError.emit('resetFailed');
                 },
-            );
+            });
         });
     }
 }

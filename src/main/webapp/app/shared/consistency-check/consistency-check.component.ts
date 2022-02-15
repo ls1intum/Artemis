@@ -28,19 +28,19 @@ export class ConsistencyCheckComponent implements OnInit {
         let exercisesRemaining = this.exercisesToCheck.length;
         this.exercisesToCheck.forEach((exercise) => {
             const course = getCourseId(exercise);
-            this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe(
-                (inconsistencies) => {
+            this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
+                next: (inconsistencies) => {
                     this.inconsistencies = this.inconsistencies.concat(inconsistencies);
                     this.inconsistencies.map((inconsistency) => (inconsistency.programmingExerciseCourseId = course || undefined));
                     if (--exercisesRemaining === 0) {
                         this.isLoading = false;
                     }
                 },
-                (err) => {
+                error: (err) => {
                     this.alertService.error(err);
                     this.isLoading = false;
                 },
-            );
+            });
         });
     }
 

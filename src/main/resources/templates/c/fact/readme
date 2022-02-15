@@ -1,0 +1,37 @@
+# Aufgabe (6 Punkte)
+
+## Beschreibung
+
+Erstellen Sie ein C-Programm, welches das Ergebnis des Terms $$ x^2 + 5 \cdot y - 4 $$ berechnet und auf der
+Standardausgabe ausgibt. Verwenden Sie für die Variablen `x` und `y` den Datentyp `int` und wählen Sie für beide
+Variablen einen beliebigen Wert!
+
+### Beispielausgaben
+
+Beispiel 1: `x = 3` und `y = 5`
+
+```text
+30
+```
+
+Beispiel 2: `x = -3` und `y = 5`
+
+```text
+30
+```
+
+Beispiel 3: `x = 5` und `y = -10`
+
+```text
+-29
+```
+
+## Hinweise
+
+- Bei den Ein-/Ausgabetests werden beim Testen die Werte der Variablen `x` und `y` in Ihrem Programm verändert!
+
+## Tests
+
+1. [task][Kompilieren](Compile)
+2. [task][Strukturtests](CodeStructure)
+3. [task][Ein-/Ausgabetests](InputOutput)

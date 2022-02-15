@@ -29,8 +29,8 @@ describe('Notification Popup Component', () => {
     let examExerciseUpdateService: ExamExerciseUpdateService;
     let router: Router;
 
-    const generateQuizNotification = (id: number) => {
-        const generatedNotification = { id, title: 'Quiz started', text: 'Quiz "Proxy pattern" just started.' } as Notification;
+    const generateQuizNotification = (notificationId: number) => {
+        const generatedNotification = { id: notificationId, title: 'Quiz started', text: 'Quiz "Proxy pattern" just started.' } as Notification;
         generatedNotification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'exercise', id: 1 });
         return generatedNotification;
     };
@@ -64,7 +64,7 @@ describe('Notification Popup Component', () => {
                 notificationService = TestBed.inject(NotificationService);
                 accountService = TestBed.inject(AccountService);
                 examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
-                router = TestBed.get(Router);
+                router = TestBed.inject(Router);
             });
     });
 

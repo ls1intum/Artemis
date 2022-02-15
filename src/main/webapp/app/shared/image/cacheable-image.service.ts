@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Cacheable, DOMStorageStrategy } from 'ts-cacheable';
+import { Cacheable, LocalStorageStrategy } from 'ts-cacheable';
 import { HttpClient } from '@angular/common/http';
 import { Observable, pipe, Subject, Subscription, UnaryFunction } from 'rxjs';
 import { distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
@@ -50,7 +50,7 @@ export class CacheableImageService implements ICacheableImageService, OnDestroy 
      * @param url
      */
     @Cacheable({
-        storageStrategy: DOMStorageStrategy,
+        storageStrategy: LocalStorageStrategy,
         cacheBusterObserver: logoutSubject.asObservable(),
         maxCacheCount: 30,
     })

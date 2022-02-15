@@ -702,7 +702,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         List<Result> results = new ArrayList<>();
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             Submission submission = exampleSubmission.getSubmission();
-            if (!submission.isEmpty()) {
+            if (!submission.isEmpty() && submission.getLatestResult() != null) {
                 Result result = findByIdWithEagerSubmissionAndFeedbackElseThrow(submission.getLatestResult().getId());
                 results.add(result);
             }

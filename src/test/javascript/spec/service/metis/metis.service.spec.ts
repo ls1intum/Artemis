@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
@@ -39,7 +39,6 @@ import {
 } from '../../helpers/sample/metis-sample-data';
 
 describe('Metis Service', () => {
-    let injector: TestBed;
     let metisService: MetisService;
     let metisServiceUserStub: jest.SpyInstance;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
@@ -47,8 +46,8 @@ describe('Metis Service', () => {
     let websocketServiceSubscribeSpy: jest.SpyInstance;
     let websocketServiceReceiveStub: jest.SpyInstance;
     let websocketService: JhiWebsocketService;
-    let reactionService: MockReactionService;
-    let postService: MockPostService;
+    let reactionService: ReactionService;
+    let postService: PostService;
     let answerPostService: AnswerPostService;
     let post: Post;
     let answerPost: AnswerPost;
@@ -70,12 +69,11 @@ describe('Metis Service', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         });
-        injector = getTestBed();
-        metisService = injector.get(MetisService);
-        websocketService = injector.get(JhiWebsocketService);
-        reactionService = injector.get(ReactionService);
-        postService = injector.get(PostService);
-        answerPostService = injector.get(AnswerPostService);
+        metisService = TestBed.inject(MetisService);
+        websocketService = TestBed.inject(JhiWebsocketService);
+        reactionService = TestBed.inject(ReactionService);
+        postService = TestBed.inject(PostService);
+        answerPostService = TestBed.inject(AnswerPostService);
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
         metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
         metisServiceUserStub = jest.spyOn(metisService, 'getUser');

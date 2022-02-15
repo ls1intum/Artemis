@@ -80,8 +80,8 @@ export function createProgrammingExercise(artemis, courseId, exerciseGroup = und
 
     // The actual exercise
     const exercise = {
-        title: 'TEST ' + nextAlphanumeric(10),
-        shortName: 'TEST' + nextAlphanumeric(5).toUpperCase(),
+        title: 'TEST K6' + nextAlphanumeric(10),
+        shortName: 'TESTK6' + nextAlphanumeric(5).toUpperCase(),
         maxPoints: 42,
         assessmentType: 'AUTOMATIC',
         type: 'programming',

@@ -63,8 +63,8 @@ export class CourseParticipantScoresComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                ([scoresResult, scoresAverageResult, avgScoreResult, avgRatedScoreResult, gradingScaleResult]) => {
+            .subscribe({
+                next: ([scoresResult, scoresAverageResult, avgScoreResult, avgRatedScoreResult, gradingScaleResult]) => {
                     this.participantScoresAverage = scoresAverageResult.body!;
                     this.participantScores = scoresResult.body!;
                     this.avgScore = avgScoreResult.body!;
@@ -79,7 +79,7 @@ export class CourseParticipantScoresComponent implements OnInit {
                         }
                     }
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 }

@@ -54,8 +54,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe(
-            (res: HttpResponse<ModelingExercise[]>) => {
+        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe({
+            next: (res: HttpResponse<ModelingExercise[]>) => {
                 this.modelingExercises = res.body!;
                 // reconnect exercise with course
                 this.modelingExercises.forEach((exercise) => {
@@ -65,8 +65,8 @@ export class ModelingExerciseComponent extends ExerciseComponent {
                 this.applyFilter();
                 this.emitExerciseCount(this.modelingExercises.length);
             },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     protected applyFilter(): void {
@@ -88,16 +88,16 @@ export class ModelingExerciseComponent extends ExerciseComponent {
      * @param modelingExerciseId id of the exercise that will be deleted
      */
     deleteModelingExercise(modelingExerciseId: number) {
-        this.modelingExerciseService.delete(modelingExerciseId).subscribe(
-            () => {
+        this.modelingExerciseService.delete(modelingExerciseId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',
                     content: 'Deleted an modelingExercise',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     protected getChangeEventName(): string {

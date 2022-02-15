@@ -77,12 +77,12 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      * Reset an exam with examId by deleting all studentExams and participations
      */
     resetExam(): void {
-        this.examManagementService.reset(this.exam.course!.id!, this.exam.id!).subscribe(
-            (res: HttpResponse<Exam>) => {
+        this.examManagementService.reset(this.exam.course!.id!, this.exam.id!).subscribe({
+            next: (res: HttpResponse<Exam>) => {
                 this.dialogErrorSource.next('');
                 this.exam = res.body!;
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

@@ -49,11 +49,20 @@
             <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
             <hr *ngIf="buildLogs?.length" />
             <div class="feedback-list">
+                <div class="mb-2 d-flex justify-content-center align-items-center" *ngIf="showOnlyNegativeFeedback || showOnlyPositiveFeedback">
+                    <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                    <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
+                    <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
+                </div>
                 <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
                     <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits"
-                        >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P</span
-                    >
+                        >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P<fa-icon
+                            *ngIf="feedback.type === FeedbackItemType.Subsequent"
+                            [icon]="faExclamationTriangle"
+                            [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
+                        ></fa-icon>
+                    </span>
                     <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
                     <jhi-feedback-collapse id="feedback-text" *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
                     <p *ngElse>No feedback available!</p>

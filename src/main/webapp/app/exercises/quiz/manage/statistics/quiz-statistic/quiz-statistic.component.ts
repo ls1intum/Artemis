@@ -12,11 +12,12 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
 })
 export class QuizStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
     quizExercise: QuizExercise;
@@ -126,8 +127,12 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
 
         // add data for the last bar (Average)
         this.backgroundColor.push('#1e3368');
-        this.ratedData.push(this.ratedAverage / this.maxScore);
-        this.unratedData.push(this.unratedAverage / this.maxScore);
+        /*
+         * we do not use roundScoreSpecifiedByCourseSettings() here as it is not necessary to make the rounding of the average correct solutions
+         * in a quiz dependent of the individual course settings
+         */
+        this.ratedData.push(round(this.ratedAverage / this.maxScore, 2));
+        this.unratedData.push(round(this.unratedAverage / this.maxScore, 2));
 
         // add Text for last label based on the language
         const lastLabel = this.translateService.instant('showStatistic.quizStatistic.average');

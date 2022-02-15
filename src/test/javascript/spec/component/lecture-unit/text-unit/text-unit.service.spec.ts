@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, getTestBed, TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
@@ -10,7 +10,6 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
 
 describe('TextUnitService', () => {
-    let injector: TestBed;
     let service: TextUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: TextUnit;
@@ -31,9 +30,8 @@ describe('TextUnitService', () => {
             ],
         });
         expectedResult = {} as HttpResponse<TextUnit>;
-        injector = getTestBed();
-        service = injector.get(TextUnitService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(TextUnitService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new TextUnit();
         elemDefault.id = 0;

@@ -1,0 +1,19 @@
+start> matching="exact" show_input=False show_expected=True rstrip=True printable_ascii=True
+s> "x" "3" "Initialization of variable 'x' not found! Please, ensure that you initialize the variable 'x' as requested (e.g., 'int x = 3;')" 1
+s> "y" "5" "Initialization of variable 'y' not found! Please, ensure that you initialize the variable 'y' as requested (e.g., 'int y = 5;')" 1
+o> "30"
+end> 0
+
+
+start> matching="exact" show_input=False show_expected=True rstrip=True printable_ascii=True
+s> "x" "5" "Initialization of variable 'x' not found! Please, ensure that you initialize the variable 'x' as requested (e.g., 'int x = 3;')" 1
+s> "y" "-10" "Initialization of variable 'y' not found! Please, ensure that you initialize the variable 'y' as requested (e.g., 'int y = 5;')" 1
+o> "-29"
+end> 0
+
+
+start> matching="exact" show_input=False show_expected=True rstrip=True printable_ascii=True
+s> "x" "0" "Initialization of variable 'x' not found! Please, ensure that you initialize the variable 'x' as requested (e.g., 'int x = 3;')" 1
+s> "y" "0" "Initialization of variable 'y' not found! Please, ensure that you initialize the variable 'y' as requested (e.g., 'int y = 5;')" 1
+o> "-4"
+end> 0

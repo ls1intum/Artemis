@@ -1,0 +1,22 @@
+version: "0.0"
+translation_unit: exercise.c
+tests:
+  - type: compile
+    name: Compile
+  - type: structural
+    name: CodeStructure
+    disallowed_includes:
+      - 'math.h'
+    requirements:
+      - Compile
+    output: true
+    input: false
+    insecure: false
+    expected_function_calls:
+      - printf
+    recursion: false
+  - type: io
+    name: InputOutput
+    requirements:
+      - Compile
+      - CodeStructure

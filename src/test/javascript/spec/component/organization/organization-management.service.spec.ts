@@ -3,7 +3,7 @@ import { Organization } from 'app/entities/organization.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { getTestBed, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -13,7 +13,6 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
 
 describe('Organization Service', () => {
-    let injector: TestBed;
     let service: OrganizationManagementService;
     let httpMock: HttpTestingController;
     let elemDefault: Organization;
@@ -28,9 +27,8 @@ describe('Organization Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        injector = getTestBed();
-        service = injector.get(OrganizationManagementService);
-        httpMock = injector.get(HttpTestingController);
+        service = TestBed.inject(OrganizationManagementService);
+        httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new Organization();
         elemDefault.id = 0;

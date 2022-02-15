@@ -78,7 +78,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             );
 
             // Calculate hasStudentsWithoutExam only when both observables emitted
-            forkJoin(studentExamObservable, examObservable).subscribe(() => {
+            forkJoin([studentExamObservable, examObservable]).subscribe(() => {
                 this.isLoading = false;
             });
         });
@@ -89,30 +89,30 @@ export class ExamAssessmentButtonsComponent implements OnInit {
      */
     evaluateQuizExercises() {
         this.isLoading = true;
-        this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe(
-            (res) => {
+        this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe({
+            next: (res) => {
                 this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
                 this.isLoading = false;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
                 this.isLoading = false;
             },
-        );
+        });
     }
 
     assessUnsubmittedExamModelingAndTextParticipations() {
         this.isLoading = true;
-        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe(
-            (res) => {
+        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe({
+            next: (res) => {
                 this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
                 this.isLoading = false;
             },
-            (err: HttpErrorResponse) => {
+            error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
                 this.isLoading = false;
             },
-        );
+        });
     }
 
     /**
