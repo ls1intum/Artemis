@@ -19,6 +19,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ExportToCsv } from 'export-to-csv';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
+
 const NAME_KEY = 'Name';
 const USERNAME_KEY = 'Username';
 const EMAIL_KEY = 'Email';
