@@ -1,10 +1,12 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
@@ -29,7 +31,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     constructor(private router: Router) {}
 
     // ngx-charts
-    ngxData: any[] = [
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [
         { name: 'Done', value: 0 },
         { name: 'Not done', value: 0 },
     ];
@@ -37,7 +39,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#32cd32', '#ff0000'], // colors: green, red
+        domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
     bindFormatting = this.valueFormatting.bind(this);
 
@@ -48,7 +50,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
             this.assignValuesToData([1, 0]);
         } else {
             this.receivedStats = true;
-            const remaining = roundScoreSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
+            const remaining = roundValueSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
             this.stats = [this.currentAbsolute!, remaining];
             return this.currentMax === 0 ? this.assignValuesToData([1, 0]) : this.assignValuesToData(this.stats);
         }

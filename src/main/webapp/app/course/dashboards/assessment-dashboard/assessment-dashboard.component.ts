@@ -26,6 +26,7 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-courses',
     templateUrl: './assessment-dashboard.component.html',
+    styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
 })
 export class AssessmentDashboardComponent implements OnInit {
@@ -316,13 +317,19 @@ export class AssessmentDashboardComponent implements OnInit {
     private getUnfinishedExercises(exercises?: Exercise[]) {
         const filteredExercises = exercises?.filter(
             (exercise) =>
-                exercise.numberOfAssessmentsOfCorrectionRounds?.map((round) => round.inTime !== exercise.numberOfSubmissions?.inTime).reduce((acc, current) => acc || current) ||
-                exercise.totalNumberOfAssessments?.inTime !== exercise.numberOfSubmissions?.inTime ||
+                (!exercise.allowComplaintsForAutomaticAssessments && this.hasUnfinishedAssessments(exercise)) ||
                 exercise.numberOfOpenComplaints !== 0 ||
                 exercise.numberOfOpenMoreFeedbackRequests !== 0,
         );
 
         return filteredExercises ? filteredExercises : [];
+    }
+
+    private hasUnfinishedAssessments(exercise: Exercise): boolean {
+        return (
+            exercise.numberOfAssessmentsOfCorrectionRounds?.map((round) => round.inTime !== exercise.numberOfSubmissions?.inTime).reduce((acc, cur) => acc || cur) ||
+            exercise.totalNumberOfAssessments?.inTime !== exercise.numberOfSubmissions?.inTime
+        );
     }
 
     /**

@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -224,7 +225,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         gradingService.calculateScoreForResult(result, programmingExercise, true);
 
         var duplicateFeedbackEntries = result.getFeedbacks().stream()
-                .filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("This is a duplicate test case.")).collect(Collectors.toList());
+                .filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("This is a duplicate test case.")).toList();
         assertThat(result.getScore()).isEqualTo(0D);
         assertThat(duplicateFeedbackEntries.size()).isEqualTo(2);
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
@@ -724,6 +725,44 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         final var updatedParticipationIds = updated.stream().map(result -> result.getParticipation().getId()).collect(Collectors.toSet());
         assertThat(updatedParticipationIds).hasSize(5);
         assertThat(updatedParticipationIds).allMatch(participationId -> !Objects.equals(participationId, participationWithIndividualDueDateId));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testWeightSumZero() {
+        programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(programmingExercise.getId());
+
+        final var testCases = createTestCases(false);
+        createTestParticipations();
+
+        for (final var testCase : testCases.values()) {
+            testCase.setWeight(0D);
+        }
+        testCases.get("test1").setBonusMultiplier(1.4D);
+        testCaseRepository.saveAll(testCases.values());
+
+        final var updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
+        assertThat(updatedResults).hasSize(7);
+
+        // even though the test case weights are all zero, the solution should receive a score
+        // => every test case is weighted with 1.0 in that case
+        final var updatedSolution = updatedResults.stream().filter(result -> result.getParticipation() instanceof SolutionProgrammingExerciseParticipation).findFirst().get();
+        assertThat(updatedSolution.getScore()).isCloseTo(66.6667, Offset.offset(offsetByTenThousandth));
+
+        final var updatedStudentResults = updatedResults.stream().filter(result -> result.getParticipation() instanceof StudentParticipation).toList();
+        assertThat(updatedStudentResults).hasSize(5);
+
+        for (final var result : updatedStudentResults) {
+            final var automaticPositiveFeedbacks = result.getFeedbacks().stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive()))
+                    .filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
+            for (final var feedback : automaticPositiveFeedbacks) {
+                double bonusPoints = testCases.get(feedback.getText()).getBonusPoints();
+                assertThat(feedback.getCredits()).isEqualTo(bonusPoints);
+            }
+        }
     }
 
     private Map<String, ProgrammingExerciseTestCase> createTestCases(boolean withAdditionalInvisibleTestCase) {

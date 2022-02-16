@@ -796,7 +796,7 @@ public class ProgrammingExerciseService {
         final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
         final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
 
-        // This cancels the scheduled tasks (like locking/unlocking repositories)
+        // The delete operation cancels scheduled tasks (like locking/unlocking repositories)
         // As the programming exercise might already be deleted once the scheduling node receives the message, only the
         // id is used to cancel the scheduling. No interaction with the database is required.
         cancelScheduledOperations(programmingExercise.getId());

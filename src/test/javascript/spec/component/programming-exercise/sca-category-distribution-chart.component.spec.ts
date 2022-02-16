@@ -9,10 +9,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { Router } from '@angular/router';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;
     let fixture: ComponentFixture<ScaCategoryDistributionChartComponent>;
+
+    let router: Router;
 
     const category1 = {
         id: 1,
@@ -53,11 +57,15 @@ describe('SCA category distribution chart', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [ScaCategoryDistributionChartComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ScaCategoryDistributionChartComponent);
         component = fixture.componentInstance;
+        router = TestBed.inject(Router);
     });
 
     it('should process the categories correctly', () => {
@@ -122,5 +130,43 @@ describe('SCA category distribution chart', () => {
 
         expect(component.ngxData[2].series[0].name).toBe('negative category');
         expect(component.ngxData[2].series[0].value).toBe(0);
+    });
+
+    describe('test chart interaction', () => {
+        let event: any;
+        let emitStub: jest.SpyInstance;
+        beforeEach(() => (emitStub = jest.spyOn(component.scaCategoryFilter, 'emit').mockImplementation()));
+        afterEach(() => jest.restoreAllMocks());
+
+        it('should delegate the user correctly', () => {
+            programmingExercerise.course = { id: 7 };
+            programmingExercerise.id = 10;
+            component.exercise = programmingExercerise;
+            const navigateSpy = jest.spyOn(router, 'navigate');
+            const expectedUrl = ['course-management', 7, 'programming-exercises', 10, 'scores'];
+            event = {};
+
+            component.onSelect(event);
+
+            expect(navigateSpy).toHaveBeenCalledWith(expectedUrl);
+        });
+
+        it('should emit the correct test case id', () => {
+            event = { isPenalty: true, id: 77 };
+
+            component.onSelect(event);
+
+            expect(emitStub).toHaveBeenCalledWith(77);
+            expect(component.tableFiltered).toBe(true);
+        });
+
+        it('should reset the table correctly', () => {
+            component.tableFiltered = true;
+
+            component.resetTableFilter();
+
+            expect(emitStub).toHaveBeenCalledWith(-5);
+            expect(component.tableFiltered).toBe(false);
+        });
     });
 });

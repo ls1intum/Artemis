@@ -265,7 +265,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (ProjectType.XCODE === type) {
             // Disable Online Editor
             this.programmingExercise.allowOnlineEditor = false;
+        } else if (ProjectType.FACT === type) {
+            // Disallow SCA for C (FACT)
+            this.disableStaticCodeAnalysis();
         }
+    }
+
+    private disableStaticCodeAnalysis() {
+        this.programmingExercise.staticCodeAnalysisEnabled = false;
+        this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
     }
 
     /**

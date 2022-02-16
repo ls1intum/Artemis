@@ -20,7 +20,7 @@
                 [exercise]="exercise"
                 [short]="true"
                 [triggerLastGraded]="false"
-                style="width: unset"
+                class="result"
             ></jhi-submission-result-status>
         </div>
         <div class="row" style="justify-content: space-between">
@@ -55,9 +55,9 @@
                     <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
                 </h4>
             </div>
-            <div class="col-sm-auto mb-2" *ngIf="dueDate; else noDate" [ngClass]="getUrgentClass(dueDate ?? exercise.releaseDate) || ''">
+            <div class="col-sm-auto mb-2" *ngIf="dueDate; else noDate" [ngClass]="getUrgentClass(dueDate) || ''">
                 <span class="d-none d-sm-inline"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: </span>
-                {{ dueDate ?? exercise.releaseDate! | artemisTimeAgo }}
+                {{ dueDate | artemisTimeAgo }}
             </div>
             <ng-template #noDate>
                 <div class="col-auto mb-2">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</div>

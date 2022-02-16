@@ -21,6 +21,8 @@ import { isOrion } from 'app/shared/orion/orion';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
+import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
 
 const routes: Routes = [
     {
@@ -61,7 +63,7 @@ const routes: Routes = [
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
     ],
-    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
+    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
 })
 export class CourseExerciseDetailsModule {}

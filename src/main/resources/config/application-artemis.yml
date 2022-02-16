@@ -9,6 +9,11 @@ artemis:
     encryption-password: <encrypt-password>         # arbitrary password for encrypting database values
     user-management:
         use-external: true
+        password-reset:
+            credential-provider: <provider> # The credential provider which users can log in though (e.g. TUMonline)
+            links: # The password reset links for different languages
+                en: '<link>'
+                de: '<link>'
         external:
             url: https://jira.ase.in.tum.de
             user: <username>        # e.g. ga12abc

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
-
 import java.util.Optional;
 
 import javax.validation.Valid;

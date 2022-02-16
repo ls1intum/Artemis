@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,7 +19,6 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 
 public class ApollonConversionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {

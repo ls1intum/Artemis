@@ -9,7 +9,7 @@ export class ProgrammingExerciseAssessmentPage extends AbstractExerciseAssessmen
 
     provideFeedbackOnCodeLine(lineIndex: number, points: number, feedback: string) {
         // We can't change elements from the ace editor, so we can't use custom ids here
-        cy.get('.ace_gutter-cell').eq(lineIndex).find('[data-icon="plus-square"]').click({ force: true });
+        cy.get('.ace_gutter-cell').eq(lineIndex).find('svg').click({ force: true });
         this.typeIntoFeedbackEditor(feedback, lineIndex);
         this.typePointsIntoFeedbackEditor(points, lineIndex);
         this.saveFeedback(lineIndex);

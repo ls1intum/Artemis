@@ -46,15 +46,17 @@ module.exports = {
         'src/main/webapp/app/exam/exam-scores/exam-scores.route.ts',
         'src/main/webapp/app/exam/participate/exam-participation.route.ts',
         'src/main/webapp/app/exercises/file-upload/manage/file-upload-exercise-management.route.ts',
-        'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts'
+        'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
+        'src/main/webapp/app/exam/manage/exam-management.route.ts',
+        'src/main/webapp/app/exercises/shared/exercise-hint/manage/exercise-hint.route.ts',
     ],
     coverageThreshold: {
         global: {
-            // TODO: in the future, the following values should be increase to at least 80%
-            statements: 78.3,
-            branches: 65.8,
-            functions: 70.0,
-            lines: 78.0,
+            // TODO: in the future, the following values should be increase to at least 85%
+            statements: 80.3,
+            branches: 67.6,
+            functions: 72.2,
+            lines: 79.9,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
@@ -73,6 +75,7 @@ module.exports = {
         '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/interceptor/**/*.spec.ts',
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',

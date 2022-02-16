@@ -6,7 +6,6 @@ import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -103,10 +102,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         if (0 <= remainingDays && remainingDays < 7) {
             return 'text-danger';
         }
-    }
-
-    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
-        return exercise as ProgrammingExercise;
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {

@@ -28,6 +28,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    currentTime: dayjs.Dayjs;
 
     // Icons
     faSort = faSort;
@@ -64,6 +65,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
                 this.course = res.body!;
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
+                this.currentTime = dayjs();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -104,20 +106,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     registerChangeInExams() {
         this.eventSubscriber = this.eventManager.subscribe('examListModification', () => {
             this.loadAllExamsForCourse();
-        });
-    }
-
-    /**
-     * Function is called when the delete button is pressed for an exam
-     * @param examId Id to be deleted
-     */
-    deleteExam(examId: number): void {
-        this.examManagementService.delete(this.course.id!, examId).subscribe({
-            next: () => {
-                this.dialogErrorSource.next('');
-                this.exams = this.exams.filter((exam) => exam.id !== examId);
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            this.currentTime = dayjs();
         });
     }
 

@@ -18,7 +18,7 @@
             <!-- Comes with JUnit 5, AssertJ and Hamcrest. JUnit 4 (JUnit 5 Vintage) or jqwik need to be added explicitly -->
             <groupId>de.tum.in.ase</groupId>
             <artifactId>artemis-java-test-sandbox</artifactId>
-            <version>1.7.6</version>
+            <version>1.8.0</version>
         </dependency>
     </dependencies>
     <build>
@@ -47,6 +47,44 @@
                 <version>3.0.0-M5</version>
                 <configuration>
                     <argLine>-Dfile.encoding=UTF-8</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-no-student-code-in-trusted-packages</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <rules>
+                        <requireFilesDontExist>
+                            <files>
+                                <file>${project.build.outputDirectory}/ch/qos/logback/</file>
+                                <file>${project.build.outputDirectory}/com/intellij/</file>
+                                <file>${project.build.outputDirectory}/com/sun/</file>
+                                <file>${project.build.outputDirectory}/de/tum/in/test/api/</file>
+                                <file>${project.build.outputDirectory}/java/</file>
+                                <file>${project.build.outputDirectory}/javax/</file>
+                                <file>${project.build.outputDirectory}/jdk/</file>
+                                <file>${project.build.outputDirectory}/net/jqwik/</file>
+                                <file>${project.build.outputDirectory}/org/apache/</file>
+                                <file>${project.build.outputDirectory}/org/assertj/</file>
+                                <file>${project.build.outputDirectory}/org/eclipse/</file>
+                                <file>${project.build.outputDirectory}/org/jacoco/</file>
+                                <file>${project.build.outputDirectory}/org/json/</file>
+                                <file>${project.build.outputDirectory}/org/junit/</file>
+                                <file>${project.build.outputDirectory}/org/opentest4j/</file>
+                                <file>${project.build.outputDirectory}/sun/</file>
+                            </files>
+                        </requireFilesDontExist>
+                    </rules>
                 </configuration>
             </plugin>
             <!--%static-code-analysis-start%-->

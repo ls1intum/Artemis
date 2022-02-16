@@ -53,7 +53,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     isSubmittingLogin = false;
 
     profileInfo: ProfileInfo | undefined = undefined;
-    showResetPasswordLink = false;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -93,7 +92,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 }
                 this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
                 this.needsToAcceptTerms = profileInfo.needsToAcceptTerms || false;
-                this.showResetPasswordLink = this.isRegistrationEnabled || profileInfo.saml2?.enablePassword || false;
             }
         });
         this.accountService.identity().then((user) => {
