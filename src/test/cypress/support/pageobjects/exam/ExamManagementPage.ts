@@ -12,11 +12,15 @@ export class ExamManagementPage {
     }
 
     /**
-     * Opens the exam in the table with the specified id
-     * @param examId the exam id
+     * Deletes the exam with the specified title.
+     * @param examId the exam ID
+     * @param examTitle the exam ID
      */
-    openExam(examId: string) {
-        cy.get(`#exam-${examId}-title`).click();
+    deleteExam(examId: string, examTitle: string) {
+        cy.get('#delete-exam-' + examId).click();
+        cy.get('#delete').should('be.disabled');
+        cy.get('#confirm-exercise-name').type(examTitle);
+        cy.get('#delete').should('not.be.disabled').click();
     }
 
     /**

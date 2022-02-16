@@ -42,7 +42,7 @@
                     <td class="d-md-table-cell">
                         <ng-container>
                             <span class="bold" *ngIf="course.isAtLeastInstructor; else notClickableExamTitle">
-                                <a id="exam-{{ exam.id }}-title" [routerLink]="[exam.id]">{{ exam.title }}</a>
+                                <a [routerLink]="[exam.id]">{{ exam.title }}</a>
                             </span>
                         </ng-container>
                         <ng-template #notClickableExamTitle>
