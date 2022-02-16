@@ -94,7 +94,7 @@ describe('Alert Service Test', () => {
 
         expect(service.get()).toHaveLength(1);
 
-        jest.advanceTimersByTime(9000);
+        jest.advanceTimersByTime(16000);
 
         expect(service.get()).toHaveLength(0);
         expect(alert.onClose).toHaveBeenCalledTimes(1);
