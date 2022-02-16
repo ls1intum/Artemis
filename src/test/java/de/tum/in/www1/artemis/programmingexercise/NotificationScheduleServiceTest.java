@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsS
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;

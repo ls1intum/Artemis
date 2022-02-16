@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
+import { GraphColors } from 'app/entities/statistics.model';
 
 export class AssessmentDashboardInformationEntry {
     constructor(public total: number, public tutor: number, public done?: number) {}
@@ -98,11 +99,11 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
         this.customColors = [
             {
                 name: this.openedAssessmentsTitle,
-                value: '#F4A7B6',
+                value: GraphColors.RED,
             },
             {
                 name: this.completedAssessmentsTitle,
-                value: '#98C7EF',
+                value: GraphColors.BLUE,
             },
         ];
 

@@ -15,6 +15,6 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
         // Allowed locations are under $artemisRunDir/public/** and resource/public/**
         final var userDir = System.getProperty("user.dir");
         final var publicFiles = Paths.get(userDir, "public");
-        registry.addResourceHandler("/public/**").addResourceLocations("file:" + publicFiles.toString() + "/", "classpath:public/");
+        registry.addResourceHandler("/public/**").addResourceLocations("file:" + publicFiles + "/", "classpath:public/");
     }
 }

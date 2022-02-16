@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.*;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;

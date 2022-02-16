@@ -7,6 +7,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { Course } from 'app/entities/course.model';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -18,7 +19,7 @@ export class ExamPointsSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     @Input() exercises: Exercise[];
     @Input() exam: Exam;
-    @Input() courseId: number;
+    @Input() course: Course;
 
     gradingScaleExists = false;
     isBonus = false;
@@ -56,9 +57,9 @@ export class ExamPointsSummaryComponent implements OnInit {
      */
     calculateExamGrade() {
         const achievedPointsRelative = (this.calculatePointsSum() / this.calculateMaxPointsSum()) * 100;
-        this.gradingSystemService.matchPercentageToGradeStepForExam(this.courseId, this.exam!.id!, achievedPointsRelative).subscribe((gradeObservable) => {
-            if (gradeObservable && gradeObservable!.body) {
-                const gradeDTO = gradeObservable!.body;
+        this.gradingSystemService.matchPercentageToGradeStepForExam(this.course.id!, this.exam.id!, achievedPointsRelative).subscribe((gradeObservable) => {
+            if (gradeObservable && gradeObservable.body) {
+                const gradeDTO = gradeObservable.body;
                 this.gradingScaleExists = true;
                 this.grade = gradeDTO.gradeName;
                 this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
@@ -74,7 +75,7 @@ export class ExamPointsSummaryComponent implements OnInit {
      */
     calculateAchievedPoints(exercise: Exercise): number {
         if (ExamPointsSummaryComponent.hasResultScore(exercise)) {
-            return roundValueSpecifiedByCourseSettings(exercise.maxPoints! * (exercise.studentParticipations![0].results![0].score! / 100), this.exam.course);
+            return roundValueSpecifiedByCourseSettings(exercise.maxPoints! * (exercise.studentParticipations![0].results![0].score! / 100), this.course);
         }
         return 0;
     }
@@ -87,7 +88,7 @@ export class ExamPointsSummaryComponent implements OnInit {
             const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
             return roundValueSpecifiedByCourseSettings(
                 exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + this.calculateAchievedPoints(nextExercise), 0),
-                this.exam.course,
+                this.course,
             );
         }
         return 0;
@@ -101,7 +102,7 @@ export class ExamPointsSummaryComponent implements OnInit {
             const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY);
             return roundValueSpecifiedByCourseSettings(
                 exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getMaxScore(nextExercise), 0),
-                this.exam.course,
+                this.course,
             );
         }
         return 0;
@@ -115,7 +116,7 @@ export class ExamPointsSummaryComponent implements OnInit {
             const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
             return roundValueSpecifiedByCourseSettings(
                 exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getBonusPoints(nextExercise), 0),
-                this.exam.course,
+                this.course,
             );
         }
         return 0;
