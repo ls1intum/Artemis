@@ -35,7 +35,7 @@ export const SCORE_KEY = 'Score';
 export const GRADE_KEY = 'Grades';
 export const BONUS_KEY = 'Bonus Points';
 
-enum HighlightType {
+export enum HighlightType {
     AVERAGE = 'average',
     MEDIAN = 'median',
     NONE = 'none',
