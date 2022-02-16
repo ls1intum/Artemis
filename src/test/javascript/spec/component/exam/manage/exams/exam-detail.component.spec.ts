@@ -52,6 +52,7 @@ describe('ExamDetailComponent', () => {
                     { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams', component: DummyComponent },
                 ]),
                 HttpClientTestingModule,
             ],
@@ -214,5 +215,20 @@ describe('ExamDetailComponent', () => {
         // THEN
         expect(service.reset).toHaveBeenCalledTimes(1);
         expect(examDetailComponent.exam).toEqual(exam);
+    });
+
+    it('should delete an exam when delete exam is called', () => {
+        // GIVEN
+        examDetailComponent.exam = exam;
+        const responseFakeDelete = {} as HttpResponse<any[]>;
+        const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
+        jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
+
+        // WHEN
+        examDetailComponent.deleteExam(exam.id!);
+
+        // THEN
+        expect(service.delete).toHaveBeenCalledTimes(1);
     });
 });

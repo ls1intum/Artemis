@@ -174,7 +174,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 // Test presence and absence of exercise type specific properties
                 if (exerciseServer instanceof FileUploadExercise fileUploadExercise) {
                     assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was set correctly").isNotNull();
+                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
                 }
                 else if (exerciseServer instanceof ModelingExercise modelingExercise) {
                     assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
@@ -284,7 +284,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
                 if (exerciseWithDetails instanceof FileUploadExercise fileUploadExercise) {
                     assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was set correctly").isNotNull();
+                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
                     assertThat(fileUploadExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
                 }
                 else if (exerciseWithDetails instanceof ModelingExercise modelingExercise) {

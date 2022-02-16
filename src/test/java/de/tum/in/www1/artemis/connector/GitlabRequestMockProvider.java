@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.connector;
 
 import static org.gitlab4j.api.models.AccessLevel.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;

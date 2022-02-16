@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static tech.jhipster.config.JHipsterConstants.*;
 

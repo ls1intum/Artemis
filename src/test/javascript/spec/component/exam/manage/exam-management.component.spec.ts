@@ -138,23 +138,6 @@ describe('Exam Management Component', () => {
         expect(comp.exams).toEqual([exam]);
     });
 
-    it('should delete an exam when delete exam is called', () => {
-        // GIVEN
-        comp.exams = [exam];
-        comp.course = course;
-        const responseFakeDelete = {} as HttpResponse<any[]>;
-        const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
-        jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
-        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
-
-        // WHEN
-        comp.deleteExam(exam.id!);
-
-        // THEN
-        expect(service.delete).toHaveBeenCalledTimes(1);
-        expect(comp.exams.length).toEqual(0);
-    });
-
     it('should return false for examHasFinished when component has no exam information ', () => {
         // GIVEN
         exam.latestIndividualEndDate = undefined;

@@ -1,19 +1,22 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
-import com.thoughtworks.qdox.model.JavaSource;
 
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -74,7 +77,7 @@ public class OracleGenerator {
 
         // Loop over each pair of types and create the diff data structures and the JSON representation afterwards for each.
         // If the types, classes or enums are equal, then ignore and continue with the next pair
-        for (Map.Entry<JavaClass, JavaClass> entry : solutionToTemplateMapping.entrySet()) {
+        for (var entry : solutionToTemplateMapping.entrySet()) {
             JsonObject diffJSON = new JsonObject();
             JavaClass solutionType = entry.getKey();
             JavaClass templateType = entry.getValue();
@@ -116,20 +119,10 @@ public class OracleGenerator {
      * This method pretty prints a given JSON array.
      *
      * @param jsonArray The JSON array that needs to get pretty printed.
-     * @return The pretty printed JSON array in its string representation. If there is any IO exception, an empty string is returned instead.
+     * @return The pretty printed JSON array in its string representation.
      */
     private static String prettyPrint(JsonArray jsonArray) {
-        ObjectMapper mapper = new ObjectMapper();
-
-        // TODO: instead of using two different libraries and convert the json vice versa we should try to pretty print via gson or directly use Jackson
-        try {
-            Object jsonObject = mapper.readValue(jsonArray.toString(), Object.class);
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
-        }
-        catch (IOException e) {
-            log.error("Could not pretty print the JSON!", e);
-            throw new InternalServerErrorException("Could not pretty print the JSON!");
-        }
+        return new GsonBuilder().setPrettyPrinting().create().toJson(jsonArray);
     }
 
     /**
@@ -143,12 +136,12 @@ public class OracleGenerator {
      * @return A hash map containing the type pairs of the solution types and their respective counterparts in the template.
      */
     private static Map<JavaClass, JavaClass> generateSolutionToTemplateMapping(Path solutionProjectPath, Path templateProjectPath) {
-        List<File> templateFiles = retrieveJavaSourceFiles(templateProjectPath);
-        List<File> solutionFiles = retrieveJavaSourceFiles(solutionProjectPath);
+        List<Path> templateFiles = retrieveJavaSourceFiles(templateProjectPath);
+        List<Path> solutionFiles = retrieveJavaSourceFiles(solutionProjectPath);
         log.debug("Template Java Files {}", templateFiles);
         log.debug("Solution Java Files {}", solutionFiles);
-        List<JavaClass> templateClasses = getClassesFromFiles(templateFiles);
-        List<JavaClass> solutionClasses = getClassesFromFiles(solutionFiles);
+        var templateClasses = getClassesFromFiles(templateFiles);
+        var solutionClasses = getClassesFromFiles(solutionFiles);
 
         Map<JavaClass, JavaClass> solutionToTemplateMapping = new HashMap<>();
 
@@ -168,44 +161,30 @@ public class OracleGenerator {
         return solutionToTemplateMapping;
     }
 
-    private static List<JavaClass> getClassesFromFiles(List<File> javaSourceFiles) {
-
-        List<JavaClass> foundJavaClasses = new ArrayList<>();
-        for (File javaSourceFile : javaSourceFiles) {
-            try {
-                JavaProjectBuilder builder = new JavaProjectBuilder();
-                JavaSource src = builder.addSource(javaSourceFile);
-                foundJavaClasses.addAll(src.getClasses());
-            }
-            catch (IOException e) {
-                log.error("Could not add java source to builder", e);
+    private static Collection<JavaClass> getClassesFromFiles(List<Path> javaSourceFiles) {
+        JavaProjectBuilder builder = new JavaProjectBuilder();
+        try {
+            for (Path source : javaSourceFiles) {
+                builder.addSource(source.toFile());
             }
         }
-        return foundJavaClasses;
-    }
-
-    private static List<File> retrieveJavaSourceFiles(Path path) {
-        List<File> foundFiles = new ArrayList<>();
-
-        walkProjectFileStructure(path.toFile(), foundFiles);
-
-        return foundFiles;
-    }
-
-    private static void walkProjectFileStructure(File file, List<File> foundFiles) {
-        String fileName = file.getName();
-
-        if (fileName.contains(".java")) {
-            foundFiles.add(file);
+        catch (IOException e) {
+            var error = "Could not add java source to builder";
+            log.error(error, e);
+            throw new InternalServerErrorException(error);
         }
+        return builder.getClasses();
+    }
 
-        if (file.isDirectory()) {
-            String[] subFiles = file.list();
-            if (subFiles != null) {
-                for (String subFile : subFiles) {
-                    walkProjectFileStructure(new File(file, subFile), foundFiles);
-                }
-            }
+    private static List<Path> retrieveJavaSourceFiles(Path start) {
+        var matcher = FileSystems.getDefault().getPathMatcher("glob:**/*.java");
+        try {
+            return Files.walk(start).filter(Files::isRegularFile).filter(matcher::matches).toList();
+        }
+        catch (IOException e) {
+            var error = "Could not retrieve the project files to generate the oracle";
+            log.error(error, e);
+            throw new InternalServerErrorException(error);
         }
     }
 

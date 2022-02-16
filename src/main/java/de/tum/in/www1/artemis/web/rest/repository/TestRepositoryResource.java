@@ -53,13 +53,13 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     VcsRepositoryUrl getRepositoryUrl(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         return exercise.getVcsTestRepositoryUrl();
     }
 
     @Override
     boolean canAccessRepository(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         return authCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userRepository.getUserWithGroupsAndAuthorities());
     }
 
