@@ -7,6 +7,7 @@ import { AlertError } from 'app/shared/alert/alert-error.model';
 import { Subscription } from 'rxjs';
 import { captureException } from '@sentry/browser';
 import { faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle, IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { HttpErrorResponse } from '@angular/common/http';
 
 export class AlertType {
     public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'btn-success');
@@ -66,7 +67,7 @@ export class AlertService {
         });
 
         this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
-            const httpErrorResponse = response.content;
+            const httpErrorResponse: HttpErrorResponse = response.content;
             switch (httpErrorResponse.status) {
                 // connection refused, server not reachable
                 case 0:
@@ -87,7 +88,7 @@ export class AlertService {
                             entityKey = httpErrorResponse.headers.get(entry);
                         }
                     });
-                    if (errorHeader) {
+                    if (errorHeader && !translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
                         const entityName = translateService.instant('global.menu.entities.' + entityKey);
                         this.addErrorAlert(errorHeader, errorHeader, { entityName });
                     } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
@@ -105,6 +106,8 @@ export class AlertService {
                         }
                     } else if (httpErrorResponse.error && httpErrorResponse.error.message) {
                         this.addErrorAlert(httpErrorResponse.error.message, httpErrorResponse.error.message, httpErrorResponse.error.params);
+                    } else if (httpErrorResponse.message) {
+                        this.addErrorAlert(httpErrorResponse.message, httpErrorResponse.message);
                     } else {
                         this.addErrorAlert(httpErrorResponse.error);
                     }
