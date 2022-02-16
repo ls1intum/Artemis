@@ -23,6 +23,11 @@ export class ExamManagementPage {
         cy.get('#delete').should('not.be.disabled').click();
     }
 
+    /** Opens the exam with this exam id. */
+    openExam(examId: string) {
+        cy.get(`#exam-${examId}-title`).click();
+    }
+
     /**
      * Clicks the create new exam button.
      */
