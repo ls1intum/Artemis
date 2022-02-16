@@ -232,12 +232,12 @@ describe('Alert Service Test', () => {
             url: 'http://localhost:8080/api/foos',
             headers: new HttpHeaders(),
             status: 400,
-            error: 'Bad Request',
+            statusText: 'Bad request',
         });
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
         expect(service.get()).toHaveLength(1);
-        expect(service.get()[0].message).toBe('Bad Request');
+        expect(service.get()[0].message).toBe('Http failure response for http://localhost:8080/api/foos: 400 Bad request');
     });
 
     it('Should display an alert on status 400 for invalid parameters', () => {
