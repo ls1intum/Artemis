@@ -32,6 +32,6 @@ describe('OrganizationManagementResolve', () => {
         const result = organizationManagementResolve.resolve({ params: { id: undefined } } as any as ActivatedRouteSnapshot);
         expect(result).not.toBe(toReturn);
         expect(result).toBeInstanceOf(Organization);
-        expect(spy).toHaveBeenCalledTimes(0);
+        expect(spy).not.toHaveBeenCalled();
     });
 });

@@ -171,7 +171,7 @@ describe('OrganizationManagementDetailComponent', () => {
         expect(typeAheadButtons[0].classList.add).toHaveBeenCalledWith('already-member');
         expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledTimes(1);
         expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
-        expect(typeAheadButtons[1].classList.add).toHaveBeenCalledTimes(0);
+        expect(typeAheadButtons[1].classList.add).not.toHaveBeenCalled();
     }));
 
     it('should return zero users if search term is less then 3 chars', fakeAsync(() => {
@@ -190,7 +190,7 @@ describe('OrganizationManagementDetailComponent', () => {
         });
 
         tick();
-        expect(userService.search).toHaveBeenCalledTimes(0);
+        expect(userService.search).not.toHaveBeenCalled();
     }));
 
     it('should set the no results flag is no users were found during search', fakeAsync(() => {
