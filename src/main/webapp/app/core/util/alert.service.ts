@@ -47,7 +47,7 @@ interface AlertInternal extends AlertBase {
 
 export interface Alert extends Readonly<AlertInternal> {}
 
-const DEFAULT_TIMEOUT = 8000;
+const DEFAULT_TIMEOUT = 15000;
 const DEFAULT_DISMISSIBLE = true;
 
 @Injectable({
@@ -147,7 +147,7 @@ export class AlertService {
             action: alert.action,
             onClose: alert.onClose,
             dismissible: alert.dismissible,
-            isOpen: true,
+            isOpen: false,
         } as AlertInternal;
 
         if (!alert.disableTranslation && (alert.translationKey || alert.message)) {
@@ -198,18 +198,21 @@ export class AlertService {
             };
         }
 
-        this.alerts.unshift(alertInternal);
+        if (alert.message && alert.message !== '') {
+            alertInternal.isOpen = true;
+            this.alerts.unshift(alertInternal);
 
-        if (alertInternal.timeout > 0) {
-            // Workaround protractor waiting for setTimeout.
-            // Reference https://www.protractortest.org/#/timeouts
-            this.ngZone.runOutsideAngular(() => {
-                setTimeout(() => {
-                    this.ngZone.run(() => {
-                        alertInternal.close();
-                    });
-                }, alertInternal.timeout);
-            });
+            if (alertInternal.timeout > 0) {
+                // Workaround protractor waiting for setTimeout.
+                // Reference https://www.protractortest.org/#/timeouts
+                this.ngZone.runOutsideAngular(() => {
+                    setTimeout(() => {
+                        this.ngZone.run(() => {
+                            alertInternal.close();
+                        });
+                    }, alertInternal.timeout);
+                });
+            }
         }
 
         return alertInternal;
