@@ -18,7 +18,7 @@ const examDetailsPage = artemis.pageobjects.exam.details;
 describe('Exam creation/deletion', () => {
     let course: Course;
     let examTitle: string;
-    let examId: string;
+    let examId: number;
 
     before(() => {
         cy.login(artemis.users.getAdmin());
