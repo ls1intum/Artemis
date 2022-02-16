@@ -35,7 +35,7 @@ export const SCORE_KEY = 'Score';
 export const GRADE_KEY = 'Grades';
 export const BONUS_KEY = 'Bonus Points';
 
-enum HighlightValue {
+enum HighlightType {
     AVERAGE = 'average',
     MEDIAN = 'median',
     NONE = 'none',
@@ -55,6 +55,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     // Expose the functions to the template
     readonly roundScorePercentSpecifiedByCourseSettings = roundScorePercentSpecifiedByCourseSettings;
+    readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     course: Course;
     allParticipationsOfCourse: StudentParticipation[] = [];
@@ -94,11 +95,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     averageGrade?: string;
     scoresToDisplay: number[];
     valueToHighlight: number | undefined;
-    highlightedType = HighlightValue.NONE;
+    highlightedType = HighlightType.NONE;
 
     numberOfReleasedExercises: number;
     averageScoreIncluded = 0;
-    averagePointsIncluded = 0;
     medianScoreIncluded = 0;
     medianPointsIncluded = 0;
 
@@ -110,7 +110,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     standardDeviationPointsIncluded = 0;
     standardDeviationPointsTotal = 0;
 
-    readonly highlightValue = HighlightValue;
+    readonly highlightType = HighlightType;
 
     private languageChangeSubscription?: Subscription;
 
@@ -242,7 +242,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const courseScoresObservable = this.participantScoresService.findCourseScores(courseId);
         // find grading scale if it exists for course
         const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
-        // eslint-disable-next-line @typescript-eslint/tslint/config
         forkJoin([findParticipationsObservable, courseScoresObservable, gradingScaleObservable]).subscribe(([participationsOfCourse, courseScoresResult, gradingScaleResponse]) => {
             this.allParticipationsOfCourse = participationsOfCourse;
 
@@ -261,7 +260,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
             this.calculateAverageAndMedianScores();
             this.scoresToDisplay = this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course));
-            this.highlightBar(HighlightValue.AVERAGE);
+            this.highlightBar(HighlightType.AVERAGE);
         });
     }
 
@@ -466,6 +465,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const pointsAchievedByStudentInExercise = roundValueSpecifiedByCourseSettings((result.score! * relevantMaxPoints) / 100, this.course);
             student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
             const includedIDs = this.exercisesOfCourseThatAreIncludedInScoreCalculation.map((includedExercise) => includedExercise.id);
+            // We only include this exercise if it is included in the exercise score
             if (includedIDs.includes(exercise.id)) {
                 student.overallPoints += pointsAchievedByStudentInExercise;
                 student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
@@ -832,36 +832,60 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         return 0;
     }
 
+    /**
+     * Filters the course exercises and returns the exercises that are already released or do not have a release date
+     * @param course the course whose exercises are filtered
+     * @private
+     */
     private determineReleasedExercises(course: Course): Exercise[] {
         return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs()));
     }
 
-    private calculateAverageScoreIncluded(scores: number[], points: number[]) {
-        this.averageScoreIncluded = roundScorePercentSpecifiedByCourseSettings(mean(scores), this.course);
-        this.averagePointsIncluded = roundValueSpecifiedByCourseSettings(mean(points), this.course);
+    /**
+     * Computes the average of given scores and returns it rounded based on course settings
+     * @param scores the scores the average should be computed of
+     * @private
+     */
+    private calculateAverageScore(scores: number[]): number {
+        return roundScorePercentSpecifiedByCourseSettings(mean(scores), this.course);
     }
 
-    private calculateAverageScoreTotal(achievedPointsTotal: number[], averageScores: number[]) {
-        this.averagePointsTotal = roundValueSpecifiedByCourseSettings(mean(achievedPointsTotal), this.course);
-        this.averageScoreTotal = roundScorePercentSpecifiedByCourseSettings(mean(averageScores), this.course);
+    /**
+     * Computes the average of given points and returns it rounded based on course settings
+     * @param points the points the average should be computed of
+     * @private
+     */
+    private calculateAveragePoints(points: number[]): number {
+        return roundValueSpecifiedByCourseSettings(mean(points), this.course);
     }
 
-    private calculateMedianScoreIncluded(scores: number[], points: number[]) {
-        this.medianScoreIncluded = roundScorePercentSpecifiedByCourseSettings(median(scores), this.course);
-        this.medianPointsIncluded = roundValueSpecifiedByCourseSettings(median(points), this.course);
+    /**
+     * Computes the median of given scores and returns it rounded based on course settings
+     * @param scores the scores the median should be computed of
+     * @private
+     */
+    private calculateMedianScore(scores: number[]): number {
+        return roundScorePercentSpecifiedByCourseSettings(median(scores), this.course);
     }
 
-    private calculateMedianScoreTotal(achievedPointsTotal: number[], averageScores: number[]) {
-        this.medianPointsTotal = roundValueSpecifiedByCourseSettings(median(achievedPointsTotal), this.course);
-        this.medianScoreTotal = roundScorePercentSpecifiedByCourseSettings(median(averageScores), this.course);
+    /**
+     * Computes the median of given points and returns it rounded based on course settings
+     * @param points the points the median should be computed of
+     * @private
+     */
+    private calculateMedianPoints(points: number[]): number {
+        return roundValueSpecifiedByCourseSettings(median(points), this.course);
     }
 
-    private calculateAverageAndMedianScores() {
+    /**
+     * Sets the statistical values displayed in the table next to the distribution chart
+     * @private
+     */
+    private calculateAverageAndMedianScores(): void {
         const allCoursePoints = this.course.exercises!.map((exercise) => exercise.maxPoints ?? 0).reduce((points1, points2) => points1 + points2, 0);
         const includedPointsPerStudent = this.students.map((student) => student.overallPoints);
         // average points and score included
         const scores = includedPointsPerStudent.map((point) => point / this.maxNumberOfOverallPoints);
-        // this.calculateAverageScoreIncluded(scores, includedPointsPerStudent);
         this.averageScoreIncluded = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
 
         // average points and score total
@@ -869,13 +893,17 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             return Array.from(student.pointsPerExercise.values()).reduce((points1, points2) => points1 + points2, 0);
         });
         const averageScores = achievedPointsTotal.map((totalPoints) => totalPoints / allCoursePoints);
-        this.calculateAverageScoreTotal(achievedPointsTotal, averageScores);
+
+        this.averagePointsTotal = this.calculateAveragePoints(achievedPointsTotal);
+        this.averageScoreTotal = this.calculateAverageScore(averageScores);
 
         // median points and score included
-        this.calculateMedianScoreIncluded(scores, includedPointsPerStudent);
+        this.medianPointsIncluded = this.calculateMedianPoints(includedPointsPerStudent);
+        this.medianScoreIncluded = this.calculateMedianScore(scores);
 
         // median points and score total
-        this.calculateMedianScoreTotal(achievedPointsTotal, averageScores);
+        this.medianPointsTotal = this.calculateMedianPoints(achievedPointsTotal);
+        this.medianScoreTotal = this.calculateMedianScore(averageScores);
 
         // Since these two values are only statistical details, there is no need to make the rounding dependent of the course settings
         // standard deviation points included
@@ -885,21 +913,25 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.standardDeviationPointsTotal = round(standardDeviation(achievedPointsTotal), 2);
     }
 
-    highlightBar(type: HighlightValue) {
+    /**
+     * Handles the case if the user selects either the average or the median in the table next to the chart
+     * @param type the statistical type that is selected by the user
+     */
+    highlightBar(type: HighlightType) {
         if (this.highlightedType === type) {
             this.valueToHighlight = undefined;
-            this.highlightedType = HighlightValue.NONE;
+            this.highlightedType = HighlightType.NONE;
             this.changeDetector.detectChanges();
             return;
         }
         switch (type) {
-            case HighlightValue.AVERAGE:
+            case HighlightType.AVERAGE:
                 this.valueToHighlight = this.averageScoreIncluded;
-                this.highlightedType = HighlightValue.AVERAGE;
+                this.highlightedType = HighlightType.AVERAGE;
                 break;
-            case HighlightValue.MEDIAN:
+            case HighlightType.MEDIAN:
                 this.valueToHighlight = this.medianScoreIncluded;
-                this.highlightedType = HighlightValue.MEDIAN;
+                this.highlightedType = HighlightType.MEDIAN;
                 break;
         }
         this.changeDetector.detectChanges();

@@ -6,10 +6,6 @@
             [translateValues]="{ exercisesLength: exercisesOfCourseThatAreIncludedInScoreCalculation.length, studentsLength: students.length }"
             >{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }} released exercises, {{ students.length }} students with results</small
         >
-        <button *ngIf="exportReady" class="btn btn-primary btn-sm float-end" (click)="exportResults()">
-            <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
-            <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
-        </button>
     </h4>
     <jhi-alert></jhi-alert>
     <span *ngIf="!exportReady" style="color: grey"
@@ -47,17 +43,19 @@
                     <tr>
                         <th>
                             <label class="d-flex align-items-center">
-                                <input type="checkbox" [checked]="highlightedType === highlightValue.AVERAGE" (click)="highlightBar(highlightValue.AVERAGE)" />
+                                <input type="checkbox" [checked]="highlightedType === highlightType.AVERAGE" (click)="highlightBar(highlightType.AVERAGE)" />
                                 <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.averagePoints">Average points (score)</span>
                             </label>
                         </th>
-                        <td id="average_points" [ngClass]="highlightedType">{{ this.averagePointsIncluded }} ({{ this.averageScoreIncluded }}%)</td>
-                        <td>{{ this.averageNumberOfOverallPoints }} ({{ this.averageScoreTotal }}%)</td>
+                        <td id="average_points" [ngClass]="highlightedType">
+                            {{ roundValueSpecifiedByCourseSettings(this.averageNumberOfOverallPoints) }} ({{ this.averageScoreIncluded }}%)
+                        </td>
+                        <td>{{ this.averagePointsTotal }} ({{ this.averageScoreTotal }}%)</td>
                     </tr>
                     <tr>
                         <th>
                             <label class="d-flex align-items-center">
-                                <input type="checkbox" [checked]="highlightedType === highlightValue.MEDIAN" (click)="highlightBar(highlightValue.MEDIAN)" />
+                                <input type="checkbox" [checked]="highlightedType === highlightType.MEDIAN" (click)="highlightBar(highlightType.MEDIAN)" />
                                 <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.medianPoints">Median points (score)</span>
                             </label>
                         </th>
@@ -75,7 +73,13 @@
             </table>
         </div>
     </div>
-    <div style="border-top: 2px solid; width: 100%; margin-bottom: 0.5em; margin-top: 1em"></div>
+    <div class="separator"></div>
+    <div class="d-flex justify-content-end">
+        <button *ngIf="exportReady" class="btn btn-primary btn-sm" (click)="exportResults()">
+            <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
+            <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
+        </button>
+    </div>
     <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
             <thead>

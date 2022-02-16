@@ -72,7 +72,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
                 this.height = 400;
             }
         }
-        this.createChart(this.scores);
+        this.createChart();
         this.yScaleMax = this.calculateTickMax();
         this.helpIconTooltip = this.determineHelpIconTooltip();
         this.highlightScore();
@@ -100,7 +100,11 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.createChartLabels();
     }
 
-    private createChartLabels() {
+    /**
+     * Creates the chart labels displaying the intervals each bar covers depending of the existence and state of a grading key
+     * @private
+     */
+    private createChartLabels(): void {
         if (this.gradingScaleExists) {
             this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
                 let label = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
@@ -143,25 +147,42 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         return index;
     }
 
-    private addToHistogram(percentage: number) {
+    /**
+     * Auxiliary method that increases the represented value of the bar covering the given score by 1
+     * @param percentage the score that should be included in the distribution
+     * @private
+     */
+    private addToHistogram(percentage: number): void {
         // Update histogram data structure
         const histogramIndex = this.findGradeStepIndex(percentage);
         this.ngxData[histogramIndex].value++;
     }
 
-    private createChart(scores: number[]) {
+    /**
+     * Sets up the distribution chart for given scores
+     * @private
+     */
+    private createChart(): void {
         this.generateDefaultNgxChartsSetting();
         this.setupChartColoring();
         this.setupAxisLabels();
-        scores.forEach((score) => this.addToHistogram(score));
+        this.scores.forEach((score) => this.addToHistogram(score));
     }
 
-    private calculateTickMax() {
+    /**
+     * Determines and returns the maximum value displayed on the Y axis
+     * @private
+     */
+    private calculateTickMax(): number {
         const histogramData = this.ngxData.map((dataPack) => dataPack.value);
         const max = Math.max(...histogramData);
         return Math.ceil((max + 1) / 10) * 10 + 20;
     }
 
+    /**
+     * Determines and returns the translation path for the tooltip that is displayed when hovering over the help icon next to the legend
+     * @private
+     */
     private determineHelpIconTooltip(): string {
         if (this.gradingScaleExists) {
             if (this.isBonus) {
@@ -239,6 +260,10 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         }
     }
 
+    /**
+     * Auxiliary method that returns the translation path for the tooltip if a grading scale exists that is not Bonus
+     * @private
+     */
     private getHelpIconTooltipNotBonus(): string {
         if (this.isCourseScore) {
             return 'instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus';
@@ -247,6 +272,10 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         }
     }
 
+    /**
+     * Auxiliary method that returns the translation path for the tooltip if no grading scale exists
+     * @private
+     */
     private getHelpIconNoGradingScale(): string {
         if (this.isCourseScore) {
             return 'instructorDashboard.courseScoreChart.noGradingScaleExplanation';
@@ -255,7 +284,12 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         }
     }
 
-    private highlightScore() {
+    /**
+     * Highlights the score passed to the component by its parent component (if any is set).
+     * Emits an event indicating whether the highlighting was successful (i.e. the bar containing the given value is representing a value > 0)
+     * @private
+     */
+    private highlightScore(): void {
         if (this.scoreToHighlight === undefined) {
             this.ngxColor.domain = this.backupDomain;
             this.ngxData = [...this.ngxData];
@@ -273,6 +307,10 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         }
     }
 
+    /**
+     * Wrapper method that is passed to ngx-charts in order to handle click events.
+     * A necessary work around as we define this input as possibly undefined which is not supported when subscribing this to the select output by ngx-charts
+     */
     onChartClick() {
         if (this.onSelect) {
             this.onSelect!();

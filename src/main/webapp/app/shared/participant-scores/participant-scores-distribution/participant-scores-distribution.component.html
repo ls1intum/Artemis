@@ -23,20 +23,21 @@
             <span>{{ 'statistics.amountOfStudents' | artemisTranslate }}: {{ model.value }}</span>
         </ng-template>
     </ngx-charts-bar-vertical>
-    <div *ngIf="gradingScaleExists && !isBonus" class="d-flex justify-content-center align-items-center">
-        <div class="color-box insufficient-performance"></div>
-        <span class="ms-2">{{ 'artemisApp.examScores.insufficientPerformance' | artemisTranslate }}</span>
+    <div class="d-flex justify-content-center align-items-center">
+        <div *ngIf="gradingScaleExists && !isBonus" class="d-flex justify-content-center align-items-center">
+            <div class="color-box insufficient-performance"></div>
+            <span class="ms-2">{{ 'artemisApp.examScores.insufficientPerformance' | artemisTranslate }}</span>
 
-        <div class="ms-4 color-box sufficient-performance"></div>
-        <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
-        <jhi-help-icon class="ms-2" placement="right auto" text="{{ helpIconTooltip }}"></jhi-help-icon>
-    </div>
-    <div *ngIf="!gradingScaleExists || isBonus" class="d-flex justify-content-center align-items-center">
-        <div class="color-box critical-performance"></div>
-        <span class="ms-2">{{ 'artemisApp.examScores.criticalPerformance' | artemisTranslate }}</span>
+            <div class="ms-4 color-box sufficient-performance"></div>
+            <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
+        </div>
+        <div *ngIf="!gradingScaleExists || isBonus" class="d-flex justify-content-center align-items-center">
+            <div class="color-box critical-performance"></div>
+            <span class="ms-2">{{ 'artemisApp.examScores.criticalPerformance' | artemisTranslate }}</span>
 
-        <div class="ms-4 color-box sufficient-performance"></div>
-        <span class="ms-2">{{ 'artemisApp.examScores.uncriticalPerformance' | artemisTranslate }}</span>
+            <div class="ms-4 color-box sufficient-performance"></div>
+            <span class="ms-2">{{ 'artemisApp.examScores.uncriticalPerformance' | artemisTranslate }}</span>
+        </div>
         <jhi-help-icon class="ms-2" placement="right auto" text="{{ helpIconTooltip }}"></jhi-help-icon>
     </div>
 </div>

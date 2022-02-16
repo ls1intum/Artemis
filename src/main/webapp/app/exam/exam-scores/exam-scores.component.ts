@@ -785,7 +785,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.overallChartMedianType = medianType;
     }
 
-    handleHighlightingCallback(isHighlighted: boolean) {
+    /**
+     * Handles the event passed by {@link ParticipantScoresDistribution#scoreHighlightingVisible} that indicates whether the selected value is highlighted in the chart or not
+     * Based on the callback value, the corresponding checkbox is shown or not
+     * @param isHighlighted the callback value indicating whether the selected value is highlighted in the chart or not
+     */
+    handleHighlightingCallback(isHighlighted: boolean): void {
         if (!isHighlighted) {
             if (this.lastCalculatedMedianType === MedianType.PASSED) {
                 this.showPassedMedianCheckbox = false;
