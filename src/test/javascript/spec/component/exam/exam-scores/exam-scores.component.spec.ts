@@ -18,7 +18,7 @@ import { cloneDeep } from 'lodash-es';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -29,7 +29,6 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { GraphColors } from 'app/entities/statistics.model';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 
@@ -359,8 +358,6 @@ describe('ExamScoresComponent', () => {
 
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
 
-        // check histogram
-        // expectCorrectHistogram(comp, examScoreDTO);
         // expect three distinct scores
         expect(comp.scores).toHaveLength(3);
         expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
@@ -444,8 +441,6 @@ describe('ExamScoresComponent', () => {
 
         // it should skip the not submitted one
         const noOfSubmittedExercises = examScoreDTO.studentResults.length - 1;
-        // check histogram
-        // expectCorrectHistogram(comp, examScoreDTO);
         // expect two distinct scores
         expect(comp.scores).toHaveLength(2);
         expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
@@ -641,26 +636,68 @@ describe('ExamScoresComponent', () => {
         comp.isBonus = false;
         fixture.detectChanges();
 
-        // expect(comp.activeEntries).toHaveLength(3);
         expect(comp.showPassedMedian).toBe(true);
 
         comp.toggleMedian(MedianType.PASSED);
 
-        // expect(comp.activeEntries).toEqual([]);
         expect(comp.showPassedMedian).toBe(false);
 
         comp.toggleMedian(MedianType.OVERALL);
 
         expect(comp.overallChartMedian).toBe(50);
-        // expect(comp.activeEntries).toHaveLength(3);
         expect(comp.showOverallMedian).toBe(true);
 
         comp.toggleMedian(MedianType.PASSED);
 
         expect(comp.showPassedMedian).toBe(true);
         expect(comp.showOverallMedian).toBe(false);
+    });
 
-        // expect(comp.activeEntries).toHaveLength(3);
+    it('should return data label correctly if noOfExamsFiltered is 0', () => {
+        comp.noOfExamsFiltered = 0;
+
+        const dataLabel = comp.formatDataLabel(0);
+
+        expect(dataLabel).toBe('0 (0%)');
+    });
+
+    it('should handle failed highlighting correctly if passed median is highlighted', () => {
+        comp.lastCalculatedMedianType = MedianType.PASSED;
+
+        comp.handleHighlightingCallback(false);
+
+        expect(comp.showPassedMedianCheckbox).toBe(false);
+    });
+
+    it('should handle failed highlighting correctly if overall or submitted median is highlighted', () => {
+        comp.lastCalculatedMedianType = MedianType.OVERALL;
+
+        comp.handleHighlightingCallback(false);
+
+        expect(comp.showOverallMedianCheckbox).toBe(false);
+
+        comp.showOverallMedianCheckbox = true;
+        comp.lastCalculatedMedianType = MedianType.SUBMITTED;
+
+        comp.handleHighlightingCallback(false);
+
+        expect(comp.showOverallMedianCheckbox).toBe(false);
+    });
+
+    it('should handle successful highlighting correctly if overall or submitted median is highlighted', () => {
+        comp.lastCalculatedMedianType = MedianType.OVERALL;
+        comp.showOverallMedianCheckbox = false;
+
+        comp.handleHighlightingCallback(true);
+
+        expect(comp.showOverallMedianCheckbox).toBe(true);
+
+        comp.showOverallMedianCheckbox = false;
+        comp.lastCalculatedMedianType = MedianType.SUBMITTED;
+
+        comp.handleHighlightingCallback(true);
+
+        expect(comp.showOverallMedianCheckbox).toBe(true);
     });
 
     /*it('should setup coloring correctly if grading scale exists and it is bonus', () => {
