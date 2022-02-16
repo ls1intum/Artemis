@@ -67,10 +67,9 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         if (this.gradingScale) {
             this.gradingScaleExists = true;
             this.isBonus = this.gradingScale.gradeType === GradeType.BONUS;
-
-            if (!this.isCourseScore) {
-                this.height = 400;
-            }
+        }
+        if (!this.isCourseScore) {
+            this.height = 400;
         }
         this.createChart();
         this.yScaleMax = this.calculateTickMax();

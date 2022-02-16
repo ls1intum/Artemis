@@ -15,7 +15,7 @@ import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scor
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -25,7 +25,6 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { BarChartModule } from '@swimlane/ngx-charts';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
@@ -220,7 +219,6 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(BarChartModule)],
             declarations: [
                 ExamScoresComponent,
                 MockPipe(ArtemisTranslatePipe),
