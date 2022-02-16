@@ -1,4 +1,4 @@
-export class ExamDetailsPage {
+class ExamDetailsPage {
     /**
      * Clicks the delete button and fills out the resulting dialog.
      * @param examTitle the exam title
