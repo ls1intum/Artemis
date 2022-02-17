@@ -7,7 +7,7 @@ export class MockExerciseHintService implements IExerciseHintService {
     private exerciseHintDummy = { id: 1 } as ExerciseHint;
     private exerciseHintDummy2 = { id: 2 } as ExerciseHint;
 
-    create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
+    create(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 
@@ -23,7 +23,7 @@ export class MockExerciseHintService implements IExerciseHintService {
         return of({ body: [this.exerciseHintDummy, this.exerciseHintDummy2] }) as Observable<HttpResponse<ExerciseHint[]>>;
     }
 
-    update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
+    update(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 }
