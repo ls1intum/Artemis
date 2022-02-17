@@ -576,14 +576,6 @@ describe('ExamScoresComponent', () => {
         comp.exportToCsv();
     });
 
-    /*it('should find grade step index correctly', () => {
-        jest.spyOn(gradingSystemService, 'matchGradePercentage');
-        comp.gradingScale = gradingScale;
-        comp.gradingScaleExists = true;
-
-        expect(comp.findGradeStepIndex(20)).toBe(0);
-    });*/
-
     it('should set grading scale properties', () => {
         const examScoreDTOWithGrades = examScoreDTO;
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
@@ -697,40 +689,6 @@ describe('ExamScoresComponent', () => {
 
         expect(comp.showOverallMedianCheckbox).toBe(true);
     });
-
-    /*it('should setup coloring correctly if grading scale exists and it is bonus', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const expectedColoring = [GraphColors.RED, GraphColors.GREY, GraphColors.GREY, GraphColors.GREY];
-        fixture.detectChanges();
-        expect(comp.isBonus).toBe(false);
-
-        expect(comp.ngxColor.domain).toEqual(expectedColoring);
-    });
-
-    it('should setup coloring correctly if grading scale exists and it is bonus', () => {
-        const adjustedGradingScale = gradingScale;
-        adjustedGradingScale.gradeSteps.forEach((gradingStep, index) => {
-            gradingStep.gradeName = index.toString();
-        });
-        adjustedGradingScale.gradeType = GradeType.BONUS;
-        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: adjustedGradingScale })));
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const expectedColoring = [GraphColors.YELLOW, GraphColors.GREY, GraphColors.GREY, GraphColors.GREY];
-        fixture.detectChanges();
-        expect(comp.isBonus).toBe(true);
-
-        expect(comp.ngxColor.domain).toEqual(expectedColoring);
-    });
-
-    it('should setup coloring correctly if no grading scale exists', () => {
-        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: undefined as unknown as GradingScale })));
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const expectedColoring = [...Array(8).fill(GraphColors.YELLOW), ...Array(12).fill(GraphColors.GREY)];
-        fixture.detectChanges();
-
-        expect(comp.gradingScaleExists).toBe(false);
-        expect(comp.ngxColor.domain).toEqual(expectedColoring);
-    });*/
 });
 
 function expectCorrectExamScoreDto(comp: ExamScoresComponent, examScoreDTO: ExamScoreDTO) {
@@ -738,22 +696,6 @@ function expectCorrectExamScoreDto(comp: ExamScoresComponent, examScoreDTO: Exam
     expect(comp.studentResults).toEqual(examScoreDTO.studentResults);
     expect(comp.exerciseGroups).toEqual(examScoreDTO.exerciseGroups);
 }
-
-/*function expectCorrectHistogram(comp: ExamScoresComponent, examScoreDTO: ExamScoreDTO) {
-    examScoreDTO.studentResults.forEach((studentResult) => {
-        let histogramIndex = Math.floor(studentResult.overallScoreAchieved! / comp.binWidth);
-        if (histogramIndex >= comp.scores.length) {
-            histogramIndex = comp.histogramData.length - 1;
-        }
-        // expect one exercise with 20% and one with 100%
-        if (studentResult.submitted || !comp.filterForSubmittedExams) {
-            expect(comp.histogramData[histogramIndex]).toBe(1);
-        } else {
-            // the not submitted exercise counts not towards histogram
-            expect(comp.histogramData[histogramIndex]).toBe(0);
-        }
-    });
-}*/
 
 function validateUserRow(
     userRow: any,
