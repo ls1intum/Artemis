@@ -437,6 +437,28 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+
+        modelingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now());
+
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setCourse(course2);
+
+        ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
+        assertThat(newModelingExercise.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the response").isNull();
+
+        ModelingExercise newModelingExerciseFromDatabase = modelingExerciseRepository.findById(newModelingExercise.getId()).get();
+        assertThat(newModelingExerciseFromDatabase.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the database")
+                .isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExerciseForExam() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);

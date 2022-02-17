@@ -594,6 +594,26 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importTextExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+
+        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now());
+
+        textExerciseRepository.save(textExercise);
+        textExercise.setCourse(course2);
+
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        assertThat(newTextExercise.getExampleSolutionPublicationDate()).as("text example solution publication date was correctly set to null in the response").isNull();
+
+        TextExercise newTextExerciseFromDatabase = textExerciseRepository.findById(newTextExercise.getId()).get();
+        assertThat(newTextExerciseFromDatabase.getExampleSolutionPublicationDate()).as("text example solution publication date was correctly set to null in the database").isNull();
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllTextExercisesForCourse() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();

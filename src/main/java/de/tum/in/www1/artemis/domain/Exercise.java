@@ -59,10 +59,6 @@ public abstract class Exercise extends BaseExercise {
     @Lob
     private String gradingInstructions;
 
-    @Nullable
-    @Column(name = "example_solution_publication_date")
-    private ZonedDateTime exampleSolutionPublicationDate;
-
     @ManyToMany(mappedBy = "exercises")
     public Set<LearningGoal> learningGoals = new HashSet<>();
 
@@ -831,19 +827,6 @@ public abstract class Exercise extends BaseExercise {
             newGradingInstructions.add(newGradingInstruction);
         }
         return newGradingInstructions;
-    }
-
-    @Nullable
-    public ZonedDateTime getExampleSolutionPublicationDate() {
-        return exampleSolutionPublicationDate;
-    }
-
-    public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
-        this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
-    }
-
-    public boolean isExampleSolutionPublished() {
-        return this.exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(this.exampleSolutionPublicationDate);
     }
 
     /**
