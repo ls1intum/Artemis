@@ -26,6 +26,12 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 };
 
+export type ProgrammingExerciseTaskServerSide = {
+    id: number;
+    taskName: String;
+    testCases: ProgrammingExerciseTestCase[];
+};
+
 // TODO: we should use a proper enum here
 export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
 
@@ -395,12 +401,14 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Parse tasks from problem statement and map to test cases.
+     * Get tasks and tests cases extracted from the problem statement for a programming exercise.
      * This method and all helper methods are only for testing reason and will be removed later on.
      * @param exerciseId the exercise id
      */
-    extractTasksFromProblemStatement(exerciseId: number): Observable<Task[]> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' }).pipe(map((res: any) => this.processServerSideTasks(res)));
+    getTasksAndTestsExtractedFromProblemStatement(exerciseId: number): Observable<Task[]> {
+        return this.http
+            .get(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProgrammingExerciseTaskServerSide[]>) => this.processServerSideTasks(res)));
     }
 
     /**
@@ -408,8 +416,8 @@ export class ProgrammingExerciseService {
      * @param response the server response
      * @private
      */
-    private processServerSideTasks(response: any): Task[] {
-        return response.body.map((task: any) => this.convertServerToClientTask(task));
+    private processServerSideTasks(response: HttpResponse<ProgrammingExerciseTaskServerSide[]>): Task[] {
+        return response.body!.map((task: any) => this.convertServerToClientTask(task));
     }
 
     /**
@@ -417,7 +425,7 @@ export class ProgrammingExerciseService {
      * @param serverTask the server side representation of a task
      * @private
      */
-    private convertServerToClientTask(serverTask: any): Task {
+    private convertServerToClientTask(serverTask: ProgrammingExerciseTaskServerSide): Task {
         return {
             id: serverTask.id,
             taskName: serverTask.taskName,

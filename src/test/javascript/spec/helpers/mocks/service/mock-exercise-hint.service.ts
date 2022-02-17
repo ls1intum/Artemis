@@ -11,7 +11,7 @@ export class MockExerciseHintService implements IExerciseHintService {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 
-    delete(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<any>> {
+    delete(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<void>> {
         return of();
     }
 

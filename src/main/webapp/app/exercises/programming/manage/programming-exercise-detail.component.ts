@@ -236,10 +236,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Parse tasks and corresponding test cases from problem statement for this exercise
+     * Get tasks and corresponding test cases extracted from the problem statement for this exercise
      */
-    extractTasksFromProblemStatement(): void {
-        this.programmingExerciseService.extractTasksFromProblemStatement(this.programmingExercise.id!).subscribe({
+    getExtractedTasksAndTestsFromProblemStatement(): void {
+        this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.programmingExercise.id!).subscribe({
             next: (res) => {
                 const numberTests = res.map((task) => task.tests.length).reduce((numberTests1, numberTests2) => numberTests1 + numberTests2, 0);
                 this.alertService.addAlert({
@@ -255,9 +255,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     private buildTaskCreationMessage(tasks: Task[]): string {
-        let message = '';
-        message += tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
-        return message;
+        return tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
     }
 
     /**

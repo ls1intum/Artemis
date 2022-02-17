@@ -110,7 +110,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         });
     });
 
-    it('should invoke extracting tasks', () => {
+    it('should retrieve all tasks and tests extracted from the problem statement', () => {
         const tasks: Task[] = [
             {
                 id: 1,
@@ -127,7 +127,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
                 hints: [],
             },
         ];
-        const extractTaskMock = jest.spyOn(programmingExerciseService, 'extractTasksFromProblemStatement').mockReturnValue(of(tasks));
+        const extractTaskMock = jest.spyOn(programmingExerciseService, 'getTasksAndTestsExtractedFromProblemStatement').mockReturnValue(of(tasks));
         const expectedParams = {
             numberTasks: 2,
             numberTestCases: 3,
@@ -138,7 +138,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
 
-        comp.extractTasksFromProblemStatement();
+        comp.getExtractedTasksAndTestsFromProblemStatement();
 
         expect(addAlertSpy).toHaveBeenCalledTimes(1);
         expect(addAlertSpy).toHaveBeenCalledWith({
