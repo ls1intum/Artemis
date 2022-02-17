@@ -21,6 +21,11 @@ import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 
+/**
+ * This class tests the database relations of the Hestia domain models.
+ * This currently includes ProgrammingExerciseTask, ProgrammingExerciseSolutionEntry and CodeHint.
+ * It tests if the addition and deletion of these models works as expected.
+ */
 public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -178,19 +183,5 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(codeHintRepository.findAll()).isEmpty();
         assertThat(programmingExerciseTestCaseRepository.findAll()).hasSize(3);
         assertThat(programmingExerciseSolutionEntryRepository.findAll()).hasSize(6);
-    }
-
-    @Test
-    void testy() {
-        var programmingExercise = programmingExerciseRepository.getById(programmingExerciseId);
-        database.addTestCasesToProgrammingExercise(programmingExercise);
-        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
-        assertThat(testCases).isNotEmpty();
-        var task = addTaskToProgrammingExercise("Task 1");
-        task.setTestCases(testCases);
-        task = programmingExerciseTaskRepository.save(task);
-        task = programmingExerciseTaskRepository.findByNameAndExerciseId("Task 1", programmingExerciseId).get();
-        assertThat(testCases.stream().map(ProgrammingExerciseTestCase::getTestName).toList())
-                .isEqualTo(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList());
     }
 }
