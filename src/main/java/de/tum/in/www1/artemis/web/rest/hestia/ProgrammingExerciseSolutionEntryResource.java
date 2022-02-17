@@ -176,7 +176,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
         checkExerciseContainsTestCaseElseThrow(exercise, testCase);
         if (!solutionEntryId.equals(solutionEntryBeforeSaving.getId())) {
-            throw new ConflictException("A solution entry can only be updated if the solutionEntryIds match", ENTITY_NAME, "solutionEntryIdsMismatch");
+            throw new ConflictException("A solution entry can only be updated if the solutionEntryIds match", ENTITY_NAME, "solutionEntryError");
         }
 
         ProgrammingExerciseSolutionEntry solutionEntryAfterSaving = programmingExerciseSolutionEntryRepository.save(solutionEntry);
@@ -217,7 +217,7 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     private void checkTestCaseContainsSolutionEntryElseThrow(ProgrammingExerciseTestCase testCase, ProgrammingExerciseSolutionEntry solutionEntry) {
         if (solutionEntry.getTestCase() == null || !testCase.getId().equals(solutionEntry.getTestCase().getId())) {
-            throw new ConflictException("The test case of the solution entry does not belong to the solution entry.", ENTITY_NAME, "solutionEntryTestCaseMismatch");
+            throw new ConflictException("The test case of the solution entry does not belong to the solution entry.", ENTITY_NAME, "solutionEntryError");
         }
     }
 }

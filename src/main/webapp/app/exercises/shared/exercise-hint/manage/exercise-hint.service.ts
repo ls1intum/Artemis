@@ -10,15 +10,17 @@ export type ExerciseHintResponse = HttpResponse<ExerciseHint>;
 export interface IExerciseHintService {
     /**
      * Creates an exercise hint
+     * @param exerciseId of the exercise
      * @param exerciseHint Exercise hint to create
      */
-    create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse>;
+    create(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse>;
 
     /**
      * Updates an exercise hint
+     * @param exerciseId of the exercise
      * @param exerciseHint Exercise hint to update
      */
-    update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse>;
+    update(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse>;
 
     /**
      * Finds an exercise hint
@@ -49,9 +51,10 @@ export class ExerciseHintService implements IExerciseHintService {
 
     /**
      * Creates an exercise hint
+     * @param exerciseId of the exercise
      * @param exerciseHint Exercise hint to create
      */
-    create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
+    create(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
         exerciseHint.type = 'text';
         if (exerciseHint.exercise.categories) {
@@ -62,9 +65,10 @@ export class ExerciseHintService implements IExerciseHintService {
 
     /**
      * Updates an exercise hint
+     * @param exerciseId of the exercise
      * @param exerciseHint Exercise hint to update
      */
-    update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
+    update(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
         exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
         return this.http.put<ExerciseHint>(`${this.resourceUrl}/${exerciseHint.exercise.id}/exercise-hints/${exerciseHint.id}`, exerciseHint, { observe: 'response' });

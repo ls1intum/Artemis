@@ -311,9 +311,7 @@
         "unexpectedError": "An unexpected error occurred: {{error}}",
         "manualCodeHintOperation": "This endpoint does not allow to change code hints manually.",
         "exerciseNotDefined": "The exercise is not defined.",
-        "exerciseIdsMismatch": "The exercise ids do no match.",
-        "solutionEntryIdMismatch": "The solution entry ids do no match.",
-        "solutionEntryTestCaseMismatch": "The test case of the solution entry does not belong to the solution entry."
+        "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement."
     },
     "aboutUs": "About us",
     "contact": "Contact us",

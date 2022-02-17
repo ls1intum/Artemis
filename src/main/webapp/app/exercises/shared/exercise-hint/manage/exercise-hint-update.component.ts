@@ -119,9 +119,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     save() {
         this.isSaving = true;
         if (this.exerciseHint.id !== undefined) {
-            this.subscribeToSaveResponse(this.exerciseHintService.update(this.exerciseHint));
+            this.subscribeToSaveResponse(this.exerciseHintService.update(this.exerciseId, this.exerciseHint));
         } else {
-            this.subscribeToSaveResponse(this.exerciseHintService.create(this.exerciseHint));
+            this.subscribeToSaveResponse(this.exerciseHintService.create(this.exerciseId, this.exerciseHint));
         }
     }
 

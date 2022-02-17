@@ -82,7 +82,7 @@ describe('ExerciseHint Management Update Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(service.update).toHaveBeenCalledWith(entity);
+            expect(service.update).toHaveBeenCalledWith(2, entity);
             expect(comp.isSaving).toEqual(false);
         }));
 
@@ -98,7 +98,7 @@ describe('ExerciseHint Management Update Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
+            expect(service.create).toHaveBeenCalledWith(2, entity);
             expect(comp.isSaving).toEqual(false);
         }));
     });

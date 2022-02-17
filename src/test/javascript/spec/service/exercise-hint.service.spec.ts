@@ -67,7 +67,7 @@ describe('ExerciseHint Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         service
-            .create(exerciseHint)
+            .create(1, exerciseHint)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'POST' });
@@ -80,13 +80,16 @@ describe('ExerciseHint Service', () => {
             {
                 title: 'BBBBBB',
                 content: 'BBBBBB',
+                exercise: {
+                    id: 1,
+                },
             },
             elemDefault,
         );
 
         const expected = Object.assign({}, returnedFromService);
         service
-            .update(elemDefault)
+            .update(1, elemDefault)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'PUT' });
