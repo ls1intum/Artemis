@@ -2,7 +2,7 @@ import { GradingInstruction } from 'app/exercises/shared/structured-grading-crit
 import { buildFeedbackTextForReview, Feedback } from 'app/entities/feedback.model';
 
 describe('Feedback', () => {
-    describe('buildFeedbackTextForReview', function () {
+    describe('buildFeedbackTextForReview', () => {
         const gradingInstruction = new GradingInstruction();
         gradingInstruction.feedback = 'Grading instruction feedback';
 
