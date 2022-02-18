@@ -176,7 +176,7 @@ describe('ExerciseScoresChartComponent', () => {
             expect(component.typeSet.has(type)).toBe(true);
             expect(component.chartFilter.get(type)).toBe(true);
 
-            component.toggleExerciseType(type);
+            component.toggleType(type);
 
             expect(component.numberOfActiveFilters).toBe(4 - index);
             expect(component.chartFilter.get(type)).toBe(false);

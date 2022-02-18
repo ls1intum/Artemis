@@ -6,7 +6,7 @@
                 <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage }}%</h4>
             </div>
             <fa-icon
-                *ngIf="exerciseAverageScores.length > 10 && currentPeriod > 0"
+                *ngIf="currentlyDisplayedExerciseAverageScores.length > 10 && currentPeriod > 0"
                 [icon]="faArrowLeft"
                 size="3x"
                 class="col-md-4 d-flex justify-content-end align-items-center"
@@ -15,7 +15,7 @@
             ></fa-icon>
         </div>
     </div>
-    <div #containerRef class="col-md-9">
+    <div #containerRef class="col-md-8">
         <ngx-charts-bar-vertical
             [view]="[containerRef.offsetWidth, 250]"
             [results]="ngxData"
@@ -23,7 +23,9 @@
             [yScaleMax]="100"
             [xAxis]="true"
             [yAxis]="true"
+            [yAxisTickFormatting]="yAxisTickFormatting"
             (select)="onSelect($event)"
+            class="row"
         >
             <ng-template #tooltipTemplate let-model="model">
                 <b>{{ model.name }}</b> <br />
@@ -35,12 +37,57 @@
             </ng-template>
         </ngx-charts-bar-vertical>
     </div>
-    <fa-icon
-        *ngIf="exerciseAverageScores.length > 10 && exerciseAverageScores[10 + currentPeriod] != null"
-        [icon]="faArrowRight"
-        size="3x"
-        class="col-md-1 d-flex justify-content-start align-items-center"
-        role="button"
-        (click)="switchTimeSpan(RIGHT)"
-    ></fa-icon>
+    <div class="col-md-2 d-flex">
+        <div class="row">
+            <fa-icon
+                *ngIf="currentlyDisplayedExerciseAverageScores.length > 10 && currentlyDisplayedExerciseAverageScores[10 + currentPeriod] != null"
+                [icon]="faArrowRight"
+                size="3x"
+                class="col d-flex align-items-center"
+                style="max-width: 60px"
+                role="button"
+                (click)="switchTimeSpan(RIGHT)"
+            ></fa-icon>
+            <div class="col">
+                <div class="d-flex flex-column align-items-center ms-4">
+                    <div *ngIf="typeSet.size > 0" class="filter mb-3" aria-label="Filter Dropdown" ngbDropdown>
+                        <button
+                            class="btn"
+                            [ngClass]="{ 'btn-secondary': numberOfActiveFilters === 0, 'btn-success': numberOfActiveFilters > 0 }"
+                            ngbDropdownToggle
+                            id="filter-dropdown-button"
+                        >
+                            <fa-icon [icon]="faFilter"></fa-icon>
+                            <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: numberOfActiveFilters } }}</span>
+                        </button>
+                        <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                            <li>
+                                <b class="ms-2">{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate }}</b>
+                            </li>
+                            <li *ngFor="let type of typeSet">
+                                <label>
+                                    <input class="ms-2" (change)="toggleType(type)" [checked]="chartFilter.get(type.toLowerCase().replace('_', '-'))" type="checkbox" />
+                                    <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="legend-container">
+                        <div class="legend-entry" (click)="togglePerformanceInterval(performanceInterval.CRITICAL)">
+                            <div class="color-legend" [ngClass]="displayColorMap.get(performanceInterval.CRITICAL)!"></div>
+                            <span>Critical 30%</span>
+                        </div>
+                        <div class="legend-entry" (click)="togglePerformanceInterval(performanceInterval.MEDIAN)">
+                            <div class="color-legend" [ngClass]="displayColorMap.get(performanceInterval.MEDIAN)!"></div>
+                            <span>Median 30%</span>
+                        </div>
+                        <div class="legend-entry" (click)="togglePerformanceInterval(performanceInterval.BEST)">
+                            <div class="color-legend" [ngClass]="displayColorMap.get(performanceInterval.BEST)!"></div>
+                            <label>Best 30%</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

@@ -1,0 +1,32 @@
+.color-legend {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+    border: 1px solid;
+    margin-right: 5px;
+}
+.legend-entry {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+}
+
+.legend-container {
+    background: whitesmoke;
+    padding: 5px;
+    border-radius: 5px;
+    max-width: 150px;
+}
+
+.critical-color {
+    background: rgba(204, 0, 0, 1);
+}
+
+.median-color {
+    background: rgba(127, 127, 127, 255);
+}
+
+.best-color {
+    background: rgba(40, 164, 40, 1);
+}
