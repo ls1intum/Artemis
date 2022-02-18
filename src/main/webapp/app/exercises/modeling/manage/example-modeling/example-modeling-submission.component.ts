@@ -1,8 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Result } from 'app/entities/result.model';
@@ -107,10 +105,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         private modelingAssessmentService: ModelingAssessmentService,
         private tutorParticipationService: TutorParticipationService,
         private alertService: AlertService,
-        private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,
-        private location: Location,
         private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
