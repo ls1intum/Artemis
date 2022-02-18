@@ -195,15 +195,13 @@ export const buildFeedbackTextForReview = (feedback: Feedback): string => {
         if (feedback.text) {
             feedbackText = feedbackText + '\n' + feedback.text;
         }
-        return convertToHtmlLinebreaks(feedbackText);
+    } else if (feedback.detailText) {
+        feedbackText = feedback.detailText;
+    } else if (feedback.text) {
+        feedbackText = feedback.text;
     }
-    if (feedback.detailText) {
-        return feedback.detailText;
-    }
-    if (feedback.text) {
-        return feedback.text;
-    }
-    return feedbackText;
+
+    return convertToHtmlLinebreaks(feedbackText);
 };
 
 /**

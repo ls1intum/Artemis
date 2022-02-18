@@ -128,11 +128,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
             if (feedback.detailText) {
                 feedbackText = feedbackText + '\n' + feedback.detailText;
             }
-            return convertToHtmlLinebreaks(feedbackText);
+        } else if (feedback.detailText) {
+            feedbackText = feedback.detailText;
         }
-        if (feedback.detailText) {
-            return feedback.detailText;
-        }
-        return feedbackText;
+
+        return convertToHtmlLinebreaks(feedbackText);
     }
 }
