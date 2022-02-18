@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Enter the personal access token of the admin user
-ADMIN_PERSONAL_ACCESS_TOKEN="your.gitlab.admin.access.token"
+ADMIN_PERSONAL_ACCESS_TOKEN="artemis-gitlab-token"
 
 # Enter the url of the Gitlab instance.
 GITLAB_API_URL="http://localhost/api/v4/"

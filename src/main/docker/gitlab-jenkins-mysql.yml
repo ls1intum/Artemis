@@ -9,6 +9,7 @@ services:
             - ./gitlab/gitlab-local-setup.sh:/gitlab-local-setup.sh
         environment:
             - GITLAB_OMNIBUS_CONFIG=prometheus_monitoring['enable'] = false; gitlab_rails['gitlab_shell_ssh_port'] = 2222; gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
+            - GITLAB_ROOT_PASSWORD
         ports:
             - "2222:22"
             - "8081:80"
