@@ -140,11 +140,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
             }
             if (command instanceof CorrectOptionCommand || command instanceof IncorrectOptionCommand) {
                 currentAnswerOption = new AnswerOption();
-                if (command instanceof CorrectOptionCommand) {
-                    currentAnswerOption.isCorrect = true;
-                } else {
-                    currentAnswerOption.isCorrect = false;
-                }
+                currentAnswerOption.isCorrect = command instanceof CorrectOptionCommand;
                 currentAnswerOption.text = text;
                 this.question.answerOptions!.push(currentAnswerOption);
             } else if (command instanceof ExplanationCommand) {

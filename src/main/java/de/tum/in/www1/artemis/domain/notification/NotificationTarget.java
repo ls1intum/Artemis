@@ -40,18 +40,18 @@ public class NotificationTarget {
 
     public NotificationTarget() {
         // intentionally empty. e.g. used for cases without courseId
-    };
+    }
 
     public NotificationTarget(Long identifier, Long courseId) {
         this.identifier = identifier;
         this.courseId = courseId;
-    };
+    }
 
     public NotificationTarget(String entity, Long courseId, String mainPage) {
         this.entity = entity;
         this.courseId = courseId;
         this.mainPage = mainPage;
-    };
+    }
 
     public NotificationTarget(String message, Long identifier, String entity, Long courseId, String mainPage) {
         this.message = message;

@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.PlagiarismResultRepository;
@@ -338,7 +337,7 @@ public class ProgrammingPlagiarismDetectionService {
         return studentParticipations.parallelStream().filter(participation -> participation instanceof ProgrammingExerciseParticipation)
                 .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
                 .filter(participation -> {
-                    Submission submission = ((StudentParticipation) participation).findLatestSubmission().orElse(null);
+                    Submission submission = participation.findLatestSubmission().orElse(null);
                     // filter empty submissions
                     if (submission == null) {
                         return false;

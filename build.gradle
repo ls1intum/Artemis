@@ -20,15 +20,15 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.2.0"
-    id "com.github.node-gradle.node" version "3.2.0"
-    id "com.diffplug.spotless" version "6.2.2"
+    id "com.github.node-gradle.node" version "3.2.1"
+    id "com.diffplug.spotless" version "6.3.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.5.5"
+version = "5.6.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=16
@@ -105,6 +105,10 @@ task testReport(type: TestReport) {
 
 jacoco {
     toolVersion = "0.8.7"
+}
+
+jar {
+    enabled = false
 }
 
 private excludedClassFilesForReport(classDirectories) {
@@ -189,7 +193,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.8.2"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.8.3"
     implementation "net.logstash.logback:logstash-logback-encoder:7.0.1"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -222,16 +226,16 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:2.3.5.RELEASE"
-    implementation 'org.springframework.data:spring-data-ldap:2.6.1'
+    implementation "org.springframework.ldap:spring-ldap-core:2.3.6.RELEASE"
+    implementation 'org.springframework.data:spring-data-ldap:2.6.2'
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.0"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.0"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.1"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.1"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
     implementation "io.netty:netty-all:4.1.74.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.15"
-    implementation "org.springframework:spring-messaging:5.3.15"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.16"
+    implementation "org.springframework:spring-messaging:5.3.16"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"

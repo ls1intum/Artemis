@@ -270,7 +270,7 @@ public class ExamService {
 
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
-                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.userId)).collect(Collectors.toList());
+                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.userId)).toList();
 
             studentResult.overallPointsAchieved = 0.0;
             studentResult.overallPointsAchievedInFirstCorrection = 0.0;
@@ -773,7 +773,7 @@ public class ExamService {
                 ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
                         .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
-                log.debug("Finished combination of template commits for programming exercise {}", programmingExerciseWithTemplateParticipation.toString());
+                log.debug("Finished combination of template commits for programming exercise {}", programmingExerciseWithTemplateParticipation);
             }
             catch (InterruptedException | GitAPIException e) {
                 log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);

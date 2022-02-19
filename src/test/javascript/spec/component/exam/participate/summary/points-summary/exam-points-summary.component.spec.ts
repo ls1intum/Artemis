@@ -21,6 +21,7 @@ import { GradeDTO } from 'app/entities/grade-step.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 let fixture: ComponentFixture<ExamPointsSummaryComponent>;
@@ -134,9 +135,13 @@ describe('ExamPointsSummaryComponent', () => {
         })
             .compileComponents()
             .then(() => {
+                const course = new Course();
+                course.id = 1;
+                course.accuracyOfScores = 2;
+
                 fixture = TestBed.createComponent(ExamPointsSummaryComponent);
                 component = fixture.componentInstance;
-                component.courseId = 1;
+                component.course = course;
                 component.exam = exam;
                 component.exercises = exercises;
                 component.gradingScaleExists = false;
@@ -184,10 +189,10 @@ describe('ExamPointsSummaryComponent', () => {
         expect(component.calculateAchievedPoints(notIncludedTextExercise)).toEqual(10);
         expect(component.calculateAchievedPoints(bonusTextExercise)).toEqual(10);
         expect(component.calculateAchievedPoints(quizExercise)).toEqual(2);
-        expect(component.calculateAchievedPoints(modelingExercise)).toEqual(3.3);
+        expect(component.calculateAchievedPoints(modelingExercise)).toEqual(3.33);
         expect(component.calculateAchievedPoints(programmingExercise)).toEqual(0);
 
-        expect(component.calculatePointsSum()).toEqual(35.3);
+        expect(component.calculatePointsSum()).toEqual(35.33);
         expect(component.calculateMaxPointsSum()).toEqual(40);
         expect(component.calculateMaxBonusPointsSum()).toEqual(20);
     });
