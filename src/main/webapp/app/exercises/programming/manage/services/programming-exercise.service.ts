@@ -391,4 +391,9 @@ export class ProgrammingExerciseService {
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
         return exerciseRes;
     }
+
+    // TODO
+    updateDiffReport(exerciseId: number): Observable<any> {
+        return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/diff-report`, null);
+    }
 }
