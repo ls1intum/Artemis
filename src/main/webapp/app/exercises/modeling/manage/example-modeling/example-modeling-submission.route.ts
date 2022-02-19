@@ -4,7 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { ExampleModelingSubmissionComponent } from './example-modeling-submission.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: ':courseId/modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
         component: ExampleModelingSubmissionComponent,
