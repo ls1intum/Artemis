@@ -38,6 +38,10 @@ export class ChartExerciseTypeFilterDirective {
         const isIncluded = this.chartFilter.get(convertedType);
         this.chartFilter.set(convertedType, !isIncluded);
         this.numberOfActiveFilters += !isIncluded ? 1 : -1;
+        return this.applyCurrentFilter(exerciseScores);
+    }
+
+    private applyCurrentFilter(exerciseScores: any[]) {
         return exerciseScores.filter((score) => this.chartFilter.get(score.exerciseType.toLowerCase().replace('_', '-')));
     }
 }

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { GraphColors, Graphs, SpanType } from 'app/entities/statistics.model';
+import { GraphColors, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
@@ -14,7 +14,7 @@ interface ExerciseStatisticsEntry extends NgxChartsSingleSeriesDataEntry {
     exerciseId: number;
 }
 
-enum PerformanceInterval {
+export enum PerformanceInterval {
     CRITICAL,
     MEDIAN,
     BEST,
@@ -37,7 +37,6 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     LEFT = false;
     RIGHT = true;
     SpanType = SpanType;
-    Graphs = Graphs;
 
     // Data
     barChartLabels: string[] = [];
@@ -51,7 +50,8 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     } as Color;
 
     // for filtering
-    currentlyDisplayedExerciseAverageScores: CourseManagementStatisticsModel[];
+    exerciseScoresFilteredByPerformanceInterval: CourseManagementStatisticsModel[];
+    currentlyDisplayableExercises: CourseManagementStatisticsModel[];
     displayColorMap = new Map<PerformanceInterval, string>();
 
     readonly yAxisTickFormatting = axisTickFormattingWithPercentageSign;
@@ -65,6 +65,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
 
     // Left arrow -> decrease, right arrow -> increase
     currentPeriod = 0;
+    currentSize = 0;
 
     // Icons
     faArrowLeft = faArrowLeft;
@@ -80,20 +81,20 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     }
 
     private initializeChart(): void {
-        this.displayColorMap.set(PerformanceInterval.CRITICAL, this.CRITICAL_CLASS);
-        this.displayColorMap.set(PerformanceInterval.MEDIAN, this.MEDIAN_CLASS);
-        this.displayColorMap.set(PerformanceInterval.BEST, this.BEST_CLASS);
+        this.includeAllIntervals();
         this.exerciseAverageScores = this.orderAverageScores(this.exerciseAverageScores);
         this.setUpColorDistribution();
         this.initializeFilterOptions(this.exerciseAverageScores);
         this.setupChart(this.exerciseAverageScores);
-        this.currentlyDisplayedExerciseAverageScores = this.exerciseAverageScores;
+        this.currentlyDisplayableExercises = this.exerciseAverageScores;
+        this.exerciseScoresFilteredByPerformanceInterval = this.exerciseAverageScores;
+        this.currentSize = this.exerciseAverageScores.length;
     }
 
     // handles arrow clicks and updates the exercises which are shown, forward is boolean since it is either forward or backward
     public switchTimeSpan(forward: boolean): void {
         this.currentPeriod += forward ? 1 : -1;
-        this.setupChart(this.currentlyDisplayedExerciseAverageScores);
+        this.setupChart(this.currentlyDisplayableExercises);
     }
 
     /**
@@ -216,8 +217,10 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      * @param type the exercise type that is filtered against
      */
     toggleType(type: ExerciseType): void {
-        this.currentlyDisplayedExerciseAverageScores = this.orderAverageScores(this.toggleExerciseType(type, this.exerciseAverageScores));
-        this.setupChart(this.currentlyDisplayedExerciseAverageScores);
+        this.currentlyDisplayableExercises = this.orderAverageScores(this.toggleExerciseType(type, this.exerciseScoresFilteredByPerformanceInterval));
+        this.currentPeriod = 0;
+        this.setupChart(this.currentlyDisplayableExercises);
+        this.currentSize = this.currentlyDisplayableExercises.length;
     }
 
     /**
@@ -239,7 +242,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
                     this.displayColorMap.set(pi, '');
                 }
             });
-            this.currentlyDisplayedExerciseAverageScores = this.filterForPerformanceInterval(interval);
+            this.exerciseScoresFilteredByPerformanceInterval = this.filterForPerformanceInterval(this.exerciseAverageScores, interval);
             this.initializeFilterOptionsAndSetupChartWithCurrentVisibleScores();
             return;
         }
@@ -260,7 +263,8 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
         // This map determines whether the color legend next to a chart entry is colored or not representing whether this entry is currently visible in the chart or not
         this.displayColorMap.set(interval, newValue);
         const exercises = this.filterForPerformanceInterval(interval);
-        this.currentlyDisplayedExerciseAverageScores = this.orderAverageScores(this.currentlyDisplayedExerciseAverageScores.concat(exercises));
+        this.exerciseScoresFilteredByPerformanceInterval = this.orderAverageScores(this.currentlyDisplayableExercises.concat(exercises));
+        this.initializeFilterOptionsAndSetupChartWithCurrentVisibleScores();
     }
 
     /**
@@ -270,10 +274,6 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      */
     private filterForPerformanceInterval(interval: PerformanceInterval) {
         let filterFunction;
-        // we reset the type filter in order to prevent inconsistencies
-        this.typeSet.forEach((type) => {
-            this.chartFilter.set(type, true);
-        });
         switch (interval) {
             case PerformanceInterval.CRITICAL: {
                 filterFunction = (model: CourseManagementStatisticsModel) => model.averageScore <= this.weakestThirdUpperBoundary;
@@ -296,12 +296,28 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      * @param exerciseModels the array that should be ordered
      * @private
      */
-    private orderAverageScores(exerciseModels: CourseManagementStatisticsModel[]) {
+    private orderAverageScores(exerciseModels: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
         return exerciseModels.sort((exercise1, exercise2) => exercise1.averageScore - exercise2.averageScore);
     }
 
+    /**
+     * Auxiliary method reducing code duplication for initializing the chart after a performance interval has been selected
+     * @private
+     */
     private initializeFilterOptionsAndSetupChartWithCurrentVisibleScores(): void {
-        this.initializeFilterOptions(this.currentlyDisplayedExerciseAverageScores);
-        this.setupChart(this.currentlyDisplayedExerciseAverageScores);
+        this.initializeFilterOptions(this.exerciseScoresFilteredByPerformanceInterval);
+        this.setupChart(this.exerciseScoresFilteredByPerformanceInterval);
+        this.currentlyDisplayableExercises = this.exerciseScoresFilteredByPerformanceInterval;
+        this.currentSize = this.exerciseScoresFilteredByPerformanceInterval.length;
+    }
+
+    /**
+     * Sets all performance intervals to visible
+     * @private
+     */
+    private includeAllIntervals(): void {
+        this.displayColorMap.set(PerformanceInterval.CRITICAL, this.CRITICAL_CLASS);
+        this.displayColorMap.set(PerformanceInterval.MEDIAN, this.MEDIAN_CLASS);
+        this.displayColorMap.set(PerformanceInterval.BEST, this.BEST_CLASS);
     }
 }

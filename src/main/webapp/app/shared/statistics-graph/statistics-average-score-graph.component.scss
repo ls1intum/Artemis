@@ -5,6 +5,7 @@
     border: 1px solid;
     margin-right: 5px;
 }
+
 .legend-entry {
     cursor: pointer;
     display: inline-flex;
@@ -16,7 +17,11 @@
     background: whitesmoke;
     padding: 5px;
     border-radius: 5px;
-    max-width: 150px;
+    max-width: 300px;
+}
+
+.switch-forward {
+    max-width: 60px;
 }
 
 .critical-color {

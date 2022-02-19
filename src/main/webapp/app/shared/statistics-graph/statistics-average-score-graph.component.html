@@ -1,4 +1,4 @@
-<div class="row mb-5">
+<div class="row mb-3">
     <div class="col-md-2 d-flex">
         <div class="row flex-grow-1">
             <div class="col-md-8 d-flex flex-column">
@@ -6,7 +6,7 @@
                 <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage }}%</h4>
             </div>
             <fa-icon
-                *ngIf="currentlyDisplayedExerciseAverageScores.length > 10 && currentPeriod > 0"
+                *ngIf="currentSize > 10 && currentPeriod > 0"
                 [icon]="faArrowLeft"
                 size="3x"
                 class="col-md-4 d-flex justify-content-end align-items-center"
@@ -17,7 +17,7 @@
     </div>
     <div #containerRef class="col-md-8">
         <ngx-charts-bar-vertical
-            [view]="[containerRef.offsetWidth, 250]"
+            [view]="[containerRef.offsetWidth, 300]"
             [results]="ngxData"
             [scheme]="ngxColor"
             [yScaleMax]="100"
@@ -40,11 +40,10 @@
     <div class="col-md-2 d-flex">
         <div class="row">
             <fa-icon
-                *ngIf="currentlyDisplayedExerciseAverageScores.length > 10 && currentlyDisplayedExerciseAverageScores[10 + currentPeriod] != null"
+                *ngIf="currentSize > 10 + currentPeriod"
                 [icon]="faArrowRight"
                 size="3x"
-                class="col d-flex align-items-center"
-                style="max-width: 60px"
+                class="col d-flex align-items-center switch-forward"
                 role="button"
                 (click)="switchTimeSpan(RIGHT)"
             ></fa-icon>
@@ -72,18 +71,20 @@
                             </li>
                         </ul>
                     </div>
-                    <div class="legend-container">
-                        <div class="legend-entry" (click)="togglePerformanceInterval(performanceInterval.CRITICAL)">
-                            <div class="color-legend" [ngClass]="displayColorMap.get(performanceInterval.CRITICAL)!"></div>
-                            <span>Critical 30%</span>
-                        </div>
-                        <div class="legend-entry" (click)="togglePerformanceInterval(performanceInterval.MEDIAN)">
-                            <div class="color-legend" [ngClass]="displayColorMap.get(performanceInterval.MEDIAN)!"></div>
-                            <span>Median 30%</span>
-                        </div>
-                        <div class="legend-entry" (click)="togglePerformanceInterval(performanceInterval.BEST)">
-                            <div class="color-legend" [ngClass]="displayColorMap.get(performanceInterval.BEST)!"></div>
-                            <label>Best 30%</label>
+                    <div class="d-flex align-items-center">
+                        <div class="legend-container">
+                            <div class="legend-entry" (click)="togglePerformanceInterval(performanceInterval.CRITICAL)">
+                                <div class="color-legend" [ngClass]="displayColorMap.get(performanceInterval.CRITICAL)!"></div>
+                                <span>{{ 'artemisApp.courseStatistics.chartLegend.lowest' | artemisTranslate }}</span>
+                            </div>
+                            <div class="legend-entry" (click)="togglePerformanceInterval(performanceInterval.MEDIAN)">
+                                <div class="color-legend" [ngClass]="displayColorMap.get(performanceInterval.MEDIAN)!"></div>
+                                <span>{{ 'artemisApp.courseStatistics.chartLegend.average' | artemisTranslate }}</span>
+                            </div>
+                            <div class="legend-entry" (click)="togglePerformanceInterval(performanceInterval.BEST)">
+                                <div class="color-legend" [ngClass]="displayColorMap.get(performanceInterval.BEST)!"></div>
+                                <span>{{ 'artemisApp.courseStatistics.chartLegend.best' | artemisTranslate }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
