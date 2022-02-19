@@ -417,7 +417,7 @@ export class ProgrammingExerciseService {
      * @private
      */
     private processServerSideTasks(response: HttpResponse<ProgrammingExerciseTaskServerSide[]>): Task[] {
-        return response.body?.map((task: any) => this.convertServerToClientTask(task)) ?? [];
+        return response.body?.map((task: ProgrammingExerciseTaskServerSide) => this.convertServerToClientTask(task)) ?? [];
     }
 
     /**
