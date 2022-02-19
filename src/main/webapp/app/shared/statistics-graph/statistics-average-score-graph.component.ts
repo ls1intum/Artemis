@@ -242,7 +242,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
                     this.displayColorMap.set(pi, '');
                 }
             });
-            this.exerciseScoresFilteredByPerformanceInterval = this.filterForPerformanceInterval(this.exerciseAverageScores, interval);
+            this.exerciseScoresFilteredByPerformanceInterval = this.filterForPerformanceInterval(interval);
             this.initializeFilterOptionsAndSetupChartWithCurrentVisibleScores();
             return;
         }
