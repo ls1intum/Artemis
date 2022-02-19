@@ -226,11 +226,11 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:2.3.5.RELEASE"
-    implementation 'org.springframework.data:spring-data-ldap:2.6.1'
+    implementation "org.springframework.ldap:spring-ldap-core:2.3.6.RELEASE"
+    implementation 'org.springframework.data:spring-data-ldap:2.6.2'
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.0"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.0"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.1"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.1"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
     implementation "io.netty:netty-all:4.1.74.Final"
