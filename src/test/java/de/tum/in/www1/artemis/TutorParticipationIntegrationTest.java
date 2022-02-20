@@ -213,7 +213,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
 
             var instructions = ModelFactory.generateGradingInstructions(gradingCriterion, 1, 1);
             gradingInstructionRepository.saveAll(instructions);
-            instructions.stream().forEach(feedback::setGradingInstruction);
+            instructions.forEach(feedback::setGradingInstruction);
             result.addFeedback(feedback);
             resultRepository.save(result);
         }

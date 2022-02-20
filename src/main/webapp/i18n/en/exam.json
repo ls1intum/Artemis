@@ -286,7 +286,7 @@
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text",
-            "assessmentDashboard": "Assessment Dashboard",
+            "assessmentDashboard": "Assessment",
             "examChecklist": "Exam Checklist",
             "studentExams": "Student Exams",
             "students": "Students",
@@ -480,6 +480,8 @@
             "correction": {
                 "examCorrection": "Exam correction",
                 "correctionRoundProgress": "Correction progress in round {{ index }}",
+                "publishResultDate": "Publishing results",
+                "notSet": "Unset",
                 "examReview": "Exam review",
                 "unset": "Unset",
                 "planned": "Planned",

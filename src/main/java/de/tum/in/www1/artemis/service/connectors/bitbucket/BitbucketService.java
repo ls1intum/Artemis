@@ -200,7 +200,7 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
         final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
-        log.debug("getCloneRepositoryUrl: {}", cloneUrl.toString());
+        log.debug("getCloneRepositoryUrl: {}", cloneUrl);
         return cloneUrl;
     }
 

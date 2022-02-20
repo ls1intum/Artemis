@@ -38,7 +38,8 @@ export class ExamChecklistComponent implements OnChanges {
         this.hasOptionalExercises = this.countMandatoryExercises < (this.exam.exerciseGroups?.length ?? 0);
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
             this.examChecklist = examStats;
-            this.allExamsGenerated = this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
+            this.allExamsGenerated =
+                !!this.exam.numberOfRegisteredUsers && this.exam.numberOfRegisteredUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
         });
     }
 }
