@@ -193,7 +193,7 @@ describe('Exam Update Component', () => {
         fixture.detectChanges();
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const updateStub = jest.spyOn(examManagementService, 'update').mockReturnValue(throwError(httpError));
+        const updateStub = jest.spyOn(examManagementService, 'update').mockReturnValue(throwError(() => httpError));
 
         // trigger save
         component.save();
@@ -223,7 +223,7 @@ describe('Exam Update Component', () => {
         fixture.detectChanges();
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const createStub = jest.spyOn(examManagementService, 'create').mockReturnValue(throwError(httpError));
+        const createStub = jest.spyOn(examManagementService, 'create').mockReturnValue(throwError(() => httpError));
 
         // trigger save
         component.save();

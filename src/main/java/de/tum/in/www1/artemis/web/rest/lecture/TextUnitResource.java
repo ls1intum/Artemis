@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
+@Deprecated // Moved to Lecture microservice. To be removed
 @RestController
 @RequestMapping("/api")
 public class TextUnitResource {

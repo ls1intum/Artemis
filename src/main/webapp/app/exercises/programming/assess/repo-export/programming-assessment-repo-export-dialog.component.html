@@ -114,7 +114,7 @@
             <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             type="submit"
             [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"
@@ -124,7 +124,7 @@
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
         </button>
         <button
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             type="submit"
             [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"

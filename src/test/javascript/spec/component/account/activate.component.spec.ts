@@ -1,4 +1,4 @@
-import { async, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
@@ -14,7 +14,7 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 describe('ActivateComponent', () => {
     let comp: ActivateComponent;
 
-    beforeEach(async(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ActivateComponent],
@@ -27,7 +27,7 @@ describe('ActivateComponent', () => {
         })
             .overrideTemplate(ActivateComponent, '')
             .compileComponents();
-    }));
+    });
 
     beforeEach(() => {
         const fixture = TestBed.createComponent(ActivateComponent);
@@ -62,7 +62,7 @@ describe('ActivateComponent', () => {
     it('should set set error to true upon activation failure', inject(
         [ActivateService],
         fakeAsync((service: ActivateService) => {
-            jest.spyOn(service, 'get').mockReturnValue(throwError('ERROR'));
+            jest.spyOn(service, 'get').mockReturnValue(throwError(() => new Error('ERROR')));
 
             comp.activateAccount();
             tick();

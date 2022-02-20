@@ -1,4 +1,4 @@
-import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -6,7 +6,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { take } from 'rxjs/operators';
 
 describe('Submission Policy Service', () => {
-    let injector: TestBed;
     let httpMock: HttpTestingController;
     let submissionPolicyService: SubmissionPolicyService;
     let lockRepositoryPolicy: LockRepositoryPolicy;
@@ -19,9 +18,8 @@ describe('Submission Policy Service', () => {
             imports: [HttpClientTestingModule],
             providers: [{ provide: SubmissionPolicyService, useClass: SubmissionPolicyService }],
         });
-        injector = getTestBed();
-        httpMock = injector.get(HttpTestingController);
-        submissionPolicyService = injector.get(SubmissionPolicyService);
+        httpMock = TestBed.inject(HttpTestingController);
+        submissionPolicyService = TestBed.inject(SubmissionPolicyService);
         lockRepositoryPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5 } as LockRepositoryPolicy;
         programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.id = 1;

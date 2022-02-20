@@ -2,12 +2,12 @@
     <div class="card unit-card">
         <div class="card-header unit-card-header row align-content-center" (click)="handleCollapse($event)">
             <h5 class="m-0 fw-medium">
-                <fa-icon class="col-auto me-2" [icon]="faVideo" [ngbTooltip]="'artemisApp.videoUnit.tooltip' | artemisTranslate"> </fa-icon>
+                <fa-icon class="col-auto me-2" [icon]="faVideo" [ngbTooltip]="'lectureApp.videoUnit.tooltip' | artemisTranslate"> </fa-icon>
                 {{ videoUnit?.name ? videoUnit.name : '' }}
                 <span
                     *ngIf="!videoUnit?.visibleToStudents"
                     class="badge bg-warning ms-2"
-                    ngbTooltip="{{ 'artemisApp.videoUnit.notReleasedTooltip' | artemisTranslate }} {{ videoUnit?.releaseDate | artemisDate }}"
+                    ngbTooltip="{{ 'lectureApp.videoUnit.notReleasedTooltip' | artemisTranslate }} {{ videoUnit?.releaseDate | artemisDate }}"
                 >
                     {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
                 </span>

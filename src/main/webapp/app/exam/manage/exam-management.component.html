@@ -23,36 +23,8 @@
                         <span>{{ 'artemisApp.exam.title' | artemisTranslate }}</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th class="d-md-table-cell" jhiSortBy="visibleDate">
-                        <span>{{ 'artemisApp.exam.visible' | artemisTranslate }}</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="startDate">
-                        <span>{{ 'artemisApp.exam.startDate' | artemisTranslate }}</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="endDate">
-                        <span>{{ 'artemisApp.exam.endDate' | artemisTranslate }}</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="publishResultsDate">
-                        <span>{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="examStudentReviewStart">
-                        <span>{{ 'artemisApp.exam.examStudentReviewStart' | artemisTranslate }}</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="examStudentReviewEnd">
-                        <span>{{ 'artemisApp.exam.examStudentReviewEnd' | artemisTranslate }}</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th>
-                        <span>{{ 'artemisApp.exam.duration' | artemisTranslate }}</span>
-                    </th>
-                    <th jhiSortBy="numberOfRegisteredUsers">
-                        <span>{{ 'artemisApp.exam.nrOfStudents' | artemisTranslate }}</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                    <th class="d-md-table-cell">
+                        <span>{{ 'artemisApp.examStatus.columnTitle' | artemisTranslate }}</span>
                     </th>
                     <th></th>
                 </tr>
@@ -79,26 +51,8 @@
                             </span>
                         </ng-template>
                     </td>
-                    <td>{{ exam.visibleDate | artemisDate }}</td>
-                    <td>{{ exam.startDate | artemisDate }}</td>
-                    <td>{{ exam.endDate | artemisDate }}</td>
-                    <td>{{ exam.publishResultsDate | artemisDate }}</td>
-                    <td>{{ exam.examStudentReviewStart | artemisDate }}</td>
-                    <td>{{ exam.examStudentReviewEnd | artemisDate }}</td>
-                    <td>{{ exam.startDate | durationTo: exam.endDate }}</td>
-                    <td>
-                        <ng-container *ngIf="course.isAtLeastInstructor; else notClickableNumberOfRegisteredUsers">
-                            <span>
-                                <a [routerLink]="[exam.id, 'students']">
-                                    {{ exam.numberOfRegisteredUsers }}
-                                </a>
-                            </span>
-                        </ng-container>
-                        <ng-template #notClickableNumberOfRegisteredUsers>
-                            <span>
-                                {{ exam.numberOfRegisteredUsers }}
-                            </span>
-                        </ng-template>
+                    <td class="d-md-table-cell">
+                        <jhi-exam-status [exam]="exam"></jhi-exam-status>
                     </td>
                     <td class="text-end">
                         <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">

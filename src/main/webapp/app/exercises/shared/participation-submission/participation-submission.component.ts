@@ -207,44 +207,44 @@ export class ParticipationSubmissionComponent implements OnInit {
      * @param submissionId - Id of submission that is deleted.
      */
     deleteSubmission(submissionId: number) {
-        this.submissionService.delete(submissionId).subscribe(
-            () => {
+        this.submissionService.delete(submissionId).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'submissionsModification',
                     content: 'Deleted a submission',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     deleteResult(submission: Submission, result: Result) {
         if (this.exercise && submission.id && result.id && this.participationId) {
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
-                    this.textAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
-                        () => this.updateResults(submission, result),
-                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
-                    );
+                    this.textAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe({
+                        next: () => this.updateResults(submission, result),
+                        error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
+                    });
                     break;
                 case ExerciseType.MODELING:
-                    this.modelingAssessmentsService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
-                        () => this.updateResults(submission, result),
-                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
-                    );
+                    this.modelingAssessmentsService.deleteAssessment(this.participationId, submission.id, result.id).subscribe({
+                        next: () => this.updateResults(submission, result),
+                        error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
+                    });
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    this.fileUploadAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
-                        () => this.updateResults(submission, result),
-                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
-                    );
+                    this.fileUploadAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe({
+                        next: () => this.updateResults(submission, result),
+                        error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
+                    });
                     break;
                 case ExerciseType.PROGRAMMING:
-                    this.programmingAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe(
-                        () => this.updateResults(submission, result),
-                        (error: HttpErrorResponse) => this.handleErrorResponse(error),
-                    );
+                    this.programmingAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe({
+                        next: () => this.updateResults(submission, result),
+                        error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
+                    });
                     break;
             }
         }

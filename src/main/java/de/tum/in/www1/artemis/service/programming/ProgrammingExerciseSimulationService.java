@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -15,13 +15,13 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Only for local development
@@ -99,7 +99,7 @@ public class ProgrammingExerciseSimulationService {
     }
 
     /**
-     * Sets the url and buildplan ids for the new exercise
+     * Sets the url and build plan ids for the new exercise
      * @param programmingExercise the new exercise
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      */
@@ -111,9 +111,9 @@ public class ProgrammingExerciseSimulationService {
         final var projectKey = programmingExercise.getProjectKey();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
-        final var exerciseRepoUrl = "http://" + domain + projectKey + "/" + exerciseRepoName + ".git";
-        final var testsRepoUrl = "http://" + domain + projectKey + "/" + testRepoName + ".git";
-        final var solutionRepoUrl = "http://" + domain + projectKey + "/" + solutionRepoName + ".git";
+        final var exerciseRepoUrl = "https://" + domain + projectKey + "/" + exerciseRepoName + ".git";
+        final var testsRepoUrl = "https://" + domain + projectKey + "/" + testRepoName + ".git";
+        final var solutionRepoUrl = "https://" + domain + projectKey + "/" + solutionRepoName + ".git";
         templateParticipation.setBuildPlanId(programmingExercise.generateBuildPlanId(TEMPLATE));
         templateParticipation.setRepositoryUrl(exerciseRepoUrl);
         solutionParticipation.setBuildPlanId(programmingExercise.generateBuildPlanId(SOLUTION));
@@ -129,45 +129,39 @@ public class ProgrammingExerciseSimulationService {
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      */
     public void setupInitialSubmissionsAndResults(ProgrammingExercise programmingExercise) {
-        Optional<TemplateProgrammingExerciseParticipation> templateProgrammingExerciseParticipation = this.templateProgrammingExerciseParticipationRepository
-                .findByProgrammingExerciseId(programmingExercise.getId());
-        Optional<SolutionProgrammingExerciseParticipation> solutionProgrammingExerciseParticipation = this.solutionProgrammingExerciseParticipationRepository
-                .findByProgrammingExerciseId(programmingExercise.getId());
+        var templateProgrammingExerciseParticipation = this.templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow(
+                () -> new EntityNotFoundException("TemplateProgrammingExerciseParticipation with programming exercise with " + programmingExercise.getId() + " does not exist"));
+        var solutionProgrammingExerciseParticipation = this.solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow(
+                () -> new EntityNotFoundException("SolutionProgrammingExerciseParticipation with programming exercise with " + programmingExercise.getId() + " does not exist"));
+
         String commitHashBase = VCSSimulationUtils.simulateCommitHash();
-        ProgrammingSubmission templateProgrammingSubmission = new ProgrammingSubmission();
-        templateProgrammingSubmission.setParticipation(templateProgrammingExerciseParticipation.get());
-        templateProgrammingSubmission.setSubmitted(true);
-        templateProgrammingSubmission.setType(SubmissionType.MANUAL);
-        templateProgrammingSubmission.setCommitHash(commitHashBase);
-        templateProgrammingSubmission.setSubmissionDate(templateProgrammingExerciseParticipation.get().getInitializationDate());
-        programmingSubmissionRepository.save(templateProgrammingSubmission);
-        Result templateResult = new Result();
-        templateResult.setParticipation(templateProgrammingExerciseParticipation.get());
-        templateResult.setSubmission(templateProgrammingSubmission);
-        templateResult.setRated(true);
-        templateResult.resultString("0 of 13 passed");
-        templateResult.setAssessmentType(AssessmentType.AUTOMATIC);
+        Result templateResult = createSubmissionAndResult(templateProgrammingExerciseParticipation, commitHashBase);
+        templateResult.setResultString("0 of 13 passed");
         templateResult.setScore(0D);
-        templateResult.setCompletionDate(templateProgrammingExerciseParticipation.get().getInitializationDate());
         resultRepository.save(templateResult);
 
-        ProgrammingSubmission solutionProgrammingSubmission = new ProgrammingSubmission();
         String commitHashSolution = VCSSimulationUtils.simulateCommitHash();
-        solutionProgrammingSubmission.setParticipation(solutionProgrammingExerciseParticipation.get());
-        solutionProgrammingSubmission.setSubmitted(true);
-        solutionProgrammingSubmission.setType(SubmissionType.MANUAL);
-        solutionProgrammingSubmission.setCommitHash(commitHashSolution);
-        solutionProgrammingSubmission.setSubmissionDate(solutionProgrammingExerciseParticipation.get().getInitializationDate());
-        programmingSubmissionRepository.save(solutionProgrammingSubmission);
-        Result solutionResult = new Result();
-        solutionResult.setParticipation(solutionProgrammingExerciseParticipation.get());
-        solutionResult.setSubmission(solutionProgrammingSubmission);
-        solutionResult.setRated(true);
-        solutionResult.resultString("13 of 13 passed");
+        Result solutionResult = createSubmissionAndResult(solutionProgrammingExerciseParticipation, commitHashSolution);
+        solutionResult.setResultString("13 of 13 passed");
         solutionResult.setScore(100D);
-        solutionResult.setAssessmentType(AssessmentType.AUTOMATIC);
-        solutionResult.setCompletionDate(solutionProgrammingExerciseParticipation.get().getInitializationDate());
         resultRepository.save(solutionResult);
+    }
+
+    private Result createSubmissionAndResult(AbstractBaseProgrammingExerciseParticipation templateProgrammingExerciseParticipation, String commitHashBase) {
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+        programmingSubmission.setParticipation(templateProgrammingExerciseParticipation);
+        programmingSubmission.setSubmitted(true);
+        programmingSubmission.setType(SubmissionType.MANUAL);
+        programmingSubmission.setCommitHash(commitHashBase);
+        programmingSubmission.setSubmissionDate(templateProgrammingExerciseParticipation.getInitializationDate());
+        programmingSubmissionRepository.save(programmingSubmission);
+        Result result = new Result();
+        result.setParticipation(templateProgrammingExerciseParticipation);
+        result.setSubmission(programmingSubmission);
+        result.setRated(true);
+        result.setCompletionDate(templateProgrammingExerciseParticipation.getInitializationDate());
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        return result;
     }
 
 }

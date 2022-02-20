@@ -330,7 +330,7 @@ describe('QuizExercise Management Detail Component', () => {
             });
 
             it('should call on error if course service fails', () => {
-                courseServiceStub.mockReturnValue(throwError({ status: 404 }));
+                courseServiceStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 comp.init();
                 expect(alertServiceStub).toBeCalled();
             });
@@ -667,7 +667,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should call alert service if fails', () => {
-                    quizExerciseServiceFindForCourseStub.mockReturnValue(throwError({ status: 404 }));
+                    quizExerciseServiceFindForCourseStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
                     let alertServiceStub: jest.SpyInstance;
                     alertServiceStub = jest.spyOn(alertService, 'error');
@@ -714,7 +714,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should call alert service if fails', () => {
-                    quizExerciseServiceFindForExamStub.mockReturnValue(throwError({ status: 404 }));
+                    quizExerciseServiceFindForExamStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
                     let alertServiceStub: jest.SpyInstance;
                     alertServiceStub = jest.spyOn(alertService, 'error');
@@ -1164,13 +1164,13 @@ describe('QuizExercise Management Detail Component', () => {
             });
 
             it('should call alert service if update fails', () => {
-                quizExerciseServiceUpdateStub.mockReturnValue(throwError({ status: 404 }));
+                quizExerciseServiceUpdateStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 saveAndExpectAlertService();
             });
 
             it('should call alert service if response has no body on create', () => {
                 comp.quizExercise.id = undefined;
-                quizExerciseServiceCreateStub.mockReturnValue(throwError({ status: 404 }));
+                quizExerciseServiceCreateStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 saveAndExpectAlertService();
             });
         });

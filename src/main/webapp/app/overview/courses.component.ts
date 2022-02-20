@@ -72,8 +72,8 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     loadAndFilterCourses() {
-        this.courseService.findAllForDashboard().subscribe(
-            (res: HttpResponse<Course[]>) => {
+        this.courseService.findAllForDashboard().subscribe({
+            next: (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                 this.courseScoreCalculationService.setCourses(this.courses);
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
@@ -94,8 +94,8 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                 );
                 this.nextRelevantExercise = this.findNextRelevantExercise();
             },
-            (response: string) => this.onError(response),
-        );
+            error: (response: string) => this.onError(response),
+        });
     }
 
     private onError(error: string) {

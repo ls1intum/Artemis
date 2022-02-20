@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -15,19 +13,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
@@ -35,7 +33,10 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
@@ -89,8 +90,6 @@ public class TextExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExerciseGroupRepository exerciseGroupRepository;
-
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final TextPlagiarismDetectionService textPlagiarismDetectionService;
@@ -105,8 +104,8 @@ public class TextExerciseResource {
             ParticipationRepository participationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
             TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
-            ExerciseGroupRepository exerciseGroupRepository, InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService,
-            CourseRepository courseRepository, TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
+            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
+            TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -125,7 +124,6 @@ public class TextExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.exerciseGroupRepository = exerciseGroupRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
@@ -153,29 +151,18 @@ public class TextExerciseResource {
         }
         // validates general settings: points, dates
         textExercise.validateGeneralSettings();
-
-        if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {
-            throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
-        }
-
         // Valid exercises have set either a course or an exerciseGroup
         textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
-
         // Check that the user is authorized to create the exercise
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // if exercise is created from scratch we create a new knowledge instance
+        // if exercise is created from scratch we create new knowledge instance
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
-
         groupNotificationService.checkNotificationsForNewExercise(textExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
@@ -201,26 +188,20 @@ public class TextExerciseResource {
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
         }
-
         // validates general settings: points, dates
         textExercise.validateGeneralSettings();
-
         // Valid exercises have set either a course or an exerciseGroup
         textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        // Retrieve the course over the exerciseGroup or the given courseId
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
-
         // Check that the user is authorized to update the exercise
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            return forbidden();
-        }
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Important: use the original exercise for permission check
         final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdElseThrow(textExercise.getId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExerciseBeforeUpdate, user);
 
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
-            return conflict("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
 
         // Forbid conversion between normal course exercise and exam exercise
@@ -231,16 +212,8 @@ public class TextExerciseResource {
         exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());
-
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
-
-        // Avoid recursions
-        if (textExercise.getExampleSubmissions().size() != 0) {
-            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(textExercise.getId());
-            updatedTextExercise.setExampleSubmissions(exampleSubmissionsWithResults);
-            updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
-            updatedTextExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
-        }
+        exerciseService.checkExampleSubmissions(updatedTextExercise);
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText,
                 instanceMessageSendService);
@@ -259,9 +232,7 @@ public class TextExerciseResource {
     public ResponseEntity<List<TextExercise>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<TextExercise> exercises = textExerciseRepository.findByCourseIdWithCategories(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
@@ -269,9 +240,7 @@ public class TextExerciseResource {
             exercise.setCourse(null);
             List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setGradingCriteria(gradingCriteria);
-
         }
-
         return ResponseEntity.ok().body(exercises);
     }
 
@@ -285,29 +254,17 @@ public class TextExerciseResource {
     @GetMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
+        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
-        if (optionalTextExercise.isEmpty()) {
-            return notFound();
-        }
-        TextExercise textExercise = optionalTextExercise.get();
-
-        // If the exercise belongs to an exam, only instructors and admins are allowed to access it
+        // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
         if (textExercise.isExamExercise()) {
-            // Get the course over the exercise group
-            ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(textExercise.getExerciseGroup().getId());
-            Course course = exerciseGroup.getExam().getCourse();
-
-            if (!authCheckService.isAtLeastEditorInCourse(course, null)) {
-                return forbidden();
-            }
-            // Set the exerciseGroup, exam and course so that the client can work with those ids
-            textExercise.setExerciseGroup(exerciseGroup);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         }
-        else if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
-            return forbidden();
+        else {
+            // in courses, also tutors can access the exercise
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
         }
 
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
@@ -330,29 +287,12 @@ public class TextExerciseResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete TextExercise : {}", exerciseId);
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
-        if (optionalTextExercise.isEmpty()) {
-            return notFound();
-        }
-        TextExercise textExercise = optionalTextExercise.get();
-
-        // If the exercise belongs to an exam, the course must be retrieved over the exerciseGroup
-        Course course;
-        if (textExercise.isExamExercise()) {
-            course = exerciseGroupRepository.retrieveCourseOverExerciseGroup(textExercise.getExerciseGroup().getId());
-        }
-        else {
-            course = textExercise.getCourseViaExerciseGroupOrCourseMember();
-        }
-
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return forbidden();
-        }
-
+        var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
         instanceMessageSendService.sendTextExerciseScheduleCancel(textExercise.getId());
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(textExercise, course, user);
+        exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }
@@ -376,12 +316,12 @@ public class TextExerciseResource {
 
         // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
         if (!authCheckService.isOwnerOfParticipation(participation, user) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            throw new AccessForbiddenException();
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
         if (!authCheckService.isAllowedToGetExamResult(textExercise, user)) {
-            return forbidden();
+            throw new AccessForbiddenException();
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
@@ -459,9 +399,8 @@ public class TextExerciseResource {
     /**
      * POST /text-exercises/import: Imports an existing text exercise into an existing course
      * <p>
-     * This will import the whole exercise except for the participations and Dates. Referenced
+     * This will import the whole exercise except for the participations and dates. Referenced
      * entities will get cloned and assigned a new id.
-     * Exercise)}
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the
@@ -475,37 +414,15 @@ public class TextExerciseResource {
     public ResponseEntity<TextExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody TextExercise importedExercise) throws URISyntaxException {
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
-            return badRequest();
+            throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
+        importedExercise.checkCourseAndExerciseGroupExclusivity("Text Exercise");
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var originalTextExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
-        if (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null) {
-            log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
-            if (!authCheckService.isAtLeastEditorInCourse(importedExercise.getExerciseGroup().getExam().getCourse(), user)) {
-                log.debug("User {} is not allowed to import exercises into course of exercise group {}", user.getId(), importedExercise.getExerciseGroup().getId());
-                return forbidden();
-            }
-        }
-        else {
-            log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-            if (!authCheckService.isAtLeastEditorInCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-                log.debug("User {} is not allowed to import exercises into course {}", user.getId(), importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-                return forbidden();
-            }
-        }
-
-        if (originalTextExercise.getCourseViaExerciseGroupOrCourseMember() == null) {
-            if (!authCheckService.isAtLeastEditorInCourse(originalTextExercise.getExerciseGroup().getExam().getCourse(), user)) {
-                log.debug("User {} is not allowed to import exercises from exercise group {}", user.getId(), originalTextExercise.getExerciseGroup().getId());
-                return forbidden();
-            }
-        }
-        else if (originalTextExercise.getExerciseGroup() == null) {
-            if (!authCheckService.isAtLeastEditorInCourse(originalTextExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-                log.debug("User {} is not allowed to import exercises from course {}", user.getId(), originalTextExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-                return forbidden();
-            }
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalTextExercise, user);
+        // validates general settings: points, dates
+        importedExercise.validateGeneralSettings();
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newTextExercise);
@@ -523,9 +440,7 @@ public class TextExerciseResource {
     @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
-
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
 
         // TAs are not allowed to download all participations
@@ -552,9 +467,7 @@ public class TextExerciseResource {
     public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastEditorForExercise(textExercise)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }
@@ -571,16 +484,17 @@ public class TextExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
+    @FeatureToggle(Feature.PlagiarismChecks)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws ExitException {
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-        if (!authCheckService.isAtLeastEditorForExercise(textExercise)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
+        log.info("Start textPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
         long start = System.nanoTime();
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
-        log.info("Finished textPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
+        log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons in {}", exerciseId, result.getComparisons().size(),
+                TimeLogUtil.formatDurationFrom(start));
         result.sortAndLimit(500);
         log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
         start = System.nanoTime();
@@ -608,7 +522,7 @@ public class TextExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
 
-        // check that the exercise is exist for given id
+        // check that the exercise exists for given id
         textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
 
         authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, textExercise);

@@ -39,7 +39,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
 
     ngOnInit() {
         const lectureRoute = this.activatedRoute.parent!.parent!;
-        combineLatest(lectureRoute.paramMap, lectureRoute.parent!.paramMap).subscribe(([params, parentParams]) => {
+        combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params, parentParams]) => {
             this.lectureId = Number(params.get('lectureId'));
             this.courseId = Number(parentParams.get('courseId'));
         });
@@ -88,12 +88,12 @@ export class CreateAttachmentUnitComponent implements OnInit {
                             this.isLoading = false;
                         }),
                     )
-                    .subscribe(
-                        () => {
+                    .subscribe({
+                        next: () => {
                             this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                         },
-                        (res: HttpErrorResponse) => onError(this.alertService, res),
-                    );
+                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                    });
             },
             (error) => {
                 // displaying the file upload error in the form but not resetting the form]

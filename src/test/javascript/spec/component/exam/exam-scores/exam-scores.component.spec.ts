@@ -1,12 +1,12 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AggregatedExerciseGroupResult, ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { ExamScoresComponent } from 'app/exam/exam-scores/exam-scores.component';
+import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -16,9 +16,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { cloneDeep } from 'lodash-es';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { empty, of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -26,12 +26,21 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { AccountService } from 'app/core/auth/account.service';
+import { Course } from 'app/entities/course.model';
+import { GraphColors } from 'app/entities/statistics.model';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
     let comp: ExamScoresComponent;
     let examService: ExamManagementService;
     let gradingSystemService: GradingSystemService;
+    let accountService: AccountService;
+    let router: Router;
+
+    let navigateSpy: jest.SpyInstance;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -223,9 +232,12 @@ describe('ExamScoresComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ExamScoresAverageScoresGraphComponent),
+                MockRouterLinkDirective,
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
+                { provide: Router, useClass: MockRouter },
+                MockProvider(AccountService),
                 MockProvider(TranslateService),
                 MockProvider(ExamManagementService),
                 MockProvider(SortService),
@@ -247,7 +259,7 @@ describe('ExamScoresComponent', () => {
                         return [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
                     },
                 }),
-                MockProvider(JhiLanguageHelper, { language: empty() }),
+                MockProvider(JhiLanguageHelper, { language: EMPTY }),
                 MockProvider(CourseManagementService, {
                     find: () => {
                         return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
@@ -265,6 +277,10 @@ describe('ExamScoresComponent', () => {
                 findExamScoresSpy = jest
                     .spyOn(participationScoreService, 'findExamScores')
                     .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
+                accountService = TestBed.inject(AccountService);
+                router = TestBed.inject(Router);
+
+                navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
             });
     });
 
@@ -568,6 +584,7 @@ describe('ExamScoresComponent', () => {
     it('should find grade step index correctly', () => {
         jest.spyOn(gradingSystemService, 'matchGradePercentage');
         comp.gradingScale = gradingScale;
+        comp.gradingScaleExists = true;
 
         expect(comp.findGradeStepIndex(20)).toBe(0);
     });
@@ -597,6 +614,85 @@ describe('ExamScoresComponent', () => {
         comp.toggleFilterForNonEmptySubmission();
 
         expect(comp.filterForNonEmptySubmissions).toBe(true);
+    });
+
+    it('should not delegate user if authorisation is not sufficient', () => {
+        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+
+        comp.onSelect();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should delegate user if authorisation is sufficient', () => {
+        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+        comp.course = { id: 42 } as Course;
+        comp.examScoreDTO = examScoreDTO;
+
+        comp.onSelect();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 42, 'exams', 1, 'participant-scores']);
+    });
+
+    it('should toggle median correctly', () => {
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        comp.isBonus = false;
+        fixture.detectChanges();
+
+        expect(comp.activeEntries).toHaveLength(3);
+        expect(comp.showPassedMedian).toBe(true);
+
+        comp.toggleMedian(MedianType.PASSED);
+
+        expect(comp.activeEntries).toEqual([]);
+        expect(comp.showPassedMedian).toBe(false);
+
+        comp.toggleMedian(MedianType.OVERALL);
+
+        expect(comp.overallChartMedian).toBe(50);
+        expect(comp.activeEntries).toHaveLength(3);
+        expect(comp.showOverallMedian).toBe(true);
+
+        comp.toggleMedian(MedianType.PASSED);
+
+        expect(comp.showPassedMedian).toBe(true);
+        expect(comp.showOverallMedian).toBe(false);
+
+        expect(comp.activeEntries).toHaveLength(3);
+    });
+
+    it('should setup coloring correctly if grading scale exists and it is bonus', () => {
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        const expectedColoring = [GraphColors.RED, GraphColors.GREY, GraphColors.GREY, GraphColors.GREY];
+        fixture.detectChanges();
+        expect(comp.isBonus).toBe(false);
+
+        expect(comp.ngxColor.domain).toEqual(expectedColoring);
+    });
+
+    it('should setup coloring correctly if grading scale exists and it is bonus', () => {
+        const adjustedGradingScale = gradingScale;
+        adjustedGradingScale.gradeSteps.forEach((gradingStep, index) => {
+            gradingStep.gradeName = index.toString();
+        });
+        adjustedGradingScale.gradeType = GradeType.BONUS;
+        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: adjustedGradingScale })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        const expectedColoring = [GraphColors.YELLOW, GraphColors.GREY, GraphColors.GREY, GraphColors.GREY];
+        fixture.detectChanges();
+        expect(comp.isBonus).toBe(true);
+
+        expect(comp.ngxColor.domain).toEqual(expectedColoring);
+    });
+
+    it('should setup coloring correctly if no grading scale exists', () => {
+        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: undefined as unknown as GradingScale })));
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        const expectedColoring = [...Array(8).fill(GraphColors.YELLOW), ...Array(12).fill(GraphColors.GREY)];
+        fixture.detectChanges();
+
+        expect(comp.gradingScaleExists).toBe(false);
+        expect(comp.ngxColor.domain).toEqual(expectedColoring);
     });
 });
 

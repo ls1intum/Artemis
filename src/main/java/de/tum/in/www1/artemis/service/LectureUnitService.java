@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 
+@Deprecated // Moved to Lecture microservice. To be removed
 @Service
 public class LectureUnitService {
 

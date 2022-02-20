@@ -225,7 +225,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         ide: 'artemisApp.editor.home.title',
         lectures: 'artemisApp.lecture.home.title',
         attachments: 'artemisApp.lecture.attachments.title',
-        unit_management: 'artemisApp.lectureUnit.home.title',
+        unit_management: 'lectureApp.lectureUnit.home.title',
         exams: 'artemisApp.examManagement.title',
         exercise_groups: 'artemisApp.examManagement.exerciseGroups',
         students: 'artemisApp.course.students',
@@ -462,14 +462,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
         const index = this.breadcrumbs.length;
         this.addBreadcrumb(uri, segment, false);
 
-        observable.subscribe(
-            (response: HttpResponse<string>) => {
+        observable.subscribe({
+            next: (response: HttpResponse<string>) => {
                 // Fall back to the segment in case there is no body returned
                 const title = response.body ?? segment;
                 this.setBreadcrumb(uri, title, false, index);
             },
-            (error: HttpErrorResponse) => onError(this.alertService, error),
-        );
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**

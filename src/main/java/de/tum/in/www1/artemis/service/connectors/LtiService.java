@@ -15,7 +15,10 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.imsglobal.lti.launch.*;
+import org.imsglobal.lti.launch.LtiOauthVerifier;
+import org.imsglobal.lti.launch.LtiVerificationException;
+import org.imsglobal.lti.launch.LtiVerificationResult;
+import org.imsglobal.lti.launch.LtiVerifier;
 import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +31,15 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
+import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -177,7 +184,7 @@ public class LtiService {
      * @param launchRequest The launch request, sent by LTI consumer
      * @return the authentication based on the user who invoked the launch request
      * @throws ArtemisAuthenticationException if the user cannot be authenticated, this exception will be thrown
-     * @throws AuthenticationException internal exception of Spring that might be thrown as well
+     * @throws AuthenticationException        internal exception of Spring that might be thrown as well
      */
     private Optional<Authentication> authenticateLtiUser(LtiLaunchRequestDTO launchRequest) throws ArtemisAuthenticationException, AuthenticationException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -193,10 +200,13 @@ public class LtiService {
             throw new InternalAuthenticationServiceException("Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.");
         }
 
-        final var email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary()
-                : launchRequest.getUser_id() + "@lti.artemis.ase.in.tum.de";
-        final var username = createUsernameFromLaunchRequest(launchRequest);
-        final var fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
+        if (StringUtils.isEmpty(launchRequest.getLis_person_contact_email_primary())) {
+            throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
+        }
+
+        final String email = launchRequest.getLis_person_contact_email_primary();
+        final String username = createUsernameFromLaunchRequest(launchRequest);
+        final String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
         // 2. Case: Existing mapping for LTI user id
         // Check if there is an existing mapping for the user ID
@@ -233,27 +243,24 @@ public class LtiService {
             final var groups = new HashSet<String>();
             if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
                 groups.add(USER_GROUP_NAME_EDX.get());
-                newUser = userCreationService.createInternalUser(username, null, groups, USER_GROUP_NAME_EDX.get(), fullname, email, null, null, "en");
+                newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_EDX.get(), fullname, email, null, null, "en", true);
             }
             else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent()) {
                 groups.add(USER_GROUP_NAME_U4I.get());
-                newUser = userCreationService.createInternalUser(username, null, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, "en");
+                newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, "en", true);
             }
             else {
-                String message = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
+                String message = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest;
                 log.error(message);
                 throw new InternalAuthenticationServiceException(message);
             }
+            newUser.setActivationKey(null);
+            userRepository.save(newUser);
             log.info("Created new user {}", newUser);
             return newUser;
         });
 
         log.info("createNewUserFromLaunchRequest: {}", user);
-
-        // Make sure the user is activated
-        if (!user.getActivated()) {
-            userCreationService.activateUser(user);
-        }
 
         log.info("Signing in as {}", username);
         return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
@@ -277,14 +284,14 @@ public class LtiService {
     @NotNull
     private String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
         final String username;
-        if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
-            username = this.USER_PREFIX_EDX.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent() && USER_PREFIX_EDX.isPresent()) {
+            username = USER_PREFIX_EDX.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
         }
-        else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent()) {
-            username = this.USER_PREFIX_U4I.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent() && USER_PREFIX_U4I.isPresent()) {
+            username = USER_PREFIX_U4I.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
         }
         else {
-            throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest.toString());
+            throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest);
         }
 
         return username;
@@ -293,7 +300,7 @@ public class LtiService {
     /**
      * Add an user to the course student group
      *
-     * @param user the user who should be added the course
+     * @param user   the user who should be added the course
      * @param course the course to which the user should be added
      */
     private void addUserToExerciseGroup(User user, Course course) {
@@ -319,9 +326,9 @@ public class LtiService {
     /**
      * Save the LTO outcome url
      *
-     * @param user the user for which the lti outcome url should be saved
-     * @param exercise the exercise
-     * @param url the service url given by the LTI request
+     * @param user      the user for which the lti outcome url should be saved
+     * @param exercise  the exercise
+     * @param url       the service url given by the LTI request
      * @param sourcedId the sourcedId given by the LTI request
      */
     private void saveLtiOutcomeUrl(User user, Exercise exercise, String url, String sourcedId) {
@@ -344,7 +351,7 @@ public class LtiService {
     /**
      * Save the User <-> LTI User ID mapping
      *
-     * @param user the user that should be saved
+     * @param user            the user that should be saved
      * @param ltiUserIdString the user id
      */
     private void saveLtiUserId(User user, String ltiUserIdString) {
@@ -398,6 +405,7 @@ public class LtiService {
 
     /**
      * helper method to print a request with all its elements
+     *
      * @param request the http request
      * @return a string with all debug information
      */

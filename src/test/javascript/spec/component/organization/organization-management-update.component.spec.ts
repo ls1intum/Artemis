@@ -35,7 +35,7 @@ describe('OrganizationManagementUpdateComponent', () => {
         organizationService = TestBed.inject(OrganizationManagementService);
     });
 
-    afterEach(async () => {
+    beforeEach(() => {
         jest.clearAllMocks();
     });
 

@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { Router } from '@angular/router';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -47,17 +46,26 @@ export class TeamComponent implements OnInit {
      * Fetches the exercise and team from the server
      */
     ngOnInit() {
-        this.route.params.subscribe((params) => {
-            this.setLoadingState(true);
-            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                this.exercise = exerciseResponse.body!;
-                this.teamService.find(this.exercise, params['teamId']).subscribe((teamResponse) => {
-                    this.team = teamResponse.body!;
-                    this.setTeamOwnerFlag();
-                    this.setLoadingState(false);
-                }, this.onLoadError);
-            }, this.onLoadError);
-        }, this.onLoadError);
+        this.route.params.subscribe({
+            next: (params) => {
+                this.setLoadingState(true);
+                this.exerciseService.find(params['exerciseId']).subscribe({
+                    next: (exerciseResponse) => {
+                        this.exercise = exerciseResponse.body!;
+                        this.teamService.find(this.exercise, params['teamId']).subscribe({
+                            next: (teamResponse) => {
+                                this.team = teamResponse.body!;
+                                this.setTeamOwnerFlag();
+                                this.setLoadingState(false);
+                            },
+                            error: this.onLoadError,
+                        });
+                    },
+                    error: this.onLoadError,
+                });
+            },
+            error: this.onLoadError,
+        });
     }
 
     private setTeamOwnerFlag() {

@@ -119,7 +119,7 @@ describe('ProgrammingExercise Management Component', () => {
 
     it('Should not reset exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(exerciseService, 'reset').mockReturnValue(throwError(httpErrorResponse));
+        jest.spyOn(exerciseService, 'reset').mockReturnValue(throwError(() => httpErrorResponse));
         const mockSubscriber = jest.fn();
         comp.dialogError$.subscribe(mockSubscriber);
 
@@ -156,7 +156,7 @@ describe('ProgrammingExercise Management Component', () => {
 
     it('Should not delete exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(httpErrorResponse));
+        jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(() => httpErrorResponse));
         const mockSubscriber = jest.fn();
         comp.dialogError$.subscribe(mockSubscriber);
 

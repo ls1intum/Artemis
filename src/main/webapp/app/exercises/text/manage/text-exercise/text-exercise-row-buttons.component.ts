@@ -28,15 +28,15 @@ export class TextExerciseRowButtonsComponent {
     constructor(private textExerciseService: TextExerciseService, private eventManager: EventManager) {}
 
     deleteExercise() {
-        this.textExerciseService.delete(this.exercise.id!).subscribe(
-            () => {
+        this.textExerciseService.delete(this.exercise.id!).subscribe({
+            next: () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
                     content: 'Deleted a textExercise',
                 });
                 this.dialogErrorSource.next('');
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

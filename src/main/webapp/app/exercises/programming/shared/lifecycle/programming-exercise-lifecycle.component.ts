@@ -49,9 +49,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     }
 
     /**
-     * Toggles the assessment type between AUTOMATIC (only tests in repo will be run using build plans) and
-     * SEMI_AUTOMATIC (After all automatic tests have been run, the tutors will have to make a final manual assessment)
-     *
+     * Toggles the value for allowing complaints for automatic assessment between true and false
      */
     toggleComplaintsType() {
         this.exercise.allowComplaintsForAutomaticAssessments = !this.exercise.allowComplaintsForAutomaticAssessments;

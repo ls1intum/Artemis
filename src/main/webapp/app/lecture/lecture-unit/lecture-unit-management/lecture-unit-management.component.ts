@@ -86,8 +86,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (lecture) => {
+            .subscribe({
+                next: (lecture) => {
                     this.lecture = lecture;
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
@@ -95,18 +95,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         this.lectureUnits = [];
                     }
                 },
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     updateOrder() {
         this.lectureUnitService
             .updateOrder(this.lectureId, this.lectureUnits)
             .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
-            .subscribe(
-                () => {},
-                (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            );
+            .subscribe({
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 
     moveUp(index: number): void {
@@ -130,13 +129,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getDeleteQuestionKey(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
-                return 'artemisApp.exerciseUnit.delete.question';
+                return 'lectureApp.exerciseUnit.delete.question';
             case LectureUnitType.ATTACHMENT:
-                return 'artemisApp.attachmentUnit.delete.question';
+                return 'lectureApp.attachmentUnit.delete.question';
             case LectureUnitType.VIDEO:
-                return 'artemisApp.videoUnit.delete.question';
+                return 'lectureApp.videoUnit.delete.question';
             case LectureUnitType.TEXT:
-                return 'artemisApp.textUnit.delete.question';
+                return 'lectureApp.textUnit.delete.question';
             default:
                 return '';
         }
@@ -145,13 +144,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getDeleteConfirmationTextKey(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
-                return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
+                return 'lectureApp.exerciseUnit.delete.typeNameToConfirm';
             case LectureUnitType.ATTACHMENT:
-                return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
+                return 'lectureApp.attachmentUnit.delete.typeNameToConfirm';
             case LectureUnitType.VIDEO:
-                return 'artemisApp.videoUnit.delete.typeNameToConfirm';
+                return 'lectureApp.videoUnit.delete.typeNameToConfirm';
             case LectureUnitType.TEXT:
-                return 'artemisApp.textUnit.delete.typeNameToConfirm';
+                return 'lectureApp.textUnit.delete.typeNameToConfirm';
             default:
                 return '';
         }
@@ -166,13 +165,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe(
-            () => {
+        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe({
+            next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
             },
-            (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        );
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     editButtonAvailable(lectureUnit: LectureUnit) {

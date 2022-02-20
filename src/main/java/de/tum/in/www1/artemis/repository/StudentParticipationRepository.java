@@ -460,6 +460,26 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             select p from StudentParticipation p
             left join fetch p.results r
+            left join fetch p.submissions s
+            left join fetch s.results sr
+            left join fetch sr.feedbacks
+            left join p.team.students
+            where p.id = :#{#participationId}
+            """)
+    Optional<StudentParticipation> findWithEagerSubmissionsResultsFeedbacksById(@Param("participationId") Long participationId);
+
+    /**
+     * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database.
+     * Further, load the exercise and its course. Returns an empty Optional if the participation could not be found.
+     *
+     * Note: Does NOT load illegal submissions!
+     *
+     * @param participationId the id of the participation
+     * @return the participation with eager submissions, results, exercise and course or an empty Optional
+     */
+    @Query("""
+            select p from StudentParticipation p
+            left join fetch p.results r
             left join fetch r.submission rs
             left join fetch p.submissions s
             left join fetch s.results sr
