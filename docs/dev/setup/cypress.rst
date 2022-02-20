@@ -17,7 +17,7 @@ Every execution of the Cypress test suite requires its own deployment of Artemis
 Using docker-compose we can start a MySQL database and the Artemis Server locally on the build agent and connect it to the prelive system in the university data center.
 The docker-compose file can be found under `src/main/docker/cypress/docker-compose.yml <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/docker-compose.yml>`__.
 
-.. figure:: cypress/cypress_bamboo_deployment_diagram.png
+.. figure:: cypress/cypress_bamboo_deployment_diagram.svg
    :align: center
    :alt: Artemis Deployment on Bamboo Build Agent for Cypress
 
@@ -60,7 +60,7 @@ Artemis Deployment on test environment
 There is another build plan on Bamboo, which executes the Cypress test suite. This build plan deploys the latest Artemis executable of the develop branch on an already configured test environment (test server 3) and executes the Cypress test suite against it.
 This build plan is automatically executed every 8 hours and serves as a smoke test for test server 3.
 
-.. figure:: cypress/cypress_test_environment_deployment_diagram.png
+.. figure:: cypress/cypress_test_environment_deployment_diagram.svg
    :align: center
    :alt: Artemis Deployment on test environment for Cypress
 
