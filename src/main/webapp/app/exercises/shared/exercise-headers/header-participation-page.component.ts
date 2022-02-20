@@ -20,7 +20,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     @Input() participation: StudentParticipation;
 
     public exerciseStatusBadge = 'bg-success';
-    public exerciseCategories: ExerciseCategory[];
+    public exerciseCategories: ExerciseCategory[] = [];
 
     dueDate?: dayjs.Dayjs;
     getIcon = getIcon;
@@ -38,7 +38,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      * Returns false if it is an exam exercise and the publishResultsDate is in the future, true otherwise
      */
     get resultsPublished(): boolean {
-        if (!!this.exercise.exerciseGroup && !!this.exercise.exerciseGroup.exam) {
+        if (this.exercise?.exerciseGroup?.exam) {
             if (this.exercise.exerciseGroup.exam.publishResultsDate) {
                 return dayjs().isAfter(this.exercise.exerciseGroup.exam.publishResultsDate);
             }
@@ -52,14 +52,10 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      * Sets the status badge and categories of the exercise on changes
      */
     ngOnChanges(): void {
-        this.setExerciseStatusBadge();
-        this.exerciseCategories = this.exercise.categories || [];
-        this.dueDate = getExerciseDueDate(this.exercise, this.participation);
-    }
-
-    private setExerciseStatusBadge(): void {
         if (this.exercise) {
             this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.participation) ? 'bg-danger' : 'bg-success';
+            this.exerciseCategories = this.exercise.categories || [];
+            this.dueDate = getExerciseDueDate(this.exercise, this.participation);
         }
     }
 }

@@ -85,4 +85,15 @@ describe('HeaderParticipationPage', () => {
         exam.publishResultsDate = dayjs().add(1, 'day');
         expect(component.resultsPublished).toBe(false);
     });
+
+    it('should not apply changes if no exercise is set', () => {
+        // @ts-ignore
+        component.exercise = undefined;
+        component.ngOnChanges();
+
+        // Expect default values
+        expect(component.exerciseStatusBadge).toBe('bg-success');
+        expect(component.exerciseCategories).toEqual([]);
+        expect(component.dueDate).toBe(undefined);
+    });
 });
