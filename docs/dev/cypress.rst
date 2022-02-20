@@ -1,8 +1,6 @@
 Cypress Bamboo Plans
 ====================
 
-This page describes all existing Bamboo build plans for Cypress.
-
 **Background**
 
 The Cypress test suite contains system tests verifying the most important features of Artemis. System tests test the whole system and therefore require a complete deployment of the system first.
@@ -30,7 +28,6 @@ In total there are three docker containers started in the Bamboo build agent:
 
    This container starts a MySQL database and exposes it on port 3306. The container automatically creates a new database 'Artemis' and configures it with the recommended settings for Artemis.
    The Cypress setup reuses the already existing `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/mysql.yml>`__ from the standard Artemis docker setup.
-
 2. Artemis
    
    The docker image for the Artemis container is created from the already existing `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/Dockerfile>`__. When the Bamboo build of the Cypress test suite starts it retrieves the Artemis executable (.war file) from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
@@ -41,7 +38,6 @@ In total there are three docker containers started in the Bamboo build agent:
    This information is accessible to the Bamboo build agent via `Bamboo plan variables <https://confluence.atlassian.com/bamboo/bamboo-variables-289277087.html>`__.
    
    The Artemis container is also configured to `depend on <https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on>`__ the MySQL container and uses `health checks <https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck>`__ to wait until the MySQL container is up and running.
-
 3. Cypress
    
    Cypress offers a `variety of docker images <https://github.com/cypress-io/cypress-docker-images>`__ to execute Cypress tests. We use an image, which has the Cypress operating system dependencies and a chrome browser installed.
