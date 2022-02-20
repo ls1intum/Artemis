@@ -51,11 +51,11 @@ In total there are three Docker containers started in the Bamboo build agent:
 
 The Artemis instance deployed on the build agent is not publicly available to improve the security of this setup.
 However, in order to get the build results for programming exercise submissions Artemis relies on a webhook from Bamboo to send POST requests to Artemis.
-To allow this an extra rule has been added to the firewall allowing only the Bamboo instance in the prelive system to connect to the Artemis instance in the build agent.
+To allow this, an extra rule has been added to the firewall allowing only the Bamboo instance in the prelive system to connect to the Artemis instance in the build agent.
 
 **Timing**
 
-As mentioned above we want the Cypress test suite to be executed whenever new commits are pushed to a Git branch. This has been achieved by adding the `Cypress Github build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-AETG>`__ as a `child dependency <https://confluence.atlassian.com/bamboo/setting-up-plan-build-dependencies-289276887.html>`__ to the `Artemis Build build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`__.
+As mentioned above, we want the Cypress test suite to be executed whenever new commits are pushed to a Git branch. This has been achieved by adding the `Cypress Github build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-AETG>`__ as a `child dependency <https://confluence.atlassian.com/bamboo/setting-up-plan-build-dependencies-289276887.html>`__ to the `Artemis Build build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`__.
 The *Artemis Build* build plan is triggered whenever a new commit has been pushed to a branch.
 
 The Cypress build plan is only triggered after a successful build of the Artemis executable.
