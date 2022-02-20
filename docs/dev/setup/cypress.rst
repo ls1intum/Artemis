@@ -3,7 +3,8 @@ Cypress Bamboo Plans
 
 This page describes all existing Bamboo build plans for Cypress.
 
-** Background **
+**Background**
+
 The Cypress test suite contains system tests verifying the most important features of Artemis. System tests test the whole system and therefore require a complete deployment of the system first.
 In order to prevent as many faults (bugs) as possible from being introduced into the develop branch, we want to execute the Cypress test suite whenever new commits are pushed to a git branch (just like the unit and integration test suites).
 To accomplish this we need to be able to dynamically deploy multiple different instances of Artemis at the same time. An ideal setup would be to deploy the whole Artemis system using Kubernetes. However, this setup is too complex at the moment.
@@ -42,12 +43,14 @@ In total there are three docker containers started in the Bamboo build agent:
    Therefore, the Artemis Cypress docker container is configured to install all depencenies (using :code:`npm ci`) upon start. This will also install Cypress itself. Afterwards the Artemis Cypress test suite is executed.
    The necessary configuration for the Cypress test suite is also passed in via environmental variables. Furthermore, the Cypress container depends on the Artemis container and is only started once Artemis has been fully booted.
 
-** Bamboo webhook **
+**Bamboo webhook**
+
 The Artemis instance deployed on the build agent is not publicly available to improve the security of this setup.
 However, in order to get the build result for programming exercises Artemis relies on a webhook from Bamboo to send POST requests to Artemis.
 To allow this an extra rule has been added to the firewall allowing only the Bamboo instance in the prelive system to connect to the Artemis instance in the build agent.
 
-** Timing **
+**Timing**
+
 As mentioned above we want the Cypress test suite to be executed whenever new commits are pushed to a git branch. This has been achieved by adding the `Cypress Github build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-AETG>`__ as a `child dependency <https://confluence.atlassian.com/bamboo/setting-up-plan-build-dependencies-289276887.html>`__ to the `Artemis Build build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`__.
 The Artemis Build build plan is triggered whenever a new commit has been pushed to a branch. The Cypress build plan is only triggered after a successful build of the Artemis executable.
 This does imply a delay (about 10 minutes on average) between the push of new commits and the execution of the Cypress test suite, since the new Artemis executable first has to be built.
