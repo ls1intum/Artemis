@@ -15,15 +15,15 @@ interface ExerciseStatisticsEntry extends NgxChartsSingleSeriesDataEntry {
 }
 
 export enum PerformanceInterval {
-    CRITICAL,
-    MEDIAN,
-    BEST,
+    LOWEST = 'lowest',
+    AVERAGE = 'average',
+    BEST = 'best',
 }
 
 @Component({
     selector: 'jhi-statistics-average-score-graph',
     templateUrl: './statistics-average-score-graph.component.html',
-    styleUrls: ['./statistics-average-score-graph.component.scss'],
+    styleUrls: ['./statistics-average-score-graph.component.scss', '../chart/vertical-bar-chart.scss'],
 })
 export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilterDirective implements OnInit {
     @Input()
@@ -55,7 +55,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     displayColorMap = new Map<PerformanceInterval, string>();
 
     readonly yAxisTickFormatting = axisTickFormattingWithPercentageSign;
-    readonly performanceInterval = PerformanceInterval;
+    readonly performanceIntervals = [PerformanceInterval.LOWEST, PerformanceInterval.AVERAGE, PerformanceInterval.BEST];
     readonly CRITICAL_CLASS = 'critical-color';
     readonly MEDIAN_CLASS = 'median-color';
     readonly BEST_CLASS = 'best-color';
@@ -236,8 +236,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
         let newValue = '';
         // This means an interval is selected that is currently already displayed
         if (currentValue !== '') {
-            const performanceIntervals = [PerformanceInterval.BEST, PerformanceInterval.MEDIAN, PerformanceInterval.CRITICAL];
-            performanceIntervals.forEach((pi) => {
+            this.performanceIntervals.forEach((pi) => {
                 if (pi !== interval) {
                     this.displayColorMap.set(pi, '');
                 }
@@ -247,11 +246,11 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
             return;
         }
         switch (interval) {
-            case PerformanceInterval.CRITICAL: {
+            case PerformanceInterval.LOWEST: {
                 newValue = this.CRITICAL_CLASS;
                 break;
             }
-            case PerformanceInterval.MEDIAN: {
+            case PerformanceInterval.AVERAGE: {
                 newValue = this.MEDIAN_CLASS;
                 break;
             }
@@ -275,11 +274,11 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     private filterForPerformanceInterval(interval: PerformanceInterval) {
         let filterFunction;
         switch (interval) {
-            case PerformanceInterval.CRITICAL: {
+            case PerformanceInterval.LOWEST: {
                 filterFunction = (model: CourseManagementStatisticsModel) => model.averageScore <= this.weakestThirdUpperBoundary;
                 break;
             }
-            case PerformanceInterval.MEDIAN: {
+            case PerformanceInterval.AVERAGE: {
                 filterFunction = (model: CourseManagementStatisticsModel) =>
                     model.averageScore > this.weakestThirdUpperBoundary && model.averageScore < this.bestThirdLowerBoundary;
                 break;
@@ -316,8 +315,16 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      * @private
      */
     private includeAllIntervals(): void {
-        this.displayColorMap.set(PerformanceInterval.CRITICAL, this.CRITICAL_CLASS);
-        this.displayColorMap.set(PerformanceInterval.MEDIAN, this.MEDIAN_CLASS);
+        this.displayColorMap.set(PerformanceInterval.LOWEST, this.CRITICAL_CLASS);
+        this.displayColorMap.set(PerformanceInterval.AVERAGE, this.MEDIAN_CLASS);
         this.displayColorMap.set(PerformanceInterval.BEST, this.BEST_CLASS);
+    }
+
+    /**
+     * Appends a percentage sign to every data label of the chart
+     * @param averageScore the score that is displayed by the data label
+     */
+    formatDataLabel(averageScore: number): string {
+        return averageScore + '%';
     }
 }

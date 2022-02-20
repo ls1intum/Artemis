@@ -168,7 +168,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         it('should filter correctly if lowest third is selected', () => {
             expectedScores = [exercise1, exercise2, exercise3];
 
-            component.togglePerformanceInterval(PerformanceInterval.CRITICAL);
+            component.togglePerformanceInterval(PerformanceInterval.LOWEST);
 
             expect(component.currentlyDisplayableExercises).toEqual(expectedScores);
         });
@@ -176,7 +176,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         it('should filter correctly if average third is selected', () => {
             expectedScores = [exercise4, exercise5, exercise6, exercise7, exercise8];
 
-            component.togglePerformanceInterval(PerformanceInterval.MEDIAN);
+            component.togglePerformanceInterval(PerformanceInterval.AVERAGE);
 
             expect(component.currentlyDisplayableExercises).toEqual(expectedScores);
         });
@@ -192,8 +192,8 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         it('should filter correctly if lowest and average third is selected', () => {
             expectedScores = [exercise1, exercise2, exercise3, exercise4, exercise5, exercise6, exercise7, exercise8];
 
-            component.togglePerformanceInterval(PerformanceInterval.MEDIAN);
-            component.togglePerformanceInterval(PerformanceInterval.CRITICAL);
+            component.togglePerformanceInterval(PerformanceInterval.AVERAGE);
+            component.togglePerformanceInterval(PerformanceInterval.LOWEST);
 
             expect(component.currentlyDisplayableExercises).toEqual(expectedScores);
         });
@@ -202,7 +202,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expectedScores = [exercise1, exercise2, exercise3, exercise9, exercise10, exercise11];
 
             component.togglePerformanceInterval(PerformanceInterval.BEST);
-            component.togglePerformanceInterval(PerformanceInterval.CRITICAL);
+            component.togglePerformanceInterval(PerformanceInterval.LOWEST);
 
             expect(component.currentlyDisplayableExercises).toEqual(expectedScores);
         });
@@ -211,7 +211,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expectedScores = [exercise4, exercise5, exercise6, exercise7, exercise8, exercise9, exercise10, exercise11];
 
             component.togglePerformanceInterval(PerformanceInterval.BEST);
-            component.togglePerformanceInterval(PerformanceInterval.MEDIAN);
+            component.togglePerformanceInterval(PerformanceInterval.AVERAGE);
 
             expect(component.currentlyDisplayableExercises).toEqual(expectedScores);
         });
