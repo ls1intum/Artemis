@@ -20,7 +20,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     @Input() participation: StudentParticipation;
 
     public exerciseStatusBadge = 'bg-success';
-    public exerciseCategories: ExerciseCategory[] = [];
+    public exerciseCategories: ExerciseCategory[];
 
     dueDate?: dayjs.Dayjs;
     getIcon = getIcon;
