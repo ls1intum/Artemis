@@ -19,16 +19,21 @@ services:
                 ipv4_address: 172.33.0.2
     jenkins:
         build: jenkins
+        user: root
         volumes:
             - artemis-jenkins-data:/var/jenkins_home
-            - /var/run/docker.sock:/var/run/docker.sock
-            - /usr/local/bin/docker:/usr/bin/docker
+            - ./jenkins/jenkins-disable-csrf.groovy:/var/jenkins_home/init.groovy # Disable CSRF token
+            - ./jenkins/master.key:/var/jenkins_home/master.key # Preset master key to use pre-generated secrets
             - ./jenkins/jenkins-casc-config.yml:/usr/share/jenkins/ref/jenkins-casc-config.yml
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /usr/bin/docker:/usr/bin/docker:ro
+            - /usr/bin/com.docker.cli:/usr/bin/com.docker.cli
         ports:
             - "8082:8080"
         hostname: jenkins
         environment:
             - CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/jenkins-casc-config.yml
+            - JAVA_OPTS
         networks:
             artemis:
                 ipv4_address: 172.33.0.3

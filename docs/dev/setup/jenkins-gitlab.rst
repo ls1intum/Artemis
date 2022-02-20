@@ -53,15 +53,15 @@ below into your ``application-artemis.yml`` or ``application-local.yml`` file (t
     version-control:
         url: http://localhost:8081
         user: root
-        password: <your.gitlab.admin.password> # created in Gitlab Server Quickstart step 2
-        token: <your.gitlab.token> # generated in Gitlab Server Quickstart steps 4 and 5
-        ci-token: <your.ci.token> # generated in Jenkins Server Quickstart step 8
+        password: artemis_admin # created in Gitlab Server Quickstart step 2
+        token: artemis-gitlab-token # generated in Gitlab Server Quickstart steps 4 and 5
+        ci-token: jenkins-secret-token # generated in Jenkins Server Quickstart step 8
     continuous-integration:
         user: artemis_admin
         password: artemis_admin
         url: http://localhost:8082
         empty-commit-necessary: true
-        secret-push-token: <your.secret.push.token> # generated in Jenkins Server Quickstart step 8
+        secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # generated in Jenkins Server Quickstart step 8
         vcs-credentials: artemis_gitlab_admin_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token
         artemis-authentication-token-value: artemis_admin
@@ -69,10 +69,14 @@ below into your ``application-artemis.yml`` or ``application-local.yml`` file (t
     git:
         name: Artemis
         email: artemis.in@tum.de
-    jenkins:
-        internal-urls:
-            ci-url: http://jenkins:8080
-            vcs-url: http://gitlab:80
+   jenkins:
+       internal-urls:
+         ci-url: http://jenkins:8080
+         vcs-url: http://gitlab:80
+       use-crumb: false
+    server:
+      port: 8080
+      url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
 
 In addition, you have to start Artemis with the profiles ``gitlab`` and
 ``jenkins`` so that the correct adapters will be used, e.g.:
@@ -140,6 +144,8 @@ Gitlab Server Quickstart
 
 The following steps describes how to set up the Gitlab server in a semi-automated way.
 This is ideal as a quickstart for developers. For a more detailed setup, see `Manual Gitlab Server Setup <#gitlab-server-setup>`__.
+In a production setup, you have to at least change the root password (by either specifying it in step 1 or extracting the random password in step 2) and generate random access tokens (instead of the pre-defined values).
+Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-setup.sh`` script and use the generated tokens instead of the predefined ones.
 
 1. Start the Gitlab container defined in `src/main/docker/gitlab-jenkins-mysql.yml` by running
 
@@ -161,7 +167,8 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
 
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab cat /etc/gitlab/initial_root_password
 
-3. Create an Artemis configuration file ``application-local.yml`` (in src/main/resources) and insert the Gitlab admin account:
+3. Insert the Gitlab root user password in the file ``application-local.yml`` (in src/main/resources) and insert the Gitlab admin account.
+   If you copied the template from above and used the default password, this is already done for you.
 
    .. code:: yaml
 
@@ -179,15 +186,17 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
 
    You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens`` and generate a token with all scopes.
    Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
+   If you used the command to generate the token, you don't have to change the ``gitlab-local-setup.sh`` file.
 
-5. Run the following command and copy the generated access tokens into the Artemis configuration ``src/main/resources/application-local.yml`` and ``src/main/docker/jenkins/jenkins-casc-config.yml`` files.
+5. Adjust the GitLab setup by running, this will configure GitLab's network setting to allow local requests:
 
    ::
 
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
 
+    This script can also generate random access tokens, which should be used in a production setup. Change the variabe ``$GENERATE_ACCESS_TOKENS`` to ``true`` to generate the random tokens and insert them into the Artemis configuration file.
+
 6. You're done! Follow the `Automated Jenkins Server Setup <#automated-jenkins-server-setup>`__ section for configuring Jenkins.
-    There you can skip steps 4, 5, and 10.
 
 Manual Gitlab Server Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -427,62 +436,30 @@ Automated Jenkins Server Setup
 
 The following steps describe how to deploy a pre-configured version of the Jenkins server.
 This is ideal as a quickstart for developers. For a more detailed setup, see `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
+In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config.yml``) and generate random access tokens and push tokens.
 
-1. Open the dockerfile located at ``src/main/docker/jenkins/Dockerfile`` or ``src/main/docker/jenkins/swift/Dockerfile`` (in case you want to additionally install Swift/SwiftLint).
-
-2. Uncomment the line which installs the docker client. Jenkins uses build agents to build code. The automated setup configures a local agent running from within Jenkins container.
-
-3. Uncomment the line that disables the first-time setup wizard and save the dockerfile:
-
-::
-
-       ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
-
-4. Create a new access token in Gitlab named ``Jenkins`` and give it **api** and **read_repository** rights. You can do either do it manually or using the following command:
+1. Create a new access token in Gitlab named ``Jenkins`` and give it **api** and **read_repository** rights. You can do either do it manually or using the following command:
 
   ::
 
       docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_repository], name: 'Jenkins'); token.set_token('jenkins-gitlab-token'); token.save\!"
 
 
-5. Open the ``src/main/docker/jenkins/jenkins-casc-config.yml`` file with an editor and insert the generated token (which is ``jenkins-gitlab-token``, if you used the command from above), the gitlab admin username, and password:
 
-.. code:: yaml
-
-   credentials:
-    system:
-        domainCredentials:
-            - credentials:
-                - gitLabApiTokenImpl:
-                    apiToken: your.api.token
-            - usernamePassword:
-                id: artemis_gitlab_admin_credentials
-                scope: GLOBAL
-                username: your.gitlab.admin.username
-                password: your.gitlab.admin.password
-
-
-6. Navigate to the bottom of the file and set the url of your Gitlab instance. This is typically the ip address or hostname of the Gitlab container.
-
-.. code:: yaml
-
-    unclassified:
-      gitlabconnectionconfig:
-        connections:
-          - apiTokenId: artemis_gitlab_api_token
-            url: your.gitlab.url
-
-7. You can now deploy Jenkins. A ``src/main/docker/gitlab-jenkins-mysql.yml`` file is provided which deploys the Jenkins, Gitlab, and Mysql containers bound to static ip addresses. You can deploy them by running:
+2. You can now deploy Jenkins. A ``src/main/docker/gitlab-jenkins-mysql.yml`` file is provided which deploys the Jenkins, Gitlab, and Mysql containers bound to static ip addresses. You can deploy them by running:
 
 ::
 
-       docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
+       JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
 
  Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
-8. You need to generate the `ci-token` and `secret-push-token`. Please follow the `Gitlab to Jenkins push notification token <##gitlab-to-jenkins-push-notification-token>`__ steps.
+3. You need to generate the `ci-token` and `secret-push-token`.
+   If you used the preset ``master.key`` within the file ``gitlab-jenkins-mysql.yml``, you can skip this step.
+   In a production setup, you should use a random ``master.key``, then you have to follow the steps described in  `Gitlab to Jenkins push notification token <##gitlab-to-jenkins-push-notification-token>`__ to generate the token.
 
-9. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+4. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+   If you used the preset ``master.key`` and are running a development setup, the correct values are already correctly inserted in the template configuration in the beginning of this page.
 
 .. code:: yaml
 
@@ -506,7 +483,8 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
                 artemis-authentication-token-value: artemis_admin
                 secret-push-token: # generated in step 8
 
-10. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
+5. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
+    Again, if you are using a development setup, the template in the beginning of this page already contains the correct values.
 
 .. code:: yaml
 
@@ -515,7 +493,7 @@ This is ideal as a quickstart for developers. For a more detailed setup, see `Ma
             ci-url: http://jenkins:8080
             vcs-url: http://gitlab:80
 
-11. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
+6. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
 
 Manual Jenkins Server Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -878,7 +856,7 @@ the following steps:
 
         GET https://your.jenkins.domain/job/TestProject/config.xml
 
-    If you used the automated setup and have xmllint installed, you can use this command, which will output the ``secret-push-token`` from steps 9 and 10:
+    If you have xmllint installed, you can use this command, which will output the ``secret-push-token`` from steps 9 and 10 (you may have to adjust the username and password):
 
     ::
 
