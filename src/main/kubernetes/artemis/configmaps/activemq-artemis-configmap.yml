@@ -8,5 +8,3 @@ data:
 kind: ConfigMap
 metadata:
   name: activemq-artemis
-  annotations:
-    field.cattle.io/creatorId: user-9jfkn

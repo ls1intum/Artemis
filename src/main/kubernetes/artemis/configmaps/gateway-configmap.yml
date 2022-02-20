@@ -9,5 +9,3 @@ data:
 kind: ConfigMap
 metadata:
   name: gateway
-  annotations:
-    field.cattle.io/creatorId: user-9jfkn

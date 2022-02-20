@@ -5,5 +5,3 @@ data:
 kind: ConfigMap
 metadata:
   name: jhipster-registry-config
-  annotations:
-    field.cattle.io/creatorId: user-9jfkn
