@@ -1,4 +1,4 @@
-version: '2'
+version: '2.4'
 services:
     artemis-app:
         image: ghcr.io/ls1intum/artemis-service:${TAG:-latest}
