@@ -7,33 +7,39 @@ This page describes all existing Bamboo build plans for Cypress.
 
 The Cypress test suite contains system tests verifying the most important features of Artemis. System tests test the whole system and therefore require a complete deployment of the system first.
 In order to prevent as many faults (bugs) as possible from being introduced into the develop branch, we want to execute the Cypress test suite whenever new commits are pushed to a git branch (just like the unit and integration test suites).
+
 To accomplish this we need to be able to dynamically deploy multiple different instances of Artemis at the same time. An ideal setup would be to deploy the whole Artemis system using Kubernetes. However, this setup is too complex at the moment.
 The main reason for the complexity is that it is very hard to automatically setup docker containers for the external services (Jira, Bitbucket and Bamboo) and connect them directly with Artemis.
+
 Therefore, the current setup only dynamically deploys the Artemis Server and configures it to connect to the prelive system, which is already properly setup in the university data center.
 
 Artemis Deployment on Bamboo Build Agent
 ----------------------------------------
 Every execution of the Cypress test suite requires its own deployment of Artemis. The easiest way to accomplish this is to deploy Artemis locally on the build agent, which executes the Cypress tests.
 Using docker-compose we can start a MySQL database and the Artemis Server locally on the build agent and connect it to the prelive system in the university data center.
-The docker-compose file can be found under `src/main/docker/cypress/docker-compose.yml <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/docker-compose.yml>`__.
 
 .. figure:: cypress/cypress_bamboo_deployment_diagram.svg
    :align: center
    :alt: Artemis Deployment on Bamboo Build Agent for Cypress
+   
+   Artemis Deployment on Bamboo Build Agent for Cypress
 
 In total there are three docker containers started in the Bamboo build agent:
 
 1. MySQL
 
    This container starts a MySQL database and exposes it on port 3306. The container automatically creates a new database 'Artemis' and configures it with the recommended settings for Artemis.
-   The Cypress setup reuses the already existing `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/mysql.yml>`__ from the standard Artemis setup.
+   The Cypress setup reuses the already existing `MySQL docker image <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/mysql.yml>`__ from the standard Artemis docker setup.
 
 2. Artemis
    
    The docker image for the Artemis container is created from the already existing `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/Dockerfile>`__. When the Bamboo build of the Cypress test suite starts it retrieves the Artemis executable (.war file) from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
-   Upon creation of the Artemis docker image the executable is copied into the image together with configuration files for the Artemis Server. The main configuration of the Artemis Server is contained in the `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/application.yml>`__.
+   Upon creation of the Artemis docker image the executable is copied into the image together with configuration files for the Artemis Server.
+   
+   The main configuration of the Artemis Server is contained in the `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/application.yml>`__.
    However, this file does not contain any security relevant information. Security relevant settings like the credentials to the Jira admin account in the prelive system are instead passed to the docker container via environmental variables.
    This information is accessible to the Bamboo build agent via `Bamboo plan variables <https://confluence.atlassian.com/bamboo/bamboo-variables-289277087.html>`__.
+   
    The Artemis container is also configured to `depend on <https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on>`__ the MySQL container and uses `health checks <https://docs.docker.com/compose/compose-file/compose-file-v2/#healthcheck>`__ to wait until the MySQL container is up and running.
 
 3. Cypress
@@ -41,28 +47,33 @@ In total there are three docker containers started in the Bamboo build agent:
    Cypress offers a `variety of docker images <https://github.com/cypress-io/cypress-docker-images>`__ to execute Cypress tests. We use an image, which has the Cypress operating system dependencies and a chrome browser installed.
    However, Cypress itself is not installed in `theses images <https://github.com/cypress-io/cypress-docker-images/tree/master/browsers>`__. This is convenient for us because the image is smaller and the Artemis Cypress project requires additional dependencies to fully function.
    Therefore, the Artemis Cypress docker container is configured to install all depencenies (using :code:`npm ci`) upon start. This will also install Cypress itself. Afterwards the Artemis Cypress test suite is executed.
+   
    The necessary configuration for the Cypress test suite is also passed in via environmental variables. Furthermore, the Cypress container depends on the Artemis container and is only started once Artemis has been fully booted.
 
 **Bamboo webhook**
 
 The Artemis instance deployed on the build agent is not publicly available to improve the security of this setup.
-However, in order to get the build result for programming exercises Artemis relies on a webhook from Bamboo to send POST requests to Artemis.
+However, in order to get the build result for programming exercise submission Artemis relies on a webhook from Bamboo to send POST requests to Artemis.
 To allow this an extra rule has been added to the firewall allowing only the Bamboo instance in the prelive system to connect to the Artemis instance in the build agent.
 
 **Timing**
 
 As mentioned above we want the Cypress test suite to be executed whenever new commits are pushed to a git branch. This has been achieved by adding the `Cypress Github build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-AETG>`__ as a `child dependency <https://confluence.atlassian.com/bamboo/setting-up-plan-build-dependencies-289276887.html>`__ to the `Artemis Build build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`__.
-The Artemis Build build plan is triggered whenever a new commit has been pushed to a branch. The Cypress build plan is only triggered after a successful build of the Artemis executable.
+The Artemis Build build plan is triggered whenever a new commit has been pushed to a branch.
+
+The Cypress build plan is only triggered after a successful build of the Artemis executable.
 This does imply a delay (about 10 minutes on average) between the push of new commits and the execution of the Cypress test suite, since the new Artemis executable first has to be built.
 
 Artemis Deployment on test environment
 --------------------------------------
-There is another build plan on Bamboo, which executes the Cypress test suite. This build plan deploys the latest Artemis executable of the develop branch on an already configured test environment (test server 3) and executes the Cypress test suite against it.
+There is another build plan on Bamboo, which executes the Cypress test suite. `This build plan <https://bamboo.ase.in.tum.de/chain/viewChain.action?planKey=ARTEMIS-AETBB>`__ deploys the latest Artemis executable of the develop branch on an already configured test environment (test server 3) and executes the Cypress test suite against it.
 This build plan is automatically executed every 8 hours and serves as a smoke test for test server 3.
 
 .. figure:: cypress/cypress_test_environment_deployment_diagram.svg
    :align: center
    :alt: Artemis Deployment on test environment for Cypress
+   
+   Artemis Deployment on test environment for Cypress
 
 The difference of this setup is that the Artemis Server is deployed on a separate environment, which already contains the necessary configuration files for the Artemis Server to connect to the prelive system.
 The docker image for the Cypress container should be exactly the same as the Cypress image used in the docker-compose file for the deployment on a Bamboo build agent.
@@ -71,4 +82,4 @@ Maintenance
 -----------
 The Artemis dockerfile as well as the MySQL image are already maintained because they are used in other Artemis docker setups. Therefore, only Cypress and the Cypress docker image requires active maintenance.
 Since the Cypress test suite simulates a real user it makes sense to execute the test suite with the latest chrome browser. The Cypress docker image we use always has a specific chrome version installed.
-Therefore, `docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/docker-compose.yml>`__ as well as the `build plan for the Cypress smoke tests <https://bamboo.ase.in.tum.de/build/admin/edit/editBuildDocker.action?buildKey=ARTEMIS-AETBB-QE>`__ should be updated every month to make sure that the latest Cypress image for the chrome browser is used.
+Therefore, the `docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/docker-compose.yml>`__ as well as the `build plan for the Cypress smoke tests <https://bamboo.ase.in.tum.de/build/admin/edit/editBuildDocker.action?buildKey=ARTEMIS-AETBB-QE>`__ should be updated every month to make sure that the latest Cypress image for the chrome browser is used.
