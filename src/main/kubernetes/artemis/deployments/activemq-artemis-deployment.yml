@@ -1,11 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    field.cattle.io/creatorId: user-9jfkn
   labels:
-    cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-activemq-artemis
+    app: deployment-artemis-activemq-artemis
   name: activemq-artemis
 spec:
   progressDeadlineSeconds: 600
@@ -13,7 +10,7 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-activemq-artemis
+        app: deployment-artemis-activemq-artemis
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -22,7 +19,7 @@ spec:
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-activemq-artemis
+          app: deployment-artemis-activemq-artemis
     spec:
       containers:
       - envFrom:
@@ -49,11 +46,6 @@ spec:
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
-        stdin: true
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        tty: true
-      dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}

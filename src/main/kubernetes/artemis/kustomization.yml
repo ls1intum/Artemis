@@ -28,6 +28,12 @@ resources:
   - deployments/usermanagement-service-deployment.yml
   - deployments/gateway-deployment.yml
   #Services
+  - services/activemq-artemis-service.yml
+  - services/artemis-mysql-service.yml
+  - services/artemis-service.yml
+  - services/gateway-service.yml
+  - services/lecture-service.yml
+  - services/usermanagement-service.yml
   - services/jhipster-registry-service.yml
   #Ingresses
   - ingresses/activemq-artemis-ingress.yml

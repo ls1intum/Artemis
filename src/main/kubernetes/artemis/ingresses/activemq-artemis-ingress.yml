@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
@@ -12,8 +12,10 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: activemq-artemis
-          servicePort: 8161
+          service:
+            name: activemq-artemis
+            port:
+              number: 8161
         pathType: ImplementationSpecific
   tls:
   - hosts:

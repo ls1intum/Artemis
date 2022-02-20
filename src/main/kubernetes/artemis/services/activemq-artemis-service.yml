@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: activemq-artemis-service
+spec:
+  ports:
+    - name: 61616tcp
+      port: 61616
+      protocol: TCP
+      targetPort: 61616
+    - name: 8161tcp
+      port: 8161
+      protocol: TCP
+      targetPort: 8161
+  selector:
+    app: deployment-artemis-activemq-artemis

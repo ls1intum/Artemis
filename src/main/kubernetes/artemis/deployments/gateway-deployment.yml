@@ -1,11 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    field.cattle.io/creatorId: user-9jfkn
   labels:
-    cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-gateway
+    app: deployment-artemis-gateway
   name: gateway
 spec:
   progressDeadlineSeconds: 600
@@ -13,7 +10,7 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-gateway
+        app: deployment-artemis-gateway
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -22,7 +19,7 @@ spec:
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-gateway
+          app: deployment-artemis-gateway
     spec:
       containers:
       - env:
@@ -38,7 +35,7 @@ spec:
         - configMapRef:
             name: jhipster-registry-config
             optional: false
-        image: <DockerId>/artemis-gateway
+        image: ghcr.io/ls1intum/artemis-gateway
         imagePullPolicy: Always
         name: gateway
         ports:
@@ -51,11 +48,6 @@ spec:
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
-        stdin: true
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        tty: true
-      dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}

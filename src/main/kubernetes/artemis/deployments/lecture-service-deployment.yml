@@ -1,11 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    field.cattle.io/creatorId: user-9jfkn
   labels:
-    cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-lecture-service
+    app: deployment-artemis-lecture-service
   name: lecture-service
 spec:
   progressDeadlineSeconds: 600
@@ -13,7 +10,7 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-lecture-service
+        app: deployment-artemis-lecture-service
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -22,7 +19,7 @@ spec:
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-lecture-service
+          app: deployment-artemis-lecture-service
     spec:
       containers:
       - envFrom:
@@ -34,7 +31,7 @@ spec:
             optional: false
         - secretRef:
             name: artemis-secrets
-        image: <DockerId>/artemis-lecture-service
+        image: ghcr.io/ls1intum/artemis-lecture-service
         imagePullPolicy: Always
         name: lecture-service
         ports:
@@ -48,13 +45,7 @@ spec:
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
-        stdin: true
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        tty: true
-      dnsPolicy: ClusterFirst
       restartPolicy: Always
-      schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
       initContainers:

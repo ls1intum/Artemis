@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
@@ -10,8 +10,10 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: jhipster-registry
-          servicePort: 8761
+          service:
+            name: jhipster-registry
+            port:
+              number: 8761
         pathType: ImplementationSpecific
   tls:
   - hosts:

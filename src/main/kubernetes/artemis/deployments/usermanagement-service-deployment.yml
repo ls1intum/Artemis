@@ -1,11 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    field.cattle.io/creatorId: user-9jfkn
   labels:
-    cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-usermanagement-service
+    app: deployment-artemis-usermanagement-service
   name: usermanagement-service
 spec:
   progressDeadlineSeconds: 600
@@ -13,7 +10,7 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-usermanagement-service
+      app: deployment-artemis-usermanagement-service
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -22,7 +19,7 @@ spec:
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-usermanagement-service
+        app: deployment-artemis-usermanagement-service
     spec:
       containers:
       - envFrom:
@@ -34,7 +31,7 @@ spec:
             optional: false
         - secretRef:
             name: artemis-secrets
-        image: <DockerId>/artemis-usermanagement-service
+        image: ghcr.io/ls1intum/artemis-usermanagement-service
         imagePullPolicy: Always
         name: usermanagement-service
         ports:
@@ -47,13 +44,7 @@ spec:
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
-        stdin: true
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        tty: true
-      dnsPolicy: ClusterFirst
       restartPolicy: Always
-      schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
       initContainers:

@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
@@ -12,8 +12,10 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: artemis-app
-          servicePort: 8080
+          service:
+            name: artemis-app
+            port:
+              number: 8080
         pathType: ImplementationSpecific
   tls:
   - hosts:
