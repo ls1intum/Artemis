@@ -93,7 +93,7 @@ describe('HeaderParticipationPage', () => {
 
         // Expect default values
         expect(component.exerciseStatusBadge).toBe('bg-success');
-        expect(component.exerciseCategories).toEqual([]);
+        expect(component.exerciseCategories).toBe(undefined);
         expect(component.dueDate).toBe(undefined);
     });
 });
