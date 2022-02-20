@@ -120,7 +120,7 @@
                 </div>
                 <div #containerRef class="col-12 col-md-8">
                     <ngx-charts-bar-horizontal-stacked
-                        [view]="[containerRef.offsetWidth, 250]"
+                        [view]="[containerRef.offsetWidth, exerciseGroup[0].height]"
                         [scheme]="ngxBarColor"
                         [results]="exerciseGroup"
                         [xAxis]="true"
