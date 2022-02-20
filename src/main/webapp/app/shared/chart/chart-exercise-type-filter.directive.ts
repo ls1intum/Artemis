@@ -22,7 +22,7 @@ export class ChartExerciseTypeFilterDirective {
     protected initializeFilterOptions(exerciseScores: any[]): void {
         this.typeSet = new Set(exerciseScores.map((score) => score.exerciseType));
         this.typeSet.forEach((type) => {
-            this.chartFilter.set(type.toLowerCase().replace('_', '-'), true);
+            this.chartFilter.set(ChartExerciseTypeFilterDirective.convertToMapKey(type), true);
         });
         this.numberOfActiveFilters = this.typeSet.size;
     }
@@ -32,9 +32,10 @@ export class ChartExerciseTypeFilterDirective {
      * @param type the ExerciseType the user changed the filter for
      * @param exerciseScores the score objects the updated filter should be applied against
      * @returns the exeriseScores filtered against the current state of the chart filter
+     * @protected
      */
-    toggleExerciseType(type: ExerciseType, exerciseScores: any[]): any {
-        const convertedType = type.toLowerCase().replace('_', '-');
+    protected toggleExerciseType(type: ExerciseType, exerciseScores: any[]): any {
+        const convertedType = ChartExerciseTypeFilterDirective.convertToMapKey(type);
         const isIncluded = this.chartFilter.get(convertedType);
         this.chartFilter.set(convertedType, !isIncluded);
         this.numberOfActiveFilters += !isIncluded ? 1 : -1;
@@ -42,6 +43,15 @@ export class ChartExerciseTypeFilterDirective {
     }
 
     private applyCurrentFilter(exerciseScores: any[]) {
-        return exerciseScores.filter((score) => this.chartFilter.get(score.exerciseType.toLowerCase().replace('_', '-')));
+        return exerciseScores.filter((score) => this.chartFilter.get(ChartExerciseTypeFilterDirective.convertToMapKey(score.exerciseType)));
+    }
+
+    /**
+     * Converts a given exercise type to a map key and returns it
+     * @param type the exercise type
+     * @protected
+     */
+    protected static convertToMapKey(type: ExerciseType) {
+        return type.toLowerCase().replace('_', '-');
     }
 }

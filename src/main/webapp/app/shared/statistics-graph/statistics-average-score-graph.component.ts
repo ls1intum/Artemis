@@ -53,9 +53,11 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     exerciseScoresFilteredByPerformanceInterval: CourseManagementStatisticsModel[];
     currentlyDisplayableExercises: CourseManagementStatisticsModel[];
     displayColorMap = new Map<PerformanceInterval, string>();
+    numberOfSelectedIntervals = 3;
 
     readonly yAxisTickFormatting = axisTickFormattingWithPercentageSign;
     readonly performanceIntervals = [PerformanceInterval.LOWEST, PerformanceInterval.AVERAGE, PerformanceInterval.BEST];
+    readonly convertToMapKey = ChartExerciseTypeFilterDirective.convertToMapKey;
     readonly CRITICAL_CLASS = 'critical-color';
     readonly MEDIAN_CLASS = 'median-color';
     readonly BEST_CLASS = 'best-color';
@@ -236,12 +238,13 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
         let newValue = '';
         // This means an interval is selected that is currently already displayed
         if (currentValue !== '') {
-            this.performanceIntervals.forEach((pi) => {
-                if (pi !== interval) {
-                    this.displayColorMap.set(pi, '');
-                }
-            });
-            this.exerciseScoresFilteredByPerformanceInterval = this.filterForPerformanceInterval(interval);
+            // if only this interval is selected, reselecting it leads to selecting all intervals
+            if (this.numberOfSelectedIntervals === 1) {
+                this.includeAllIntervals();
+                this.exerciseScoresFilteredByPerformanceInterval = this.orderAverageScores(this.exerciseAverageScores);
+            } else {
+                this.deselectAllOtherIntervals(interval);
+            }
             this.initializeFilterOptionsAndSetupChartWithCurrentVisibleScores();
             return;
         }
@@ -261,6 +264,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
         }
         // This map determines whether the color legend next to a chart entry is colored or not representing whether this entry is currently visible in the chart or not
         this.displayColorMap.set(interval, newValue);
+        this.numberOfSelectedIntervals += 1;
         const exercises = this.filterForPerformanceInterval(interval);
         this.exerciseScoresFilteredByPerformanceInterval = this.orderAverageScores(this.currentlyDisplayableExercises.concat(exercises));
         this.initializeFilterOptionsAndSetupChartWithCurrentVisibleScores();
@@ -318,6 +322,22 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
         this.displayColorMap.set(PerformanceInterval.LOWEST, this.CRITICAL_CLASS);
         this.displayColorMap.set(PerformanceInterval.AVERAGE, this.MEDIAN_CLASS);
         this.displayColorMap.set(PerformanceInterval.BEST, this.BEST_CLASS);
+        this.numberOfSelectedIntervals = 3;
+    }
+
+    /**
+     * Deselects all performance intervals except the passed one
+     * @param interval the interval that should not be deselected
+     * @private
+     */
+    private deselectAllOtherIntervals(interval: PerformanceInterval): void {
+        this.performanceIntervals.forEach((pi) => {
+            if (pi !== interval) {
+                this.displayColorMap.set(pi, '');
+            }
+        });
+        this.numberOfSelectedIntervals = 1;
+        this.exerciseScoresFilteredByPerformanceInterval = this.filterForPerformanceInterval(interval);
     }
 
     /**
