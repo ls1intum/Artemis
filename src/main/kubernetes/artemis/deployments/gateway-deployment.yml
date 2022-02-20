@@ -49,6 +49,5 @@ spec:
           readOnlyRootFilesystem: false
           runAsNonRoot: false
       restartPolicy: Always
-      schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
