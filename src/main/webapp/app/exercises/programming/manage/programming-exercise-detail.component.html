@@ -150,19 +150,6 @@
                         </button>
                     </span>
                 </div>
-                <div *ngIf="isAdmin">
-                    <span class="mr-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="getTestCasesWithType()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.testCasesWithTypeWarning' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.testCasesWithTypeTitle">Load Test Cases With Type</span>
-                        </button>
-                    </span>
-                </div>
                 <div>
                     <button
                         id="unlockAllRepositoriesButton"

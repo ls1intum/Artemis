@@ -26,8 +26,6 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import {
     faBook,
     faChartBar,
@@ -67,8 +65,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
 
-    isAdmin = false;
-
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -99,7 +95,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
         private sortService: SortService,
-        private programmingExerciseGradingService: ProgrammingExerciseGradingService,
         private router: Router,
     ) {}
 
@@ -108,7 +103,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise = programmingExercise;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
-            this.isAdmin = this.accountService.isAdmin();
 
             const auxiliaryRepositories = this.programmingExercise.auxiliaryRepositories;
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
@@ -366,26 +360,5 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             link.push('submissions');
         }
         return link;
-    }
-
-    /**
-     * Fetch all test cases with type and display as an alert
-     */
-    getTestCasesWithType(): void {
-        this.programmingExerciseGradingService.getTestCases(this.programmingExercise!.id!).subscribe({
-            next: (res) => {
-                this.alertService.addAlert({
-                    type: 'success',
-                    message: 'artemisApp.programmingExercise.testCasesWithTypeSuccess',
-                    translationParams: { detailedContent: this.buildTestCaseTypeMessage(res) },
-                    timeout: 1000000,
-                });
-            },
-            error: (err) => this.dialogErrorSource.error(err.message),
-        });
-    }
-
-    private buildTestCaseTypeMessage(testCases: ProgrammingExerciseTestCase[]): string {
-        return testCases.map((test) => '- ' + test.testName + ': ' + test.programmingExerciseTestCaseType).join('\n');
     }
 }
