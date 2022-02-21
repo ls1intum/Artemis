@@ -30,6 +30,5 @@ function inferVersion() {
         console.log("Error while retrieving 'APP_VERSION' property");
     }
 
-    console.log(version);
     return version;
 }
