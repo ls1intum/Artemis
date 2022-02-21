@@ -5,7 +5,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
-import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 import { faBan, faPencilAlt, faQuestionCircle, faSave, faTrashAlt, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
