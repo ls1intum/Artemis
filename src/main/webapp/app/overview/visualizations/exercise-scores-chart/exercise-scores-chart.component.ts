@@ -30,6 +30,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
 
     readonly Math = Math;
     readonly ExerciseType = ExerciseType;
+    readonly convertToMapKey = ChartExerciseTypeFilterDirective.convertToMapKey;
 
     // Icons
     faFilter = faFilter;
