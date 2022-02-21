@@ -155,6 +155,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly barChartTitle = ChartBarTitle;
+    readonly chartHeight = 45;
+    readonly barPadding = 6;
+    readonly defaultSize = 50; // additional space for the x axis and its labels
 
     // array containing every non-empty exercise group
     ngxExerciseGroups: any[] = [];
@@ -638,7 +641,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     overallMaxPoints: this.overallMaxPointsPerExercise[types[index]],
                     presentationScore: this.presentationScoresPerExercise[types[index]],
                     presentationScoreEnabled: false,
-                    barPadding: this.setBarPadding(exerciseGroup.length),
                     xScaleMax: this.setXScaleMax(exerciseGroup),
                     height: this.calculateChartHeight(exerciseGroup.length),
                 };
@@ -662,17 +664,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 this.ngxExerciseGroups.push(exerciseGroup);
             }
         });
-    }
-
-    /**
-     * Calculates the bar padding dependent of the amount of exercises in one exercise group
-     * ngx-charts only allows setting an absolute value for the bar padding in px, which leads to unpleasant
-     * proportions in the bar charts for sufficiently large exercise groups
-     * @param groupSize the amount of exercises in a specific group
-     * @returns bar padding in px
-     */
-    setBarPadding(groupSize: number): number {
-        return groupSize < 10 ? 8 : groupSize < 15 ? 4 : 2;
     }
 
     /**
@@ -846,20 +837,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Determines  and returns the height of the whole chart depending of the amount of its entries
+     * Determines and returns the height of the whole chart depending of the amount of its entries
      * @param chartEntries the amount of chart entries
      * @private
      */
     private calculateChartHeight(chartEntries: number): number {
-        let multiplier: number;
-        if (chartEntries < 15) {
-            multiplier = 50;
-        } else if (chartEntries < 30) {
-            multiplier = 35;
-        } else {
-            multiplier = 25;
-        }
-
-        return chartEntries * multiplier;
+        /*
+        Each chart bar should have a height of 45px
+        Furthermore we have to take the bar padding between the bars into account
+        Finally, we need space to add space for the x axis and its ticks
+         */
+        return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
     }
 }
