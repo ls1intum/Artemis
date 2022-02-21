@@ -17,6 +17,7 @@ import { Observable, of } from 'rxjs';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('Team Submission Sync Component', () => {
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;
@@ -29,10 +30,10 @@ describe('Team Submission Sync Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                MockAccountService,
                 MockProvider(AlertService),
                 MockProvider(SessionStorageService),
                 MockProvider(JhiWebsocketService),
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: HttpClient, useClass: MockHttpService },
             ],
@@ -68,7 +69,7 @@ describe('Team Submission Sync Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('ngOnInit should work correctly', () => {
+    it('ngOnInit should work correctly', (done) => {
         const expectedWebsocketTopic = '/topic/participations/3/team/text-submissions';
         const submissionSyncObservable = of(submissionSyncPayload);
 
@@ -91,6 +92,7 @@ describe('Team Submission Sync Component', () => {
                 expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionPayload);
                 expect(submissionPayload.submission.participation?.exercise).toBe(undefined);
                 expect(submissionPayload.submission.participation?.submissions).toBeEmpty();
+                done();
             },
         });
         // checks for setupSender
@@ -98,6 +100,7 @@ describe('Team Submission Sync Component', () => {
             next: (submissionRes: Submission) => {
                 expect(websocketSendSpy).toHaveBeenCalledTimes(1);
                 expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', submissionRes);
+                done();
             },
         });
     });
