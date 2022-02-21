@@ -66,7 +66,7 @@ This does imply a delay (about 10 minutes on average) between the push of new co
 Artemis Deployment in Test Environment
 --------------------------------------
 There is another build plan on Bamboo which executes the Cypress test suite. `This build plan <https://bamboo.ase.in.tum.de/chain/viewChain.action?planKey=ARTEMIS-AETBB>`__ deploys the latest Artemis executable of the develop branch on an already configured test environment (test server 3) and executes the Cypress test suite against it.
-This build plan is automatically executed every 8 hours and serves as a smoke test for test server 3.
+This build plan is automatically executed every 8 hours and verifies that test server 3 is working properly.
 
 .. figure:: cypress/cypress_test_environment_deployment_diagram.svg
    :align: center
@@ -81,4 +81,4 @@ Maintenance
 -----------
 The Artemis Dockerfile as well as the MySQL image are already maintained because they are used in other Artemis Docker setups. Therefore, only Cypress and the Cypress Docker image require active maintenance.
 Since the Cypress test suite simulates a real user, it makes sense to execute the test suite with the latest Chrome browser. The Cypress Docker image we use always has a specific Chrome version installed.
-Therefore, the `docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/docker-compose.yml>`__ as well as the `build plan for the Cypress smoke tests <https://bamboo.ase.in.tum.de/build/admin/edit/editBuildDocker.action?buildKey=ARTEMIS-AETBB-QE>`__ should be updated every month to make sure that the latest Cypress image for the Chrome browser is used.
+Therefore, the `docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/docker-compose.yml>`__ as well as the `build plan configuration for the Cypress tests on test server 3 <https://bamboo.ase.in.tum.de/build/admin/edit/editBuildDocker.action?buildKey=ARTEMIS-AETBB-QE>`__ should be updated every month to make sure that the latest Cypress image for the Chrome browser is used.
