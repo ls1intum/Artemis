@@ -22,16 +22,19 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseGitDiffReport extends DomainObject {
 
-    @OneToOne// (mappedBy = "gitDiffReport")
+    @OneToOne
     private ProgrammingExercise programmingExercise;
 
+    @Column(name = "template_repository_commit_hash")
     private String templateRepositoryCommitHash;
 
+    @Column(name = "solution_repository_commit_hash")
     private String solutionRepositoryCommitHash;
 
     // Eager fetching is used here, as the git-diff is useless without the change entries
-    @OneToMany(mappedBy = "gitDiffReport", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
-    @JsonIgnoreProperties("gitDiff")
+    // Also CascadeType.ALL is used, so we can handle diffEntries easier
+    @OneToMany(mappedBy = "gitDiffReport", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties("gitDiffReport")
     private Set<ProgrammingExerciseGitDiffEntry> entries;
 
     public ProgrammingExercise getProgrammingExercise() {

@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -26,7 +23,7 @@ public class ProgrammingExerciseGitDiffEntry extends DomainObject {
     @JsonIgnoreProperties("entries")
     private ProgrammingExerciseGitDiffReport gitDiffReport;
 
-    @Column(name = "file_path")
+    @Column(name = "file_path", nullable = false)
     private String filePath;
 
     // The line at which the previous code segment is in the template
@@ -39,10 +36,12 @@ public class ProgrammingExerciseGitDiffEntry extends DomainObject {
 
     // The previous code segment to be replaced by the new code segment
     @Column(name = "previous_code")
+    @Lob
     private String previousCode;
 
     // The new code segment that replaces the old code segment
     @Column(name = "code")
+    @Lob
     private String code;
 
     public ProgrammingExerciseGitDiffReport getGitDiffReport() {

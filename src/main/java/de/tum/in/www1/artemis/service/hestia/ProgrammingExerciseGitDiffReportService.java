@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +83,11 @@ public class ProgrammingExerciseGitDiffReportService {
             newReport.setSolutionRepositoryCommitHash(solutionHash);
             newReport.setProgrammingExercise(programmingExercise);
             programmingExercise.setGitDiffReport(newReport);
-            return programmingExerciseGitDiffReportRepository.save(newReport);
+            newReport = programmingExerciseGitDiffReportRepository.save(newReport);
+            if (existingReport != null) {
+                programmingExerciseGitDiffReportRepository.delete(existingReport);
+            }
+            return newReport;
         }
         catch (InterruptedException | GitAPIException | IOException e) {
             log.error("Exception while generating git diff report", e);
@@ -102,9 +107,11 @@ public class ProgrammingExerciseGitDiffReportService {
             Git git = Git.wrap(templateRepo);
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
-            System.out.println(diff);
             var programmingExerciseGitDiffEntries = extractDiffEntries(diff);
             var report = new ProgrammingExerciseGitDiffReport();
+            for (ProgrammingExerciseGitDiffEntry gitDiffEntry : programmingExerciseGitDiffEntries) {
+                gitDiffEntry.setGitDiffReport(report);
+            }
             report.setEntries(new HashSet<>(programmingExerciseGitDiffEntries));
             return report;
         }
@@ -128,10 +135,13 @@ public class ProgrammingExerciseGitDiffReportService {
                 }
                 // Start of a new file
                 if (lines[i - 1].startsWith("+++ ") && lines[i - 2].startsWith("--- ")) {
-                    currentFilePath = lines[i - 1].substring(4);
+                    var filePath = lines[i - 1].substring(4);
+                    if (DiffEntry.DEV_NULL.equals(filePath)) {
+                        filePath = lines[i - 2].substring(4);
+                    }
                     // Git diff usually puts the two repos into the subfolders 'a' and 'b' for comparison, which we filter out here
-                    if (currentFilePath.startsWith("b/")) {
-                        currentFilePath = currentFilePath.substring(2);
+                    if (filePath.startsWith("a/") || filePath.startsWith("b/")) {
+                        currentFilePath = filePath.substring(2);
                     }
                 }
                 currentEntry = new ProgrammingExerciseGitDiffEntry();
@@ -190,6 +200,14 @@ public class ProgrammingExerciseGitDiffReportService {
         }
         if (!currentEntry.isEmpty()) {
             entries.add(currentEntry);
+        }
+        for (ProgrammingExerciseGitDiffEntry entry : entries) {
+            if (entry.getCode() != null) {
+                entry.setCode(entry.getCode().substring(0, entry.getCode().length() - 1));
+            }
+            if (entry.getPreviousCode() != null) {
+                entry.setPreviousCode(entry.getPreviousCode().substring(0, entry.getPreviousCode().length() - 1));
+            }
         }
         return entries;
     }

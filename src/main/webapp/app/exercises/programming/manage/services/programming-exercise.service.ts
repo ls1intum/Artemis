@@ -13,6 +13,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -393,7 +394,7 @@ export class ProgrammingExerciseService {
     }
 
     // TODO
-    updateDiffReport(exerciseId: number): Observable<any> {
-        return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/diff-report`, null);
+    updateDiffReport(exerciseId: number): Observable<ProgrammingExerciseGitDiffReport> {
+        return this.http.post<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/diff-report`, null);
     }
 }

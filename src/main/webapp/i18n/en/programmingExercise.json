@@ -367,6 +367,11 @@
                     "pattern": "The submission limit must be and integer between 1 and 500!",
                     "required": "The submission limit must be set!"
                 }
+            },
+            "diffReport": {
+                "button": "Show difference between the template and solution repositories",
+                "tooltip": "Shows and if necessary updates the git-diff between the template and solution repositories.",
+                "title": "Git-Diff"
             }
         },
         "error": {

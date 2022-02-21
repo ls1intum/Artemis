@@ -10,8 +10,12 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="programming_exercise_id" type="BIGINT"/>
-            <column name="template_repository_commit_hash" type="VARCHAR(255)"/>
-            <column name="solution_repository_commit_hash" type="VARCHAR(255)"/>
+            <column name="template_repository_commit_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="solution_repository_commit_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <addForeignKeyConstraint baseTableName="programming_exercise_git_diff_report"
                                  baseColumnNames="programming_exercise_id"
@@ -23,12 +27,16 @@
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="git_diff_report_id" type="BIGINT"/>
-            <column name="file_path" type="VARCHAR(512)"/>
+            <column name="git_diff_report_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_path" type="VARCHAR(512)">
+                <constraints nullable="false"/>
+            </column>
             <column name="line" type="INT"/>
             <column name="previous_line" type="INT"/>
-            <column name="code" type="TEXT"/>
-            <column name="previous_code" type="TEXT"/>
+            <column name="code" type="LONGTEXT"/>
+            <column name="previous_code" type="LONGTEXT"/>
         </createTable>
         <addForeignKeyConstraint baseTableName="programming_exercise_git_diff_entry"
                                  baseColumnNames="git_diff_report_id"

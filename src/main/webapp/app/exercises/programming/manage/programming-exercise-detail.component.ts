@@ -27,7 +27,6 @@ import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/progr
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import {
     faBook,
     faChartBar,
@@ -41,6 +40,7 @@ import {
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -368,16 +368,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
+    /**
+     * Updates or gets the git-diff from the server and displays it in a modal.
+     */
     updateDiff() {
         this.programmingExerciseService.updateDiffReport(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                // this.alertService.addAlert({
-                //     type: 'success',
-                //     message: 'artemisApp.programmingExercise.testCasesWithTypeSuccess',
-                //     translationParams: { detailedContent: this.buildTestCaseTypeMessage(res) },
-                //     timeout: 1000000,
-                // });
-                console.log(res);
+            next: (gitDiffReport) => {
+                const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
+                modalRef.componentInstance.report = gitDiffReport;
             },
             error: (err) => this.dialogErrorSource.error(err.message),
         });

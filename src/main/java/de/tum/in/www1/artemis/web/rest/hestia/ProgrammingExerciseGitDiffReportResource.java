@@ -36,14 +36,14 @@ public class ProgrammingExerciseGitDiffReportResource {
     }
 
     /**
-     * {@code PUT  exercises/:exerciseId/diff-report} : Create a new exerciseHint for an exercise.
+     * {@code POST exercises/:exerciseId/diff-report} : Create a new diffReport for a programming exercise.
+     * Reuses the existing one if the template and solution repositories have not changed.
      *
      * @param exerciseId the exerciseId of the exercise of which to create the exerciseHint
      * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new exerciseHint,
-     * or with status {@code 400 (Bad Request)} if the exerciseHint is a codeHint,
-     * or with status {@code 409 (Conflict)} if the exerciseId is invalid,
+     * or with status {@code 500 (Internal Server Error)} if there was an issue when generating the report,
      */
-    @PutMapping("programming-exercises/{exerciseId}/diff-report")
+    @PostMapping("programming-exercises/{exerciseId}/diff-report")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ProgrammingExerciseGitDiffReport> createExerciseHint(@PathVariable Long exerciseId) {
         log.debug("REST request to generate a ProgrammingExerciseGitDiffReport for exercise {}", exerciseId);

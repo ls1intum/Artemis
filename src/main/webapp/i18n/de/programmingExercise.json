@@ -366,6 +366,11 @@
                     "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein!",
                     "required": "Das Abgabelimit muss gesetzt sein!"
                 }
+            },
+            "diffReport": {
+                "button": "Zeige den Unterschied zwischen Template und Lösung",
+                "tooltip": "Zeigt den Git-Diff zwischen den Template und Lösung Repositories und updated diesen bei Bedarf.",
+                "title": "Git-Diff"
             }
         },
         "error": {
