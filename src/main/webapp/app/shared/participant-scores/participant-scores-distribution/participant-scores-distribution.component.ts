@@ -197,7 +197,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     /**
      * Auxiliary method that returns the bar color of the grade step in the chart
      * @param gradeStep the grade step that should be colored
-     * @returns string representation of the color
+     * @returns the color that the given grade step should receive in the chart
      * @private
      */
     private getGradeStepColor(gradeStep: GradeStep): GraphColors {
