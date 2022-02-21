@@ -4,7 +4,7 @@ metadata:
   name: artemis-app
 spec:
   rules:
-  - host: artemis-app.artemis.rancher.localhost
+  - host: artemis-app.artemis.localhost
     http:
       paths:
       - backend:
@@ -15,4 +15,4 @@ spec:
         pathType: ImplementationSpecific
   tls:
   - hosts:
-    - artemis-app.artemis.rancher.localhost
+    - artemis-app.artemis.localhost

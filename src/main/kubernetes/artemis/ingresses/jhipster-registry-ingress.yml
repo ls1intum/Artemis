@@ -4,7 +4,7 @@ metadata:
   name: jhipster-registry
 spec:
   rules:
-  - host: jhipster-registry.artemis.rancher.localhost
+  - host: jhipster-registry.artemis.localhost
     http:
       paths:
       - backend:
@@ -15,4 +15,4 @@ spec:
         pathType: ImplementationSpecific
   tls:
   - hosts:
-    - jhipster-registry.artemis.rancher.localhost
+    - jhipster-registry.artemis.localhost
