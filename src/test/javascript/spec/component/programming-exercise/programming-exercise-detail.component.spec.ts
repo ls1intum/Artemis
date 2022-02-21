@@ -12,11 +12,21 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { Exam } from 'app/entities/exam.model';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
+    let exerciseService: ProgrammingExerciseService;
+    let modalService: NgbModal;
 
     let statisticsServiceStub: jest.SpyInstance;
 
@@ -39,8 +49,12 @@ describe('ProgrammingExercise Management Detail Component', () => {
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [ProgrammingExerciseDetailComponent],
             providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useValue: new MockProfileService() },
+                { provide: ProgrammingExerciseService, useValue: new MockProgrammingExerciseService() },
+                { provide: NgbModal, useValue: new MockNgbModalService() },
             ],
         })
             .overrideTemplate(ProgrammingExerciseDetailComponent, '')
@@ -49,10 +63,26 @@ describe('ProgrammingExercise Management Detail Component', () => {
         comp = fixture.componentInstance;
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
+        exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('Should fetch and open git-diff', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        jest.spyOn(exerciseService, 'updateDiffReport').mockReturnValue(of({} as ProgrammingExerciseGitDiffReport));
+        jest.spyOn(modalService, 'open');
+
+        comp.updateDiff();
+
+        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledWith(GitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
     });
 
     describe('OnInit for course exercise', () => {

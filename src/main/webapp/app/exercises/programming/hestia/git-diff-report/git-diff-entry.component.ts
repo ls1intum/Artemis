@@ -17,8 +17,8 @@ export class GitDiffEntryComponent implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
-        this.setupEditor(this.editorPrevious, this.diffEntry.previousLine ?? 0, this.diffEntry.previousCode ?? '', 'rgba(248,81,73,0.5)');
-        this.setupEditor(this.editorNow, this.diffEntry.line ?? 0, this.diffEntry.code ?? '', 'rgba(63,185,80,0.5)');
+        this.setupEditor(this.editorPrevious, this.diffEntry.previousLine ?? 0, this.diffEntry.previousCode ?? '', 'rgba(248, 81, 73, 0.5)');
+        this.setupEditor(this.editorNow, this.diffEntry.line ?? 0, this.diffEntry.code ?? '', 'rgba(63, 185, 80, 0.5)');
     }
 
     /**

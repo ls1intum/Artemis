@@ -393,7 +393,11 @@ export class ProgrammingExerciseService {
         return exerciseRes;
     }
 
-    // TODO
+    /**
+     * Updates the git-diff report of a programming exercise.
+     *
+     * @param exerciseId The id of a programming exercise
+     */
     updateDiffReport(exerciseId: number): Observable<ProgrammingExerciseGitDiffReport> {
         return this.http.post<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/diff-report`, null);
     }
