@@ -69,7 +69,7 @@ describe('Team Submission Sync Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('ngOnInit should work correctly', (done) => {
+    it('ngOnInit should work correctly', () => {
         const expectedWebsocketTopic = '/topic/participations/3/team/text-submissions';
         const submissionSyncObservable = of(submissionSyncPayload);
 
@@ -83,25 +83,23 @@ describe('Team Submission Sync Component', () => {
         expect(component.websocketTopic).toBe(expectedWebsocketTopic);
         expect(websocketSubscribeSpy).toHaveBeenCalledTimes(1);
         expect(websocketSubscribeSpy).toHaveBeenCalledWith(expectedWebsocketTopic);
+
         // checks for setupReceiver
         expect(websocketReceiveMock).toHaveBeenCalledTimes(1);
         expect(websocketReceiveMock).toHaveBeenCalledWith(expectedWebsocketTopic);
-        submissionSyncObservable.subscribe({
-            next: (submissionPayload: SubmissionSyncPayload) => {
-                expect(receiveSubmissionEventEmitter).toHaveBeenCalledTimes(1);
-                expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionPayload);
-                expect(submissionPayload.submission.participation?.exercise).toBe(undefined);
-                expect(submissionPayload.submission.participation?.submissions).toBeEmpty();
-                done();
-            },
-        });
+        let submissionPayload: SubmissionSyncPayload | undefined;
+        submissionSyncObservable.subscribe((result: SubmissionSyncPayload) => (submissionPayload = result));
+        expect(submissionPayload).not.toBe(undefined);
+        expect(receiveSubmissionEventEmitter).toHaveBeenCalledTimes(1);
+        expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionPayload!.submission);
+
         // checks for setupSender
-        submissionObservableWithParticipation.subscribe({
-            next: (submissionRes: Submission) => {
-                expect(websocketSendSpy).toHaveBeenCalledTimes(1);
-                expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', submissionRes);
-                done();
-            },
-        });
+        let submissionRes: Submission | undefined;
+        submissionObservableWithParticipation.subscribe((result: Submission) => (submissionRes = result));
+        expect(submissionRes).not.toBe(undefined);
+        expect(submissionRes?.participation?.exercise).toBe(undefined);
+        expect(submissionRes?.participation?.submissions).toBeEmpty();
+        expect(websocketSendSpy).toHaveBeenCalledTimes(1);
+        expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', submissionRes);
     });
 });
