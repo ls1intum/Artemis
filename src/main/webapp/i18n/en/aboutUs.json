@@ -7,7 +7,7 @@
             "detail": {
                 "programmingExercises": "Programming exercises with version control and automatic assessment with test cases and continuous integration",
                 "quiz": "Quiz exercises with multiple choice, drag and drop and short answer quiz questions",
-                "modelingExercises": "Modelling exercises with semi-automatic assessment using machine learning concepts",
+                "modelingExercises": "Modeling exercises with semi-automatic assessment using machine learning concepts",
                 "textExercises": "Textual exercises with manual (and experimental semi-automatic) assessment",
                 "uploadExercises": "File upload exercises with manual assessment"
             }
