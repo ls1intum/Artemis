@@ -845,7 +845,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         /*
         Each chart bar should have a height of 45px
         Furthermore we have to take the bar padding between the bars into account
-        Finally, we need space to add space for the x axis and its ticks
+        Finally, we need to add space for the x axis and its ticks
          */
         return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
     }
