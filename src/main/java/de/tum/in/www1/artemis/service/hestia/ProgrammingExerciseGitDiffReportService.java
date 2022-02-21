@@ -11,6 +11,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -152,10 +153,11 @@ public class ProgrammingExerciseGitDiffReportService {
         boolean lastLineRemoveOperation = false;
         int currentLineCount = 0;
         int currentPreviousLineCount = 0;
+
         for (int i = 0; i < lines.length; i++) {
             var line = lines[i];
-            //
-            if (line.equals("\\ No newline at end of file")) {
+            // Filter out no new line message
+            if ("\\ No newline at end of file".equals(line)) {
                 continue;
             }
             var lineMatcher = gitDiffLinePattern.matcher(line);
@@ -164,17 +166,8 @@ public class ProgrammingExerciseGitDiffReportService {
                     entries.add(currentEntry);
                 }
                 // Start of a new file
-                if (lines[i - 1].startsWith("+++ ") && lines[i - 2].startsWith("--- ")) {
-                    var filePath = lines[i - 1].substring(4);
-                    // Check if the filePath is /dev/null (which means the file was deleted) and replace it by the actual file path
-                    if (DiffEntry.DEV_NULL.equals(filePath)) {
-                        filePath = lines[i - 2].substring(4);
-                    }
-                    // Git diff usually puts the two repos into the subfolders 'a' and 'b' for comparison, which we filter out here
-                    if (filePath.startsWith("a/") || filePath.startsWith("b/")) {
-                        currentFilePath = filePath.substring(2);
-                    }
-                }
+                var newFilePath = getFilePath(lines, i);
+                currentFilePath = newFilePath == null ? currentFilePath : newFilePath;
                 currentEntry = new ProgrammingExerciseGitDiffEntry();
                 currentEntry.setFilePath(currentFilePath);
                 currentLineCount = Integer.parseInt(lineMatcher.group("newLine"));
@@ -184,40 +177,19 @@ public class ProgrammingExerciseGitDiffReportService {
             else if (!deactivateCodeReading) {
                 switch (line.charAt(0)) {
                     case '+' -> {
-                        if (currentEntry.getCode() == null) {
-                            currentEntry.setCode("");
-                            currentEntry.setLine(currentLineCount);
-                        }
-                        var code = currentEntry.getCode();
-                        code += line.substring(1) + "\n";
-                        currentEntry.setCode(code);
+                        handleAddition(currentEntry, currentLineCount, line);
 
                         lastLineRemoveOperation = false;
                         currentLineCount++;
                     }
                     case '-' -> {
-                        if (!lastLineRemoveOperation && !currentEntry.isEmpty()) {
-                            entries.add(currentEntry);
-                            currentEntry = new ProgrammingExerciseGitDiffEntry();
-                            currentEntry.setFilePath(currentFilePath);
-                        }
-                        if (currentEntry.getPreviousCode() == null) {
-                            currentEntry.setPreviousCode("");
-                            currentEntry.setPreviousLine(currentPreviousLineCount);
-                        }
-                        var previousCode = currentEntry.getPreviousCode();
-                        previousCode += line.substring(1) + "\n";
-                        currentEntry.setPreviousCode(previousCode);
+                        currentEntry = handleRemoval(entries, currentFilePath, currentEntry, lastLineRemoveOperation, currentPreviousLineCount, line);
 
                         lastLineRemoveOperation = true;
                         currentPreviousLineCount++;
                     }
                     case ' ' -> {
-                        if (!currentEntry.isEmpty()) {
-                            entries.add(currentEntry);
-                        }
-                        currentEntry = new ProgrammingExerciseGitDiffEntry();
-                        currentEntry.setFilePath(currentFilePath);
+                        currentEntry = handleUnchanged(entries, currentFilePath, currentEntry);
 
                         lastLineRemoveOperation = false;
                         currentLineCount++;
@@ -232,7 +204,72 @@ public class ProgrammingExerciseGitDiffReportService {
         if (!currentEntry.isEmpty()) {
             entries.add(currentEntry);
         }
-        // Remove the trailing linebreak (\n) from every code block
+        removeTrailingLinebreaks(entries);
+        return entries;
+    }
+
+    @NotNull
+    private ProgrammingExerciseGitDiffEntry handleUnchanged(ArrayList<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath,
+            ProgrammingExerciseGitDiffEntry currentEntry) {
+        if (!currentEntry.isEmpty()) {
+            entries.add(currentEntry);
+        }
+        currentEntry = new ProgrammingExerciseGitDiffEntry();
+        currentEntry.setFilePath(currentFilePath);
+        return currentEntry;
+    }
+
+    @NotNull
+    private ProgrammingExerciseGitDiffEntry handleRemoval(ArrayList<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, ProgrammingExerciseGitDiffEntry currentEntry,
+            boolean lastLineRemoveOperation, int currentPreviousLineCount, String line) {
+        if (!lastLineRemoveOperation && !currentEntry.isEmpty()) {
+            entries.add(currentEntry);
+            currentEntry = new ProgrammingExerciseGitDiffEntry();
+            currentEntry.setFilePath(currentFilePath);
+        }
+        if (currentEntry.getPreviousCode() == null) {
+            currentEntry.setPreviousCode("");
+            currentEntry.setPreviousLine(currentPreviousLineCount);
+        }
+        var previousCode = currentEntry.getPreviousCode();
+        previousCode += line.substring(1) + "\n";
+        currentEntry.setPreviousCode(previousCode);
+        return currentEntry;
+    }
+
+    private void handleAddition(ProgrammingExerciseGitDiffEntry currentEntry, int currentLineCount, String line) {
+        if (currentEntry.getCode() == null) {
+            currentEntry.setCode("");
+            currentEntry.setLine(currentLineCount);
+        }
+        var code = currentEntry.getCode();
+        code += line.substring(1) + "\n";
+        currentEntry.setCode(code);
+    }
+
+    /**
+     * Extracts the file path from the raw git-diff for a specified diff block
+     *
+     * @param lines All lines of the raw git-diff
+     * @param currentLine The line where the gitDiffLinePattern matched
+     * @return The file path of the current diff block
+     */
+    private String getFilePath(String[] lines, int currentLine) {
+        if (lines[currentLine - 1].startsWith("+++ ") && lines[currentLine - 2].startsWith("--- ")) {
+            var filePath = lines[currentLine - 1].substring(4);
+            // Check if the filePath is /dev/null (which means the file was deleted) and replace it by the actual file path
+            if (DiffEntry.DEV_NULL.equals(filePath)) {
+                filePath = lines[currentLine - 2].substring(4);
+            }
+            // Git diff usually puts the two repos into the subfolders 'a' and 'b' for comparison, which we filter out here
+            if (filePath.startsWith("a/") || filePath.startsWith("b/")) {
+                return filePath.substring(2);
+            }
+        }
+        return null;
+    }
+
+    private void removeTrailingLinebreaks(ArrayList<ProgrammingExerciseGitDiffEntry> entries) {
         for (ProgrammingExerciseGitDiffEntry entry : entries) {
             if (entry.getCode() != null) {
                 entry.setCode(entry.getCode().substring(0, entry.getCode().length() - 1));
@@ -241,7 +278,6 @@ public class ProgrammingExerciseGitDiffReportService {
                 entry.setPreviousCode(entry.getPreviousCode().substring(0, entry.getPreviousCode().length() - 1));
             }
         }
-        return entries;
     }
 
     private boolean canUseExistingReport(ProgrammingExerciseGitDiffReport report, String templateHash, String solutionHash) {

@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
  */
 public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final String fileName = "test.java";
+    private final static String fileName = "test.java";
 
     private final LocalRepository templateRepo = new LocalRepository();
 
@@ -61,10 +61,6 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
     private ProgrammingExercise exercise;
 
-    private File templateFile;
-
-    private File solutionFile;
-
     @BeforeEach
     public void initTestCase() throws Exception {
         Course course = database.addEmptyCourse();
@@ -77,7 +73,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
         // add file to the repository folder
         Path filePath = Paths.get(templateRepo.localRepoFile + "/" + fileName);
-        templateFile = Files.createFile(filePath).toFile();
+        File templateFile = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(templateFile, content, Charset.defaultCharset());
 
@@ -110,7 +106,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
         // add file to the repository folder
         Path filePath = Paths.get(solutionRepo.localRepoFile + "/" + fileName);
-        solutionFile = Files.createFile(filePath).toFile();
+        File solutionFile = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(solutionFile, content, Charset.defaultCharset());
 
