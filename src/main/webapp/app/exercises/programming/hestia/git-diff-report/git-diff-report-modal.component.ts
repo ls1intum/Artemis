@@ -11,6 +11,7 @@ export class GitDiffReportModalComponent {
     report: ProgrammingExerciseGitDiffReport;
 
     constructor(protected activeModal: NgbActiveModal) {}
+
     close(): void {
         this.activeModal.dismiss();
     }

@@ -21,6 +21,14 @@ export class GitDiffEntryComponent implements OnInit {
         this.setupEditor(this.editorNow, this.diffEntry.line ?? 0, this.diffEntry.code ?? '', 'rgba(63,185,80,0.5)');
     }
 
+    /**
+     * Sets up an ace editor for displaying one part of a git-diff entry
+     *
+     * @param editor The ace editor instance
+     * @param line The starting line of the editor
+     * @param code The code that should be in the editor
+     * @param color The background color of the editor
+     */
     private setupEditor(editor: AceEditorComponent, line: number, code: string, color: string) {
         editor.setTheme('dreamweaver');
         editor.getEditor().setOptions({

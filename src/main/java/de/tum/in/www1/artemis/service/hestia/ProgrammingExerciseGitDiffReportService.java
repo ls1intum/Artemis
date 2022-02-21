@@ -27,6 +27,9 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReport
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+/**
+ * The service handling ProgrammingExerciseGitDiffReport and their ProgrammingExerciseGitDiffEntries.
+ */
 @Service
 public class ProgrammingExerciseGitDiffReportService {
 
@@ -54,6 +57,14 @@ public class ProgrammingExerciseGitDiffReportService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
+    /**
+     * Updates the ProgrammingExerciseGitDiffReport of a programming exercise.
+     * If there were no changes since the last report was created this will return the old report.
+     * If there were changes to at least one of the repositories a new report will be created.
+     *
+     * @param programmingExercise The ProgrammingExercise
+     * @return The ProgrammingExerciseGitDiffReport for the given ProgrammingExercise
+     */
     public ProgrammingExerciseGitDiffReport updateReportForExercise(ProgrammingExercise programmingExercise) {
         var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
         var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
@@ -95,6 +106,15 @@ public class ProgrammingExerciseGitDiffReportService {
         }
     }
 
+    /**
+     * Creates a new ProgrammingExerciseGitDiffReport for an exercise.
+     * It will take the git-diff between the template and solution repositories and return all changes.
+     *
+     * @param templateParticipation The participation for the template
+     * @param solutionParticipation The participation for the solution
+     * @return The changes between template and solution
+     * @throws GitAPIException If there was an issue with JGit
+     */
     private ProgrammingExerciseGitDiffReport generateReport(TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, InterruptedException, IOException {
         var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
@@ -117,6 +137,12 @@ public class ProgrammingExerciseGitDiffReportService {
         }
     }
 
+    /**
+     * Extracts the ProgrammingExerciseGitDiffEntry from the raw git-diff output
+     *
+     * @param diff The raw git-diff output
+     * @return The extraced ProgrammingExerciseGitDiffEntries
+     */
     private List<ProgrammingExerciseGitDiffEntry> extractDiffEntries(String diff) {
         var lines = diff.split("\n");
         var entries = new ArrayList<ProgrammingExerciseGitDiffEntry>();
@@ -128,6 +154,10 @@ public class ProgrammingExerciseGitDiffReportService {
         int currentPreviousLineCount = 0;
         for (int i = 0; i < lines.length; i++) {
             var line = lines[i];
+            //
+            if (line.equals("\\ No newline at end of file")) {
+                continue;
+            }
             var lineMatcher = gitDiffLinePattern.matcher(line);
             if (lineMatcher.matches()) {
                 if (!currentEntry.isEmpty()) {
@@ -136,6 +166,7 @@ public class ProgrammingExerciseGitDiffReportService {
                 // Start of a new file
                 if (lines[i - 1].startsWith("+++ ") && lines[i - 2].startsWith("--- ")) {
                     var filePath = lines[i - 1].substring(4);
+                    // Check if the filePath is /dev/null (which means the file was deleted) and replace it by the actual file path
                     if (DiffEntry.DEV_NULL.equals(filePath)) {
                         filePath = lines[i - 2].substring(4);
                     }
@@ -201,6 +232,7 @@ public class ProgrammingExerciseGitDiffReportService {
         if (!currentEntry.isEmpty()) {
             entries.add(currentEntry);
         }
+        // Remove the trailing linebreak (\n) from every code block
         for (ProgrammingExerciseGitDiffEntry entry : entries) {
             if (entry.getCode() != null) {
                 entry.setCode(entry.getCode().substring(0, entry.getCode().length() - 1));
@@ -214,9 +246,5 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private boolean canUseExistingReport(ProgrammingExerciseGitDiffReport report, String templateHash, String solutionHash) {
         return report.getTemplateRepositoryCommitHash().equals(templateHash) && report.getSolutionRepositoryCommitHash().equals(solutionHash);
-    }
-
-    private enum GitDiffParsingPhase {
-
     }
 }

@@ -45,7 +45,7 @@ public class ProgrammingExerciseGitDiffReportResource {
      */
     @PostMapping("programming-exercises/{exerciseId}/diff-report")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<ProgrammingExerciseGitDiffReport> createExerciseHint(@PathVariable Long exerciseId) {
+    public ResponseEntity<ProgrammingExerciseGitDiffReport> updateOrGetGitDiffReport(@PathVariable Long exerciseId) {
         log.debug("REST request to generate a ProgrammingExerciseGitDiffReport for exercise {}", exerciseId);
 
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);

@@ -163,7 +163,7 @@ public class ProgrammingExercise extends Exercise {
         return null;
     }
 
-    private void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
+    public void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
         }

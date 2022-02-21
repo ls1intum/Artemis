@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Spring Data JPA repository for the ProgrammingExerciseGitDiffReport entity.
+ */
 @Repository
 public interface ProgrammingExerciseGitDiffReportRepository extends JpaRepository<ProgrammingExerciseGitDiffReport, Long> {
 

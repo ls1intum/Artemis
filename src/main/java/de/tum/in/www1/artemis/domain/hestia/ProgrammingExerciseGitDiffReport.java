@@ -14,7 +14,8 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
- * A TODO
+ * A ProgrammingExerciseGitDiffReport representing a git-diff between the template and solution repositories of a ProgrammingExercise.
+ * For each change in the git-diff it will have one ProgrammingExerciseGitDiffEntry.
  */
 @Entity
 @Table(name = "programming_exercise_git_diff_report")
