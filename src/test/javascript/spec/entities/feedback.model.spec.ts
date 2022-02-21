@@ -22,6 +22,13 @@ describe('Feedback', () => {
             expect(buildFeedbackTextForReview(feedback)).toBe(expectedText);
         });
 
+        it('should ignore the simple text if requested and no grading instruction is set', () => {
+            const feedback = new Feedback();
+            feedback.text = 'simple text\nline2';
+
+            expect(buildFeedbackTextForReview(feedback, false)).toBe('');
+        });
+
         it('should only return the the grading instruction feedback if no other text is set', () => {
             const feedback = new Feedback();
             feedback.gradingInstruction = gradingInstruction;
@@ -37,6 +44,9 @@ describe('Feedback', () => {
 
             const expectedText = 'Grading instruction feedback<br>multi<br>line<br>detail<br>simple text';
             expect(buildFeedbackTextForReview(feedback)).toBe(expectedText);
+
+            const expectedTextIgnoreSimpleText = 'Grading instruction feedback<br>multi<br>line<br>detail';
+            expect(buildFeedbackTextForReview(feedback, false)).toBe(expectedTextIgnoreSimpleText);
         });
     });
 });

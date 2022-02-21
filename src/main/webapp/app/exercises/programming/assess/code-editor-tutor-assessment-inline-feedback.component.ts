@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { buildFeedbackTextForReview, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -116,22 +116,12 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     /**
      * Builds the feedback text. When the feedback has a link with grading instruction it merges the feedback of
-     * the grading instruction with the feedback text provided by the assessor. Otherwise, it returns detail_text.
+     * the grading instruction with the feedback text provided by the assessor.
      *
-     * @param feedback that contains feedback detail_text and grading instruction
-     * @returns {string} formatted string representing the feedback text ready to display
+     * @param feedback The feedback for which the text visible to the user should be created.
+     * @returns The formatted string representing the feedback text ready to display.
      */
     public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
-        let feedbackText = '';
-        if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
-            feedbackText = feedback.gradingInstruction.feedback;
-            if (feedback.detailText) {
-                feedbackText = feedbackText + '\n' + feedback.detailText;
-            }
-        } else if (feedback.detailText) {
-            feedbackText = feedback.detailText;
-        }
-
-        return convertToHtmlLinebreaks(feedbackText);
+        return buildFeedbackTextForReview(feedback, false);
     }
 }
