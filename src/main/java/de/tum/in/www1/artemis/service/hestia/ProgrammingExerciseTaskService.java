@@ -99,6 +99,12 @@ public class ProgrammingExerciseTaskService {
         }
     }
 
+    /**
+     * Returns the extracted tasks and test cases from the problem statement markdown and
+     * maps the tasks to the corresponding test cases for a programming exercise
+     * @param exercise the exercise for which the tasks and test cases should be extracted
+     * @return the extracted tasks with the corresponding test cases
+     */
     private Set<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
         var problemStatement = exercise.getProblemStatement();
         var matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
