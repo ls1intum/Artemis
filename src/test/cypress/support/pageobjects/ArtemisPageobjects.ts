@@ -1,3 +1,4 @@
+import { ExamDetailsPage } from './exam/ExamDetailsPage';
 import { LoginPage } from './LoginPage';
 import { ExamExerciseGroupCreationPage } from './exam/ExamExerciseGroupCreationPage';
 import { ExamExerciseGroupsPage } from './exam/ExamExerciseGroupsPage';
@@ -51,6 +52,7 @@ export class ArtemisPageobjects {
         overview: new CourseOverviewPage(),
     };
     exam = {
+        details: new ExamDetailsPage(),
         creation: new ExamCreationPage(),
         management: new ExamManagementPage(),
         startEnd: new ExamStartEndPage(),
