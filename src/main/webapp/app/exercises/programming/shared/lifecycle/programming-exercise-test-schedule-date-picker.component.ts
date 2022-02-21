@@ -44,7 +44,7 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
 
     writeValue(obj: any): void {
         if (obj !== undefined && this.selectedDate !== obj) {
-            this.selectedDate = !obj ? null : isDate(obj) ? obj : obj.toDate();
+            this.selectedDate = !obj ? null : isDate(obj) ? obj.setSeconds(0, 0) : obj.toDate().setSeconds(0, 0);
             this._onChange(obj);
         }
     }
