@@ -106,9 +106,9 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      * @private
      */
     private determineColor(score: number): string {
-        if (score >= this.bestThirdLowerBoundary) {
+        if (score > this.bestThirdLowerBoundary) {
             return GraphColors.GREEN;
-        } else if (score <= this.weakestThirdUpperBoundary) {
+        } else if (score < this.weakestThirdUpperBoundary) {
             return GraphColors.RED;
         } else {
             return GraphColors.GREY;
@@ -204,14 +204,21 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      * The 33% average performing exercises are colored grey.
      * The 33% best performing exercises are colored green.
      * This method only identifies the threshold scores for the lowest and highest performing exercises.
-     * These are inclusive, which means that both boundary values are included by the lowest and best third accordingly
+     * These are exclusive, which means that both boundary values are excluded by the lowest and best third accordingly
      * @private
      */
     private setUpColorDistribution(): void {
+        if (!this.exerciseAverageScores || this.exerciseAverageScores.length === 0) {
+            return;
+        }
         const averageScores = this.exerciseAverageScores.map((exercise) => exercise.averageScore);
         const thirdSize = Math.floor(averageScores.length / 3);
-        this.weakestThirdUpperBoundary = averageScores[Math.max(thirdSize - 1, 0)];
-        this.bestThirdLowerBoundary = averageScores[Math.min(averageScores.length - thirdSize, averageScores.length - 1)];
+        const highestScoreInLowestThird = averageScores[Math.max(thirdSize - 1, 0)];
+        const allScoresAboveLowestThird = averageScores.filter((score) => score > highestScoreInLowestThird);
+        this.weakestThirdUpperBoundary = allScoresAboveLowestThird.length > 0 ? Math.min(...allScoresAboveLowestThird) : highestScoreInLowestThird;
+        const lowestScoreInBestThird = averageScores[Math.min(averageScores.length - thirdSize, averageScores.length - 1)];
+        const allScoresBelowBestThird = averageScores.filter((score) => score < lowestScoreInBestThird);
+        this.bestThirdLowerBoundary = allScoresBelowBestThird.length > 0 ? Math.max(...allScoresBelowBestThird) : lowestScoreInBestThird;
     }
 
     /**
@@ -279,16 +286,16 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
         let filterFunction;
         switch (interval) {
             case PerformanceInterval.LOWEST: {
-                filterFunction = (model: CourseManagementStatisticsModel) => model.averageScore <= this.weakestThirdUpperBoundary;
+                filterFunction = (model: CourseManagementStatisticsModel) => model.averageScore < this.weakestThirdUpperBoundary;
                 break;
             }
             case PerformanceInterval.AVERAGE: {
                 filterFunction = (model: CourseManagementStatisticsModel) =>
-                    model.averageScore > this.weakestThirdUpperBoundary && model.averageScore < this.bestThirdLowerBoundary;
+                    model.averageScore >= this.weakestThirdUpperBoundary && model.averageScore <= this.bestThirdLowerBoundary;
                 break;
             }
             case PerformanceInterval.BEST: {
-                filterFunction = (model: CourseManagementStatisticsModel) => model.averageScore >= this.bestThirdLowerBoundary;
+                filterFunction = (model: CourseManagementStatisticsModel) => model.averageScore > this.bestThirdLowerBoundary;
             }
         }
         return this.exerciseAverageScores.filter(filterFunction);
