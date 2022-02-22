@@ -121,7 +121,7 @@ describe('AuthServerProvider', () => {
     });
 
     describe('test login with token', () => {
-        let resultPromise: Promise<String>;
+        let resultPromise: Promise<string>;
         it('should login with token if token is present', () => {
             resultPromise = service.loginWithToken(storedToken, true);
 

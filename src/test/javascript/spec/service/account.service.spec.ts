@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
@@ -8,6 +8,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -18,10 +22,20 @@ describe('AccountService', () => {
     const getUserUrl = 'api/account';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
+    const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.USER] } as User;
+
+    const authorities = [Authority.USER, Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA];
+    const course = {
+        instructorGroupName: 'INSTRUCTOR',
+        editorGroupName: 'EDITOR',
+        teachingAssistantGroupName: 'TA',
+    } as Course;
+    const exercise = { course } as Exercise;
+    const examExercise = { exerciseGroup: { exam: { course } } } as Exercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [HttpClientTestingModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
         httpService = new MockHttpService();
@@ -77,5 +91,309 @@ describe('AccountService', () => {
         expect(userReceived).toEqual(user);
         expect(accountService.userIdentity).toEqual(user);
         expect(accountService.isAuthenticated()).toBe(true);
+    });
+
+    it('should authenticate a user', fakeAsync(() => {
+        accountService.userIdentity = undefined;
+
+        accountService.authenticate(user);
+
+        expect(accountService.userIdentity).toEqual(user);
+    }));
+
+    it('should sync user groups', () => {
+        accountService.userIdentity = user;
+
+        accountService.syncGroups(user3);
+
+        expect(accountService.userIdentity.groups).toEqual(['USER', 'TA']);
+    });
+
+    describe('test authority check', () => {
+        let checkPromise: Promise<boolean>;
+        const usedAuthorities: Authority[] = [];
+        it.each(authorities)('should return false if not authenticated, no user id and no authorities are set', (authority: Authority) => {
+            usedAuthorities.push(authority);
+            checkPromise = accountService.hasAnyAuthority(usedAuthorities);
+
+            expect(checkPromise).toEqual(Promise.resolve(false));
+        });
+
+        it.each(authorities)('should return false if authenticated, user id but no authorities are set', (authority: Authority) => {
+            accountService.userIdentity = user;
+            usedAuthorities.push(authority);
+            checkPromise = accountService.hasAnyAuthority(usedAuthorities);
+
+            expect(checkPromise).toEqual(Promise.resolve(false));
+        });
+
+        it.each(authorities)('should return true if user is required', (authority: Authority) => {
+            accountService.userIdentity = user3;
+            usedAuthorities.push(authority);
+            checkPromise = accountService.hasAnyAuthority(usedAuthorities);
+
+            expect(checkPromise).toEqual(Promise.resolve(true));
+        });
+
+        it.each(authorities)('should return true if authority matches exactly', (authority: Authority) => {
+            accountService.userIdentity = { id: authorities.indexOf(authority), groups: ['USER'], authorities: [authority] } as User;
+            checkPromise = accountService.hasAnyAuthority([authority]);
+
+            expect(checkPromise).toEqual(Promise.resolve(true));
+        });
+
+        it.each(authorities)('should return false if authority does not match', (authority: Authority) => {
+            const index = authorities.indexOf(authority);
+            accountService.userIdentity = { id: index + 1, groups: ['USER'], authorities: [authorities[(index + 1) % 5]] } as User;
+
+            checkPromise = accountService.hasAnyAuthority([authority]);
+
+            expect(checkPromise).toEqual(Promise.resolve(false));
+        });
+
+        it.each(authorities)('should return false if not authenticated', (authority: Authority) => {
+            checkPromise = accountService.hasAuthority(authority);
+
+            expect(checkPromise).toEqual(Promise.resolve(false));
+        });
+    });
+
+    describe('test hasGroup', () => {
+        const groups = ['USER', 'EDITOR', 'ADMIN'];
+        let result: boolean;
+        it.each(groups)('should return false if not authenticated', (group: string) => {
+            result = accountService.hasGroup(group);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(groups)('should return false if no authorities are set', (group: string) => {
+            accountService.userIdentity = user;
+            result = accountService.hasGroup(group);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(groups)('should return false if no groups are set', (group: string) => {
+            accountService.userIdentity = { id: 10, authorities } as User;
+            result = accountService.hasGroup(group);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(groups)('should return false if group does not match', (group: string) => {
+            const index = groups.indexOf(group);
+            accountService.userIdentity = { id: 10, groups: [groups[index + (1 % 3)]], authorities } as User;
+
+            result = accountService.hasGroup(group);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(groups)('should return true if group matchs', (group: string) => {
+            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+
+            result = accountService.hasGroup(group);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('Test isAtLeastTutorInCourse', () => {
+        let result: boolean;
+        it('should return false if user is not tutor', () => {
+            accountService.userIdentity = user2;
+
+            result = accountService.isAtLeastTutorInCourse(course);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
+            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+
+            result = accountService.isAtLeastTutorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+
+            result = accountService.isAtLeastTutorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('Test isAtLeastEditorInCourse', () => {
+        let result: boolean;
+        it('should return false if user is not editor', () => {
+            accountService.userIdentity = user2;
+
+            result = accountService.isAtLeastEditorInCourse(course);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
+            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+
+            result = accountService.isAtLeastEditorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+
+            result = accountService.isAtLeastEditorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('Test isAtLeastInstructorInCourse', () => {
+        let result: boolean;
+        it('should return false if user is not editor', () => {
+            accountService.userIdentity = user2;
+
+            result = accountService.isAtLeastInstructorInCourse(course);
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if user is instructor', () => {
+            accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+
+            result = accountService.isAtLeastInstructorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+
+            result = accountService.isAtLeastInstructorInCourse(course);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('Test isAtLeastTutorForExercise', () => {
+        let result: boolean;
+        it('should return false if user is not tutor', () => {
+            accountService.userIdentity = user2;
+
+            result = accountService.isAtLeastTutorForExercise(exercise);
+
+            expect(result).toBe(false);
+
+            result = accountService.isAtLeastTutorForExercise(examExercise);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
+            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+
+            result = accountService.isAtLeastTutorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastTutorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+
+            result = accountService.isAtLeastTutorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastTutorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('Test isAtLeastEditorForExercise', () => {
+        let result: boolean;
+        it('should return false if user is not tutor', () => {
+            accountService.userIdentity = user2;
+
+            result = accountService.isAtLeastEditorForExercise(exercise);
+
+            expect(result).toBe(false);
+
+            result = accountService.isAtLeastEditorForExercise(examExercise);
+
+            expect(result).toBe(false);
+        });
+
+        it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
+            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+
+            result = accountService.isAtLeastEditorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastEditorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+
+            result = accountService.isAtLeastEditorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastEditorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('Test isAtLeastInstructorForExercise', () => {
+        let result: boolean;
+        it('should return false if user is not tutor', () => {
+            accountService.userIdentity = user2;
+
+            result = accountService.isAtLeastInstructorForExercise(exercise);
+
+            expect(result).toBe(false);
+
+            result = accountService.isAtLeastInstructorForExercise(examExercise);
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if user is editor or instructor', () => {
+            accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+
+            result = accountService.isAtLeastInstructorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastInstructorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+
+            result = accountService.isAtLeastInstructorForExercise(exercise);
+
+            expect(result).toBe(true);
+
+            result = accountService.isAtLeastInstructorForExercise(examExercise);
+
+            expect(result).toBe(true);
+        });
     });
 });
