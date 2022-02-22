@@ -18,7 +18,7 @@ export class LinkCommand extends Command {
         let selectedText = this.getSelectedText();
 
         if (selectedText.includes('[](http://)')) {
-            const textToAdd = selectedText.slice(10);
+            const textToAdd = selectedText.slice(11);
             this.insertText(textToAdd);
         } else {
             const range = this.getRange();

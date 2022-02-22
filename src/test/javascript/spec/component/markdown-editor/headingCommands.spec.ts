@@ -34,6 +34,7 @@ describe('HeadingOneCommand', () => {
                 comp.defaultCommands = [headingOneCommand, headingTwoCommand, headingThreeCommand];
             });
     });
+
     it('should add # Heading 1,2,3 on execute when no text is selected', () => {
         fixture.detectChanges();
         comp.ngAfterViewInit();
@@ -49,6 +50,7 @@ describe('HeadingOneCommand', () => {
         headingThreeCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('### Heading 3');
     });
+
     it('should add #, ##, ### on execute when text is selected', () => {
         fixture.detectChanges();
         comp.ngAfterViewInit();
@@ -80,5 +82,21 @@ describe('HeadingOneCommand', () => {
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('### lorem');
         headingThreeCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
+    });
+
+    it('should remove #, ##, ### with Heading text on execute when text of header selected', () => {
+        fixture.detectChanges();
+        comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('# Heading 1');
+        headingOneCommand.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
+        comp.aceEditorContainer.getEditor().setValue('## Heading 2');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('## Heading 2');
+        headingTwoCommand.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
+        comp.aceEditorContainer.getEditor().setValue('### Heading 3');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('### Heading 3');
+        headingThreeCommand.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
     });
 });

@@ -2,12 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
+import { FullscreenCommand } from 'app/shared/markdown-editor/commands/fullscreen.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
+import * as FullscreenUtil from 'app/shared/util/fullscreen.util';
 
-describe('ItalicCommand', () => {
+describe('FullscreenCommand', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
@@ -26,29 +27,31 @@ describe('ItalicCommand', () => {
         jest.restoreAllMocks();
     });
 
-    it('should add **** on execute', () => {
-        const command = new ItalicCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('italic');
+    it('should enable fullscreen on execute', () => {
+        jest.spyOn(FullscreenUtil, 'enterFullscreen');
+        jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(false);
 
+        const command = new FullscreenCommand();
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('*italic*');
+        expect(FullscreenUtil.isFullScreen).toHaveBeenCalledTimes(1);
+        expect(FullscreenUtil.enterFullscreen).toHaveBeenCalledTimes(1);
     });
 
-    it('should remove ** on execute', () => {
-        const command = new ItalicCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('*italic*');
+    it('should disable fullscreen on execute', () => {
+        jest.spyOn(FullscreenUtil, 'exitFullscreen');
+        jest.spyOn(FullscreenUtil, 'isFullScreen').mockReturnValue(true);
 
+        const command = new FullscreenCommand();
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('italic');
+        expect(FullscreenUtil.isFullScreen).toHaveBeenCalledTimes(2);
+        expect(FullscreenUtil.exitFullscreen).toHaveBeenCalledTimes(1);
     });
 });

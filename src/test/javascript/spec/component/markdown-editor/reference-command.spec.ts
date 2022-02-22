@@ -28,6 +28,7 @@ describe('ReferenceCommand', () => {
                 comp.defaultCommands = [referenceCommand];
             });
     });
+
     it('should add > Reference on execute when no text is selected', () => {
         fixture.detectChanges();
         comp.ngAfterViewInit();
@@ -42,6 +43,14 @@ describe('ReferenceCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('> lorem');
         referenceCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
+    });
+
+    it('should remove > Reference on execute when reference is selected', () => {
+        fixture.detectChanges();
+        comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('> Reference');
+        referenceCommand.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
     });
 
     it('should add > on execute when text is selected', () => {

@@ -28,6 +28,7 @@ describe('Underline Command', () => {
                 comp.defaultCommands = [underlineCommand];
             });
     });
+
     it('should add <ins></ins> brackets on execute when no text is selected', () => {
         fixture.detectChanges();
         comp.ngAfterViewInit();
@@ -42,5 +43,13 @@ describe('Underline Command', () => {
         comp.aceEditorContainer.getEditor().setValue('lorem');
         underlineCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('<ins>lorem</ins>');
+    });
+
+    it('should remove <ins></ins> around selected text on execute when text is selected', () => {
+        fixture.detectChanges();
+        comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('<ins>lorem</ins>');
+        underlineCommand.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
     });
 });
