@@ -375,7 +375,6 @@
                 "template": "Template",
                 "solution": "Solution",
                 "internalError": "An error occured while creating the diff. Please make sure that the template and solution repositories are properly set up."
-
             }
         },
         "error": {
