@@ -949,5 +949,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     setVisibilityOfCheckBoxes(intervals: GradingInterval[]): void {
         this.showAverageCheckBox = !this.participantScoresDistributionService.isContainingIntervalPresent(this.averageScoreIncluded, intervals);
         this.showMedianCheckBox = !this.participantScoresDistributionService.isContainingIntervalPresent(this.medianScoreIncluded, intervals);
+        // if the average cannot be highlighted, but the median can, we select the median per default
+        if (!this.showAverageCheckBox && this.showMedianCheckBox) {
+            this.highlightBar(HighlightType.MEDIAN);
+            this.highlightedType = HighlightType.MEDIAN;
+        }
     }
 }
