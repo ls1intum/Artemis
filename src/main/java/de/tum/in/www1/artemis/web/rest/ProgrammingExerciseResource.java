@@ -666,7 +666,7 @@ public class ProgrammingExerciseResource {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+        programmingExerciseService.recreateBuildPlans(programmingExercise);
         return ResponseEntity.ok().build();
     }
 

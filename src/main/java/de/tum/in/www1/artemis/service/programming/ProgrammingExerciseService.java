@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
@@ -952,5 +953,33 @@ public class ProgrammingExerciseService {
             throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
         }
         // means the project does not exist in version control server and does not exist in continuous integration server
+    }
+
+    /**
+     * Recreates the template and solution build plans by deleting the old ones and crating them again as for a new exercise.
+     *
+     * If Jenkins is used as CI provider, also cleans up student build plans to keep them consistent.
+     *
+     * @param programmingExercise The exercise for which the template and solution should be recreated.
+     */
+    public void recreateBuildPlans(final ProgrammingExercise programmingExercise) {
+        continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+
+        /*
+         * For Jenkins we need to clean up the student build plans on build plan recreation as well, as they are created on-demand as an adaption from the template. Therefore, they
+         * are deleted to make sure that all build plans are consistent. Students can just resume the exercise and submit again. Then the new build plan will be created
+         * automatically from the recreated template.
+         */
+        if (isJenkinsCIProvider()) {
+            // ToDo:
+            // Should this be done for Bamboo as well, or can’t those build plans be recreated easily?
+            // The client message mentions ‘Build plans will be recreated. All previous changes will be overwritten’.
+            // Therefore, a cleanup of student build plans would not be unexpected.
+            participationService.cleanupAllStudentBuildPlans(programmingExercise);
+        }
+    }
+
+    private boolean isJenkinsCIProvider() {
+        return continuousIntegrationService.map(JenkinsService.class::isInstance).orElse(false);
     }
 }

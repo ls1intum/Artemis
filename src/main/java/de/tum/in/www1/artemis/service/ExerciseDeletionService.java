@@ -99,19 +99,14 @@ public class ExerciseDeletionService {
         Exercise exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 
-        if (exercise instanceof ProgrammingExercise) {
-            for (StudentParticipation participation : exercise.getStudentParticipations()) {
-                participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
-            }
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            participationService.cleanupAllStudentBuildPlans(programmingExercise);
 
-            if (!deleteRepositories) {
-                return;    // in this case, we are done
+            if (deleteRepositories) {
+                for (StudentParticipation participation : exercise.getStudentParticipations()) {
+                    participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
+                }
             }
-
-            for (StudentParticipation participation : exercise.getStudentParticipations()) {
-                participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
-            }
-
         }
         else {
             log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
