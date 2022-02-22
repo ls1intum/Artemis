@@ -16,7 +16,13 @@
             <div class="text-center">
                 <h4 jhiTranslate="instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
             </div>
-            <jhi-participant-scores-distribution *ngIf="scoresToDisplay" [gradingScale]="gradingScale" [scores]="scoresToDisplay" [scoreToHighlight]="valueToHighlight">
+            <jhi-participant-scores-distribution
+                *ngIf="scoresToDisplay"
+                [gradingScale]="gradingScale"
+                [scores]="scoresToDisplay"
+                [scoreToHighlight]="valueToHighlight"
+                (emptyBars)="setVisibilityOfCheckBoxes($event)"
+            >
             </jhi-participant-scores-distribution>
         </div>
         <div class="col-3">
@@ -43,7 +49,12 @@
                     <tr>
                         <th>
                             <label class="d-flex align-items-center">
-                                <input type="checkbox" [checked]="highlightedType === highlightType.AVERAGE" (click)="highlightBar(highlightType.AVERAGE)" />
+                                <input
+                                    *ngIf="showAverageCheckBox"
+                                    type="checkbox"
+                                    [checked]="highlightedType === highlightType.AVERAGE"
+                                    (click)="highlightBar(highlightType.AVERAGE)"
+                                />
                                 <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.averagePoints">Average points (score)</span>
                             </label>
                         </th>
@@ -55,7 +66,12 @@
                     <tr>
                         <th>
                             <label class="d-flex align-items-center">
-                                <input type="checkbox" [checked]="highlightedType === highlightType.MEDIAN" (click)="highlightBar(highlightType.MEDIAN)" />
+                                <input
+                                    *ngIf="showMedianCheckBox"
+                                    type="checkbox"
+                                    [checked]="highlightedType === highlightType.MEDIAN"
+                                    (click)="highlightBar(highlightType.MEDIAN)"
+                                />
                                 <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.medianPoints">Median points (score)</span>
                             </label>
                         </th>

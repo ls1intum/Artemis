@@ -5,7 +5,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { AggregatedExerciseGroupResult, ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import {
+    AggregatedExamResult,
+    AggregatedExerciseGroupResult,
+    ExamScoreDTO,
+    ExerciseGroup,
+    ExerciseInfo,
+    ExerciseResult,
+    StudentResult,
+} from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -29,7 +37,8 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { GradingInterval, ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { ParticipantScoresDistributionService } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.service';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -40,6 +49,7 @@ describe('ExamScoresComponent', () => {
     let router: Router;
 
     let navigateSpy: jest.SpyInstance;
+    let isContainingIntervalPresentMock: jest.SpyInstance;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -264,6 +274,7 @@ describe('ExamScoresComponent', () => {
                         return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
                     },
                 }),
+                MockProvider(ParticipantScoresDistributionService),
             ],
         })
             .compileComponents()
@@ -280,6 +291,8 @@ describe('ExamScoresComponent', () => {
                 router = TestBed.inject(Router);
 
                 navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
+                const participantScoresDistributionService = TestBed.inject(ParticipantScoresDistributionService);
+                isContainingIntervalPresentMock = jest.spyOn(participantScoresDistributionService, 'isContainingIntervalPresent').mockReturnValue(true);
             });
     });
 
@@ -651,43 +664,53 @@ describe('ExamScoresComponent', () => {
         expect(dataLabel).toBe('0 (0%)');
     });
 
-    it('should handle failed highlighting correctly if passed median is highlighted', () => {
-        comp.lastCalculatedMedianType = MedianType.PASSED;
+    describe('test checkbox visibility', () => {
+        const emptyInterval = { lowerBoundary: 10, upperBoundary: 15, lowerBoundaryInclusive: true, upperBoundaryInclusive: false } as GradingInterval;
+        it('should hide overall median checkbox if corresponding bar is empty', () => {
+            comp.overallChartMedian = 14;
+            comp.aggregatedExamResults = new AggregatedExamResult();
 
-        comp.handleHighlightingCallback(false);
+            comp.setVisibilityOfCheckBoxes([emptyInterval]);
 
-        expect(comp.showPassedMedianCheckbox).toBe(false);
-    });
+            expect(comp.showOverallMedianCheckbox).toBe(false);
+            expect(isContainingIntervalPresentMock).toHaveBeenCalledTimes(1);
+        });
 
-    it('should handle failed highlighting correctly if overall or submitted median is highlighted', () => {
-        comp.lastCalculatedMedianType = MedianType.OVERALL;
+        it('should hide should hide passed median checkbox if corresponding bar is empty', () => {
+            const examResults = new AggregatedExamResult();
+            examResults.medianRelativePassed = 12;
+            comp.overallChartMedian = 3;
+            comp.aggregatedExamResults = examResults;
 
-        comp.handleHighlightingCallback(false);
+            comp.setVisibilityOfCheckBoxes([emptyInterval]);
 
-        expect(comp.showOverallMedianCheckbox).toBe(false);
+            expect(comp.showPassedMedianCheckbox).toBe(false);
+            expect(isContainingIntervalPresentMock).toHaveBeenCalledTimes(2);
+        });
 
-        comp.showOverallMedianCheckbox = true;
-        comp.lastCalculatedMedianType = MedianType.SUBMITTED;
+        it('should show overall median checkbox if corresponding bar is not empty', () => {
+            comp.overallChartMedian = 45;
+            comp.aggregatedExamResults = new AggregatedExamResult();
+            const newMock = isContainingIntervalPresentMock.mockReturnValue(false);
 
-        comp.handleHighlightingCallback(false);
+            comp.setVisibilityOfCheckBoxes([emptyInterval]);
 
-        expect(comp.showOverallMedianCheckbox).toBe(false);
-    });
+            expect(comp.showOverallMedianCheckbox).toBe(true);
+            expect(newMock).toHaveBeenCalledTimes(1);
+        });
 
-    it('should handle successful highlighting correctly if overall or submitted median is highlighted', () => {
-        comp.lastCalculatedMedianType = MedianType.OVERALL;
-        comp.showOverallMedianCheckbox = false;
+        it('should hide should hide passed median checkbox if corresponding bar is empty', () => {
+            const examResults = new AggregatedExamResult();
+            examResults.medianRelativePassed = 20;
+            comp.overallChartMedian = 3;
+            comp.aggregatedExamResults = examResults;
+            const newMock = isContainingIntervalPresentMock.mockReturnValue(false);
 
-        comp.handleHighlightingCallback(true);
+            comp.setVisibilityOfCheckBoxes([emptyInterval]);
 
-        expect(comp.showOverallMedianCheckbox).toBe(true);
-
-        comp.showOverallMedianCheckbox = false;
-        comp.lastCalculatedMedianType = MedianType.SUBMITTED;
-
-        comp.handleHighlightingCallback(true);
-
-        expect(comp.showOverallMedianCheckbox).toBe(true);
+            expect(comp.showPassedMedianCheckbox).toBe(true);
+            expect(newMock).toHaveBeenCalledTimes(2);
+        });
     });
 });
 

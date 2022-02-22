@@ -14,7 +14,7 @@
         [animations]="false"
         [dataLabelFormatting]="dataLabelFormatting"
         [showDataLabel]="!isCourseScore"
-        (select)="onChartClick()"
+        (select)="onSelect.emit($event)"
         class="row"
     >
         <ng-template #tooltipTemplate let-model="model">

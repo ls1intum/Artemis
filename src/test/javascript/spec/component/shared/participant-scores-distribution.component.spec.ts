@@ -16,7 +16,6 @@ describe('ParticipantScoresDistributionComponent', () => {
     let fixture: ComponentFixture<ParticipantScoresDistributionComponent>;
     let component: ParticipantScoresDistributionComponent;
 
-    let emitSpy: jest.SpyInstance;
     let expectedColoring: string[];
     let expectedDistribution: number[];
 
@@ -91,7 +90,6 @@ describe('ParticipantScoresDistributionComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ParticipantScoresDistributionComponent);
                 component = fixture.componentInstance;
-                emitSpy = jest.spyOn(component.scoreHighlightingVisible, 'emit').mockImplementation();
 
                 component.scores = [14, 56];
             });
@@ -114,8 +112,6 @@ describe('ParticipantScoresDistributionComponent', () => {
         expect(component.ngxColor.domain).toEqual(expectedColoring);
         expect(component.ngxData.map((data) => data.name)).toEqual(defaultLabels);
         expect(component.ngxData.map((data) => data.value)).toEqual(expectedDistribution);
-        expect(emitSpy).toHaveBeenCalledTimes(1);
-        expect(emitSpy).toHaveBeenCalledWith(false);
 
         component.isCourseScore = false;
 
@@ -167,13 +163,11 @@ describe('ParticipantScoresDistributionComponent', () => {
         expect(component.ngxColor.domain).toEqual(expectedColoring);
         expect(component.ngxData.map((data) => data.name)).toEqual(expectedLabels);
         expect(component.ngxData.map((data) => data.value)).toEqual(expectedDistribution);
-        expect(emitSpy).toHaveBeenCalledWith(true);
 
         component.scoreToHighlight = undefined;
 
         component.ngOnChanges();
 
         expect(component.ngxColor.domain).toEqual(Array(4).fill(GraphColors.GREY));
-        expect(emitSpy).toHaveBeenCalledTimes(1);
     });
 });

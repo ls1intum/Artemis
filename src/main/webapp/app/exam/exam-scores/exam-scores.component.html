@@ -337,8 +337,8 @@
                 [gradingScale]="gradingScale"
                 [isCourseScore]="false"
                 [dataLabelFormatting]="dataLabelFormatting"
-                [onSelect]="navigateToParticipantScores"
-                (scoreHighlightingVisible)="handleHighlightingCallback($event)"
+                (onSelect)="(onSelect)"
+                (emptyBars)="setVisibilityOfCheckBoxes($event)"
                 class="row"
             >
             </jhi-participant-scores-distribution>

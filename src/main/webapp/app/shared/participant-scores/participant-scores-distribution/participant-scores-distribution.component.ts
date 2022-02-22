@@ -7,6 +7,28 @@ import { TranslateService } from '@ngx-translate/core';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GraphColors } from 'app/entities/statistics.model';
 
+export interface GradingInterval {
+    upperBoundary: number;
+    lowerBoundary: number;
+
+    upperBoundaryInclusive: boolean;
+    lowerBoundaryInclusive: boolean;
+}
+
+interface ParticipantScoresEntry extends NgxChartsSingleSeriesDataEntry {
+    lowerBoundary: number;
+    upperBoundary: number;
+
+    lowerBoundaryInclusive: boolean;
+    upperBoundaryInclusive: boolean;
+}
+
+interface ClickEvent {
+    name: string;
+    value: number;
+    label: string;
+}
+
 @Component({
     selector: 'jhi-participant-scores-distribution',
     templateUrl: './participant-scores-distribution.component.html',
@@ -26,17 +48,17 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     dataLabelFormatting?: (submissionCount: number) => string;
 
     @Input()
-    onSelect?: (event?: any) => any;
-
-    @Input()
     scoreToHighlight?: number;
 
     @Output()
-    scoreHighlightingVisible: EventEmitter<boolean> = new EventEmitter<boolean>();
+    emptyBars: EventEmitter<GradingInterval[]> = new EventEmitter<GradingInterval[]>();
+
+    @Output()
+    onSelect = new EventEmitter<ClickEvent>();
 
     gradingScaleExists = false;
     isBonus?: boolean;
-    ngxData: NgxChartsSingleSeriesDataEntry[];
+    ngxData: ParticipantScoresEntry[];
     yScaleMax: number;
     height = 500;
 
@@ -69,9 +91,11 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
             this.isBonus = this.gradingScale.gradeType === GradeType.BONUS;
         }
         if (!this.isCourseScore) {
+            // This is the old height for the exam statistics. We would like to keep it, but for course scores we increased it by 100px
             this.height = 400;
         }
         this.createChart();
+        this.determineEmptyBars();
         this.yScaleMax = this.calculateTickMax();
         this.helpIconTooltip = this.determineHelpIconTooltip();
         this.highlightScore();
@@ -88,12 +112,27 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.ngxData = [];
         if (this.gradingScaleExists) {
             this.ngxData = [];
-            for (let i = 0; i < this.gradingScale!.gradeSteps.length; i++) {
-                this.ngxData.push({ name: i.toString(), value: 0 });
-            }
+            this.gradingScale!.gradeSteps.forEach((step) => {
+                this.ngxData.push({
+                    name: step.gradeName,
+                    value: 0,
+                    lowerBoundary: step.lowerBoundPercentage,
+                    upperBoundary: step.upperBoundPercentage,
+                    lowerBoundaryInclusive: step.lowerBoundInclusive,
+                    upperBoundaryInclusive: step.upperBoundInclusive,
+                });
+            });
         } else {
             for (let i = 0; i < 100 / this.binWidth; i++) {
-                this.ngxData.push({ name: i.toString(), value: 0 });
+                const entry = {
+                    name: i.toString(),
+                    value: 0,
+                    lowerBoundary: i * this.binWidth,
+                    upperBoundary: (i + 1) * this.binWidth,
+                    lowerBoundaryInclusive: true,
+                    upperBoundaryInclusive: i === 19, // the last bucket has to include its upper boundary
+                };
+                this.ngxData.push(entry);
             }
         }
         this.createChartLabels();
@@ -300,19 +339,21 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         if (bar.value > 0) {
             this.ngxColor.domain[index] = GraphColors.LIGHT_BLUE;
             this.ngxData = [...this.ngxData];
-            this.scoreHighlightingVisible.emit(true);
-        } else {
-            this.scoreHighlightingVisible.emit(false);
         }
     }
 
-    /**
-     * Wrapper method that is passed to ngx-charts in order to handle click events.
-     * A necessary work around as we define this input as possibly undefined which is not supported when subscribing this to the select output by ngx-charts
-     */
-    onChartClick() {
-        if (this.onSelect) {
-            this.onSelect!();
-        }
+    private determineEmptyBars() {
+        const emptyIntervals = this.ngxData
+            .filter((entry) => entry.value === 0)
+            .map((entry) => {
+                return {
+                    upperBoundary: entry.upperBoundary,
+                    lowerBoundary: entry.lowerBoundary,
+                    upperBoundaryInclusive: entry.upperBoundaryInclusive,
+                    lowerBoundaryInclusive: entry.lowerBoundaryInclusive,
+                } as GradingInterval;
+            });
+
+        this.emptyBars.emit(emptyIntervals);
     }
 }

@@ -31,6 +31,8 @@ import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-so
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { GradingInterval } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { ParticipantScoresDistributionService } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.service';
 
 export enum MedianType {
     PASSED,
@@ -56,7 +58,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     public noOfExamsFiltered: number;
 
     dataLabelFormatting = this.formatDataLabel.bind(this);
-    navigateToParticipantScores = this.onSelect.bind(this);
     scores: number[];
     lastCalculatedMedianType: MedianType;
     highlightedValue: number | undefined;
@@ -109,6 +110,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private courseManagementService: CourseManagementService,
         private router: Router,
         private accountService: AccountService,
+        private participantScoresDistributionService: ParticipantScoresDistributionService,
     ) {}
 
     ngOnInit() {
@@ -168,7 +170,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         // if a grading scale exists and the scoring type is not bonus, per default the median of all passed exams is shown.
                         // We need to set the value for the overall median in order to show it next to the check box
                         if (medianType === MedianType.PASSED) {
-                            this.showPassedMedianCheckbox = true;
                             // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
                             this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
                             this.showOverallMedian = false;
@@ -758,7 +759,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.lastCalculatedMedianType = medianType;
         if (medianType === MedianType.PASSED) {
             const passedMedian = this.aggregatedExamResults.medianRelativePassed;
-            chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course) : 0;
+            chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course) : undefined;
             this.showPassedMedian = true;
         } else {
             this.setOverallChartMedianDependingOfExamsIncluded(medianType);
@@ -786,26 +787,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Handles the event passed by {@link ParticipantScoresDistribution#scoreHighlightingVisible} that indicates whether the selected value is highlighted in the chart or not
-     * Based on the callback value, the corresponding checkbox is shown or not
-     * @param isHighlighted the callback value indicating whether the selected value is highlighted in the chart or not
+     * Sets the visibility of checkboxes depending on the emitter output of {@link ParticipantScoresDistribution#emptyBars}
+     * @param intervals the bars that are empty in the distribution
      */
-    handleHighlightingCallback(isHighlighted: boolean): void {
-        if (!isHighlighted) {
-            if (this.lastCalculatedMedianType === MedianType.PASSED) {
-                this.showPassedMedianCheckbox = false;
-            } else {
-                this.showOverallMedianCheckbox = false;
-            }
+    setVisibilityOfCheckBoxes(intervals: GradingInterval[]): void {
+        if (!this.aggregatedExamResults.medianRelativePassed) {
+            this.showPassedMedianCheckbox = false;
         } else {
-            /*
-            The median value for passed exams does not change by any filter configuration, therefore the corresponding flag won't get updated after init.
-            The median value for all exams does change depending on if only submitted exams are included or not. Here we have to update the flag if the bar
-            represents a value > 0
-            */
-            if (this.lastCalculatedMedianType !== MedianType.PASSED) {
-                this.showOverallMedianCheckbox = true;
-            }
+            this.showPassedMedianCheckbox = !this.participantScoresDistributionService.isContainingIntervalPresent(this.aggregatedExamResults.medianRelativePassed, intervals);
         }
+        this.showOverallMedianCheckbox = !this.participantScoresDistributionService.isContainingIntervalPresent(this.overallChartMedian, intervals);
     }
 }
