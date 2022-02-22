@@ -30,6 +30,6 @@ describe('CodeBlockCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('code');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('```java\ncode\n```');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('```java\ncode\n```');
     });
 });

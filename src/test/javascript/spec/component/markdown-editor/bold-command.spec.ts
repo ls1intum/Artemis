@@ -30,7 +30,7 @@ describe('BoldCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('bold');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('**bold**');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('**bold**');
     });
 
     it('should remove **** on execute', () => {
@@ -41,6 +41,6 @@ describe('BoldCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('**bold**');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('bold');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('bold');
     });
 });

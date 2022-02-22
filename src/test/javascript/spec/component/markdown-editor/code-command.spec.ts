@@ -30,7 +30,7 @@ describe('CodeCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('code');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('`code`');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('`code`');
     });
 
     it('should remove `` on execute', () => {
@@ -41,6 +41,6 @@ describe('CodeCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('`code`');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('code');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('code');
     });
 });

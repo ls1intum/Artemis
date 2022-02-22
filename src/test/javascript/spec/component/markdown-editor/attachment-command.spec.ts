@@ -30,7 +30,7 @@ describe('AttachmentCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('![](http://)');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('![](http://)');
     });
 
     it('should remove ![](http://) on execute', () => {
@@ -41,6 +41,6 @@ describe('AttachmentCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('![](http://)test');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('test');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('test');
     });
 });

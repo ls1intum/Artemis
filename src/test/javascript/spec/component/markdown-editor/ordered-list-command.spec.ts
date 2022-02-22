@@ -30,7 +30,7 @@ describe('OrderedListCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('line 1\nline 2');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('1. line 1\n2. line 2\n');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('1. line 1\n2. line 2\n');
     });
 
     it('should add new ordered list on execute', () => {
@@ -41,7 +41,7 @@ describe('OrderedListCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('1. ');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('1. ');
     });
 
     it('should remove ordered list on execute', () => {
@@ -52,6 +52,6 @@ describe('OrderedListCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('1. line 1\n2. line 2');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('line 1\nline 2\n');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('line 1\nline 2\n');
     });
 });

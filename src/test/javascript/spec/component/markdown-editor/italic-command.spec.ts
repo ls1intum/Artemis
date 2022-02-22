@@ -30,7 +30,7 @@ describe('ItalicCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('italic');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('*italic*');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('*italic*');
     });
 
     it('should remove ** on execute', () => {
@@ -41,6 +41,6 @@ describe('ItalicCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('*italic*');
 
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('italic');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('italic');
     });
 });

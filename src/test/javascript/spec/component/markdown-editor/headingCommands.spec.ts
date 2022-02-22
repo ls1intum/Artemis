@@ -40,15 +40,15 @@ describe('HeadingOneCommand', () => {
         comp.ngAfterViewInit();
 
         headingOneCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('# Heading 1');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('# Heading 1');
         comp.aceEditorContainer.getEditor().setValue('');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('');
         headingTwoCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('## Heading 2');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('## Heading 2');
         comp.aceEditorContainer.getEditor().setValue('');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('');
         headingThreeCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('### Heading 3');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('### Heading 3');
     });
 
     it('should add #, ##, ### on execute when text is selected', () => {
@@ -57,15 +57,15 @@ describe('HeadingOneCommand', () => {
         jest.spyOn(comp.aceEditorContainer.getEditor(), 'getSelectedText').mockReturnValue('lorem');
 
         headingOneCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('# lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('# lorem');
         comp.aceEditorContainer.getEditor().setValue('lorem');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');
         headingTwoCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('## lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('## lorem');
         comp.aceEditorContainer.getEditor().setValue('lorem');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');
         headingThreeCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('### lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('### lorem');
     });
 
     it('should remove #, ##, ### on execute when text of header selected', () => {
@@ -73,15 +73,15 @@ describe('HeadingOneCommand', () => {
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('# lorem');
         headingOneCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');
         comp.aceEditorContainer.getEditor().setValue('## lorem');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('## lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('## lorem');
         headingTwoCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');
         comp.aceEditorContainer.getEditor().setValue('### lorem');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('### lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('### lorem');
         headingThreeCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');
     });
 
     it('should remove #, ##, ### with Heading text on execute when text of header selected', () => {
@@ -89,14 +89,14 @@ describe('HeadingOneCommand', () => {
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('# Heading 1');
         headingOneCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('');
         comp.aceEditorContainer.getEditor().setValue('## Heading 2');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('## Heading 2');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('## Heading 2');
         headingTwoCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('');
         comp.aceEditorContainer.getEditor().setValue('### Heading 3');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('### Heading 3');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('### Heading 3');
         headingThreeCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('');
     });
 });

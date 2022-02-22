@@ -34,7 +34,7 @@ describe('Underline Command', () => {
         comp.ngAfterViewInit();
 
         underlineCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('<ins></ins>');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('<ins></ins>');
     });
 
     it('should add <ins></ins> around selected text on execute when text is selected', () => {
@@ -42,7 +42,7 @@ describe('Underline Command', () => {
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('lorem');
         underlineCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('<ins>lorem</ins>');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('<ins>lorem</ins>');
     });
 
     it('should remove <ins></ins> around selected text on execute when text is selected', () => {
@@ -50,6 +50,6 @@ describe('Underline Command', () => {
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('<ins>lorem</ins>');
         underlineCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');
     });
 });

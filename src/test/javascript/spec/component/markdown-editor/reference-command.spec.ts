@@ -34,7 +34,7 @@ describe('ReferenceCommand', () => {
         comp.ngAfterViewInit();
 
         referenceCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('> Reference');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('> Reference');
     });
 
     it('should remove > Reference on execute when reference is selected', () => {
@@ -42,7 +42,7 @@ describe('ReferenceCommand', () => {
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('> lorem');
         referenceCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');
     });
 
     it('should remove > Reference on execute when reference is selected', () => {
@@ -50,7 +50,7 @@ describe('ReferenceCommand', () => {
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('> Reference');
         referenceCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('');
     });
 
     it('should add > on execute when text is selected', () => {
@@ -58,6 +58,6 @@ describe('ReferenceCommand', () => {
         comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('lorem');
         referenceCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('> lorem');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('> lorem');
     });
 });

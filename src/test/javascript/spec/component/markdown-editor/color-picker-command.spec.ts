@@ -24,7 +24,7 @@ describe('ColorPickerCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('test');
 
         command.execute(hex);
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('<span class="' + color + '">test</span>');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('<span class="' + color + '">test</span>');
     }
 
     function testRemoveColor(color: string) {
@@ -35,7 +35,7 @@ describe('ColorPickerCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('<span class="' + color + '">test</span>');
 
         command.execute('#ffffff');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('test');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('test');
     }
 
     beforeEach(() => {
@@ -92,7 +92,7 @@ describe('ColorPickerCommand', () => {
         comp.aceEditorContainer.getEditor().setValue('test');
 
         command.execute('#000000');
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('test');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('test');
     });
 
     it('should remove green color on execute', () => {

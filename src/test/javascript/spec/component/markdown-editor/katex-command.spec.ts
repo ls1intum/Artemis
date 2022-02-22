@@ -28,6 +28,6 @@ describe('KatexCommand', () => {
         comp.ngAfterViewInit();
 
         katexCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('$$ e^{\\frac{1}{4} y^2} $$');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('$$ e^{\\frac{1}{4} y^2} $$');
     });
 });
