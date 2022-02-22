@@ -209,8 +209,7 @@ public class ProgrammingExerciseGitDiffReportService {
     }
 
     @NotNull
-    private ProgrammingExerciseGitDiffEntry handleUnchanged(ArrayList<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath,
-            ProgrammingExerciseGitDiffEntry currentEntry) {
+    private ProgrammingExerciseGitDiffEntry handleUnchanged(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, ProgrammingExerciseGitDiffEntry currentEntry) {
         if (!currentEntry.isEmpty()) {
             entries.add(currentEntry);
         }
@@ -220,21 +219,22 @@ public class ProgrammingExerciseGitDiffReportService {
     }
 
     @NotNull
-    private ProgrammingExerciseGitDiffEntry handleRemoval(ArrayList<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, ProgrammingExerciseGitDiffEntry currentEntry,
+    private ProgrammingExerciseGitDiffEntry handleRemoval(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, ProgrammingExerciseGitDiffEntry currentEntry,
             boolean lastLineRemoveOperation, int currentPreviousLineCount, String line) {
-        if (!lastLineRemoveOperation && !currentEntry.isEmpty()) {
-            entries.add(currentEntry);
-            currentEntry = new ProgrammingExerciseGitDiffEntry();
-            currentEntry.setFilePath(currentFilePath);
+        var entry = currentEntry;
+        if (!lastLineRemoveOperation && !entry.isEmpty()) {
+            entries.add(entry);
+            entry = new ProgrammingExerciseGitDiffEntry();
+            entry.setFilePath(currentFilePath);
         }
-        if (currentEntry.getPreviousCode() == null) {
-            currentEntry.setPreviousCode("");
-            currentEntry.setPreviousLine(currentPreviousLineCount);
+        if (entry.getPreviousCode() == null) {
+            entry.setPreviousCode("");
+            entry.setPreviousLine(currentPreviousLineCount);
         }
-        var previousCode = currentEntry.getPreviousCode();
+        var previousCode = entry.getPreviousCode();
         previousCode += line.substring(1) + "\n";
-        currentEntry.setPreviousCode(previousCode);
-        return currentEntry;
+        entry.setPreviousCode(previousCode);
+        return entry;
     }
 
     private void handleAddition(ProgrammingExerciseGitDiffEntry currentEntry, int currentLineCount, String line) {

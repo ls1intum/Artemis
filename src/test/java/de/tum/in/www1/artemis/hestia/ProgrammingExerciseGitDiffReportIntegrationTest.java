@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
  */
 public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final static String fileName = "test.java";
+    private final String fileName = "test.java";
 
     private final LocalRepository templateRepo = new LocalRepository();
 
