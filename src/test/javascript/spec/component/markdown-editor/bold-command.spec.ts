@@ -22,33 +22,25 @@ describe('BoldCommand', () => {
             });
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
     it('should add **** on execute', () => {
         const command = new BoldCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('bold');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('bold');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('**bold**');
     });
 
     it('should remove **** on execute', () => {
         const command = new BoldCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('**bold**');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('**bold**');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('bold');
     });
 });

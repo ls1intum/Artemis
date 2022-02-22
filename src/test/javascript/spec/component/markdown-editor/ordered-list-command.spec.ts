@@ -22,46 +22,36 @@ describe('OrderedListCommand', () => {
             });
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
     it('should add ordered list to lines on execute', () => {
         const command = new OrderedListCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('line 1\nline 2');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('line 1\nline 2');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('1. line 1\n2. line 2\n');
     });
 
     it('should add new ordered list on execute', () => {
         const command = new OrderedListCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('1. ');
     });
 
     it('should remove ordered list on execute', () => {
         const command = new OrderedListCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('1. line 1\n2. line 2');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('1. line 1\n2. line 2');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('line 1\nline 2\n');
     });
 });

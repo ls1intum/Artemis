@@ -22,33 +22,25 @@ describe('CodeCommand', () => {
             });
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
     it('should add `` on execute', () => {
         const command = new CodeCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('code');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('code');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('`code`');
     });
 
     it('should remove `` on execute', () => {
         const command = new CodeCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('`code`');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('`code`');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('code');
     });
 });

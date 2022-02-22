@@ -12,35 +12,31 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
-function testAddColor(hex: string, color: string, comp: MarkdownEditorComponent, fixture: ComponentFixture<MarkdownEditorComponent>) {
-    const command = new ColorPickerCommand();
-    jest.spyOn(command, 'getSelectedText').mockReturnValue('test');
-
-    comp.colorCommands = [command];
-    fixture.detectChanges();
-    comp.ngAfterViewInit();
-
-    command.execute(hex);
-    expect(command.getSelectedText).toHaveBeenCalledTimes(1);
-    expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('<span class="' + color + '">test</span>');
-}
-
-function testRemoveColor(color: string, comp: MarkdownEditorComponent, fixture: ComponentFixture<MarkdownEditorComponent>) {
-    const command = new ColorPickerCommand();
-    jest.spyOn(command, 'getSelectedText').mockReturnValue('<span class="' + color + '">test</span>');
-
-    comp.colorCommands = [command];
-    fixture.detectChanges();
-    comp.ngAfterViewInit();
-
-    command.execute('#ffffff');
-    expect(command.getSelectedText).toHaveBeenCalledTimes(1);
-    expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('test');
-}
-
 describe('ColorPickerCommand', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
+
+    function testAddColor(hex: string, color: string, comp: MarkdownEditorComponent, fixture: ComponentFixture<MarkdownEditorComponent>) {
+        const command = new ColorPickerCommand();
+        comp.colorCommands = [command];
+        fixture.detectChanges();
+        comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('test');
+
+        command.execute(hex);
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('<span class="' + color + '">test</span>');
+    }
+
+    function testRemoveColor(color: string, comp: MarkdownEditorComponent, fixture: ComponentFixture<MarkdownEditorComponent>) {
+        const command = new ColorPickerCommand();
+        comp.colorCommands = [command];
+        fixture.detectChanges();
+        comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('<span class="' + color + '">test</span>');
+
+        command.execute('#ffffff');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('test');
+    }
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -57,10 +53,6 @@ describe('ColorPickerCommand', () => {
                 fixture = TestBed.createComponent(MarkdownEditorComponent);
                 comp = fixture.componentInstance;
             });
-    });
-
-    afterEach(() => {
-        jest.restoreAllMocks();
     });
 
     it('should add red color on execute', () => {
@@ -93,14 +85,13 @@ describe('ColorPickerCommand', () => {
 
     it('should add black color on execute', () => {
         const command = new ColorPickerCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('test');
 
         comp.colorCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('test');
 
         command.execute('#000000');
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('test');
     });
 

@@ -22,33 +22,25 @@ describe('ItalicCommand', () => {
             });
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
-    it('should add **** on execute', () => {
+    it('should add ** on execute', () => {
         const command = new ItalicCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('italic');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('italic');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('*italic*');
     });
 
     it('should remove ** on execute', () => {
         const command = new ItalicCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('*italic*');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('*italic*');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('italic');
     });
 });

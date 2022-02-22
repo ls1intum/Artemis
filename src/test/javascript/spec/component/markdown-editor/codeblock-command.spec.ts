@@ -22,20 +22,14 @@ describe('CodeBlockCommand', () => {
             });
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
     it('should add ```java\n``` on execute', () => {
         const command = new CodeBlockCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('code');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('code');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('```java\ncode\n```');
     });
 });

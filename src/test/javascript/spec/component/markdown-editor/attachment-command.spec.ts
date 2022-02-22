@@ -22,33 +22,25 @@ describe('AttachmentCommand', () => {
             });
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
     it('should add ![](http://) on execute', () => {
         const command = new AttachmentCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('![](http://)');
     });
 
     it('should remove ![](http://) on execute', () => {
         const command = new AttachmentCommand();
-        jest.spyOn(command, 'getSelectedText').mockReturnValue('![](http://)test');
-
         comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('![](http://)test');
 
         command.execute();
-        expect(command.getSelectedText).toHaveBeenCalledTimes(1);
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('test');
     });
 });
