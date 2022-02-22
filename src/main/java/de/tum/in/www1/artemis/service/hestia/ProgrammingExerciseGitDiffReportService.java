@@ -210,12 +210,13 @@ public class ProgrammingExerciseGitDiffReportService {
 
     @NotNull
     private ProgrammingExerciseGitDiffEntry handleUnchanged(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, ProgrammingExerciseGitDiffEntry currentEntry) {
-        if (!currentEntry.isEmpty()) {
-            entries.add(currentEntry);
+        var entry = currentEntry;
+        if (!entry.isEmpty()) {
+            entries.add(entry);
         }
-        currentEntry = new ProgrammingExerciseGitDiffEntry();
-        currentEntry.setFilePath(currentFilePath);
-        return currentEntry;
+        entry = new ProgrammingExerciseGitDiffEntry();
+        entry.setFilePath(currentFilePath);
+        return entry;
     }
 
     @NotNull
@@ -269,7 +270,7 @@ public class ProgrammingExerciseGitDiffReportService {
         return null;
     }
 
-    private void removeTrailingLinebreaks(ArrayList<ProgrammingExerciseGitDiffEntry> entries) {
+    private void removeTrailingLinebreaks(List<ProgrammingExerciseGitDiffEntry> entries) {
         for (ProgrammingExerciseGitDiffEntry entry : entries) {
             if (entry.getCode() != null) {
                 entry.setCode(entry.getCode().substring(0, entry.getCode().length() - 1));
