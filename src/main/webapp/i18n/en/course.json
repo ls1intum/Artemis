@@ -85,7 +85,7 @@
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
-            "modelingExercises": "Modelling Exercises",
+            "modelingExercises": "Modeling Exercises",
             "textExercises": "Text Exercises",
             "upload": "Upload",
             "uploading": "Uploading...",
@@ -109,7 +109,7 @@
                         "all": "All Exercises",
                         "programming": "Programming Exercises",
                         "quiz": "Quiz Exercises",
-                        "modeling": "Modelling Exercises",
+                        "modeling": "Modeling Exercises",
                         "text": "Text Exercises",
                         "file-upload": "File Upload Exercises"
                     }
