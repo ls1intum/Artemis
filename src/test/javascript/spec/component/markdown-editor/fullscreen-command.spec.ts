@@ -51,7 +51,7 @@ describe('FullscreenCommand', () => {
         comp.ngAfterViewInit();
 
         command.execute();
-        expect(FullscreenUtil.isFullScreen).toHaveBeenCalledTimes(2);
+        expect(FullscreenUtil.isFullScreen).toHaveBeenCalledTimes(1);
         expect(FullscreenUtil.exitFullscreen).toHaveBeenCalledTimes(1);
     });
 });
