@@ -41,7 +41,7 @@ export class GitDiffEntryComponent implements OnInit {
                 return this.getText(session, lastLineNumber).toString().length * config.characterWidth;
             },
             getText(session: any, row: number): number {
-                return row + line;
+                return row + line - 1;
             },
         };
         editor.getEditor().getSession().setValue(code);
