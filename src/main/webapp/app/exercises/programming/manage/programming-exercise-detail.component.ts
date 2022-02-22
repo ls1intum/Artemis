@@ -374,7 +374,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
                 modalRef.componentInstance.report = gitDiffReport;
             },
-            error: (err) => this.dialogErrorSource.error(err.message),
+            error: (err) => {
+                if (err.status === 500) {
+                    this.alertService.error('artemisApp.programmingExercise.diffReport.internalError');
+                } else {
+                    this.onError(err);
+                }
+            },
         });
     }
 }

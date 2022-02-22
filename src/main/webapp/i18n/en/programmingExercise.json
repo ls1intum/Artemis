@@ -371,7 +371,10 @@
             "diffReport": {
                 "button": "Show difference between the template and solution repositories",
                 "tooltip": "Shows and if necessary updates the git-diff between the template and solution repositories.",
-                "title": "Git-Diff"
+                "title": "Git-Diff",
+                "template": "Template",
+                "solution": "Solution",
+                "internalError": "There was an error while creating the diff. Please make sure that the template and solution repositories are properly setup."
             }
         },
         "error": {

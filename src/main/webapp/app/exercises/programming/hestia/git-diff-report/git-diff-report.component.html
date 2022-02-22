@@ -1,3 +1,7 @@
+<div class="row border-bottom">
+    <div class="col-6"><h4 jhiTranslate="artemisApp.programmingExercise.diffReport.template">Template</h4></div>
+    <div class="col-6"><h4 jhiTranslate="artemisApp.programmingExercise.diffReport.solution">Solution</h4></div>
+</div>
 <div *ngFor="let entry of entries" class="mt-2">
     <jhi-git-diff-entry [diffEntry]="entry"></jhi-git-diff-entry>
 </div>
