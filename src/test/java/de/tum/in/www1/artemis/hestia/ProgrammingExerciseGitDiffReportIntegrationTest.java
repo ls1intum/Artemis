@@ -41,11 +41,13 @@ import de.tum.in.www1.artemis.util.ModelFactory;
  */
 public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final String fileName = "test.java";
+    private final static String FILE_NAME = "test.java";
 
     private final LocalRepository templateRepo = new LocalRepository();
 
     private final LocalRepository solutionRepo = new LocalRepository();
+
+    private ProgrammingExercise exercise;
 
     @Autowired
     private ProgrammingExerciseRepository exerciseRepository;
@@ -59,8 +61,6 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private ProgrammingExercise exercise;
-
     @BeforeEach
     public void initTestCase() throws Exception {
         Course course = database.addEmptyCourse();
@@ -72,7 +72,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
         templateRepo.configureRepos("templateLocalRepo", "templateOriginRepo");
 
         // add file to the repository folder
-        Path filePath = Paths.get(templateRepo.localRepoFile + "/" + fileName);
+        Path filePath = Paths.get(templateRepo.localRepoFile + "/" + FILE_NAME);
         File templateFile = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(templateFile, content, Charset.defaultCharset());
@@ -105,7 +105,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
         // add file to the repository folder
-        Path filePath = Paths.get(solutionRepo.localRepoFile + "/" + fileName);
+        Path filePath = Paths.get(solutionRepo.localRepoFile + "/" + FILE_NAME);
         File solutionFile = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(solutionFile, content, Charset.defaultCharset());
