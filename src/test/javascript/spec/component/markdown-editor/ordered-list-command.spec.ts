@@ -12,7 +12,7 @@ describe('OrderedListCommand', () => {
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()

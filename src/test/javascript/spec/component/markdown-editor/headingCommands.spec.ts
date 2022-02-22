@@ -21,7 +21,7 @@ describe('HeadingOneCommand', () => {
     });
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()

@@ -19,7 +19,7 @@ describe('Grading Instruction Command', () => {
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
             declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(NgModel)],
         })

@@ -39,7 +39,7 @@ describe('ColorPickerCommand', () => {
     }
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
             declarations: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
             providers: [
@@ -55,35 +55,21 @@ describe('ColorPickerCommand', () => {
             });
     });
 
-    it('should add red color on execute', () => {
-        testAddColor('#ca2024', 'red');
+    const colorTable = [
+        ['#ca2024', 'red'],
+        ['#3ea119', 'green'],
+        ['#ffffff', 'white'],
+        ['#fffa5c', 'yellow'],
+        ['#0d3cc2', 'blue'],
+        ['#b05db8', 'lila'],
+        ['#d86b1f', 'orange'],
+    ];
+
+    it.each(colorTable)('should add color %s on execute', (hex, color) => {
+        testAddColor(hex, color);
     });
 
-    it('should add green color on execute', () => {
-        testAddColor('#3ea119', 'green');
-    });
-
-    it('should add white color on execute', () => {
-        testAddColor('#ffffff', 'white');
-    });
-
-    it('should add yellow color on execute', () => {
-        testAddColor('#fffa5c', 'yellow');
-    });
-
-    it('should add blue color on execute', () => {
-        testAddColor('#0d3cc2', 'blue');
-    });
-
-    it('should add lila color on execute', () => {
-        testAddColor('#b05db8', 'lila');
-    });
-
-    it('should add orange color on execute', () => {
-        testAddColor('#d86b1f', 'orange');
-    });
-
-    it('should add black color on execute', () => {
+    it('should add color black on execute', () => {
         const command = new ColorPickerCommand();
 
         comp.colorCommands = [command];
@@ -95,31 +81,7 @@ describe('ColorPickerCommand', () => {
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('test');
     });
 
-    it('should remove green color on execute', () => {
-        testRemoveColor('green');
-    });
-
-    it('should remove white color on execute', () => {
-        testRemoveColor('white');
-    });
-
-    it('should remove orange color on execute', () => {
-        testRemoveColor('orange');
-    });
-
-    it('should remove yellow color on execute', () => {
-        testRemoveColor('yellow');
-    });
-
-    it('should remove red color on execute', () => {
-        testRemoveColor('red');
-    });
-
-    it('should remove blue color on execute', () => {
-        testRemoveColor('blue');
-    });
-
-    it('should remove lila color on execute', () => {
-        testRemoveColor('lila');
+    it.each(colorTable)('should remove color %s on execute', (hex, color) => {
+        testRemoveColor(color);
     });
 });
