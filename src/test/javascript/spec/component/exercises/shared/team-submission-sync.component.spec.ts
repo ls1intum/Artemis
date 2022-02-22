@@ -23,6 +23,7 @@ describe('Team Submission Sync Component', () => {
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;
     let component: TeamSubmissionSyncComponent;
     let websocketService: JhiWebsocketService;
+    let textSubmissionWithParticipation: Submission;
     let submissionObservableWithParticipation: Observable<Submission>;
     let submissionSyncPayload: SubmissionSyncPayload;
     let currentUser: User;
@@ -49,7 +50,7 @@ describe('Team Submission Sync Component', () => {
                 const participation = new StudentParticipation(ParticipationType.STUDENT);
                 participation.id = 3;
                 component.participation = participation;
-                const textSubmissionWithParticipation = new TextSubmission();
+                textSubmissionWithParticipation = new TextSubmission();
                 textSubmissionWithParticipation.participation = new StudentParticipation();
                 submissionObservableWithParticipation = of(textSubmissionWithParticipation);
                 component.submissionObservable = submissionObservableWithParticipation;
@@ -87,19 +88,14 @@ describe('Team Submission Sync Component', () => {
         // checks for setupReceiver
         expect(websocketReceiveMock).toHaveBeenCalledTimes(1);
         expect(websocketReceiveMock).toHaveBeenCalledWith(expectedWebsocketTopic);
-        let submissionPayload: SubmissionSyncPayload | undefined;
-        submissionSyncObservable.subscribe((result: SubmissionSyncPayload) => (submissionPayload = result));
-        expect(submissionPayload).not.toBe(undefined);
         expect(receiveSubmissionEventEmitter).toHaveBeenCalledTimes(1);
-        expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionPayload!.submission);
+        expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionSyncPayload?.submission);
 
         // checks for setupSender
-        let submissionRes: Submission | undefined;
-        submissionObservableWithParticipation.subscribe((result: Submission) => (submissionRes = result));
-        expect(submissionRes).not.toBe(undefined);
-        expect(submissionRes?.participation?.exercise).toBe(undefined);
-        expect(submissionRes?.participation?.submissions).toBeEmpty();
+        expect(textSubmissionWithParticipation).not.toBe(undefined);
+        expect(textSubmissionWithParticipation?.participation?.exercise).toBe(undefined);
+        expect(textSubmissionWithParticipation?.participation?.submissions).toBeEmpty();
         expect(websocketSendSpy).toHaveBeenCalledTimes(1);
-        expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', submissionRes);
+        expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
     });
 });
