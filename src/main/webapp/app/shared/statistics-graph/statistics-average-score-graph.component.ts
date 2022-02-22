@@ -273,7 +273,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
         this.displayColorMap.set(interval, newValue);
         this.numberOfSelectedIntervals += 1;
         const exercises = this.filterForPerformanceInterval(interval);
-        this.exerciseScoresFilteredByPerformanceInterval = this.orderAverageScores(this.currentlyDisplayableExercises.concat(exercises));
+        this.exerciseScoresFilteredByPerformanceInterval = this.orderAverageScores(this.exerciseScoresFilteredByPerformanceInterval.concat(exercises));
         this.initializeFilterOptionsAndSetupChartWithCurrentVisibleScores();
     }
 
