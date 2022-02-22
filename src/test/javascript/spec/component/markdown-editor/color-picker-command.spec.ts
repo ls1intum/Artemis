@@ -16,7 +16,7 @@ describe('ColorPickerCommand', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
-    function testAddColor(hex: string, color: string, comp: MarkdownEditorComponent, fixture: ComponentFixture<MarkdownEditorComponent>) {
+    function testAddColor(hex: string, color: string) {
         const command = new ColorPickerCommand();
         comp.colorCommands = [command];
         fixture.detectChanges();
@@ -27,7 +27,7 @@ describe('ColorPickerCommand', () => {
         expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('<span class="' + color + '">test</span>');
     }
 
-    function testRemoveColor(color: string, comp: MarkdownEditorComponent, fixture: ComponentFixture<MarkdownEditorComponent>) {
+    function testRemoveColor(color: string) {
         const command = new ColorPickerCommand();
         comp.colorCommands = [command];
         fixture.detectChanges();
@@ -56,31 +56,31 @@ describe('ColorPickerCommand', () => {
     });
 
     it('should add red color on execute', () => {
-        testAddColor('#ca2024', 'red', comp, fixture);
+        testAddColor('#ca2024', 'red');
     });
 
     it('should add green color on execute', () => {
-        testAddColor('#3ea119', 'green', comp, fixture);
+        testAddColor('#3ea119', 'green');
     });
 
     it('should add white color on execute', () => {
-        testAddColor('#ffffff', 'white', comp, fixture);
+        testAddColor('#ffffff', 'white');
     });
 
     it('should add yellow color on execute', () => {
-        testAddColor('#fffa5c', 'yellow', comp, fixture);
+        testAddColor('#fffa5c', 'yellow');
     });
 
     it('should add blue color on execute', () => {
-        testAddColor('#0d3cc2', 'blue', comp, fixture);
+        testAddColor('#0d3cc2', 'blue');
     });
 
     it('should add lila color on execute', () => {
-        testAddColor('#b05db8', 'lila', comp, fixture);
+        testAddColor('#b05db8', 'lila');
     });
 
     it('should add orange color on execute', () => {
-        testAddColor('#d86b1f', 'orange', comp, fixture);
+        testAddColor('#d86b1f', 'orange');
     });
 
     it('should add black color on execute', () => {
@@ -96,30 +96,30 @@ describe('ColorPickerCommand', () => {
     });
 
     it('should remove green color on execute', () => {
-        testRemoveColor('green', comp, fixture);
+        testRemoveColor('green');
     });
 
     it('should remove white color on execute', () => {
-        testRemoveColor('white', comp, fixture);
+        testRemoveColor('white');
     });
 
     it('should remove orange color on execute', () => {
-        testRemoveColor('orange', comp, fixture);
+        testRemoveColor('orange');
     });
 
     it('should remove yellow color on execute', () => {
-        testRemoveColor('yellow', comp, fixture);
+        testRemoveColor('yellow');
     });
 
     it('should remove red color on execute', () => {
-        testRemoveColor('red', comp, fixture);
+        testRemoveColor('red');
     });
 
     it('should remove blue color on execute', () => {
-        testRemoveColor('blue', comp, fixture);
+        testRemoveColor('blue');
     });
 
     it('should remove lila color on execute', () => {
-        testRemoveColor('lila', comp, fixture);
+        testRemoveColor('lila');
     });
 });
