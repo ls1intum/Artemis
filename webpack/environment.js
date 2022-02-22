@@ -1,7 +1,7 @@
 module.exports = {
     I18N_HASH: 'generated_hash',
     SERVER_API_URL: '',
-    __VERSION__: process.env.hasOwnProperty('APP_VERSION') ? process.env.APP_VERSION : inferVersion(),
+    __VERSION__: process.env.APP_VERSION || inferVersion(),
     __DEBUG_INFO_ENABLED__: false,
 };
 
@@ -21,11 +21,7 @@ function inferVersion() {
 
         version = data.match(/\nversion\s=\s"(.*)"/);
 
-        if (version) {
-            version = version[1];
-        } else {
-            version = 'DEV';
-        }
+        version = version[1] ?? 'DEV';
     } catch (error) {
         console.log("Error while retrieving 'APP_VERSION' property");
     }
