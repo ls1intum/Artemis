@@ -23,7 +23,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
     });
 
     it('Should sort entries', () => {
-        let entries = [
+        const entries = [
             { filePath: 'src/a.java', previousLine: 3 },
             { filePath: 'src/b.java', line: 1 },
             { filePath: 'src/a.java', line: 2 },
@@ -32,7 +32,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
             { filePath: 'src/a.java', line: 1 },
         ] as ProgrammingExerciseGitDiffEntry[];
 
-        let expectedEntries = [
+        const expectedEntries = [
             { filePath: 'src/a.java', line: 1 },
             { filePath: 'src/a.java', line: 2 },
             { filePath: 'src/a.java', previousLine: 3 },
@@ -41,7 +41,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
             { filePath: 'src/b.java', line: 2 },
         ] as ProgrammingExerciseGitDiffEntry[];
 
-        comp.report = { entries: entries } as ProgrammingExerciseGitDiffReport;
+        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
         comp.ngOnInit();
         expect(comp.entries).toStrictEqual(expectedEntries);
     });

@@ -72,9 +72,9 @@ describe('ProgrammingExerciseGitDiffEntry Component', () => {
 
     it('Should give correct line for gutter', () => {
         comp.ngOnInit();
-        let gutterRendererNow = comp.editorNow.getEditor().session.gutterRenderer;
-        let gutterRendererPrevious = comp.editorPrevious.getEditor().session.gutterRenderer;
-        let config = { characterWidth: 1 };
+        const gutterRendererNow = comp.editorNow.getEditor().session.gutterRenderer;
+        const gutterRendererPrevious = comp.editorPrevious.getEditor().session.gutterRenderer;
+        const config = { characterWidth: 1 };
 
         expect(gutterRendererNow.getText(null, 2)).toBe(11);
         expect(gutterRendererPrevious.getText(null, 2)).toBe(2);
