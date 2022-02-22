@@ -76,9 +76,9 @@ describe('ProgrammingExerciseGitDiffEntry Component', () => {
         const gutterRendererPrevious = comp.editorPrevious.getEditor().session.gutterRenderer;
         const config = { characterWidth: 1 };
 
-        expect(gutterRendererNow.getText(null, 2)).toBe(11);
-        expect(gutterRendererPrevious.getText(null, 2)).toBe(2);
+        expect(gutterRendererNow.getText(null, 2)).toBe(12);
+        expect(gutterRendererPrevious.getText(null, 0)).toBe(1);
         expect(gutterRendererNow.getWidth(null, 2, config)).toBe(2);
-        expect(gutterRendererPrevious.getWidth(null, 2, config)).toBe(1);
+        expect(gutterRendererPrevious.getWidth(null, 0, config)).toBe(1);
     });
 });
