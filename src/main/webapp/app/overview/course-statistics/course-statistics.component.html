@@ -120,13 +120,13 @@
                 </div>
                 <div #containerRef class="col-12 col-md-8">
                     <ngx-charts-bar-horizontal-stacked
-                        [view]="[containerRef.offsetWidth, 250]"
+                        [view]="[containerRef.offsetWidth, exerciseGroup[0].height]"
                         [scheme]="ngxBarColor"
                         [results]="exerciseGroup"
                         [xAxis]="true"
                         [yAxis]="true"
                         [xScaleMax]="exerciseGroup[0].xScaleMax"
-                        [barPadding]="exerciseGroup[0].barPadding"
+                        [barPadding]="barPadding"
                         (select)="onSelect($event)"
                     >
                         <!-- This template is managing the tooltip content depending of the bar that is selected by the user and the properties of the corresponding exercise-->
