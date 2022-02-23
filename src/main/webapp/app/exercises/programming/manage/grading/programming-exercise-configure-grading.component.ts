@@ -11,7 +11,7 @@ import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/m
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
@@ -71,6 +71,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     courseId: number;
     programmingExercise: ProgrammingExercise;
+    programmingLanguage = ProgrammingLanguage;
     testCaseSubscription: Subscription;
     testCaseChangedSubscription: Subscription;
     paramSub: Subscription;

@@ -47,7 +47,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "test_case_type")
-    private ProgrammingExerciseTestCaseType programmingExerciseTestCaseType;
+    private ProgrammingExerciseTestCaseType type;
 
     public ProgrammingExerciseTestCase id(Long id) {
         setId(id);
@@ -157,12 +157,12 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         return this;
     }
 
-    public ProgrammingExerciseTestCaseType getProgrammingExerciseTestCaseType() {
-        return programmingExerciseTestCaseType;
+    public ProgrammingExerciseTestCaseType getType() {
+        return type;
     }
 
-    public void setProgrammingExerciseTestCaseType(ProgrammingExerciseTestCaseType programmingExerciseTestCaseType) {
-        this.programmingExerciseTestCaseType = programmingExerciseTestCaseType;
+    public void setType(ProgrammingExerciseTestCaseType programmingExerciseTestCaseType) {
+        this.type = programmingExerciseTestCaseType;
     }
 
     /**

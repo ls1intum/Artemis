@@ -241,7 +241,7 @@ public class ProgrammingExerciseTestCaseService {
      */
     public void setTestCaseType(Set<ProgrammingExerciseTestCase> testCases, ProgrammingLanguage programmingLanguage) {
         if (programmingLanguage != ProgrammingLanguage.JAVA) {
-            testCases.forEach(testCase -> testCase.setProgrammingExerciseTestCaseType(ProgrammingExerciseTestCaseType.DEFAULT));
+            testCases.forEach(testCase -> testCase.setType(ProgrammingExerciseTestCaseType.DEFAULT));
             return;
         }
 
@@ -251,10 +251,10 @@ public class ProgrammingExerciseTestCaseService {
             // set type depending on the test case name
             if (testCaseName.matches(METHOD_TEST_REGEX) || testCaseName.matches(ATTRIBUTES_TEST_REGEX) || testCaseName.matches(CONSTRUCTORS_TEST_REGEX)
                     || testCaseName.matches(CLASS_TEST_REGEX)) {
-                testCase.setProgrammingExerciseTestCaseType(ProgrammingExerciseTestCaseType.STRUCTURAL);
+                testCase.setType(ProgrammingExerciseTestCaseType.STRUCTURAL);
             }
             else {
-                testCase.setProgrammingExerciseTestCaseType(ProgrammingExerciseTestCaseType.BEHAVIORAL);
+                testCase.setType(ProgrammingExerciseTestCaseType.BEHAVIORAL);
             }
         });
     }

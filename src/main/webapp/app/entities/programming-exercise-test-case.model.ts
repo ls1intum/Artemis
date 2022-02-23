@@ -22,5 +22,5 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     active?: boolean;
     visibility?: Visibility;
     exercise?: ProgrammingExercise;
-    programmingExerciseTestCaseType?: ProgrammingExerciseTestCaseType;
+    type?: ProgrammingExerciseTestCaseType;
 }

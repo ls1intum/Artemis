@@ -192,7 +192,7 @@
                     "bonusMultiplier": "This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
                     "bonusPoints": "Bonus points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
                     "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
-                    "type": "The type of the test case determine if the test case has been generated from the test.json (STRUCTURAL), or has been written by the editor manually (BEHAVIORAL). This is currently only supported for exercises in Java, the tests in all other languages are of type DEFAULT."
+                    "type": "The type of the test case determines if the test case has been generated from the test.json (STRUCTURAL), or has been written manually (BEHAVIORAL)."
                 },
                 "updatedGradingConfigShort": "Updated grading",
                 "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",

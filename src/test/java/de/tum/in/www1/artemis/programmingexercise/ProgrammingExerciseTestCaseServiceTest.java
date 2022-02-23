@@ -242,7 +242,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                 new ProgrammingExerciseTestCase().testName("testAttributes[Starter]").exercise(programmingExercise));
 
         testCaseService.setTestCaseType(structuralTestCases, ProgrammingLanguage.JAVA);
-        assertThat(structuralTestCases).allMatch(testCase -> testCase.getProgrammingExerciseTestCaseType() == ProgrammingExerciseTestCaseType.STRUCTURAL);
+        assertThat(structuralTestCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.STRUCTURAL);
     }
 
     @Test
@@ -253,7 +253,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                 new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
 
         testCaseService.setTestCaseType(behavioralTestCases, ProgrammingLanguage.JAVA);
-        assertThat(behavioralTestCases).allMatch(testCase -> testCase.getProgrammingExerciseTestCaseType() == ProgrammingExerciseTestCaseType.BEHAVIORAL);
+        assertThat(behavioralTestCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.BEHAVIORAL);
     }
 
     @Test
@@ -269,7 +269,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
                     new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
                     new ProgrammingExerciseTestCase().testName("HiddenRandomTest").exercise(programmingExercise));
             testCaseService.setTestCaseType(testCases, language);
-            assertThat(testCases).allMatch(testCase -> testCase.getProgrammingExerciseTestCaseType() == ProgrammingExerciseTestCaseType.DEFAULT);
+            assertThat(testCases).allMatch(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.DEFAULT);
         }
     }
 }
