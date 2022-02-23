@@ -121,19 +121,14 @@ describe('AuthServerProvider', () => {
     });
 
     describe('test login with token', () => {
-        let resultPromise: Promise<string>;
-        it('should login with token if token is present', () => {
-            resultPromise = service.loginWithToken(storedToken, true);
-
-            expect(resultPromise).toEqual(Promise.resolve(storedToken));
+        it('should login with token if token is present', async () => {
+            await expect(service.loginWithToken(storedToken, true)).resolves.toBe(storedToken);
             expect(localStorageStoreSpy).toHaveBeenCalledTimes(1);
             expect(localStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
         });
 
-        it('should return error message promise if no token is present', () => {
-            resultPromise = service.loginWithToken('', true);
-
-            expect(resultPromise).toEqual(Promise.reject('auth-jwt-service Promise reject'));
+        it('should return error message promise if no token is present', async () => {
+            await expect(service.loginWithToken('', true)).rejects.toBe('auth-jwt-service Promise reject');
             expect(localStorageStoreSpy).not.toHaveBeenCalled();
         });
     });

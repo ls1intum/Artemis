@@ -113,51 +113,42 @@ describe('AccountService', () => {
     });
 
     describe('test authority check', () => {
-        let checkPromise: Promise<boolean>;
         const usedAuthorities: Authority[] = [];
         it.each(authorities)('should return false if not authenticated, no user id and no authorities are set', (authority: Authority) => {
             usedAuthorities.push(authority);
-            checkPromise = accountService.hasAnyAuthority(usedAuthorities);
 
-            expect(checkPromise).toEqual(Promise.resolve(false));
+            expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
         });
 
         it.each(authorities)('should return false if authenticated, user id but no authorities are set', (authority: Authority) => {
             accountService.userIdentity = user;
             usedAuthorities.push(authority);
-            checkPromise = accountService.hasAnyAuthority(usedAuthorities);
 
-            expect(checkPromise).toEqual(Promise.resolve(false));
+            expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
         });
 
         it.each(authorities)('should return true if user is required', (authority: Authority) => {
             accountService.userIdentity = user3;
             usedAuthorities.push(authority);
-            checkPromise = accountService.hasAnyAuthority(usedAuthorities);
 
-            expect(checkPromise).toEqual(Promise.resolve(true));
+            expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(true);
         });
 
         it.each(authorities)('should return true if authority matches exactly', (authority: Authority) => {
             accountService.userIdentity = { id: authorities.indexOf(authority), groups: ['USER'], authorities: [authority] } as User;
-            checkPromise = accountService.hasAnyAuthority([authority]);
 
-            expect(checkPromise).toEqual(Promise.resolve(true));
+            expect(accountService.hasAnyAuthority([authority])).resolves.toBe(true);
         });
 
         it.each(authorities)('should return false if authority does not match', (authority: Authority) => {
             const index = authorities.indexOf(authority);
             accountService.userIdentity = { id: index + 1, groups: ['USER'], authorities: [authorities[(index + 1) % 5]] } as User;
 
-            checkPromise = accountService.hasAnyAuthority([authority]);
-
-            expect(checkPromise).toEqual(Promise.resolve(false));
+            expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
         });
 
         it.each(authorities)('should return false if not authenticated', (authority: Authority) => {
-            checkPromise = accountService.hasAuthority(authority);
-
-            expect(checkPromise).toEqual(Promise.resolve(false));
+            expect(accountService.hasAuthority(authority)).resolves.toBe(false);
         });
     });
 
