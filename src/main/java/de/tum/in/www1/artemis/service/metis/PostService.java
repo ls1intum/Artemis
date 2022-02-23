@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service.metis;
 
 import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.commonmark.node.Node;
@@ -35,6 +37,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
@@ -202,56 +205,44 @@ public class PostService extends PostingService {
     }
 
     /**
-     * @param pagingEnabled             flag to paginate result
-     * @param pageable                  pagination settings to fetch posts in smaller batches
-     * @param courseId                  id of the course the fetch posts for
-     * @param courseWideContext         course-wide context for which the posts should be fetched
-     * @param exerciseId                id of the exercise for which the posts should be fetched
-     * @param lectureId                 id of the lecture for which the posts should be fetched
-     * @param searchText
-     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
-     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
-     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
-     * @param postSortCriterion         sorting property
-     * @param sortingOrder              sorting order (ASC, DESC)
+     * @param postContextFilter request object to fetch posts
      * @return page of posts that match the given context
      */
-    public Page<Post> getPostsInCourse(boolean pagingEnabled, Pageable pageable, Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId,
-            String searchText, boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
+    public Page<Post> getPostsInCourse(boolean pagingEnabled, Pageable pageable, PostContextFilter postContextFilter) {
 
         List<Post> postsInCourse;
         // no filter -> get all posts in course
-        if (courseWideContext == null && exerciseId == null && lectureId == null) {
-            postsInCourse = this.getAllCoursePostsPage(courseId, filterToUnresolved, filterToOwn, filterToAnsweredOrReacted);
+        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
+            postsInCourse = this.getAllCoursePostsPage(postContextFilter);
         }
         // filter by course-wide context
-        else if (courseWideContext != null && exerciseId == null && lectureId == null) {
-            postsInCourse = this.getAllPostsByCourseWideContext(courseId, courseWideContext, filterToUnresolved, filterToOwn, filterToAnsweredOrReacted);
+        else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
+            postsInCourse = this.getAllPostsByCourseWideContext(postContextFilter);
         }
         // filter by exercise
-        else if (courseWideContext == null && exerciseId != null && lectureId == null) {
-            postsInCourse = this.getAllExercisePosts(courseId, exerciseId, filterToUnresolved, filterToOwn, filterToAnsweredOrReacted);
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null) {
+            postsInCourse = this.getAllExercisePosts(postContextFilter);
         }
         // filter by lecture
-        else if (courseWideContext == null && exerciseId == null && lectureId != null) {
-            postsInCourse = this.getAllLecturePostsPage(courseId, lectureId, filterToUnresolved, filterToOwn, filterToAnsweredOrReacted);
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null) {
+            postsInCourse = this.getAllLecturePostsPage(postContextFilter);
         }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
+        // search by text or #post
+        if (postContextFilter.getSearchText() != null) {
+            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
+        }
+
         final Page<Post> postsPage;
         if (pagingEnabled) {
-            // search by text or #post
-            if (searchText != null) {
-                postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, searchText)).collect(Collectors.toList());
-            }
-
             int startIndex = pageable.getPageNumber() * pageable.getPageSize();
             int endIndex = Math.min(startIndex + pageable.getPageSize(), postsInCourse.size());
 
-            // sort
-            postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postSortCriterion, sortingOrder));
+            // sort (only used by CourseDiscussionsPage, which has pagination enabled)
+            postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
 
             try {
                 postsPage = new PageImpl<>(postsInCourse.subList(startIndex, endIndex), pageable, postsInCourse.size());
@@ -295,44 +286,41 @@ public class PostService extends PostingService {
      * retrieves and filters posts for a course by its id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId                  id of the course the post belongs to
-     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
-     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
-     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
+     * @param postContextFilter filter object
      * @return page of posts that belong to the course
      */
-    public List<Post> getAllCoursePostsPage(Long courseId, boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted) {
+    public List<Post> getAllCoursePostsPage(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
         List<Post> coursePosts;
-        if (!filterToUnresolved && !filterToOwn && !filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findPostsForCourse(courseId);
+        if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findPostsForCourse(postContextFilter.getCourseId());
         }
-        else if (filterToUnresolved && !filterToOwn && !filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findUnresolvedPostsForCourse(courseId);
+        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findUnresolvedPostsForCourse(postContextFilter.getCourseId());
         }
-        else if (!filterToUnresolved && filterToOwn && !filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findOwnPostsForCourse(courseId, user.getId());
+        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findOwnPostsForCourse(postContextFilter.getCourseId(), user.getId());
         }
-        else if (!filterToUnresolved && !filterToOwn && filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findAnsweredOrReactedPostsByUserForCourse(courseId, user.getId());
+        else if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findAnsweredOrReactedPostsByUserForCourse(postContextFilter.getCourseId(), user.getId());
         }
-        else if (filterToUnresolved && filterToOwn && !filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findOwnAndUnresolvedPostsForCourse(courseId, user.getId());
+        else if (postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findOwnAndUnresolvedPostsForCourse(postContextFilter.getCourseId(), user.getId());
         }
-        else if (!filterToUnresolved && filterToOwn && filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserForCourse(courseId, user.getId());
+        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserForCourse(postContextFilter.getCourseId(), user.getId());
         }
-        else if (filterToUnresolved && !filterToOwn && filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserForCourse(courseId, user.getId());
+        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserForCourse(postContextFilter.getCourseId(), user.getId());
         }
         else {
-            coursePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserForCourse(courseId, user.getId());
+            coursePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserForCourse(postContextFilter.getCourseId(), user.getId());
         }
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -345,47 +333,47 @@ public class PostService extends PostingService {
      * retrieves and filters posts with a certain course-wide context by course id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId                  id of the course the post belongs to
-     * @param courseWideContext         specific course-wide context to filter course get posts for
-     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
-     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
-     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
+     * @param postContextFilter filter object
      * @return page of posts for a certain course-wide context
      */
-    public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext, boolean filterToUnresolved, boolean filterToOwn,
-            boolean filterToAnsweredOrReacted) {
+    public List<Post> getAllPostsByCourseWideContext(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
         List<Post> coursePosts;
         // retrieve posts
-        if (!filterToUnresolved && !filterToOwn && !filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findPostsForCourseByCourseWideContext(courseId, courseWideContext);
+        if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findPostsForCourseByCourseWideContext(postContextFilter.getCourseId(), postContextFilter.getCourseWideContext());
         }
-        else if (filterToUnresolved && !filterToOwn && !filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findUnresolvedPostsForCourseByCourseWideContext(courseId, courseWideContext);
+        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findUnresolvedPostsForCourseByCourseWideContext(postContextFilter.getCourseId(), postContextFilter.getCourseWideContext());
         }
-        else if (!filterToUnresolved && filterToOwn && !filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findOwnPostsForCourseByCourseWideContext(courseId, user.getId(), courseWideContext);
+        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findOwnPostsForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(), postContextFilter.getCourseWideContext());
         }
-        else if (!filterToUnresolved && !filterToOwn && filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findAnsweredOrReactedPostsByUserForCourseByCourseWideContext(courseId, user.getId(), courseWideContext);
+        else if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findAnsweredOrReactedPostsByUserForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
+                    postContextFilter.getCourseWideContext());
         }
-        else if (filterToUnresolved && filterToOwn && !filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findOwnAndUnresolvedPostsForCourseByCourseWideContext(courseId, user.getId(), courseWideContext);
+        else if (postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findOwnAndUnresolvedPostsForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
+                    postContextFilter.getCourseWideContext());
         }
-        else if (!filterToUnresolved && filterToOwn && filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserForCourseByCourseWideContext(courseId, user.getId(), courseWideContext);
+        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
+                    postContextFilter.getCourseWideContext());
         }
-        else if (filterToUnresolved && !filterToOwn && filterToAnsweredOrReacted) {
-            coursePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserForCourseByCourseWideContext(courseId, user.getId(), courseWideContext);
+        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            coursePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
+                    postContextFilter.getCourseWideContext());
         }
         else {
-            coursePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserForCourseByCourseWideContext(courseId, user.getId(), courseWideContext);
+            coursePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
+                    postContextFilter.getCourseWideContext());
         }
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -398,45 +386,41 @@ public class PostService extends PostingService {
      * retrieves and filters posts for an exercise by its id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId                  id of the course the post belongs to
-     * @param exerciseId                id of the exercise for which the posts should be retrieved
-     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
-     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
-     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
+     * @param postContextFilter filter object
      * @return page of posts that belong to the exercise
      */
-    public List<Post> getAllExercisePosts(Long courseId, Long exerciseId, boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted) {
+    public List<Post> getAllExercisePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
-        preCheckExercise(user, courseId, exerciseId);
+        preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        preCheckExercise(user, postContextFilter.getCourseId(), postContextFilter.getExerciseId());
 
         // retrieve posts
-        List<Post> exercisePosts = null;
-        if (!filterToUnresolved && !filterToOwn && !filterToAnsweredOrReacted) {
-            exercisePosts = postRepository.findPostsByExerciseId(exerciseId);
+        List<Post> exercisePosts;
+        if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            exercisePosts = postRepository.findPostsByExerciseId(postContextFilter.getExerciseId());
         }
-        else if (filterToUnresolved && !filterToOwn && !filterToAnsweredOrReacted) {
-            exercisePosts = postRepository.findUnresolvedPostsByExerciseId(exerciseId);
+        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            exercisePosts = postRepository.findUnresolvedPostsByExerciseId(postContextFilter.getExerciseId());
         }
-        else if (!filterToUnresolved && filterToOwn && !filterToAnsweredOrReacted) {
-            exercisePosts = postRepository.findOwnPostsByExerciseId(exerciseId, user.getId());
+        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            exercisePosts = postRepository.findOwnPostsByExerciseId(postContextFilter.getExerciseId(), user.getId());
         }
-        else if (!filterToUnresolved && !filterToOwn && filterToAnsweredOrReacted) {
-            exercisePosts = postRepository.findAnsweredOrReactedPostsByUserByExerciseId(exerciseId, user.getId());
+        else if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            exercisePosts = postRepository.findAnsweredOrReactedPostsByUserByExerciseId(postContextFilter.getExerciseId(), user.getId());
         }
-        else if (filterToUnresolved && filterToOwn && !filterToAnsweredOrReacted) {
-            exercisePosts = postRepository.findOwnAndUnresolvedPostsByExerciseId(exerciseId, user.getId());
+        else if (postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            exercisePosts = postRepository.findOwnAndUnresolvedPostsByExerciseId(postContextFilter.getExerciseId(), user.getId());
         }
-        else if (!filterToUnresolved && filterToOwn && filterToAnsweredOrReacted) {
-            exercisePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserByExerciseId(exerciseId, user.getId());
+        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            exercisePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserByExerciseId(postContextFilter.getExerciseId(), user.getId());
         }
-        else if (filterToUnresolved && !filterToOwn && filterToAnsweredOrReacted) {
-            exercisePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserByExerciseId(exerciseId, user.getId());
+        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            exercisePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserByExerciseId(postContextFilter.getExerciseId(), user.getId());
         }
         else {
-            exercisePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserByExerciseId(exerciseId, user.getId());
+            exercisePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserByExerciseId(postContextFilter.getExerciseId(), user.getId());
         }
         // protect sample solution, grading instructions, etc.
         exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
@@ -449,45 +433,41 @@ public class PostService extends PostingService {
      * retrieves and filters posts for a lecture by its id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId                  id of the course the post belongs to
-     * @param lectureId                 id of the lecture for which the posts should be retrieved
-     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
-     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
-     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
+     * @param postContextFilter filter object
      * @return page of posts that belong to the lecture
      */
-    public List<Post> getAllLecturePostsPage(Long courseId, Long lectureId, boolean filterToUnresolved, boolean filterToOwn, boolean filterToAnsweredOrReacted) {
+    public List<Post> getAllLecturePostsPage(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
-        preCheckLecture(user, courseId, lectureId);
+        preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        preCheckLecture(user, postContextFilter.getCourseId(), postContextFilter.getLectureId());
 
         // retrieve posts
         List<Post> lecturePosts;
-        if (!filterToUnresolved && !filterToOwn && !filterToAnsweredOrReacted) {
-            lecturePosts = postRepository.findPostsByLectureId(lectureId);
+        if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            lecturePosts = postRepository.findPostsByLectureId(postContextFilter.getLectureId());
         }
-        else if (filterToUnresolved && !filterToOwn && !filterToAnsweredOrReacted) {
-            lecturePosts = postRepository.findUnresolvedPostsByLectureId(lectureId);
+        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            lecturePosts = postRepository.findUnresolvedPostsByLectureId(postContextFilter.getLectureId());
         }
-        else if (!filterToUnresolved && filterToOwn && !filterToAnsweredOrReacted) {
-            lecturePosts = postRepository.findOwnPostsByLectureId(lectureId, user.getId());
+        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            lecturePosts = postRepository.findOwnPostsByLectureId(postContextFilter.getLectureId(), user.getId());
         }
-        else if (!filterToUnresolved && !filterToOwn && filterToAnsweredOrReacted) {
-            lecturePosts = postRepository.findAnsweredOrReactedPostsByUserByLectureId(lectureId, user.getId());
+        else if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            lecturePosts = postRepository.findAnsweredOrReactedPostsByUserByLectureId(postContextFilter.getLectureId(), user.getId());
         }
-        else if (filterToUnresolved && filterToOwn && !filterToAnsweredOrReacted) {
-            lecturePosts = postRepository.findOwnAndUnresolvedPostsForLecture(lectureId, user.getId());
+        else if (postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
+            lecturePosts = postRepository.findOwnAndUnresolvedPostsForLecture(postContextFilter.getLectureId(), user.getId());
         }
-        else if (!filterToUnresolved && filterToOwn && filterToAnsweredOrReacted) {
-            lecturePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserForLecture(lectureId, user.getId());
+        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            lecturePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserForLecture(postContextFilter.getLectureId(), user.getId());
         }
-        else if (filterToUnresolved && !filterToOwn && filterToAnsweredOrReacted) {
-            lecturePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserForLecture(lectureId, user.getId());
+        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
+            lecturePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserForLecture(postContextFilter.getLectureId(), user.getId());
         }
         else {
-            lecturePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserForLecture(lectureId, user.getId());
+            lecturePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserForLecture(postContextFilter.getLectureId(), user.getId());
         }
 
         // protect sample solution, grading instructions, etc.

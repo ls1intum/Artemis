@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.service.metis.PostService;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
@@ -93,7 +94,7 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
      *
-     * @param courseId  id of the course the post belongs to
+     * @param courseId id of the course the post belongs to
      * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
      * or 400 (Bad Request) if the checks on user or course validity fail
      */
@@ -130,8 +131,21 @@ public class PostResource {
             @RequestParam(required = false) boolean filterToAnsweredOrReacted, @RequestParam(required = false) PostSortCriterion postSortCriterion,
             @RequestParam(required = false) SortingOrder sortingOrder) {
 
-        Page<Post> coursePosts = postService.getPostsInCourse(pagingEnabled, pageable, courseId, courseWideContext, exerciseId, lectureId, searchText, filterToUnresolved,
-                filterToOwn, filterToAnsweredOrReacted, postSortCriterion, sortingOrder);
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setCourseId(courseId);
+        postContextFilter.setExerciseId(exerciseId);
+        postContextFilter.setLectureId(lectureId);
+        postContextFilter.setPageable(pageable);
+        postContextFilter.setPagingEnabled(pagingEnabled);
+        postContextFilter.setCourseWideContext(courseWideContext);
+        postContextFilter.setSearchText(searchText);
+        postContextFilter.setFilterToAnsweredOrReacted(filterToAnsweredOrReacted);
+        postContextFilter.setFilterToOwn(filterToOwn);
+        postContextFilter.setFilterToUnresolved(filterToUnresolved);
+        postContextFilter.setPostSortCriterion(postSortCriterion);
+        postContextFilter.setSortingOrder(sortingOrder);
+
+        Page<Post> coursePosts = postService.getPostsInCourse(pagingEnabled, pageable, postContextFilter);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
 
         return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);
