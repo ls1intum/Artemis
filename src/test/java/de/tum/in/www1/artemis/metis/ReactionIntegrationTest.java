@@ -52,7 +52,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     private Validator validator;
 
-    private int maxPostsPerPage = 20;
+    private static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
     public void initTestCase() {
@@ -229,7 +229,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // ordering only available in course discussions page, where paging is enabled
         params.add("pagingEnabled", "true");
         params.add("page", "0");
-        params.add("size", String.valueOf(maxPostsPerPage));
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
         params.add("postSortCriterion", sortCriterion.toString());
         params.add("sortingOrder", sortingOrder.toString());
@@ -267,7 +267,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // ordering only available in course discussions page, where paging is enabled
         params.add("pagingEnabled", "true");
         params.add("page", "0");
-        params.add("size", String.valueOf(maxPostsPerPage));
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
         params.add("postSortCriterion", sortCriterion.toString());
         params.add("sortingOrder", sortingOrder.toString());

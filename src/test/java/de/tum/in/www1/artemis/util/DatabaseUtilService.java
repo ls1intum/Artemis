@@ -94,6 +94,8 @@ public class DatabaseUtilService {
 
     private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
 
+    private static int dayCount = 1;
+
     @Autowired
     private CourseRepository courseRepo;
 
@@ -808,11 +810,13 @@ public class DatabaseUtilService {
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
-        post.setCreationDate(ZonedDateTime.of(2015, 11, 28, 23, 45, 59, 1234, ZoneId.of("UTC")));
+        post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
         Set<String> tags = new HashSet<>();
         tags.add(tag);
         post.setTags(tags);
+
+        dayCount = (dayCount % 25) + 1;
         return post;
     }
 
