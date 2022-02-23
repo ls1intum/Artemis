@@ -12,6 +12,8 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Team } from 'app/entities/team.model';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -32,6 +34,7 @@ describe('AccountService', () => {
     } as Course;
     const exercise = { course } as Exercise;
     const examExercise = { exerciseGroup: { exam: { course } } } as Exercise;
+    let result: boolean;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -160,7 +163,6 @@ describe('AccountService', () => {
 
     describe('test hasGroup', () => {
         const groups = ['USER', 'EDITOR', 'ADMIN'];
-        let result: boolean;
         it.each(groups)('should return false if not authenticated', (group: string) => {
             result = accountService.hasGroup(group);
 
@@ -199,8 +201,7 @@ describe('AccountService', () => {
         });
     });
 
-    describe('Test isAtLeastTutorInCourse', () => {
-        let result: boolean;
+    describe('test isAtLeastTutorInCourse', () => {
         it('should return false if user is not tutor', () => {
             accountService.userIdentity = user2;
 
@@ -226,8 +227,7 @@ describe('AccountService', () => {
         });
     });
 
-    describe('Test isAtLeastEditorInCourse', () => {
-        let result: boolean;
+    describe('test isAtLeastEditorInCourse', () => {
         it('should return false if user is not editor', () => {
             accountService.userIdentity = user2;
 
@@ -253,8 +253,7 @@ describe('AccountService', () => {
         });
     });
 
-    describe('Test isAtLeastInstructorInCourse', () => {
-        let result: boolean;
+    describe('test isAtLeastInstructorInCourse', () => {
         it('should return false if user is not editor', () => {
             accountService.userIdentity = user2;
 
@@ -280,8 +279,7 @@ describe('AccountService', () => {
         });
     });
 
-    describe('Test isAtLeastTutorForExercise', () => {
-        let result: boolean;
+    describe('test isAtLeastTutorForExercise', () => {
         it('should return false if user is not tutor', () => {
             accountService.userIdentity = user2;
 
@@ -319,8 +317,7 @@ describe('AccountService', () => {
         });
     });
 
-    describe('Test isAtLeastEditorForExercise', () => {
-        let result: boolean;
+    describe('test isAtLeastEditorForExercise', () => {
         it('should return false if user is not tutor', () => {
             accountService.userIdentity = user2;
 
@@ -358,8 +355,7 @@ describe('AccountService', () => {
         });
     });
 
-    describe('Test isAtLeastInstructorForExercise', () => {
-        let result: boolean;
+    describe('test isAtLeastInstructorForExercise', () => {
         it('should return false if user is not tutor', () => {
             accountService.userIdentity = user2;
 
@@ -394,6 +390,110 @@ describe('AccountService', () => {
             result = accountService.isAtLeastInstructorForExercise(examExercise);
 
             expect(result).toBe(true);
+        });
+    });
+
+    describe('test isAdmin', () => {
+        it('should return false if user is not admin', () => {
+            accountService.userIdentity = user2;
+
+            result = accountService.isAdmin();
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if user is system admin', () => {
+            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+
+            result = accountService.isAdmin();
+
+            expect(result).toBe(true);
+        });
+    });
+
+    it('should set access rights for referenced course', () => {
+        accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+
+        accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
+
+        expect(exercise.isAtLeastEditor).toBe(true);
+        expect(exercise.isAtLeastEditor).toBe(true);
+        expect(exercise.isAtLeastInstructor).toBe(true);
+        expect(exercise.course!.isAtLeastEditor).toBe(true);
+        expect(exercise.course!.isAtLeastEditor).toBe(true);
+        expect(exercise.course!.isAtLeastInstructor).toBe(true);
+    });
+
+    it('should set access rights for referenced exercise', () => {
+        course.exercises = [exercise];
+        accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+
+        accountService.setAccessRightsForCourseAndReferencedExercises(course);
+
+        expect(exercise.isAtLeastEditor).toBe(true);
+        expect(exercise.isAtLeastEditor).toBe(true);
+        expect(exercise.isAtLeastInstructor).toBe(true);
+        expect(exercise.course!.isAtLeastEditor).toBe(true);
+        expect(exercise.course!.isAtLeastEditor).toBe(true);
+        expect(exercise.course!.isAtLeastInstructor).toBe(true);
+    });
+
+    describe('test isOwnerOfParticipation', () => {
+        let participation: Participation;
+        const user4 = { login: 'user' } as User;
+        const team = { students: [user4] } as Team;
+        it('should return false if student is not owner', () => {
+            participation = { student: user } as Participation;
+            accountService.userIdentity = user4;
+
+            result = accountService.isOwnerOfParticipation(participation);
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if student is owner', () => {
+            participation = { student: user4 } as Participation;
+            accountService.userIdentity = user4;
+
+            result = accountService.isOwnerOfParticipation(participation);
+
+            expect(result).toBe(true);
+        });
+
+        it('should return false if student is not part of the team', () => {
+            participation = { team } as Participation;
+            accountService.userIdentity = user;
+
+            result = accountService.isOwnerOfParticipation(participation);
+
+            expect(result).toBe(false);
+        });
+
+        it('should return true if student is part of the team', () => {
+            participation = { team } as Participation;
+            accountService.userIdentity = user4;
+
+            result = accountService.isOwnerOfParticipation(participation);
+
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('test getImageUrl', () => {
+        let url: string | undefined;
+        it('should return undefined if not authenticated', () => {
+            url = accountService.getImageUrl();
+
+            expect(url).toBe(undefined);
+        });
+
+        it('should return image url if authenticated', () => {
+            const expectedUrl = 'www.examp.le';
+            accountService.userIdentity = { imageUrl: expectedUrl } as User;
+
+            url = accountService.getImageUrl();
+
+            expect(url).toBe(expectedUrl);
         });
     });
 });
