@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
@@ -96,13 +96,13 @@ describe('AccountService', () => {
         expect(accountService.isAuthenticated()).toBe(true);
     });
 
-    it('should authenticate a user', fakeAsync(() => {
+    it('should authenticate a user', () => {
         accountService.userIdentity = undefined;
 
         accountService.authenticate(user);
 
         expect(accountService.userIdentity).toEqual(user);
-    }));
+    });
 
     it('should sync user groups', () => {
         accountService.userIdentity = user;
