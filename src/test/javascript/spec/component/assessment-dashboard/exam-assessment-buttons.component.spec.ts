@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -17,6 +17,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { ArtemisTestModule } from '../../test.module';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('ExamAssessmentButtons', () => {
     let examAssessmentButtonsFixture: ComponentFixture<ExamAssessmentButtonsComponent>;
@@ -119,9 +122,9 @@ describe('ExamAssessmentButtons', () => {
 
         studentExams = [studentExamOne];
 
-        return TestBed.configureTestingModule({
-            imports: [],
-            declarations: [ExamAssessmentButtonsComponent],
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [ExamAssessmentButtonsComponent, MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers,
         })
             .compileComponents()

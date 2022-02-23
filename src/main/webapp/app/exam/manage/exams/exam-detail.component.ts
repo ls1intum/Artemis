@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -10,7 +10,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import dayjs from 'dayjs/esm';
-import { faClipboard, faEye, faListAlt, faTable, faThList, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faEye, faListAlt, faTable, faThList, faTimes, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -29,6 +29,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
+    faTimes = faTimes;
     faUndo = faUndo;
     faEye = faEye;
     faWrench = faWrench;
@@ -43,6 +44,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         private artemisMarkdown: ArtemisMarkdownService,
         private accountService: AccountService,
         private examManagementService: ExamManagementService,
+        private router: Router,
     ) {}
 
     /**
@@ -81,6 +83,20 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             next: (res: HttpResponse<Exam>) => {
                 this.dialogErrorSource.next('');
                 this.exam = res.body!;
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
+     * Function is called when the delete button is pressed for an exam
+     * @param examId Id to be deleted
+     */
+    deleteExam(examId: number): void {
+        this.examManagementService.delete(this.exam.course!.id!, examId).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.router.navigate(['/course-management', this.exam.course!.id!, 'exams']);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

@@ -10,6 +10,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -35,7 +36,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     collapsedExerciseIds: number[] = [];
 
-    courseId: number;
+    private courseId: number;
+    course: Course;
 
     isTestRun = false;
 
@@ -64,7 +66,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.setExamWithOnlyIdAndStudentReviewPeriod();
         // load course for the exercise
         this.courseManagementService.find(this.courseId).subscribe((courseResponse) => {
-            this.examWithOnlyIdAndStudentReviewPeriod.course = courseResponse.body!;
+            const course = courseResponse.body!;
+            this.examWithOnlyIdAndStudentReviewPeriod.course = course;
+            this.course = course;
         });
         for (const exercise of this.studentExam.exercises ?? []) {
             exercise.studentParticipations!.first()!.exercise = exercise;

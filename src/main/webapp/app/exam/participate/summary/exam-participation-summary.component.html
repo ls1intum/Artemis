@@ -18,8 +18,8 @@
         {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
     </a>
 </div>
-<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam">
-    <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam" [courseId]="courseId"></jhi-exam-points-summary>
+<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam && course">
+    <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam" [course]="course"></jhi-exam-points-summary>
 </div>
 <div *ngIf="!resultsPublished" class="mb-0">
     <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
@@ -94,6 +94,7 @@
                     <ng-container *ngIf="exercise.type === QUIZ">
                         <jhi-quiz-exam-summary
                             [exercise]="exercise"
+                            [course]="course"
                             [exam]="studentExam.exam!"
                             [submission]="getSubmissionForExercise(exercise)!"
                             [resultsPublished]="!!resultsPublished"
