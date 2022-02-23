@@ -814,7 +814,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         sortAndTest(weightHeader, 'weight', 'asc');
         sortAndTest(weightHeader, 'weight', 'desc');
 
-        const passedPercentHeader = headerColumns[7];
+        const passedPercentHeader = headerColumns[6];
         sortAndTest(passedPercentHeader, 'passedPercent', 'asc');
         sortAndTest(passedPercentHeader, 'passedPercent', 'desc');
     });
