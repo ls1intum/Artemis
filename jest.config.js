@@ -49,6 +49,7 @@ module.exports = {
         'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
         'src/main/webapp/app/exam/manage/exam-management.route.ts',
         'src/main/webapp/app/exercises/shared/exercise-hint/manage/exercise-hint.route.ts',
+        'src/main/webapp/app/core/config/prod.config.ts'
     ],
     coverageThreshold: {
         global: {
@@ -71,11 +72,13 @@ module.exports = {
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/entities/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/integration/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/interceptor/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/config/**/*.spec.ts',
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
