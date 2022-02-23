@@ -39,6 +39,7 @@ export enum StatisticsView {
 }
 
 export enum GraphColors {
+    LIGHT_GREY = 'rgba(153,153,153,1)',
     GREY = 'rgba(127,127,127,255)',
     DARK_BLUE = 'rgba(53,61,71,1)',
     BLUE = 'rgba(93,138,201,1)',
