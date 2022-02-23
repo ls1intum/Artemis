@@ -11,6 +11,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
@@ -52,7 +53,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         name: 'Performance in Exercises',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#87ceeb', '#fa8072', '#32cd32'],
+        domain: [GraphColors.BLUE, GraphColors.YELLOW, GraphColors.GREEN],
     } as Color; // colors: blue, red, green
     backUpColor = cloneDeep(this.ngxColor);
     yourScoreLabel: string;
