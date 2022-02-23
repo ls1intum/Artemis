@@ -111,20 +111,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Function is called when the delete button is pressed for an exam
-     * @param examId Id to be deleted
-     */
-    deleteExam(examId: number): void {
-        this.examManagementService.delete(this.course.id!, examId).subscribe({
-            next: () => {
-                this.dialogErrorSource.next('');
-                this.exams = this.exams.filter((exam) => exam.id !== examId);
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
      * Track the items on the Exams Table
      * @param index {number}
      * @param item {Exam}

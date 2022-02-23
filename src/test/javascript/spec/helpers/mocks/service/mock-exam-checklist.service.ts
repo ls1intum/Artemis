@@ -32,6 +32,8 @@ export class MockExamChecklistService {
     }
 
     getExamStatistics(exam: Exam) {
-        return of(new ExamChecklist());
+        const checklist = new ExamChecklist();
+        checklist.allExamExercisesAllStudentsPrepared = true;
+        return of(checklist);
     }
 }

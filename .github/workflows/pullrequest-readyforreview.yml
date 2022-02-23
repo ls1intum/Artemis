@@ -24,7 +24,7 @@ jobs:
           skip-with-manual-reviewers: 5
 
       - name: Label "ready for review"
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
