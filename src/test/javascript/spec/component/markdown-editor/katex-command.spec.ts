@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -13,7 +12,7 @@ describe('KatexCommand', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {
@@ -21,6 +20,7 @@ describe('KatexCommand', () => {
                 comp = fixture.componentInstance;
             });
     });
+
     it('should add insert the sample e-function into the editor on execute', () => {
         const katexCommand = new KatexCommand();
         comp.domainCommands = [katexCommand];

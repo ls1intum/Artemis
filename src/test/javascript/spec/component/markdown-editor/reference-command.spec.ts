@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -10,7 +9,7 @@ import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.
 describe('ReferenceCommand', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
-    let referenceCommand = new ReferenceCommand();
+    let referenceCommand: ReferenceCommand;
 
     afterEach(() => {
         jest.restoreAllMocks();
@@ -18,44 +17,38 @@ describe('ReferenceCommand', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(MarkdownEditorComponent);
                 comp = fixture.componentInstance;
+
                 referenceCommand = new ReferenceCommand();
                 comp.defaultCommands = [referenceCommand];
+                fixture.detectChanges();
+                comp.ngAfterViewInit();
             });
     });
 
     it('should add > Reference on execute when no text is selected', () => {
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
-
         referenceCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('> Reference');
     });
 
     it('should remove > Reference on execute when reference is selected', () => {
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('> lorem');
         referenceCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');
     });
 
     it('should remove > Reference on execute when reference is selected', () => {
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('> Reference');
         referenceCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('');
     });
 
     it('should add > on execute when text is selected', () => {
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('lorem');
         referenceCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('> lorem');

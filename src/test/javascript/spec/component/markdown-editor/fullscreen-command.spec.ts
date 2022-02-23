@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { FullscreenCommand } from 'app/shared/markdown-editor/commands/fullscreen.command';
@@ -14,7 +13,7 @@ describe('FullscreenCommand', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {

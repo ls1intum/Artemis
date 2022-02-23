@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -13,7 +12,7 @@ describe('CodeBlockCommand', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {

@@ -29,6 +29,7 @@ describe('Grading Instruction Command', () => {
                 comp = fixture.componentInstance;
             });
     });
+
     it('should add instruction identifiers and parameters on execute', () => {
         const gradingInstructionCommand = new GradingInstructionCommand();
         comp.domainCommands = [gradingInstructionCommand];
@@ -61,6 +62,7 @@ describe('Grading Instruction Command', () => {
                 '\n',
         );
     });
+
     it('should add CriteriaCommand identifier on execute', () => {
         const criterionCommand = new GradingCriterionCommand();
         const gradingInstructionCommand = new GradingInstructionCommand();

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -22,7 +21,7 @@ describe('HeadingOneCommand', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {
@@ -32,13 +31,12 @@ describe('HeadingOneCommand', () => {
                 headingTwoCommand = new HeadingTwoCommand();
                 headingThreeCommand = new HeadingThreeCommand();
                 comp.defaultCommands = [headingOneCommand, headingTwoCommand, headingThreeCommand];
+                fixture.detectChanges();
+                comp.ngAfterViewInit();
             });
     });
 
     it('should add # Heading 1,2,3 on execute when no text is selected', () => {
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
-
         headingOneCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('# Heading 1');
         comp.aceEditorContainer.getEditor().setValue('');
@@ -52,8 +50,6 @@ describe('HeadingOneCommand', () => {
     });
 
     it('should add #, ##, ### on execute when text is selected', () => {
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
         jest.spyOn(comp.aceEditorContainer.getEditor(), 'getSelectedText').mockReturnValue('lorem');
 
         headingOneCommand.execute();
@@ -69,8 +65,6 @@ describe('HeadingOneCommand', () => {
     });
 
     it('should remove #, ##, ### on execute when text of header selected', () => {
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('# lorem');
         headingOneCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');
@@ -85,8 +79,6 @@ describe('HeadingOneCommand', () => {
     });
 
     it('should remove #, ##, ### with Heading text on execute when text of header selected', () => {
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('# Heading 1');
         headingOneCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('');
