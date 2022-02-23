@@ -5,6 +5,10 @@
         {{ allCourseGroupUsers.length }} <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
         <span class="text-muted">({{ courseGroupName }})</span>
         <jhi-user-import-button *ngIf="course?.isAtLeastInstructor" class="ms-4" [courseId]="course.id!" [courseGroup]="courseGroup!" (finish)="loadAll()"></jhi-user-import-button>
+        <button *ngIf="course?.isAtLeastInstructor && allCourseGroupUsers.length > 0" class="btn btn-primary btn-sm float-end" (click)="exportUserInformation()">
+            <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
+            <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Users</span>
+        </button>
     </h2>
     <jhi-alert></jhi-alert>
     <jhi-data-table
