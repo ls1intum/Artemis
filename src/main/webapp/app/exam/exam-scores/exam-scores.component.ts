@@ -31,8 +31,6 @@ import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-so
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { GradingInterval } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { ParticipantScoresDistributionService } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.service';
 
 export enum MedianType {
     PASSED,
@@ -63,11 +61,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     highlightedValue: number | undefined;
 
     showOverallMedian: boolean; // Indicates whether the median of all exams is currently highlighted
-    showOverallMedianCheckbox = true; // Indicates whether the checkbox for toggling the highlighting of overallChartMedian is currently visible to the user
     overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
     overallChartMedianType: MedianType; // We need to distinguish the different overall medians for the toggling
     showPassedMedian: boolean; // Same as above for the median of all passed exams
-    showPassedMedianCheckbox: boolean; // Same as above for the checkbox corresponding to passedMedian
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly medianType = MedianType;
@@ -110,7 +106,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private courseManagementService: CourseManagementService,
         private router: Router,
         private accountService: AccountService,
-        private participantScoresDistributionService: ParticipantScoresDistributionService,
     ) {}
 
     ngOnInit() {
@@ -759,7 +754,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.lastCalculatedMedianType = medianType;
         if (medianType === MedianType.PASSED) {
             const passedMedian = this.aggregatedExamResults.medianRelativePassed;
-            chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course) : undefined;
+            chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course) : 0;
             this.showPassedMedian = true;
         } else {
             this.setOverallChartMedianDependingOfExamsIncluded(medianType);
@@ -784,18 +779,5 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.overallChartMedian = submittedMedian ? roundValueSpecifiedByCourseSettings(submittedMedian, this.course) : 0;
         }
         this.overallChartMedianType = medianType;
-    }
-
-    /**
-     * Sets the visibility of checkboxes depending on the emitter output of {@link ParticipantScoresDistribution#emptyBars}
-     * @param intervals the bars that are empty in the distribution
-     */
-    setVisibilityOfCheckBoxes(intervals: GradingInterval[]): void {
-        if (!this.aggregatedExamResults.medianRelativePassed) {
-            this.showPassedMedianCheckbox = false;
-        } else {
-            this.showPassedMedianCheckbox = !this.participantScoresDistributionService.isContainingIntervalPresent(this.aggregatedExamResults.medianRelativePassed, intervals);
-        }
-        this.showOverallMedianCheckbox = !this.participantScoresDistributionService.isContainingIntervalPresent(this.overallChartMedian, intervals);
     }
 }

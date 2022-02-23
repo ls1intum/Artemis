@@ -7,23 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GraphColors } from 'app/entities/statistics.model';
 
-export interface GradingInterval {
-    upperBoundary: number;
-    lowerBoundary: number;
-
-    upperBoundaryInclusive: boolean;
-    lowerBoundaryInclusive: boolean;
-}
-
-interface ParticipantScoresEntry extends NgxChartsSingleSeriesDataEntry {
-    lowerBoundary: number;
-    upperBoundary: number;
-
-    lowerBoundaryInclusive: boolean;
-    upperBoundaryInclusive: boolean;
-}
-
-interface ClickEvent {
+interface NgxClickEvent {
     name: string;
     value: number;
     label: string;
@@ -51,14 +35,11 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     scoreToHighlight?: number;
 
     @Output()
-    emptyBars: EventEmitter<GradingInterval[]> = new EventEmitter<GradingInterval[]>();
-
-    @Output()
-    onSelect = new EventEmitter<ClickEvent>();
+    onSelect = new EventEmitter<NgxClickEvent>();
 
     gradingScaleExists = false;
     isBonus?: boolean;
-    ngxData: ParticipantScoresEntry[];
+    ngxData: NgxChartsSingleSeriesDataEntry[];
     yScaleMax: number;
     height = 500;
 
@@ -95,7 +76,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
             this.height = 400;
         }
         this.createChart();
-        this.determineEmptyBars();
         this.yScaleMax = this.calculateTickMax();
         this.helpIconTooltip = this.determineHelpIconTooltip();
         this.highlightScore();
@@ -116,10 +96,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
                 this.ngxData.push({
                     name: step.gradeName,
                     value: 0,
-                    lowerBoundary: step.lowerBoundPercentage,
-                    upperBoundary: step.upperBoundPercentage,
-                    lowerBoundaryInclusive: step.lowerBoundInclusive,
-                    upperBoundaryInclusive: step.upperBoundInclusive,
                 });
             });
         } else {
@@ -127,10 +103,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
                 const entry = {
                     name: i.toString(),
                     value: 0,
-                    lowerBoundary: i * this.binWidth,
-                    upperBoundary: (i + 1) * this.binWidth,
-                    lowerBoundaryInclusive: true,
-                    upperBoundaryInclusive: i === 19, // the last bucket has to include its upper boundary
                 };
                 this.ngxData.push(entry);
             }
@@ -324,7 +296,6 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
 
     /**
      * Highlights the score passed to the component by its parent component (if any is set).
-     * Emits an event indicating whether the highlighting was successful (i.e. the bar containing the given value is representing a value > 0)
      * @private
      */
     private highlightScore(): void {
@@ -340,20 +311,5 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
             this.ngxColor.domain[index] = GraphColors.LIGHT_BLUE;
             this.ngxData = [...this.ngxData];
         }
-    }
-
-    private determineEmptyBars() {
-        const emptyIntervals = this.ngxData
-            .filter((entry) => entry.value === 0)
-            .map((entry) => {
-                return {
-                    upperBoundary: entry.upperBoundary,
-                    lowerBoundary: entry.lowerBoundary,
-                    upperBoundaryInclusive: entry.upperBoundaryInclusive,
-                    lowerBoundaryInclusive: entry.lowerBoundaryInclusive,
-                } as GradingInterval;
-            });
-
-        this.emptyBars.emit(emptyIntervals);
     }
 }

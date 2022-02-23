@@ -5,15 +5,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import {
-    AggregatedExamResult,
-    AggregatedExerciseGroupResult,
-    ExamScoreDTO,
-    ExerciseGroup,
-    ExerciseInfo,
-    ExerciseResult,
-    StudentResult,
-} from 'app/exam/exam-scores/exam-score-dtos.model';
+import { AggregatedExerciseGroupResult, ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertComponent } from 'app/shared/alert/alert.component';
@@ -37,8 +29,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { GradingInterval, ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { ParticipantScoresDistributionService } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.service';
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -49,7 +40,6 @@ describe('ExamScoresComponent', () => {
     let router: Router;
 
     let navigateSpy: jest.SpyInstance;
-    let isContainingIntervalPresentMock: jest.SpyInstance;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -274,7 +264,6 @@ describe('ExamScoresComponent', () => {
                         return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
                     },
                 }),
-                MockProvider(ParticipantScoresDistributionService),
             ],
         })
             .compileComponents()
@@ -291,8 +280,6 @@ describe('ExamScoresComponent', () => {
                 router = TestBed.inject(Router);
 
                 navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
-                const participantScoresDistributionService = TestBed.inject(ParticipantScoresDistributionService);
-                isContainingIntervalPresentMock = jest.spyOn(participantScoresDistributionService, 'isContainingIntervalPresent').mockReturnValue(true);
             });
     });
 
@@ -662,55 +649,6 @@ describe('ExamScoresComponent', () => {
         const dataLabel = comp.formatDataLabel(0);
 
         expect(dataLabel).toBe('0 (0%)');
-    });
-
-    describe('test checkbox visibility', () => {
-        const emptyInterval = { lowerBoundary: 10, upperBoundary: 15, lowerBoundaryInclusive: true, upperBoundaryInclusive: false } as GradingInterval;
-        it('should hide overall median checkbox if corresponding bar is empty', () => {
-            comp.overallChartMedian = 14;
-            comp.aggregatedExamResults = new AggregatedExamResult();
-
-            comp.setVisibilityOfCheckBoxes([emptyInterval]);
-
-            expect(comp.showOverallMedianCheckbox).toBe(false);
-            expect(isContainingIntervalPresentMock).toHaveBeenCalledTimes(1);
-        });
-
-        it('should hide should hide passed median checkbox if corresponding bar is empty', () => {
-            const examResults = new AggregatedExamResult();
-            examResults.medianRelativePassed = 12;
-            comp.overallChartMedian = 3;
-            comp.aggregatedExamResults = examResults;
-
-            comp.setVisibilityOfCheckBoxes([emptyInterval]);
-
-            expect(comp.showPassedMedianCheckbox).toBe(false);
-            expect(isContainingIntervalPresentMock).toHaveBeenCalledTimes(2);
-        });
-
-        it('should show overall median checkbox if corresponding bar is not empty', () => {
-            comp.overallChartMedian = 45;
-            comp.aggregatedExamResults = new AggregatedExamResult();
-            const newMock = isContainingIntervalPresentMock.mockReturnValue(false);
-
-            comp.setVisibilityOfCheckBoxes([emptyInterval]);
-
-            expect(comp.showOverallMedianCheckbox).toBe(true);
-            expect(newMock).toHaveBeenCalledTimes(1);
-        });
-
-        it('should hide should hide passed median checkbox if corresponding bar is empty', () => {
-            const examResults = new AggregatedExamResult();
-            examResults.medianRelativePassed = 20;
-            comp.overallChartMedian = 3;
-            comp.aggregatedExamResults = examResults;
-            const newMock = isContainingIntervalPresentMock.mockReturnValue(false);
-
-            comp.setVisibilityOfCheckBoxes([emptyInterval]);
-
-            expect(comp.showPassedMedianCheckbox).toBe(true);
-            expect(newMock).toHaveBeenCalledTimes(2);
-        });
     });
 });
 

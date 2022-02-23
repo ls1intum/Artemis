@@ -22,8 +22,6 @@ import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons
 import { CourseScoresCsvRow, CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
-import { GradingInterval } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { ParticipantScoresDistributionService } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.service';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -98,8 +96,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     scoresToDisplay: number[];
     valueToHighlight: number | undefined;
     highlightedType = HighlightType.NONE;
-    showAverageCheckBox = false;
-    showMedianCheckBox = false;
 
     numberOfReleasedExercises: number;
     averageScoreIncluded = 0;
@@ -132,7 +128,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         private localeConversionService: LocaleConversionService,
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
-        private participantScoresDistributionService: ParticipantScoresDistributionService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -940,19 +935,5 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 break;
         }
         this.changeDetector.detectChanges();
-    }
-
-    /**
-     * Sets the visibility of checkboxes depending on the emitter output of {@link ParticipantScoresDistribution#emptyBars}
-     * @param intervals the bars that are empty in the distribution
-     */
-    setVisibilityOfCheckBoxes(intervals: GradingInterval[]): void {
-        this.showAverageCheckBox = !this.participantScoresDistributionService.isContainingIntervalPresent(this.averageScoreIncluded, intervals);
-        this.showMedianCheckBox = !this.participantScoresDistributionService.isContainingIntervalPresent(this.medianScoreIncluded, intervals);
-        // if the average cannot be highlighted, but the median can, we select the median per default
-        if (!this.showAverageCheckBox && this.showMedianCheckBox) {
-            this.highlightBar(HighlightType.MEDIAN);
-            this.highlightedType = HighlightType.MEDIAN;
-        }
     }
 }

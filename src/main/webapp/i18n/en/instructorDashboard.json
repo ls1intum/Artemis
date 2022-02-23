@@ -27,7 +27,8 @@
             "amountOfReleasedExercises": "# of released exercises",
             "averagePoints": "Average points (score)",
             "medianPoints": "Median points (score)",
-            "standardPointDeviation": "Standard point deviation"
+            "standardPointDeviation": "Standard point deviation",
+            "highlightInChart": "Highlight in distribution"
         },
         "cleanup": {
             "title": "Cleanup",

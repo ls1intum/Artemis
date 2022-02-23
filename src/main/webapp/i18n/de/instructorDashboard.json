@@ -27,7 +27,8 @@
             "amountOfReleasedExercises": "# veröffentlichter Aufgaben",
             "averagePoints": "Punkte Durchschnitt (Ergebnis)",
             "medianPoints": "Punkte Median (Ergebnis)",
-            "standardPointDeviation": "Punkte Standardabweichung"
+            "standardPointDeviation": "Punkte Standardabweichung",
+            "highlightInChart": "In Verteilung hervorheben"
         },
         "cleanup": {
             "title": "Aufräumen",

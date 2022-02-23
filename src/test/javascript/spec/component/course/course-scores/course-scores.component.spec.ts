@@ -37,6 +37,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -245,6 +246,7 @@ describe('CourseScoresComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
                 MockTranslateValuesDirective,
             ],
             providers: [
