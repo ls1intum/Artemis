@@ -306,6 +306,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
+        this.assessmentsAreValid = false;
     }
 
     /**

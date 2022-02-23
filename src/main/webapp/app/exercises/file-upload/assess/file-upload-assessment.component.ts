@@ -329,6 +329,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 },
                 error: (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
             });
+        this.assessmentsAreValid = false;
     }
 
     /**

@@ -375,6 +375,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.alertService.error(errorMessage);
             },
         });
+        this.assessmentsAreValid = false;
     }
 
     /**
