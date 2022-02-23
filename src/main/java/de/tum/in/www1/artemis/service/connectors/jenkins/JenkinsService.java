@@ -84,16 +84,12 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             createProjectForExercise(exercise);
         }
 
-        if (checkIfBuildPlanExists(projectKey, exercise.getTemplateBuildPlanId())) {
-            deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
-        }
-        if (checkIfBuildPlanExists(projectKey, exercise.getSolutionBuildPlanId())) {
-            deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
-        }
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
+        deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
 
-        final VcsRepositoryUrl testRepositoryUrl = exercise.getRepositoryURL(RepositoryType.TESTS);
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE), testRepositoryUrl);
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION), testRepositoryUrl);
+        final VcsRepositoryUrl testsRepositoryUrl = exercise.getRepositoryURL(RepositoryType.TESTS);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE), testsRepositoryUrl);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION), testsRepositoryUrl);
     }
 
     @Override

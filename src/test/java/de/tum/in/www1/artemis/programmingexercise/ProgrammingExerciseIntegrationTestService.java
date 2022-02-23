@@ -1739,15 +1739,22 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     public void testRecreateBuildPlansExerciseSuccess() throws Exception {
-        addAuxiliaryRepositoryToExercise();
-        mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
         String solutionBuildPlanName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
+        final List<String> studentBuildPlanNames = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .map(ProgrammingExerciseStudentParticipation::getBuildPlanId).toList();
+
+        addAuxiliaryRepositoryToExercise();
+        mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, true, true, false, false);
         mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
+        for (final String buildPlanName : studentBuildPlanNames) {
+            mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanName, false);
+        }
         mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+
         request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.OK);
     }
 
