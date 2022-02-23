@@ -12,7 +12,7 @@
             "resumeExercise": "Resume exercise",
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",
-            "openModelingEditor": "Open modelling editor",
+            "openModelingEditor": "Open modeling editor",
             "importIntoIntelliJ": "Open in IntelliJ",
             "cloneRepository": "Clone Repository",
             "clonePersonalRepository": "Clone your personal repository for this exercise:",

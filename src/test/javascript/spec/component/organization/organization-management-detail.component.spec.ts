@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -16,6 +16,8 @@ import { Course } from 'app/entities/course.model';
 import { UserService } from 'app/core/user/user.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { MockComponent } from 'ng-mocks';
+import { iconsAsHTML } from 'app/utils/icons.utils';
 
 describe('OrganizationManagementDetailComponent', () => {
     let component: OrganizationManagementDetailComponent;
@@ -33,7 +35,7 @@ describe('OrganizationManagementDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule],
-            declarations: [OrganizationManagementDetailComponent],
+            declarations: [OrganizationManagementDetailComponent, MockComponent(DataTableComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -41,10 +43,7 @@ describe('OrganizationManagementDetailComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: DataTableComponent, useClass: DataTableComponent },
             ],
-        })
-            .overrideTemplate(OrganizationManagementDetailComponent, '')
-            .overrideTemplate(DataTableComponent, '')
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(OrganizationManagementDetailComponent);
         component = fixture.componentInstance;
@@ -76,16 +75,16 @@ describe('OrganizationManagementDetailComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.organization.id).toEqual(organization1.id);
-        expect(component.organization.users?.length).toEqual(1);
-        expect(component.organization.courses?.length).toEqual(1);
+        expect(component.organization.id).toBe(organization1.id);
+        expect(component.organization.users?.length).toBe(1);
+        expect(component.organization.courses?.length).toBe(1);
     }));
 
     it('should track id', fakeAsync(() => {
         const user = new User();
         user.id = 5;
 
-        expect(component.trackIdentity(0, user)).toEqual(5);
+        expect(component.trackIdentity(0, user)).toBe(5);
     }));
 
     it('should remove user from organization', fakeAsync(() => {
@@ -95,7 +94,7 @@ describe('OrganizationManagementDetailComponent', () => {
 
         component.removeFromOrganization(organization1.users[0]);
         tick();
-        expect(component.organization.users?.length).toEqual(2);
+        expect(component.organization.users).toHaveLength(2);
     }));
 
     it('should not remove user from organization if error occurred', fakeAsync(() => {
@@ -105,7 +104,7 @@ describe('OrganizationManagementDetailComponent', () => {
 
         component.removeFromOrganization(organization1.users[0]);
         tick();
-        expect(component.organization.users?.length).toEqual(3);
+        expect(component.organization.users).toHaveLength(3);
     }));
 
     it('should load all current organization users', fakeAsync(() => {
@@ -121,17 +120,22 @@ describe('OrganizationManagementDetailComponent', () => {
         jest.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
 
         component.loadAll();
-        expect(component.organization.users?.length).toEqual(2);
-        expect(component.organization.courses?.length).toEqual(1);
+        expect(component.organization.users).toHaveLength(2);
+        expect(component.organization.courses).toHaveLength(1);
     }));
 
-    it('should search users in the used DataTable component', fakeAsync(() => {
+    it('should search users in the used DataTable component and return them and add organization icons', fakeAsync(() => {
         const user1 = { id: 11, login: 'user1' } as User;
         const user2 = { id: 12, login: 'user2' } as User;
 
-        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2] })));
+        let typeAheadButtons = [
+            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() } },
+            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() } },
+        ];
 
-        component.dataTable = dataTable;
+        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2] })));
+        component.dataTable = { typeaheadButtons: typeAheadButtons } as any as DataTableComponent;
+        component.organization = { users: undefined };
 
         const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
 
@@ -140,12 +144,110 @@ describe('OrganizationManagementDetailComponent', () => {
                 { id: user1.id, login: user1.login },
                 { id: user2.id, login: user2.login },
             ]);
-            expect(component.searchNoResults).toEqual(false);
-            expect(component.searchFailed).toEqual(false);
+            expect(component.searchNoResults).toBe(false);
+            expect(component.searchFailed).toBe(false);
         });
 
         tick();
-        expect(userService.search).toHaveBeenCalled();
+        expect(userService.search).toHaveBeenCalledTimes(1);
+
+        typeAheadButtons.forEach((button) => {
+            expect(button.insertAdjacentHTML).toHaveBeenCalledTimes(1);
+            expect(button.insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
+        });
+
+        component.organization = { users: [user1] };
+        typeAheadButtons = [
+            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() } },
+            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() } },
+        ];
+        component.dataTable = { typeaheadButtons: typeAheadButtons } as any as DataTableComponent;
+        component.searchAllUsers(of({ text: 'user', entities: [] })).subscribe();
+        tick();
+
+        expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledTimes(1);
+        expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users']);
+        expect(typeAheadButtons[0].classList.add).toHaveBeenCalledTimes(1);
+        expect(typeAheadButtons[0].classList.add).toHaveBeenCalledWith('already-member');
+        expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledTimes(1);
+        expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
+        expect(typeAheadButtons[1].classList.add).not.toHaveBeenCalled();
+    }));
+
+    it('should return zero users if search term is less then 3 chars', fakeAsync(() => {
+        const user1 = { id: 11, login: 'user1' } as User;
+        const user2 = { id: 12, login: 'user2' } as User;
+
+        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2] })));
+        component.dataTable = dataTable;
+
+        const result = component.searchAllUsers(of({ text: 'us', entities: [] }));
+
+        result.subscribe((a) => {
+            expect(a).toStrictEqual([]);
+            expect(component.searchNoResults).toBe(false);
+            expect(component.searchFailed).toBe(false);
+        });
+
+        tick();
+        expect(userService.search).not.toHaveBeenCalled();
+    }));
+
+    it('should set the no results flag is no users were found during search', fakeAsync(() => {
+        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [] })));
+        component.dataTable = dataTable;
+
+        const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
+
+        result.subscribe((a) => {
+            expect(a).toStrictEqual([]);
+            expect(component.searchNoResults).toBe(true);
+            expect(component.searchFailed).toBe(false);
+        });
+
+        tick();
+        expect(userService.search).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should set the search failed flag if search failed', fakeAsync(() => {
+        jest.spyOn(userService, 'search').mockReturnValue(throwError(() => new Error()));
+        component.dataTable = dataTable;
+
+        const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
+
+        result.subscribe((a) => {
+            expect(a).toStrictEqual([]);
+            expect(component.searchNoResults).toBe(false);
+            expect(component.searchFailed).toBe(true);
+        });
+
+        tick();
+        expect(userService.search).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should add the user to organization on autocomplete select', fakeAsync(() => {
+        component.organization = { id: 7, users: [{ id: 1 } as User] };
+        const addUserSpy = jest.spyOn(organizationService, 'addUserToOrganization').mockReturnValue(of(new HttpResponse<void>()));
+        const flashSpy = jest.spyOn(component, 'flashRowClass');
+
+        const callback = jest.fn();
+        const newUser = { id: 2, login: 'test' } as User;
+        component.onAutocompleteSelect(newUser, callback);
+        tick();
+        expect(addUserSpy).toHaveBeenCalledTimes(1);
+        expect(addUserSpy).toHaveBeenCalledWith(7, 'test');
+        expect(component.organization.users).toContain(newUser);
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith(newUser);
+        expect(flashSpy).toHaveBeenCalledTimes(1);
+        expect(flashSpy).toHaveBeenCalledWith('newly-added-member');
+
+        const existingUser = { id: 1 } as User;
+        component.onAutocompleteSelect(existingUser, callback);
+        tick();
+        expect(callback).toHaveBeenCalledTimes(2);
+        expect(callback).toHaveBeenCalledWith(existingUser);
+        expect(addUserSpy).toHaveBeenCalledTimes(1);
     }));
 
     function createTestUsers() {

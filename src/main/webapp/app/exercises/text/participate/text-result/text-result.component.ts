@@ -21,6 +21,8 @@ export class TextResultComponent {
     // Icons
     faExclamationTriangle = faExclamationTriangle;
 
+    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
+
     private readonly sha1Regex = /^[a-f0-9]{40}$/i;
 
     @Input()
@@ -112,9 +114,5 @@ export class TextResultComponent {
         const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
 
         return this.translateService.instant(`artemisApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, { credits: textResultBlock.feedback!.credits });
-    }
-
-    public buildFeedbackTextForReview(feedback: Feedback): string {
-        return buildFeedbackTextForReview(feedback);
     }
 }

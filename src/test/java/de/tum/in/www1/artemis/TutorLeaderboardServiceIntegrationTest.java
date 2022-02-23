@@ -76,7 +76,7 @@ public class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testLeaderboardData_forCourseWithExercises() {
         Long[] exerciseIds = { exercise.getId() };
-        var leaderboardData = tutorLeaderboardService.getCourseLeaderboard(course, new HashSet<Long>(Arrays.asList(exerciseIds)));
+        var leaderboardData = tutorLeaderboardService.getCourseLeaderboard(course, new HashSet<>(Arrays.asList(exerciseIds)));
         assertLeaderboardData(leaderboardData);
     }
 

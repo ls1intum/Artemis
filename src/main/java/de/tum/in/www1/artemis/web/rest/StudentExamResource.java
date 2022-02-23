@@ -509,6 +509,10 @@ public class StudentExamResource {
     private void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
+        if (!(exercise instanceof QuizExercise)) {
+            // Note: quiz exercises are filtered below
+            exercise.filterSensitiveInformation();
+        }
 
         if (!isAtLeastInstructor) {
             exercise.setExerciseGroup(null);
@@ -533,13 +537,9 @@ public class StudentExamResource {
                 participation.setSubmissions(Set.of(latestSubmission));
                 setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
 
-                if (exercise instanceof QuizExercise) {
+                if (exercise instanceof QuizExercise && latestSubmission instanceof QuizSubmission quizSubmission) {
                     // filter quiz solutions when the publishing result date is not set (or when set before the publish result date)
-                    ((QuizSubmission) latestSubmission).filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
-                }
-                else {
-                    // Note: sensitive information for quizzes was already removed above
-                    exercise.filterSensitiveInformation();
+                    quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
                 }
             }
             // add participation into an array
