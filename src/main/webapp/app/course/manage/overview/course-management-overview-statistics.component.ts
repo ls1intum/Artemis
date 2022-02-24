@@ -5,6 +5,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import * as shape from 'd3-shape';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
@@ -42,10 +43,11 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
     constructor(private translateService: TranslateService) {}
 
     ngOnInit() {
-        for (let i = 0; i < 4; i++) {
-            this.lineChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
-        }
+        this.translateService.onLangChange.subscribe(() => {
+            this.updateTranslation();
+        });
 
+        this.createChartLabels();
         this.createChartData();
     }
 
@@ -81,5 +83,46 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
      */
     formatYAxis(value: any): string {
         return value.toLocaleString() + ' %';
+    }
+
+    private createChartLabels(): void {
+        let weekOffset = 0;
+        const now = dayjs();
+        // If the course end date is passed, the server returns the data until the end date. We have to adapt the labels accordingly
+        if (this.course.endDate && now.isAfter(this.course.endDate) && now.isoWeek() !== dayjs(this.course.endDate).isoWeek()) {
+            const endDateIsoWeek = dayjs(this.course.endDate).isoWeek();
+            if (endDateIsoWeek > now.isoWeek()) {
+                weekOffset = dayjs(this.course.endDate).isoWeeksInYear() - endDateIsoWeek + now.isoWeek();
+            } else {
+                weekOffset = now.isoWeek() - endDateIsoWeek;
+            }
+        }
+        for (let i = 0; i < 4; i++) {
+            let translatePath: string;
+            const week = 3 - i + weekOffset;
+            switch (week) {
+                case 0: {
+                    translatePath = 'overview.currentWeek';
+                    break;
+                }
+                case 1: {
+                    translatePath = 'overview.weekAgo';
+                    break;
+                }
+                default: {
+                    translatePath = 'overview.weeksAgo';
+                }
+            }
+            this.lineChartLabels[i] = this.translateService.instant(translatePath, { amount: week });
+        }
+    }
+
+    /**
+     * Auxiliary method that ensures that the chart is translated directly when user selects a new language
+     * @private
+     */
+    private updateTranslation(): void {
+        this.createChartLabels();
+        this.createChartData();
     }
 }

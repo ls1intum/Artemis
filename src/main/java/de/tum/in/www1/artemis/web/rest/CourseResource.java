@@ -677,7 +677,11 @@ public class CourseResource {
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4, ZonedDateTime.now()));
+            var endDate = ZonedDateTime.now();
+            if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
+                endDate = course.getEndDate();
+            }
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4, endDate));
             courseDTOs.add(courseDTO);
         }
 
