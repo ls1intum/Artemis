@@ -205,7 +205,7 @@
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
-                            <ngx-datatable-column *ngIf="programmingExercise.programmingLanguage === programmingLanguage.JAVA" name="Type" prop="type">
+                            <ngx-datatable-column *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" name="Type" prop="type">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
                                         <span class="datatable-header-cell-label bold sortable">Type</span>
