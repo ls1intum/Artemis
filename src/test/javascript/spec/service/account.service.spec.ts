@@ -114,41 +114,41 @@ describe('AccountService', () => {
 
     describe('test authority check', () => {
         const usedAuthorities: Authority[] = [];
-        it.each(authorities)('should return false if not authenticated, no user id and no authorities are set', (authority: Authority) => {
+        it.each(authorities)('should return false if not authenticated, no user id and no authorities are set', async (authority: Authority) => {
             usedAuthorities.push(authority);
 
-            expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
         });
 
-        it.each(authorities)('should return false if authenticated, user id but no authorities are set', (authority: Authority) => {
+        it.each(authorities)('should return false if authenticated, user id but no authorities are set', async (authority: Authority) => {
             accountService.userIdentity = user;
             usedAuthorities.push(authority);
 
-            expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
         });
 
-        it.each(authorities)('should return true if user is required', (authority: Authority) => {
+        it.each(authorities)('should return true if user is required', async (authority: Authority) => {
             accountService.userIdentity = user3;
             usedAuthorities.push(authority);
 
-            expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(true);
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(true);
         });
 
-        it.each(authorities)('should return true if authority matches exactly', (authority: Authority) => {
+        it.each(authorities)('should return true if authority matches exactly', async (authority: Authority) => {
             accountService.userIdentity = { id: authorities.indexOf(authority), groups: ['USER'], authorities: [authority] } as User;
 
-            expect(accountService.hasAnyAuthority([authority])).resolves.toBe(true);
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(true);
         });
 
-        it.each(authorities)('should return false if authority does not match', (authority: Authority) => {
+        it.each(authorities)('should return false if authority does not match', async (authority: Authority) => {
             const index = authorities.indexOf(authority);
             accountService.userIdentity = { id: index + 1, groups: ['USER'], authorities: [authorities[(index + 1) % 5]] } as User;
 
-            expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
         });
 
-        it.each(authorities)('should return false if not authenticated', (authority: Authority) => {
-            expect(accountService.hasAuthority(authority)).resolves.toBe(false);
+        it.each(authorities)('should return false if not authenticated', async (authority: Authority) => {
+            await expect(accountService.hasAuthority(authority)).resolves.toBe(false);
         });
     });
 

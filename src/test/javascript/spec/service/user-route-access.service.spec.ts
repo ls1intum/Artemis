@@ -77,8 +77,8 @@ describe('UserRouteAccessService', () => {
         expect(MockSyncStorage.retrieve('authenticationToken')).toEqual('testToken');
     });
 
-    it('should return true if authorities are omitted', () => {
-        expect(service.checkLogin([], url)).resolves.toBe(true);
+    it('should return true if authorities are omitted', async () => {
+        await expect(service.checkLogin([], url)).resolves.toBe(true);
     });
 
     it('should store url if identity is undefined', async () => {

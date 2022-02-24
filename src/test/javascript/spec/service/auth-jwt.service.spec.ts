@@ -134,7 +134,7 @@ describe('AuthServerProvider', () => {
     });
 
     describe('test authentication token removal', () => {
-        it('should clear only the authentication token', () => {
+        it('should clear only the authentication token', fakeAsync(() => {
             localStorageService.store(tokenKey, storedToken);
             sessionStorageService.store(tokenKey, storedToken);
 
@@ -145,19 +145,21 @@ describe('AuthServerProvider', () => {
                 expect(localStorageClearSpy).toHaveBeenCalledTimes(1);
                 expect(localStorageClearSpy).toHaveBeenCalledWith(tokenKey);
             });
-        });
+            tick();
+        }));
 
-        it('should clear the whole storage', () => {
+        it('should clear the whole storage', fakeAsync(() => {
             localStorageService.store(tokenKey, storedToken);
             sessionStorageService.store(tokenKey, storedToken);
 
             service.clearCaches().subscribe((resp) => {
                 expect(resp).toBe(undefined);
                 expect(sessionStorageClearSpy).toHaveBeenCalledTimes(1);
-                expect(sessionStorageClearSpy).toHaveBeenCalledWith(undefined);
+                expect(sessionStorageClearSpy).toHaveBeenCalledWith();
                 expect(localStorageClearSpy).toHaveBeenCalledTimes(1);
-                expect(localStorageClearSpy).toHaveBeenCalledWith(undefined);
+                expect(localStorageClearSpy).toHaveBeenCalledWith();
             });
-        });
+            tick();
+        }));
     });
 });
