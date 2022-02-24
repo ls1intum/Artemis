@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -205,6 +206,8 @@ public class PostService extends PostingService {
     }
 
     /**
+     * @param pagingEnabled     fetches single page instead of all entities
+     * @param pageable          requested page and page size
      * @param postContextFilter request object to fetch posts
      * @return page of posts that match the given context
      */
@@ -660,6 +663,35 @@ public class PostService extends PostingService {
     public static int postComparator(Post postA, Post postB, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
 
         // sort by priority
+        Integer x = sortByPriority(postA, postB);
+        if (x != null)
+            return x;
+
+        // sort by votes via voteEmojiCount
+        if (postSortCriterion == PostSortCriterion.VOTES) {
+            Integer sortingOrder1 = sortByVotes(postA, postB, sortingOrder);
+            if (sortingOrder1 != null)
+                return sortingOrder1;
+        }
+
+        // sort by creation date
+        if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
+            Integer sortingOrder1 = sortByCreationDate(postA, postB, sortingOrder);
+            if (sortingOrder1 != null)
+                return sortingOrder1;
+        }
+
+        // sort by answer count
+        if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
+            Integer sortingOrder1 = sortByAnswerCount(postA, postB, sortingOrder);
+            if (sortingOrder1 != null)
+                return sortingOrder1;
+        }
+        return 0;
+    }
+
+    @Nullable
+    private static Integer sortByPriority(Post postA, Post postB) {
         if (postA.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT && postA.getDisplayPriority() == DisplayPriority.PINNED
                 && postB.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT) {
             return -1;
@@ -680,56 +712,61 @@ public class PostService extends PostingService {
         if (postA.getDisplayPriority() != DisplayPriority.ARCHIVED && postB.getDisplayPriority() == DisplayPriority.ARCHIVED) {
             return -1;
         }
-        // sort by votes via voteEmojiCount
-        if (postSortCriterion == PostSortCriterion.VOTES) {
+        return null;
+    }
 
-            int postAVoteEmojiCount = 0;
-            int postBVoteEmojiCount = 0;
+    @Nullable
+    private static Integer sortByVotes(Post postA, Post postB, SortingOrder sortingOrder) {
+        int postAVoteEmojiCount = 0;
+        int postBVoteEmojiCount = 0;
 
-            if (postA.getReactions() != null) {
-                postAVoteEmojiCount = (int) postA.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
-            }
-
-            if (postB.getReactions() != null) {
-                postBVoteEmojiCount = (int) postB.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
-            }
-
-            if (postAVoteEmojiCount > postBVoteEmojiCount) {
-                return sortingOrder == SortingOrder.DESCENDING ? -1 : 1;
-            }
-            if (postAVoteEmojiCount < postBVoteEmojiCount) {
-                return sortingOrder == SortingOrder.DESCENDING ? 1 : -1;
-            }
+        if (postA.getReactions() != null) {
+            postAVoteEmojiCount = (int) postA.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
         }
-        // sort by creation date
-        if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
-            if (postA.getCreationDate().compareTo(postB.getCreationDate()) > 0) {
-                return sortingOrder == SortingOrder.DESCENDING ? -1 : 1;
-            }
-            if (postA.getCreationDate().compareTo(postB.getCreationDate()) < 0) {
-                return sortingOrder == SortingOrder.DESCENDING ? 1 : -1;
-            }
-        }
-        // sort by answer count
-        if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-            int postAAnswerCount = 0;
-            int postBAnswerCount = 0;
 
-            if (postA.getAnswers() != null) {
-                postAAnswerCount = postA.getAnswers().size();
-            }
-            if (postB.getAnswers() != null) {
-                postBAnswerCount = postB.getAnswers().size();
-            }
-
-            if (postAAnswerCount > postBAnswerCount) {
-                return sortingOrder == SortingOrder.DESCENDING ? -1 : 1;
-            }
-            if (postAAnswerCount < postBAnswerCount) {
-                return sortingOrder == SortingOrder.DESCENDING ? 1 : -1;
-            }
+        if (postB.getReactions() != null) {
+            postBVoteEmojiCount = (int) postB.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
         }
-        return 0;
+
+        if (postAVoteEmojiCount > postBVoteEmojiCount) {
+            return sortingOrder == SortingOrder.DESCENDING ? -1 : 1;
+        }
+        if (postAVoteEmojiCount < postBVoteEmojiCount) {
+            return sortingOrder == SortingOrder.DESCENDING ? 1 : -1;
+        }
+        return null;
+    }
+
+    @Nullable
+    private static Integer sortByCreationDate(Post postA, Post postB, SortingOrder sortingOrder) {
+        if (postA.getCreationDate().compareTo(postB.getCreationDate()) > 0) {
+            return sortingOrder == SortingOrder.DESCENDING ? -1 : 1;
+        }
+        if (postA.getCreationDate().compareTo(postB.getCreationDate()) < 0) {
+            return sortingOrder == SortingOrder.DESCENDING ? 1 : -1;
+        }
+        return null;
+    }
+
+    @Nullable
+    private static Integer sortByAnswerCount(Post postA, Post postB, SortingOrder sortingOrder) {
+        int postAAnswerCount = 0;
+        int postBAnswerCount = 0;
+
+        if (postA.getAnswers() != null) {
+            postAAnswerCount = postA.getAnswers().size();
+        }
+        if (postB.getAnswers() != null) {
+            postBAnswerCount = postB.getAnswers().size();
+        }
+
+        if (postAAnswerCount > postBAnswerCount) {
+            return sortingOrder == SortingOrder.DESCENDING ? -1 : 1;
+        }
+        if (postAAnswerCount < postBAnswerCount) {
+            return sortingOrder == SortingOrder.DESCENDING ? 1 : -1;
+        }
+        return null;
     }
 
     /**

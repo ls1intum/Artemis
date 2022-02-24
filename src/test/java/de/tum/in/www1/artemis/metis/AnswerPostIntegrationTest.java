@@ -159,7 +159,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get posts of current user and compare
         List<Post> resolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().allMatch(answerPost -> answerPost.doesResolvePost() == null || answerPost.doesResolvePost() == false)).toList();
+                .filter(post -> post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))).toList();
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
     }
@@ -174,8 +174,9 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get unresolved posts of current user and compare
-        List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(post -> post.getAuthor().getLogin().equals("student1")
-                && (post.getAnswers().stream().allMatch(answerPost -> answerPost.doesResolvePost() == null || answerPost.doesResolvePost() == false))).toList();
+        List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(
+                post -> "student1".equals(post.getAuthor().getLogin()) && (post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))))
+                .toList();
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
     }

@@ -46,7 +46,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             WHERE (post.courseWideContext = :#{#courseWideContext}
             AND (lecture.course.id = :#{#courseId}
             OR exercise.course.id = :#{#courseId}
-            OR post.course.id = :#{#courseId} ))""")
+            OR post.course.id = :#{#courseId}))""")
     List<Post> findPostsForCourseWideContext(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext);
 
     @Query("""
@@ -54,7 +54,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
             WHERE (lecture.course.id = :#{#courseId}
             OR exercise.course.id = :#{#courseId}
-            OR post.course.id = :#{#courseId} )""")
+            OR post.course.id = :#{#courseId})""")
     List<Post> findPostsForCourse(@Param("courseId") Long courseId);
 
     @Query("""
@@ -62,7 +62,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             LEFT JOIN post.tags tag LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
             WHERE (lecture.course.id = :#{#courseId}
             OR exercise.course.id = :#{#courseId}
-            OR post.course.id = :#{#courseId} )""")
+            OR post.course.id = :#{#courseId})""")
     List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 
     @Query("""
@@ -93,8 +93,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             OR exercise.course.id = :#{#courseId}
             OR post.course.id = :#{#courseId})
             AND (NOT EXISTS (SELECT answerPost FROM AnswerPost answerPost
-            WHERE answerPost.resolvesPost = true
-            AND answerPost.post.id = post.id)))""")
+                WHERE answerPost.resolvesPost = true
+                AND answerPost.post.id = post.id)))""")
     List<Post> findOwnAndUnresolvedPostsForCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @Query("""
@@ -154,7 +154,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 AND answerPost.post.id = post.id))
                 AND (EXISTS (SELECT answerPost FROM AnswerPost answerPost
                     WHERE answerPost.post.id = post.id
-                    AND answerPost.author.id = :#{#userId} )
+                    AND answerPost.author.id = :#{#userId})
                     OR EXISTS (SELECT reaction FROM Reaction reaction
                         WHERE reaction.post.id = post.id
                         AND reaction.user.id = :#{#userId})))""")
@@ -289,8 +289,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                     WHERE answerPost.post.id = post.id
                     AND answerPost.author.id = :#{#userId})
                     OR EXISTS (SELECT reaction FROM Reaction reaction
-                    WHERE reaction.post.id = post.id
-                    AND reaction.user.id = :#{#userId})))""")
+                        WHERE reaction.post.id = post.id
+                        AND reaction.user.id = :#{#userId})))""")
     List<Post> findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserByExerciseId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     @Query("""
@@ -337,7 +337,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 AND answerPost.author.id = :#{#userId})
                 OR EXISTS (SELECT reaction FROM Reaction reaction
                     WHERE reaction.post.id = post.id
-                    AND reaction.user.id = :#{#userId}) )""")
+                    AND reaction.user.id = :#{#userId}))""")
     List<Post> findAnsweredOrReactedPostsByUserForCourseByCourseWideContext(@Param("courseId") Long courseId, @Param("userId") Long userId,
             @Param("courseWideContext") CourseWideContext courseWideContext);
 
@@ -361,7 +361,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             WHERE (lecture.course.id = :#{#courseId}
             OR exercise.course.id = :#{#courseId}
             OR post.course.id = :#{#courseId})
-            AND post.author.id = :#{#userId
+            AND post.author.id = :#{#userId}
             AND (post.courseWideContext = :#{#courseWideContext})
             AND (EXISTS (SELECT answerPost FROM AnswerPost answerPost
                 WHERE answerPost.post.id = post.id

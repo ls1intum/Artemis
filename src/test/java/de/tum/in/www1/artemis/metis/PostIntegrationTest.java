@@ -538,7 +538,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get posts of current user and compare
-        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getAuthor().getLogin().equals("student1")).collect(Collectors.toList()));
+        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> "student1".equals(post.getAuthor().getLogin())).collect(Collectors.toList()));
     }
 
     @Test
