@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
+import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 
-describe('ItalicCommand', () => {
+describe('UnorderedListCommand', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
     let command: Command;
@@ -21,22 +21,32 @@ describe('ItalicCommand', () => {
                 fixture = TestBed.createComponent(MarkdownEditorComponent);
                 comp = fixture.componentInstance;
 
-                command = new ItalicCommand();
+                command = new UnorderedListCommand();
                 comp.defaultCommands = [command];
                 fixture.detectChanges();
                 comp.ngAfterViewInit();
             });
     });
 
-    it('should add ** on execute', () => {
-        comp.aceEditorContainer.getEditor().setValue('italic');
-        command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('*italic*');
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
-    it('should remove ** on execute', () => {
-        comp.aceEditorContainer.getEditor().setValue('*italic*');
+    it('should add ordered list to lines on execute', () => {
+        comp.aceEditorContainer.getEditor().setValue('line 1\nline 2');
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('italic');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('- line 1\n- line 2\n');
+    });
+
+    it('should add new ordered list on execute', () => {
+        comp.aceEditorContainer.getEditor().setValue('');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('- ');
+    });
+
+    it('should remove ordered list on execute', () => {
+        comp.aceEditorContainer.getEditor().setValue('- line 1\n- line 2');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('line 1\nline 2\n');
     });
 });
