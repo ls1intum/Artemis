@@ -1,14 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
+import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisTestModule } from '../../test.module';
+import { Command } from 'app/shared/markdown-editor/commands/command';
 
-describe('KatexCommand', () => {
+describe('CodeCommand', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
+    let command: Command;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -18,16 +20,23 @@ describe('KatexCommand', () => {
             .then(() => {
                 fixture = TestBed.createComponent(MarkdownEditorComponent);
                 comp = fixture.componentInstance;
+
+                command = new CodeCommand();
+                comp.defaultCommands = [command];
+                fixture.detectChanges();
+                comp.ngAfterViewInit();
             });
     });
 
-    it('should add insert the sample e-function into the editor on execute', () => {
-        const katexCommand = new KatexCommand();
-        comp.domainCommands = [katexCommand];
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
+    it('should add `` on execute', () => {
+        comp.aceEditorContainer.getEditor().setValue('code');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('`code`');
+    });
 
-        katexCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('$$ e^{\\frac{1}{4} y^2} $$');
+    it('should remove `` on execute', () => {
+        comp.aceEditorContainer.getEditor().setValue('`code`');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('code');
     });
 });

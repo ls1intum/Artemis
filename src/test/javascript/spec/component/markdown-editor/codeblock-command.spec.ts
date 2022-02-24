@@ -3,10 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisTestModule } from '../../test.module';
+import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 
-describe('KatexCommand', () => {
+describe('CodeBlockCommand', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
@@ -21,13 +21,14 @@ describe('KatexCommand', () => {
             });
     });
 
-    it('should add insert the sample e-function into the editor on execute', () => {
-        const katexCommand = new KatexCommand();
-        comp.domainCommands = [katexCommand];
+    it('should add ```java\n``` on execute', () => {
+        const command = new CodeBlockCommand();
+        comp.defaultCommands = [command];
         fixture.detectChanges();
         comp.ngAfterViewInit();
+        comp.aceEditorContainer.getEditor().setValue('code');
 
-        katexCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('$$ e^{\\frac{1}{4} y^2} $$');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('```java\ncode\n```');
     });
 });
