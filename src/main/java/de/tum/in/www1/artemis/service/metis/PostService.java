@@ -216,7 +216,7 @@ public class PostService extends PostingService {
         List<Post> postsInCourse;
         // no filter -> get all posts in course
         if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
-            postsInCourse = this.getAllCoursePostsPage(postContextFilter);
+            postsInCourse = this.getAllCoursePosts(postContextFilter);
         }
         // filter by course-wide context
         else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
@@ -228,7 +228,7 @@ public class PostService extends PostingService {
         }
         // filter by lecture
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null) {
-            postsInCourse = this.getAllLecturePostsPage(postContextFilter);
+            postsInCourse = this.getAllLecturePosts(postContextFilter);
         }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
@@ -292,7 +292,7 @@ public class PostService extends PostingService {
      * @param postContextFilter filter object
      * @return page of posts that belong to the course
      */
-    public List<Post> getAllCoursePostsPage(PostContextFilter postContextFilter) {
+    public List<Post> getAllCoursePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -439,7 +439,7 @@ public class PostService extends PostingService {
      * @param postContextFilter filter object
      * @return page of posts that belong to the lecture
      */
-    public List<Post> getAllLecturePostsPage(PostContextFilter postContextFilter) {
+    public List<Post> getAllLecturePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -670,23 +670,24 @@ public class PostService extends PostingService {
 
         // sort by votes via voteEmojiCount
         if (postSortCriterion == PostSortCriterion.VOTES) {
-            Integer sortingOrder1 = sortByVotes(postA, postB, sortingOrder);
-            if (sortingOrder1 != null)
-                return sortingOrder1;
+            order = sortByVotes(postA, postB, sortingOrder);
+            if (order != null)
+                return order;
         }
 
         // sort by creation date
         if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
-            Integer sortingOrder1 = sortByCreationDate(postA, postB, sortingOrder);
-            if (sortingOrder1 != null)
-                return sortingOrder1;
+            order = sortByCreationDate(postA, postB, sortingOrder);
+            if (order != null)
+                return order;
         }
 
         // sort by answer count
         if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-            Integer sortingOrder1 = sortByAnswerCount(postA, postB, sortingOrder);
-            if (sortingOrder1 != null)
-                return sortingOrder1;
+            order = sortByAnswerCount(postA, postB, sortingOrder);
+            if (order != null) {
+                return order;
+            }
         }
         return 0;
     }
