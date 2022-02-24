@@ -48,13 +48,7 @@ describe('ColorPickerCommand', () => {
     });
 
     it('should add color black on execute', () => {
-        const command = new ColorPickerCommand();
-
-        comp.colorCommands = [command];
-        fixture.detectChanges();
-        comp.ngAfterViewInit();
         comp.aceEditorContainer.getEditor().setValue('test');
-
         command.execute('#000000');
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('test');
     });
