@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export enum ScoreType {
     ABSOLUTE_SCORE = 'absoluteScore',
@@ -33,8 +34,9 @@ export class CourseScoreCalculationService {
             const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
             const isAssessmentOver = !exercise.assessmentDueDate || exercise.assessmentDueDate.isBefore(dayjs());
             const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
+            const isExerciseAssessedAutomatically = exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType === AssessmentType.AUTOMATIC;
 
-            if (isExerciseFinished && isExerciseIncluded) {
+            if ((isExerciseAssessedAutomatically || isExerciseFinished) && isExerciseIncluded) {
                 const maxPointsReachableInExercise = exercise.maxPoints!;
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
