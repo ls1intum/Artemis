@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
@@ -183,6 +184,74 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourseWithCourseWideContent() throws Exception {
+        // filterToUnresolved set true; will fetch all unresolved posts of current course
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("courseWideContext", "TECH_SUPPORT");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())).toList();
+
+        assertThat(returnedPosts).isEqualTo(resolvedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourseWithUnresolvedPostsWithCourseWideContent() throws Exception {
+        // filterToUnresolved set true; will fetch all unresolved posts of current course
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToUnresolved", "true");
+        params.add("courseWideContext", "TECH_SUPPORT");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        List<Post> resolvedPosts = existingPostsWithAnswers.stream()
+                .filter(post -> post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(resolvedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourseWithOwnWithCourseWideContent() throws Exception {
+        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToOwn", "true");
+        params.add("courseWideContext", "TECH_SUPPORT");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        List<Post> resolvedPosts = existingPostsWithAnswers.stream()
+                .filter(post -> "student1".equals(post.getAuthor().getLogin())
+                        && post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(resolvedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourseWithOwnAndUnresolvedPostsWithCourseWideContent() throws Exception {
+        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToUnresolved", "true");
+        params.add("filterToOwn", "true");
+        params.add("courseWideContext", "TECH_SUPPORT");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get unresolved posts of current user and compare
+        List<Post> resolvedPosts = existingPostsWithAnswers.stream()
+                .filter(post -> "student1".equals(post.getAuthor().getLogin())
+                        && post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(resolvedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostsForCourse_OrderByAnswerCountDESC() throws Exception {
         PostSortCriterion sortCriterion = PostSortCriterion.ANSWER_COUNT;
         SortingOrder sortingOrder = SortingOrder.DESCENDING;
@@ -225,6 +294,153 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetAnsweredOrReactedPostsByUserForCourse() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswers = existingPostsWithAnswers.stream()
+                .filter(post -> post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
+                        || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin())))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetOwnAndAnsweredOrReactedPostsByUserForCourse() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("filterToOwn", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswers = existingPostsWithAnswers.stream().filter(
+                post -> "student1".equals(post.getAuthor().getLogin()) && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
+                        || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetUnresolvedAnsweredOrReactedPostsByUserForCourse() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("filterToUnresolved", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswers = existingPostsWithAnswers.stream()
+                .filter(post -> post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
+                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourse() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToOwn", "true");
+        params.add("filterToUnresolved", "true");
+        params.add("filterToAnsweredOrReacted", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswers = existingPostsWithAnswers.stream().filter(
+                post -> "student1".equals(post.getAuthor().getLogin()) && (post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
+                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin())))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("courseWideContext", "TECH_SUPPORT");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
+                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())
+                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
+                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetOwnAndAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("filterToOwn", "true");
+        params.add("courseWideContext", "TECH_SUPPORT");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
+                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && "student1".equals(post.getAuthor().getLogin())
+                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
+                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetUnresolvedAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("filterToUnresolved", "true");
+        params.add("courseWideContext", "TECH_SUPPORT");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
+                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())
+                        && post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
+                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToOwn", "true");
+        params.add("filterToUnresolved", "true");
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("courseWideContext", "TECH_SUPPORT");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
+                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && "student1".equals(post.getAuthor().getLogin())
+                        && (post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                                && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
+                                        || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin())))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
+    }
     // UPDATE
 
     @Test
