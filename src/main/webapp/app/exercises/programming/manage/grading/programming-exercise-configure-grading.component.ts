@@ -85,8 +85,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     // The event emitters emit this value in order to indicate this component to reset the corresponding table view
     readonly RESET_TABLE = ProgrammingGradingChartsDirective.RESET_TABLE;
-    readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly chartFilterType = ChartFilterType;
+    readonly ProgrammingLanguage = ProgrammingLanguage;
 
     // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
     staticCodeAnalysisCategoriesForTable: StaticCodeAnalysisCategory[] = [];
