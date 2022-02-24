@@ -70,7 +70,7 @@ describe('AboutUsComponent', () => {
         tick();
         fixture.whenStable().then(() => {
             expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledTimes(1);
-            expect(fixture.debugElement.nativeElement.querySelector('#contributorsName').innerHTML).toEqual(fullName);
+            expect(fixture.debugElement.nativeElement.querySelector('#contributorsName').innerHTML).toBe(fullName);
         });
     }));
 });
