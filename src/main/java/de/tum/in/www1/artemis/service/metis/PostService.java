@@ -629,8 +629,8 @@ public class PostService extends PostingService {
         List<Post> coursePosts = this.getAllCoursePosts(courseId);
 
         // sort course posts by calculated similarity scores
-        coursePosts.sort(Comparator.comparing((coursePost) -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
-        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).collect(Collectors.toList());
+        coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
+        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
     }
 
     /**
@@ -663,9 +663,10 @@ public class PostService extends PostingService {
     public static int postComparator(Post postA, Post postB, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
 
         // sort by priority
-        Integer x = sortByPriority(postA, postB);
-        if (x != null)
-            return x;
+        Integer order = sortByPriority(postA, postB);
+        if (order != null) {
+            return order;
+        }
 
         // sort by votes via voteEmojiCount
         if (postSortCriterion == PostSortCriterion.VOTES) {
@@ -785,13 +786,12 @@ public class PostService extends PostingService {
             String lowerCasedSearchString = searchText.toLowerCase();
             // if searchText starts with a # and is followed by a post id, filter for post with id
             if (lowerCasedSearchString.startsWith("#") && (lowerCasedSearchString.substring(1) != null && !lowerCasedSearchString.substring(1).isBlank())) {
-                return keepPost && post.getId() == Integer.parseInt(lowerCasedSearchString.substring(1));
+                return post.getId() == Integer.parseInt(lowerCasedSearchString.substring(1));
             }
             // regular search on content, title, and tags
-            boolean searchStringMatchesAnyPostProperty = post.getTitle() != null && post.getTitle().toLowerCase().contains(lowerCasedSearchString)
+            return post.getTitle() != null && post.getTitle().toLowerCase().contains(lowerCasedSearchString)
                     || post.getContent() != null && post.getContent().toLowerCase().contains(lowerCasedSearchString)
                     || post.getTags() != null && String.join(" ", post.getTags()).toLowerCase().contains(lowerCasedSearchString);
-            return keepPost && (searchStringMatchesAnyPostProperty);
         }
         return keepPost;
     }
