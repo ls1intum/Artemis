@@ -98,6 +98,12 @@
             "combineTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommitsError": "Template-Repository-Commits konnten nicht zusammengeführt werden.",
             "combineTemplateCommitsSuccess": "Template-Repository-Commits wurden zusammengeführt.",
+            "extractTasksFromProblemStatementWarning": "Nur zu Testzwecken: Extrahiere alle Aufgaben und Tests aus der Aufgabenstellung.",
+            "extractTasksFromProblemStatementSuccess": "{{numberTasks}} extrahierte Aufgaben mit {{numberTestCases}} Tests geladen:\n{{detailedResult}}",
+            "extractTasksFromProblemStatementTitle": "Lade extrahierte Aufgaben",
+            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Solution Entries wurden gelöscht.",
+            "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Solution Entries.",
+            "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",

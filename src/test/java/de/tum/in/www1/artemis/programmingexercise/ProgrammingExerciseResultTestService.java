@@ -186,7 +186,7 @@ public class ProgrammingExerciseResultTestService {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id").containsExactlyInAnyOrderElementsOf(expectedTestCases);
+        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries").containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(optionalResult).isPresent();
         if (withFailedTest) {
             assertThat(optionalResult.get().getScore()).isEqualTo(75L);

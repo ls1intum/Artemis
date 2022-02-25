@@ -10,7 +10,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
-import { generateTextHintExplanation } from 'app/shared/util/markdown.util';
+import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -74,9 +74,9 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      */
     generateMarkdown(): string {
         const markdownText =
-            generateTextHintExplanation(this.question) +
+            generateExerciseHintExplanation(this.question) +
             '\n\n' +
-            this.question.answerOptions!.map((answerOption) => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + generateTextHintExplanation(answerOption)).join('\n');
+            this.question.answerOptions!.map((answerOption) => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + generateExerciseHintExplanation(answerOption)).join('\n');
         return markdownText;
     }
 

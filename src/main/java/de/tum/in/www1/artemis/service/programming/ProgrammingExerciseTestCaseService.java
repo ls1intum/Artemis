@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -47,12 +48,15 @@ public class ProgrammingExerciseTestCaseService {
 
     private static final String CLASS_TEST_REGEX = "testClass\\[.+]";
 
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingSubmissionService programmingSubmissionService, AuditEventRepository auditEventRepository) {
+            ProgrammingSubmissionService programmingSubmissionService, AuditEventRepository auditEventRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.auditEventRepository = auditEventRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
     }
 
     /**
@@ -111,6 +115,7 @@ public class ProgrammingExerciseTestCaseService {
         }
 
         testCaseRepository.saveAll(updatedTests);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
         programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
@@ -199,6 +204,7 @@ public class ProgrammingExerciseTestCaseService {
 
         if (testCasesToSave.size() > 0) {
             testCaseRepository.saveAll(testCasesToSave);
+            programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             return true;
         }
         return false;
