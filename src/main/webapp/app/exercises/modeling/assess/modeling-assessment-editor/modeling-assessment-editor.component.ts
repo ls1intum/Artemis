@@ -69,6 +69,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     loadingInitialSubmission = true;
     highlightDifferences = false;
     resizeOptions = { verticalResize: true };
+    isApollonModelLoaded = false;
 
     private cancelConfirmationText: string;
 
@@ -193,7 +194,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.alertService.info('modelingAssessmentEditor.messages.lock');
         }
         this.checkPermissions();
-        this.validateFeedback();
 
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
@@ -375,6 +375,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.alertService.error(errorMessage);
             },
         });
+        this.assessmentsAreValid = false;
     }
 
     /**
@@ -418,6 +419,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     onFeedbackChanged(feedback: Feedback[]) {
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference);
+
+        if (!this.isApollonModelLoaded) {
+            this.isApollonModelLoaded = true;
+            this.calculateTotalScore();
+            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
+            return;
+        }
+
         this.validateFeedback();
     }
 

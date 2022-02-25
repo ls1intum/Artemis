@@ -270,6 +270,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             error: (error: HttpErrorResponse) => this.handleError(error),
         });
+        this.assessmentsAreValid = false;
     }
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
