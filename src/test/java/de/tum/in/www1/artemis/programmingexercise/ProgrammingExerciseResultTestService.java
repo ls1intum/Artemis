@@ -16,6 +16,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -163,9 +164,11 @@ public class ProgrammingExerciseResultTestService {
         request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, HttpStatus.OK, httpHeaders);
     }
 
-    private ProgrammingExerciseTestCase createTest(String testName, long testId) {
-        return new ProgrammingExerciseTestCase().exercise(programmingExercise).testName(testName).active(true).weight(1.0).id(testId).bonusMultiplier(1D).bonusPoints(0D)
+    private ProgrammingExerciseTestCase createTest(String testName, long testId, ProgrammingExerciseTestCaseType testCaseType) {
+        var testCase = new ProgrammingExerciseTestCase().exercise(programmingExercise).testName(testName).active(true).weight(1.0).id(testId).bonusMultiplier(1D).bonusPoints(0D)
                 .visibility(Visibility.ALWAYS);
+        testCase.setType(testCaseType);
+        return testCase;
     }
 
     // Test
@@ -173,17 +176,17 @@ public class ProgrammingExerciseResultTestService {
         database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
-        expectedTestCases.add(createTest("test1", 1L));
-        expectedTestCases.add(createTest("test2", 2L));
-        expectedTestCases.add(createTest("test4", 4L));
+        expectedTestCases.add(createTest("test1", 1L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
+        expectedTestCases.add(createTest("test2", 2L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
+        expectedTestCases.add(createTest("test4", 4L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
         if (withFailedTest) {
-            expectedTestCases.add(createTest("test3", 3L));
+            expectedTestCases.add(createTest("test3", 3L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
         }
 
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id").containsExactlyInAnyOrderElementsOf(expectedTestCases);
+        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries").containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(optionalResult).isPresent();
         if (withFailedTest) {
             assertThat(optionalResult.get().getScore()).isEqualTo(75L);

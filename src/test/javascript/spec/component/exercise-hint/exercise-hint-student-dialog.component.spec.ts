@@ -9,7 +9,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { ExerciseHintStudentComponent, ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
