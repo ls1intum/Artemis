@@ -288,9 +288,8 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        var isInstructorInCourse = authCheckService.isInstructorInCourse(course, user);
+        var isInstructorInCourse = authCheckService.isAtLeastInstructorInCourse(course, null);
 
         Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, isInstructorInCourse);
