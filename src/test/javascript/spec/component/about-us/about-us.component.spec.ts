@@ -61,15 +61,15 @@ describe('AboutUsComponent', () => {
         const contributors = [new ContributorModel(fullName, photoDirectory, role, website)];
 
         const getStaticJsonFromArtemisServerStub = jest.spyOn(staticContentService, 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], contributors)));
-        const getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(
-            new BehaviorSubject<ProfileInfo>({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo).asObservable(),
-        );
+        const getProfileInfoStub = jest
+            .spyOn(profileService, 'getProfileInfo')
+            .mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
 
         fixture.detectChanges();
         tick();
         fixture.whenStable().then(() => {
             expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledTimes(1);
+            expect(getProfileInfoStub).toHaveBeenCalled();
             expect(fixture.debugElement.nativeElement.querySelector('#contributorsName').innerHTML).toBe(fullName);
         });
     }));
