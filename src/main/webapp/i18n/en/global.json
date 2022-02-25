@@ -308,7 +308,10 @@
         "invalid.auxiliary.repository.checkout.directory": "At least one Auxiliary Repository checkout directory is invalid or duplicated. Please make sure all checkout directories are appropriate and do not contain duplications.",
         "invalid.auxiliary.repository.description": "The description of at least one Auxiliary Repository is too long!",
         "invalid.testcases.weights": "Before deactivating manual feedback, please give at least one test case a weight greater than zero.",
-        "unexpectedError": "An unexpected error occurred: {{error}}"
+        "unexpectedError": "An unexpected error occurred: {{error}}",
+        "manualCodeHintOperation": "This endpoint does not allow to change code hints manually.",
+        "exerciseNotDefined": "The exercise is not defined.",
+        "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement."
     },
     "aboutUs": "About us",
     "contact": "Contact us",

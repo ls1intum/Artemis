@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -29,9 +30,13 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -40,6 +45,7 @@ import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
@@ -86,13 +92,20 @@ public class ProgrammingExerciseService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    private final ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -109,6 +122,9 @@ public class ProgrammingExerciseService {
         this.groupNotificationService = groupNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
     }
 
     /**
@@ -159,6 +175,8 @@ public class ProgrammingExerciseService {
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
+
+        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
@@ -398,6 +416,8 @@ public class ProgrammingExerciseService {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
+
+        programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
@@ -700,6 +720,8 @@ public class ProgrammingExerciseService {
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
+        programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
+
         groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
 
         return updatedProgrammingExercise;
@@ -952,5 +974,19 @@ public class ProgrammingExerciseService {
             throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
         }
         // means the project does not exist in version control server and does not exist in continuous integration server
+    }
+
+    /**
+     * Delete all tasks with solution entries for an existing ProgrammingExercise.
+     * This method can be used to reset the mappings in case of unconsidered edge cases.
+     *
+     * @param exerciseId of the exercise
+     */
+    public void deleteTasksWithSolutionEntries(Long exerciseId) {
+        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+        Set<ProgrammingExerciseSolutionEntry> solutionEntries = tasks.stream().map(ProgrammingExerciseTask::getTestCases).flatMap(Collection::stream)
+                .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
+        programmingExerciseTaskRepository.deleteAll(tasks);
+        programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
     }
 }
