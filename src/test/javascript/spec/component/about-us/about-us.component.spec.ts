@@ -69,7 +69,7 @@ describe('AboutUsComponent', () => {
         tick();
         fixture.whenStable().then(() => {
             expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledTimes(1);
-            expect(getProfileInfoStub).toHaveBeenCalled();
+            expect(getProfileInfoStub).toHaveBeenCalledTimes(1);
             expect(fixture.debugElement.nativeElement.querySelector('#contributorsName').innerHTML).toBe(fullName);
         });
     }));
