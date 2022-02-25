@@ -1,6 +1,6 @@
 import { DomainMultiOptionListCommand } from 'app/shared/markdown-editor/domainCommands/domain-multi-option-list.command';
 
-export class TaskHintCommand extends DomainMultiOptionListCommand {
+export class ExerciseHintCommand extends DomainMultiOptionListCommand {
     buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.exerciseHintCommand';
 
     protected getValueMeta(): string {

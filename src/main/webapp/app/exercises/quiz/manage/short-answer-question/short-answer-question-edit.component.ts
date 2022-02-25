@@ -26,7 +26,7 @@ import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.mod
 import { cloneDeep } from 'lodash-es';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
-import { generateTextHintExplanation, parseTextHintExplanation } from 'app/shared/util/markdown.util';
+import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -240,7 +240,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     generateMarkdown(): string {
         this.setOptionsWithID();
         const markdownText =
-            generateTextHintExplanation(this.shortAnswerQuestion) +
+            generateExerciseHintExplanation(this.shortAnswerQuestion) +
             '\n\n\n' +
             this.shortAnswerQuestion.solutions?.map((solution, index) => this.optionsWithID[index] + ' ' + solution.text!.trim()).join('\n');
         return markdownText;
@@ -278,7 +278,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const solutionParts = questionParts.map((questionPart) => questionPart.split(/\]/g)).slice(1);
 
         // Split question into main text, hint and explanation
-        parseTextHintExplanation(questionText, this.shortAnswerQuestion);
+        parseExerciseHintExplanation(questionText, this.shortAnswerQuestion);
 
         // Extract existing solutions IDs
         const existingSolutionIDs = this.shortAnswerQuestion.solutions!.filter((solution) => solution.id !== undefined).map((solution) => solution.id);

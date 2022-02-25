@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { uniq } from 'lodash-es';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/shared/util/global.utils';
 import {
     AnalysisItem,
@@ -35,7 +35,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
         const tasksFromProblemStatement = matchRegexWithLineNumbers(problemStatement, taskRegex);
 
         const { invalidTestCases, missingTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
-        const { invalidHints, invalidHintAnalysis } = this.analyzeHints(tasksFromProblemStatement, exerciseHints);
+        const { invalidHints, invalidHintAnalysis } = this.analyzeExerciseHints(tasksFromProblemStatement, exerciseHints);
 
         const completeAnalysis: ProblemStatementAnalysis = this.mergeAnalysis(invalidTestCaseAnalysis, invalidHintAnalysis);
         return { invalidTestCases, missingTestCases, invalidHints, completeAnalysis };
@@ -84,7 +84,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param tasksFromProblemStatement to check if they contain hints.
      * @param exerciseHints to double check the exercise hints found in the problem statement.
      */
-    private analyzeHints = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseHints: ExerciseHint[]) => {
+    private analyzeExerciseHints = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseHints: ExerciseHint[]) => {
         const hintsInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, this.HINT_REGEX);
         const invalidHintAnalysis = hintsInMarkdown
             .map(

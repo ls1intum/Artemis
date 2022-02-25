@@ -39,6 +39,7 @@ import {
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -64,6 +65,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     lockingOrUnlockingRepositories = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
+
+    isAdmin = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -103,6 +106,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise = programmingExercise;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
+            this.isAdmin = this.accountService.isAdmin();
 
             const auxiliaryRepositories = this.programmingExercise.auxiliaryRepositories;
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
@@ -228,6 +232,45 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 const jhiAlert = this.alertService.error(errorMessage);
                 jhiAlert.message = errorMessage;
             },
+        });
+    }
+
+    /**
+     * Get tasks and corresponding test cases extracted from the problem statement for this exercise
+     */
+    getExtractedTasksAndTestsFromProblemStatement(): void {
+        this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.programmingExercise.id!).subscribe({
+            next: (res) => {
+                const numberTests = res.map((task) => task.tests.length).reduce((numberTests1, numberTests2) => numberTests1 + numberTests2, 0);
+                this.alertService.addAlert({
+                    type: 'success',
+                    message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
+                    translationParams: { numberTasks: res.length, numberTestCases: numberTests, detailedResult: this.buildTaskCreationMessage(res) },
+                    // long timeout in order to test properly
+                    timeout: 10000000,
+                });
+            },
+            error: (error) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    private buildTaskCreationMessage(tasks: Task[]): string {
+        return tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
+    }
+
+    /**
+     * Delete all tasks and solution entries for this exercise
+     */
+    deleteTasksWithSolutionEntries(): void {
+        this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
+            next: () => {
+                this.alertService.addAlert({
+                    type: 'success',
+                    message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
+                    timeout: 10000,
+                });
+            },
+            error: (error) => this.dialogErrorSource.next(error.message),
         });
     }
 
