@@ -98,6 +98,12 @@
             "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
             "combineTemplateCommitsSuccess": "Template repository commits have been successfully combined.",
+            "extractTasksFromProblemStatementWarning": "Only for testing purpose: Extract all tasks and test cases from problems statement.",
+            "extractTasksFromProblemStatementSuccess": "Loaded {{numberTasks}} extracted tasks with {{numberTestCases}} tests from the problem statement:\n{{detailedResult}}",
+            "extractTasksFromProblemStatementTitle": "Get Extracted Tasks",
+            "deleteTasksAndSolutionEntriesWarning": "Only for testing purpose: Delete all tasks and solution entries.",
+            "deleteTasksAndSolutionEntriesSuccess": "Successfully deleted all tasks and solution entries.",
+            "deleteTasksAndSolutionEntriesTitle": "Delete Tasks",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
