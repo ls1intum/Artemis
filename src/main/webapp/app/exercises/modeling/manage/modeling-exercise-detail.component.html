@@ -6,12 +6,8 @@
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
-                <jhi-non-programming-exercise-detail-common-actions
-                    *ngIf="course"
-                    [isExamExercise]="isExamExercise"
-                    [course]="course"
-                    [exercise]="modelingExercise"
-                ></jhi-non-programming-exercise-detail-common-actions>
+                <jhi-non-programming-exercise-detail-common-actions *ngIf="course" [isExamExercise]="isExamExercise" [course]="course" [exercise]="modelingExercise">
+                </jhi-non-programming-exercise-detail-common-actions>
                 <a *ngIf="modelingExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
@@ -36,9 +32,9 @@
                 </dd>
 
                 <dt>
-                    <span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span>
+                    <span jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</span>
                     <button
-                        *ngIf="modelingExercise && modelingExercise.sampleSolutionModel && isApollonProfileActive"
+                        *ngIf="modelingExercise && modelingExercise.exampleSolutionModel && isApollonProfileActive"
                         (click)="downloadAsPDf()"
                         class="btn btn-primary m-2"
                         jhiTranslate="entity.action.export"
@@ -47,22 +43,23 @@
                     </button>
                 </dt>
                 <dd class="editor-outline-background">
-                    <jhi-modeling-editor
-                        *ngIf="sampleSolutionUML"
-                        [readOnly]="true"
-                        [diagramType]="modelingExercise.diagramType!"
-                        [umlModel]="sampleSolutionUML!"
-                    ></jhi-modeling-editor>
+                    <jhi-modeling-editor *ngIf="exampleSolutionUML" [readOnly]="true" [diagramType]="modelingExercise.diagramType!" [umlModel]="exampleSolutionUML!">
+                    </jhi-modeling-editor>
                 </dd>
 
-                <div *ngIf="modelingExercise.sampleSolutionExplanation">
+                <div *ngIf="modelingExercise.exampleSolutionExplanation">
                     <dt>
                         {{ 'artemisApp.modelingExercise.exampleSolutionExplanation' | artemisTranslate }}
                     </dt>
                     <dd class="editor-outline-background">
-                        <span [innerHTML]="sampleSolution"></span>
+                        <span [innerHTML]="exampleSolution"></span>
                     </dd>
                 </div>
+                <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>
+                <dd>
+                    <span *ngIf="modelingExercise.exampleSolutionPublicationDate">{{ modelingExercise.exampleSolutionPublicationDate | artemisDate }}</span>
+                    <span *ngIf="!modelingExercise.exampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                </dd>
             </dl>
             <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN']">
                 <dl class="row-md">

@@ -197,7 +197,7 @@
         </jhi-info-panel>
 
         <jhi-info-panel
-            *ngIf="exercise.type === ExerciseType.MODELING && modelingExercise.sampleSolutionExplanation"
+            *ngIf="exercise.type === ExerciseType.MODELING && modelingExercise.exampleSolutionExplanation"
             [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolutionExplanation' | artemisTranslate"
         >
             <div [innerHTML]="formattedSampleSolution" style="margin-bottom: -15px"></div>

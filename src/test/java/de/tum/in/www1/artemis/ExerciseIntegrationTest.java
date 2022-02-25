@@ -174,12 +174,12 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 // Test presence and absence of exercise type specific properties
                 if (exerciseServer instanceof FileUploadExercise fileUploadExercise) {
                     assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(fileUploadExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
                 }
                 else if (exerciseServer instanceof ModelingExercise modelingExercise) {
                     assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
-                    assertThat(modelingExercise.getSampleSolutionModel()).as("Sample solution model was filtered out").isNull();
-                    assertThat(modelingExercise.getSampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
+                    assertThat(modelingExercise.getExampleSolutionModel()).as("Sample solution model was filtered out").isNull();
+                    assertThat(modelingExercise.getExampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
                 }
                 else if (exerciseServer instanceof ProgrammingExercise programmingExerciseExercise) {
                     assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
@@ -196,7 +196,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were filtered out").isZero();
                 }
                 else if (exerciseServer instanceof TextExercise textExercise) {
-                    assertThat(textExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
                 }
 
                 // Test that the exercise does not have more than one participation.
@@ -284,13 +284,13 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
                 if (exerciseWithDetails instanceof FileUploadExercise fileUploadExercise) {
                     assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(fileUploadExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
                     assertThat(fileUploadExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
                 }
                 else if (exerciseWithDetails instanceof ModelingExercise modelingExercise) {
                     assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
-                    assertThat(modelingExercise.getSampleSolutionModel()).as("Sample solution model was filtered out").isNull();
-                    assertThat(modelingExercise.getSampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
+                    assertThat(modelingExercise.getExampleSolutionModel()).as("Sample solution model was filtered out").isNull();
+                    assertThat(modelingExercise.getExampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
                     assertThat(modelingExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(2);
                 }
                 else if (exerciseWithDetails instanceof ProgrammingExercise programmingExerciseExercise) {
@@ -310,7 +310,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     assertThat(quizExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
                 }
                 else if (exerciseWithDetails instanceof TextExercise textExercise) {
-                    assertThat(textExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
                     assertThat(textExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(1);
                 }
             }
