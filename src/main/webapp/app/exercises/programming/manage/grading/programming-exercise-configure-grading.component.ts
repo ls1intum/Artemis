@@ -11,7 +11,7 @@ import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/m
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
@@ -86,6 +86,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     // The event emitters emit this value in order to indicate this component to reset the corresponding table view
     readonly RESET_TABLE = ProgrammingGradingChartsDirective.RESET_TABLE;
     readonly chartFilterType = ChartFilterType;
+    readonly ProgrammingLanguage = ProgrammingLanguage;
 
     // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
     staticCodeAnalysisCategoriesForTable: StaticCodeAnalysisCategory[] = [];

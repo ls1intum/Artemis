@@ -205,6 +205,24 @@
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
+                            <ngx-datatable-column *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" name="Type" prop="type">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
+                                        <span class="datatable-header-cell-label bold sortable">Type</span>
+                                        <fa-icon [icon]="iconForSortPropField('testCases', 'programmingExerciseTestCaseType')"></fa-icon
+                                        ><fa-icon
+                                            [icon]="faQuestionCircle"
+                                            class="text-secondary ms-2"
+                                            placement="bottom"
+                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate"
+                                            container="body"
+                                        ></fa-icon>
+                                    </span>
+                                </ng-template>
+                                <ng-template ngx-datatable-cell-template let-value="value">
+                                    {{ value }}
+                                </ng-template>
+                            </ngx-datatable-column>
                             <ngx-datatable-column name="Passed %" prop="passedPercent" [comparator]="comparePassedPercent">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
