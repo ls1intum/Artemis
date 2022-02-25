@@ -43,10 +43,10 @@ export class CourseScoreCalculationService {
             /*
             The requirement that has to be fulfilled for every exercise: It has to be included in score
             The base case we include: An exercise that is not an automatically assessed programming exercise and whose due date is over
-            Edge case 1: An automatically assessed programming exercise without a due date to run build and tests again after it
+            Edge case 1: An automatically assessed programming exercise without test runs after the due date
                 -> include in maxPointsInCourse directly after release because the student can achieve points immediately
-            Edge case 2: An automatically assessed programming exercise with a due date to run build and tests again after it
-                -> include in maxPointsInScore after the build and test run due date is over, not immediately after release because
+            Edge case 2: An automatically assessed programming exercise with test runs after the due date
+                -> include in maxPointsInScore after the final test run is over, not immediately after release because
                    the test run after due date is important for the final course score (hidden tests)
              */
             if ((isAutomaticAssessmentFinished || (!isExerciseAssessedAutomatically && isExerciseFinished)) && isExerciseIncluded) {
