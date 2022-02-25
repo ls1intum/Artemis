@@ -100,14 +100,24 @@
                         %)
                     </td>
                     <td>
-                        {{ aggregatedExamResults.noOfExamsFiltered }} ({{
+                        {{ filterForNonEmptySubmissions ? aggregatedExamResults.noOfExamsSubmittedAndNotEmpty : aggregatedExamResults.noOfExamsSubmitted }} ({{
                             aggregatedExamResults.noOfRegisteredUsers > 0
-                                ? roundAndPerformLocalConversion((aggregatedExamResults.noOfExamsFiltered / aggregatedExamResults.noOfRegisteredUsers) * 100)
+                                ? roundAndPerformLocalConversion((aggregatedExamResults.noOfExamsSubmitted / aggregatedExamResults.noOfRegisteredUsers) * 100)
                                 : '-'
                         }}
                         %)
                     </td>
-                    <td>{{ aggregatedExamResults.noOfRegisteredUsers }}</td>
+                    <td>
+                        {{
+                            filterForSubmittedExams && filterForNonEmptySubmissions
+                                ? aggregatedExamResults.noOfExamsSubmittedAndNotEmpty
+                                : filterForSubmittedExams && !filterForNonEmptySubmissions
+                                ? aggregatedExamResults.noOfExamsSubmitted
+                                : !filterForSubmittedExams && filterForNonEmptySubmissions
+                                ? aggregatedExamResults.noOfExamsNonEmpty
+                                : aggregatedExamResults.noOfRegisteredUsers
+                        }}
+                    </td>
                     <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey"></td>
                     <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '3px solid lightgrey' } : {}"></td>
                     <td *ngIf="hasSecondCorrectionAndStarted"></td>

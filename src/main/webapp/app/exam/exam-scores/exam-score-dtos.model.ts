@@ -45,7 +45,7 @@ export class StudentResult {
     public overallGradeInFirstCorrection?: string;
     public hasPassed?: boolean;
     public submitted: boolean;
-    public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
+    public exerciseGroupIdToExerciseResult: Map<number, ExerciseResult>; // no idea if this is possible
 
     constructor() {}
 }
@@ -87,7 +87,9 @@ export class AggregatedExamResult {
     public standardGradeDeviation?: number;
     public standardGradeDeviationTotal?: number;
     public noOfExamsFilteredForPassed = 0;
-    public noOfExamsFiltered = 0;
+    public noOfExamsSubmitted = 0;
+    public noOfExamsNonEmpty = 0;
+    public noOfExamsSubmittedAndNotEmpty = 0;
     public noOfRegisteredUsers = 0;
 
     // same for first correction round

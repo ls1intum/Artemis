@@ -315,6 +315,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * Calculates statistics on exam granularity for passed exams, submitted exams, and for all exams.
      */
     private calculateExamStatistics() {
+        let numberNonEmptySubmissions = 0;
+        let numberNonEmptySubmittedSubmissions = 0;
+
         const studentPointsPassed: number[] = [];
         const studentPointsSubmitted: number[] = [];
         const studentPointsTotal: number[] = [];
@@ -341,6 +344,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 if (studentResult.hasPassed) {
                     studentPointsPassed.push(studentResult.overallPointsAchieved!);
                     studentPointsPassedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
+                }
+            }
+            const studentExerciseSubmissions = Array.from(studentResult.exerciseGroupIdToExerciseResult.values());
+            if (studentExerciseSubmissions.some((submission) => !submission.hasNonEmptySubmission)) {
+                numberNonEmptySubmissions += 1;
+                if (studentResult.submitted) {
+                    numberNonEmptySubmittedSubmissions += 1;
                 }
             }
 
@@ -383,6 +393,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             studentGradesTotal,
             studentGradesTotalInFirstCorrectionRound,
         );
+        this.aggregatedExamResults.noOfExamsNonEmpty = numberNonEmptySubmissions;
+        this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty = numberNonEmptySubmittedSubmissions;
     }
 
     /**
@@ -444,7 +456,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             examStatistics.meanPoints = mean(studentPointsSubmitted);
             examStatistics.median = median(studentPointsSubmitted);
             examStatistics.standardDeviation = standardDeviation(studentPointsSubmitted);
-            examStatistics.noOfExamsFiltered = studentPointsSubmitted.length;
+            examStatistics.noOfExamsSubmitted = studentPointsSubmitted.length;
             if (this.examScoreDTO.maxPoints) {
                 examStatistics.meanPointsRelative = (examStatistics.meanPoints / this.examScoreDTO.maxPoints) * 100;
                 examStatistics.medianRelative = (examStatistics.median / this.examScoreDTO.maxPoints) * 100;
