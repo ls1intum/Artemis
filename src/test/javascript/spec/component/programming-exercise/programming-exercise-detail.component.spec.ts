@@ -17,7 +17,7 @@ import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 
 describe('ProgrammingExercise Management Detail Component', () => {
@@ -146,9 +146,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(addAlertSpy).toHaveBeenCalledTimes(1);
         expect(addAlertSpy).toHaveBeenCalledWith({
             message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
-            timeout: 10000000,
+            timeout: 0,
             translationParams: expectedParams,
-            type: 'success',
+            type: AlertType.SUCCESS,
         });
         expect(extractTaskMock).toHaveBeenCalledTimes(1);
         expect(extractTaskMock).toHaveBeenCalledWith(programmingExercise.id);
@@ -168,8 +168,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(addAlertSpy).toHaveBeenCalledTimes(1);
         expect(addAlertSpy).toHaveBeenCalledWith({
             message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
-            timeout: 10000,
-            type: 'success',
+            type: AlertType.SUCCESS,
         });
     });
 });

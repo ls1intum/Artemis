@@ -201,7 +201,7 @@ export class AlertService {
             };
         }
 
-        if (alert.message && alert.message !== '') {
+        if (alert.message) {
             alertInternal.isOpen = true;
             this.alerts.unshift(alertInternal);
 

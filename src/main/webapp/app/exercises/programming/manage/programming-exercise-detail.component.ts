@@ -253,11 +253,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             next: (res) => {
                 const numberTests = res.map((task) => task.tests.length).reduce((numberTests1, numberTests2) => numberTests1 + numberTests2, 0);
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
                     translationParams: { numberTasks: res.length, numberTestCases: numberTests, detailedResult: this.buildTaskCreationMessage(res) },
-                    // long timeout in order to test properly
-                    timeout: 10000000,
+                    timeout: 0,
                 });
             },
             error: (error) => this.dialogErrorSource.next(error.message),
@@ -275,9 +274,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
             next: () => {
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
-                    timeout: 10000,
                 });
             },
             error: (error) => this.dialogErrorSource.next(error.message),
@@ -344,7 +342,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.unlockAllRepositoriesSuccess',
                     translationParams: { number: res?.body },
-                    timeout: 10000,
                 });
                 this.lockingOrUnlockingRepositories = false;
             },
@@ -378,7 +375,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.lockAllRepositoriesSuccess',
                     translationParams: { number: res?.body },
-                    timeout: 10000,
                 });
                 this.lockingOrUnlockingRepositories = false;
             },
