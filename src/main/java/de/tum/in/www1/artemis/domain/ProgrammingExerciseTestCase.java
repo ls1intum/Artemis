@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -57,6 +58,10 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExerciseTestCase")
     private ProgrammingExercise exercise;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "test_case_type")
+    private ProgrammingExerciseTestCaseType type;
 
     public ProgrammingExerciseTestCase id(Long id) {
         setId(id);
@@ -180,6 +185,14 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     public ProgrammingExerciseTestCase visibility(Visibility visibility) {
         this.visibility = visibility;
         return this;
+    }
+
+    public ProgrammingExerciseTestCaseType getType() {
+        return type;
+    }
+
+    public void setType(ProgrammingExerciseTestCaseType programmingExerciseTestCaseType) {
+        this.type = programmingExerciseTestCaseType;
     }
 
     /**

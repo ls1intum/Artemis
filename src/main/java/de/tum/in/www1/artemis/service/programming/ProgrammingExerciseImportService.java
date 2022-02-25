@@ -310,6 +310,7 @@ public class ProgrammingExerciseImportService {
             copy.setBonusMultiplier(testCase.getBonusMultiplier());
             copy.setBonusPoints(testCase.getBonusPoints());
             copy.setExercise(targetExercise);
+            copy.setType(testCase.getType());
             programmingExerciseTestCaseRepository.save(copy);
             newIdByOldId.put(testCase.getId(), copy.getId());
             return copy;
