@@ -4,7 +4,15 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
-import { CourseScoresComponent, EMAIL_KEY, NAME_KEY, OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
+import {
+    CourseScoresComponent,
+    EMAIL_KEY,
+    HighlightType,
+    NAME_KEY,
+    OVERALL_COURSE_POINTS_KEY,
+    OVERALL_COURSE_SCORE_KEY,
+    USERNAME_KEY,
+} from 'app/course/course-scores/course-scores.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -27,6 +35,8 @@ import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/m
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -37,6 +47,10 @@ describe('CourseScoresComponent', () => {
     const exerciseWithFutureReleaseDate = {
         title: 'exercise with future release date',
         releaseDate: dayjs().add(1, 'day'),
+        id: 6,
+        type: ExerciseType.TEXT,
+        includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
+        maxPoints: 10,
     } as Exercise;
 
     const overallPoints = 10 + 10 + 10;
@@ -222,6 +236,7 @@ describe('CourseScoresComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 CourseScoresComponent,
+                MockComponent(ParticipantScoresDistributionComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(OrionFilterDirective),
@@ -229,6 +244,7 @@ describe('CourseScoresComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
                 MockTranslateValuesDirective,
             ],
             providers: [
@@ -434,6 +450,27 @@ describe('CourseScoresComponent', () => {
         expect(component.isBonus).toBeFalse();
         expect(component.maxGrade).toEqual('A');
         expect(component.averageGrade).toEqual('A');
+    });
+
+    it('should set highlighting to default if current highlighting is deselected', () => {
+        component.highlightedType = HighlightType.AVERAGE;
+
+        // we deselect the current highlighting
+        component.highlightBar(HighlightType.AVERAGE);
+
+        expect(component.highlightedType).toBe(HighlightType.NONE);
+        expect(component.valueToHighlight).toBe(undefined);
+    });
+
+    it('should highlight the median correctly', () => {
+        component.highlightedType = HighlightType.AVERAGE;
+        component.medianScoreIncluded = 55.5;
+
+        // we select the median
+        component.highlightBar(HighlightType.MEDIAN);
+
+        expect(component.highlightedType).toBe(HighlightType.MEDIAN);
+        expect(component.valueToHighlight).toBe(55.5);
     });
 
     function validateUserRow(

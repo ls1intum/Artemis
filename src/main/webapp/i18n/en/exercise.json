@@ -143,7 +143,7 @@
             "showAll": "Show All",
             "tagPlaceholder": "+ Category",
             "isProgramming": "This is a programming exercise",
-            "isModeling": "This is a modelling exercise",
+            "isModeling": "This is a modeling exercise",
             "isQuiz": "This is a quiz exercise",
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",

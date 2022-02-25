@@ -6,14 +6,89 @@
             [translateValues]="{ exercisesLength: exercisesOfCourseThatAreIncludedInScoreCalculation.length, studentsLength: students.length }"
             >{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }} released exercises, {{ students.length }} students with results</small
         >
-        <button *ngIf="exportReady" class="btn btn-primary btn-sm float-end" (click)="exportResults()">
-            <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
-            <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
-        </button>
     </h4>
     <span *ngIf="!exportReady" style="color: grey"
         ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="instructorDashboard.loadingStudents">Loading the results of all students...</span></span
     >
+    <div class="row d-flex align-items-center">
+        <div class="col-9">
+            <div class="text-center">
+                <h4 jhiTranslate="instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
+            </div>
+            <jhi-participant-scores-distribution *ngIf="scoresToDisplay" [gradingScale]="gradingScale" [scores]="scoresToDisplay" [scoreToHighlight]="valueToHighlight">
+            </jhi-participant-scores-distribution>
+        </div>
+        <div class="col-3">
+            <table class="table table-bordered table-sm table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th></th>
+                        <th>
+                            <span jhiTranslate="instructorDashboard.statisticsTable.included">Included in score</span>
+                        </th>
+                        <th>
+                            <span jhiTranslate="instructorDashboard.statisticsTable.total">Total</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>
+                            <span jhiTranslate="instructorDashboard.statisticsTable.amountOfReleasedExercises"># of released exercises</span>
+                        </th>
+                        <td>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</td>
+                        <td>{{ this.numberOfReleasedExercises }}</td>
+                    </tr>
+                    <tr>
+                        <th>
+                            <label class="d-flex align-items-center">
+                                <input
+                                    type="checkbox"
+                                    [checked]="highlightedType === highlightType.AVERAGE"
+                                    (click)="highlightBar(highlightType.AVERAGE)"
+                                    ngbTooltip="{{ 'instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
+                                />
+                                <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.averagePoints">Average points (score)</span>
+                            </label>
+                        </th>
+                        <td id="average_points" [ngClass]="highlightedType">
+                            {{ roundValueSpecifiedByCourseSettings(this.averageNumberOfOverallPoints, course) }} ({{ this.averageScoreIncluded }}%)
+                        </td>
+                        <td>{{ this.averagePointsTotal }} ({{ this.averageScoreTotal }}%)</td>
+                    </tr>
+                    <tr>
+                        <th>
+                            <label class="d-flex align-items-center">
+                                <input
+                                    type="checkbox"
+                                    [checked]="highlightedType === highlightType.MEDIAN"
+                                    (click)="highlightBar(highlightType.MEDIAN)"
+                                    ngbTooltip="{{ 'instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
+                                />
+                                <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.medianPoints">Median points (score)</span>
+                            </label>
+                        </th>
+                        <td id="median_points" [ngClass]="highlightedType">{{ this.medianPointsIncluded }} ({{ this.medianScoreIncluded }}%)</td>
+                        <td>{{ this.medianPointsTotal }} ({{ this.medianScoreTotal }}%)</td>
+                    </tr>
+                    <tr>
+                        <th>
+                            <span jhiTranslate="instructorDashboard.statisticsTable.standardPointDeviation">Standard point deviation</span>
+                        </th>
+                        <td>{{ this.standardDeviationPointsIncluded }}</td>
+                        <td>{{ this.standardDeviationPointsTotal }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="separator"></div>
+    <div class="d-flex justify-content-end">
+        <button *ngIf="exportReady" class="btn btn-primary btn-sm" (click)="exportResults()">
+            <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
+            <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
+        </button>
+    </div>
     <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
             <thead>

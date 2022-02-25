@@ -8,7 +8,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -83,7 +83,7 @@ describe('ExerciseHint Management Update Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(service.update).toHaveBeenCalledWith(entity);
+            expect(service.update).toHaveBeenCalledWith(2, entity);
             expect(comp.isSaving).toEqual(false);
         }));
 
@@ -99,7 +99,7 @@ describe('ExerciseHint Management Update Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(service.create).toHaveBeenCalledWith(entity);
+            expect(service.create).toHaveBeenCalledWith(2, entity);
             expect(comp.isSaving).toEqual(false);
         }));
     });

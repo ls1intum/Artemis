@@ -3,8 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ExerciseHintDetailComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-detail.component';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ArtemisTestModule } from '../../test.module';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 describe('ExerciseHint Management Detail Component', () => {
     let comp: ExerciseHintDetailComponent;

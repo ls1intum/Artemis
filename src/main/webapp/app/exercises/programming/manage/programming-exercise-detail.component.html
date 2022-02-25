@@ -25,7 +25,7 @@
 
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise"
-                        [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'hints']"
+                        [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
                         class="btn btn-warning btn-sm me-1"
                         style="margin-bottom: 10px"
                     >
@@ -136,7 +136,7 @@
                             <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                         </button>
                     </span>
-                    <span *ngIf="programmingExercise.isAtLeastEditor" class="mr-1">
+                    <span *ngIf="programmingExercise.isAtLeastEditor" class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
@@ -145,6 +145,34 @@
                             ngbTooltip="{{ 'artemisApp.programmingExercise.recreateBuildPlans.warning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
+                        </button>
+                    </span>
+                </div>
+                <!--
+                At the moment, this is only visible to admins as the actual main functionality has not yet been added on the server.
+                In the future, this feature will be available to editors and instructors as well.
+                -->
+                <div *ngIf="isAdmin">
+                    <span class="me-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="getExtractedTasksAndTestsFromProblemStatement()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.extractTasksFromProblemStatementWarning' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.extractTasksFromProblemStatementTitle">Extract Tasks</span>
+                        </button>
+                    </span>
+                    <span class="me-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="deleteTasksWithSolutionEntries()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesWarning' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.deleteTasksAndSolutionEntriesTitle">Delete Tasks</span>
                         </button>
                     </span>
                 </div>
