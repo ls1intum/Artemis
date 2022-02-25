@@ -39,11 +39,11 @@ public class PostContextFilter {
 
     private String searchText;
 
-    private boolean filterToUnresolved;
+    private Boolean filterToUnresolved;
 
-    private boolean filterToOwn;
+    private Boolean filterToOwn;
 
-    private boolean filterToAnsweredOrReacted;
+    private Boolean filterToAnsweredOrReacted;
 
     private PostSortCriterion postSortCriterion;
 
@@ -105,27 +105,27 @@ public class PostContextFilter {
         this.searchText = searchText;
     }
 
-    public boolean isFilterToUnresolved() {
+    public Boolean getFilterToUnresolved() {
         return filterToUnresolved;
     }
 
-    public void setFilterToUnresolved(boolean filterToUnresolved) {
+    public void setFilterToUnresolved(Boolean filterToUnresolved) {
         this.filterToUnresolved = filterToUnresolved;
     }
 
-    public boolean isFilterToOwn() {
+    public Boolean getFilterToOwn() {
         return filterToOwn;
     }
 
-    public void setFilterToOwn(boolean filterToOwn) {
+    public void setFilterToOwn(Boolean filterToOwn) {
         this.filterToOwn = filterToOwn;
     }
 
-    public boolean isFilterToAnsweredOrReacted() {
+    public Boolean getFilterToAnsweredOrReacted() {
         return filterToAnsweredOrReacted;
     }
 
-    public void setFilterToAnsweredOrReacted(boolean filterToAnsweredOrReacted) {
+    public void setFilterToAnsweredOrReacted(Boolean filterToAnsweredOrReacted) {
         this.filterToAnsweredOrReacted = filterToAnsweredOrReacted;
     }
 

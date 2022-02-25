@@ -127,8 +127,8 @@ public class PostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
             @RequestParam(required = false) CourseWideContext courseWideContext, @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId,
-            @RequestParam(required = false) String searchText, @RequestParam(required = false) boolean filterToUnresolved, @RequestParam(required = false) boolean filterToOwn,
-            @RequestParam(required = false) boolean filterToAnsweredOrReacted, @RequestParam(required = false) PostSortCriterion postSortCriterion,
+            @RequestParam(required = false) String searchText, @RequestParam(required = false) Boolean filterToUnresolved, @RequestParam(required = false) Boolean filterToOwn,
+            @RequestParam(required = false) Boolean filterToAnsweredOrReacted, @RequestParam(required = false) PostSortCriterion postSortCriterion,
             @RequestParam(required = false) SortingOrder sortingOrder) {
 
         PostContextFilter postContextFilter = new PostContextFilter();

@@ -112,7 +112,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingExercisePosts.size() + 1).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
+        assertThat(existingExercisePosts.size() + 1).isEqualTo(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null).size());
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
     }
 
@@ -125,7 +125,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setExercise(examExercise);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingExercisePosts.size()).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
+        assertThat(existingExercisePosts.size()).isEqualTo(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null).size());
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
 
     }
@@ -139,7 +139,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingLecturePosts.size() + 1).isEqualTo(postRepository.findPostsByLectureId(lectureId).size());
+        assertThat(existingLecturePosts.size() + 1).isEqualTo(postRepository.findPostsByLectureId(lectureId, null, null, null, null).size());
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
     }
 
@@ -153,7 +153,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).toList();
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null).stream().filter(post -> post.getCourseWideContext() != null)
+                .toList();
         assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewCoursePost(createdPost, course);
     }
@@ -169,7 +170,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setDisplayPriority(DisplayPriority.PINNED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).toList();
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null).stream().filter(post -> post.getCourseWideContext() != null)
+                .toList();
         assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
     }

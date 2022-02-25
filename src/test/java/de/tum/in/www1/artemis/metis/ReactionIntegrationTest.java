@@ -222,7 +222,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         createVoteReactionOnPost(postReactedOn2, student2);
 
         // refresh posts after reactions are added
-        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId);
+        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, null, null, null, null);
 
         var params = new LinkedMultiValueMap<String, String>();
 
@@ -260,7 +260,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         createVoteReactionOnPost(post2ReactedOn, student2);
 
         // refresh posts after reactions are added
-        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId);
+        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, null, null, null, null);
 
         var params = new LinkedMultiValueMap<String, String>();
 

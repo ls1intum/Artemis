@@ -277,7 +277,7 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        List<Post> coursePosts = postRepository.findPostsForCourse(courseId);
+        List<Post> coursePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null);
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
@@ -301,30 +301,9 @@ public class PostService extends PostingService {
 
         // retrieve posts
         List<Post> coursePosts;
-        if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findPostsForCourse(postContextFilter.getCourseId());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findUnresolvedPostsForCourse(postContextFilter.getCourseId());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findOwnPostsForCourse(postContextFilter.getCourseId(), user.getId());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findAnsweredOrReactedPostsByUserForCourse(postContextFilter.getCourseId(), user.getId());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findOwnAndUnresolvedPostsForCourse(postContextFilter.getCourseId(), user.getId());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserForCourse(postContextFilter.getCourseId(), user.getId());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserForCourse(postContextFilter.getCourseId(), user.getId());
-        }
-        else {
-            coursePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserForCourse(postContextFilter.getCourseId(), user.getId());
-        }
+        coursePosts = postRepository.findPostsForCourse(postContextFilter.getCourseId(), null, postContextFilter.getFilterToUnresolved(), postContextFilter.getFilterToOwn(),
+                postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
@@ -349,35 +328,9 @@ public class PostService extends PostingService {
         // retrieve posts
         List<Post> coursePosts;
         // retrieve posts
-        if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findPostsForCourseByCourseWideContext(postContextFilter.getCourseId(), postContextFilter.getCourseWideContext());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findUnresolvedPostsForCourseByCourseWideContext(postContextFilter.getCourseId(), postContextFilter.getCourseWideContext());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findOwnPostsForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(), postContextFilter.getCourseWideContext());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findAnsweredOrReactedPostsByUserForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
-                    postContextFilter.getCourseWideContext());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findOwnAndUnresolvedPostsForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
-                    postContextFilter.getCourseWideContext());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
-                    postContextFilter.getCourseWideContext());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            coursePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
-                    postContextFilter.getCourseWideContext());
-        }
-        else {
-            coursePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserForCourseByCourseWideContext(postContextFilter.getCourseId(), user.getId(),
-                    postContextFilter.getCourseWideContext());
-        }
+        coursePosts = postRepository.findPostsForCourse(postContextFilter.getCourseId(), postContextFilter.getCourseWideContext(), postContextFilter.getFilterToUnresolved(),
+                postContextFilter.getFilterToOwn(), postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
@@ -401,30 +354,9 @@ public class PostService extends PostingService {
 
         // retrieve posts
         List<Post> exercisePosts;
-        if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            exercisePosts = postRepository.findPostsByExerciseId(postContextFilter.getExerciseId());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            exercisePosts = postRepository.findUnresolvedPostsByExerciseId(postContextFilter.getExerciseId());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            exercisePosts = postRepository.findOwnPostsByExerciseId(postContextFilter.getExerciseId(), user.getId());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            exercisePosts = postRepository.findAnsweredOrReactedPostsByUserByExerciseId(postContextFilter.getExerciseId(), user.getId());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            exercisePosts = postRepository.findOwnAndUnresolvedPostsByExerciseId(postContextFilter.getExerciseId(), user.getId());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            exercisePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserByExerciseId(postContextFilter.getExerciseId(), user.getId());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            exercisePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserByExerciseId(postContextFilter.getExerciseId(), user.getId());
-        }
-        else {
-            exercisePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserByExerciseId(postContextFilter.getExerciseId(), user.getId());
-        }
+        exercisePosts = postRepository.findPostsByExerciseId(postContextFilter.getExerciseId(), postContextFilter.getFilterToUnresolved(), postContextFilter.getFilterToOwn(),
+                postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+
         // protect sample solution, grading instructions, etc.
         exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
 
@@ -448,30 +380,8 @@ public class PostService extends PostingService {
 
         // retrieve posts
         List<Post> lecturePosts;
-        if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            lecturePosts = postRepository.findPostsByLectureId(postContextFilter.getLectureId());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            lecturePosts = postRepository.findUnresolvedPostsByLectureId(postContextFilter.getLectureId());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            lecturePosts = postRepository.findOwnPostsByLectureId(postContextFilter.getLectureId(), user.getId());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            lecturePosts = postRepository.findAnsweredOrReactedPostsByUserByLectureId(postContextFilter.getLectureId(), user.getId());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && !postContextFilter.isFilterToAnsweredOrReacted()) {
-            lecturePosts = postRepository.findOwnAndUnresolvedPostsForLecture(postContextFilter.getLectureId(), user.getId());
-        }
-        else if (!postContextFilter.isFilterToUnresolved() && postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            lecturePosts = postRepository.findOwnAndAnsweredOrReactedPostsByUserForLecture(postContextFilter.getLectureId(), user.getId());
-        }
-        else if (postContextFilter.isFilterToUnresolved() && !postContextFilter.isFilterToOwn() && postContextFilter.isFilterToAnsweredOrReacted()) {
-            lecturePosts = postRepository.findUnresolvedAndAnsweredOrReactedPostsByUserForLecture(postContextFilter.getLectureId(), user.getId());
-        }
-        else {
-            lecturePosts = postRepository.findUnresolvedAndOwnAndAnsweredOrReactedPostsByUserForLecture(postContextFilter.getLectureId(), user.getId());
-        }
+        lecturePosts = postRepository.findPostsByLectureId(postContextFilter.getLectureId(), postContextFilter.getFilterToUnresolved(), postContextFilter.getFilterToOwn(),
+                postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
 
         // protect sample solution, grading instructions, etc.
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
