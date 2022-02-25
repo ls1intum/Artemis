@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -211,14 +211,19 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id!).subscribe({
             next: (res) => {
-                const jhiAlert = this.alertService.success(res);
-                jhiAlert.message = res;
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: res,
+                    disableTranslation: true,
+                });
             },
             error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
-                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
             },
         });
     }
@@ -226,14 +231,19 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     recreateBuildPlans() {
         this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
             next: (res) => {
-                const jhiAlert = this.alertService.success(res);
-                jhiAlert.message = res;
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: res,
+                    disableTranslation: true,
+                });
             },
             error: (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
-                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
             },
         });
     }
@@ -246,11 +256,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             next: (res) => {
                 const numberTests = res.map((task) => task.tests.length).reduce((numberTests1, numberTests2) => numberTests1 + numberTests2, 0);
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
                     translationParams: { numberTasks: res.length, numberTestCases: numberTests, detailedResult: this.buildTaskCreationMessage(res) },
-                    // long timeout in order to test properly
-                    timeout: 10000000,
+                    timeout: 0,
                 });
             },
             error: (error) => this.dialogErrorSource.next(error.message),
@@ -268,9 +277,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
             next: () => {
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
-                    timeout: 10000,
                 });
             },
             error: (error) => this.dialogErrorSource.next(error.message),
@@ -334,10 +342,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.programmingExerciseService.unlockAllRepositories(this.programmingExercise.id!).subscribe({
             next: (res) => {
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.unlockAllRepositoriesSuccess',
                     translationParams: { number: res?.body },
-                    timeout: 10000,
                 });
                 this.lockingOrUnlockingRepositories = false;
             },
@@ -368,10 +375,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.programmingExerciseService.lockAllRepositories(this.programmingExercise.id!).subscribe({
             next: (res) => {
                 this.alertService.addAlert({
-                    type: 'success',
+                    type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.lockAllRepositoriesSuccess',
                     translationParams: { number: res?.body },
-                    timeout: 10000,
                 });
                 this.lockingOrUnlockingRepositories = false;
             },

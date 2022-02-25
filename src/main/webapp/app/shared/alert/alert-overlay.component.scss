@@ -1,0 +1,188 @@
+:host {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    z-index: 100000;
+
+    padding: 20px;
+
+    overflow: hidden;
+
+    .alert-wrap {
+        width: 100%;
+        overflow: visible;
+        position: relative;
+
+        margin-bottom: 15px;
+
+        .alert-inner {
+            width: 100%;
+            pointer-events: all;
+            min-height: 70px;
+            position: relative;
+
+            border: 1px solid;
+            padding: 15px 20px;
+            border-radius: 0.3rem;
+            box-shadow: rgba(0, 0, 0, 0.55) 0 5px 15px;
+
+            flex: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .left {
+                display: flex;
+                gap: 15px;
+                align-items: center;
+                justify-content: center;
+
+                .message {
+                    white-space: break-spaces;
+                    text-overflow: ellipsis;
+                }
+
+                .ng-fa-icon {
+                    animation: 0.4s highlight;
+                    animation-delay: 0.6s;
+                    animation-iteration-count: 3;
+                }
+            }
+
+            .close-circle {
+                position: absolute;
+                top: 0;
+                right: 0;
+
+                color: black;
+                border-radius: 20px;
+                background: white;
+                width: 20px;
+                height: 20px;
+                border: 1px solid rgba(93, 93, 93, 0.65);
+                text-align: center;
+                vertical-align: center;
+                padding: 4.5px 0;
+
+                display: flex;
+                justify-content: center;
+                align-items: center;
+
+                // rotate is a workaround for subpixel rendering issues on Firefox
+                transform: translate(35%, -35%) rotate(0.0000001deg);
+
+                cursor: pointer;
+                transition: all 0.25s;
+                opacity: 0.7;
+
+                .ng-fa-icon {
+                    transform: rotate(0.0000001deg);
+                }
+            }
+
+            .close-circle:hover {
+                opacity: 1;
+                background: #d2d2d2;
+            }
+
+            .time-bar {
+                position: absolute;
+                bottom: 0px;
+                left: 0px;
+                height: 4px;
+                border-radius: 0 3px 3px;
+
+                animation: scale-down cubic-bezier(0.79, 0.98, 0.79, 0.98);
+            }
+        }
+
+        .info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border-color: #1295ab;
+
+            .left > .ng-fa-icon {
+                color: #1295ab;
+            }
+
+            .time-bar {
+                background-color: #1295ab;
+            }
+        }
+
+        .danger {
+            color: #600c0c;
+            background-color: #f1d1d1;
+            border-color: #bb2d3b;
+
+            .left > .ng-fa-icon {
+                color: #bb2d3b;
+            }
+
+            .time-bar {
+                background-color: #bb2d3b;
+            }
+        }
+
+        .warning {
+            color: #604c0c;
+            background-color: #f1e8d1;
+            border-color: #cc9c12;
+
+            .left > .ng-fa-icon {
+                color: #cc9c12;
+            }
+
+            .time-bar {
+                background-color: #cc9c12;
+            }
+        }
+
+        .success {
+            color: #21600c;
+            background-color: #d9f1d1;
+            border-color: #3eb058;
+
+            .left > .ng-fa-icon {
+                color: #3eb058;
+            }
+
+            .time-bar {
+                background-color: #3eb058;
+            }
+        }
+    }
+
+    @media screen and (min-width: 800px) {
+        .alert-wrap {
+            width: 75%;
+            max-width: 800px;
+        }
+    }
+
+    @keyframes highlight {
+        0%,
+        100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.3);
+        }
+    }
+
+    @keyframes scale-down {
+        0% {
+            width: 100%;
+        }
+        100% {
+            width: 0;
+        }
+    }
+}

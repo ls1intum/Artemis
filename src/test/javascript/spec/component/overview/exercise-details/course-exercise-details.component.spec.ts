@@ -49,8 +49,6 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -59,6 +57,10 @@ import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-st
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -74,6 +76,25 @@ describe('CourseExerciseDetailsComponent', () => {
     let subscribeForParticipationChangesMock: jest.SpyInstance;
     let complaintService: ComplaintService;
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
+    const modelingExercise = {
+        id: 23,
+        type: ExerciseType.MODELING,
+        studentParticipations: [],
+        exampleSolutionModel: '{ "key": "value" }',
+        exampleSolutionExplanation: 'Solution<br>Explanation',
+    } as unknown as ModelingExercise;
+    const textExercise = {
+        id: 24,
+        type: ExerciseType.TEXT,
+        studentParticipations: [],
+        exampleSolution: 'Sample<br>Solution',
+    } as unknown as TextExercise;
+    const fileUploadExercise = {
+        id: 25,
+        type: ExerciseType.FILE_UPLOAD,
+        studentParticipations: [],
+        exampleSolution: 'Sample<br>Solution',
+    } as unknown as FileUploadExercise;
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
     beforeEach(() => {
@@ -95,14 +116,13 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
-                MockComponent(AlertComponent),
-                MockComponent(AlertErrorComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(ExtensionPointDirective),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(NgbTooltip),
                 MockComponent(LtiInitializerComponent),
+                MockComponent(ModelingEditorComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -251,4 +271,34 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.wasSubmissionSimulated).toBe(false);
         expect(comp.exercise?.participationStatus).toBe(ParticipationStatus.EXERCISE_SUBMITTED);
     }));
+
+    it('should fill & empty sample modeling solution', () => {
+        comp.showIfExampleSolutionPresent({ ...modelingExercise });
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
+
+        comp.showIfExampleSolutionPresent({ ...exercise });
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
+    });
+
+    it('should fill & empty sample text solution', () => {
+        comp.showIfExampleSolutionPresent({ ...textExercise });
+        expect(comp.exampleSolution).not.toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
+
+        comp.showIfExampleSolutionPresent({ ...exercise });
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
+    });
+
+    it('should fill & empty sample file upload solution', () => {
+        comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
+        expect(comp.exampleSolution).not.toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
+
+        comp.showIfExampleSolutionPresent({ ...exercise });
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
+    });
 });

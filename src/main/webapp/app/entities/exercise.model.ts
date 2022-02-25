@@ -88,6 +88,7 @@ export abstract class Exercise implements BaseEntity {
     public teamAssignmentConfig?: TeamAssignmentConfig;
     public categories?: ExerciseCategory[];
     public type?: ExerciseType;
+    public exampleSolutionPublicationDate?: dayjs.Dayjs;
 
     public teams?: Team[];
     public studentParticipations?: StudentParticipation[];
@@ -231,4 +232,5 @@ export function resetDates(exercise: Exercise) {
     exercise.releaseDate = undefined;
     exercise.dueDate = undefined;
     exercise.assessmentDueDate = undefined;
+    exercise.exampleSolutionPublicationDate = undefined;
 }

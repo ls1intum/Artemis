@@ -8,10 +8,9 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
-import { MockComponent, MockDirective, MockPipe, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { of, Subscription } from 'rxjs';
 import { NgModel } from '@angular/forms';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
@@ -88,7 +87,6 @@ describe('Exercise Scores Component', () => {
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxDatatableModule)],
             declarations: [
                 ExerciseScoresComponent,
-                MockComponent(AlertComponent),
                 MockComponent(ExerciseScoresExportButtonComponent),
                 MockComponent(ProgrammingAssessmentRepoExportButtonComponent),
                 MockComponent(SubmissionExportButtonComponent),
