@@ -1469,6 +1469,17 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(true);
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(0);
 
+        // check that an adapted version is computed for tutors
+        database.changeUser("tutor1");
+
+        examChecklistDTO = examService.getStatsForChecklist(exam, false);
+        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(null);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(0);
+
+        database.changeUser("instructor1");
+
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
             studentExam.setStarted(true);
@@ -1651,6 +1662,25 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(0L);
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound().length).isEqualTo(1);
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).containsAll((Collections.singletonList(90L)));
+
+        // change to a tutor
+        database.changeUser("tutor1");
+
+        // check that a modified version is returned
+        // check if stats are set correctly for the instructor
+        examChecklistDTO = examService.getStatsForChecklist(exam, false);
+        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(null);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(75);
+        assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound().length).isEqualTo(1);
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).containsAll((Collections.singletonList(90L)));
+
+        // change back to instructor user
+        database.changeUser("instructor1");
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
