@@ -5,7 +5,6 @@
         <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.textExercise.home.importLabel"></h4>
     </div>
     <div>
-        <jhi-alert-error></jhi-alert-error>
         <div class="form-group" [hidden]="isImport || !textExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="textExercise.id" readonly />
@@ -138,7 +137,6 @@
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="textExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
-                [shouldDisplayAlert]="false"
                 [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
@@ -150,7 +148,6 @@
                 [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="textExercise.exampleSolution"
                 [editorMode]="EditorMode.LATEX"
-                [shouldDisplayAlert]="false"
                 [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
@@ -180,7 +177,6 @@
             <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
-    <jhi-alert></jhi-alert>
     <div>
         <button type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>

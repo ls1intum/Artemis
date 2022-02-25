@@ -5,8 +5,6 @@
         <h4 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel"></h4>
     </div>
     <div>
-        <jhi-alert></jhi-alert>
-        <jhi-alert-error></jhi-alert-error>
         <div class="form-group" [hidden]="!modelingExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="modelingExercise.id" readonly />
@@ -166,7 +164,6 @@
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="modelingExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
-                [shouldDisplayAlert]="false"
                 [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
@@ -187,7 +184,6 @@
                 [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="modelingExercise.exampleSolutionExplanation"
                 [editorMode]="EditorMode.LATEX"
-                [shouldDisplayAlert]="false"
                 [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
@@ -208,7 +204,6 @@
             <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
-    <jhi-alert></jhi-alert>
     <div>
         <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>

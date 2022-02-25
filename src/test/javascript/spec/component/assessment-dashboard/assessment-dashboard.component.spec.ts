@@ -30,7 +30,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgModel } from '@angular/forms';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -153,7 +152,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockComponent(SecondCorrectionEnableButtonComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(FaIconComponent),
-                MockComponent(AlertComponent),
                 MockDirective(SortDirective),
                 MockDirective(NgModel),
                 MockDirective(NgbTooltip),

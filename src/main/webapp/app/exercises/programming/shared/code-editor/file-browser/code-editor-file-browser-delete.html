@@ -5,7 +5,6 @@
         <button type="button" class="btn-close" data-dismiss="modal" (click)="closeModal()"></button>
     </div>
     <div class="modal-body">
-        <jhi-alert-error></jhi-alert-error>
         <p *ngIf="fileType === 'FILE'" class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFileConfirm' | artemisTranslate: {filename: fileNameToDelete}"></p>
         <p *ngIf="fileType === 'FOLDER'" class="text-danger" [innerHtml]="'artemisApp.editor.fileBrowser.deleteFolderConfirm' | artemisTranslate: {filename: fileNameToDelete}"></p>
     </div>

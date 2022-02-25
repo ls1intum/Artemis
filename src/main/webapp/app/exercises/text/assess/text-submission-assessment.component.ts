@@ -365,7 +365,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             .subscribe({
                 next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
                 error: (httpErrorResponse: HttpErrorResponse) => {
-                    this.alertService.clear();
+                    this.alertService.closeAll();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {
                         this.alertService.error(error.message, error.params);
