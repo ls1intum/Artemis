@@ -5,8 +5,6 @@
             <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="userManagement.home.createLabel">Create a new User</span>
         </a>
     </h2>
-    <jhi-alert-error></jhi-alert-error>
-    <jhi-alert></jhi-alert>
     <div class="table-responsive" *ngIf="users">
         <form [formGroup]="userSearchForm">
             <div class="form-group form-inline">

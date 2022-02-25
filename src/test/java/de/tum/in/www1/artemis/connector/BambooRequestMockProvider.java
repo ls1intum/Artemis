@@ -10,6 +10,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
@@ -135,7 +136,7 @@ public class BambooRequestMockProvider {
 
     public void mockRemoveAllDefaultProjectPermissions(ProgrammingExercise exercise) {
         final var projectKey = exercise.getProjectKey();
-        List.of("ANONYMOUS", "LOGGED_IN").stream().map(role -> {
+        Stream.of("ANONYMOUS", "LOGGED_IN").map(role -> {
             try {
                 return UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/project/").pathSegment(projectKey).path("/roles/").pathSegment(role)
                         .build().toUri();

@@ -1,0 +1,22 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+#median_points {
+    &.median {
+        font-weight: bold;
+        color: rgba(135, 206, 250, 1); //GraphColors.LIGHT_BLUE
+    }
+}
+
+#average_points {
+    &.average {
+        font-weight: bold;
+        color: rgba(135, 206, 250, 1); //GraphColors.LIGHT_BLUE
+    }
+}
+
+.separator {
+    border-top: 2px solid;
+    width: 100%;
+    margin-bottom: 0.5em;
+    margin-top: 1em;
+}

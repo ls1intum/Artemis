@@ -16,8 +16,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { NgForm, NgModel } from '@angular/forms';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { MockDirective, MockModule } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
@@ -35,7 +34,7 @@ describe('User Management Update Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(MatFormFieldModule), MockModule(MatChipsModule)],
-            declarations: [UserManagementUpdateComponent, TranslatePipeMock, MockDirective(NgForm), MockDirective(NgModel), MockComponent(AlertErrorComponent)],
+            declarations: [UserManagementUpdateComponent, TranslatePipeMock, MockDirective(NgForm), MockDirective(NgModel)],
             providers: [
                 {
                     provide: ActivatedRoute,

@@ -116,7 +116,7 @@ describe('ModelingEditorComponent', () => {
         component.ngAfterViewInit();
 
         // test
-        // const model = comp.getCurrentModel();
+        // const model = component.getCurrentModel();
         // TODO: uncomment after deserialization bugfix in Apollon library, see https://github.com/ls1intum/Apollon/issues/146
         // expect(model).toEqual(testClassDiagram);
     });

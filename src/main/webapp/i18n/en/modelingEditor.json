@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "modelingEditor": {
-            "title": "Modelling Editor",
+            "title": "Modeling Editor",
             "maxScore": "<strong>Max. Points: {{maxScore}}</strong>",
             "saveSuccessful": "Your diagram was saved successfully!",
             "allSaved": "All changes saved",
@@ -28,7 +28,7 @@
             },
             "helpModal": {
                 "help": "Help",
-                "title": "How to use the modelling editor",
+                "title": "How to use the modeling editor",
                 "createElement": {
                     "title": "Add Elements",
                     "text": "To add an element, simply drag and drop one of the elements from the right side into the editor area on the left side."

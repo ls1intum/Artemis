@@ -9,8 +9,6 @@
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
-    <jhi-alert></jhi-alert>
-    <jhi-alert-error></jhi-alert-error>
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar tab-bar-exercise-details ps-2 pe-2 mb-2 justify-content-between">
         <jhi-exercise-details-student-actions
@@ -206,6 +204,25 @@
                 </div>
             </div>
             <!-- RESULTS END -->
+            <ng-container *ngIf="exampleSolutionUML || exampleSolution">
+                <div class="row mb-2 mt-2 align-items-baseline">
+                    <div class="col-auto">
+                        <h3>{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</h3>
+                    </div>
+                </div>
+                <dl class="row-md jh-entity-details markdown-preview">
+                    <dd *ngIf="exampleSolutionUML && modelingExercise" class="editor-outline-background">
+                        <jhi-modeling-editor
+                            [readOnly]="true"
+                            [diagramType]="modelingExercise.diagramType!"
+                            [umlModel]="exampleSolutionUML!"
+                            [withExplanation]="!!modelingExercise.exampleSolutionExplanation"
+                            [explanation]="modelingExercise.exampleSolutionExplanation || ''"
+                        ></jhi-modeling-editor>
+                    </dd>
+                    <dd *ngIf="exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolution"></dd>
+                </dl>
+            </ng-container>
             <jhi-complaint-student-view
                 *ngIf="
                     exercise &&

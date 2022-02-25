@@ -9,8 +9,6 @@ import { UserService } from 'app/core/user/user.service';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup } from 'app/entities/course.model';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -18,7 +16,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -28,6 +26,13 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
+
+jest.mock('export-to-csv', () => ({
+    ExportToCsv: jest.fn().mockImplementation(() => ({
+        generateCsv: jest.fn(),
+    })),
+}));
 
 describe('Course Management Detail Component', () => {
     let comp: CourseGroupComponent;
@@ -53,8 +58,6 @@ describe('Course Management Detail Component', () => {
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
-                MockComponent(AlertErrorComponent),
-                MockDirective(AlertComponent),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
                 MockComponent(CourseExamArchiveButtonComponent),
@@ -258,5 +261,33 @@ describe('Course Management Detail Component', () => {
             delete user.login;
             expect(comp.searchTextFromUser(user)).toBe('');
         });
+    });
+
+    it('should generate csv correctly', () => {
+        comp.allCourseGroupUsers = [courseGroupUser, courseGroupUser2];
+        comp.courseGroup = CourseGroup.STUDENTS;
+        comp.course = course;
+        const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv');
+
+        comp.exportUserInformation();
+
+        expect(exportAsCsvMock).toHaveBeenCalledTimes(1);
+        const generatedRows = exportAsCsvMock.mock.calls[0][0];
+
+        const expectedRow1 = {};
+        expectedRow1[NAME_KEY] = '';
+        expectedRow1[USERNAME_KEY] = courseGroupUser.login;
+        expectedRow1[EMAIL_KEY] = '';
+        expectedRow1[REGISTRATION_NUMBER_KEY] = '';
+
+        const expectedRow2 = {};
+        expectedRow2[NAME_KEY] = '';
+        expectedRow2[USERNAME_KEY] = courseGroupUser2.login;
+        expectedRow2[EMAIL_KEY] = '';
+        expectedRow2[REGISTRATION_NUMBER_KEY] = '';
+
+        const expectedRows = [expectedRow1, expectedRow2];
+
+        expect(generatedRows).toEqual(expectedRows);
     });
 });

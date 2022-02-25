@@ -57,7 +57,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
 
     protected handleError(error: HttpErrorResponse): void {
         const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
-        this.alertService.error(errorMessage, undefined, undefined);
+        this.alertService.error(errorMessage);
     }
 
     /**

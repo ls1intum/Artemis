@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.*;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
@@ -309,7 +309,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             // Check that sensitive information has been removed
             assertThat(textExercise.getGradingCriteria()).isEmpty();
             assertThat(textExercise.getGradingInstructions()).isEqualTo(null);
-            assertThat(textExercise.getSampleSolution()).isEqualTo(null);
+            assertThat(textExercise.getExampleSolution()).isEqualTo(null);
 
             // Check that sensitive information has been removed
             assertThat(quizExercise.getGradingCriteria()).isEmpty();
@@ -913,7 +913,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
             for (var exercise : studentExamResponse.getExercises()) {
                 var participation = exercise.getStudentParticipations().iterator().next();
-                if (exercise instanceof ProgrammingExercise) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
                     doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
                     bambooRequestMockProvider.reset();
                     bambooRequestMockProvider.enableMockingOfRequests(true);
@@ -922,11 +922,12 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
                             .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participation.getId());
                     assertThat(programmingSubmission).isPresent();
+                    assertSensitiveInformationWasFilteredProgrammingExercise(programmingExercise);
                     participation.getSubmissions().add(programmingSubmission.get());
                     continue;
                 }
                 var submission = participation.getSubmissions().iterator().next();
-                if (exercise instanceof ModelingExercise) {
+                if (exercise instanceof ModelingExercise modelingExercise) {
                     // check that the submission was saved and that a submitted version was created
                     String newModel = "This is a new model";
                     String newExplanation = "This is an explanation";
@@ -939,10 +940,11 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                             ModelingSubmission.class);
                     // check that the submission was saved
                     assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
+                    assertSensitiveInformationWasFilteredModelingExercise(modelingExercise);
                     // check that a submitted version was created
                     assertVersionedSubmission(modelingSubmission);
                 }
-                else if (exercise instanceof TextExercise) {
+                else if (exercise instanceof TextExercise textExercise) {
                     var textSubmission = (TextSubmission) submission;
                     final var newText = "New Text";
                     textSubmission.setText(newText);
@@ -952,9 +954,31 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     assertThat(newText).isEqualTo(savedTextSubmission.getText());
                     // check that a submitted version was created
                     assertVersionedSubmission(textSubmission);
+                    assertSensitiveInformationWasFilteredTextExercise(textExercise);
                 }
-                else if (exercise instanceof QuizExercise) {
-                    submitQuizInExam((QuizExercise) exercise, (QuizSubmission) submission);
+                else if (exercise instanceof QuizExercise quizExercise) {
+                    // TODO: move into its own function
+                    quizExercise.getQuizQuestions().forEach(quizQuestion -> {
+                        assertThat(quizQuestion.getQuizQuestionStatistic()).isNull();
+                        assertThat(quizQuestion.getExplanation()).isNull();
+                        if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
+                            mcQuestion.getAnswerOptions().forEach(answerOption -> {
+                                assertThat(answerOption.getExplanation()).isNull();
+                                assertThat(answerOption.isIsCorrect()).isNull();
+                            });
+                        }
+                        else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
+                            assertThat(dndQuestion.getCorrectMappings()).isNullOrEmpty();
+                        }
+                        else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
+                            assertThat(saQuestion.getCorrectMappings()).isNullOrEmpty();
+                        }
+                    });
+
+                    submitQuizInExam(quizExercise, (QuizSubmission) submission);
+                }
+                else if (exercise instanceof FileUploadExercise fileUploadExercise) {
+                    assertSensitiveInformationWasFilteredFileUploadExercise(fileUploadExercise);
                 }
             }
 
