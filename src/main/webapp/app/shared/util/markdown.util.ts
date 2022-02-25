@@ -1,4 +1,4 @@
-import { TextHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
+import { ExerciseHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
 import { hintCommentIdentifier } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { explanationCommandIdentifier } from 'app/shared/markdown-editor/domainCommands/explanation.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -45,7 +45,7 @@ export function removeTextRange(from: { col: number; row: number }, to: { col: n
  * @param markdownText {string} the markdown text to parse
  * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
  */
-export function parseTextHintExplanation(markdownText: string, targetObject: TextHintExplanationInterface) {
+export function parseExerciseHintExplanation(markdownText: string, targetObject: ExerciseHintExplanationInterface) {
     if (!markdownText || !targetObject) {
         return;
     }
@@ -84,7 +84,7 @@ export function parseTextHintExplanation(markdownText: string, targetObject: Tex
  * @param sourceObject
  * @return {string}
  */
-export function generateTextHintExplanation(sourceObject: TextHintExplanationInterface) {
+export function generateExerciseHintExplanation(sourceObject: ExerciseHintExplanationInterface) {
     return !sourceObject.text
         ? ''
         : sourceObject.text +

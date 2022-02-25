@@ -13,6 +13,8 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
+import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
@@ -23,6 +25,12 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     hasStudentResult: boolean;
     testCasesChanged: boolean;
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
+};
+
+export type ProgrammingExerciseTaskServerSide = {
+    id: number;
+    taskName: String;
+    testCases: ProgrammingExerciseTestCase[];
 };
 
 // TODO: we should use a proper enum here
@@ -391,6 +399,47 @@ export class ProgrammingExerciseService {
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
         return exerciseRes;
+    }
+
+    /**
+     * Get tasks and tests cases extracted from the problem statement for a programming exercise.
+     * This method and all helper methods are only for testing reason and will be removed later on.
+     * @param exerciseId the exercise id
+     */
+    getTasksAndTestsExtractedFromProblemStatement(exerciseId: number): Observable<Task[]> {
+        return this.http
+            .get(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProgrammingExerciseTaskServerSide[]>) => this.processServerSideTasks(res)));
+    }
+
+    /**
+     * Map server response to tasks
+     * @param response the server response
+     * @private
+     */
+    private processServerSideTasks(response: HttpResponse<ProgrammingExerciseTaskServerSide[]>): Task[] {
+        return response.body?.map((task: ProgrammingExerciseTaskServerSide) => this.convertServerToClientTask(task)) ?? [];
+    }
+
+    /**
+     * Map server side task representation to client side task representation
+     * @param serverTask the server side representation of a task
+     * @private
+     */
+    private convertServerToClientTask(serverTask: ProgrammingExerciseTaskServerSide): Task {
+        return {
+            id: serverTask.id,
+            taskName: serverTask.taskName,
+            tests: serverTask.testCases.map((testCase: ProgrammingExerciseTestCase) => testCase.testName),
+        } as Task;
+    }
+
+    /**
+     * Delete all tasks and solution entries
+     * @param exerciseId the exercise id
+     */
+    deleteTasksWithSolutionEntries(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' });
     }
 
     /**

@@ -12,14 +12,20 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { Exam } from 'app/entities/exam.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { MockProvider } from 'ng-mocks';
+import { AlertService } from 'app/core/util/alert.service';
+import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -27,7 +33,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
     let statisticsService: StatisticsService;
     let exerciseService: ProgrammingExerciseService;
     let modalService: NgbModal;
-
+    let alertService: AlertService;
     let statisticsServiceStub: jest.SpyInstance;
 
     const exerciseStatistics = {
@@ -49,10 +55,12 @@ describe('ProgrammingExercise Management Detail Component', () => {
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [ProgrammingExerciseDetailComponent],
             providers: [
+                MockProvider(AlertService),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useValue: new MockProfileService() },
+                { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
                 { provide: ProgrammingExerciseService, useValue: new MockProgrammingExerciseService() },
                 { provide: NgbModal, useValue: new MockNgbModalService() },
             ],
@@ -63,6 +71,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         comp = fixture.componentInstance;
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
+        alertService = fixture.debugElement.injector.get(AlertService);
         exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
         modalService = fixture.debugElement.injector.get(NgbModal);
     });
@@ -128,6 +137,66 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(statisticsServiceStub).toHaveBeenCalled();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeTrue();
+        });
+    });
+
+    it('should retrieve all tasks and tests extracted from the problem statement', () => {
+        const tasks: Task[] = [
+            {
+                id: 1,
+                taskName: 'Implement BubbleSort',
+                tests: ['testBubbleSort', 'testBubbleSortHidden'],
+                completeString: '',
+                hints: [],
+            },
+            {
+                id: 2,
+                taskName: 'Implement Context',
+                tests: ['testClass[Context]'],
+                completeString: '',
+                hints: [],
+            },
+        ];
+        const extractTaskMock = jest.spyOn(exerciseService, 'getTasksAndTestsExtractedFromProblemStatement').mockReturnValue(of(tasks));
+        const expectedParams = {
+            numberTasks: 2,
+            numberTestCases: 3,
+            detailedResult: '"Implement BubbleSort": testBubbleSort,testBubbleSortHidden\n"Implement Context": testClass[Context]',
+        };
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        comp.getExtractedTasksAndTestsFromProblemStatement();
+
+        expect(addAlertSpy).toHaveBeenCalledTimes(1);
+        expect(addAlertSpy).toHaveBeenCalledWith({
+            message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
+            timeout: 10000000,
+            translationParams: expectedParams,
+            type: 'success',
+        });
+        expect(extractTaskMock).toHaveBeenCalledTimes(1);
+        expect(extractTaskMock).toHaveBeenCalledWith(programmingExercise.id);
+    });
+
+    it('should invoke deletion of tasks and solution entries', () => {
+        const deleteTasksAndSolutionEntriesSpy = jest.spyOn(exerciseService, 'deleteTasksWithSolutionEntries').mockReturnValue(of(new HttpResponse<void>()));
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        comp.deleteTasksWithSolutionEntries();
+
+        expect(deleteTasksAndSolutionEntriesSpy).toHaveBeenCalledTimes(1);
+        expect(deleteTasksAndSolutionEntriesSpy).toHaveBeenCalledWith(programmingExercise.id);
+        expect(addAlertSpy).toHaveBeenCalledTimes(1);
+        expect(addAlertSpy).toHaveBeenCalledWith({
+            message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
+            timeout: 10000,
+            type: 'success',
         });
     });
 });

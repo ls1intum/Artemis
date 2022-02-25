@@ -1,6 +1,5 @@
 import { of } from 'rxjs';
 import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 export class MockProgrammingExerciseService {
     updateProblemStatement = (exerciseId: number, problemStatement: string) => of();
@@ -10,5 +9,7 @@ export class MockProgrammingExerciseService {
     getProgrammingExerciseTestCaseState = (exerciseId: number) => of({ body: { released: true, hasStudentResult: true, testCasesChanged: false } });
     exportInstructorExercise = (exerciseId: number) => of({ body: undefined });
     exportInstructorRepository = (exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType) => of({ body: undefined });
+    extractTasksFromProblemStatement = (exerciseId: number) => of();
+    deleteTasksWithSolutionEntries = (exerciseId: number) => of();
     updateDiffReport = (exerciseId: number) => of({});
 }

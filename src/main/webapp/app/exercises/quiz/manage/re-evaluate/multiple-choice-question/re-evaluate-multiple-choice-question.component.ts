@@ -6,7 +6,7 @@ import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommand
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { cloneDeep } from 'lodash-es';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { generateTextHintExplanation, parseTextHintExplanation } from 'app/shared/util/markdown.util';
+import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
@@ -43,7 +43,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
      */
     getQuestionText(question: MultipleChoiceQuestion): string {
         const questionToSet = { text: question.text, hint: question.hint, explanation: question.explanation };
-        return generateTextHintExplanation(questionToSet);
+        return generateExerciseHintExplanation(questionToSet);
     }
 
     /**
@@ -51,7 +51,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
      * @param {string} text
      */
     onQuestionChange(text: string): void {
-        parseTextHintExplanation(text, this.question);
+        parseExerciseHintExplanation(text, this.question);
         this.questionUpdated.emit();
     }
 
@@ -80,7 +80,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
      * @param answer {AnswerOption}  is the AnswerOption, which the Markdown-field presents
      */
     generateAnswerMarkdown(answer: AnswerOption): string {
-        return (answer.isCorrect ? CorrectOptionCommand.identifier : IncorrectOptionCommand.identifier) + ' ' + generateTextHintExplanation(answer);
+        return (answer.isCorrect ? CorrectOptionCommand.identifier : IncorrectOptionCommand.identifier) + ' ' + generateExerciseHintExplanation(answer);
     }
 
     /**
@@ -103,7 +103,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
         const box = text.substring(0, startOfThisPart);
         // Check if box says this answer option is correct or not
         answer.isCorrect = box === CorrectOptionCommand.identifier;
-        parseTextHintExplanation(answerOptionText, answer);
+        parseExerciseHintExplanation(answerOptionText, answer);
     }
 
     /**

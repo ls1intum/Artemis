@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -99,6 +100,10 @@ public class ProgrammingExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
+    private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
@@ -506,6 +511,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void setTestCases(Set<ProgrammingExerciseTestCase> testCases) {
         this.testCases = testCases;
+    }
+
+    public Set<ProgrammingExerciseTask> getTasks() {
+        return tasks;
+    }
+
+    public void setTasks(Set<ProgrammingExerciseTask> tasks) {
+        this.tasks = tasks;
     }
 
     public Set<StaticCodeAnalysisCategory> getStaticCodeAnalysisCategories() {
