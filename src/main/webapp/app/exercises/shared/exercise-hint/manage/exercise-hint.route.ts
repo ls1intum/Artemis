@@ -7,10 +7,10 @@ import { filter, map } from 'rxjs/operators';
 import { ExerciseHintService } from './exercise-hint.service';
 import { ExerciseHintComponent } from './exercise-hint.component';
 import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
-import { ExerciseHintUpdateComponent } from './exercise-hint-update.component';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { exerciseTypes } from 'app/entities/exercise.model';
+import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintResolve implements Resolve<ExerciseHint> {
@@ -21,9 +21,10 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint> {
      * @param route Route which to resolve
      */
     resolve(route: ActivatedRouteSnapshot) {
-        const id = route.params['hintId'] ? route.params['hintId'] : undefined;
-        if (id) {
-            return this.service.find(id).pipe(
+        const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
+        const hintId = route.params['hintId'] ? route.params['hintId'] : undefined;
+        if (exerciseId && hintId) {
+            return this.service.find(exerciseId, hintId).pipe(
                 filter((response: HttpResponse<ExerciseHint>) => response.ok),
                 map((exerciseHint: HttpResponse<ExerciseHint>) => exerciseHint.body!),
             );
@@ -35,7 +36,7 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint> {
 export const exerciseHintRoute: Routes = [
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints/new',
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/exercise-hints/new',
             component: ExerciseHintUpdateComponent,
             resolve: {
                 exerciseHint: ExerciseHintResolve,
@@ -49,7 +50,7 @@ export const exerciseHintRoute: Routes = [
     }),
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints/:hintId',
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/exercise-hints/:hintId',
             component: ExerciseHintDetailComponent,
             resolve: {
                 exerciseHint: ExerciseHintResolve,
@@ -63,7 +64,7 @@ export const exerciseHintRoute: Routes = [
     }),
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints/:hintId/edit',
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/exercise-hints/:hintId/edit',
             component: ExerciseHintUpdateComponent,
             resolve: {
                 exerciseHint: ExerciseHintResolve,
@@ -77,7 +78,7 @@ export const exerciseHintRoute: Routes = [
     }),
     ...exerciseTypes.map((exerciseType) => {
         return {
-            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/hints',
+            path: ':courseId/' + exerciseType + '-exercises/:exerciseId/exercise-hints',
             component: ExerciseHintComponent,
             data: {
                 authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],

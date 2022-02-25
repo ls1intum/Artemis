@@ -41,9 +41,9 @@ describe('AssessmentInstructionsComponent', () => {
     it('should initialize exercise input', () => {
         const modelingExercise = {
             id: 1,
-            sampleSolutionModel: '{"elements": [{"id": 1}]}',
+            exampleSolutionModel: '{"elements": [{"id": 1}]}',
             diagramType: UMLDiagramType.ClassDiagram,
-            sampleSolutionExplanation: 'explanation',
+            exampleSolutionExplanation: 'explanation',
             type: ExerciseType.MODELING,
         } as ModelingExercise;
         const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown').mockReturnValue('sample text');
@@ -54,13 +54,13 @@ describe('AssessmentInstructionsComponent', () => {
 
         comp.sampleSolutionExplanation = undefined;
         fixture.detectChanges();
-        const textExercise = { id: 1, sampleSolution: 'sample solution', type: ExerciseType.TEXT } as TextExercise;
+        const textExercise = { id: 1, exampleSolution: 'sample solution', type: ExerciseType.TEXT } as TextExercise;
         comp.exerciseInput = textExercise;
         expect(comp.sampleSolutionExplanation).not.toBe(undefined);
 
         comp.sampleSolutionExplanation = undefined;
         fixture.detectChanges();
-        const fileUploadExercise = { id: 1, sampleSolution: 'sample solution', type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
+        const fileUploadExercise = { id: 1, exampleSolution: 'sample solution', type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
         comp.exerciseInput = fileUploadExercise;
         expect(comp.sampleSolutionExplanation).not.toBe(undefined);
 

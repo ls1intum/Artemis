@@ -137,15 +137,23 @@
             ></jhi-markdown-editor>
         </div>
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
-        <div class="form-group" id="field_sampleSolution">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>
+        <div class="form-group" id="field_exampleSolution">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution">Example Solution</label>
             <jhi-markdown-editor
                 class="markdown-editor"
                 [domainCommands]="domainCommandsSampleSolution"
-                [(markdown)]="fileUploadExercise.sampleSolution"
+                [(markdown)]="fileUploadExercise.exampleSolution"
                 [editorMode]="EditorMode.LATEX"
                 [enableResize]="true"
             ></jhi-markdown-editor>
+        </div>
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-date-time-picker
+                class="form-element"
+                name="exampleSolutionPublicationDate"
+                labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
+                [(ngModel)]="fileUploadExercise.exampleSolutionPublicationDate"
+            ></jhi-date-time-picker>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>

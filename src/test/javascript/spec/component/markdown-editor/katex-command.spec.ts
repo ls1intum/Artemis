@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -12,8 +11,8 @@ describe('KatexCommand', () => {
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {
@@ -21,6 +20,7 @@ describe('KatexCommand', () => {
                 comp = fixture.componentInstance;
             });
     });
+
     it('should add insert the sample e-function into the editor on execute', () => {
         const katexCommand = new KatexCommand();
         comp.domainCommands = [katexCommand];
@@ -28,6 +28,6 @@ describe('KatexCommand', () => {
         comp.ngAfterViewInit();
 
         katexCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('$$ e^{\\frac{1}{4} y^2} $$');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('$$ e^{\\frac{1}{4} y^2} $$');
     });
 });

@@ -19,7 +19,7 @@ describe('Grading Instruction Command', () => {
     let fixture: ComponentFixture<MarkdownEditorComponent>;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
             declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(NgModel)],
         })
@@ -29,6 +29,7 @@ describe('Grading Instruction Command', () => {
                 comp = fixture.componentInstance;
             });
     });
+
     it('should add instruction identifiers and parameters on execute', () => {
         const gradingInstructionCommand = new GradingInstructionCommand();
         comp.domainCommands = [gradingInstructionCommand];
@@ -36,7 +37,7 @@ describe('Grading Instruction Command', () => {
         comp.ngAfterViewInit();
 
         gradingInstructionCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual(
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe(
             '[instruction]' +
                 '\n' +
                 '\t' +
@@ -61,6 +62,7 @@ describe('Grading Instruction Command', () => {
                 '\n',
         );
     });
+
     it('should add CriteriaCommand identifier on execute', () => {
         const criterionCommand = new GradingCriterionCommand();
         const gradingInstructionCommand = new GradingInstructionCommand();
@@ -69,6 +71,6 @@ describe('Grading Instruction Command', () => {
         comp.ngAfterViewInit();
 
         criterionCommand.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toEqual('\n' + '[criterion]' + GradingCriterionCommand.text + '\n' + gradingInstructionCommand.instructionText());
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('\n' + '[criterion]' + GradingCriterionCommand.text + '\n' + gradingInstructionCommand.instructionText());
     });
 });

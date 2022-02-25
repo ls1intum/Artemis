@@ -26,8 +26,5 @@ export class AdditionalFeedbackComponent {
     // Expose the function to the template
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
-
-    public buildFeedbackTextForReview(feedback: Feedback): string {
-        return buildFeedbackTextForReview(feedback);
-    }
+    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 }

@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
 
-    @Column(name = "sample_solution")
+    @Column(name = "example_solution")
     @Lob
-    private String sampleSolution;
+    private String exampleSolution;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
     @JsonIgnore
@@ -34,12 +34,12 @@ public class TextExercise extends Exercise {
     @JsonIgnore
     private TextAssessmentKnowledge knowledge;
 
-    public String getSampleSolution() {
-        return sampleSolution;
+    public String getExampleSolution() {
+        return exampleSolution;
     }
 
-    public void setSampleSolution(String sampleSolution) {
-        this.sampleSolution = sampleSolution;
+    public void setExampleSolution(String exampleSolution) {
+        this.exampleSolution = exampleSolution;
     }
 
     public boolean isAutomaticAssessmentEnabled() {
@@ -51,7 +51,9 @@ public class TextExercise extends Exercise {
      */
     @Override
     public void filterSensitiveInformation() {
-        setSampleSolution(null);
+        if (!isExampleSolutionPublished()) {
+            setExampleSolution(null);
+        }
         super.filterSensitiveInformation();
     }
 
@@ -62,7 +64,7 @@ public class TextExercise extends Exercise {
 
     @Override
     public String toString() {
-        return "TextExercise{" + "id=" + getId() + ", sampleSolution='" + getSampleSolution() + "'" + "}";
+        return "TextExercise{" + "id=" + getId() + ", exampleSolution='" + getExampleSolution() + "'" + "}";
     }
 
     public TextAssessmentKnowledge getKnowledge() {

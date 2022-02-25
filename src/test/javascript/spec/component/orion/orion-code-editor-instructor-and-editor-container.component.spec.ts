@@ -19,9 +19,9 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;

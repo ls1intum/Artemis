@@ -7,8 +7,7 @@ import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { TaskHintCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task-hint.command';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHintCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/exercise-hint.command';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -22,6 +21,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -39,9 +39,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
-    taskHintCommand = new TaskHintCommand();
+    exerciseHintCommand = new ExerciseHintCommand();
     katexCommand = new KatexCommand();
-    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.taskHintCommand];
+    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.exerciseHintCommand];
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -89,7 +89,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             // Note: Exam exercises do not include hints at the moment, therefore, the markdown editor should not offer this command
             this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand];
         } else {
-            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.taskHintCommand];
+            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.exerciseHintCommand];
         }
         this.exerciseChange.emit(this.programmingExercise);
     }
@@ -197,7 +197,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Prepares the task hints using exerciseHints
      */
     private prepareTaskHints() {
-        this.taskHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id!.toString(10), value: title! })));
+        this.exerciseHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id!.toString(10), value: title! })));
     }
 
     /** Save the problem statement on the server.
