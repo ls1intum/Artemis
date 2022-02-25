@@ -1,6 +1,6 @@
 <div class="exam-status-wrapper">
     <!-- 1. Exam preparation -->
-    <div class="status-step">
+    <div class="status-step" *ngIf="isAtLeastInstructor">
         <!-- If all preparation tasks are finished, show a green check as header, show a red cross else -->
         <div class="d-flex justify-content-center header-icon">
             <fa-icon *ngIf="examPreparationFinished" [icon]="faCheckCircle" class="check"></fa-icon>
@@ -37,7 +37,7 @@
             </ol>
         </div>
     </div>
-    <div class="connector" [ngClass]="examPreparationFinished ? 'check' : 'cross'"></div>
+    <div *ngIf="isAtLeastInstructor" class="connector" [ngClass]="examPreparationFinished ? 'check' : 'cross'"></div>
 
     <!-- 2. Exam conduction -->
     <div class="status-step">
@@ -54,7 +54,7 @@
                 <h6>{{ 'artemisApp.examStatus.conduction.examConduction' | artemisTranslate }}</h6>
                 <b>{{ exam.startDate | artemisDate }} - {{ exam.endDate | artemisDate }}</b>
             </div>
-            <ol *ngIf="examChecklist">
+            <ol *ngIf="isAtLeastInstructor && examChecklist">
                 <li>
                     <span>
                         {{ 'artemisApp.examStatus.conduction.startedExams' | artemisTranslate }}:

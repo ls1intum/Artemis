@@ -1463,7 +1463,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser("instructor1");
 
         // instructor exam checklist checks
-        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam);
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotEqualTo(null);
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(15L);
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(true);
@@ -1641,7 +1641,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser("instructor1");
 
         // check if stats are set correctly for the instructor
-        examChecklistDTO = examService.getStatsForChecklist(exam);
+        examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotEqualTo(null);
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(15);
         assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(15);
@@ -1659,7 +1659,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamStatistics() throws Exception {
-        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1);
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, true);
         ExamChecklistDTO returnedStatistics = request.get("/api/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
                 ExamChecklistDTO.class);
         assertThat(returnedStatistics.isAllExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.isAllExamExercisesAllStudentsPrepared());

@@ -193,7 +193,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getChecklistStatsEmpty() {
         // check if general method works. More sophisticated test are within the ExamIntegrationTests
-        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1);
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1, true);
         assertThat(examChecklistDTO).isNotEqualTo(null);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(0);
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(0);
