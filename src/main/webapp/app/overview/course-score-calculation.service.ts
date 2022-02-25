@@ -7,6 +7,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Participation } from 'app/entities/participation/participation.model';
 import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 export enum ScoreType {
     ABSOLUTE_SCORE = 'absoluteScore',
@@ -35,13 +36,17 @@ export class CourseScoreCalculationService {
             const isAssessmentOver = !exercise.assessmentDueDate || exercise.assessmentDueDate.isBefore(dayjs());
             const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
             const isExerciseAssessedAutomatically = exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType === AssessmentType.AUTOMATIC;
+            const isAutomaticAssessmentFinished =
+                isExerciseAssessedAutomatically &&
+                (!(exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate ||
+                    (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate!.isBefore(dayjs()));
 
-            if ((isExerciseAssessedAutomatically || isExerciseFinished) && isExerciseIncluded) {
+            if ((isAutomaticAssessmentFinished || (!isExerciseAssessedAutomatically && isExerciseFinished)) && isExerciseIncluded) {
                 const maxPointsReachableInExercise = exercise.maxPoints!;
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
                     // points are reachable if the exercise is released and the assessment is over --> It was possible for the student to get points
-                    if (isAssessmentOver) {
+                    if (isAssessmentOver || isAutomaticAssessmentFinished) {
                         reachableMaxPointsInCourse += maxPointsReachableInExercise;
                     }
                 }
