@@ -16,12 +16,15 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.UrlService;
@@ -62,6 +65,8 @@ public class ProgrammingExerciseImportService {
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
     private final UrlService urlService;
 
     public ProgrammingExerciseImportService(ExerciseHintRepository exerciseHintRepository, Optional<VersionControlService> versionControlService,
@@ -69,7 +74,7 @@ public class ProgrammingExerciseImportService {
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
             UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, UrlService urlService) {
+            SubmissionPolicyRepository submissionPolicyRepository, UrlService urlService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -85,6 +90,7 @@ public class ProgrammingExerciseImportService {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.urlService = urlService;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
     }
 
     /**
@@ -116,10 +122,12 @@ public class ProgrammingExerciseImportService {
         setupTestRepository(newExercise);
         programmingExerciseService.initParticipations(newExercise);
 
-        // Hints, test cases and static code analysis categories
+        // Hints, tasks, test cases and static code analysis categories
         exerciseHintRepository.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
-        importTestCases(templateExercise, newExercise);
+        Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, newExercise);
+        importTasks(templateExercise, newExercise, newTestCaseIdByOldId);
+        // TODO: importing code hints and solution entries is not supported yet but will be added at a later stage of HESTIA
 
         // Copy or create SCA categories
         if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled()))) {
@@ -145,6 +153,7 @@ public class ProgrammingExerciseImportService {
             auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
             newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
         }
+
         programmingExerciseRepository.save(newExercise);
 
         return newExercise;
@@ -286,8 +295,10 @@ public class ProgrammingExerciseImportService {
      *
      * @param templateExercise The template exercise which test cases should get copied
      * @param targetExercise The new exercise to which all test cases should get copied to
+     * @return a map with the old test case id as a key and the new test case id as value
      */
-    private void importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
+    private Map<Long, Long> importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
+        Map<Long, Long> newIdByOldId = new HashMap<>();
         targetExercise.setTestCases(templateExercise.getTestCases().stream().map(testCase -> {
             final var copy = new ProgrammingExerciseTestCase();
 
@@ -300,6 +311,34 @@ public class ProgrammingExerciseImportService {
             copy.setBonusPoints(testCase.getBonusPoints());
             copy.setExercise(targetExercise);
             programmingExerciseTestCaseRepository.save(copy);
+            newIdByOldId.put(testCase.getId(), copy.getId());
+            return copy;
+        }).collect(Collectors.toSet()));
+
+        return newIdByOldId;
+    }
+
+    /**
+     * Copies tasks from one exercise to another. Because the tasks from the template exercise references its test cases, the
+     * references between tasks and test cases also need to be changed.
+     * @param templateExercise The template exercise which tasks should be copied
+     * @param targetExercise The new exercise to which all tasks should get copied to
+     * @param newTestCaseIdByOldId a map with the old test case id as a key and the new test case id as a value
+     */
+    private void importTasks(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTestCaseIdByOldId) {
+        targetExercise.setTasks(templateExercise.getTasks().stream().map(task -> {
+            final var copy = new ProgrammingExerciseTask();
+
+            // copy everything except for the referenced exercise
+            copy.setTaskName(task.getTaskName());
+            // change reference to newly imported test cases from the target exercise
+            copy.setTestCases(task.getTestCases().stream().map(testCase -> {
+                Long oldTestCaseId = testCase.getId();
+                Long newTestCaseId = newTestCaseIdByOldId.get(oldTestCaseId);
+                return targetExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst().orElseThrow();
+            }).collect(Collectors.toSet()));
+            copy.setExercise(targetExercise);
+            programmingExerciseTaskRepository.save(copy);
             return copy;
         }).collect(Collectors.toSet()));
     }

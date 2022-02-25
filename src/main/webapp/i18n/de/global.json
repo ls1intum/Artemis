@@ -309,7 +309,11 @@
         "invalid.testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
         "invalid.page.request": "Die Seitenanforderung scheint ungültig zu sein. Bitte stellen Sie sicher, dass genügend {{entityName}}-Entitäten vorhanden sind, damit die Anforderungsseite erstellt werden kann.",
         "idnull": "Ungültige ID",
-        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}"
+        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",
+        "manualCodeHintOperation": "Dieser Endpunkt erlaubt keine manuelle Bearbeitung von Codehinweisen.",
+        "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
+        "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
+        "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung."
     },
     "aboutUs": "Über uns",
     "contact": "Kontaktiere uns",
