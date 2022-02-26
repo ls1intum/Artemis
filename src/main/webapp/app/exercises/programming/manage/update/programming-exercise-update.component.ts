@@ -304,8 +304,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.isExamMode = true;
                                 this.programmingExercise.exerciseGroup = res.body!;
-                                // Lock possibility to not-include exercise into overall score
-                                this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                             });
                         } else if (params['courseId']) {
                             const courseId = params['courseId'];
@@ -384,8 +382,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else if (params['courseId']) {
             this.courseService.find(params['courseId']).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
-                // Set exerciseGroup to undefined if an exam exercise is imported
-                this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
         }
@@ -397,6 +393,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.title = undefined;
         if (this.programmingExercise.submissionPolicy) {
             this.programmingExercise.submissionPolicy.id = undefined;
+        }
+        if (this.isExamMode) {
+            // Set exerciseGroup to undefined if an exam exercise is imported
+            this.programmingExercise.exerciseGroup = undefined;
         }
     }
 
