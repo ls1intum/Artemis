@@ -304,8 +304,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.isExamMode = true;
                                 this.programmingExercise.exerciseGroup = res.body!;
-                                // Lock possibility to not-include exercise into overall score
-                                this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                             });
                         } else if (params['courseId']) {
                             const courseId = params['courseId'];
@@ -331,6 +329,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         this.submitButtonTitle = 'entity.action.save';
                     } else {
                         this.submitButtonTitle = 'entity.action.generate';
+                    }
+                    if (this.isExamMode) {
+                        // Lock possibility to not-include exercise into overall score
+                        this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                     }
                 }),
             )
