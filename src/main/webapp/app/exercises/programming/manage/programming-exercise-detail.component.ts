@@ -420,18 +420,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * Gets the full git-diff from the server and displays it in a modal.
      */
     getAndShowFullDiff() {
-        this.programmingExerciseService.getFullDiffReport(this.programmingExercise.id!).subscribe({
-            next: (gitDiffReport) => {
-                const modalRef = this.modalService.open(FullGitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
-                modalRef.componentInstance.report = gitDiffReport;
-            },
-            error: (err) => {
-                if (err.status === 500) {
-                    this.alertService.error('artemisApp.programmingExercise.diffReport.internalError');
-                } else {
-                    this.onError(err);
-                }
-            },
+        this.programmingExerciseService.getFullDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
+            const modalRef = this.modalService.open(FullGitDiffReportModalComponent, {
+                size: 'xl',
+                backdrop: 'static',
+            });
+            modalRef.componentInstance.report = gitDiffReport;
         });
     }
 }
