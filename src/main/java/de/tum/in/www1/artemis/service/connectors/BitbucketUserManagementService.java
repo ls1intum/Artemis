@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -55,7 +53,7 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
             // User
             if (!bitbucketService.userExists(user.getLogin())) {
                 log.debug("Bitbucket user {} does not exist yet", user.getLogin());
-                String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
+                String displayName = user.getName().trim();
                 bitbucketService.createUser(user.getLogin(), passwordService.decryptPasswordByLogin(user.getLogin()).get(), user.getEmail(), displayName);
 
                 try {
@@ -82,7 +80,7 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      *     <li>Update the password of the user</li>
      *     <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
      * </ul>
-     *  @param vcsLogin                  The username of the user in the VCS
+     * @param vcsLogin                  The username of the user in the VCS
      *
      * @param user                      The updated user in Artemis
      * @param removedGroups             groups that the user does not belong to any longer
@@ -165,11 +163,9 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
                 bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), oldEditorGroup, null);
                 bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), updatedCourse.getEditorGroupName(), BitbucketPermission.PROJECT_WRITE);
             }
-            boolean isCourseOrAfterExam = programmingExercise.isCourseExercise() || ZonedDateTime.now().isAfter(programmingExercise.getExerciseGroup().getExam().getStartDate()
-                    .plusMinutes(programmingExercise.getExerciseGroup().getExam().getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
             if (!oldEditorGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
                 bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), oldTeachingAssistantGroup, null);
-                if (isCourseOrAfterExam) {
+                if (programmingExercise.isCourseExercise() || programmingExercise.getExerciseGroup().getExam().isAfterLatestStudentExamEnd()) {
                     bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), updatedCourse.getTeachingAssistantGroupName(),
                             BitbucketPermission.PROJECT_READ);
                 }

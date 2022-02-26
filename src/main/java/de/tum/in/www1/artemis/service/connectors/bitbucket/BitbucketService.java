@@ -269,6 +269,8 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     /**
+     * Updates the password of a user on Bitbucket
+     *
      * @param username The username of the user to update
      * @param password The new password
      * @throws BitbucketException

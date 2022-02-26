@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.domain.exam;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -9,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -384,6 +388,16 @@ public class Exam extends DomainObject {
             return false;
         }
         return publishResultsDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * Checks if the exam has completely ended even for students with time extensions
+     *
+     * @return true if the exam writing time of the student with the longest extension has been exceeded
+     */
+    @JsonIgnore
+    public boolean isAfterLatestStudentExamEnd() {
+        return ZonedDateTime.now().isAfter(getStartDate().plusMinutes(getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
     }
 
     public boolean hasExamArchive() {
