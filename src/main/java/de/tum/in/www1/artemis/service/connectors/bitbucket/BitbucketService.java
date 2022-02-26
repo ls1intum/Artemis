@@ -27,10 +27,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
@@ -224,7 +220,6 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException if the rest request to Bitbucket for creating the user failed.
      */
     public void createUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
-
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username)
                 .queryParam("email", emailAddress).queryParam("emailAddress", emailAddress).queryParam("password", password).queryParam("displayName", displayName)
                 .queryParam("addToDefaultGroup", "true").queryParam("notify", "false");
@@ -263,7 +258,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                if (isUserNotFoundException(e)) {
+                if (e.getMessage() != null && e.getMessage().contains("com.atlassian.bitbucket.user.NoSuchUserException")) {
                     log.warn("Bitbucket user " + username + " does not exist.");
                     return;
                 }
@@ -293,7 +288,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                if (isUserNotFoundException(e)) {
+                if (e.getMessage() != null && e.getMessage().contains("com.atlassian.bitbucket.user.NoSuchUserException")) {
                     log.warn("Bitbucket user " + username + " does not exist.");
                     return;
                 }
@@ -319,7 +314,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                if (isUserNotFoundException(e)) {
+                if (e.getMessage() != null && e.getMessage().contains("com.atlassian.bitbucket.user.NoSuchUserException")) {
                     log.warn("Bitbucket user " + username + " has already been deleted.");
                     return;
                 }
@@ -327,26 +322,6 @@ public class BitbucketService extends AbstractVersionControlService {
             log.error("Could not delete Bitbucket user " + username, e);
             throw new BitbucketException("Error while updating user", e);
         }
-    }
-
-    private boolean isUserNotFoundException(HttpClientErrorException e) {
-        if (e == null || e.getMessage() == null || e.getMessage().length() < 8 || !e.getMessage().startsWith("404 : \"") || !e.getMessage().endsWith("\"")) {
-            return false;
-        }
-        String messageObjectString = e.getMessage().substring(7, e.getMessage().length() - 1);
-        JsonObject detailMessage = JsonParser.parseString(messageObjectString).getAsJsonObject();
-        if (!detailMessage.has("errors")) {
-            return false;
-        }
-        JsonArray errorArray = detailMessage.getAsJsonArray("errors");
-        for (JsonElement jsonElement : errorArray) {
-            JsonObject error = jsonElement.getAsJsonObject();
-            if (error.has("exceptionName") && error.get("exceptionName").getAsString().equals("com.atlassian.bitbucket.user.NoSuchUserException")) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

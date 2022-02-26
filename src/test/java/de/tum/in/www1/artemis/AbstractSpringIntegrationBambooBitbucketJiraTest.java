@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.mockito.Mockito.*;
-import static tech.jhipster.config.JHipsterConstants.*;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -38,7 +39,10 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
@@ -382,15 +386,17 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws URISyntaxException {
+    public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws JsonProcessingException {
         var managedUserVM = new ManagedUserVM(user);
         jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
         jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin(), false);
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
+
+        bitbucketRequestMockProvider.mockUpdateUserDetails(oldLogin, user.getEmail(), user.getFirstName() + " " + user.getLastName());
     }
 
     @Override
-    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws URISyntaxException {
+    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) {
         var managedUserVM = new ManagedUserVM(user);
         jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
@@ -403,7 +409,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
-        // Not needed here
+        // User management and CI not needed here
+        bitbucketRequestMockProvider.mockDeleteUser(user.getLogin(), failInVcs);
     }
 
     @Override

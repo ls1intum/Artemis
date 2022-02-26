@@ -112,7 +112,7 @@ public class UserTestService {
 
     // Test
     public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, false, false, false);
+        mockDelegate.mockDeleteUserInUserManagement(student, false, true, true);
 
         request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
 
@@ -132,7 +132,7 @@ public class UserTestService {
 
     // Test
     public void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, false, true, false);
+        mockDelegate.mockDeleteUserInUserManagement(student, true, true, false);
 
         request.delete("/api/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
 

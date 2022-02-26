@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.connector;
 
 import static org.gitlab4j.api.models.AccessLevel.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.net.URISyntaxException;
@@ -353,9 +354,12 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockDeleteVcsUser(String login, boolean shouldFailToDelete) throws GitLabApiException {
+    public void mockDeleteVcsUser(String login, boolean userExists, boolean shouldFailToDelete) throws GitLabApiException {
         mockGetUserId(login, true, false);
-        if (shouldFailToDelete) {
+        if (!userExists) {
+            doThrow(GitLabUserDoesNotExistException.class).when(userApi).deleteUser(anyInt(), eq(true));
+        }
+        else if (shouldFailToDelete) {
             doThrow(GitLabApiException.class).when(userApi).deleteUser(anyInt(), eq(true));
         }
         else {

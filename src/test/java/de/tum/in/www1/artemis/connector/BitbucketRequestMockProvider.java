@@ -271,10 +271,16 @@ public class BitbucketRequestMockProvider {
         })).andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 
-    public void mockDeleteUser(String username) {
+    public void mockDeleteUser(String username, boolean fail) {
         final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username).build().toUri();
 
-        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        if (fail) {
+            mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.DELETE))
+                    .andRespond(withStatus(HttpStatus.NOT_FOUND).body("404 : \"{\"errors:[{\"exceptionName\":\"com.atlassian.bitbucket.user.NoSuchUserException\"}]}\""));
+        }
+        else {
+            mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        }
     }
 
     public void mockEraseDeletedUser(String username) {

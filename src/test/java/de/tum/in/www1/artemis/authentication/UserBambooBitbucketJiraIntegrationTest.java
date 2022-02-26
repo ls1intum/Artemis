@@ -131,7 +131,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
-        bitbucketRequestMockProvider.mockDeleteUser(userTestService.getStudent().getLogin());
+        bitbucketRequestMockProvider.mockDeleteUser(userTestService.getStudent().getLogin(), false);
         bitbucketRequestMockProvider.mockEraseDeletedUser(userTestService.getStudent().getLogin());
         request.delete("/api/users/" + userTestService.getStudent().getLogin(), HttpStatus.OK);
     }
@@ -139,7 +139,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_isSuccessful() throws Exception {
-        bitbucketRequestMockProvider.mockDeleteUser("student1");
+        bitbucketRequestMockProvider.mockDeleteUser("student1", false);
         bitbucketRequestMockProvider.mockEraseDeletedUser("student1");
         userTestService.deleteUser_isSuccessful();
     }
@@ -147,8 +147,6 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteUser_doesntExistInUserManagement_isSuccessful() throws Exception {
-        bitbucketRequestMockProvider.mockDeleteUser(userTestService.getStudent().getLogin());
-        bitbucketRequestMockProvider.mockEraseDeletedUser(userTestService.getStudent().getLogin());
         userTestService.deleteUser_doesntExistInUserManagement_isSuccessful();
     }
 
