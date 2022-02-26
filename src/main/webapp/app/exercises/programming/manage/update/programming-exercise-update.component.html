@@ -231,7 +231,7 @@
             </div>
             <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode" [readOnly]="false"></jhi-programming-exercise-lifecycle>
         </div>
-        <div class="form-group">
+        <div class="form-group" *ngIf="!isExamMode">
             <label class="form-control-label">{{
                 'artemisApp.exercise.includedInOverallScore' + (programmingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
             }}</label>

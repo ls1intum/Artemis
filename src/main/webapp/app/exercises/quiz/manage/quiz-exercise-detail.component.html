@@ -113,7 +113,7 @@
             </div>
             <div class="row">
                 <div class="col">
-                    <div class="form-group">
+                    <div class="form-group" *ngIf="!isExamMode">
                         <label class="form-control-label">{{
                             'artemisApp.exercise.includedInOverallScore' + (quizExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
                         }}</label>

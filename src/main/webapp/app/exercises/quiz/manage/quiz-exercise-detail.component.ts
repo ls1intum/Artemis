@@ -226,6 +226,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }
+        if (this.isExamMode) {
+            // Lock possibility to not-include exercise into overall score
+            this.quizExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        }
         this.updateDuration();
         this.cacheValidation();
     }
