@@ -12,4 +12,5 @@ export class MockProgrammingExerciseService {
     getTasksAndTestsExtractedFromProblemStatement = (exerciseId: number) => of();
     deleteTasksWithSolutionEntries = (exerciseId: number) => of();
     getFullDiffReport = (exerciseId: number) => of({});
+    getDiffReport = (exerciseId: number) => of({});
 }
