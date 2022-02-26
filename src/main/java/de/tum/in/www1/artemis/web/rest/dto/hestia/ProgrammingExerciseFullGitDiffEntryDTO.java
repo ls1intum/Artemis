@@ -2,6 +2,11 @@ package de.tum.in.www1.artemis.web.rest.dto.hestia;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * A single difference from a git-diff report between the template and solution repositories.
+ * This is the full version of the git-diff entry that does contain the actual code of the change.
+ * It was created from a ProgrammingExerciseGitDiffEntry.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseFullGitDiffEntryDTO {
 

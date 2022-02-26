@@ -11,7 +11,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
- * A single difference from a git-diff report
+ * A single difference from a git-diff report between the template and solution repositories.
+ * This is a light version of the changes that does not contain the actual code.
+ * It rather contains the startLine and the length of the code blocks from both repositories.
  */
 @Entity
 @Table(name = "programming_exercise_git_diff_entry")

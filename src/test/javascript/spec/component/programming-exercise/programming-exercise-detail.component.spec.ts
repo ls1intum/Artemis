@@ -65,7 +65,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
                 previousLineCount: 2,
                 lineCount: 2,
             },
-        ] as ProgrammingExerciseGitDiffEntry[],
+        ],
     } as ProgrammingExerciseGitDiffReport;
 
     beforeEach(() => {

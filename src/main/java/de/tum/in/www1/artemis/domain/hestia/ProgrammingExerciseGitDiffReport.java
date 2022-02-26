@@ -14,8 +14,10 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
- * A ProgrammingExerciseGitDiffReport representing a git-diff between the template and solution repositories of a ProgrammingExercise.
- * For each change in the git-diff it will have one ProgrammingExerciseGitDiffEntry.
+ * A git-diff report representing a git-diff between the template and solution repositories of a ProgrammingExercise.
+ * This is a light version of the git-diff that does not contain the actual code in its entries.
+ * The entries rather contain the startLine and the length of the code blocks from both repositories.
+ * It can be converted to a full git-diff report with the ProgrammingExerciseGitDiffReportService.
  */
 @Entity
 @Table(name = "programming_exercise_git_diff_report")

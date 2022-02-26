@@ -4,6 +4,11 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
     <property name="autoIncrement" value="true"/>
 
+    <!--
+    This changeset adds the database tables for storing git-diffs of programming exercises
+    It contains tables for ProgrammingExerciseGitDiffReport and ProgrammingExerciseGitDiffEntry.
+    It also adds a new column to the exercise table that represents the reference from a programming exercise to a git-diff report
+    -->
     <changeSet author="timor-morrien" id="20220218140000">
         <createTable tableName="programming_exercise_git_diff_report">
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
