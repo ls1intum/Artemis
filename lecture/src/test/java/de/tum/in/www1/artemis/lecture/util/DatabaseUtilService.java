@@ -14,28 +14,45 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.util.DatabaseCleanupService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -97,6 +114,18 @@ public class DatabaseUtilService {
 
     @Autowired
     private ResultRepository resultRepo;
+
+    @Autowired
+    private AttachmentUnitRepository attachmentUnitRepository;
+
+    @Autowired
+    private ExerciseUnitRepository exerciseUnitRepository;
+
+    @Autowired
+    private TextUnitRepository textUnitRepository;
+
+    @Autowired
+    private VideoUnitRepository videoUnitRepository;
 
     @Autowired
     private DatabaseCleanupService databaseCleanupService;
@@ -272,6 +301,58 @@ public class DatabaseUtilService {
 
     public User getUserByLogin(String login) {
         return userRepo.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+    }
+
+    public ExerciseUnit createExerciseUnit(de.tum.in.www1.artemis.domain.Exercise exercise) {
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+        exerciseUnit.setExercise(exercise);
+        return exerciseUnitRepository.save(exerciseUnit);
+    }
+
+    public AttachmentUnit createAttachmentUnit() {
+        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit = attachmentRepo.save(attachmentOfAttachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnitRepository.save(attachmentUnit);
+    }
+
+    public TextUnit createTextUnit() {
+        TextUnit textUnit = new TextUnit();
+        textUnit.setContent("Lorem Ipsum");
+        return textUnitRepository.save(textUnit);
+    }
+
+    public VideoUnit createVideoUnit() {
+        VideoUnit videoUnit = new VideoUnit();
+        videoUnit.setDescription("Lorem Ipsum");
+        videoUnit.setSource("Some URL");
+        return videoUnitRepository.save(videoUnit);
+    }
+
+    public Lecture addLectureUnitsToLecture(Lecture lecture, Set<de.tum.in.www1.artemis.domain.lecture.LectureUnit> lectureUnits) {
+        Lecture l = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        for (LectureUnit lectureUnit : lectureUnits) {
+            l.addLectureUnit(lectureUnit);
+        }
+        return lectureRepo.save(l);
+    }
+
+    public void changeUser(String username) {
+        User user = getUserByLogin(username);
+        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+        for (Authority authority : user.getAuthorities()) {
+            grantedAuthorities.add(new SimpleGrantedAuthority(authority.getName()));
+        }
+        org.springframework.security.core.userdetails.User securityContextUser = new org.springframework.security.core.userdetails.User(user.getLogin(), user.getPassword(),
+            grantedAuthorities);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(securityContextUser, securityContextUser.getPassword(), grantedAuthorities);
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        TestSecurityContextHolder.setContext(context);
     }
 
     public void resetDatabase() {

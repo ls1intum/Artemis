@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.messaging.services.LectureServiceProducer;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
@@ -68,7 +69,7 @@ public class CourseService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LectureService lectureService;
+    private final LectureServiceProducer lectureServiceProducer;
 
     private final GroupNotificationRepository groupNotificationRepository;
 
@@ -99,10 +100,10 @@ public class CourseService {
     private final StudentParticipationRepository studentParticipationRepository;
 
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
-            GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
+            ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            LectureServiceProducer lectureServiceProducer, GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository,
+            AuditEventRepository auditEventRepository, UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
+            ExamService examService, ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
@@ -111,7 +112,7 @@ public class CourseService {
         this.exerciseDeletionService = exerciseDeletionService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.lectureService = lectureService;
+        this.lectureServiceProducer = lectureServiceProducer;
         this.groupNotificationRepository = groupNotificationRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.auditEventRepository = auditEventRepository;
@@ -170,7 +171,7 @@ public class CourseService {
             throw new AccessForbiddenException();
         }
         course.setExercises(exerciseService.findAllForCourse(course, user));
-        course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+        course.setLectures(lectureServiceProducer.filterActiveAttachments(course.getLectures(), user));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
@@ -201,7 +202,7 @@ public class CourseService {
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isCourseVisibleForUser(user, course))
                 .peek(course -> {
                     course.setExercises(exerciseService.findAllForCourse(course, user));
-                    course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+                    course.setLectures(lectureServiceProducer.filterActiveAttachments(course.getLectures(), user));
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
                         course.setExams(examRepository.filterVisibleExams(course.getExams()));
                     }
@@ -227,7 +228,7 @@ public class CourseService {
      *     <li>The Course</li>
      *     <li>All Exercises including:
      *      submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
-     *     <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
+     *     <li>All Lectures and their Attachments, see {@link LectureServiceProducer#deleteLecturesOfCourse}</li>
      *     <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
      *     <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
      *     <li>All Exams, see {@link ExamService#delete}</li>
@@ -241,7 +242,7 @@ public class CourseService {
 
         deleteLearningGoalsOfCourse(course);
         deleteExercisesOfCourse(course);
-        deleteLecturesOfCourse(course);
+        lectureServiceProducer.deleteLecturesOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
@@ -282,12 +283,6 @@ public class CourseService {
     private void deleteNotificationsOfCourse(Course course) {
         List<GroupNotification> notifications = groupNotificationRepository.findAllByCourseId(course.getId());
         groupNotificationRepository.deleteAll(notifications);
-    }
-
-    private void deleteLecturesOfCourse(Course course) {
-        for (Lecture lecture : course.getLectures()) {
-            lectureService.delete(lecture);
-        }
     }
 
     private void deleteExercisesOfCourse(Course course) {

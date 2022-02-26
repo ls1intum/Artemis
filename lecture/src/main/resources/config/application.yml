@@ -161,6 +161,12 @@ spring:
         phone:
             home:
                 enabled: false
+    artemis: # ActiveMQ Artemis configuration
+        mode: native
+        host: localhost
+        port: 61616
+        user: guest
+        password: guest
 
 hazelcast:
     phone:

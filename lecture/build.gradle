@@ -95,6 +95,7 @@ sourceSets {
             include 'de/tum/in/www1/artemis/config/DateTimeFormatConfiguration.*'
             include 'de/tum/in/www1/artemis/config/JacksonConfiguration.*'
             include 'de/tum/in/www1/artemis/config/LocaleConfiguration.*'
+            include 'de/tum/in/www1/artemis/config/MessageBrokerConstants.*'
 
             // de.tum.in.www1.artemis.service
             include 'de/tum/in/www1/artemis/service/AuthorizationCheckService.*'
