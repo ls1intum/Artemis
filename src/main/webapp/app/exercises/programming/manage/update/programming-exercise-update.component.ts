@@ -330,6 +330,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     } else {
                         this.submitButtonTitle = 'entity.action.generate';
                     }
+                    if (this.isExamMode) {
+                        // Lock possibility to not-include exercise into overall score
+                        this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+                    }
                 }),
             )
             .subscribe();
@@ -395,8 +399,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.isExamMode) {
             // Set exerciseGroup to undefined if an exam exercise is imported
             this.programmingExercise.exerciseGroup = undefined;
-            // Lock possibility to not-include exercise into overall score
-            this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         }
     }
 

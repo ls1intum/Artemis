@@ -81,6 +81,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             }
+            if (this.isExamMode) {
+                this.fileUploadExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            }
 
             this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType);
         });
