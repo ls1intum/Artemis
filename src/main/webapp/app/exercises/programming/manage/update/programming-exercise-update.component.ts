@@ -377,8 +377,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.programmingExercise.course = undefined;
             });
             this.isExamMode = true;
-            // Lock possibility to not-include exercise into overall score
-            this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         } else if (params['courseId']) {
             this.courseService.find(params['courseId']).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
@@ -397,6 +395,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.isExamMode) {
             // Set exerciseGroup to undefined if an exam exercise is imported
             this.programmingExercise.exerciseGroup = undefined;
+            // Lock possibility to not-include exercise into overall score
+            this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         }
     }
 
