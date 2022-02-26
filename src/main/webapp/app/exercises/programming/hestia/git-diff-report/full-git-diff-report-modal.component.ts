@@ -1,14 +1,14 @@
 import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 
 @Component({
     selector: 'jhi-git-diff-report-modal',
-    templateUrl: './git-diff-report-modal.component.html',
+    templateUrl: './full-git-diff-report-modal.component.html',
 })
-export class GitDiffReportModalComponent {
+export class FullGitDiffReportModalComponent {
     @Input()
-    report: ProgrammingExerciseGitDiffReport;
+    report: ProgrammingExerciseFullGitDiffReport;
 
     constructor(protected activeModal: NgbActiveModal) {}
 

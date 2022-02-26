@@ -41,7 +41,7 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
+import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -174,6 +174,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
                 }
             });
+
+            this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => (this.programmingExercise.gitDiffReport = gitDiffReport));
         });
     }
 
@@ -418,9 +420,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * Updates or gets the git-diff from the server and displays it in a modal.
      */
     updateDiff() {
-        this.programmingExerciseService.updateDiffReport(this.programmingExercise.id!).subscribe({
+        this.programmingExerciseService.getFullDiffReport(this.programmingExercise.id!).subscribe({
             next: (gitDiffReport) => {
-                const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
+                const modalRef = this.modalService.open(FullGitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
                 modalRef.componentInstance.report = gitDiffReport;
             },
             error: (err) => {

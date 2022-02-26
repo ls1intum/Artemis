@@ -8,10 +8,12 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.in.www1.artemis.web.rest.dto.hestia.ProgrammingExerciseFullGitDiffReportDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for managing ProgrammingExerciseGitDiffReports and its entries.
@@ -28,34 +30,55 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     private final ProgrammingExerciseGitDiffReportService gitDiffReportService;
 
+    private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
+
     public ProgrammingExerciseGitDiffReportResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseGitDiffReportService gitDiffReportService) {
+            ProgrammingExerciseGitDiffReportService gitDiffReportService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitDiffReportService = gitDiffReportService;
+        this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
     }
 
     /**
-     * {@code POST exercises/:exerciseId/diff-report} : Create a new diffReport for a programming exercise.
-     * Reuses the existing one if the template and solution repositories have not changed.
+     * {@code GET exercises/:exerciseId/diff-report} : Get the diff report for a programming exercise.
      *
      * @param exerciseId the exerciseId of the exercise of which to create the exerciseHint
-     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the new exerciseHint,
-     * or with status {@code 500 (Internal Server Error)} if there was an issue when generating the report,
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the diff report
      */
-    @PostMapping("programming-exercises/{exerciseId}/diff-report")
+    @GetMapping("programming-exercises/{exerciseId}/diff-report")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<ProgrammingExerciseGitDiffReport> updateOrGetGitDiffReport(@PathVariable Long exerciseId) {
-        log.debug("REST request to generate a ProgrammingExerciseGitDiffReport for exercise {}", exerciseId);
+    public ResponseEntity<ProgrammingExerciseGitDiffReport> gitDiffReport(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a ProgrammingExerciseGitDiffReport for exercise {}", exerciseId);
 
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
-        var report = gitDiffReportService.updateReportForExercise(exercise);
-        if (report == null) {
-            throw new InternalServerErrorException("Unable to generate diff report");
-        }
+        var report = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(exercise.getId());
 
         return ResponseEntity.ok(report);
+    }
+
+    /**
+     * {@code GET exercises/:exerciseId/full-diff-report} : Create the full diff report for a programming exercise.
+     * The fill diff report contains entries with the previous and current code blocks.
+     *
+     * @param exerciseId the exerciseId of the exercise of which to create the exerciseHint
+     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the full diff report,
+     */
+    @GetMapping("programming-exercises/{exerciseId}/full-diff-report")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<ProgrammingExerciseFullGitDiffReportDTO> getFullGitDiffReport(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a ProgrammingExerciseFullGitDiffReport for exercise {}", exerciseId);
+
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        var fullReport = gitDiffReportService.getFullReport(exercise);
+        if (fullReport == null) {
+            throw new EntityNotFoundException("No git diff report exists for this exercise");
+        }
+
+        return ResponseEntity.ok(fullReport);
     }
 }

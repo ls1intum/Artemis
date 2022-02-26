@@ -1,5 +1,12 @@
 <div class="jhi-git-diff-report">
-    <h6>{{ diffEntry.filePath }}</h6>
+    <div class="row">
+        <div class="col-6">
+            <h6>{{ diffEntry.previousFilePath }}</h6>
+        </div>
+        <div class="col-6">
+            <h6>{{ diffEntry.filePath }}</h6>
+        </div>
+    </div>
     <div class="row">
         <div class="col-6">
             <jhi-ace-editor #editorPrevious [mode]="'java'" [readOnly]="true" [hidden]="false" [autoUpdateContent]="true" class="jhi-git-diff-report-editor-previous">

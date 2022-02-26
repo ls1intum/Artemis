@@ -1,18 +1,18 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
 
 @Component({
     selector: 'jhi-git-diff-entry',
-    templateUrl: './git-diff-entry.component.html',
+    templateUrl: './full-git-diff-entry.component.html',
 })
-export class GitDiffEntryComponent implements OnInit {
+export class FullGitDiffEntryComponent implements OnInit {
     @ViewChild('editorPrevious', { static: true })
     editorPrevious: AceEditorComponent;
     @ViewChild('editorNow', { static: true })
     editorNow: AceEditorComponent;
     @Input()
-    diffEntry: ProgrammingExerciseGitDiffEntry;
+    diffEntry: ProgrammingExerciseFullGitDiffEntry;
 
     constructor() {}
 

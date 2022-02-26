@@ -3,22 +3,22 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { GitDiffEntryComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-entry.component';
+import { FullGitDiffEntryComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-entry.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute } from '@angular/router';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 
-describe('ProgrammingExerciseGitDiffEntry Component', () => {
-    let comp: GitDiffEntryComponent;
-    let fixture: ComponentFixture<GitDiffEntryComponent>;
+describe('ProgrammingExerciseFullGitDiffEntry Component', () => {
+    let comp: FullGitDiffEntryComponent;
+    let fixture: ComponentFixture<FullGitDiffEntryComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
-            declarations: [GitDiffEntryComponent, AceEditorComponent],
+            declarations: [FullGitDiffEntryComponent, AceEditorComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -26,10 +26,10 @@ describe('ProgrammingExerciseGitDiffEntry Component', () => {
                 { provide: ProfileService, useValue: new MockProfileService() },
             ],
         }).compileComponents();
-        fixture = TestBed.createComponent(GitDiffEntryComponent);
+        fixture = TestBed.createComponent(FullGitDiffEntryComponent);
         comp = fixture.componentInstance;
 
-        comp.diffEntry = new ProgrammingExerciseGitDiffEntry();
+        comp.diffEntry = new ProgrammingExerciseFullGitDiffEntry();
         comp.diffEntry.id = 123;
         comp.diffEntry.filePath = '/src/de/test.java';
         comp.diffEntry.previousLine = 1;

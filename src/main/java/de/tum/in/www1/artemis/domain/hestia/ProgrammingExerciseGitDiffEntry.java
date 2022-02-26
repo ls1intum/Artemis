@@ -23,26 +23,27 @@ public class ProgrammingExerciseGitDiffEntry extends DomainObject {
     @JsonIgnoreProperties("entries")
     private ProgrammingExerciseGitDiffReport gitDiffReport;
 
-    @Column(name = "file_path", nullable = false)
+    @Column(name = "previous_file_path")
+    private String previousFilePath;
+
+    @Column(name = "file_path")
     private String filePath;
 
     // The line at which the previous code segment is in the template
     @Column(name = "previous_line")
-    private Integer previousLine;
+    private Integer previousStartLine;
 
     // The line at which the new code segment is in the solution
     @Column(name = "line")
-    private Integer line;
+    private Integer startLine;
 
-    // The previous code segment to be replaced by the new code segment
-    @Column(name = "previous_code")
-    @Lob
-    private String previousCode;
+    // The amount of lines of the code segment in the template
+    @Column(name = "previous_line_count")
+    private Integer previousLineCount;
 
-    // The new code segment that replaces the old code segment
-    @Column(name = "code")
-    @Lob
-    private String code;
+    // The amount of lines of the code segment in the solution
+    @Column(name = "line_count")
+    private Integer lineCount;
 
     public ProgrammingExerciseGitDiffReport getGitDiffReport() {
         return gitDiffReport;
@@ -50,6 +51,14 @@ public class ProgrammingExerciseGitDiffEntry extends DomainObject {
 
     public void setGitDiffReport(ProgrammingExerciseGitDiffReport gitDiff) {
         this.gitDiffReport = gitDiff;
+    }
+
+    public String getPreviousFilePath() {
+        return previousFilePath;
+    }
+
+    public void setPreviousFilePath(String previousFilePath) {
+        this.previousFilePath = previousFilePath;
     }
 
     public String getFilePath() {
@@ -60,39 +69,39 @@ public class ProgrammingExerciseGitDiffEntry extends DomainObject {
         this.filePath = filePath;
     }
 
-    public Integer getPreviousLine() {
-        return previousLine;
+    public Integer getPreviousStartLine() {
+        return previousStartLine;
     }
 
-    public void setPreviousLine(Integer previousLine) {
-        this.previousLine = previousLine;
+    public void setPreviousStartLine(Integer previousStartLine) {
+        this.previousStartLine = previousStartLine;
     }
 
-    public Integer getLine() {
-        return line;
+    public Integer getStartLine() {
+        return startLine;
     }
 
-    public void setLine(Integer line) {
-        this.line = line;
+    public void setStartLine(Integer startLine) {
+        this.startLine = startLine;
     }
 
-    public String getPreviousCode() {
-        return previousCode;
+    public Integer getPreviousLineCount() {
+        return previousLineCount;
     }
 
-    public void setPreviousCode(String previousCode) {
-        this.previousCode = previousCode;
+    public void setPreviousLineCount(Integer previousLineCount) {
+        this.previousLineCount = previousLineCount;
     }
 
-    public String getCode() {
-        return code;
+    public Integer getLineCount() {
+        return lineCount;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setLineCount(Integer lineCount) {
+        this.lineCount = lineCount;
     }
 
     public boolean isEmpty() {
-        return code == null && previousCode == null;
+        return startLine == null && previousStartLine == null;
     }
 }

@@ -14,7 +14,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -205,11 +205,11 @@ describe('ProgrammingExercise Service', () => {
         }));
 
         it('should make post request', fakeAsync(() => {
-            const expected = new ProgrammingExerciseGitDiffReport();
+            const expected = new ProgrammingExerciseFullGitDiffReport();
             expected.templateRepositoryCommitHash = 'XYZ';
             expected.solutionRepositoryCommitHash = 'ABC';
-            service.updateDiffReport(123).subscribe((resp) => expect(resp).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/diff-report` });
+            service.getFullDiffReport(123).subscribe((resp) => expect(resp).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/full-diff-report` });
             req.flush(expected);
             tick();
         }));

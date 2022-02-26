@@ -1,16 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
+import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
 
 @Component({
     selector: 'jhi-git-diff-report',
-    templateUrl: './git-diff-report.component.html',
+    templateUrl: './full-git-diff-report.component.html',
 })
-export class GitDiffReportComponent implements OnInit {
+export class FullGitDiffReportComponent implements OnInit {
     @Input()
-    report: ProgrammingExerciseGitDiffReport;
+    report: ProgrammingExerciseFullGitDiffReport;
 
-    entries: ProgrammingExerciseGitDiffEntry[];
+    entries: ProgrammingExerciseFullGitDiffEntry[];
 
     constructor() {}
 

@@ -19,10 +19,10 @@ import { Task } from 'app/exercises/programming/shared/instructions-render/task/
 import { MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
+import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
@@ -85,13 +85,13 @@ describe('ProgrammingExercise Management Detail Component', () => {
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
 
-        jest.spyOn(exerciseService, 'updateDiffReport').mockReturnValue(of({} as ProgrammingExerciseGitDiffReport));
+        jest.spyOn(exerciseService, 'getFullDiffReport').mockReturnValue(of({} as ProgrammingExerciseFullGitDiffReport));
         jest.spyOn(modalService, 'open');
 
         comp.updateDiff();
 
         expect(modalService.open).toHaveBeenCalledTimes(1);
-        expect(modalService.open).toHaveBeenCalledWith(GitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(FullGitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
     });
 
     describe('OnInit for course exercise', () => {

@@ -2,10 +2,9 @@ package de.tum.in.www1.artemis.service.hestia;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -21,11 +20,15 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
+import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.web.rest.dto.hestia.ProgrammingExerciseFullGitDiffEntryDTO;
+import de.tum.in.www1.artemis.web.rest.dto.hestia.ProgrammingExerciseFullGitDiffReportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -38,9 +41,13 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private final GitService gitService;
 
+    private final RepositoryService repositoryService;
+
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
@@ -48,25 +55,106 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private final Pattern gitDiffLinePattern = Pattern.compile("@@ -(?<previousLine>\\d+),(?<previousLineCount>\\d+) \\+(?<newLine>\\d+),(?<newLineCount>\\d+) @@");
 
-    public ProgrammingExerciseGitDiffReportService(GitService gitService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public ProgrammingExerciseGitDiffReportService(GitService gitService, RepositoryService repositoryService,
+            ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.gitService = gitService;
+        this.repositoryService = repositoryService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     /**
+     * Gets the full git-diff report of a programming exercise. A full git-diff report is created from the normal git-diff report
+     * but contains the actual code blocks of the template and solution.
+     *
+     * @param programmingExercise The programming exercise
+     * @return The full git-diff report for the given programming exercise
+     */
+    public ProgrammingExerciseFullGitDiffReportDTO getFullReport(ProgrammingExercise programmingExercise) {
+        try {
+            var report = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
+            if (report == null) {
+                return null;
+            }
+            var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
+            var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
+            if (templateParticipationOptional.isEmpty() || solutionParticipationOptional.isEmpty()) {
+                return null;
+            }
+            var templateParticipation = templateParticipationOptional.get();
+            var solutionParticipation = solutionParticipationOptional.get();
+            var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
+            var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
+
+            var fullReport = new ProgrammingExerciseFullGitDiffReportDTO();
+            fullReport.setTemplateRepositoryCommitHash(report.getTemplateRepositoryCommitHash());
+            fullReport.setSolutionRepositoryCommitHash(report.getSolutionRepositoryCommitHash());
+            var fullEntries = new HashSet<ProgrammingExerciseFullGitDiffEntryDTO>();
+            var templateFiles = repositoryService.getFilesWithContent(templateRepo);
+            var solutionFiles = repositoryService.getFilesWithContent(solutionRepo);
+            for (ProgrammingExerciseGitDiffEntry entry : report.getEntries()) {
+                ProgrammingExerciseFullGitDiffEntryDTO fullEntry = convertToFullEntry(entry, templateFiles, solutionFiles);
+                if (!fullEntry.isEmpty()) {
+                    fullEntries.add(fullEntry);
+                }
+            }
+            fullReport.setEntries(fullEntries);
+
+            return fullReport;
+        }
+        catch (InterruptedException | GitAPIException e) {
+            log.error("Exception while generating full git diff report", e);
+            throw new InternalServerErrorException("Error while generating full git-diff: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Converts a normal git-diff entry to a full git-diff entry containing the actual code block of the change it represents.
+     *
+     * @param entry The normal git-diff entry
+     * @param templateRepoFiles The files of the solution repository
+     * @param solutionRepoFiles The files of the template repository
+     * @return The full git-diff entry
+     */
+    private ProgrammingExerciseFullGitDiffEntryDTO convertToFullEntry(ProgrammingExerciseGitDiffEntry entry, Map<String, String> templateRepoFiles,
+            Map<String, String> solutionRepoFiles) {
+        var fullEntry = new ProgrammingExerciseFullGitDiffEntryDTO();
+        fullEntry.setLine(entry.getStartLine());
+        fullEntry.setPreviousLine(entry.getPreviousStartLine());
+        fullEntry.setFilePath(entry.getFilePath());
+        fullEntry.setPreviousFilePath(entry.getPreviousFilePath());
+        if (entry.getPreviousFilePath() != null && entry.getPreviousStartLine() != null && entry.getPreviousLineCount() != null) {
+            var fileContent = templateRepoFiles.get(entry.getPreviousFilePath());
+            if (fileContent != null) {
+                var previousCode = Arrays.stream(fileContent.split("\n")).skip(entry.getPreviousStartLine() - 1).limit(entry.getPreviousLineCount())
+                        .collect(Collectors.joining("\n"));
+                fullEntry.setPreviousCode(previousCode);
+            }
+        }
+        if (entry.getFilePath() != null && entry.getStartLine() != null && entry.getLineCount() != null) {
+            var fileContent = solutionRepoFiles.get(entry.getFilePath());
+            if (fileContent != null) {
+                var code = Arrays.stream(fileContent.split("\n")).skip(entry.getStartLine() - 1).limit(entry.getLineCount()).collect(Collectors.joining("\n"));
+                fullEntry.setCode(code);
+            }
+        }
+        return fullEntry;
+    }
+
+    /**
      * Updates the ProgrammingExerciseGitDiffReport of a programming exercise.
-     * If there were no changes since the last report was created this will return the old report.
+     * If there were no changes since the last report was created this will not do anything.
      * If there were changes to at least one of the repositories a new report will be created.
      *
-     * @param programmingExercise The ProgrammingExercise
-     * @return The ProgrammingExerciseGitDiffReport for the given ProgrammingExercise
+     * @param programmingExercise The programming exercise
+     * @return The git-diff report for the given programming exercise
      */
-    public ProgrammingExerciseGitDiffReport updateReportForExercise(ProgrammingExercise programmingExercise) {
+    public ProgrammingExerciseGitDiffReport updateReport(ProgrammingExercise programmingExercise) {
         var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
         var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
         if (templateParticipationOptional.isEmpty() || solutionParticipationOptional.isEmpty()) {
@@ -96,6 +184,7 @@ public class ProgrammingExerciseGitDiffReportService {
             newReport.setProgrammingExercise(programmingExercise);
             programmingExercise.setGitDiffReport(newReport);
             newReport = programmingExerciseGitDiffReportRepository.save(newReport);
+            programmingExerciseRepository.save(programmingExercise);
             if (existingReport != null) {
                 programmingExerciseGitDiffReportRepository.delete(existingReport);
             }
@@ -148,6 +237,7 @@ public class ProgrammingExerciseGitDiffReportService {
         var lines = diff.split("\n");
         var entries = new ArrayList<ProgrammingExerciseGitDiffEntry>();
         String currentFilePath = null;
+        String currentPreviousFilePath = null;
         var currentEntry = new ProgrammingExerciseGitDiffEntry();
         boolean deactivateCodeReading = true;
         boolean lastLineRemoveOperation = false;
@@ -167,9 +257,12 @@ public class ProgrammingExerciseGitDiffReportService {
                 }
                 // Start of a new file
                 var newFilePath = getFilePath(lines, i);
+                var newPreviousFilePath = getPreviousFilePath(lines, i);
                 currentFilePath = newFilePath == null ? currentFilePath : newFilePath;
+                currentPreviousFilePath = newPreviousFilePath == null ? currentPreviousFilePath : newPreviousFilePath;
                 currentEntry = new ProgrammingExerciseGitDiffEntry();
                 currentEntry.setFilePath(currentFilePath);
+                currentEntry.setPreviousFilePath(currentPreviousFilePath);
                 currentLineCount = Integer.parseInt(lineMatcher.group("newLine"));
                 currentPreviousLineCount = Integer.parseInt(lineMatcher.group("previousLine"));
                 deactivateCodeReading = false;
@@ -183,13 +276,13 @@ public class ProgrammingExerciseGitDiffReportService {
                         currentLineCount++;
                     }
                     case '-' -> {
-                        currentEntry = handleRemoval(entries, currentFilePath, currentEntry, lastLineRemoveOperation, currentPreviousLineCount, line);
+                        currentEntry = handleRemoval(entries, currentFilePath, currentPreviousFilePath, currentEntry, lastLineRemoveOperation, currentPreviousLineCount, line);
 
                         lastLineRemoveOperation = true;
                         currentPreviousLineCount++;
                     }
                     case ' ' -> {
-                        currentEntry = handleUnchanged(entries, currentFilePath, currentEntry);
+                        currentEntry = handleUnchanged(entries, currentFilePath, currentPreviousFilePath, currentEntry);
 
                         lastLineRemoveOperation = false;
                         currentLineCount++;
@@ -204,63 +297,61 @@ public class ProgrammingExerciseGitDiffReportService {
         if (!currentEntry.isEmpty()) {
             entries.add(currentEntry);
         }
-        removeTrailingLinebreaks(entries);
         return entries;
     }
 
     @NotNull
-    private ProgrammingExerciseGitDiffEntry handleUnchanged(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, ProgrammingExerciseGitDiffEntry currentEntry) {
+    private ProgrammingExerciseGitDiffEntry handleUnchanged(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, String currentPreviousFilePath,
+            ProgrammingExerciseGitDiffEntry currentEntry) {
         var entry = currentEntry;
         if (!entry.isEmpty()) {
             entries.add(entry);
         }
         entry = new ProgrammingExerciseGitDiffEntry();
         entry.setFilePath(currentFilePath);
+        entry.setPreviousFilePath(currentPreviousFilePath);
         return entry;
     }
 
     @NotNull
-    private ProgrammingExerciseGitDiffEntry handleRemoval(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, ProgrammingExerciseGitDiffEntry currentEntry,
-            boolean lastLineRemoveOperation, int currentPreviousLineCount, String line) {
+    private ProgrammingExerciseGitDiffEntry handleRemoval(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, String currentPreviousFilePath,
+            ProgrammingExerciseGitDiffEntry currentEntry, boolean lastLineRemoveOperation, int currentPreviousLineCount, String line) {
         var entry = currentEntry;
         if (!lastLineRemoveOperation && !entry.isEmpty()) {
             entries.add(entry);
             entry = new ProgrammingExerciseGitDiffEntry();
             entry.setFilePath(currentFilePath);
+            entry.setPreviousFilePath(currentPreviousFilePath);
         }
-        if (entry.getPreviousCode() == null) {
-            entry.setPreviousCode("");
-            entry.setPreviousLine(currentPreviousLineCount);
+        if (entry.getPreviousLineCount() == null) {
+            entry.setPreviousLineCount(0);
+            entry.setPreviousStartLine(currentPreviousLineCount);
         }
-        var previousCode = entry.getPreviousCode();
-        previousCode += line.substring(1) + "\n";
-        entry.setPreviousCode(previousCode);
+        entry.setPreviousLineCount(entry.getPreviousLineCount() + 1);
         return entry;
     }
 
     private void handleAddition(ProgrammingExerciseGitDiffEntry currentEntry, int currentLineCount, String line) {
-        if (currentEntry.getCode() == null) {
-            currentEntry.setCode("");
-            currentEntry.setLine(currentLineCount);
+        if (currentEntry.getLineCount() == null) {
+            currentEntry.setLineCount(0);
+            currentEntry.setStartLine(currentLineCount);
         }
-        var code = currentEntry.getCode();
-        code += line.substring(1) + "\n";
-        currentEntry.setCode(code);
+        currentEntry.setLineCount(currentEntry.getLineCount() + 1);
     }
 
     /**
      * Extracts the file path from the raw git-diff for a specified diff block
      *
-     * @param lines All lines of the raw git-diff
+     * @param lines       All lines of the raw git-diff
      * @param currentLine The line where the gitDiffLinePattern matched
      * @return The file path of the current diff block
      */
     private String getFilePath(String[] lines, int currentLine) {
         if (lines[currentLine - 1].startsWith("+++ ") && lines[currentLine - 2].startsWith("--- ")) {
             var filePath = lines[currentLine - 1].substring(4);
-            // Check if the filePath is /dev/null (which means the file was deleted) and replace it by the actual file path
+            // Check if the filePath is /dev/null (which means the file was deleted) and instead return null
             if (DiffEntry.DEV_NULL.equals(filePath)) {
-                filePath = lines[currentLine - 2].substring(4);
+                return null;
             }
             // Git diff usually puts the two repos into the subfolders 'a' and 'b' for comparison, which we filter out here
             if (filePath.startsWith("a/") || filePath.startsWith("b/")) {
@@ -270,15 +361,26 @@ public class ProgrammingExerciseGitDiffReportService {
         return null;
     }
 
-    private void removeTrailingLinebreaks(List<ProgrammingExerciseGitDiffEntry> entries) {
-        for (ProgrammingExerciseGitDiffEntry entry : entries) {
-            if (entry.getCode() != null) {
-                entry.setCode(entry.getCode().substring(0, entry.getCode().length() - 1));
+    /**
+     * Extracts the previous file path from the raw git-diff for a specified diff block
+     *
+     * @param lines       All lines of the raw git-diff
+     * @param currentLine The line where the gitDiffLinePattern matched
+     * @return The previous file path of the current diff block
+     */
+    private String getPreviousFilePath(String[] lines, int currentLine) {
+        if (lines[currentLine - 1].startsWith("+++ ") && lines[currentLine - 2].startsWith("--- ")) {
+            var filePath = lines[currentLine - 2].substring(4);
+            // Check if the filePath is /dev/null (which means the file was deleted) and instead return null
+            if (DiffEntry.DEV_NULL.equals(filePath)) {
+                return null;
             }
-            if (entry.getPreviousCode() != null) {
-                entry.setPreviousCode(entry.getPreviousCode().substring(0, entry.getPreviousCode().length() - 1));
+            // Git diff usually puts the two repos into the subfolders 'a' and 'b' for comparison, which we filter out here
+            if (filePath.startsWith("a/") || filePath.startsWith("b/")) {
+                return filePath.substring(2);
             }
         }
+        return null;
     }
 
     private boolean canUseExistingReport(ProgrammingExerciseGitDiffReport report, String templateHash, String solutionHash) {
