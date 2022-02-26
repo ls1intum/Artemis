@@ -182,8 +182,8 @@ public class ProgrammingExerciseGitDiffReportService {
             newReport.setTemplateRepositoryCommitHash(templateHash);
             newReport.setSolutionRepositoryCommitHash(solutionHash);
             newReport.setProgrammingExercise(programmingExercise);
-            programmingExercise.setGitDiffReport(newReport);
             newReport = programmingExerciseGitDiffReportRepository.save(newReport);
+            programmingExercise.setGitDiffReport(newReport);
             programmingExerciseRepository.save(programmingExercise);
             if (existingReport != null) {
                 programmingExerciseGitDiffReportRepository.delete(existingReport);

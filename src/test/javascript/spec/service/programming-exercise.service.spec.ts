@@ -204,12 +204,12 @@ describe('ProgrammingExercise Service', () => {
             tick();
         }));
 
-        it('should make post request', fakeAsync(() => {
+        it('should make get request', fakeAsync(() => {
             const expected = new ProgrammingExerciseFullGitDiffReport();
             expected.templateRepositoryCommitHash = 'XYZ';
             expected.solutionRepositoryCommitHash = 'ABC';
             service.getFullDiffReport(123).subscribe((resp) => expect(resp).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/full-diff-report` });
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/full-diff-report` });
             req.flush(expected);
             tick();
         }));
