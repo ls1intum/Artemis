@@ -39,7 +39,8 @@ public class HestiaUtilService {
     @Autowired
     private ProgrammingExerciseRepository exerciseRepository;
 
-    @Autowired
+    // required=false is necessary, as this will otherwise fail when not part of a AbstractSpringIntegrationBambooBitbucketJiraTest
+    @Autowired(required = false)
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     @Autowired

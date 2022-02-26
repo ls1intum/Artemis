@@ -189,8 +189,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
         fullEntries.sort(Comparator.comparing(ProgrammingExerciseFullGitDiffEntryDTO::getLine));
         assertThat(fullEntries.get(0).getPreviousLine()).isEqualTo(2);
         assertThat(fullEntries.get(0).getLine()).isEqualTo(2);
-        assertThat(fullEntries.get(0).getPreviousCode()).isEqualTo("L2\n");
-        assertThat(fullEntries.get(0).getCode()).isEqualTo("L2a\n");
+        assertThat(fullEntries.get(0).getPreviousCode()).isEqualTo("L2");
+        assertThat(fullEntries.get(0).getCode()).isEqualTo("L2a");
 
         assertThat(fullEntries.get(1).getPreviousLine()).isEqualTo(4);
         assertThat(fullEntries.get(1).getLine()).isEqualTo(4);
