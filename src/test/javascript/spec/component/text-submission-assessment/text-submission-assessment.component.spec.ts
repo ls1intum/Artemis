@@ -42,7 +42,6 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -51,7 +50,6 @@ describe('TextSubmissionAssessmentComponent', () => {
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
     let router: Router;
-    let textSubmissionService: TextSubmissionService;
 
     const exercise = {
         id: 1,
@@ -166,7 +164,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         component = fixture.componentInstance;
         submissionService = TestBed.inject(SubmissionService);
         exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
-        textSubmissionService = fixture.debugElement.injector.get(TextSubmissionService);
         textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         router = TestBed.inject(Router);
 
@@ -405,6 +402,6 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.navigateToConflictingSubmissions(1);
 
-        expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission: submission } });
+        expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission } });
     });
 });

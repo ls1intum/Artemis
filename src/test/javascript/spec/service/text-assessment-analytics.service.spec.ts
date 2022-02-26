@@ -68,17 +68,18 @@ describe('TextAssessmentAnalytics Service', () => {
     }));
 
     it('should display error when submitting event to the server', () => {
-        const error = { message: 'error occurred!' };
+        const error = new Error();
+        error.message = 'error occurred';
         service.analyticsEnabled = true;
         const textAssessmentService = TestBed.inject(TextAssessmentService);
-        const errorStub = jest.spyOn(textAssessmentService, 'addTextAssessmentEvent').mockReturnValue(throwError({ message: 'error occurred!' }));
+        const errorStub = jest.spyOn(textAssessmentService, 'addTextAssessmentEvent').mockReturnValue(throwError(() => error));
         const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation();
 
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
 
         expect(errorStub).toHaveBeenCalledTimes(1);
         expect(consoleErrorMock).toHaveBeenCalledTimes(1);
-        expect(consoleErrorMock).toHaveBeenCalledWith('Error sending statistics: ' + error.message);
+        expect(consoleErrorMock).toHaveBeenCalledWith('Error sending statistics: error occurred');
     });
 
     it('should not subscribe to route parameters if artemis analytics is disabled', fakeAsync(() => {

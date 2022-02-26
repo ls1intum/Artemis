@@ -408,7 +408,6 @@ describe('TextAssessment Service', () => {
         let resolver: NewStudentParticipationResolver;
         let textSubmissionService: TextSubmissionService;
         let newStudentParticipationStub: jest.SpyInstance;
-        const textSubmission = { id: 23 } as TextSubmission;
 
         resolver = TestBed.inject(NewStudentParticipationResolver);
         textSubmissionService = TestBed.inject(TextSubmissionService);

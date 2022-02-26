@@ -40,7 +40,7 @@ describe('TextAssessmentAreaComponent', () => {
     });
 
     it('should add a TextblockAssessmentCardComponent for each TextBlockRef', () => {
-        const textBlockRefs = [
+        const textBlockRefs2 = [
             TextBlockRef.new(),
             TextBlockRef.new(),
             TextBlockRef.new(),
@@ -53,8 +53,8 @@ describe('TextAssessmentAreaComponent', () => {
             TextBlockRef.new(),
         ];
 
-        for (let i = 0; i < textBlockRefs.length; i++) {
-            component.textBlockRefs = textBlockRefs.slice(0, i);
+        for (let i = 0; i < textBlockRefs2.length; i++) {
+            component.textBlockRefs = textBlockRefs2.slice(0, i);
             fixture.detectChanges();
 
             const all = fixture.debugElement.queryAll(By.directive(TextblockAssessmentCardComponent));
