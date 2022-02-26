@@ -51,6 +51,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        gitService.deleteLocalRepository(exercise.getVcsTemplateRepositoryUrl());
+        gitService.deleteLocalRepository(exercise.getVcsSolutionRepositoryUrl());
     }
 
     @Test
@@ -182,7 +184,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
         assertThat(entries.get(1).getLineCount()).isEqualTo(1);
 
         var fullReport = reportService.getFullReport(exercise);
-        assertThat(fullReport.getEntries()).hasSize(1);
+        assertThat(fullReport.getEntries()).hasSize(2);
         var fullEntries = new ArrayList<>(fullReport.getEntries());
         fullEntries.sort(Comparator.comparing(ProgrammingExerciseFullGitDiffEntryDTO::getLine));
         assertThat(fullEntries.get(0).getPreviousLine()).isEqualTo(2);

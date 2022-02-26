@@ -48,6 +48,8 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        gitService.deleteLocalRepository(exercise.getVcsTemplateRepositoryUrl());
+        gitService.deleteLocalRepository(exercise.getVcsSolutionRepositoryUrl());
     }
 
     @Test
