@@ -51,8 +51,6 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-        gitService.deleteLocalRepository(exercise.getVcsTemplateRepositoryUrl());
-        gitService.deleteLocalRepository(exercise.getVcsSolutionRepositoryUrl());
     }
 
     @Test
