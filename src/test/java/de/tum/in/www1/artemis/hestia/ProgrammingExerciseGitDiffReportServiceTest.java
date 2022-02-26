@@ -55,6 +55,15 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getNonExistingGitDiff() throws Exception {
+        exercise = hestiaUtilService.setupTemplate("Line 1\nLine 2", FILE_NAME, exercise, templateRepo);
+        exercise = hestiaUtilService.setupSolution("Line 1\nLine 2", FILE_NAME, exercise, solutionRepo);
+        var report = reportService.getFullReport(exercise);
+        assertThat(report).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateGitDiffNoChanges() throws Exception {
         exercise = hestiaUtilService.setupTemplate("Line 1\nLine 2", FILE_NAME, exercise, templateRepo);
         exercise = hestiaUtilService.setupSolution("Line 1\nLine 2", FILE_NAME, exercise, solutionRepo);

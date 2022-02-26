@@ -51,6 +51,15 @@ public class HestiaUtilService {
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    /**
+     * Sets up the template repository of a programming exercise with a single file with content
+     *
+     * @param content The content of the fill
+     * @param fileName The name of the file
+     * @param exercise The programming exercise
+     * @param templateRepo The repository
+     * @return The programming exercise
+     */
     public ProgrammingExercise setupTemplate(String content, String fileName, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
         templateRepo.configureRepos("templateLocalRepo", "templateOriginRepo");
 
@@ -58,7 +67,7 @@ public class HestiaUtilService {
         Path filePath = Paths.get(templateRepo.localRepoFile + "/" + fileName);
         File templateFile = Files.createFile(filePath).toFile();
         // write content to the created file
-        org.apache.commons.io.FileUtils.write(templateFile, content, Charset.defaultCharset());
+        FileUtils.write(templateFile, content, Charset.defaultCharset());
 
         var templateRepoUrl = new GitUtilService.MockFileRepositoryUrl(templateRepo.localRepoFile);
         exercise.setTemplateRepositoryUrl(templateRepoUrl.toString());
@@ -73,9 +82,9 @@ public class HestiaUtilService {
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(templateRepoUrl));
 
-        exercise = exerciseRepository.save(exercise);
-        database.addTemplateParticipationForProgrammingExercise(exercise);
-        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
+        var savedExercise = exerciseRepository.save(exercise);
+        database.addTemplateParticipationForProgrammingExercise(savedExercise);
+        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         templateParticipation.setRepositoryUrl(templateRepoUrl.toString());
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         var templateSubmission = new ProgrammingSubmission();
@@ -83,9 +92,18 @@ public class HestiaUtilService {
         templateSubmission.setCommitHash(String.valueOf(content.hashCode()));
         programmingSubmissionRepository.save(templateSubmission);
 
-        return exercise;
+        return savedExercise;
     }
 
+    /**
+     * Sets up the solution repository of a programming exercise with a single file with content
+     *
+     * @param content The content of the fill
+     * @param fileName The name of the file
+     * @param exercise The programming exercise
+     * @param solutionRepo The repository
+     * @return The programming exercise
+     */
     public ProgrammingExercise setupSolution(String content, String fileName, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
@@ -108,9 +126,9 @@ public class HestiaUtilService {
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(solutionRepoUrl));
 
-        exercise = exerciseRepository.save(exercise);
-        database.addSolutionParticipationForProgrammingExercise(exercise);
-        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
+        var savedExercise = exerciseRepository.save(exercise);
+        database.addSolutionParticipationForProgrammingExercise(savedExercise);
+        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
         solutionParticipation.setRepositoryUrl(solutionRepoUrl.toString());
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         var solutionSubmission = new ProgrammingSubmission();
@@ -118,6 +136,6 @@ public class HestiaUtilService {
         solutionSubmission.setCommitHash(String.valueOf(content.hashCode()));
         programmingSubmissionRepository.save(solutionSubmission);
 
-        return exercise;
+        return savedExercise;
     }
 }
