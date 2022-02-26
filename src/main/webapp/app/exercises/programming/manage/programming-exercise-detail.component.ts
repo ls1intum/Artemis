@@ -417,9 +417,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Updates or gets the git-diff from the server and displays it in a modal.
+     * Gets the full git-diff from the server and displays it in a modal.
      */
-    updateDiff() {
+    getAndShowFullDiff() {
         this.programmingExerciseService.getFullDiffReport(this.programmingExercise.id!).subscribe({
             next: (gitDiffReport) => {
                 const modalRef = this.modalService.open(FullGitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });

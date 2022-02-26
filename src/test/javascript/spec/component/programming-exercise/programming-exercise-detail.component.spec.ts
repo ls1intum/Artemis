@@ -88,7 +88,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         jest.spyOn(exerciseService, 'getFullDiffReport').mockReturnValue(of({} as ProgrammingExerciseFullGitDiffReport));
         jest.spyOn(modalService, 'open');
 
-        comp.updateDiff();
+        comp.getAndShowFullDiff();
 
         expect(modalService.open).toHaveBeenCalledTimes(1);
         expect(modalService.open).toHaveBeenCalledWith(FullGitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });

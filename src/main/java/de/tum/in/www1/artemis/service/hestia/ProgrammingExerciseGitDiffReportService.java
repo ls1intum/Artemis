@@ -270,13 +270,13 @@ public class ProgrammingExerciseGitDiffReportService {
             else if (!deactivateCodeReading) {
                 switch (line.charAt(0)) {
                     case '+' -> {
-                        handleAddition(currentEntry, currentLineCount, line);
+                        handleAddition(currentEntry, currentLineCount);
 
                         lastLineRemoveOperation = false;
                         currentLineCount++;
                     }
                     case '-' -> {
-                        currentEntry = handleRemoval(entries, currentFilePath, currentPreviousFilePath, currentEntry, lastLineRemoveOperation, currentPreviousLineCount, line);
+                        currentEntry = handleRemoval(entries, currentFilePath, currentPreviousFilePath, currentEntry, lastLineRemoveOperation, currentPreviousLineCount);
 
                         lastLineRemoveOperation = true;
                         currentPreviousLineCount++;
@@ -315,7 +315,7 @@ public class ProgrammingExerciseGitDiffReportService {
 
     @NotNull
     private ProgrammingExerciseGitDiffEntry handleRemoval(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, String currentPreviousFilePath,
-            ProgrammingExerciseGitDiffEntry currentEntry, boolean lastLineRemoveOperation, int currentPreviousLineCount, String line) {
+            ProgrammingExerciseGitDiffEntry currentEntry, boolean lastLineRemoveOperation, int currentPreviousLineCount) {
         var entry = currentEntry;
         if (!lastLineRemoveOperation && !entry.isEmpty()) {
             entries.add(entry);
@@ -331,7 +331,7 @@ public class ProgrammingExerciseGitDiffReportService {
         return entry;
     }
 
-    private void handleAddition(ProgrammingExerciseGitDiffEntry currentEntry, int currentLineCount, String line) {
+    private void handleAddition(ProgrammingExerciseGitDiffEntry currentEntry, int currentLineCount) {
         if (currentEntry.getLineCount() == null) {
             currentEntry.setLineCount(0);
             currentEntry.setStartLine(currentLineCount);
