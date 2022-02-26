@@ -1,11 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
@@ -18,7 +18,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
@@ -39,9 +39,10 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -49,9 +50,11 @@ describe('TextSubmissionAssessmentComponent', () => {
     let textAssessmentService: TextAssessmentService;
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
+    let router: Router;
+    let textSubmissionService: TextSubmissionService;
 
     const exercise = {
-        id: 20,
+        id: 1,
         type: ExerciseType.TEXT,
         assessmentType: AssessmentType.MANUAL,
         problemStatement: '',
@@ -59,6 +62,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     } as TextExercise;
     const participation: StudentParticipation = {
         type: ParticipationType.STUDENT,
+        id: 2,
         exercise,
     } as unknown as StudentParticipation;
     const submission = {
@@ -111,20 +115,16 @@ describe('TextSubmissionAssessmentComponent', () => {
     ];
     submission.participation!.submissions = [submission];
     submission.participation!.results = [getLatestSubmissionResult(submission)!];
-    const route = {
-        snapshot: { path: '' },
-        paramMap: of(
-            convertToParamMap({
-                exerciseId: '1',
+
+    const route = (): ActivatedRoute =>
+        ({
+            paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2 })),
+            queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
+            data: of({
+                studentParticipation: participation,
             }),
-        ),
-        queryParams: of({
-            testRun: 'false',
-        }),
-        data: of({
-            studentParticipation: participation,
-        }),
-    } as unknown as ActivatedRoute;
+        } as any as ActivatedRoute);
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
@@ -149,6 +149,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(Router),
             ],
         })
             .overrideModule(ArtemisTestModule, {
@@ -165,6 +166,9 @@ describe('TextSubmissionAssessmentComponent', () => {
         component = fixture.componentInstance;
         submissionService = TestBed.inject(SubmissionService);
         exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        textSubmissionService = fixture.debugElement.injector.get(TextSubmissionService);
+        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        router = TestBed.inject(Router);
 
         fixture.detectChanges();
     });
@@ -173,9 +177,16 @@ describe('TextSubmissionAssessmentComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create', () => {
+    it('should create and set parameters correctly', fakeAsync(() => {
         expect(component).not.toBeNull();
-    });
+        component['route'] = route();
+        component['activatedRoute'] = route();
+        component.ngOnInit();
+        tick();
+        expect(component.isTestRun).toBe(false);
+        expect(component.exerciseId).toBe(1);
+        expect(component.examId).toBe(2);
+    }));
 
     it('should show jhi-text-assessment-area', () => {
         component['setPropertiesFromServerResponse'](participation);
@@ -204,7 +215,6 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should save the assessment with correct parameters', () => {
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
         const handleFeedbackStub = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
@@ -230,6 +240,26 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(handleFeedbackStub).toHaveBeenCalled();
     });
 
+    it('should display error when saving but assessment invalid', () => {
+        component.validateFeedback();
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const errorStub = jest.spyOn(alertService, 'error');
+
+        fixture.detectChanges();
+        component.save();
+        expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
+    });
+
+    it('should display error when submitting but assessment invalid', () => {
+        component.validateFeedback();
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const errorStub = jest.spyOn(alertService, 'error');
+        component.result = getLatestSubmissionResult(submission);
+
+        component.submit();
+        expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
+    });
+
     it('should display error when complaint resolved but assessment invalid', () => {
         // would be called on receive of event
         const complaintResponse = new ComplaintResponse();
@@ -247,7 +277,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
         unreferencedFeedback.id = 1;
         component.unreferencedFeedback = [unreferencedFeedback];
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
 
         const updateAssessmentAfterComplaintStub = jest.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
         updateAssessmentAfterComplaintStub.mockReturnValue(of(new HttpResponse({ body: new Result() })));
@@ -257,8 +286,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.updateAssessmentAfterComplaint(complaintResponse);
         expect(updateAssessmentAfterComplaintStub).toHaveBeenCalled();
     });
+
     it('should submit the assessment with correct parameters', () => {
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
 
@@ -280,6 +309,26 @@ describe('TextSubmissionAssessmentComponent', () => {
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
     });
+
+    it('should not submit if result was not saved', () => {
+        const submitSpy = jest.spyOn(textAssessmentService, 'submit');
+        component.submit();
+        expect(submitSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle error if saving fails', () => {
+        component['setPropertiesFromServerResponse'](participation);
+        component.assessmentsAreValid = true;
+        fixture.detectChanges();
+        const error = new HttpErrorResponse({ status: 404 });
+        const errorStub = jest.spyOn(textAssessmentService, 'save').mockReturnValue(throwError(() => error));
+
+        component.save();
+
+        expect(errorStub).toHaveBeenCalledTimes(1);
+        expect(component.saveBusy).toBe(false);
+    });
+
     it('should invoke import example submission', () => {
         component.submission = submission;
         component.exercise = exercise;
@@ -291,5 +340,71 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         expect(importStub).toHaveBeenCalledTimes(1);
         expect(importStub).toHaveBeenCalledWith(submission.id, exercise.id);
+    });
+
+    it('should cancel assessment', fakeAsync(() => {
+        component['setPropertiesFromServerResponse'](participation);
+        fixture.detectChanges();
+
+        const navigateBackSpy = jest.spyOn(component, 'navigateBack');
+        const cancelAssessmentStub = jest.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+        const windowConfirmStub = jest.spyOn(window, 'confirm').mockReturnValue(true);
+
+        component.cancel();
+
+        expect(windowConfirmStub).toHaveBeenCalledTimes(1);
+        expect(navigateBackSpy).toHaveBeenCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
+    }));
+
+    it('should go to next submission', fakeAsync(() => {
+        component['setPropertiesFromServerResponse'](participation);
+        const routerSpy = jest.spyOn(router, 'navigate');
+        component['route'] = route();
+        component['activatedRoute'] = route();
+
+        component.ngOnInit();
+        tick();
+
+        const url = [
+            '/course-management',
+            component.courseId.toString(),
+            'exams',
+            component.examId.toString(),
+            'exercise-groups',
+            component.exerciseGroupId.toString(),
+            'text-exercises',
+            exercise.id!.toString(),
+            'submissions',
+            'new',
+            'assessment',
+        ];
+        const queryParams = { queryParams: { 'correction-round': 0 } };
+
+        component.nextSubmission();
+        expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
+    }));
+
+    it('should navigate to conflicting submission', () => {
+        const routerSpy = jest.spyOn(router, 'navigate');
+        component['setPropertiesFromServerResponse'](participation);
+        fixture.detectChanges();
+        const feedback = getLatestSubmissionResult(submission)!.feedbacks!;
+        const url = [
+            '/course-management',
+            component.courseId,
+            'text-exercises',
+            component.exerciseId,
+            'participations',
+            submission.participation!.id,
+            'submissions',
+            component.submission!.id,
+            'text-feedback-conflict',
+            feedback[0].id,
+        ];
+
+        component.navigateToConflictingSubmissions(1);
+
+        expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission: submission } });
     });
 });
