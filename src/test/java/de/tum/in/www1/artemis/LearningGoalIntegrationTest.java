@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
@@ -76,6 +77,9 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private Long idOfCourse;
 
@@ -390,6 +394,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteCourse_asAdmin_shouldAlsoDeleteLearningGoal() throws Exception {
+        jmsMessageMockProvider.mockDeleteLectures();
         request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
     }

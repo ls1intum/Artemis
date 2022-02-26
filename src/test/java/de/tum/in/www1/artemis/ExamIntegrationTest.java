@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -102,6 +103,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     ZipFileTestUtilService zipFileTestUtilService;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private List<User> users;
 
@@ -398,6 +402,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerateStudentExams() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
 
         // invoke generate student exams
@@ -470,6 +475,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerateMissingStudentExams() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
 
         // Generate student exams
@@ -870,6 +876,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(textExercise);
@@ -908,6 +915,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteStudent() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         // Create an exam with registered students
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
         var student1 = database.getUserByLogin("student1");
@@ -1012,6 +1020,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteStudentWithParticipationsAndSubmissions() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         // Create an exam with registered students
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
         var student1 = database.getUserByLogin("student1");
@@ -1078,6 +1087,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExamWithOneTestRun() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         var instructor = database.getUserByLogin("instructor1");
         var exam = database.addExam(course1);
         exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
@@ -1653,6 +1663,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound().length).isEqualTo(1);
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).containsAll((Collections.singletonList(90L)));
 
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }

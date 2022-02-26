@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -89,6 +90,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private List<User> users;
 
@@ -1414,6 +1418,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
         bitbucketRequestMockProvider.mockDeleteProject(projectKey, false);
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
 

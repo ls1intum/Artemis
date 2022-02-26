@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.service.ModelAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.compass.controller.ModelClusterFactory;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.util.FileUtils;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 
@@ -62,6 +63,9 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     @BeforeEach
     public void initTestCase() {
@@ -116,6 +120,8 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testKeepKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
+
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
@@ -135,6 +141,8 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
+
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextExercise importedExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
@@ -191,6 +199,8 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testKeepModelAssessmentKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
+
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
@@ -210,6 +220,8 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteModelAssessmentKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
+
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         ModelingExercise importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,

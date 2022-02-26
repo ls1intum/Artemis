@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -37,6 +38,9 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private PersistentAuditEvent persAuditEvent;
 
@@ -86,6 +90,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         mockDefaultBranch(programmingExercise2);
         bambooRequestMockProvider.enableMockingOfRequests(true);
         mockTriggerFailedBuild(participation);
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
 
         // Try to access 5 different endpoints with programming feature toggle enabled
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.OK);

@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 // Moved to Lecture microservice. To be removed
@@ -43,6 +44,9 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private Course course1;
 
@@ -180,6 +184,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
         }
         assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
 
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         request.delete("/api/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);

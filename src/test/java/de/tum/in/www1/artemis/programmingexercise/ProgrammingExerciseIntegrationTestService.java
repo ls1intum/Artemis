@@ -118,6 +118,9 @@ public class ProgrammingExerciseIntegrationTestService {
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private GitService gitService;
 
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
+
     private Course course;
 
     public ProgrammingExercise programmingExercise;
@@ -479,6 +482,7 @@ public class ProgrammingExerciseIntegrationTestService {
             mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
         }
         mockDelegate.mockDeleteProjectInVcs(projectKey, false);
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
 
         request.delete(path, HttpStatus.OK, params);
     }

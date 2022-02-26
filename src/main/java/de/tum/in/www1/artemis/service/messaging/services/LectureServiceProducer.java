@@ -29,13 +29,6 @@ public class LectureServiceProducer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LectureServiceProducer.class);
 
-    // private static final String LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS = "lecture_queue.filter_active_attachments";
-    // private static final String LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE = "lecture_queue.filter_active_attachments_response";
-    // private static final String ARTEMIS_QUEUE_REMOVE_EXERCISE_UNITS = "artemis_queue.remove_exercise_units";
-    // private static final String ARTEMIS_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE = "artemis_queue.remove_exercise_units_response";
-    // private static final String ARTEMIS_QUEUE_DELETE_LECTURES = "artemis_queue.delete_lectures";
-    // private static final String ARTEMIS_QUEUE_DELETE_LECTURES_RESPONSE = "artemis_queue.delete_lectures_response";
-
     @Autowired
     private final JmsTemplate jmsTemplate;
 
@@ -93,6 +86,9 @@ public class LectureServiceProducer {
     }
 
     public boolean deleteLecturesOfCourse(Course course) {
+        if (CollectionUtils.isEmpty(course.getLectures())) {
+            return true;
+        }
         Set<Lecture> lectures = course.getLectures();
         LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, lectures);
         String correlationId = Integer.toString(lectures.hashCode());

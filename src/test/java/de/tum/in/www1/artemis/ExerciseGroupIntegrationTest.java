@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -28,6 +29,9 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private Course course1;
 
@@ -132,6 +136,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testDeleteExerciseGroup_asEditor() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
     }
 }

@@ -26,11 +26,8 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
+import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -72,6 +69,9 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
 
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 1, 0, 1);
@@ -111,6 +111,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
         textClusterRepository.saveAll(clusters);
         database.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(textExercise.getId())).as("text exercise was deleted").isEmpty();
@@ -120,6 +121,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteExamTextExercise() throws Exception {
         TextExercise textExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findAll()).isEmpty();

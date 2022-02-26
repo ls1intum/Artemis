@@ -117,6 +117,9 @@ public class CourseTestService {
     @Autowired
     private GroupNotificationService groupNotificationService;
 
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
+
     private final static int numberOfStudents = 8;
 
     private final static int numberOfTutors = 5;
@@ -340,6 +343,7 @@ public class CourseTestService {
                     mockDelegate.mockDeleteProjectInVcs(projectKey, false);
                 }
             }
+            jmsMessageMockProvider.mockDeleteLectures();
         }
 
         for (Course course : courses) {
@@ -529,6 +533,7 @@ public class CourseTestService {
     // Test
     public void testGetCourseForDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
+        jmsMessageMockProvider.mockFilterLectures(courses.get(0).getLectures());
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
@@ -565,7 +570,7 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesForDashboard() throws Exception {
         database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
-
+        jmsMessageMockProvider.mockFilterLectures(new HashSet<>());
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
 
