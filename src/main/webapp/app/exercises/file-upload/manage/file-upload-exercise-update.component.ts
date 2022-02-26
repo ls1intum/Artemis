@@ -81,6 +81,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             }
+            // Exam exercises are always inclued completely into the total score
             if (this.isExamMode) {
                 this.fileUploadExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
             }

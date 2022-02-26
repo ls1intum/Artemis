@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
@@ -137,10 +138,12 @@ public class ProgrammingExerciseImportService {
             staticCodeAnalysisService.createDefaultCategories(newExercise);
         }
 
-        // An exam exercise can only be in individual mode
         if (newExercise.isExamExercise()) {
+            // An exam exercise can only be in individual mode
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
             newExercise.setTeamAssignmentConfig(null);
+            // Exam exercises are always inclued completely into the total score
+            newExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         }
 
         importSubmissionPolicy(newExercise);
