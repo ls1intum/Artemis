@@ -27,13 +27,20 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
@@ -256,15 +263,13 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                // TODO: check the error message in this case for something like "No user named 'testuser123' was found" and/or
-                // "exceptionName":"com.atlassian.bitbucket.user.NoSuchUserException"
-                // nothing to do, the Bitbucket user simply does not exist which is ok.
-                log.warn("Could not update Bitbucket user " + username);
+                if (isUserNotFoundException(e)) {
+                    log.warn("Bitbucket user " + username + " does not exist.");
+                    return;
+                }
             }
-            else {
-                log.error("Could not update Bitbucket user " + username, e);
-                throw new BitbucketException("Error while updating user", e);
-            }
+            log.error("Could not update Bitbucket user " + username, e);
+            throw new BitbucketException("Error while updating user", e);
         }
     }
 
@@ -288,15 +293,13 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                // TODO: check the error message in this case for something like "No user named 'testuser123' was found" and/or
-                // "exceptionName":"com.atlassian.bitbucket.user.NoSuchUserException"
-                // nothing to do, the Bitbucket user simply does not exist which is ok.
-                log.warn("Could not update Bitbucket user password for " + username);
+                if (isUserNotFoundException(e)) {
+                    log.warn("Bitbucket user " + username + " does not exist.");
+                    return;
+                }
             }
-            else {
-                log.error("Could not update Bitbucket user password for " + username, e);
-                throw new BitbucketException("Error while updating user", e);
-            }
+            log.error("Could not update Bitbucket user password for " + username, e);
+            throw new BitbucketException("Error while updating user", e);
         }
     }
 
@@ -315,18 +318,35 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(eraseBuilder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
         }
         catch (HttpClientErrorException e) {
-
             if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                // TODO: check the error message in this case for something like "No user named 'testuser123' was found" and/or
-                // "exceptionName":"com.atlassian.bitbucket.user.NoSuchUserException"
-                // nothing to do, the Bitbucket user simply does not exist which is ok.
-                log.warn("Could not delete Bitbucket user " + username);
+                if (isUserNotFoundException(e)) {
+                    log.warn("Bitbucket user " + username + " has already been deleted.");
+                    return;
+                }
             }
-            else {
-                log.error("Could not delete Bitbucket user " + username, e);
-                throw new BitbucketException("Error while updating user", e);
+            log.error("Could not delete Bitbucket user " + username, e);
+            throw new BitbucketException("Error while updating user", e);
+        }
+    }
+
+    private boolean isUserNotFoundException(HttpClientErrorException e) {
+        if (e == null || e.getMessage() == null || e.getMessage().length() < 8 || !e.getMessage().startsWith("404 : \"") || !e.getMessage().endsWith("\"")) {
+            return false;
+        }
+        String messageObjectString = e.getMessage().substring(7, e.getMessage().length() - 1);
+        JsonObject detailMessage = JsonParser.parseString(messageObjectString).getAsJsonObject();
+        if (!detailMessage.has("errors")) {
+            return false;
+        }
+        JsonArray errorArray = detailMessage.getAsJsonArray("errors");
+        for (JsonElement jsonElement : errorArray) {
+            JsonObject error = jsonElement.getAsJsonObject();
+            if (error.has("exceptionName") && error.get("exceptionName").getAsString().equals("com.atlassian.bitbucket.user.NoSuchUserException")) {
+                return true;
             }
         }
+
+        return false;
     }
 
     /**
@@ -353,8 +373,9 @@ public class BitbucketService extends AbstractVersionControlService {
 
     /**
      * Removes a Bitbucket user from (multiple) Bitbucket groups
+     *
      * @param username The Bitbucket username
-     * @param groups Names of Bitbucket groups
+     * @param groups   Names of Bitbucket groups
      * @throws BitbucketException if the request to Bitbucket fails
      */
     public void removeUserFromGroups(String username, Set<String> groups) throws BitbucketException {
@@ -763,7 +784,8 @@ public class BitbucketService extends AbstractVersionControlService {
     @NotNull
     public Commit getLastCommitDetails(Object requestBody) throws BitbucketException {
         // NOTE the requestBody should look like this:
-        // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/master","fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
+        // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/master",
+        // "fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
         // we are interested in the toHash
         Commit commit = new Commit();
         try {
