@@ -39,3 +39,35 @@ resources:
   - ingresses/activemq-artemis-ingress.yml
   - ingresses/gateway-ingress.yml
   - ingresses/jhipster-registry-ingress.yml
+
+patches:
+  - target:
+      kind: Ingress
+      name: artemis-gateway
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: artemis-gateway.artemis.rancher.localhost
+      - op: replace
+        path: /spec/tls/0/hosts
+        value: [artemis-gateway.artemis.rancher.localhost]
+  - target:
+      kind: Ingress
+      name: activemq
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: activemq.artemis.rancher.localhost
+      - op: replace
+        path: /spec/tls/0/hosts
+        value: [activemq.artemis.rancher.localhost]
+  - target:
+      kind: Ingress
+      name: jhipster-registry
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: jhipster-registry.artemis.rancher.localhost
+      - op: replace
+        path: /spec/tls/0/hosts
+        value: [jhipster-registry.artemis.rancher.localhost]

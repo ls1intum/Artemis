@@ -4,7 +4,7 @@ metadata:
   name: artemis-gateway
 spec:
   rules:
-  - host: artemis-gateway.artemis.localhost
+  - host: artemis-gateway
     http:
       paths:
       - backend:
@@ -15,4 +15,4 @@ spec:
         pathType: ImplementationSpecific
   tls:
   - hosts:
-    - artemis-gateway.artemis.localhost
+    - artemis-gateway
