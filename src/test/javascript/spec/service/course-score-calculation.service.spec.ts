@@ -94,6 +94,48 @@ describe('CourseScoreCalculationService', () => {
         expectCalculationResult(result, 25.2, 60, 60, 42, 0, 42);
     });
 
+    it('should not include automatically assessed programming exercise when it runs tests after due date that is not over yet', () => {
+        const course = new Course();
+        const automaticallyAssessedExercise = new ProgrammingExercise(course, undefined);
+        automaticallyAssessedExercise.maxPoints = 42;
+        automaticallyAssessedExercise.releaseDate = dayjs();
+        automaticallyAssessedExercise.dueDate = dayjs().add(4, 'days');
+        automaticallyAssessedExercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(5, 'days');
+        automaticallyAssessedExercise.assessmentType = AssessmentType.AUTOMATIC;
+        automaticallyAssessedExercise.studentParticipations = [];
+        course.exercises = [automaticallyAssessedExercise];
+
+        let result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
+        expectCalculationResult(result, 0, 0, 0, 0, 0, 0);
+
+        addParticipationAndResultToExercise(automaticallyAssessedExercise, true, 60, true);
+
+        result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
+
+        expectCalculationResult(result, 0, 0, 0, 0, 0, 0);
+    });
+
+    it('should include automatically assessed programming exercise when it runs tests after due date that is over', () => {
+        const course = new Course();
+        const automaticallyAssessedExercise = new ProgrammingExercise(course, undefined);
+        automaticallyAssessedExercise.maxPoints = 42;
+        automaticallyAssessedExercise.releaseDate = dayjs();
+        automaticallyAssessedExercise.dueDate = dayjs().add(4, 'days');
+        automaticallyAssessedExercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(-1, 'days');
+        automaticallyAssessedExercise.assessmentType = AssessmentType.AUTOMATIC;
+        automaticallyAssessedExercise.studentParticipations = [];
+        course.exercises = [automaticallyAssessedExercise];
+
+        let result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
+        expectCalculationResult(result, 0, 0, 0, 42, 0, 42);
+
+        addParticipationAndResultToExercise(automaticallyAssessedExercise, true, 60, true);
+
+        result = courseScoreCalculationService.calculateTotalScores(course.exercises, course);
+
+        expectCalculationResult(result, 25.2, 60, 60, 42, 0, 42);
+    });
+
     it('should pick the last result for calculation of the course score if multiple exits', () => {
         const course = new Course();
         course.exercises = [];
