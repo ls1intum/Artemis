@@ -94,16 +94,10 @@ public class ProgrammingExerciseGitDiffReportService {
             var fullReport = new ProgrammingExerciseFullGitDiffReportDTO();
             fullReport.setTemplateRepositoryCommitHash(report.getTemplateRepositoryCommitHash());
             fullReport.setSolutionRepositoryCommitHash(report.getSolutionRepositoryCommitHash());
-            var fullEntries = new HashSet<ProgrammingExerciseFullGitDiffEntryDTO>();
             var templateFiles = repositoryService.getFilesWithContent(templateRepo);
             var solutionFiles = repositoryService.getFilesWithContent(solutionRepo);
-            for (ProgrammingExerciseGitDiffEntry entry : report.getEntries()) {
-                ProgrammingExerciseFullGitDiffEntryDTO fullEntry = convertToFullEntry(entry, templateFiles, solutionFiles);
-                if (!fullEntry.isEmpty()) {
-                    fullEntries.add(fullEntry);
-                }
-            }
-            fullReport.setEntries(fullEntries);
+            fullReport.setEntries(report.getEntries().stream().map(entry -> convertToFullEntry(entry, templateFiles, solutionFiles)).filter(fullEntry -> !fullEntry.isEmpty())
+                    .collect(Collectors.toSet()));
 
             return fullReport;
         }
@@ -347,7 +341,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @return The file path of the current diff block
      */
     private String getFilePath(String[] lines, int currentLine) {
-        if (lines[currentLine - 1].startsWith("+++ ") && lines[currentLine - 2].startsWith("--- ")) {
+        if (currentLine > 1 && lines[currentLine - 1].startsWith("+++ ") && lines[currentLine - 2].startsWith("--- ")) {
             var filePath = lines[currentLine - 1].substring(4);
             // Check if the filePath is /dev/null (which means the file was deleted) and instead return null
             if (DiffEntry.DEV_NULL.equals(filePath)) {
@@ -369,7 +363,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @return The previous file path of the current diff block
      */
     private String getPreviousFilePath(String[] lines, int currentLine) {
-        if (lines[currentLine - 1].startsWith("+++ ") && lines[currentLine - 2].startsWith("--- ")) {
+        if (currentLine > 1 && lines[currentLine - 1].startsWith("+++ ") && lines[currentLine - 2].startsWith("--- ")) {
             var filePath = lines[currentLine - 2].substring(4);
             // Check if the filePath is /dev/null (which means the file was deleted) and instead return null
             if (DiffEntry.DEV_NULL.equals(filePath)) {

@@ -27,7 +27,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -82,9 +81,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
                 { provide: ProgrammingExerciseService, useValue: new MockProgrammingExerciseService() },
                 { provide: NgbModal, useValue: new MockNgbModalService() },
             ],
-        })
-            .overrideTemplate(ProgrammingExerciseDetailComponent, '')
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
@@ -127,8 +124,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalled();
-            expect(gitDiffReportStub).toHaveBeenCalled();
+            expect(statisticsServiceStub).toHaveBeenCalledTimes(1);
+            expect(gitDiffReportStub).toHaveBeenCalledTimes(1);
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toEqual(100);
@@ -156,8 +153,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalled();
-            expect(gitDiffReportStub).toHaveBeenCalled();
+            expect(statisticsServiceStub).toHaveBeenCalledTimes(1);
+            expect(gitDiffReportStub).toHaveBeenCalledTimes(1);
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).not.toBe(undefined);

@@ -377,7 +377,7 @@
             },
             "diffReport": {
                 "button": "Show difference between the template and solution repositories",
-                "tooltip": "Shows the git-diff between the template and solution repositories.™",
+                "tooltip": "Shows the git-diff between the template and solution repositories.",
                 "title": "Git-Diff",
                 "template": "Template",
                 "solution": "Solution"
