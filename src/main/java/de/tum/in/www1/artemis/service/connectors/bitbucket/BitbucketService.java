@@ -258,7 +258,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (HttpClientErrorException e) {
             if (isUserNotFoundException(e)) {
-                log.warn("Bitbucket user " + username + " does not exist.");
+                log.warn("Bitbucket user {} does not exist.", username);
                 return;
             }
             log.error("Could not update Bitbucket user " + username, e);
@@ -281,17 +281,17 @@ public class BitbucketService extends AbstractVersionControlService {
         passwordBody.put("passwordConfirm", password);
         HttpEntity<Map<String, Object>> passwordEntity = new HttpEntity<>(passwordBody, null);
 
-        log.debug("Updating Bitbucket user password {}", username);
+        log.debug("Updating Bitbucket user password for user {}", username);
 
         try {
             restTemplate.exchange(passwordBuilder.build().encode().toUri(), HttpMethod.PUT, passwordEntity, Void.class);
         }
         catch (HttpClientErrorException e) {
             if (isUserNotFoundException(e)) {
-                log.warn("Bitbucket user " + username + " does not exist.");
+                log.warn("Bitbucket user {} does not exist.", username);
                 return;
             }
-            log.error("Could not update Bitbucket user password for " + username, e);
+            log.error("Could not update Bitbucket user password for user " + username, e);
             throw new BitbucketException("Error while updating user", e);
         }
     }
@@ -312,7 +312,7 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         catch (HttpClientErrorException e) {
             if (isUserNotFoundException(e)) {
-                log.warn("Bitbucket user " + username + " has already been deleted.");
+                log.warn("Bitbucket user {} has already been deleted.", username);
                 return;
             }
             log.error("Could not delete Bitbucket user " + username, e);
