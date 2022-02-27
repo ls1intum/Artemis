@@ -24,9 +24,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -110,8 +108,6 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
-                MockComponent(AlertComponent),
-                MockComponent(AlertErrorComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

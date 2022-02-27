@@ -27,7 +27,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     course: Course | undefined;
     isExamExercise: boolean;
     formattedProblemStatement: SafeHtml | null;
-    formattedSampleSolution: SafeHtml | null;
+    formattedExampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
     doughnutStats: ExerciseManagementStatisticsDto;
@@ -67,7 +67,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
 
             this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
             this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.problemStatement);
-            this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.sampleSolution);
+            this.formattedExampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.textExercise.exampleSolution);
         });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;

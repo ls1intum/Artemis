@@ -270,6 +270,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             error: (error: HttpErrorResponse) => this.handleError(error),
         });
+        this.assessmentsAreValid = false;
     }
 
     protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
@@ -364,7 +365,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             .subscribe({
                 next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
                 error: (httpErrorResponse: HttpErrorResponse) => {
-                    this.alertService.clear();
+                    this.alertService.closeAll();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {
                         this.alertService.error(error.message, error.params);

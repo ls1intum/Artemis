@@ -31,7 +31,7 @@
         "exerciseAssessmentDashboard": {
             "instructions": {
                 "headline": "Anleitung",
-                "content": "Dieser Abschnitt enthält die <tt>Aufgabenstellung</tt>, <tt>Beispiel Lösung</tt> und <tt>Bewertungsanweisungen</tt> der Übung. Bitte lies sie dir genau durch und fahre mit dem nächsten Schritt fort."
+                "content": "Dieser Abschnitt enthält die <tt>Aufgabenstellung</tt>, <tt>Beispiellösung</tt> und <tt>Bewertungsanweisungen</tt> der Übung. Bitte lies sie dir genau durch und fahre mit dem nächsten Schritt fort."
             },
             "instructionsButton": {
                 "headline": "Bestätigung",

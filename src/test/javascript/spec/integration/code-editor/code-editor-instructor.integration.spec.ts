@@ -45,7 +45,6 @@ import { MockParticipationService } from '../../helpers/mocks/service/mock-parti
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -113,7 +112,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 MockComponent(CodeEditorAceComponent),
                 CodeEditorBuildOutputComponent,
                 MockPipe(ArtemisDatePipe),
-                MockComponent(AlertComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
                 ProgrammingExerciseInstructorExerciseStatusComponent,
                 UpdatingResultComponent,

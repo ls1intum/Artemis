@@ -14,8 +14,6 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ExerciseDetailsComponent } from 'app/exercises/shared/exercise/exercise-details/exercise-details.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -47,8 +45,6 @@ describe('TextExercise Management Detail Component', () => {
             declarations: [
                 TextExerciseDetailComponent,
                 MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
-                MockComponent(AlertComponent),
-                MockComponent(AlertErrorComponent),
                 MockComponent(ExerciseDetailStatisticsComponent),
                 MockComponent(ExerciseDetailsComponent),
                 MockRouterLinkDirective,
