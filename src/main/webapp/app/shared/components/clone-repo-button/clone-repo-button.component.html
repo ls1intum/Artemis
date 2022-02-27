@@ -33,11 +33,13 @@
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }}</pre
             >
-            <a [href]="getHttpOrSshRepositoryUrl() | safeUrl" class="btn btn-info btn-sm me-1">
+            <a
+                style="flex: 1"
+                [ngStyle]="{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' }"
+                [href]="getHttpRepositoryUrl() | safeUrl"
+                class="btn btn-info btn-sm me-1"
+            >
                 <fa-icon [icon]="faLink"></fa-icon>
-            </a>
-            <a class="btn btn-primary btn-sm me-2" style="min-width: 10px" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl"
-                >{{ 'artemisApp.exerciseActions.cloneSourceTree' | artemisTranslate }}
             </a>
         </div>
         <p *ngIf="repositoryPassword">

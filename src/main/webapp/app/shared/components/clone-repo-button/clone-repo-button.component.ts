@@ -85,6 +85,14 @@ export class CloneRepoButtonComponent implements OnInit {
         return this.repositoryUrl;
     }
 
+    getHttpRepositoryUrl(): string {
+        if (this.isTeamParticipation) {
+            return this.repositoryUrlForTeam(this.repositoryUrl);
+        } else {
+            return this.repositoryUrl;
+        }
+    }
+
     /**
      * The user info part of the repository url of a team participation has to be added with the current user's login.
      *
