@@ -1,43 +1,49 @@
 <div class="exam-status-wrapper">
-    <!-- 1. Exam preparation -->
-    <div class="status-step" *ngIf="isAtLeastInstructor">
-        <!-- If all preparation tasks are finished, show a green check as header, show a red cross else -->
-        <div class="d-flex justify-content-center header-icon">
-            <fa-icon *ngIf="examPreparationFinished" [icon]="faCheckCircle" class="check"></fa-icon>
-            <fa-icon *ngIf="!examPreparationFinished" [icon]="faTimesCircle" class="cross"></fa-icon>
+    <ng-template *ngIf="isAtLeastInstructor">
+        <!-- 1. Exam preparation -->
+        <div class="status-step">
+            <!-- If all preparation tasks are finished, show a green check as header, show a red cross else -->
+            <div class="d-flex justify-content-center header-icon">
+                <fa-icon *ngIf="examPreparationFinished" [icon]="faCheckCircle" class="check"></fa-icon>
+                <fa-icon *ngIf="!examPreparationFinished" [icon]="faTimesCircle" class="cross"></fa-icon>
+            </div>
+            <div class="status-step-content">
+                <h6 class="text-center">{{ 'artemisApp.examStatus.preparation.examPreparation' | artemisTranslate }}</h6>
+                <ol>
+                    <li class="d-flex align-items-center">
+                        <span>{{
+                            'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate: { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }
+                        }}</span>
+                        <fa-icon *ngIf="configuredExercises" [icon]="faCheckCircle" class="check"></fa-icon>
+                        <fa-icon *ngIf="!configuredExercises" [icon]="faTimes" class="cross"></fa-icon>
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <span>{{ 'artemisApp.examStatus.preparation.registerStudents' | artemisTranslate: { registered: exam.numberOfRegisteredUsers } }} </span>
+                        <fa-icon *ngIf="registeredStudents" [icon]="faCheckCircle" class="check"></fa-icon>
+                        <fa-icon *ngIf="!registeredStudents" [icon]="faTimes" class="cross"></fa-icon>
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <span>{{ 'artemisApp.examStatus.preparation.generateStudentExams' | artemisTranslate }}</span>
+                        <!-- If no students are registered yet, we do not want to display "0 of 0" -->
+                        <span *ngIf="!registeredStudents">{{ 'artemisApp.examStatus.preparation.notRegistered' | artemisTranslate }}</span>
+                        <span *ngIf="registeredStudents">
+                            {{
+                                'artemisApp.examStatus.preparation.registered' | artemisTranslate: { generated: numberOfGeneratedStudentExams, total: exam.numberOfRegisteredUsers }
+                            }}
+                        </span>
+                        <fa-icon *ngIf="generatedStudentExams" [icon]="faCheckCircle" class="check"></fa-icon>
+                        <fa-icon *ngIf="!generatedStudentExams" [icon]="faTimes" class="cross"></fa-icon>
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <span>{{ 'artemisApp.examStatus.preparation.prepareExerciseStart' | artemisTranslate }}</span>
+                        <fa-icon *ngIf="preparedExerciseStart" [icon]="faCheckCircle" class="check"></fa-icon>
+                        <fa-icon *ngIf="!preparedExerciseStart" [icon]="faTimes" class="cross"></fa-icon>
+                    </li>
+                </ol>
+            </div>
         </div>
-        <div class="status-step-content">
-            <h6 class="text-center">{{ 'artemisApp.examStatus.preparation.examPreparation' | artemisTranslate }}</h6>
-            <ol>
-                <li class="d-flex align-items-center">
-                    <span>{{ 'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate: { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 } }}</span>
-                    <fa-icon *ngIf="configuredExercises" [icon]="faCheckCircle" class="check"></fa-icon>
-                    <fa-icon *ngIf="!configuredExercises" [icon]="faTimes" class="cross"></fa-icon>
-                </li>
-                <li class="d-flex align-items-center">
-                    <span>{{ 'artemisApp.examStatus.preparation.registerStudents' | artemisTranslate: { registered: exam.numberOfRegisteredUsers } }} </span>
-                    <fa-icon *ngIf="registeredStudents" [icon]="faCheckCircle" class="check"></fa-icon>
-                    <fa-icon *ngIf="!registeredStudents" [icon]="faTimes" class="cross"></fa-icon>
-                </li>
-                <li class="d-flex align-items-center">
-                    <span>{{ 'artemisApp.examStatus.preparation.generateStudentExams' | artemisTranslate }}</span>
-                    <!-- If no students are registered yet, we do not want to display "0 of 0" -->
-                    <span *ngIf="!registeredStudents">{{ 'artemisApp.examStatus.preparation.notRegistered' | artemisTranslate }}</span>
-                    <span *ngIf="registeredStudents">
-                        {{ 'artemisApp.examStatus.preparation.registered' | artemisTranslate: { generated: numberOfGeneratedStudentExams, total: exam.numberOfRegisteredUsers } }}
-                    </span>
-                    <fa-icon *ngIf="generatedStudentExams" [icon]="faCheckCircle" class="check"></fa-icon>
-                    <fa-icon *ngIf="!generatedStudentExams" [icon]="faTimes" class="cross"></fa-icon>
-                </li>
-                <li class="d-flex align-items-center">
-                    <span>{{ 'artemisApp.examStatus.preparation.prepareExerciseStart' | artemisTranslate }}</span>
-                    <fa-icon *ngIf="preparedExerciseStart" [icon]="faCheckCircle" class="check"></fa-icon>
-                    <fa-icon *ngIf="!preparedExerciseStart" [icon]="faTimes" class="cross"></fa-icon>
-                </li>
-            </ol>
-        </div>
-    </div>
-    <div *ngIf="isAtLeastInstructor" class="connector" [ngClass]="examPreparationFinished ? 'check' : 'cross'"></div>
+        <div class="connector" [ngClass]="examPreparationFinished ? 'check' : 'cross'"></div>
+    </ng-template>
 
     <!-- 2. Exam conduction -->
     <div class="status-step">
