@@ -136,6 +136,7 @@ public class ProgrammingExerciseImportService {
         else if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled())) {
             staticCodeAnalysisService.createDefaultCategories(newExercise);
         }
+
         // An exam exercise can only be in individual mode
         if (newExercise.isExamExercise()) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
