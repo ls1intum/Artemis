@@ -6,7 +6,6 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { TestBed } from '@angular/core/testing';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
 import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
@@ -34,7 +33,6 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
             declarations: [
                 CodeEditorInstructorAndEditorOrionContainerComponent,
                 MockComponent(UpdatingResultComponent),
-                MockComponent(AlertComponent),
                 MockComponent(ProgrammingExerciseInstructorExerciseStatusComponent),
                 MockComponent(ExerciseHintStudentComponent),
                 MockComponent(ProgrammingExerciseEditableInstructionComponent),

@@ -18,7 +18,6 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
@@ -237,7 +236,6 @@ describe('CourseScoresComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 CourseScoresComponent,
-                MockComponent(AlertComponent),
                 MockComponent(ParticipantScoresDistributionComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),

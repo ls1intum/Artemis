@@ -405,11 +405,11 @@ public class ParticipationResource {
                 quizExercise.setQuizPointStatistic(null);
             }
             else if (exercise instanceof TextExercise textExercise) {
-                textExercise.setSampleSolution(null);
+                textExercise.setExampleSolution(null);
             }
             else if (exercise instanceof ModelingExercise modelingExercise) {
-                modelingExercise.setSampleSolutionModel(null);
-                modelingExercise.setSampleSolutionExplanation(null);
+                modelingExercise.setExampleSolutionModel(null);
+                modelingExercise.setExampleSolutionExplanation(null);
             }
             resultCount += participation.getResults().size();
         }

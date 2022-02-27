@@ -20,7 +20,6 @@
     <div *ngIf="showSearch && getFilteredExerciseCount() == 0 && !exerciseFilter.isEmpty()" class="alert alert-secondary" role="alert">
         {{ 'artemisApp.course.exercise.search.noResults' | artemisTranslate }}
     </div>
-    <jhi-alert></jhi-alert>
 
     <jhi-course-exercise-card [hidden]="shouldHideExerciseCard('programming')" headingJhiTranslate="artemisApp.course.programmingExercises">
         <jhi-programming-exercise

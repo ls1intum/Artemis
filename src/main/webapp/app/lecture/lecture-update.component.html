@@ -3,7 +3,6 @@
         <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
             <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
             <div>
-                <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!lecture.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" [(ngModel)]="lecture.id" readonly />
