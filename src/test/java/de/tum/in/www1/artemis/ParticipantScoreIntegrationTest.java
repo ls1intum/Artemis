@@ -180,6 +180,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteCourse_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         jmsMessageMockProvider.mockDeleteLectures();
         request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
         assertThat(courseRepository.existsById(idOfCourse)).isFalse();

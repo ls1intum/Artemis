@@ -394,6 +394,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteCourse_asAdmin_shouldAlsoDeleteLearningGoal() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         jmsMessageMockProvider.mockDeleteLectures();
         request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);

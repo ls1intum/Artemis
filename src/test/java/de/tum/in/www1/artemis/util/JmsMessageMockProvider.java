@@ -4,9 +4,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -61,10 +59,23 @@ public class JmsMessageMockProvider {
             for (ExerciseUnit exerciseUnit : exerciseUnits) {
                 Set<LearningGoal> associatedLearningGoals = new HashSet<>(exerciseUnit.getLearningGoals());
                 for (LearningGoal learningGoal : associatedLearningGoals) {
-                    learningGoal.removeLectureUnit(exerciseUnit);
-                    learningGoalRepository.save(learningGoal);
+                    Optional<LearningGoal> learningGoalFromDbOptional = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId());
+                    if (learningGoalFromDbOptional.isPresent()) {
+                        LearningGoal learningGoalFromDb = learningGoalFromDbOptional.get();
+                        learningGoalFromDb.removeLectureUnit(exerciseUnit);
+                        learningGoalRepository.save(learningGoalFromDb);
+                    }
                 }
-                lectureUnitRepository.delete(exerciseUnit);
+                Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(exerciseUnit.getLecture().getId());
+                List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
+                for (LectureUnit unit : lecture.getLectureUnits()) {
+                    if (Objects.nonNull(unit) && !unit.getId().equals(exerciseUnit.getId())) {
+                        lectureUnitsUpdated.add(unit);
+                    }
+                }
+                lecture.getLectureUnits().clear();
+                lecture.getLectureUnits().addAll(lectureUnitsUpdated);
+                lectureRepository.save(lecture);
             }
             return message;
         }).when(jmsTemplate).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS), anyLong(), any());
@@ -77,13 +88,22 @@ public class JmsMessageMockProvider {
         doAnswer(invocation -> {
             Set<Lecture> lectures = invocation.getArgument(1);
             for (Lecture lecture : lectures) {
-                for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
-                    Set<LearningGoal> learningGoals = new HashSet<>(lectureUnit.getLearningGoals());
-                    for (LearningGoal learningGoal : learningGoals) {
-                        learningGoal.removeLectureUnit(lectureUnit);
-                        learningGoalRepository.save(learningGoal);
+                Optional<Lecture> lectureToDeleteOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId());
+                Lecture lectureToDelete = lectureToDeleteOptional.get();
+                List<LectureUnit> lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).toList();
+                for (LectureUnit lectureUnit : lectureUnits) {
+                    Optional<LectureUnit> lectureUnitFromDbOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId());
+                    if (lectureUnitFromDbOptional.isPresent()) {
+                        Set<LearningGoal> learningGoals = new HashSet<>(lectureUnit.getLearningGoals());
+                        for (LearningGoal learningGoal : learningGoals) {
+                            Optional<LearningGoal> learningGoalFromDbOptional = learningGoalRepository.findByIdWithLectureUnitsBidirectional(learningGoal.getId());
+                            if (learningGoalFromDbOptional.isPresent()) {
+                                LearningGoal learningGoalFromDb = learningGoalFromDbOptional.get();
+                                learningGoalFromDb.removeLectureUnit(lectureUnit);
+                                learningGoalRepository.save(learningGoalFromDb);
+                            }
+                        }
                     }
-                    lectureUnitRepository.delete(lectureUnit);
                 }
                 lectureRepository.deleteById(lecture.getId());
             }
