@@ -459,17 +459,23 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         studentGradesSubmittedInFirstCorrectionRound: number[],
     ): AggregatedExamResult {
         if (studentPointsSubmitted.length) {
-            examStatistics.meanPoints = mean(studentPointsSubmitted);
-            examStatistics.median = median(studentPointsSubmitted);
-            examStatistics.standardDeviation = standardDeviation(studentPointsSubmitted);
+            examStatistics.meanPointsSubmitted = mean(studentPointsSubmitted);
+            examStatistics.medianSubmitted = median(studentPointsSubmitted);
+            examStatistics.standardDeviationSubmitted = standardDeviation(studentPointsSubmitted);
             examStatistics.noOfExamsSubmitted = studentPointsSubmitted.length;
             if (this.examScoreDTO.maxPoints) {
-                examStatistics.meanPointsRelative = (examStatistics.meanPoints / this.examScoreDTO.maxPoints) * 100;
-                examStatistics.medianRelative = (examStatistics.median / this.examScoreDTO.maxPoints) * 100;
+                examStatistics.meanPointsRelativeSubmitted = (examStatistics.meanPointsSubmitted / this.examScoreDTO.maxPoints) * 100;
+                examStatistics.medianRelativeSubmitted = (examStatistics.medianSubmitted / this.examScoreDTO.maxPoints) * 100;
                 if (this.gradingScaleExists) {
-                    examStatistics.meanGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelative)!.gradeName;
-                    examStatistics.medianGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelative)!.gradeName;
-                    examStatistics.standardGradeDeviation = this.hasNumericGrades ? standardDeviation(studentGradesSubmitted) : undefined;
+                    examStatistics.meanGradeSubmitted = this.gradingSystemService.findMatchingGradeStep(
+                        this.gradingScale!.gradeSteps,
+                        examStatistics.meanPointsRelativeSubmitted,
+                    )!.gradeName;
+                    examStatistics.medianGradeSubmitted = this.gradingSystemService.findMatchingGradeStep(
+                        this.gradingScale!.gradeSteps,
+                        examStatistics.medianRelativeSubmitted,
+                    )!.gradeName;
+                    examStatistics.standardGradeDeviationSubmitted = this.hasNumericGrades ? standardDeviation(studentGradesSubmitted) : undefined;
                 }
             }
             // Calculate statistics for the first assessments of submitted exams if second correction exists
@@ -793,13 +799,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const overallMedian = this.aggregatedExamResults.medianRelativeTotal;
             this.overallChartMedian = overallMedian ? roundValueSpecifiedByCourseSettings(overallMedian, this.course) : 0;
         } else {
-            const submittedMedian = this.aggregatedExamResults.medianRelative;
+            const submittedMedian = this.aggregatedExamResults.medianRelativeSubmitted;
             this.overallChartMedian = submittedMedian ? roundValueSpecifiedByCourseSettings(submittedMedian, this.course) : 0;
         }
         this.overallChartMedianType = medianType;
     }
 
-    private updateValuesInPassedColumn() {
+    private updateValuesAccordingToFilter() {
         const amountOfPassedExams = this.aggregatedExamResults.noOfExamsFilteredForPassed;
         this.absoluteAmountOfSubmittedExams = this.aggregatedExamResults.noOfExamsSubmitted;
         this.absoluteAmountOfTotalExams = this.aggregatedExamResults.noOfRegisteredUsers;
@@ -821,5 +827,20 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         this.relativeAmountOfPassedExams = denominator > 0 ? this.roundAndPerformLocalConversion((amountOfPassedExams / denominator) * 100) : '-';
         this.relativeAmountOfSubmittedExams = denominator > 0 ? this.roundAndPerformLocalConversion((this.absoluteAmountOfSubmittedExams / denominator) * 100) : '-';
+    }
+
+    private determineMeanPointsSubmittedAndNonEmpty() {
+        if (this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty) {
+            return;
+        }
+        const points: number[] = [];
+        this.studentResults.forEach((result) => {
+            const hasAtLeastOneSubmission = Array.from(result.exerciseGroupIdToExerciseResult.values()).some((exerciseResult) => exerciseResult.hasNonEmptySubmission);
+            if (result.submitted && hasAtLeastOneSubmission) {
+                points.push(result.overallPointsAchieved ?? 0);
+            }
+        });
+
+        this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty = mean(points);
     }
 }
