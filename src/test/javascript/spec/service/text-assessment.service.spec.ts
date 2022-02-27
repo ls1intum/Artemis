@@ -54,14 +54,12 @@ describe('TextAssessment Service', () => {
                     id: 1,
                     submitted: true,
                     type: 'MANUAL',
-                    // submissionDate: '2020-07-07T14:34:25.194518+02:00',
                     durationInMinutes: 0,
                     text: 'Test\n\nTest\n\nTest',
                     results: [
                         {
                             id: 6,
                             resultString: '1 of 1 points',
-                            // completionDate: '2020-07-09T16:28:18.138615+02:00',
                             successful: true,
                             score: 100,
                             rated: true,
@@ -99,7 +97,7 @@ describe('TextAssessment Service', () => {
         const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
 
         service
-            .save(participationId, mockResponse.submissions[0].results[0].id, mockResponse.submissions[0].results[0].feedbacks, mockResponse.submissions[0].blocks)
+            .save(participationId, result.id!, result.feedbacks!, mockResponse.submissions[0].blocks)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp.body));
         const req = httpMock.expectOne({
@@ -117,7 +115,7 @@ describe('TextAssessment Service', () => {
         const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
 
         service
-            .saveExampleAssessment(exercise.id!, mockResponse.submissions[0].id, mockResponse.submissions[0].results[0].feedbacks, mockResponse.submissions[0].blocks)
+            .saveExampleAssessment(exercise.id!, mockResponse.submissions[0].id, result.feedbacks!, mockResponse.submissions[0].blocks)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp.body));
 
@@ -137,7 +135,7 @@ describe('TextAssessment Service', () => {
         const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
 
         service
-            .submit(participationId, mockResponse.submissions[0].results[0].id, mockResponse.submissions[0].results[0].feedbacks, mockResponse.submissions[0].blocks)
+            .submit(participationId, result.id!, result.feedbacks!, mockResponse.submissions[0].blocks)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp.body));
         const req = httpMock.expectOne({
@@ -225,10 +223,10 @@ describe('TextAssessment Service', () => {
         httpMock.verify();
     });
 
-    it('should not send feedback', async () => {
+    it('should not send feedback', fakeAsync(() => {
         service.trackAssessment();
         httpMock.expectNone({ method: 'POST' });
-    });
+    }));
 
     it('should send feedback', async () => {
         textSubmission.atheneTextAssessmentTrackingToken = '12345';
