@@ -3,7 +3,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -34,7 +33,6 @@ describe('CourseManagementStatisticsComponent', () => {
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 CourseManagementStatisticsComponent,
-                MockComponent(AlertComponent),
                 MockComponent(StatisticsGraphComponent),
                 MockComponent(StatisticsAverageScoreGraphComponent),
                 MockDirective(MockHasAnyAuthorityDirective),

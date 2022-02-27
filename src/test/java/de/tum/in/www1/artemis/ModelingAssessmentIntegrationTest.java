@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -183,14 +182,39 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test()
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetExampleAssessment() throws Exception {
+    public void testGetExampleAssessmentAsTutor() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, true));
         List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
                 HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
-        // NOTE: for some reason this test fails in IntelliJ but works fine on the command line
+        request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
+                HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test()
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExampleAssessmentAsTutorNoTutorial() throws Exception {
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, false));
+        List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
+                HttpStatus.OK);
+        assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
+        assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
+        request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
+                Result.class);
+    }
+
+    @Test()
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExampleAssessmentAsInstructor() throws Exception {
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, true));
+        List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
+                HttpStatus.OK);
+        assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
+        assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
         request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 Result.class);
     }
@@ -199,11 +223,8 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1")
     public void testManualAssessmentSubmitAsStudent() throws Exception {
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
-
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.FORBIDDEN);
-
         Optional<Result> storedResult = resultRepo.findDistinctBySubmissionId(submission.getId());
         assertThat(storedResult).as("result is not saved").isNotPresent();
     }
@@ -1475,7 +1496,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testdeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
-        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().toList().get(0);
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
 

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
@@ -130,7 +129,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
 
         final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
-        log.info("Update Gitlab permissions for programming exercises: " + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
+        log.info("Update Gitlab permissions for programming exercises: " + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
 
         final List<User> allUsers = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
@@ -340,7 +339,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
 
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
-        log.info("Update Gitlab permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
+        log.info("Update Gitlab permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
         for (var exercise : exercises) {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -402,7 +401,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         // Gitlab groups are identified by the project key of the programming exercise
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groupsToRemove);
-        log.info("Update Gitlab permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.toList()));
+        log.info("Update Gitlab permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         for (var exercise : exercises) {
             // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();

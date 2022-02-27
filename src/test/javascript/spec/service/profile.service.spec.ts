@@ -14,6 +14,12 @@ describe('Profile Service', () => {
     let httpMock: HttpTestingController;
 
     const serverResponse = {
+        externalCredentialProvider: '',
+        externalPasswordResetLinkMap: new Map<string, string>([
+            ['en', ''],
+            ['de', ''],
+        ]),
+        useExternal: false,
         contact: 'artemis.in@tum.de',
         imprint: 'https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint',
         'guided-tour': {
@@ -119,6 +125,12 @@ describe('Profile Service', () => {
     };
 
     const expectedProfileInfo: ProfileInfo = {
+        externalCredentialProvider: '',
+        externalPasswordResetLinkMap: new Map<string, string>([
+            ['en', ''],
+            ['de', ''],
+        ]),
+        useExternal: false,
         activeProfiles: ['prod', 'jenkins', 'gitlab', 'athene', 'openapi', 'apollon'],
         allowedMinimumOrionVersion: '1.0.0',
         testServer: true,

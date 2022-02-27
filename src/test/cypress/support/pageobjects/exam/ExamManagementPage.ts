@@ -11,16 +11,9 @@ export class ExamManagementPage {
         return this.getExamSelector(examTitle).parents('tr');
     }
 
-    /**
-     * Deletes the exam with the specified title.
-     * @param examId the exam ID
-     * @param examTitle the exam ID
-     */
-    deleteExam(examId: string, examTitle: string) {
-        cy.get('#delete-exam-' + examId).click();
-        cy.get('#delete').should('be.disabled');
-        cy.get('#confirm-exercise-name').type(examTitle);
-        cy.get('#delete').should('not.be.disabled').click();
+    /** Opens the exam with this exam id. */
+    openExam(examId: number) {
+        cy.get(`#exam-${examId}-title`).click();
     }
 
     /**
@@ -65,7 +58,7 @@ export class ExamManagementPage {
      * @param examId the id of the exam
      * @param timeout how long to wait for the assessment dashboard button
      */
-    openAssessmentDashboard(examId: string, timeout: number) {
+    openAssessmentDashboard(examId: number, timeout: number) {
         cy.get('#exercises-button-' + examId, { timeout }).click();
     }
 }

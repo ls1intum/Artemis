@@ -3,8 +3,6 @@ import { artemis } from './../../../ArtemisTesting';
 import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
-const buildingAndTesting = 'Building and testing...';
-
 /**
  * A class which encapsulates UI selectors and actions for the Online Editor Page.
  */
@@ -35,7 +33,7 @@ export class OnlineEditorPage {
             this.createFileInRootPackage(newFile.name, packageName);
             cy.fixture(newFile.path).then(($fileContent) => {
                 const sanitizedContent = this.sanitizeInput($fileContent, packageName);
-                this.focusCodeEditor().type(sanitizedContent, { delay: 3 });
+                this.focusCodeEditor().type(sanitizedContent, { delay: 8 });
                 // Delete the remaining content which has been automatically added by the code editor.
                 // We simply send as many {del} keystrokes as the file has characters. This shouldn't increase the test runtime by too long since we set the delay to 0.
                 const deleteRemainingContent = '{del}'.repeat(sanitizedContent.length);
@@ -86,9 +84,7 @@ export class OnlineEditorPage {
      */
     submit() {
         cy.get('#submit_button').click();
-        this.getResultPanel().contains(buildingAndTesting, { timeout: 15000 }).should('be.visible');
-        this.getBuildOutput().contains(buildingAndTesting).should('be.visible');
-        this.getResultPanel().contains('GRADED', { timeout: 140000 }).should('be.visible');
+        cy.get('#result-score-graded', { timeout: 140000 }).should('contain.text', 'GRADED').and('be.visible');
     }
 
     /**
@@ -120,6 +116,13 @@ export class OnlineEditorPage {
      */
     getResultPanel() {
         return cy.get('#result');
+    }
+
+    /**
+     * @returns the element containing the result score percentage.
+     */
+    getResultScorePercentage() {
+        return cy.get('#result-score-percentage');
     }
 
     /**

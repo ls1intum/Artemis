@@ -1,5 +1,4 @@
 <div>
-    <jhi-alert></jhi-alert>
     <div *ngIf="isLoading" class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
             <span class="sr-only">Loading...</span>
@@ -19,8 +18,13 @@
 
         <div class="d-flex mb-1">
             <h6 *ngIf="examScoreDTO.maxPoints">{{ 'artemisApp.examScores.maxPoints' | artemisTranslate }}: {{ localize(examScoreDTO.maxPoints) }},</h6>
-            <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }},</h6>
-            <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
+            <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'exercise-groups']">
+                <h6 class="ms-2">{{ exerciseGroups.length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }}</h6>
+            </a>
+            <h6>,</h6>
+            <a [routerLink]="['/course-management', course!.id, 'exams', examScoreDTO.examId, 'students']">
+                <h6 class="ms-2">{{ aggregatedExamResults.noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}</h6>
+            </a>
         </div>
 
         <div class="mb-2">
@@ -304,28 +308,38 @@
             </tbody>
         </table>
 
-        <div #containerRef class="d-block">
+        <div class="d-block">
+            <label *ngIf="gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null" class="d-flex align-items-center">
+                <input type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
+                <span class="ms-1">
+                    {{
+                        'artemisApp.examScores.highlightPassedMedian'
+                            | artemisTranslate
+                                : {
+                                      median: this.aggregatedExamResults.medianRelativePassed
+                                          ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
+                                          : 0
+                                  }
+                    }}
+                </span>
+            </label>
+            <label class="d-flex align-items-center">
+                <input type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
+                <span class="ms-1">
+                    {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
+                </span>
+            </label>
             <!-- Histogram -->
-            <ngx-charts-bar-vertical
-                [view]="[containerRef.offsetWidth, 400]"
-                [results]="ngxData"
-                [scheme]="ngxColor"
-                [yAxis]="true"
-                [xAxis]="true"
-                [yAxisLabel]="yAxisLabel"
-                [showYAxisLabel]="true"
-                [xAxisLabel]="xAxisLabel"
-                [showXAxisLabel]="true"
-                [yScaleMax]="yScaleMax"
+            <jhi-participant-scores-distribution
+                [scores]="scores"
+                [scoreToHighlight]="highlightedValue"
+                [gradingScale]="gradingScale"
+                [isCourseScore]="false"
                 [dataLabelFormatting]="dataLabelFormatting"
-                [showDataLabel]="true"
+                (onSelect)="onSelect()"
+                class="row"
             >
-                <ng-template #tooltipTemplate let-model="model">
-                    <b>{{ model.name }}</b
-                    ><br />
-                    <span>{{ 'statistics.amountOfStudents' | artemisTranslate }}: {{ model.value }}</span>
-                </ng-template>
-            </ngx-charts-bar-vertical>
+            </jhi-participant-scores-distribution>
         </div>
 
         <!-- Exercise Statistics -->

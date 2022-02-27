@@ -1,21 +1,21 @@
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { ExerciseHintResponse, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { IExerciseHintService, ExerciseHintResponse } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 export class MockExerciseHintService implements IExerciseHintService {
     private exerciseHintDummy = { id: 1 } as ExerciseHint;
     private exerciseHintDummy2 = { id: 2 } as ExerciseHint;
 
-    create(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
+    create(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
+    delete(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<void>> {
         return of();
     }
 
-    find(id: number): Observable<ExerciseHintResponse> {
+    find(exerciseId: number, exerciseHintId: number): Observable<ExerciseHintResponse> {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 
@@ -23,7 +23,7 @@ export class MockExerciseHintService implements IExerciseHintService {
         return of({ body: [this.exerciseHintDummy, this.exerciseHintDummy2] }) as Observable<HttpResponse<ExerciseHint[]>>;
     }
 
-    update(exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
+    update(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 }

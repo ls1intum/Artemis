@@ -4,11 +4,12 @@ import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
+import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 
 let fixture: ComponentFixture<ExamInformationComponent>;
 let component: ExamInformationComponent;
@@ -34,7 +35,13 @@ describe('ExamInformationComponent', () => {
 
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
-            declarations: [ExamInformationComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockPipe(ArtemisDurationFromSecondsPipe)],
+            declarations: [
+                ExamInformationComponent,
+                MockComponent(StudentExamWorkingTimeComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockPipe(ArtemisDurationFromSecondsPipe),
+            ],
         })
             .compileComponents()
             .then(() => {

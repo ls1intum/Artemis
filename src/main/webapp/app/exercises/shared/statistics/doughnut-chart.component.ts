@@ -1,11 +1,12 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { Course, NgxDataEntry } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { ScaleType, Color } from '@swimlane/ngx-charts';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 @Component({
     selector: 'jhi-doughnut-chart',
@@ -32,7 +33,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     constructor(private router: Router) {}
 
     // ngx
-    ngxDoughnutData: NgxDataEntry[] = [
+    ngxDoughnutData: NgxChartsSingleSeriesDataEntry[] = [
         { name: 'Done', value: 0 },
         { name: 'Not done', value: 0 },
     ];
@@ -51,7 +52,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
             this.assignValuesToData([1, 0]);
         } else {
             this.receivedStats = true;
-            const remaining = roundScoreSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
+            const remaining = roundValueSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
             this.stats = [this.currentAbsolute!, remaining];
             return this.currentMax === 0 ? this.assignValuesToData([1, 0]) : this.assignValuesToData(this.stats);
         }
@@ -98,7 +99,7 @@ export class DoughnutChartComponent implements OnChanges, OnInit {
     private assignValuesToData(values: number[]) {
         this.ngxDoughnutData[0].value = values[0];
         this.ngxDoughnutData[1].value = values[1];
-        this.ngxDoughnutData.forEach((entry: NgxDataEntry, index: number) => (entry.value = values[index]));
+        this.ngxDoughnutData.forEach((entry: NgxChartsSingleSeriesDataEntry, index: number) => (entry.value = values[index]));
         this.ngxDoughnutData = [...this.ngxDoughnutData];
     }
 

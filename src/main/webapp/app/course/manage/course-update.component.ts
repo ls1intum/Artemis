@@ -2,7 +2,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
@@ -278,10 +278,12 @@ export class CourseUpdateComponent implements OnInit {
      */
     private onSaveError(error: HttpErrorResponse) {
         const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
-        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         if (errorMessage) {
-            const jhiAlert = this.alertService.error(errorMessage);
-            jhiAlert.message = errorMessage;
+            this.alertService.addAlert({
+                type: AlertType.DANGER,
+                message: errorMessage,
+                disableTranslation: true,
+            });
         }
 
         this.isSaving = false;

@@ -14,8 +14,6 @@ import { ExamChecklistCheckComponent } from 'app/exam/manage/exams/exam-checklis
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -54,6 +52,7 @@ describe('ExamDetailComponent', () => {
                     { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
+                    { path: 'course-management/:courseId/exams', component: DummyComponent },
                 ]),
                 HttpClientTestingModule,
             ],
@@ -62,8 +61,6 @@ describe('ExamDetailComponent', () => {
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(AlertComponent),
-                MockComponent(AlertErrorComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(HasAnyAuthorityDirective),
@@ -218,5 +215,20 @@ describe('ExamDetailComponent', () => {
         // THEN
         expect(service.reset).toHaveBeenCalledTimes(1);
         expect(examDetailComponent.exam).toEqual(exam);
+    });
+
+    it('should delete an exam when delete exam is called', () => {
+        // GIVEN
+        examDetailComponent.exam = exam;
+        const responseFakeDelete = {} as HttpResponse<any[]>;
+        const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
+        jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
+        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
+
+        // WHEN
+        examDetailComponent.deleteExam(exam.id!);
+
+        // THEN
+        expect(service.delete).toHaveBeenCalledTimes(1);
     });
 });

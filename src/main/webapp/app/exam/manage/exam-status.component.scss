@@ -1,0 +1,55 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.exam-status-wrapper {
+    display: flex;
+    justify-content: space-between;
+    min-width: 650px;
+    max-width: 750px;
+    margin-left: 130px;
+    margin-right: 170px;
+
+    .planned,
+    .finished,
+    .check {
+        color: $success; // green
+    }
+
+    .unset,
+    .cross {
+        color: $danger; // red
+    }
+
+    li {
+        display: list-item !important;
+    }
+
+    .running {
+        color: $warning; // yellow
+    }
+
+    .connector {
+        width: 100%;
+        min-width: 50px;
+        border-top: 2px solid;
+        margin-top: 1.5em;
+    }
+
+    .status-step {
+        width: 25px;
+        overflow-x: visible;
+        justify-content: flex-start;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .status-step-content {
+            min-width: fit-content;
+            white-space: nowrap;
+        }
+    }
+
+    .header-icon {
+        z-index: 2;
+        font-size: 2em;
+    }
+}

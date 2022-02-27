@@ -54,7 +54,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         tutor = userRepository.getUserByLoginElseThrow("tutor1");
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findAll().get(0);
-        textSubmission = (TextSubmission) textSubmissionRepository.findAll().get(0);
+        textSubmission = textSubmissionRepository.findAll().get(0);
     }
 
     @AfterEach

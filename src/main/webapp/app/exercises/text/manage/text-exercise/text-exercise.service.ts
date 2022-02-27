@@ -87,10 +87,10 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
 
     /**
      * Deletes the text exercise with the given id.
-     * @param id of the text exercise of type {number}
+     * @param exerciseId of the text exercise of type {number}
      */
-    delete(id: number): Observable<HttpResponse<{}>> {
-        return this.http.delete(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(exerciseId: number): Observable<HttpResponse<{}>> {
+        return this.http.delete(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 
     /**

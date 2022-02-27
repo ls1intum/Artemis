@@ -8,7 +8,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subject } from 'rxjs';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
@@ -24,7 +24,7 @@ describe('DeleteDialogComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgbModule],
-            declarations: [DeleteDialogComponent, AlertComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            declarations: [DeleteDialogComponent, AlertOverlayComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [JhiLanguageHelper, AlertService],
         })
             .compileComponents()
@@ -37,7 +37,7 @@ describe('DeleteDialogComponent', () => {
     });
 
     it('Dialog is correctly initialized', fakeAsync(() => {
-        const dismissSyp = jest.spyOn(ngbActiveModal, 'dismiss');
+        const closeSpy = jest.spyOn(ngbActiveModal, 'close');
         let inputFormGroup = debugElement.query(By.css('.form-group'));
         expect(inputFormGroup).toBeNull();
 
@@ -52,12 +52,12 @@ describe('DeleteDialogComponent', () => {
         const closeButton = fixture.debugElement.query(By.css('.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
-        expect(dismissSyp).toHaveBeenCalledTimes(1);
+        expect(closeSpy).toHaveBeenCalledTimes(1);
 
         const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
-        expect(dismissSyp).toHaveBeenCalledTimes(2);
+        expect(closeSpy).toHaveBeenCalledTimes(2);
 
         inputFormGroup = debugElement.query(By.css('.form-group'));
         expect(inputFormGroup).not.toBeNull();

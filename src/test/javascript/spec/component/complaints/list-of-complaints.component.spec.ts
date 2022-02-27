@@ -15,7 +15,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { of } from 'rxjs';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Result } from 'app/entities/result.model';
@@ -64,7 +63,7 @@ describe('ListOfComplaintsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(AlertComponent), MockComponent(FaIconComponent)],
+            declarations: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(SortService),
@@ -174,42 +173,6 @@ describe('ListOfComplaintsComponent', () => {
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
             expect(comp.hasStudentInformation).toBe(true);
-        });
-    });
-
-    describe('shouldHighlightComplaint', () => {
-        it('should not highlight handled complaints', () => {
-            const complaint = {
-                id: 42,
-                submittedTime: dayjs().subtract(1, 'hours'),
-                accepted: true,
-            } as Complaint;
-
-            const result = comp.shouldHighlightComplaint(complaint);
-
-            expect(result).toBe(false);
-        });
-
-        it('should not highlight recent complaints', () => {
-            const complaint = {
-                id: 42,
-                submittedTime: dayjs().subtract(8, 'days').add(1, 'seconds'),
-            } as Complaint;
-
-            const result = comp.shouldHighlightComplaint(complaint);
-
-            expect(result).toBe(false);
-        });
-
-        it('should highlight old complaints', () => {
-            const complaint = {
-                id: 42,
-                submittedTime: dayjs().subtract(8, 'days'),
-            } as Complaint;
-
-            const result = comp.shouldHighlightComplaint(complaint);
-
-            expect(result).toBe(true);
         });
     });
 

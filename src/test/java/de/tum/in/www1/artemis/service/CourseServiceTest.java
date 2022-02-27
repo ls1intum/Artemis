@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -144,7 +145,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         var exerciseList = new HashSet<Long>();
         exerciseList.add(exercise.getId());
-        var activeStudents = courseService.getActiveStudents(exerciseList, 0, 4, ZonedDateTime.now());
+        var activeStudents = courseService.getActiveStudents(exerciseList, 0, 4, ZonedDateTime.of(2022, 1, 25, 0, 0, 0, 0, ZoneId.systemDefault()));
         assertThat(activeStudents.size()).isEqualTo(4);
         assertThat(activeStudents).containsExactly(1, 0, 0, 0);
     }

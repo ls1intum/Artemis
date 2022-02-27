@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.LearningGoal;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Learning Goal entity.
@@ -31,6 +32,10 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
             LEFT JOIN FETCH lu.learningGoals
             WHERE learningGoal.id = :#{#learningGoalId}
             """)
-    Optional<LearningGoal> findByIdWithLectureUnitsBidirectional(@Param("learningGoalId") Long learningGoalId);
+    Optional<LearningGoal> findByIdWithLectureUnitsBidirectional(@Param("learningGoalId") long learningGoalId);
+
+    default LearningGoal findByIdWithLectureUnitsBidirectionalElseThrow(long learningGoalId) {
+        return findByIdWithLectureUnitsBidirectional(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    }
 
 }

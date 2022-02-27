@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, discardPeriodicTasks, TestBed } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../test.module';
@@ -10,7 +10,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -35,14 +34,7 @@ describe('DeleteDialogDirective', () => {
     beforeEach(() =>
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, NgbModule],
-            declarations: [
-                TestComponent,
-                DeleteButtonDirective,
-                MockComponent(DeleteDialogComponent),
-                MockComponent(AlertComponent),
-                TranslatePipeMock,
-                MockDirective(TranslateDirective),
-            ],
+            declarations: [TestComponent, DeleteButtonDirective, MockComponent(DeleteDialogComponent), TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [JhiLanguageHelper, AlertService],
         })
             .compileComponents()

@@ -32,7 +32,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { getLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -306,6 +306,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
+        this.assessmentsAreValid = false;
     }
 
     /**
@@ -392,11 +393,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.submission!.id!).subscribe({
             next: (result: Result) => {
                 this.participation.results![0] = this.manualResult = result;
-                this.alertService.clear();
+                this.alertService.closeAll();
                 this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
-                this.alertService.clear();
+                this.alertService.closeAll();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
                     this.alertService.error(error.message, error.params);
@@ -493,7 +494,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.participation.results = [];
         }
         this.participation.results![0] = this.manualResult = response.body!;
-        this.alertService.clear();
+        this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
     }
@@ -539,7 +540,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.onFeedbackLoaded.emit();
-        this.validateFeedback();
     }
 
     private setFeedbacksForManualResult() {
@@ -547,7 +547,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private createResultString(totalScore: number, maxScore: number | undefined): string {
-        return `${roundScoreSpecifiedByCourseSettings(totalScore, getCourseFromExercise(this.exercise))} of ${roundScoreSpecifiedByCourseSettings(
+        return `${roundValueSpecifiedByCourseSettings(totalScore, getCourseFromExercise(this.exercise))} of ${roundValueSpecifiedByCourseSettings(
             maxScore,
             getCourseFromExercise(this.exercise),
         )} points`;

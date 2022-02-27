@@ -13,8 +13,8 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -34,6 +34,9 @@ export class QuizExamSummaryComponent implements OnInit {
 
     @Input()
     submission: QuizSubmission;
+
+    @Input()
+    course: Course;
 
     @Input()
     resultsPublished: boolean;
@@ -119,7 +122,7 @@ export class QuizExamSummaryComponent implements OnInit {
                 return answer && answer.quizQuestion ? answer.quizQuestion.id === quizQuestionId : false;
             });
             if (submittedAnswer && submittedAnswer.scoreInPoints !== undefined) {
-                return roundScoreSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, getCourseFromExercise(this.exercise));
+                return roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, this.course);
             }
         }
         return 0;

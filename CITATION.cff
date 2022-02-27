@@ -22,7 +22,8 @@ preferred-citation:
   title: "ArTEMiS: An Automatic Assessment Management System for Interactive Learning"
   doi: "10.1145/3159450.3159602"
   year: 2018
-  journal: "49th ACM Technical Symposium on Computer Science Education"
+  conference: "49th Technical Symposium on Computer Science Education"
+  publisher: ACM
   pages: 6
   start: 284
   end: 289

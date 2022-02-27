@@ -1,4 +1,4 @@
-import { round, roundScoreSpecifiedByCourseSettings, roundScorePercentSpecifiedByCourseSettings, stringifyIgnoringFields } from 'app/shared/util/utils';
+import { round, roundValueSpecifiedByCourseSettings, roundScorePercentSpecifiedByCourseSettings, stringifyIgnoringFields } from 'app/shared/util/utils';
 
 describe('Round', () => {
     it('Decimal length', () => {
@@ -36,11 +36,11 @@ describe('Round', () => {
 
 describe('Rounding of scores', () => {
     it('RoundScore', () => {
-        expect(roundScoreSpecifiedByCourseSettings(13.821354, { accuracyOfScores: 4 })).toBe(13.8214);
-        expect(roundScoreSpecifiedByCourseSettings(54.821354, { accuracyOfScores: 3 })).toBe(54.821);
-        expect(roundScoreSpecifiedByCourseSettings(0.821354, { accuracyOfScores: 2 })).toBe(0.82);
-        expect(roundScoreSpecifiedByCourseSettings(1000.821354, { accuracyOfScores: 1 })).toBe(1000.8);
-        expect(roundScoreSpecifiedByCourseSettings(4.821354, { accuracyOfScores: 0 })).toBe(5);
+        expect(roundValueSpecifiedByCourseSettings(13.821354, { accuracyOfScores: 4 })).toBe(13.8214);
+        expect(roundValueSpecifiedByCourseSettings(54.821354, { accuracyOfScores: 3 })).toBe(54.821);
+        expect(roundValueSpecifiedByCourseSettings(0.821354, { accuracyOfScores: 2 })).toBe(0.82);
+        expect(roundValueSpecifiedByCourseSettings(1000.821354, { accuracyOfScores: 1 })).toBe(1000.8);
+        expect(roundValueSpecifiedByCourseSettings(4.821354, { accuracyOfScores: 0 })).toBe(5);
     });
 
     it('RoundScorePercent', () => {
