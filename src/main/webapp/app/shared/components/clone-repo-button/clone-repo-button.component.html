@@ -33,12 +33,7 @@
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }}</pre
             >
-            <a
-                style="flex: 1"
-                [ngStyle]="{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' }"
-                [href]="getHttpRepositoryUrl() | safeUrl"
-                class="btn btn-info btn-sm me-1"
-            >
+            <a class="btn btn-secondary btn-sm me-2" style="margin-bottom: 10px" [href]="getHttpRepositoryUrl() | safeUrl">
                 <fa-icon [icon]="faLink"></fa-icon>
             </a>
         </div>
