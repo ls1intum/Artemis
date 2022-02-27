@@ -3,7 +3,6 @@ import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/rout
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -38,7 +37,6 @@ describe('SystemNotificationManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockRouterLinkDirective,
                 MockDirective(RouterOutlet),
-                MockDirective(AlertComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(NgbPagination),
                 MockDirective(SortDirective),

@@ -40,7 +40,6 @@ import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component'
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { HttpResponse } from '@angular/common/http';
@@ -84,7 +83,6 @@ describe('ModelingSubmission Management Component', () => {
                 MockComponent(AdditionalFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintsStudentViewComponent),
-                MockComponent(AlertComponent),
                 MockComponent(FaIconComponent),
             ],
             providers: [

@@ -13,7 +13,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
@@ -160,8 +160,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             },
             error: (error: HttpErrorResponse) => {
                 const errorMessage = error.headers.get('X-artemisApp-message')!;
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
             },
         });
     }

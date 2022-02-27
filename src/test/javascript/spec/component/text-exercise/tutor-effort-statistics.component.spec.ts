@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockDirective, MockModule } from 'ng-mocks';
+import { MockPipe, MockDirective, MockModule, MockComponent } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,8 +11,11 @@ import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { of } from 'rxjs';
 
 describe('TutorEffortStatisticsComponent', () => {
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
@@ -22,6 +25,7 @@ describe('TutorEffortStatisticsComponent', () => {
     let textAssessmentService: TextAssessmentService;
     let getNumberOfTutorsInvolvedInAssessmentStub: any;
     let calculateTutorEffortStub: any;
+    let router: Router;
     const tutorEffortsMocked: TutorEffort[] = [
         {
             courseId: 1,
@@ -46,13 +50,14 @@ describe('TutorEffortStatisticsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(BarChartModule)],
-            declarations: [TutorEffortStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective)],
+            declarations: [TutorEffortStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective), MockComponent(HelpIconComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ courseId: 1, exerciseId: 1 }),
                 },
+                { provide: Router, useClass: MockRouter },
             ],
         })
             .compileComponents()
@@ -65,6 +70,7 @@ describe('TutorEffortStatisticsComponent', () => {
                 textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
                 getNumberOfTutorsInvolvedInAssessmentStub = jest.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
                 calculateTutorEffortStub = jest.spyOn(textExerciseService, 'calculateTutorEffort');
+                router = TestBed.inject(Router);
             });
     });
 
@@ -135,6 +141,40 @@ describe('TutorEffortStatisticsComponent', () => {
         const numberOfSubmissionsAssessed = compiled.querySelector('[jhiTranslate$=numberOfSubmissionsAssessed]');
         expect(noData).not.toBe(null);
         expect(numberOfSubmissionsAssessed).toBe(null);
+    });
+
+    it('should delegate the user correctly', () => {
+        component.currentCourseId = 42;
+        component.currentExerciseId = 33;
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        const expectedArray = ['/course-management', 42, 'assessment-dashboard', 33];
+
+        component.onSelect();
+
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledWith(expectedArray);
+    });
+
+    it('should compute the correct medians', () => {
+        const tutorEfforts = [
+            ...tutorEffortsMocked,
+            {
+                courseId: 1,
+                exerciseId: 1,
+                numberOfSubmissionsAssessed: 15,
+                totalTimeSpentMinutes: 32,
+            },
+        ];
+        jest.spyOn(textExerciseService, 'calculateTutorEffort').mockReturnValue(of(tutorEfforts));
+        jest.spyOn(component, 'loadNumberOfTutorsInvolved').mockImplementation();
+
+        component.ngOnInit();
+
+        expect(component.medianValue).toBe(25);
+
+        const assessedSubmissionsMedian = component.getMedianAmountOfAssessedSubmissions('[30-40)');
+
+        expect(assessedSubmissionsMedian).toBe(8);
     });
 
     const checkNgxData = () => {

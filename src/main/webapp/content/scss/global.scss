@@ -308,63 +308,6 @@ a:hover {
 }
 
 /* ==========================================================================
-Custom alerts for notification
-========================================================================== */
-.alerts {
-    .alert {
-        text-overflow: ellipsis;
-        display: flex;
-        justify-content: space-between;
-
-        .close {
-            background: none;
-            border: none;
-            font-size: large;
-        }
-
-        pre {
-            background: none;
-            border: none;
-            font: inherit;
-            color: inherit;
-            padding: 0;
-            margin: 0;
-        }
-
-        .popover pre {
-            font-size: 10px;
-        }
-    }
-
-    .jhi-toast {
-        position: fixed;
-        width: 100%;
-
-        &.left {
-            left: 5px;
-        }
-
-        &.right {
-            right: 5px;
-        }
-
-        &.top {
-            top: 55px;
-        }
-
-        &.bottom {
-            bottom: 55px;
-        }
-    }
-}
-
-@media screen and (min-width: 480px) {
-    .alerts .jhi-toast {
-        width: 50%;
-    }
-}
-
-/* ==========================================================================
 entity tables helpers
 ========================================================================== */
 

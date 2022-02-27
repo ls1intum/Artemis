@@ -21,8 +21,8 @@ export enum UMLDiagramType {
 
 export class ModelingExercise extends Exercise {
     public diagramType?: UMLDiagramType;
-    public sampleSolutionModel?: string;
-    public sampleSolutionExplanation?: string;
+    public exampleSolutionModel?: string;
+    public exampleSolutionExplanation?: string;
 
     constructor(diagramType: UMLDiagramType, course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.MODELING);
