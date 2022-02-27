@@ -49,7 +49,7 @@ export class CourseScoreCalculationService {
                 -> include in maxPointsInScore after the final test run is over, not immediately after release because
                    the test run after due date is important for the final course score (hidden tests)
              */
-            if ((isAutomaticAssessmentFinished || (!isExerciseAssessedAutomatically && isExerciseFinished)) && isExerciseIncluded) {
+            if (isExerciseIncluded && ((!isExerciseAssessedAutomatically && isExerciseFinished) || isAutomaticAssessmentFinished)) {
                 const maxPointsReachableInExercise = exercise.maxPoints!;
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
