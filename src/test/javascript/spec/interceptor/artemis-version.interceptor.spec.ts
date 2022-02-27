@@ -1,7 +1,7 @@
 import { EMPTY, of, Subject } from 'rxjs';
 import { ServerDateService } from 'app/shared/server-date.service';
 import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { MockService } from 'ng-mocks';
 import { MockArtemisServerDateService } from '../helpers/mocks/service/mock-server-date.service';
 import { discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
@@ -32,8 +32,8 @@ describe(`ArtemisVersionInterceptor`, () => {
             isEnabled: true,
             activated: EMPTY,
             available: EMPTY,
-            checkForUpdate: () => of(true).toPromise(),
-            activateUpdate: () => of(true).toPromise(),
+            checkForUpdate: () => Promise.resolve(true),
+            activateUpdate: () => Promise.resolve(true),
         };
         checkForUpdateSpy = jest.spyOn(swUpdate, 'checkForUpdate');
         activateUpdateSpy = jest.spyOn(swUpdate, 'activateUpdate');
@@ -75,7 +75,7 @@ describe(`ArtemisVersionInterceptor`, () => {
         expect(funMock.mock.calls).toHaveLength(1);
         expect(funMock.mock.calls[0]).toHaveLength(1);
         const arg = funMock.mock.calls[0][0];
-        expect(arg.type).toBe('info');
+        expect(arg.type).toBe(AlertType.INFO);
         expect(arg.message).toBe('artemisApp.outdatedAlert');
 
         expect(activateUpdateSpy).not.toHaveBeenCalled();
