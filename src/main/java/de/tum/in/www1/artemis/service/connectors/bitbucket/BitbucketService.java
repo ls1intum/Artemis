@@ -257,11 +257,9 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(userDetailsBuilder.build().encode().toUri(), HttpMethod.PUT, userDetailsEntity, Void.class);
         }
         catch (HttpClientErrorException e) {
-            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                if (e.getMessage() != null && e.getMessage().contains("com.atlassian.bitbucket.user.NoSuchUserException")) {
-                    log.warn("Bitbucket user " + username + " does not exist.");
-                    return;
-                }
+            if (isUserNotFoundException(e)) {
+                log.warn("Bitbucket user " + username + " does not exist.");
+                return;
             }
             log.error("Could not update Bitbucket user " + username, e);
             throw new BitbucketException("Error while updating user", e);
@@ -289,11 +287,9 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(passwordBuilder.build().encode().toUri(), HttpMethod.PUT, passwordEntity, Void.class);
         }
         catch (HttpClientErrorException e) {
-            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                if (e.getMessage() != null && e.getMessage().contains("com.atlassian.bitbucket.user.NoSuchUserException")) {
-                    log.warn("Bitbucket user " + username + " does not exist.");
-                    return;
-                }
+            if (isUserNotFoundException(e)) {
+                log.warn("Bitbucket user " + username + " does not exist.");
+                return;
             }
             log.error("Could not update Bitbucket user password for " + username, e);
             throw new BitbucketException("Error while updating user", e);
@@ -315,11 +311,9 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(eraseBuilder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
         }
         catch (HttpClientErrorException e) {
-            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                if (e.getMessage() != null && e.getMessage().contains("com.atlassian.bitbucket.user.NoSuchUserException")) {
-                    log.warn("Bitbucket user " + username + " has already been deleted.");
-                    return;
-                }
+            if (isUserNotFoundException(e)) {
+                log.warn("Bitbucket user " + username + " has already been deleted.");
+                return;
             }
             log.error("Could not delete Bitbucket user " + username, e);
             throw new BitbucketException("Error while updating user", e);
@@ -374,6 +368,17 @@ public class BitbucketService extends AbstractVersionControlService {
             log.error("Could not remove Bitbucket user " + username + " from groups" + groups, e);
             throw new BitbucketException("Error while removing Bitbucket user from groups");
         }
+    }
+
+    /**
+     * Checks if a HTTP exception meets the requirements of a Bitbucket UserNotFoundException
+     *
+     * @param exception The exception thrown by the HTTP Client
+     * @return true if the exception meets the requirements
+     */
+    private boolean isUserNotFoundException(HttpClientErrorException exception) {
+        return HttpStatus.NOT_FOUND.equals(exception.getStatusCode()) && exception.getMessage() != null
+                && exception.getMessage().contains("com.atlassian.bitbucket.user.NoSuchUserException");
     }
 
     /**

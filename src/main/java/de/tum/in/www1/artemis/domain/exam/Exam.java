@@ -397,7 +397,7 @@ public class Exam extends DomainObject {
      */
     @JsonIgnore
     public boolean isAfterLatestStudentExamEnd() {
-        return ZonedDateTime.now().isAfter(getStartDate().plusMinutes(getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
+        return ZonedDateTime.now().isAfter(getStartDate().plusSeconds(getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
     }
 
     public boolean hasExamArchive() {
