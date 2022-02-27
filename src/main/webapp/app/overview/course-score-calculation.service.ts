@@ -192,7 +192,7 @@ export class CourseScoreCalculationService {
                                     immediate automatic feedback.
      Addition regarding edge case 2: the exercise score is officially reachable after the final test run
                                     (so after the buildAndTestStudentSubmissionsAfterDueDate is over).
-     * @param exercise
+     * @param exercise the exercise whose assessment state should be determined
      * @private
      */
     private isAssessmentDone(exercise: Exercise): boolean {
