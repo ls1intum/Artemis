@@ -18,7 +18,6 @@
             "clonePersonalRepository": "Clone your personal repository for this exercise:",
             "repositoryPassword": "Your Password is:",
             "hoverToShow": "(hover to show)",
-            "openRepositoryInBrowser": "Open in browser",
             "cloneSourceTree": "Clone in SourceTree",
             "sourceTreeDescription": "<a href='http://www.sourcetreeapp.com' target='_blank'>Atlassian SourceTree</a> is a free Git client for Windows or Mac.",
             "goToBuildPlan": "Go to build plan",
