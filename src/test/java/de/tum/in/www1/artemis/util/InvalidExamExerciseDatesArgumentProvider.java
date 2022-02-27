@@ -22,19 +22,19 @@ public class InvalidExamExerciseDatesArgumentProvider implements ArgumentsProvid
         ZonedDateTime releaseDate = ZonedDateTime.now().plusHours(1);
         ZonedDateTime dueDate = releaseDate.plusHours(1);
         ZonedDateTime assessmentDueDate = dueDate.plusHours(1);
-        return Stream.of( //
-                new InvalidExamExerciseDateConfiguration(releaseDate, dueDate, assessmentDueDate), //
-                new InvalidExamExerciseDateConfiguration(releaseDate, null, null), //
-                new InvalidExamExerciseDateConfiguration(null, dueDate, null), //
-                new InvalidExamExerciseDateConfiguration(null, null, assessmentDueDate) //
-        ).map(Arguments::of);
+        ZonedDateTime exampleSolutionPublicationDate = ZonedDateTime.now();
+
+        return Stream.of(new InvalidExamExerciseDateConfiguration(releaseDate, dueDate, assessmentDueDate, null),
+                new InvalidExamExerciseDateConfiguration(releaseDate, null, null, null), new InvalidExamExerciseDateConfiguration(null, dueDate, null, null),
+                new InvalidExamExerciseDateConfiguration(null, null, assessmentDueDate, null),
+                new InvalidExamExerciseDateConfiguration(null, null, null, exampleSolutionPublicationDate)).map(Arguments::of);
     }
 
     /**
      * A exercise date attribute configuration that is invalid for exam exercises. It consists of the {@link #releaseDate()}, the {@link #dueDate()} and the {@link #assessmentDueDate()}.
      */
-    public record InvalidExamExerciseDateConfiguration(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate)
-            implements InvalidExerciseConfiguration<Exercise> {
+    public record InvalidExamExerciseDateConfiguration(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+            ZonedDateTime exampleSolutionPublicationDate) implements InvalidExerciseConfiguration<Exercise> {
 
         /**
          * {@inheritDoc}
@@ -45,6 +45,7 @@ public class InvalidExamExerciseDatesArgumentProvider implements ArgumentsProvid
             exercise.setReleaseDate(releaseDate);
             exercise.setDueDate(dueDate);
             exercise.setAssessmentDueDate(assessmentDueDate);
+            exercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
             return exercise;
         }
     }

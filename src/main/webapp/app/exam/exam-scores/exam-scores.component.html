@@ -1,5 +1,4 @@
 <div>
-    <jhi-alert></jhi-alert>
     <div *ngIf="isLoading" class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
             <span class="sr-only">Loading...</span>
@@ -309,8 +308,8 @@
             </tbody>
         </table>
 
-        <div #containerRef class="d-block">
-            <label *ngIf="showPassedMedianCheckbox" class="d-flex align-items-center">
+        <div class="d-block">
+            <label *ngIf="gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null" class="d-flex align-items-center">
                 <input type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
                 <span class="ms-1">
                     {{
@@ -324,53 +323,23 @@
                     }}
                 </span>
             </label>
-            <label *ngIf="showOverallMedianCheckbox" class="d-flex align-items-center">
+            <label class="d-flex align-items-center">
                 <input type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
                 <span class="ms-1">
                     {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
                 </span>
             </label>
             <!-- Histogram -->
-            <ngx-charts-bar-vertical
-                [view]="[containerRef.offsetWidth, 400]"
-                [results]="ngxData"
-                [scheme]="ngxColor"
-                [yAxis]="true"
-                [xAxis]="true"
-                [yAxisLabel]="yAxisLabel"
-                [showYAxisLabel]="true"
-                [xAxisLabel]="xAxisLabel"
-                [showXAxisLabel]="true"
-                [yScaleMax]="yScaleMax"
+            <jhi-participant-scores-distribution
+                [scores]="scores"
+                [scoreToHighlight]="highlightedValue"
+                [gradingScale]="gradingScale"
+                [isCourseScore]="false"
                 [dataLabelFormatting]="dataLabelFormatting"
-                [showDataLabel]="true"
-                [activeEntries]="activeEntries"
-                (select)="onSelect()"
+                (onSelect)="onSelect()"
                 class="row"
             >
-                <ng-template #tooltipTemplate let-model="model">
-                    <b>{{ model.name }}</b
-                    ><br />
-                    <span>{{ 'statistics.amountOfStudents' | artemisTranslate }}: {{ model.value }}</span>
-                </ng-template>
-            </ngx-charts-bar-vertical>
-            <div *ngIf="gradingScaleExists && !isBonus" class="d-flex justify-content-center align-items-center">
-                <div class="color-box insufficient-performance"></div>
-                <span class="ms-2">{{ 'artemisApp.examScores.insufficientPerformance' | artemisTranslate }}</span>
-
-                <div class="ms-4 color-box sufficient-performance"></div>
-                <span class="ms-2">{{ 'artemisApp.examScores.sufficientPerformance' | artemisTranslate }}</span>
-                <jhi-help-icon class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanationNotBonus"></jhi-help-icon>
-            </div>
-            <div *ngIf="!gradingScaleExists || isBonus" class="d-flex justify-content-center align-items-center">
-                <div class="color-box critical-performance"></div>
-                <span class="ms-2">{{ 'artemisApp.examScores.criticalPerformance' | artemisTranslate }}</span>
-
-                <div class="ms-4 color-box sufficient-performance"></div>
-                <span class="ms-2">{{ 'artemisApp.examScores.uncriticalPerformance' | artemisTranslate }}</span>
-                <jhi-help-icon *ngIf="!isBonus" class="ms-2" placement="right auto" text="artemisApp.examScores.noGradingScaleExplanation"></jhi-help-icon>
-                <jhi-help-icon *ngIf="isBonus" class="ms-2" placement="right auto" text="artemisApp.examScores.gradingScaleExplanationBonus"></jhi-help-icon>
-            </div>
+            </jhi-participant-scores-distribution>
         </div>
 
         <!-- Exercise Statistics -->

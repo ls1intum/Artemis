@@ -45,7 +45,6 @@ import { InfoPanelComponent } from 'app/shared/info-panel/info-panel.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
@@ -201,7 +200,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockComponent(ProgrammingExerciseInstructionComponent),
         MockComponent(ButtonComponent),
         MockComponent(ResultComponent),
-        MockComponent(AlertComponent),
         MockDirective(ExtensionPointDirective),
         MockHasAnyAuthorityDirective,
         MockTranslateValuesDirective,
