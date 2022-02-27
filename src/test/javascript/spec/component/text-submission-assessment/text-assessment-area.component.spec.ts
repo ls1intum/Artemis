@@ -7,20 +7,10 @@ import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
-import { TextBlock } from 'app/entities/text-block.model';
 
 describe('TextAssessmentAreaComponent', () => {
     let component: TextAssessmentAreaComponent;
     let fixture: ComponentFixture<TextAssessmentAreaComponent>;
-
-    const blocks = [
-        {
-            text: 'First text.',
-            startIndex: 0,
-            endIndex: 11,
-        } as TextBlock,
-    ];
-    const textBlockRefs = [new TextBlockRef(blocks[0])];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -40,7 +30,7 @@ describe('TextAssessmentAreaComponent', () => {
     });
 
     it('should add a TextblockAssessmentCardComponent for each TextBlockRef', () => {
-        const textBlockRefs2 = [
+        const textBlockRefs = [
             TextBlockRef.new(),
             TextBlockRef.new(),
             TextBlockRef.new(),
@@ -53,8 +43,8 @@ describe('TextAssessmentAreaComponent', () => {
             TextBlockRef.new(),
         ];
 
-        for (let i = 0; i < textBlockRefs2.length; i++) {
-            component.textBlockRefs = textBlockRefs2.slice(0, i);
+        for (let i = 0; i < textBlockRefs.length; i++) {
+            component.textBlockRefs = textBlockRefs.slice(0, i);
             fixture.detectChanges();
 
             const all = fixture.debugElement.queryAll(By.directive(TextblockAssessmentCardComponent));
@@ -72,26 +62,24 @@ describe('TextAssessmentAreaComponent', () => {
     });
 
     it('should add TextBlockRef if text block is added manually', () => {
-        component.textBlockRefs = textBlockRefs;
+        component.textBlockRefs = [TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new()];
         jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
-        const expectedLength = component.textBlockRefs.length + 1;
 
         component.addTextBlockRef(TextBlockRef.new());
         fixture.detectChanges();
 
         expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledTimes(1);
-        expect(component.textBlockRefs).toHaveLength(expectedLength);
+        expect(component.textBlockRefs).toHaveLength(5);
     });
 
     it('should remove TextBlockRef if text block is deleted', () => {
-        component.textBlockRefs = textBlockRefs;
+        component.textBlockRefs = [TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new()];
         jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
-        const expectedLength = component.textBlockRefs.length - 1;
 
         component.removeTextBlockRef(component.textBlockRefs[0]);
         fixture.detectChanges();
 
         expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledTimes(1);
-        expect(component.textBlockRefs).toHaveLength(expectedLength);
+        expect(component.textBlockRefs).toHaveLength(3);
     });
 });

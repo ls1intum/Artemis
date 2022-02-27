@@ -340,6 +340,7 @@ describe('TextFeedbackConflictsComponent', () => {
         const clickSpy = jest.spyOn(component, 'didClickedButtonNoConflict');
         fixture.detectChanges();
         const button = fixture.debugElement.query(By.css('button'));
+        expect(button).not.toBe(null);
         button.triggerEventHandler('click', null);
 
         expect(clickSpy).toHaveBeenCalledTimes(1);

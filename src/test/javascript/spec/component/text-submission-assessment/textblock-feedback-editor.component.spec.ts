@@ -255,7 +255,9 @@ describe('TextblockFeedbackEditorComponent', () => {
         textSubmission.latestResult!.feedbacks = [
             {
                 id: 1,
+                detailText: 'text',
                 reference: 'First text id',
+                credits: 1.5,
             } as Feedback,
         ];
         textSubmission.blocks = [
@@ -263,6 +265,7 @@ describe('TextblockFeedbackEditorComponent', () => {
                 id: 'First text id',
                 text: 'First text.',
                 textSubmission,
+                numberOfAffectedSubmissions: 3,
             } as unknown as TextBlock,
         ];
         participation.submissions = [textSubmission];
@@ -273,7 +276,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         tick();
 
         expect(participationStub).toHaveBeenCalledTimes(1);
-        expect(component.listOfBlocksWithFeedback).not.toBeUndefined();
+        expect(component.listOfBlocksWithFeedback).toEqual([{ text: 'First text.', feedback: 'text', credits: 1.5, reusedCount: 3, type: 'MANUAL' }]);
     }));
 
     it('should show link icon when feedback is associated with grading instruction', () => {

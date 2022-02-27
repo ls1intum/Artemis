@@ -108,10 +108,10 @@ describe('TextAssessmentDashboardComponent', () => {
 
     it('should set parameters and call functions on init', () => {
         // setup
-        const exerciseServiceFindMock = jest.spyOn(exerciseService, 'find');
-        exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: textExercise })));
-        const getTextSubmissionStub = jest.spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound');
-        getTextSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [textSubmission], headers: new HttpHeaders() })));
+        jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
+        const getTextSubmissionStub = jest
+            .spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound')
+            .mockReturnValue(of(new HttpResponse({ body: [textSubmission], headers: new HttpHeaders() })));
 
         // test for init values
         expect(component).toBeTruthy();
@@ -132,12 +132,11 @@ describe('TextAssessmentDashboardComponent', () => {
 
     it('should get submissions', fakeAsync(() => {
         // test getSubmissions
-        const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
-        exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: textExercise })));
-        const getTextSubmissionStub = jest.spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound');
-        getTextSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [textSubmission], headers: new HttpHeaders() })));
-        const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
-        isAtLeastInstructorInCourseStub.mockReturnValue(true);
+        jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
+        const getTextSubmissionStub = jest
+            .spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound')
+            .mockReturnValue(of(new HttpResponse({ body: [textSubmission], headers: new HttpHeaders() })));
+        jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
 
         // call
         component.ngOnInit();
@@ -150,12 +149,11 @@ describe('TextAssessmentDashboardComponent', () => {
     }));
 
     it('should not get Submissions', () => {
-        const getTextSubmissionStub = jest.spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound');
-        getTextSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
-        const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
-        isAtLeastInstructorInCourseStub.mockReturnValue(true);
-        const findExerciseStub = jest.spyOn(exerciseService, 'find');
-        findExerciseStub.mockReturnValue(of(new HttpResponse({ body: textExercise, headers: new HttpHeaders() })));
+        const getTextSubmissionStub = jest
+            .spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound')
+            .mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+        jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+        const findExerciseStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise, headers: new HttpHeaders() })));
         component.exercise = textExercise;
         // call
         component.ngOnInit();
@@ -209,49 +207,47 @@ describe('TextAssessmentDashboardComponent', () => {
         expect(component.assessmentTypeTranslationKey(undefined)).toBe(`artemisApp.AssessmentType.null`);
     });
 
-    describe('should get assessment link', () => {
-        it('should get assessment link for normal exercise', () => {
-            const submissionId = 7;
-            const participationId = 2;
-            component.exercise = textExercise;
-            component.exerciseId = textExercise.id!;
-            component.courseId = textExercise.course!.id!;
-            expect(component.getAssessmentLink(participationId, submissionId)).toEqual([
-                '/course-management',
-                component.exercise.course!.id!.toString(),
-                'text-exercises',
-                component.exercise.id!.toString(),
-                'participations',
-                participationId.toString(),
-                'submissions',
-                submissionId.toString(),
-                'assessment',
-            ]);
-        });
+    it('should get assessment link for normal exercise', () => {
+        const submissionId = 7;
+        const participationId = 2;
+        component.exercise = textExercise;
+        component.exerciseId = textExercise.id!;
+        component.courseId = textExercise.course!.id!;
+        expect(component.getAssessmentLink(participationId, submissionId)).toEqual([
+            '/course-management',
+            component.exercise.course!.id!.toString(),
+            'text-exercises',
+            component.exercise.id!.toString(),
+            'participations',
+            participationId.toString(),
+            'submissions',
+            submissionId.toString(),
+            'assessment',
+        ]);
+    });
 
-        it('should get assessment link for exam exercise', () => {
-            const submissionId = 8;
-            const participationId = 3;
-            component.exercise = textExerciseOfExam;
-            component.exerciseId = textExerciseOfExam.id!;
-            component.courseId = textExerciseOfExam.exerciseGroup!.exam!.course!.id!;
-            component.examId = textExerciseOfExam.exerciseGroup!.exam!.id!;
-            component.exerciseGroupId = textExerciseOfExam.exerciseGroup!.id!;
-            expect(component.getAssessmentLink(participationId, submissionId)).toEqual([
-                '/course-management',
-                component.exercise.exerciseGroup!.exam!.course!.id!.toString(),
-                'exams',
-                component.exercise.exerciseGroup!.exam!.id!.toString(),
-                'exercise-groups',
-                component.exercise.exerciseGroup!.id!.toString(),
-                'text-exercises',
-                component.exercise.id!.toString(),
-                'participations',
-                participationId.toString(),
-                'submissions',
-                submissionId.toString(),
-                'assessment',
-            ]);
-        });
+    it('should get assessment link for exam exercise', () => {
+        const submissionId = 8;
+        const participationId = 3;
+        component.exercise = textExerciseOfExam;
+        component.exerciseId = textExerciseOfExam.id!;
+        component.courseId = textExerciseOfExam.exerciseGroup!.exam!.course!.id!;
+        component.examId = textExerciseOfExam.exerciseGroup!.exam!.id!;
+        component.exerciseGroupId = textExerciseOfExam.exerciseGroup!.id!;
+        expect(component.getAssessmentLink(participationId, submissionId)).toEqual([
+            '/course-management',
+            component.exercise.exerciseGroup!.exam!.course!.id!.toString(),
+            'exams',
+            component.exercise.exerciseGroup!.exam!.id!.toString(),
+            'exercise-groups',
+            component.exercise.exerciseGroup!.id!.toString(),
+            'text-exercises',
+            component.exercise.id!.toString(),
+            'participations',
+            participationId.toString(),
+            'submissions',
+            submissionId.toString(),
+            'assessment',
+        ]);
     });
 });
