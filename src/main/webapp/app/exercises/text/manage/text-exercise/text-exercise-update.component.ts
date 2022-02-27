@@ -113,8 +113,10 @@ export class TextExerciseUpdateComponent implements OnInit {
                         this.textExercise.mode = ExerciseMode.INDIVIDUAL;
                         this.textExercise.teamAssignmentConfig = undefined;
                         this.textExercise.teamMode = false;
-                        // Exam exercises are always inclued completely into the total score
-                        this.textExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+                        // Exam exercises cannot be not included into the total score
+                        if (this.textExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                            this.textExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+                        }
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {

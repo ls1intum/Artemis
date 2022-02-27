@@ -142,8 +142,10 @@ public class ProgrammingExerciseImportService {
             // An exam exercise can only be in individual mode
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
             newExercise.setTeamAssignmentConfig(null);
-            // Exam exercises are always inclued completely into the total score
-            newExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            // Exam exercises cannot be not included into the total score
+            if (newExercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
+                newExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            }
         }
 
         importSubmissionPolicy(newExercise);

@@ -29,6 +29,7 @@ import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/
 import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
+import { ArtemisExamIncludedInOverallScorePickerModule } from 'app/exercises/shared/exam-included-in-overall-score-picker/exam-included-in-overall-score-picker.module';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -49,6 +50,7 @@ const ENTITY_STATES = [...quizManagementRoute];
         ArtemisQuizParticipationModule,
         ArtemisMarkdownModule,
         FitTextModule,
+        ArtemisExamIncludedInOverallScorePickerModule,
     ],
     declarations: [
         QuizExerciseComponent,
