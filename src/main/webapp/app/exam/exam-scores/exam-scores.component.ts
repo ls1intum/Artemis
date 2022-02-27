@@ -65,6 +65,12 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     overallChartMedianType: MedianType; // We need to distinguish the different overall medians for the toggling
     showPassedMedian: boolean; // Same as above for the median of all passed exams
 
+    // table entries
+    relativeAmountOfPassedExams: string;
+    relativeAmountOfSubmittedExams: string;
+    absoluteAmountOfSubmittedExams: number;
+    absoluteAmountOfTotalExams: number;
+
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly medianType = MedianType;
 
@@ -791,5 +797,29 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.overallChartMedian = submittedMedian ? roundValueSpecifiedByCourseSettings(submittedMedian, this.course) : 0;
         }
         this.overallChartMedianType = medianType;
+    }
+
+    private updateValuesInPassedColumn() {
+        const amountOfPassedExams = this.aggregatedExamResults.noOfExamsFilteredForPassed;
+        this.absoluteAmountOfSubmittedExams = this.aggregatedExamResults.noOfExamsSubmitted;
+        this.absoluteAmountOfTotalExams = this.aggregatedExamResults.noOfRegisteredUsers;
+        let denominator: number;
+        if (this.filterForSubmittedExams && this.filterForNonEmptySubmissions) {
+            denominator = this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty;
+            this.absoluteAmountOfSubmittedExams = this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty;
+            this.absoluteAmountOfTotalExams = this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty;
+        } else if (this.filterForSubmittedExams && !this.filterForNonEmptySubmissions) {
+            denominator = this.aggregatedExamResults.noOfExamsSubmitted;
+            this.absoluteAmountOfTotalExams = this.aggregatedExamResults.noOfExamsSubmitted;
+        } else if (!this.filterForSubmittedExams && this.filterForNonEmptySubmissions) {
+            denominator = this.aggregatedExamResults.noOfExamsNonEmpty;
+            this.absoluteAmountOfSubmittedExams = this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty;
+            this.absoluteAmountOfTotalExams = this.aggregatedExamResults.noOfExamsNonEmpty;
+        } else {
+            denominator = this.aggregatedExamResults.noOfRegisteredUsers;
+        }
+
+        this.relativeAmountOfPassedExams = denominator > 0 ? this.roundAndPerformLocalConversion((amountOfPassedExams / denominator) * 100) : '-';
+        this.relativeAmountOfSubmittedExams = denominator > 0 ? this.roundAndPerformLocalConversion((this.absoluteAmountOfSubmittedExams / denominator) * 100) : '-';
     }
 }
