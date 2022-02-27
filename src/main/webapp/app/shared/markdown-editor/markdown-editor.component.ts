@@ -10,7 +10,7 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -154,9 +154,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input()
     enableFileUpload = true;
     acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf';
-
-    @Input()
-    shouldDisplayAlert = true;
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -446,8 +443,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
             const extension = file.name.split('.').pop()!.toLocaleLowerCase();
             if (this.acceptedFileExtensions.split(',').indexOf(extension) === -1) {
                 const errorMessage = `Unsupported file type! Only files of type ${this.acceptedFileExtensions} allowed.`;
-                const jhiAlert = this.alertService.error(errorMessage);
-                jhiAlert.message = errorMessage;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
             } else {
                 this.fileUploaderService.uploadMarkdownFile(file).then(
                     (res) => {
@@ -459,8 +459,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
                         aceEditor.insert(textToAdd);
                     },
                     (error: Error) => {
-                        const jhiAlert = this.alertService.error(error.message);
-                        jhiAlert.message = error.message;
+                        this.alertService.addAlert({
+                            type: AlertType.DANGER,
+                            message: error.message,
+                            disableTranslation: true,
+                        });
                     },
                 );
             }

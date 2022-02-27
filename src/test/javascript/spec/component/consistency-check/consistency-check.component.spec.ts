@@ -5,12 +5,10 @@ import { Course } from 'app/entities/course.model';
 import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockProvider, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
@@ -39,15 +37,7 @@ describe('ConsistencyCheckComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                ConsistencyCheckComponent,
-                MockDirective(TranslateDirective),
-                MockComponent(AlertComponent),
-                MockComponent(AlertErrorComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbHighlight),
-                MockRouterLinkDirective,
-            ],
+            declarations: [ConsistencyCheckComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockDirective(NgbHighlight), MockRouterLinkDirective],
             providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(ConsistencyCheckService)],
         })
             .compileComponents()

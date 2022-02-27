@@ -9,8 +9,6 @@ import { UserService } from 'app/core/user/user.service';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup } from 'app/entities/course.model';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -60,8 +58,6 @@ describe('Course Management Detail Component', () => {
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
-                MockComponent(AlertErrorComponent),
-                MockDirective(AlertComponent),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
                 MockComponent(CourseExamArchiveButtonComponent),

@@ -10,7 +10,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -32,14 +31,7 @@ describe('ComplaintsFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                ComplaintsFormComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(AlertComponent),
-                MockComponent(FaIconComponent),
-                MockDirective(NgModel),
-                MockDirective(TranslateDirective),
-            ],
+            declarations: [ComplaintsFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(NgModel), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(AlertService),
                 {
