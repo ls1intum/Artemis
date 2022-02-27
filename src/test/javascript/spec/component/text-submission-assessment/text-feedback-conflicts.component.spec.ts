@@ -206,7 +206,7 @@ describe('TextFeedbackConflictsComponent', () => {
     });
 
     it('should solve conflict by overriding left submission', () => {
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
@@ -289,7 +289,7 @@ describe('TextFeedbackConflictsComponent', () => {
     });
 
     it('should discard conflict', () => {
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
@@ -304,7 +304,7 @@ describe('TextFeedbackConflictsComponent', () => {
     });
 
     it('should handle error when solving conflicts', () => {
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
@@ -346,7 +346,7 @@ describe('TextFeedbackConflictsComponent', () => {
     });
 
     it('should handle error correctly when submitting left submission', () => {
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
         const errorResponse = new HttpErrorResponse({ status: 403 });
         const errorStub = jest.spyOn(textAssessmentService, 'submit').mockReturnValue(throwError(() => errorResponse));
 

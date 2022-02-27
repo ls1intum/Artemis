@@ -164,7 +164,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component = fixture.componentInstance;
         submissionService = TestBed.inject(SubmissionService);
         exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
         router = TestBed.inject(Router);
 
         fixture.detectChanges();
@@ -208,7 +208,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         textBlockRef.feedback!.credits = 42;
         textAssessmentAreaComponent.textBlockRefsChangeEmit();
 
-        expect(component.totalScore).toEqual(42);
+        expect(component.totalScore).toBe(42);
     });
 
     it('should save the assessment with correct parameters', () => {
@@ -239,7 +239,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should display error when saving but assessment invalid', () => {
         component.validateFeedback();
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
         fixture.detectChanges();
@@ -249,7 +249,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should display error when submitting but assessment invalid', () => {
         component.validateFeedback();
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
         component.result = getLatestSubmissionResult(submission);
 
@@ -260,7 +260,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should display error when complaint resolved but assessment invalid', () => {
         // would be called on receive of event
         const complaintResponse = new ComplaintResponse();
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
         component.updateAssessmentAfterComplaint(complaintResponse);
@@ -351,6 +351,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         expect(windowConfirmStub).toHaveBeenCalledTimes(1);
         expect(navigateBackSpy).toHaveBeenCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
     }));
 
@@ -379,6 +380,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const queryParams = { queryParams: { 'correction-round': 0 } };
 
         component.nextSubmission();
+        expect(routerSpy).toHaveBeenCalledTimes(1);
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
     }));
 
@@ -402,6 +404,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.navigateToConflictingSubmissions(1);
 
+        expect(routerSpy).toHaveBeenCalledTimes(1);
         expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission } });
     });
 });

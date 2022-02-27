@@ -230,7 +230,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should connect automatic feedback origin blocks with current feedback', fakeAsync(() => {
         component.feedback.suggestedFeedbackOriginSubmissionReference = 1;
         component.feedback.suggestedFeedbackParticipationReference = 1;
-        const textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        const textAssessmentService = TestBed.inject(TextAssessmentService);
 
         const participation: StudentParticipation = {
             type: ParticipationType.STUDENT,
@@ -344,6 +344,6 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.feedback.type = FeedbackType.AUTOMATIC;
         const typeSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
-        expect(typeSpy).toHaveBeenCalled();
+        expect(typeSpy).toHaveBeenCalledTimes(1);
     });
 });

@@ -94,11 +94,11 @@ describe('TextAssessmentDashboardComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TextAssessmentDashboardComponent);
                 component = fixture.componentInstance;
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                textSubmissionService = fixture.debugElement.injector.get(TextSubmissionService);
-                textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
-                accountService = fixture.debugElement.injector.get(AccountService);
-                sortService = fixture.debugElement.injector.get(SortService);
+                exerciseService = TestBed.inject(ExerciseService);
+                textSubmissionService = TestBed.inject(TextSubmissionService);
+                textAssessmentService = TestBed.inject(TextAssessmentService);
+                accountService = TestBed.inject(AccountService);
+                sortService = TestBed.inject(SortService);
             });
     });
 
@@ -116,14 +116,15 @@ describe('TextAssessmentDashboardComponent', () => {
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
-        expect(component.reverse).toEqual(false);
-        expect(component.predicate).toEqual('id');
+        expect(component.reverse).toBe(false);
+        expect(component.predicate).toBe('id');
         expect(component.filteredSubmissions).toEqual([]);
 
         // call
         component.ngOnInit();
 
         // check
+        expect(getTextSubmissionStub).toHaveBeenCalledTimes(1);
         expect(getTextSubmissionStub).toHaveBeenCalledWith(textExercise.id, { submittedOnly: true });
         expect(component.exercise).toEqual(textExercise);
         expect(component.examId).toBe(2);
@@ -142,6 +143,7 @@ describe('TextAssessmentDashboardComponent', () => {
         component.ngOnInit();
         tick(100);
         // check
+        expect(getTextSubmissionStub).toHaveBeenCalledTimes(1);
         expect(getTextSubmissionStub).toHaveBeenCalledWith(textExercise.id, { submittedOnly: true });
         expect(component.submissions).toEqual([textSubmission]);
         expect(component.filteredSubmissions).toEqual([textSubmission]);
@@ -159,7 +161,7 @@ describe('TextAssessmentDashboardComponent', () => {
         component.ngOnInit();
 
         // check
-        expect(findExerciseStub).toHaveBeenCalled();
+        expect(findExerciseStub).toHaveBeenCalledTimes(1);
         expect(getTextSubmissionStub).toHaveBeenCalledWith(textExercise.id, { submittedOnly: true });
         expect(component.submissions).toEqual([]);
         expect(component.filteredSubmissions).toEqual([]);
@@ -184,8 +186,9 @@ describe('TextAssessmentDashboardComponent', () => {
         tick();
 
         // check
+        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
         expect(cancelAssessmentStub).toHaveBeenCalledWith(textSubmission.participation.id, textSubmission.id);
-        expect(windowSpy).toHaveBeenCalled();
+        expect(windowSpy).toHaveBeenCalledTimes(1);
     }));
 
     it('should sort rows', () => {
@@ -196,13 +199,14 @@ describe('TextAssessmentDashboardComponent', () => {
         component.submissions = [textSubmission];
         component.sortRows();
 
+        expect(sortServiceSpy).toHaveBeenCalledTimes(1);
         expect(sortServiceSpy).toHaveBeenCalledWith([textSubmission], 'predicate', false);
     });
 
     it('should get the assessment type of a result', () => {
         const result = { id: 55, assessmentType: AssessmentType.SEMI_AUTOMATIC };
-        expect(component.assessmentTypeTranslationKey(result)).toEqual(`artemisApp.AssessmentType.${result.assessmentType}`);
-        expect(component.assessmentTypeTranslationKey(undefined)).toEqual(`artemisApp.AssessmentType.null`);
+        expect(component.assessmentTypeTranslationKey(result)).toBe(`artemisApp.AssessmentType.${result.assessmentType}`);
+        expect(component.assessmentTypeTranslationKey(undefined)).toBe(`artemisApp.AssessmentType.null`);
     });
 
     describe('should get assessment link', () => {

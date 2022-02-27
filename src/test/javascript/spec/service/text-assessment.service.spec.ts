@@ -258,7 +258,7 @@ describe('TextAssessment Service', () => {
 
     it('should parse jwt from header', fakeAsync(() => {
         service.getFeedbackDataForExerciseSubmission(1, 1).subscribe((studentParticipation) => {
-            expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toEqual('12345');
+            expect((studentParticipation.submissions![0] as TextSubmission).atheneTextAssessmentTrackingToken).toBe('12345');
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });
@@ -385,7 +385,7 @@ describe('TextAssessment Service', () => {
         service
             .getNumberOfTutorsInvolvedInAssessment(1, 1)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual(responseNumberOfTutors));
+            .subscribe((resp) => expect(resp).toBe(responseNumberOfTutors));
 
         const req = httpMock.expectOne({
             url: `/api/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
@@ -420,6 +420,7 @@ describe('TextAssessment Service', () => {
 
         resolver.resolve(snapshot);
 
+        expect(newStudentParticipationStub).toHaveBeenCalledTimes(1);
         expect(newStudentParticipationStub).toHaveBeenCalledWith(1, 'lock', 0);
     });
 
@@ -436,6 +437,7 @@ describe('TextAssessment Service', () => {
 
         resolver.resolve(snapshot);
 
+        expect(studentParticipationSpy).toHaveBeenCalledTimes(1);
         expect(studentParticipationSpy).toHaveBeenCalledWith(1, 2, undefined, 1);
     });
 
@@ -452,6 +454,7 @@ describe('TextAssessment Service', () => {
 
         resolver.resolve(snapshot);
 
+        expect(feedbackConflictSpy).toHaveBeenCalledTimes(1);
         expect(feedbackConflictSpy).toHaveBeenCalledWith(1, 2, 3);
     });
 
