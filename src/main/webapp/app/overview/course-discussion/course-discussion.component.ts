@@ -90,6 +90,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({
                         courseId: this.course!.id,
+                        searchText: this.searchText,
                         postSortCriterion: this.currentSortCriterion,
                         sortingOrder: this.currentSortDirection,
                         pagingEnabled: this.pagingEnabled,

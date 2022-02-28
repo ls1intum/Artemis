@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import org.springframework.data.domain.Pageable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
@@ -25,10 +23,6 @@ import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PostContextFilter {
 
-    private boolean pagingEnabled;
-
-    private Pageable pageable;
-
     private Long courseId;
 
     private CourseWideContext courseWideContext;
@@ -48,22 +42,6 @@ public class PostContextFilter {
     private PostSortCriterion postSortCriterion;
 
     private SortingOrder sortingOrder;
-
-    public boolean isPagingEnabled() {
-        return pagingEnabled;
-    }
-
-    public void setPagingEnabled(boolean pagingEnabled) {
-        this.pagingEnabled = pagingEnabled;
-    }
-
-    public Pageable getPageable() {
-        return pageable;
-    }
-
-    public void setPageable(Pageable pageable) {
-        this.pageable = pageable;
-    }
 
     public Long getCourseId() {
         return courseId;

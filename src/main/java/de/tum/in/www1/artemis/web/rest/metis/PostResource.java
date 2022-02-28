@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -108,42 +105,16 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
-     * @param courseId                  id of the course the fetch posts for
      * @param pageable                  pagination settings to fetch posts in smaller batches
      * @param pagingEnabled             flag stating whether requesting component has paging enabled or not
-     * @param courseWideContext         optional request param if a course-wide topic is the targeted context
-     * @param exerciseId                optional request param if a certain exercise is the targeted context
-     * @param lectureId                 optional request param if a certain lecture is the targeted context
-     * @param searchText                text to be searched within posts
-     * @param filterToUnresolved        post is only fetched if none of the given answers is marked as resolving
-     * @param filterToOwn               post is only fetched if the author of the post matches the currently logged in user
-     * @param filterToAnsweredOrReacted post is only fetched if the author of any given answer the user that put any reaction on that post matches the currently logged in user
-     * @param postSortCriterion         sorting property
-     * @param sortingOrder              sorting order (ASC, DESC)
+     * @param postContextFilter         request param for filtering posts
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
      * or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getPostsInCourse(@PathVariable Long courseId, @ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
-            @RequestParam(required = false) CourseWideContext courseWideContext, @RequestParam(required = false) Long exerciseId, @RequestParam(required = false) Long lectureId,
-            @RequestParam(required = false) String searchText, @RequestParam(required = false) Boolean filterToUnresolved, @RequestParam(required = false) Boolean filterToOwn,
-            @RequestParam(required = false) Boolean filterToAnsweredOrReacted, @RequestParam(required = false) PostSortCriterion postSortCriterion,
-            @RequestParam(required = false) SortingOrder sortingOrder) {
-
-        PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setCourseId(courseId);
-        postContextFilter.setExerciseId(exerciseId);
-        postContextFilter.setLectureId(lectureId);
-        postContextFilter.setPageable(pageable);
-        postContextFilter.setPagingEnabled(pagingEnabled);
-        postContextFilter.setCourseWideContext(courseWideContext);
-        postContextFilter.setSearchText(searchText);
-        postContextFilter.setFilterToAnsweredOrReacted(filterToAnsweredOrReacted);
-        postContextFilter.setFilterToOwn(filterToOwn);
-        postContextFilter.setFilterToUnresolved(filterToUnresolved);
-        postContextFilter.setPostSortCriterion(postSortCriterion);
-        postContextFilter.setSortingOrder(sortingOrder);
+    public ResponseEntity<List<Post>> getPostsInCourse(@ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
+            PostContextFilter postContextFilter) {
 
         Page<Post> coursePosts = postService.getPostsInCourse(pagingEnabled, pageable, postContextFilter);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
