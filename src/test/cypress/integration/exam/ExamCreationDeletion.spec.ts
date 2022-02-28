@@ -13,11 +13,12 @@ const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.course.management;
 const examManagement = artemis.pageobjects.exam.management;
 const creationPage = artemis.pageobjects.exam.creation;
+const examDetailsPage = artemis.pageobjects.exam.details;
 
 describe('Exam creation/deletion', () => {
     let course: Course;
     let examTitle: string;
-    let examId: string;
+    let examId: number;
 
     before(() => {
         cy.login(artemis.users.getAdmin());
@@ -65,7 +66,8 @@ describe('Exam creation/deletion', () => {
         it('Deletes an existing exam', () => {
             navigationBar.openCourseManagement();
             courseManagement.openExamsOfCourse(course.shortName!);
-            examManagement.deleteExam(examId, examTitle);
+            examManagement.openExam(examId);
+            examDetailsPage.deleteExam(examTitle);
             examManagement.getExamSelector(examTitle).should('not.exist');
         });
     });

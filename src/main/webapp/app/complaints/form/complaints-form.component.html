@@ -1,5 +1,4 @@
 <div class="col-12 mt-4" *ngIf="isCurrentUserSubmissionAuthor">
-    <jhi-alert *ngIf="!examId"></jhi-alert>
     <div class="row">
         <div class="col-12">
             <h3>{{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.title' | artemisTranslate) : ('artemisApp.moreFeedback.title' | artemisTranslate) }}</h3>

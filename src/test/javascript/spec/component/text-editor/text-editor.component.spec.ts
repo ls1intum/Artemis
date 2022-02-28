@@ -38,7 +38,6 @@ import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
@@ -85,7 +84,6 @@ describe('TextEditorComponent', () => {
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockComponent(RatingComponent),
-                MockComponent(AlertComponent),
                 MockDirective(NgModel),
             ],
             providers: [

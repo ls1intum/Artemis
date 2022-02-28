@@ -24,7 +24,7 @@ describe('ModelingExercise Management Detail Component', () => {
     let statisticsService: StatisticsService;
 
     const model = { element: { id: '33' } };
-    const modelingExercise = { id: 123, sampleSolutionModel: JSON.stringify(model) } as ModelingExercise;
+    const modelingExercise = { id: 123, exampleSolutionModel: JSON.stringify(model) } as ModelingExercise;
     const route = { params: of({ exerciseId: modelingExercise.id }) } as any as ActivatedRoute;
     const modelingExerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -87,7 +87,7 @@ describe('ModelingExercise Management Detail Component', () => {
         expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
         expect(subscribeSpy).toHaveBeenCalledWith('modelingExerciseListModification', expect.anything());
         tick();
-        expect(comp.sampleSolutionUML).toEqual(model);
+        expect(comp.exampleSolutionUML).toEqual(model);
     }));
 
     it('should destroy event manager on destroy', () => {

@@ -2,24 +2,24 @@
     "artemisApp": {
         "modelingExercise": {
             "home": {
-                "title": "Modelling Exercises",
-                "createLabel": "Create new Modelling Exercise",
-                "editLabel": "Edit Modelling Exercise",
-                "importLabel": "Import Modelling Exercise"
+                "title": "Modeling Exercises",
+                "createLabel": "Create new Modeling Exercise",
+                "editLabel": "Edit Modeling Exercise",
+                "importLabel": "Import Modeling Exercise"
             },
-            "created": "Created new Modelling Exercise with identifier {{ param }}",
-            "updated": "Updated Modelling Exercise with identifier {{ param }}",
-            "deleted": "Deleted Modelling Exercise with identifier {{ param }}",
+            "created": "Created new Modeling Exercise with identifier {{ param }}",
+            "updated": "Updated Modeling Exercise with identifier {{ param }}",
+            "deleted": "Deleted Modeling Exercise with identifier {{ param }}",
             "detail": {
-                "title": "Modelling Exercise"
+                "title": "Modeling Exercise"
             },
             "diagramType": "Diagram Type",
             "problemStatement": "Problem Statement:",
             "exampleSolution": "Example Solution",
             "exampleSolutionExplanation": "Example Solution Explanation",
             "createExampleSolution": "Create Example Solution",
-            "exampleSolutionRequiresExercise": "To create an example solution, you first need to finish creating the modelling exercise.",
-            "exampleSolutionForModelingExercise": "Example Solution for Modelling Exercise {{ exerciseTitle }}",
+            "exampleSolutionRequiresExercise": "To create an example solution, you first need to finish creating the modeling exercise.",
+            "exampleSolutionForModelingExercise": "Example Solution for Modeling Exercise {{ exerciseTitle }}",
             "saveExampleSolution": "Save Example Solution",
             "exampleSubmission": "Example Submission {{ number }}",
             "exampleSubmissions": "Example Submissions",
@@ -29,8 +29,8 @@
             "saveExampleAssessment": "Save Example Assessment",
             "showExampleSubmission": "Show Submission",
             "showExampleAssessment": "Show Assessment",
-            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the modelling exercise. You will be redirected automatically.",
-            "exampleSubmissionForModelingExercise": "Example Submission for Modelling Exercise {{ exerciseTitle }}",
+            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the modeling exercise. You will be redirected automatically.",
+            "exampleSubmissionForModelingExercise": "Example Submission for Modeling Exercise {{ exerciseTitle }}",
             "usedForTutorial": "Used for Tutorial",
             "apollonConversion": {
                 "error": "Apollon conversion is not available"

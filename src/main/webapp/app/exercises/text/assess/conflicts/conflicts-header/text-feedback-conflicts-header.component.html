@@ -8,7 +8,6 @@
             <fa-icon [icon]="faArrowRight"></fa-icon>
         </button>
     </div>
-    <jhi-alert></jhi-alert>
     <div class="row-container">
         <button class="btn ms-2 btn-primary" *ngIf="haveRights" (click)="overrideLeftSubmission.emit()" [disabled]="isOverrideDisabled">
             <fa-icon *ngIf="overrideBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>

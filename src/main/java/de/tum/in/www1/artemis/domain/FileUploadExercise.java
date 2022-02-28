@@ -16,9 +16,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FileUploadExercise extends Exercise {
 
-    @Column(name = "sample_solution")
+    @Column(name = "example_solution")
     @Lob
-    private String sampleSolution;
+    private String exampleSolution;
 
     @Column(name = "filePattern")
     private String filePattern;
@@ -31,12 +31,12 @@ public class FileUploadExercise extends Exercise {
         this.filePattern = filePattern;
     }
 
-    public String getSampleSolution() {
-        return sampleSolution;
+    public String getExampleSolution() {
+        return exampleSolution;
     }
 
-    public void setSampleSolution(String sampleSolution) {
-        this.sampleSolution = sampleSolution;
+    public void setExampleSolution(String exampleSolution) {
+        this.exampleSolution = exampleSolution;
     }
 
     /**
@@ -44,7 +44,9 @@ public class FileUploadExercise extends Exercise {
      */
     @Override
     public void filterSensitiveInformation() {
-        setSampleSolution(null);
+        if (!isExampleSolutionPublished()) {
+            setExampleSolution(null);
+        }
         super.filterSensitiveInformation();
     }
 

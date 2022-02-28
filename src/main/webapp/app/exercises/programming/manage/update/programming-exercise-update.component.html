@@ -7,8 +7,6 @@
     </h4>
     <h4 *ngIf="isImport" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import Programming Exercise</h4>
     <div class="update-programming-exercise">
-        <jhi-alert></jhi-alert>
-        <jhi-alert-error></jhi-alert-error>
         <div class="form-group" [hidden]="isImport || !programmingExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />

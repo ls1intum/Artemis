@@ -94,6 +94,7 @@
                     <ng-container *ngIf="exercise.type === QUIZ">
                         <jhi-quiz-exam-summary
                             [exercise]="exercise"
+                            [course]="course"
                             [exam]="studentExam.exam!"
                             [submission]="getSubmissionForExercise(exercise)!"
                             [resultsPublished]="!!resultsPublished"
