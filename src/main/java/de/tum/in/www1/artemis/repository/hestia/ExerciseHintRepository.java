@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.hestia;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,11 +13,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
- * Spring Data  repository for the ExerciseHint entity.
+ * Spring Data repository for the ExerciseHint entity.
  */
 @SuppressWarnings("unused")
 @Repository
@@ -40,7 +41,8 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
      */
     default void copyExerciseHints(final Exercise template, final Exercise target) {
         final Map<Long, Long> hintIdMapping = new HashMap<>();
-        target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
+        // Copying non text hints is currently not supported
+        target.setExerciseHints(template.getExerciseHints().stream().filter(exerciseHint -> !(exerciseHint instanceof CodeHint)).map(hint -> {
             final var copiedHint = new ExerciseHint();
             copiedHint.setExercise(target);
             copiedHint.setContent(hint.getContent());

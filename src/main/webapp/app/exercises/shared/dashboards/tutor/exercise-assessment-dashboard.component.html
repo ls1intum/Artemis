@@ -3,8 +3,6 @@
     <span *ngIf="isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
 </jhi-header-exercise-page-with-details>
 
-<jhi-alert></jhi-alert>
-
 <div *ngIf="exercise">
     <div *ngIf="!isTestRun" class="row my-3 d-flex justify-content-between">
         <div class="col-sm-8">
@@ -197,7 +195,7 @@
         </jhi-info-panel>
 
         <jhi-info-panel
-            *ngIf="exercise.type === ExerciseType.MODELING && modelingExercise.sampleSolutionExplanation"
+            *ngIf="exercise.type === ExerciseType.MODELING && modelingExercise.exampleSolutionExplanation"
             [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exampleSolutionExplanation' | artemisTranslate"
         >
             <div [innerHTML]="formattedSampleSolution" style="margin-bottom: -15px"></div>

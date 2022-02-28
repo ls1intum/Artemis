@@ -9,7 +9,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
@@ -115,7 +114,6 @@ describe('Exam Exercise Row Buttons Component', () => {
             declarations: [
                 ExerciseGroupsComponent,
                 ExamExerciseRowButtonsComponent,
-                MockComponent(AlertComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(NgbTooltip),

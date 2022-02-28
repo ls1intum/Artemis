@@ -72,7 +72,7 @@ class TextExerciseGatlingTest extends Simulation {
             .headers(headers_http_authenticated)
             .body(StringBody("""{
                 "id":null
-                , "sampleSolution":"SAMPLE_TEXT"
+                , "exampleSolution":"SAMPLE_TEXT"
                 }""")).asJson
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_textExercise_url"))).exitHereIfFailed

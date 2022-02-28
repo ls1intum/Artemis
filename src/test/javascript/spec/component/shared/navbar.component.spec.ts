@@ -263,7 +263,7 @@ describe('NavbarComponent', () => {
         });
 
         it('programming exercise hints', () => {
-            const testUrl = '/course-management/1/exercises/2/hints/3';
+            const testUrl = '/course-management/1/exercises/2/exercise-hints/3';
             router.setUrl(testUrl);
 
             const hintService = fixture.debugElement.injector.get(ExerciseHintService);
@@ -273,18 +273,18 @@ describe('NavbarComponent', () => {
 
             expect(courseManagementStub).toHaveBeenCalledWith(1);
             expect(exerciseStub).toHaveBeenCalledWith(2);
-            expect(hintsStub).toHaveBeenCalledWith(3);
+            expect(hintsStub).toHaveBeenCalledWith(2, 3);
 
             const hintsCrumb = {
                 label: 'artemisApp.exerciseHint.home.title',
                 translate: true,
-                uri: '/course-management/1/exercises/2/hints/',
+                uri: '/course-management/1/exercises/2/exercise-hints/',
             } as MockBreadcrumb;
 
             const hintCrumb = {
                 label: 'Exercise Hint',
                 translate: false,
-                uri: '/course-management/1/exercises/2/hints/3/',
+                uri: '/course-management/1/exercises/2/exercise-hints/3/',
             } as MockBreadcrumb;
 
             expect(component.breadcrumbs.length).toEqual(6);

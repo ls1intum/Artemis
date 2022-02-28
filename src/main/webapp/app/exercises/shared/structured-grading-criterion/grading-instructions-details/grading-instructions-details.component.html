@@ -164,7 +164,6 @@
                 (markdownChange)="prepareForSave()"
                 (textWithDomainCommandsFound)="setExerciseGradingInstructionText($event)"
                 [enableFileUpload]="false"
-                [shouldDisplayAlert]="false"
                 [enableResize]="true"
                 [showEditButton]="false"
                 [showPreviewButton]="false"
@@ -216,7 +215,6 @@
                                 (markdownChange)="prepareForSave()"
                                 (textWithDomainCommandsFound)="onInstructionChange($event, instruction)"
                                 [enableFileUpload]="false"
-                                [shouldDisplayAlert]="false"
                             ></jhi-markdown-editor>
                             <div class="form-group text-center col-md-4" style="display: block">
                                 <span class="re-evaluate-button" id="reset-button" (click)="resetInstruction(instruction, criteria)">

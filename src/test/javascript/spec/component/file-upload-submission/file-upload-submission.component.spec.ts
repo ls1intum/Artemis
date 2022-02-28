@@ -32,8 +32,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -63,8 +61,6 @@ describe('FileUploadSubmissionComponent', () => {
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),
-                MockComponent(AlertErrorComponent),
-                MockComponent(AlertComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockComponent(ButtonComponent),

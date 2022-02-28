@@ -700,4 +700,23 @@ public class ProgrammingExerciseResource {
         return updateProgrammingExercise(programmingExercise, null);
     }
 
+    /**
+     * DELETE programming-exercises/:exerciseId/tasks : Delete all tasks and solution entries for an existing ProgrammingExercise.
+     * Note: This endpoint exists only for testing purposes and will be removed at a later stage of the development of HESTIA
+     * (automatic generation of code hints for programming exercises in Java).
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 204},
+     * or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
+     */
+    @DeleteMapping(TASKS)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> deleteTaskWithSolutionEntries(@PathVariable Long exerciseId) {
+        log.debug("REST request to delete ProgrammingExerciseTasks with ProgrammingExerciseSolutionEntries for ProgrammingExercise with id : {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        programmingExerciseService.deleteTasksWithSolutionEntries(exercise.getId());
+        return ResponseEntity.noContent().build();
+    }
 }

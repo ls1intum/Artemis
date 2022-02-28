@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
 import { ArtemisTestModule } from '../../test.module';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
@@ -62,6 +62,6 @@ describe('ExerciseHint Management Component', () => {
         comp.deleteExerciseHint(123);
 
         expect(deleteHintMock).toHaveBeenCalledTimes(1);
-        expect(deleteHintMock).toHaveBeenCalledWith(123);
+        expect(deleteHintMock).toHaveBeenCalledWith(15, 123);
     });
 });
