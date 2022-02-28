@@ -977,7 +977,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Recreates the template and solution build plans by deleting the old ones and crating them again as for a new exercise.
+     * Recreates the template and solution build plans by deleting the old ones and creating them again as for a new exercise.
      *
      * The student build plans are also cleaned up so that no inconsistencies between the template/solution and the student build plans occur.
      * The student build plans are not recreated, as that will happen automatically when the student submits the next time or the student resumes the exercise.
