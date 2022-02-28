@@ -38,7 +38,7 @@ export class TextExerciseCreationPage {
     }
 
     typeExampleSolution(statement: string) {
-        this.typeText('#sampleSolution', statement);
+        this.typeText('#exampleSolution', statement);
     }
 
     typeAssessmentInstructions(statement: string) {

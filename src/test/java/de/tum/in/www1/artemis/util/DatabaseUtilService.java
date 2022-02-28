@@ -597,8 +597,8 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
-        modelingExercise.setSampleSolutionModel("Example solution model");
-        modelingExercise.setSampleSolutionExplanation("Example Solution");
+        modelingExercise.setExampleSolutionModel("Example solution model");
+        modelingExercise.setExampleSolutionExplanation("Example Solution");
         addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
@@ -606,7 +606,7 @@ public class DatabaseUtilService {
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
-        textExercise.setSampleSolution("Sample Solution");
+        textExercise.setExampleSolution("Example Solution");
         addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
@@ -614,7 +614,7 @@ public class DatabaseUtilService {
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
-        fileUploadExercise.setSampleSolution("Sample Solution");
+        fileUploadExercise.setExampleSolution("Example Solution");
         addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         course1.addExercises(fileUploadExercise);

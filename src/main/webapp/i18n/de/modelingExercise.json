@@ -16,7 +16,7 @@
             "diagramType": "Diagrammtyp",
             "problemStatement": "Aufgabenstellung:",
             "exampleSolution": "Beispiellösung",
-            "exampleSolutionExplanation": "Erklärung Beispiellösung",
+            "exampleSolutionExplanation": "Erklärung der Beispiellösung",
             "createExampleSolution": "Beispiellösung erstellen",
             "exampleSolutionRequiresExercise": "Um eine Beispiellösung zu erstellen, musst du zunächst die Erstellung der Modellierungsaufgabe abschließen.",
             "exampleSolutionForModelingExercise": "Beispiellösung für Modellierungsaufgabe {{ exerciseTitle }}",

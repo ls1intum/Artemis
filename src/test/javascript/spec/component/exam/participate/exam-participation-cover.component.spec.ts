@@ -14,7 +14,6 @@ import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
@@ -52,7 +51,6 @@ describe('ExamParticipationCoverComponent', () => {
                 ExamParticipationCoverComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
-                MockComponent(AlertErrorComponent),
                 MockComponent(ExamTimerComponent),
                 MockComponent(ExamInformationComponent),
                 MockDirective(TranslateDirective),

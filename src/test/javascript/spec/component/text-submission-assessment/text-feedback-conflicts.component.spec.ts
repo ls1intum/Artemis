@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -29,7 +29,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextFeedbackConflictsComponent', () => {
@@ -158,7 +157,6 @@ describe('TextFeedbackConflictsComponent', () => {
                 MockComponent(ScoreDisplayComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
-                MockComponent(AlertComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ feedbackId: 1 }) } } },

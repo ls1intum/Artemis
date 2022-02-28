@@ -13,5 +13,23 @@
         font-size: small;
         font-weight: normal;
         text-align: center;
+
+        .color-legend {
+            width: 5px;
+            height: 5px;
+            background: rgba(93, 138, 201, 1);
+            border-radius: 3px;
+        }
     }
+}
+
+jhi-help-icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    margin-left: 5px;
+}
+
+ngx-charts-bar-vertical {
+    font-size: x-large;
+    font-weight: bolder;
 }

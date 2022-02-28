@@ -1,4 +1,3 @@
-<jhi-alert></jhi-alert>
 <div>
     <div class="d-flex align-content-center mb-2">
         <h3 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.title">Configure Automated Grading</h3>
@@ -199,6 +198,24 @@
                                 <ng-template ngx-datatable-header-template>
                                     <span class="datatable-header-cell-wrapper">
                                         <span class="datatable-header-cell-label bold">Is Active</span>
+                                    </span>
+                                </ng-template>
+                                <ng-template ngx-datatable-cell-template let-value="value">
+                                    {{ value }}
+                                </ng-template>
+                            </ngx-datatable-column>
+                            <ngx-datatable-column *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" name="Type" prop="type">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
+                                        <span class="datatable-header-cell-label bold sortable">Type</span>
+                                        <fa-icon [icon]="iconForSortPropField('testCases', 'programmingExerciseTestCaseType')"></fa-icon
+                                        ><fa-icon
+                                            [icon]="faQuestionCircle"
+                                            class="text-secondary ms-2"
+                                            placement="bottom"
+                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate"
+                                            container="body"
+                                        ></fa-icon>
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-value="value">

@@ -12,20 +12,20 @@ public class SensitiveInformationUtil {
 
     // look at FileUploadExercise.filterSensitiveInformation
     public static void assertSensitiveInformationWasFilteredFileUploadExercise(FileUploadExercise exercise) {
-        assertThat(exercise.getSampleSolution()).isNullOrEmpty();
+        assertThat(exercise.getExampleSolution()).isNullOrEmpty();
         assertSensitiveInformationWasFilteredExercise(exercise);
     }
 
     // look at ModelingExercise.filterSensitiveInformation
     public static void assertSensitiveInformationWasFilteredModelingExercise(ModelingExercise exercise) {
-        assertThat(exercise.getSampleSolutionModel()).isNullOrEmpty();
-        assertThat(exercise.getSampleSolutionExplanation()).isNullOrEmpty();
+        assertThat(exercise.getExampleSolutionModel()).isNullOrEmpty();
+        assertThat(exercise.getExampleSolutionExplanation()).isNullOrEmpty();
         assertSensitiveInformationWasFilteredExercise(exercise);
     }
 
     // look at TextExercise.filterSensitiveInformation
     public static void assertSensitiveInformationWasFilteredTextExercise(TextExercise exercise) {
-        assertThat(exercise.getSampleSolution()).isNullOrEmpty();
+        assertThat(exercise.getExampleSolution()).isNullOrEmpty();
         assertSensitiveInformationWasFilteredExercise(exercise);
     }
 

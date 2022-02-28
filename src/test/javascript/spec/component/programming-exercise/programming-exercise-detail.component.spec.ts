@@ -12,10 +12,12 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { Exam } from 'app/entities/exam.model';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 
 describe('ProgrammingExercise Management Detail Component', () => {
@@ -48,6 +50,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useValue: new MockProfileService() },
+                { provide: ProgrammingExerciseGradingService, useValue: MockProgrammingExerciseService },
             ],
         })
             .overrideTemplate(ProgrammingExerciseDetailComponent, '')
@@ -143,9 +146,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(addAlertSpy).toHaveBeenCalledTimes(1);
         expect(addAlertSpy).toHaveBeenCalledWith({
             message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
-            timeout: 10000000,
+            timeout: 0,
             translationParams: expectedParams,
-            type: 'success',
+            type: AlertType.SUCCESS,
         });
         expect(extractTaskMock).toHaveBeenCalledTimes(1);
         expect(extractTaskMock).toHaveBeenCalledWith(programmingExercise.id);
@@ -165,8 +168,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(addAlertSpy).toHaveBeenCalledTimes(1);
         expect(addAlertSpy).toHaveBeenCalledWith({
             message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
-            timeout: 10000,
-            type: 'success',
+            type: AlertType.SUCCESS,
         });
     });
 });
