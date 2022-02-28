@@ -117,7 +117,7 @@ export class StudentExamsComponent implements OnInit {
      */
     handleGenerateStudentExams() {
         // If student exams already exists, inform the instructor about it and get confirmations for re-creation
-        if (this.studentExams?.length) {
+        if (this.studentExams.length) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText');
