@@ -53,11 +53,6 @@ export class CloneRepoButtonComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.user = user!;
 
-            // Only load password if current user login starts with 'edx_' or 'u4i_'
-            if (user && user.login && (user.login.startsWith('edx_') || user.login.startsWith('u4i_'))) {
-                this.getRepositoryPassword();
-            }
-
             if (this.versionControlAccessToken && this.user && this.user.accessToken) {
                 this.repositoryPassword = this.user.accessToken;
             }
@@ -84,18 +79,6 @@ export class CloneRepoButtonComponent implements OnInit {
     public setUseSSH(useSsh: boolean): void {
         this.useSsh = useSsh;
         this.localStorage.store('useSsh', this.useSsh);
-    }
-
-    /**
-     * get the repositoryPassword
-     */
-    getRepositoryPassword() {
-        this.sourceTreeService.getRepositoryPassword().subscribe((res) => {
-            const password = res['password'];
-            if (password) {
-                this.repositoryPassword = password;
-            }
-        });
     }
 
     getHttpOrSshRepositoryUrl(): string {
