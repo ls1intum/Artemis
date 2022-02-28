@@ -581,15 +581,17 @@ public class PostService extends PostingService {
         // sort by votes via voteEmojiCount
         if (postSortCriterion == PostSortCriterion.VOTES) {
             order = sortByVotes(postA, postB, sortingOrder);
-            if (order != null)
+            if (order != null) {
                 return order;
+            }
         }
 
         // sort by creation date
         if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
             order = sortByCreationDate(postA, postB, sortingOrder);
-            if (order != null)
+            if (order != null) {
                 return order;
+            }
         }
 
         // sort by answer count
