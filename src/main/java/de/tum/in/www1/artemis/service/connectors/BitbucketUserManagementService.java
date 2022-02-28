@@ -49,27 +49,27 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      */
     @Override
     public void createVcsUser(User user) throws VersionControlException {
-        if (user.isInternal()) {
-            // User
-            if (!bitbucketService.userExists(user.getLogin())) {
-                log.debug("Bitbucket user {} does not exist yet", user.getLogin());
-                String displayName = user.getName().trim();
-                bitbucketService.createUser(user.getLogin(), passwordService.decryptPasswordByLogin(user.getLogin()).get(), user.getEmail(), displayName);
+        if (!user.isInternal()) {
+            return;
+        }
+        if (bitbucketService.userExists(user.getLogin())) {
+            log.debug("Bitbucket user {} already exists", user.getLogin());
+            return;
+        }
 
-                try {
-                    // NOTE: we need to fetch the user here again to make sure that the groups are not lazy loaded.
-                    User repoUser = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
-                    bitbucketService.addUserToGroups(repoUser.getLogin(), repoUser.getGroups());
-                }
-                catch (BitbucketException e) {
-                    /*
-                     * This might throw exceptions, for example if the group does not exist on Bitbucket. We can safely ignore them.
-                     */
-                }
-            }
-            else {
-                log.debug("Bitbucket user {} already exists", user.getLogin());
-            }
+        log.debug("Bitbucket user {} does not exist yet", user.getLogin());
+        String displayName = user.getName().trim();
+        bitbucketService.createUser(user.getLogin(), passwordService.decryptPasswordByLogin(user.getLogin()).get(), user.getEmail(), displayName);
+
+        try {
+            // NOTE: we need to fetch the user here again to make sure that the groups are not lazy loaded.
+            User repoUser = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
+            bitbucketService.addUserToGroups(repoUser.getLogin(), repoUser.getGroups());
+        }
+        catch (BitbucketException e) {
+            /*
+             * This might throw exceptions, for example if the group does not exist on Bitbucket. We can safely ignore them.
+             */
         }
     }
 
