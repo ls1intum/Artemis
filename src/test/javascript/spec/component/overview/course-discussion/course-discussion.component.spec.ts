@@ -61,7 +61,6 @@ describe('CourseDiscussionComponent', () => {
     let post2: Post;
     let post3: Post;
     let post4: Post;
-    let posts: Post[];
 
     const id = metisCourse.id;
     const parentRoute = {
@@ -149,10 +148,10 @@ describe('CourseDiscussionComponent', () => {
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
         });
-        expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
-        expect(component.formGroup.get('filterToUnresolved')?.value).toEqual(false);
-        expect(component.formGroup.get('filterToOwn')?.value).toEqual(false);
-        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toEqual(false);
+        expect(component.formGroup.get('sortBy')?.value).toBe(PostSortCriterion.CREATION_DATE);
+        expect(component.formGroup.get('filterToUnresolved')?.value).toBe(false);
+        expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
+        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
     }));
 
     it('should initialize overview page with course posts for default settings correctly', fakeAsync(() => {
@@ -171,7 +170,7 @@ describe('CourseDiscussionComponent', () => {
             sortingOrder: SortDirection.DESCENDING,
         });
         expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
-        expect(component.currentSortDirection).toEqual(SortDirection.DESCENDING);
+        expect(component.currentSortDirection).toBe(SortDirection.DESCENDING);
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         expect(searchInput.textContent).toBe('');
@@ -404,8 +403,6 @@ describe('CourseDiscussionComponent', () => {
             post4.creationDate = dayjs().subtract(2, 'minute');
             post4.reactions = [metisUpVoteReactionUser1];
             post4.displayPriority = DisplayPriority.ARCHIVED;
-
-            posts = [post1, post2, post3, post4];
         });
 
         it('should distinguish context filter options for properly show them in form', () => {
