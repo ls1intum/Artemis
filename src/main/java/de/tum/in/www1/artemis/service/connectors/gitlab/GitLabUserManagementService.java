@@ -4,8 +4,6 @@ import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.util.*;
 
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRequestDTO;
-import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.UserApi;
@@ -18,6 +16,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -26,9 +26,9 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRequestDTO;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 @Service
 @Profile("gitlab")
@@ -483,8 +483,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      */
     public org.gitlab4j.api.models.User createUser(User user) {
         try {
-            var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user))
-                    .withCanCreateGroup(false).withCanCreateProject(false).withSkipConfirmation(true);
+            var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user)).withCanCreateGroup(false)
+                    .withCanCreateProject(false).withSkipConfirmation(true);
             gitlabUser = gitlabApi.getUserApi().createUser(gitlabUser, passwordService.decryptPassword(user), false);
             String personalAccessToken = createPersonalAccessToken(gitlabUser.getId());
             user.setAccessToken(personalAccessToken);
@@ -544,7 +544,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      */
     public String createPersonalAccessToken(Integer userId) {
         // TODO: Change this to Gitlab4J api once it's supported: https://github.com/gitlab4j/gitlab4j-api/issues/653
-        var body = new GitLabPersonalAccessTokenRequestDTO("Artemis-Automatic-Access-Token", userId, new String[]{"read_repository", "write_repository"});
+        var body = new GitLabPersonalAccessTokenRequestDTO("Artemis-Automatic-Access-Token", userId, new String[] { "read_repository", "write_repository" });
 
         var headers = new HttpHeaders();
         headers.set("PRIVATE-TOKEN", gitlabApi.getAuthToken());
@@ -552,7 +552,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         var entity = new HttpEntity<>(body, headers);
 
         try {
-            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/users/" +userId + "/personal_access_tokens", HttpMethod.POST, entity, GitLabPersonalAccessTokenResponseDTO.class);
+            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens", HttpMethod.POST, entity,
+                    GitLabPersonalAccessTokenResponseDTO.class);
             GitLabPersonalAccessTokenResponseDTO responseBody = response.getBody();
             if (responseBody == null || responseBody.getToken() == null) {
                 log.error("Could not create Gitlab personal access token for user with id " + userId + ", response is null");
