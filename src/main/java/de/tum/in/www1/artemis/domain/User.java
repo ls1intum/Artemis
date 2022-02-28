@@ -111,6 +111,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "is_internal")
     private boolean isInternal;
 
+    @Nullable
+    @Column(name = "access_token")
+    private String accessToken = null;
+
     /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
      * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
@@ -348,5 +352,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setInternal(boolean internal) {
         isInternal = internal;
+    }
+
+    @Nullable
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(@Nullable String accessToken) {
+        this.accessToken = accessToken;
     }
 }

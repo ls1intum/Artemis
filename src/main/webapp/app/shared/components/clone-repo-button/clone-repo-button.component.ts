@@ -33,6 +33,7 @@ export class CloneRepoButtonComponent implements OnInit {
     sshTemplateUrl: string;
     repositoryPassword: string;
     versionControlUrl: string;
+    versionControlAccessToken?: boolean;
     wasCopied = false;
     FeatureToggle = FeatureToggle;
     user: User;
@@ -56,6 +57,10 @@ export class CloneRepoButtonComponent implements OnInit {
             if (user && user.login && (user.login.startsWith('edx_') || user.login.startsWith('u4i_'))) {
                 this.getRepositoryPassword();
             }
+
+            if (this.versionControlAccessToken && this.user && this.user.accessToken) {
+                this.repositoryPassword = this.user.accessToken;
+            }
         });
 
         // Get ssh information from the user
@@ -65,6 +70,10 @@ export class CloneRepoButtonComponent implements OnInit {
             this.sshEnabled = !!this.sshTemplateUrl;
             if (info.versionControlUrl) {
                 this.versionControlUrl = info.versionControlUrl;
+            }
+            this.versionControlAccessToken = info.versionControlAccessToken;
+            if (this.versionControlAccessToken && this.user && this.user.accessToken) {
+                this.repositoryPassword = this.user.accessToken;
             }
         });
 

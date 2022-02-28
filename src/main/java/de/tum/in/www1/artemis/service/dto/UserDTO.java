@@ -63,6 +63,8 @@ public class UserDTO extends AuditingEntityDTO {
 
     private Set<Organization> organizations;
 
+    private String accessToken;
+
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
@@ -70,12 +72,12 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations());
+                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getAccessToken());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<Authority> authorities,
-            Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations) {
+            Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, String accessToken) {
 
         this.id = id;
         this.login = login;
@@ -98,6 +100,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.groups = groups;
         this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
+        this.accessToken = accessToken;
     }
 
     public Long getId() {
@@ -218,6 +221,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         this.guidedTourSettings = guidedTourSettings;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 
     @Override

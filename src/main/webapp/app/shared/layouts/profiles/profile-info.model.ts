@@ -28,6 +28,7 @@ export class ProfileInfo {
     public allowedCourseRegistrationUsernamePattern?: string;
     public accountName?: string;
     public versionControlUrl?: string;
+    public versionControlAccessToken?: boolean;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;
     public textAssessmentAnalyticsEnabled?: boolean;

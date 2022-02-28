@@ -31,6 +31,7 @@
         "@ng-bootstrap/ng-bootstrap": "12.0.0",
         "@ngx-translate/core": "14.0.0",
         "@ngx-translate/http-loader": "7.0.0",
+        "@popperjs/core": "^2.11.2",
         "@sentry/browser": "6.18.0",
         "@swimlane/ngx-charts": "20.0.1",
         "@swimlane/ngx-datatable": "20.0.0",
