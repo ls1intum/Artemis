@@ -539,8 +539,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * The token has scopes "read_repository" and "write_repository".
      *
      *
-     * @param userId
-     * @return
+     * @param userId the id of the user in Gitlab
+     * @return the personal access token created for that user
      */
     public String createPersonalAccessToken(Integer userId) {
         // TODO: Change this to Gitlab4J api once it's supported: https://github.com/gitlab4j/gitlab4j-api/issues/653
