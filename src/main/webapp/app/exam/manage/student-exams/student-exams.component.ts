@@ -27,7 +27,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 export class StudentExamsComponent implements OnInit {
     courseId: number;
     examId: number;
-    studentExams: StudentExam[];
+    studentExams: StudentExam[] = [];
     course: Course;
     exam: Exam;
     hasStudentsWithoutExam: boolean;
@@ -117,7 +117,7 @@ export class StudentExamsComponent implements OnInit {
      */
     handleGenerateStudentExams() {
         // If student exams already exists, inform the instructor about it and get confirmations for re-creation
-        if (this.studentExams && this.studentExams.length) {
+        if (this.studentExams?.length) {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.studentExams.generateStudentExams';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.studentExamGenerationModalText');
