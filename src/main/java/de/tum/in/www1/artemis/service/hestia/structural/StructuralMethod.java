@@ -20,9 +20,6 @@ class StructuralMethod {
     @JsonProperty(defaultValue = "void")
     private String returnType;
 
-    public StructuralMethod() {
-    }
-
     public String getName() {
         return name;
     }

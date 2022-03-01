@@ -11,9 +11,6 @@ class StructuralConstructor {
 
     private String[] parameters;
 
-    public StructuralConstructor() {
-    }
-
     public String[] getModifiers() {
         return modifiers;
     }

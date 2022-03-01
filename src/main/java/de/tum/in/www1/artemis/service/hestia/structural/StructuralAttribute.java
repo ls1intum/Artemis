@@ -16,9 +16,6 @@ class StructuralAttribute {
     @JsonProperty(required = true)
     private String type;
 
-    public StructuralAttribute() {
-    }
-
     public String getName() {
         return name;
     }

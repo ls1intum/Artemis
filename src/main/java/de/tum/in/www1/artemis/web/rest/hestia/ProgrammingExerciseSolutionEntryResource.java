@@ -234,7 +234,7 @@ public class ProgrammingExerciseSolutionEntryResource {
             return ResponseEntity.ok(solutionEntries);
         }
         catch (StructuralSolutionEntryGenerationException e) {
-            e.printStackTrace();
+            log.error("Unable to create structural solution entries", e);
             return ResponseEntity.badRequest().build();
         }
     }

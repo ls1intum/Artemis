@@ -33,9 +33,9 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 @Service
 public class StructuralTestCaseService {
 
-    private static final Logger log = LoggerFactory.getLogger(StructuralTestCaseService.class);
-
     private static final String SINGLE_INDENTATION = "    ";
+
+    private final Logger log = LoggerFactory.getLogger(StructuralTestCaseService.class);
 
     private final GitService gitService;
 
@@ -59,8 +59,8 @@ public class StructuralTestCaseService {
      * This includes solution entries for classes, attributes, methods and constructors.
      *
      * @param programmingExercise The programming exercise
-     * @throws StructuralSolutionEntryGenerationException If there was an error while generating the solution entries
      * @return The new structural solution entries
+     * @throws StructuralSolutionEntryGenerationException If there was an error while generating the solution entries
      */
     public List<ProgrammingExerciseSolutionEntry> generateStructuralSolutionEntries(ProgrammingExercise programmingExercise) throws StructuralSolutionEntryGenerationException {
         log.debug("Generating the structural SolutionEntries for the following programmingExercise: {} {}", programmingExercise.getId(), programmingExercise.getProjectName());
@@ -132,7 +132,7 @@ public class StructuralTestCaseService {
     /**
      * Finds a structural test case of a specific type and class in the list of all test cases of an exercise.
      *
-     * @param type The type of the structural test case (e.g. Class, Methods)
+     * @param type      The type of the structural test case (e.g. Class, Methods)
      * @param className The name of the Class
      * @param testCases The list of test cases
      * @return The matching test case or empty in none found
@@ -146,7 +146,7 @@ public class StructuralTestCaseService {
      * If the given test case is not present this will return null.
      *
      * @param filePath The filePath of the solution entry
-     * @param code The code of the solution entry
+     * @param code     The code of the solution entry
      * @param testCase The test case of the solution entry
      * @return A SolutionEntry if testCase is present otherwise null
      */
@@ -167,8 +167,8 @@ public class StructuralTestCaseService {
      * Generates well formatted the Java code for a class/interface/enum
      *
      * @param structuralClass The class object read from the test.json file
-     * @param enumValues The enum values if the class is an enum
-     * @param solutionClass The class read by QDox
+     * @param enumValues      The enum values if the class is an enum
+     * @param solutionClass   The class read by QDox
      * @return The code for the class
      */
     private String generateCodeForClass(StructuralClass structuralClass, String[] enumValues, JavaClass solutionClass) {
@@ -183,12 +183,12 @@ public class StructuralTestCaseService {
 
         String implementedInterfacesString = "";
         if (structuralClass.getInterfaces() != null) {
-            implementedInterfacesString = "implements " + String.join(", ", structuralClass.getInterfaces()) + "";
+            implementedInterfacesString = "implements " + String.join(", ", structuralClass.getInterfaces());
         }
 
         String extendsSuperclassString = "";
         if (structuralClass.getSuperclass() != null) {
-            extendsSuperclassString = "extends " + structuralClass.getSuperclass() + "";
+            extendsSuperclassString = "extends " + structuralClass.getSuperclass();
         }
 
         String concatenatedModifiers = structuralClass.getModifiers() == null ? "" : String.join(" ", structuralClass.getModifiers());
@@ -214,7 +214,7 @@ public class StructuralTestCaseService {
     /**
      * Generates well formatted Java code for attributes of a class.
      *
-     * @param attributes The attribute objects read from the test.json file
+     * @param attributes    The attribute objects read from the test.json file
      * @param solutionClass The class read by QDox that the attributes are a part of
      * @return The code for each attribute
      */
@@ -235,8 +235,8 @@ public class StructuralTestCaseService {
     /**
      * Generates well formatted Java code for constructors of a class.
      *
-     * @param constructors The constructor objects read from the test.json file
-     * @param className The name of the class read from the test.json file
+     * @param constructors  The constructor objects read from the test.json file
+     * @param className     The name of the class read from the test.json file
      * @param solutionClass The class read by QDox that the constructors are a part of
      * @return The code for each constructor
      */
@@ -258,7 +258,7 @@ public class StructuralTestCaseService {
     /**
      * Generates well formatted Java code for methods of a class.
      *
-     * @param methods The method objects read from the test.json file
+     * @param methods       The method objects read from the test.json file
      * @param solutionClass The class read by QDox that the methods are a part of
      * @return The code for each method
      */
@@ -318,7 +318,7 @@ public class StructuralTestCaseService {
 
     private boolean doParametersMatch(String[] parameters, List<JavaParameter> solutionParameters, List<JavaTypeVariable<JavaGenericDeclaration>> genericDeclarations) {
         if (parameters == null) {
-            return solutionParameters.size() == 0;
+            return solutionParameters.isEmpty();
         }
         if (parameters.length != solutionParameters.size()) {
             return false;

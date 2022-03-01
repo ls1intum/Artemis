@@ -26,9 +26,6 @@ class StructuralClass {
 
     private String[] interfaces;
 
-    public StructuralClass() {
-    }
-
     public String getName() {
         return name;
     }

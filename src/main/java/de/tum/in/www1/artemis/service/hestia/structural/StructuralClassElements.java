@@ -19,9 +19,6 @@ class StructuralClassElements {
 
     private String[] enumValues;
 
-    public StructuralClassElements() {
-    }
-
     public StructuralClass getStructuralClass() {
         return structuralClass;
     }

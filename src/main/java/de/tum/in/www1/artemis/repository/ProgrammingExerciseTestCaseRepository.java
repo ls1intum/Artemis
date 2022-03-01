@@ -51,6 +51,7 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
     /**
      * Returns all test cases with the associated solution entries for a programming exercise
      * @param exerciseId of the exercise
+     * @param active status of the test case
      * @return all test cases with the assocaited solution entries
      */
     @Query("""
