@@ -11,6 +11,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { ChartExerciseTypeFilterDirective } from 'app/shared/chart/chart-exercise-type-filter.directive';
 import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
@@ -18,7 +19,7 @@ import { GraphColors } from 'app/entities/statistics.model';
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
-export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
+export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirective implements AfterViewInit, OnChanges {
     @Input()
     filteredExerciseIDs: number[];
 
@@ -28,18 +29,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     excludedExerciseScores: ExerciseScoresDTO[] = [];
     visibleExerciseScores: ExerciseScoresDTO[] = [];
 
-    // Ideally I would design the filter as map from ExerciseType to boolean.
-    // But I observed some unexpected casting of the ExerciseType in the ExerciseDTO
-    // that leads to the following situation: When trying to look up a value given an ExerciseType in a map with structure: ExerciseType -> boolean
-    // instead of comparing the string value of the enum, the enum key was taken as string and then used as key for the map
-    // E.g. ExerciseType.PROGRAMMING would lead to chartFilter.get('PROGRAMMING') instead of chartFilter.get('programming')
-    // This way, never a value was returned as the map did not contain such key
-    chartFilter: Map<string, boolean> = new Map();
-    numberOfActiveFilters = 0;
-    typeSet: Set<ExerciseType> = new Set();
-
     readonly Math = Math;
     readonly ExerciseType = ExerciseType;
+    readonly convertToMapKey = ChartExerciseTypeFilterDirective.convertToMapKey;
 
     // Icons
     faFilter = faFilter;
@@ -68,6 +60,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         private exerciseScoresChartService: ExerciseScoresChartService,
         private translateService: TranslateService,
     ) {
+        super();
         this.translateService.onLangChange.subscribe(() => {
             this.setTranslations();
         });
@@ -112,7 +105,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         this.visibleExerciseScores = Array.of(...this.exerciseScores);
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
-        this.initializeFilterOptions();
+        this.initializeFilterOptions(sortedExerciseScores);
         this.addData(sortedExerciseScores);
     }
 
@@ -200,27 +193,11 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     }
 
     /**
-     * Set up initial filter for the line chart
-     * @private
-     */
-    private initializeFilterOptions(): void {
-        this.typeSet = new Set(this.exerciseScores.map((score) => score.exerciseType));
-        this.typeSet.forEach((type) => {
-            this.chartFilter.set(type.toLowerCase().replace('_', '-'), true);
-        });
-        this.numberOfActiveFilters = this.typeSet.size;
-    }
-
-    /**
      * Handles selection or deselection of specific exercise type
      * @param type the ExerciseType the user changed the filter for
      */
-    toggleExerciseType(type: ExerciseType): void {
-        const convertedType = type.toLowerCase().replace('_', '-');
-        const isIncluded = this.chartFilter.get(convertedType);
-        this.chartFilter.set(convertedType, !isIncluded);
-        this.visibleExerciseScores = this.exerciseScores.filter((score) => this.chartFilter.get(score.exerciseType.toLowerCase().replace('_', '-')));
-        this.numberOfActiveFilters += !isIncluded ? 1 : -1;
+    toggleType(type: ExerciseType): void {
+        this.visibleExerciseScores = this.toggleExerciseType(type, this.exerciseScores);
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.visibleExerciseScores, (exerciseScore) => exerciseScore.releaseDate);
         this.addData(sortedExerciseScores);
