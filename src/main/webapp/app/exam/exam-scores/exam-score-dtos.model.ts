@@ -45,7 +45,7 @@ export class StudentResult {
     public overallGradeInFirstCorrection?: string;
     public hasPassed?: boolean;
     public submitted: boolean;
-    public exerciseGroupIdToExerciseResult: Map<number, ExerciseResult>; // no idea if this is possible
+    public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
 
     constructor() {}
 }
@@ -183,4 +183,49 @@ export class AggregatedExerciseResult {
         this.totalParticipants = totalParticipants;
         this.exerciseType = exerciseType;
     }
+}
+
+export class TableState {
+    relativeAmountOfPassedExams: string;
+    relativeAmountOfSubmittedExams: string;
+    absoluteAmountOfSubmittedExams: number;
+    absoluteAmountOfTotalExams: number;
+
+    averageScoreSubmitted: string;
+    averageScoreTotal: string;
+    averageScoreSubmittedInFirstCorrection: string;
+    averageScoreTotalInFirstCorrection: string;
+    averagePointsSubmitted: string;
+    averagePointsTotal: string;
+    averagePointsSubmittedInFirstCorrection: string;
+    averagePointsTotalInFirstCorrection: string;
+
+    averageGradeSubmitted: string;
+    averageGradeTotal: string;
+    averageGradeSubmittedInFirstCorrection: string;
+    averageGradeTotalInFirstCorrection: string;
+
+    medianScoreSubmitted: string;
+    medianScoreTotal: string;
+    medianScoreSubmittedInFirstCorrection: string;
+    medianScoreTotalInFirstCorrection: string;
+    medianPointsSubmitted: string;
+    medianPointsTotal: string;
+    medianPointsSubmittedInFirstCorrection: string;
+    medianPointsTotalInFirstCorrection: string;
+
+    medianGradeSubmitted: string;
+    medianGradeTotal: string;
+    medianGradeSubmittedInFirstCorrection: string;
+    medianGradeTotalInFirstCorrection: string;
+
+    standardDeviationSubmitted: string;
+    standardDeviationTotal: string;
+    standardDeviationSubmittedInFirstCorrection: string;
+    standardDeviationTotalInFirstCorrection: string;
+
+    standardGradeDeviationSubmitted: string;
+    standardGradeDeviationTotal: string;
+    standardGradeDeviationSubmittedInFirstCorrection: string;
+    standardGradeDeviationTotalInFirstCorrection: string;
 }

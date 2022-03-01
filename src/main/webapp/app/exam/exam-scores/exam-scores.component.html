@@ -90,32 +90,10 @@
             <tbody>
                 <tr>
                     <th scope="row">{{ 'artemisApp.examScores.noOfExams' | artemisTranslate }}</th>
-                    <td *ngIf="gradingScaleExists && !isBonus">
-                        {{ aggregatedExamResults.noOfExamsFilteredForPassed }} ({{
-                            aggregatedExamResults.noOfRegisteredUsers > 0
-                                ? roundAndPerformLocalConversion((aggregatedExamResults.noOfExamsFilteredForPassed / aggregatedExamResults.noOfRegisteredUsers) * 100)
-                                : '-'
-                        }}
-                        %)
-                    </td>
+                    <td *ngIf="gradingScaleExists && !isBonus">{{ aggregatedExamResults.noOfExamsFilteredForPassed }} ({{ relativeAmountOfPassedExams }}%)</td>
+                    <td>{{ absoluteAmountOfSubmittedExams }} ({{ relativeAmountOfSubmittedExams }}%)</td>
                     <td>
-                        {{ filterForNonEmptySubmissions ? aggregatedExamResults.noOfExamsSubmittedAndNotEmpty : aggregatedExamResults.noOfExamsSubmitted }} ({{
-                            aggregatedExamResults.noOfRegisteredUsers > 0
-                                ? roundAndPerformLocalConversion((aggregatedExamResults.noOfExamsSubmitted / aggregatedExamResults.noOfRegisteredUsers) * 100)
-                                : '-'
-                        }}
-                        %)
-                    </td>
-                    <td>
-                        {{
-                            filterForSubmittedExams && filterForNonEmptySubmissions
-                                ? aggregatedExamResults.noOfExamsSubmittedAndNotEmpty
-                                : filterForSubmittedExams && !filterForNonEmptySubmissions
-                                ? aggregatedExamResults.noOfExamsSubmitted
-                                : !filterForSubmittedExams && filterForNonEmptySubmissions
-                                ? aggregatedExamResults.noOfExamsNonEmpty
-                                : aggregatedExamResults.noOfRegisteredUsers
-                        }}
+                        {{ absoluteAmountOfTotalExams }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey"></td>
                     <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '3px solid lightgrey' } : {}"></td>
@@ -128,16 +106,8 @@
                         ({{ aggregatedExamResults.meanPointsRelativePassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativePassed) : '-' }}
                         %)
                     </td>
-                    <td>
-                        {{ aggregatedExamResults.meanPointsSubmitted !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsSubmitted) : '-' }}
-                        ({{ aggregatedExamResults.meanPointsRelativeSubmitted !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeSubmitted) : '-' }}
-                        %)
-                    </td>
-                    <td>
-                        {{ aggregatedExamResults.meanPointsTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsTotal) : '-' }}
-                        ({{ aggregatedExamResults.meanPointsRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeTotal) : '-' }}
-                        %)
-                    </td>
+                    <td>{{ tableState.averagePointsSubmitted }} ({{ tableState.averageScoreSubmitted }}%)</td>
+                    <td>{{ tableState.averagePointsTotal }} ({{ tableState.averageScoreTotal }}%)</td>
                     <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey">
                         {{
                             aggregatedExamResults.meanPointsPassedInFirstCorrection !== null
@@ -152,26 +122,12 @@
                         %)
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '3px solid lightgrey' } : {}">
-                        {{ aggregatedExamResults.meanPointsInFirstCorrection !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsInFirstCorrection) : '-' }}
-                        ({{
-                            aggregatedExamResults.meanPointsRelativeInFirstCorrection !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeInFirstCorrection)
-                                : '-'
-                        }}
-                        %)
+                        {{ tableState.averagePointsSubmittedInFirstCorrection }}
+                        ({{ tableState.averageScoreSubmittedInFirstCorrection }}%)
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted">
-                        {{
-                            aggregatedExamResults.meanPointsTotalInFirstCorrection !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsTotalInFirstCorrection)
-                                : '-'
-                        }}
-                        ({{
-                            aggregatedExamResults.meanPointsRelativeTotalInFirstCorrection !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsRelativeTotalInFirstCorrection)
-                                : '-'
-                        }}
-                        %)
+                        {{ tableState.averagePointsTotalInFirstCorrection }}
+                        ({{ tableState.averageScoreTotal }}%)
                     </td>
                 </tr>
                 <tr *ngIf="gradingScaleExists">
@@ -179,16 +135,16 @@
                         {{ isBonus ? ('artemisApp.examScores.averageBonusColumn' | artemisTranslate) : ('artemisApp.examScores.averageGradeColumn' | artemisTranslate) }}
                     </th>
                     <td *ngIf="!isBonus">{{ aggregatedExamResults.meanGradePassed !== null ? aggregatedExamResults.meanGradePassed : '-' }}</td>
-                    <td>{{ aggregatedExamResults.meanGradeSubmitted !== null ? aggregatedExamResults.meanGradeSubmitted : '-' }}</td>
-                    <td>{{ aggregatedExamResults.meanGradeTotal !== null ? aggregatedExamResults.meanGradeTotal : '-' }}</td>
+                    <td>{{ tableState.averageGradeSubmitted }}</td>
+                    <td>{{ tableState.averageGradeTotal }}</td>
                     <td *ngIf="hasSecondCorrectionAndStarted && !isBonus" style="border-left: 3px solid lightgrey">
                         {{ aggregatedExamResults.meanGradePassedInFirstCorrection !== null ? aggregatedExamResults.meanGradePassedInFirstCorrection : '-' }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="isBonus ? { 'border-left': '3px solid lightgrey' } : {}">
-                        {{ aggregatedExamResults.meanGradeInFirstCorrection !== null ? aggregatedExamResults.meanGradeInFirstCorrection : '-' }}
+                        {{ tableState.averageGradeSubmittedInFirstCorrection }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted">
-                        {{ aggregatedExamResults.meanGradeTotalInFirstCorrection !== null ? aggregatedExamResults.meanGradeTotalInFirstCorrection : '-' }}
+                        {{ tableState.averageGradeTotalInFirstCorrection }}
                     </td>
                 </tr>
                 <tr>
@@ -199,14 +155,12 @@
                         %)
                     </td>
                     <td>
-                        {{ aggregatedExamResults.medianSubmitted !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianSubmitted) : '-' }}
-                        ({{ aggregatedExamResults.medianRelativeSubmitted !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeSubmitted) : '-' }}
-                        %)
+                        {{ tableState.medianPointsSubmitted }}
+                        ({{ tableState.medianScoreSubmitted }}%)
                     </td>
                     <td>
-                        {{ aggregatedExamResults.medianTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianTotal) : '-' }}
-                        ({{ aggregatedExamResults.medianRelativeTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeTotal) : '-' }}
-                        %)
+                        {{ tableState.medianPointsTotal }}
+                        ({{ tableState.medianScoreTotal }}%)
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey">
                         {{
@@ -220,22 +174,12 @@
                         %)
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '3px solid lightgrey' } : {}">
-                        {{ aggregatedExamResults.medianInFirstCorrection !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianInFirstCorrection) : '-' }}
-                        ({{
-                            aggregatedExamResults.medianRelativeInFirstCorrection !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeInFirstCorrection)
-                                : '-'
-                        }}
-                        %)
+                        {{ tableState.medianPointsSubmittedInFirstCorrection }}
+                        ({{ tableState.medianScoreSubmittedInFirstCorrection }}%)
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted">
-                        {{ aggregatedExamResults.medianTotalInFirstCorrection !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianTotalInFirstCorrection) : '-' }}
-                        ({{
-                            aggregatedExamResults.medianRelativeTotalInFirstCorrection !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.medianRelativeTotalInFirstCorrection)
-                                : '-'
-                        }}
-                        %)
+                        {{ tableState.medianPointsTotalInFirstCorrection }}
+                        ({{ tableState.medianScoreTotalInFirstCorrection }}%)
                     </td>
                 </tr>
                 <tr *ngIf="gradingScaleExists">
@@ -243,16 +187,16 @@
                         {{ isBonus ? ('artemisApp.examScores.medianBonusColumn' | artemisTranslate) : ('artemisApp.examScores.medianGradeColumn' | artemisTranslate) }}
                     </th>
                     <td *ngIf="!isBonus">{{ aggregatedExamResults.medianGradePassed !== null ? aggregatedExamResults.medianGradePassed : '-' }}</td>
-                    <td>{{ aggregatedExamResults.medianGradeSubmitted !== null ? aggregatedExamResults.medianGradeSubmitted : '-' }}</td>
-                    <td>{{ aggregatedExamResults.medianGradeTotal !== null ? aggregatedExamResults.medianGradeTotal : '-' }}</td>
+                    <td>{{ tableState.medianGradeSubmitted }}</td>
+                    <td>{{ tableState.medianGradeTotal }}</td>
                     <td *ngIf="!isBonus && hasSecondCorrectionAndStarted" style="border-left: 3px solid lightgrey">
                         >{{ aggregatedExamResults.medianGradePassedInFirstCorrection !== null ? aggregatedExamResults.medianGradePassedInFirstCorrection : '-' }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="isBonus ? { 'border-left': '3px solid lightgrey' } : {}">
-                        {{ aggregatedExamResults.medianGradeInFirstCorrection !== null ? aggregatedExamResults.medianGradeInFirstCorrection : '-' }}
+                        {{ tableState.medianGradeSubmittedInFirstCorrection }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted">
-                        {{ aggregatedExamResults.medianGradeTotalInFirstCorrection !== null ? aggregatedExamResults.medianGradeTotalInFirstCorrection : '-' }}
+                        {{ tableState.medianGradeTotalInFirstCorrection }}
                     </td>
                 </tr>
                 <tr>
@@ -261,9 +205,9 @@
                         {{ aggregatedExamResults.standardDeviationPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationPassed) : '-' }}
                     </td>
                     <td>
-                        {{ aggregatedExamResults.standardDeviationSubmitted !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationSubmitted) : '-' }}
+                        {{ tableState.standardDeviationSubmitted }}
                     </td>
-                    <td>{{ aggregatedExamResults.standardDeviationTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationTotal) : '-' }}</td>
+                    <td>{{ tableState.standardDeviationTotal }}</td>
                     <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey">
                         {{
                             aggregatedExamResults.standardDeviationPassedInFirstCorrection !== null
@@ -272,18 +216,10 @@
                         }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '3px solid lightgrey' } : {}">
-                        {{
-                            aggregatedExamResults.standardDeviationInFirstCorrection !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationInFirstCorrection)
-                                : '-'
-                        }}
+                        {{ tableState.standardDeviationSubmittedInFirstCorrection }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted">
-                        {{
-                            aggregatedExamResults.standardDeviationTotalInFirstCorrection !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationTotalInFirstCorrection)
-                                : '-'
-                        }}
+                        {{ tableState.standardDeviationTotalInFirstCorrection }}
                     </td>
                 </tr>
                 <tr *ngIf="gradingScaleExists && hasNumericGrades">
@@ -292,14 +228,10 @@
                         {{ aggregatedExamResults.standardGradeDeviationPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationPassed) : '-' }}
                     </td>
                     <td>
-                        {{
-                            aggregatedExamResults.standardGradeDeviationSubmitted !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationSubmitted)
-                                : '-'
-                        }}
+                        {{ tableState.standardGradeDeviationSubmitted }}
                     </td>
                     <td>
-                        {{ aggregatedExamResults.standardGradeDeviationTotal !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationTotal) : '-' }}
+                        {{ tableState.standardGradeDeviationTotal }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted && !isBonus" style="border-left: 3px solid lightgrey">
                         {{
@@ -309,18 +241,10 @@
                         }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="isBonus ? { 'border-left': '3px solid lightgrey' } : {}">
-                        {{
-                            aggregatedExamResults.standardGradeDeviationInFirstCorrection !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationInFirstCorrection)
-                                : '-'
-                        }}
+                        {{ tableState.standardGradeDeviationSubmittedInFirstCorrection }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted">
-                        {{
-                            aggregatedExamResults.standardGradeDeviationTotalInFirstCorrection !== null
-                                ? roundAndPerformLocalConversion(aggregatedExamResults.standardGradeDeviationTotalInFirstCorrection)
-                                : '-'
-                        }}
+                        {{ tableState.standardGradeDeviationTotalInFirstCorrection }}
                     </td>
                 </tr>
             </tbody>
