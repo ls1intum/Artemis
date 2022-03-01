@@ -385,8 +385,8 @@
                 "descriptionItem": {
                     "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder es können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal angemeldet werden.",
                     "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
-                    "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt. Die Arbeitszeit kann dabei individuell angepasst werden.\nZudem werden alle Commits des Templates von Programmieraufgaben in einem Commit zusammengefasst.",
-                    "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",
+                    "generateStudentExams": "Du musst die individuellen Klausuren der Studierenden vor Start der Klausur generieren. Die Arbeitszeit kann dabei individuell angepasst werden.\nZudem werden alle Commits des Templates von Programmieraufgaben in einem Commit zusammengefasst.",
+                    "prepareExerciseStart": "Du musst die Aufgaben vor Beginn der Klausur vorbereiten.",
                     "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
                     "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
                     "assessAllSubmissions": "Die Anzahl der Korrekturrunden der Aufgaben entspricht der in der Klausur angegebenen Anzahl von Korrekturrunden.",
