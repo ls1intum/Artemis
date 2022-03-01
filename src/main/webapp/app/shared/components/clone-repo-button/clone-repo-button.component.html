@@ -33,9 +33,8 @@
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }}</pre
             >
-            <div *ngIf="!sshEnabled" style="display: flex; align-items: center">
+            <div *ngIf="!useSsh" style="display: flex; align-items: center">
                 <a
-                    *ngIf="!sshEnabled"
                     style="flex: 1"
                     class="btn btn-secondary btn-sm me-2"
                     style="margin-bottom: 10px"
