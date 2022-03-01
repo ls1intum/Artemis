@@ -139,6 +139,15 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createUser_asAdmin_with_vcsAccessToken_isSuccessful() throws Exception {
+        gitlabRequestMockProvider.mockCreationOfUser("batman");
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
+        userTestService.createUser_asAdmin_withVcsToken_isSuccessful();
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_asAdmin_hasId() throws Exception {
         userTestService.createUser_asAdmin_hasId();
     }

@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
@@ -190,15 +191,25 @@ public class GitlabRequestMockProvider {
      * @param login Login of the user who's creation is mocked
      * @throws GitLabApiException Never
      */
-    public void mockCreationOfUser(String login) throws GitLabApiException {
+    public void mockCreationOfUser(String login) throws GitLabApiException, JsonProcessingException {
+        var userId = 1234;
         UserApi userApi = mock(UserApi.class);
         doReturn(userApi).when(gitLabApi).getUserApi();
         doReturn(null).when(userApi).getUser(eq(login));
         doAnswer(invocation -> {
             User user = (User) invocation.getArguments()[0];
-            user.setId(1234);
+            user.setId(userId);
             return user;
         }).when(userApi).createUser(any(), any(), anyBoolean());
+
+        var accessTokenResponseDTO = new GitLabPersonalAccessTokenResponseDTO();
+        accessTokenResponseDTO.setName("acccess-token-name");
+        accessTokenResponseDTO.setToken("acccess-token-value");
+        accessTokenResponseDTO.setUserId(userId);
+        final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
+
+        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
