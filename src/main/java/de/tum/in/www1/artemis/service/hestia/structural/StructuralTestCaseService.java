@@ -174,36 +174,25 @@ public class StructuralTestCaseService {
     private String generateCodeForClass(StructuralClass structuralClass, String[] enumValues, JavaClass solutionClass) {
         String classSolutionCode = "";
         classSolutionCode += String.join(" ", "package", structuralClass.getPackageName()) + ";\n";
-        String classModifier = structuralClass.isInterface() ? "interface" : (structuralClass.isEnum() ? "enum" : "class");
 
         String genericTypes = "";
         if (solutionClass != null && !solutionClass.getTypeParameters().isEmpty()) {
             genericTypes = getGenericTypesString(solutionClass.getTypeParameters());
         }
 
-        String implementedInterfacesString = "";
-        if (structuralClass.getInterfaces() != null) {
-            implementedInterfacesString = "implements " + String.join(", ", structuralClass.getInterfaces());
+        if (structuralClass.getModifiers() != null) {
+            classSolutionCode += String.join(" ", structuralClass.getModifiers()) + " ";
         }
-
-        String extendsSuperclassString = "";
-        if (structuralClass.getSuperclass() != null) {
-            extendsSuperclassString = "extends " + structuralClass.getSuperclass();
-        }
-
-        String concatenatedModifiers = structuralClass.getModifiers() == null ? "" : String.join(" ", structuralClass.getModifiers());
-
-        if (!concatenatedModifiers.isEmpty()) {
-            classSolutionCode += concatenatedModifiers + " ";
-        }
-        classSolutionCode += classModifier + " ";
+        classSolutionCode += structuralClass.isInterface() ? "interface" : (structuralClass.isEnum() ? "enum" : "class") + " ";
         classSolutionCode += structuralClass.getName() + genericTypes + " ";
-        if (!extendsSuperclassString.isEmpty()) {
-            classSolutionCode += extendsSuperclassString + " ";
+
+        if (structuralClass.getSuperclass() != null) {
+            classSolutionCode += "extends " + structuralClass.getSuperclass() + " ";
         }
-        if (!implementedInterfacesString.isEmpty()) {
-            classSolutionCode += implementedInterfacesString + " ";
+        if (structuralClass.getInterfaces() != null) {
+            classSolutionCode += "implements " + String.join(", ", structuralClass.getInterfaces()) + " ";
         }
+
         classSolutionCode += "{\n";
         String classInnerContent = structuralClass.isEnum() ? String.join(", ", enumValues) : "";
         classSolutionCode += SINGLE_INDENTATION + classInnerContent + "\n}";
