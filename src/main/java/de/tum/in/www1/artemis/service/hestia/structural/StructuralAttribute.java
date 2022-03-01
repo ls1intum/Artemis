@@ -14,10 +14,7 @@ class StructuralAttribute {
     @JsonProperty(required = true)
     private String type;
 
-    public StructuralAttribute(String name, String[] modifiers, String type) {
-        this.name = name;
-        this.modifiers = modifiers;
-        this.type = type;
+    public StructuralAttribute() {
     }
 
     public String getName() {

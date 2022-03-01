@@ -8,9 +8,7 @@ class StructuralConstructor {
 
     private String[] parameters;
 
-    public StructuralConstructor(String[] modifiers, String[] parameters) {
-        this.modifiers = modifiers;
-        this.parameters = parameters;
+    public StructuralConstructor() {
     }
 
     public String[] getModifiers() {

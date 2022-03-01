@@ -40,6 +40,7 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -409,5 +410,22 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             link.push('submissions');
         }
         return link;
+    }
+
+    createStructuralSolutionEntries() {
+        this.programmingExerciseService.createStructuralSolutionEntries(this.programmingExercise.id!).subscribe({
+            next: (res) => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'Success',
+                });
+                console.log(this.buildStructuralSolutionEntriesMessage(res));
+            },
+            error: this.onError,
+        });
+    }
+
+    private buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
+        return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
     }
 }

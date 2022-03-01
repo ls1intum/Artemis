@@ -15,6 +15,7 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { Submission } from 'app/entities/submission.model';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -439,5 +440,9 @@ export class ProgrammingExerciseService {
      */
     deleteTasksWithSolutionEntries(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' });
+    }
+
+    createStructuralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
+        return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/structural-solution-entries`, null);
     }
 }

@@ -22,13 +22,7 @@ class StructuralClass {
 
     private String[] interfaces;
 
-    public StructuralClass(String name, String packageName, String superclass, boolean isInterface, boolean isEnum, String[] interfaces) {
-        this.name = name;
-        this.packageName = packageName;
-        this.superclass = superclass;
-        this.isInterface = isInterface;
-        this.isEnum = isEnum;
-        this.interfaces = interfaces;
+    public StructuralClass() {
     }
 
     public String getName() {

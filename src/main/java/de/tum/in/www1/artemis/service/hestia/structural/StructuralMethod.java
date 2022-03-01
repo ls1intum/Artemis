@@ -18,12 +18,7 @@ class StructuralMethod {
     @JsonProperty(defaultValue = "void")
     private String returnType;
 
-    public StructuralMethod(String name, String[] modifiers, String[] parameters, String[] annotations, String returnType) {
-        this.name = name;
-        this.modifiers = modifiers;
-        this.parameters = parameters;
-        this.annotations = annotations;
-        this.returnType = returnType;
+    public StructuralMethod() {
     }
 
     public String getName() {

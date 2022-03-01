@@ -17,13 +17,7 @@ class StructuralClassElements {
 
     private String[] enumValues;
 
-    public StructuralClassElements(StructuralClass structuralClass, StructuralMethod[] methods, StructuralAttribute[] attributes, StructuralConstructor[] constructors,
-            String[] enumValues) {
-        this.structuralClass = structuralClass;
-        this.methods = methods;
-        this.attributes = attributes;
-        this.constructors = constructors;
-        this.enumValues = enumValues;
+    public StructuralClassElements() {
     }
 
     public StructuralClass getStructuralClass() {

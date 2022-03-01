@@ -48,6 +48,19 @@ public interface ProgrammingExerciseTestCaseRepository extends JpaRepository<Pro
             """)
     Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntries(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Returns all test cases with the associated solution entries for a programming exercise
+     * @param exerciseId of the exercise
+     * @return all test cases with the assocaited solution entries
+     */
+    @Query("""
+            SELECT DISTINCT tc FROM ProgrammingExerciseTestCase tc
+            LEFT JOIN FETCH tc.solutionEntries se
+            WHERE tc.exercise.id = :#{#exerciseId}
+            AND tc.active = :#{#active}
+            """)
+    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntriesAndActive(@Param("exerciseId") Long exerciseId, @Param("active") Boolean active);
+
     Set<ProgrammingExerciseTestCase> findByExerciseIdAndActive(Long exerciseId, Boolean active);
 
     /**
