@@ -58,6 +58,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         sshKeysURL: 'sshKeysURL',
         testServer: false,
         versionControlUrl: 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
+        versionControlAccessToken: true,
     };
 
     beforeEach(() => {
@@ -155,6 +156,33 @@ describe('JhiCloneRepoButtonComponent', () => {
         expect(url).toEqual(info.versionControlUrl!);
     });
 
+    it('should insert the correct token in the repository url', () => {
+        component.user = { login: 'user1', guidedTourSettings: [], vcsAccessToken: 'token' };
+        component.repositoryUrl = `https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.useSsh = false;
+        component.isTeamParticipation = false;
+
+        component.versionControlAccessTokenRequired = true;
+
+        // Placeholder is shown
+        let url = component.getHttpOrSshRepositoryUrl();
+        expect(url).toEqual(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+
+        url = component.getHttpOrSshRepositoryUrl(false);
+        expect(url).toEqual(`https://${component.user.login}:token@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+
+        // Team participation does not include user name
+        component.repositoryUrl = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.isTeamParticipation = true;
+
+        // Placeholder is shown
+        url = component.getHttpOrSshRepositoryUrl();
+        expect(url).toEqual(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+
+        url = component.getHttpOrSshRepositoryUrl(false);
+        expect(url).toEqual(`https://${component.user.login}:token@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+    });
+
     it('should fetch and store ssh preference', fakeAsync(() => {
         stubServices();
 
@@ -190,7 +218,7 @@ describe('JhiCloneRepoButtonComponent', () => {
 
     function stubServices() {
         const identityStub = jest.spyOn(accountService, 'identity');
-        identityStub.mockReturnValue(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin' }));
+        identityStub.mockReturnValue(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin', vcsAccessToken: 'token' }));
 
         const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(new BehaviorSubject(info));
