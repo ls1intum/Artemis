@@ -59,7 +59,7 @@ jobs:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v2.5.0
+      uses: actions/setup-java@v3
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
