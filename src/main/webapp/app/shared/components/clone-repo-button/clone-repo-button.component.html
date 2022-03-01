@@ -33,9 +33,19 @@
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }}</pre
             >
-            <a style="flex: 1" class="btn btn-secondary btn-sm me-2" style="margin-bottom: 10px" [href]="getHttpRepositoryUrl() | safeUrl">
-                <fa-icon [icon]="faLink"></fa-icon>
-            </a>
+            <div *ngIf="!sshEnabled" style="display: flex; align-items: center">
+                <a
+                    *ngIf="!sshEnabled"
+                    style="flex: 1"
+                    class="btn btn-secondary btn-sm me-2"
+                    style="margin-bottom: 10px"
+                    [href]="getHttpRepositoryUrl() | safeUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <fa-icon [icon]="faExternalLink"></fa-icon>
+                </a>
+            </div>
         </div>
         <p *ngIf="repositoryPassword">
             {{ 'artemisApp.exerciseActions.repositoryPassword' | artemisTranslate }} <code class="password">{{ repositoryPassword }}</code>
