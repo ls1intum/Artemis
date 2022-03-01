@@ -188,7 +188,12 @@
             "quiz": "Quiz",
             "modeling": "Modellierung",
             "text": "Text",
-            "file-upload": "Dateiupload"
+            "file-upload": "Dateiupload",
+            "chartLegend": {
+                "lowest": "Unteres Performance-Drittel",
+                "average": "Durchschnittliches Performance-Drittel",
+                "best": "Bestes Performance-Drittel"
+            }
         }
     }
 }
