@@ -143,7 +143,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         gitlabRequestMockProvider.mockCreationOfUser("batman");
         ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
         userTestService.createUser_asAdmin_withVcsToken_isSuccessful();
-        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", false);
     }
 
     @Test
