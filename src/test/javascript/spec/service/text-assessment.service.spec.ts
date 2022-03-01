@@ -26,7 +26,38 @@ describe('TextAssessment Service', () => {
     let httpMock: HttpTestingController;
     let textSubmission: TextSubmission;
     let mockResponse: any;
-    let expectedResult: any;
+    let actualResponse: any;
+
+    mockResponse = {
+        id: 1,
+        submissions: [
+            {
+                id: 1,
+                type: 'MANUAL',
+                results: [
+                    {
+                        id: 6,
+                        feedbacks: [
+                            {
+                                id: 6,
+                                reference: '8c8d2463ec548efca05e66423bee537b6357e880',
+                                type: 'MANUAL',
+                            },
+                        ],
+                        assessmentType: 'MANUAL',
+                    },
+                ],
+                blocks: [
+                    {
+                        id: '8c8d2463ec548efca05e66423bee537b6357e880',
+                        text: 'Test',
+                    },
+                ],
+            },
+        ],
+    };
+
+    const result = mockResponse.submissions[0].results[0] as Result;
 
     const exercise = {
         id: 20,
@@ -35,6 +66,8 @@ describe('TextAssessment Service', () => {
         course: { id: 123, isAtLeastInstructor: true } as Course,
     } as TextExercise;
 
+    textSubmission = new TextSubmission();
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -42,165 +75,105 @@ describe('TextAssessment Service', () => {
         });
         service = TestBed.inject(TextAssessmentService);
         httpMock = TestBed.inject(HttpTestingController);
-
-        textSubmission = new TextSubmission();
-
-        mockResponse = {
-            type: 'student',
-            id: 1,
-            submissions: [
-                {
-                    submissionExerciseType: 'text',
-                    id: 1,
-                    submitted: true,
-                    type: 'MANUAL',
-                    durationInMinutes: 0,
-                    text: 'Test\n\nTest\n\nTest',
-                    results: [
-                        {
-                            id: 6,
-                            resultString: '1 of 1 points',
-                            successful: true,
-                            score: 100,
-                            rated: true,
-                            hasFeedback: false,
-                            feedbacks: [
-                                {
-                                    id: 6,
-                                    detailText: 'Test',
-                                    reference: '8c8d2463ec548efca05e66423bee537b6357e880',
-                                    credits: 1.0,
-                                    positive: true,
-                                    type: 'MANUAL',
-                                },
-                            ],
-                            assessmentType: 'MANUAL',
-                        },
-                    ],
-                    blocks: [
-                        {
-                            id: '8c8d2463ec548efca05e66423bee537b6357e880',
-                            text: 'Test',
-                            startIndex: 0,
-                            endIndex: 4,
-                        },
-                    ],
-                },
-            ],
-        };
     });
 
     it('should save an assessment', async () => {
-        let result: Result;
         const participationId = 1;
-        result = mockResponse.submissions[0].results[0];
-        const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
 
         service
             .save(participationId, result.id!, result.feedbacks!, mockResponse.submissions[0].blocks)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp.body));
+            .subscribe((resp) => (actualResponse = resp.body));
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/participations/${1}/results/${6}/text-assessment`,
             method: 'PUT',
         });
-        req.flush(returnedFromService);
+        req.flush(result);
 
-        expect(expectedResult).toEqual(result);
+        expect(actualResponse).toEqual(result);
     });
 
     it('should save example assessment', async () => {
-        let result: Result;
-        result = mockResponse.submissions[0].results[0];
-        const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
-
         service
             .saveExampleAssessment(exercise.id!, mockResponse.submissions[0].id, result.feedbacks!, mockResponse.submissions[0].blocks)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp.body));
+            .subscribe((resp) => (actualResponse = resp.body));
 
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/exercises/${exercise.id}/example-submissions/${mockResponse.submissions[0].id}/example-text-assessment`,
             method: 'PUT',
         });
-        req.flush(returnedFromService);
+        req.flush(result);
 
-        expect(expectedResult).toEqual(result);
+        expect(actualResponse).toEqual(result);
     });
 
     it('should submit an assessment', async () => {
-        let result: Result;
         const participationId = 1;
-        result = mockResponse.submissions[0].results[0];
-        const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
 
         service
             .submit(participationId, result.id!, result.feedbacks!, mockResponse.submissions[0].blocks)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp.body));
+            .subscribe((resp) => (actualResponse = resp.body));
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/participations/${1}/results/${6}/submit-text-assessment`,
             method: 'POST',
         });
-        req.flush(returnedFromService);
+        req.flush(result);
 
-        expect(expectedResult).toEqual(result);
+        expect(actualResponse).toEqual(result);
     });
 
     it('should update assessment after complaint', () => {
-        const feedbacks = mockResponse.submissions[0].results[0].feedbacks;
+        const feedbacks = result.feedbacks!;
         const textBlocks = mockResponse.submissions[0].blocks;
         const complaintResponse = new ComplaintResponse();
         const participationId = 1;
-        const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
 
         service
             .updateAssessmentAfterComplaint(feedbacks, textBlocks, complaintResponse, mockResponse.submissions[0].id, participationId)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp.body));
+            .subscribe((resp) => (actualResponse = resp.body));
 
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/participations/${1}/submissions/${mockResponse.submissions[0].id}/text-assessment-after-complaint`,
             method: 'PUT',
         });
-        req.flush(returnedFromService);
+        req.flush(result);
 
-        expect(expectedResult).toEqual(mockResponse.submissions[0].results[0]);
+        expect(actualResponse).toEqual(result);
     });
 
     it('should cancel assessment', () => {
         const participationId = 1;
         const submissionId = 1;
-        const result = mockResponse.submissions[0].results[0];
-        const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
 
         service
             .cancelAssessment(participationId, submissionId)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp));
+            .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/cancel-assessment`,
             method: 'POST',
         });
-        req.flush(returnedFromService);
+        req.flush(result);
 
-        expect(expectedResult).toEqual(result);
+        expect(actualResponse).toEqual(result);
     });
 
     it('should delete assessment', () => {
         const participationId = 1;
         const submissionId = 18;
-        const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
 
         service
-            .deleteAssessment(participationId, submissionId, mockResponse.submissions[0].results[0].id)
+            .deleteAssessment(participationId, submissionId, result.id!)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp));
+            .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${1}/text-submissions/${submissionId}/results/${mockResponse.submissions[0].results[0].id}`,
+            url: `${SERVER_API_URL}api/participations/${1}/text-submissions/${submissionId}/results/${result.id}`,
             method: 'DELETE',
         });
-        req.flush(returnedFromService);
+        req.flush(result);
 
         httpMock.verify();
     });
@@ -208,25 +181,24 @@ describe('TextAssessment Service', () => {
     it('should delete example assessment', () => {
         const exerciseId = 10;
         const submissionId = 9;
-        const returnedFromService = Object.assign({}, mockResponse.submissions[0].results[0]);
 
         service
             .deleteExampleAssessment(exerciseId, submissionId)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp));
+            .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/exercises/${exerciseId}/example-submissions/${submissionId}/example-text-assessment/feedback`,
             method: 'DELETE',
         });
-        req.flush(returnedFromService);
+        req.flush(result);
 
         httpMock.verify();
     });
 
-    it('should not send feedback', fakeAsync(() => {
+    it('should not send feedback', () => {
         service.trackAssessment();
         httpMock.expectNone({ method: 'POST' });
-    }));
+    });
 
     it('should send feedback', async () => {
         textSubmission.atheneTextAssessmentTrackingToken = '12345';
@@ -266,37 +238,35 @@ describe('TextAssessment Service', () => {
 
     it('should get feedback data for submission', fakeAsync(() => {
         const submissionId = 42;
-        const returnedFromService = Object.assign({}, mockResponse);
         const participationId = 42;
         service
             .getFeedbackDataForExerciseSubmission(participationId, submissionId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(mockResponse.submissions[0].results[0].feedbacks));
+            .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
 
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?correction-round=0`,
             method: 'GET',
         });
-        req.flush(returnedFromService);
+        req.flush(mockResponse);
         tick();
     }));
 
     it('should get feedback data with resultId set', fakeAsync(() => {
         const submissionId = 42;
-        const returnedFromService = Object.assign({}, mockResponse);
         const participationId = 42;
-        const resultId = mockResponse.submissions[0].results[0].id;
+        const resultId = result.id;
 
         service
             .getFeedbackDataForExerciseSubmission(participationId, submissionId, undefined, resultId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(mockResponse.submissions[0].results[0].feedbacks));
+            .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
 
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?resultId=6`,
             method: 'GET',
         });
-        req.flush(returnedFromService);
+        req.flush(mockResponse);
         tick();
     }));
 
@@ -342,17 +312,16 @@ describe('TextAssessment Service', () => {
     }));
 
     it('should get example result for defined exercise and submission', () => {
-        const returnedFromService = Object.assign({}, mockResponse);
         service
             .getExampleResult(exercise.id!, mockResponse.submissions[0].id)
             .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp));
+            .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
             url: `${SERVER_API_URL}api/exercises/${exercise.id}/submissions/${mockResponse.submissions[0].id}/example-result`,
             method: 'GET',
         });
-        req.flush(returnedFromService);
-        expect(expectedResult).toEqual(mockResponse);
+        req.flush(mockResponse);
+        expect(actualResponse).toEqual(mockResponse);
     });
 
     it('should solve feedback conflicts', fakeAsync(() => {
@@ -364,7 +333,6 @@ describe('TextAssessment Service', () => {
             firstFeedback: new Feedback(),
             secondFeedback: new Feedback(),
         } as unknown as FeedbackConflict;
-        const returnedFromService = Object.assign({}, feedbackConflict);
         service
             .solveFeedbackConflict(exerciseId, feedbackConflict.id!)
             .pipe(take(1))
@@ -374,7 +342,7 @@ describe('TextAssessment Service', () => {
             url: `${SERVER_API_URL}api/exercises/${exerciseId}/feedback-conflicts/${feedbackConflict.id}/solve`,
             method: 'POST',
         });
-        req.flush(returnedFromService);
+        req.flush(feedbackConflict);
         tick();
     }));
 
@@ -395,7 +363,7 @@ describe('TextAssessment Service', () => {
 
     it('should match blocks with feedbacks', () => {
         const blocks = mockResponse.submissions[0].blocks;
-        const feedbacks = mockResponse.submissions[0].results[0].feedbacks;
+        const feedbacks = result.feedbacks!;
 
         const expected = [new TextBlockRef(blocks[0], feedbacks[0])];
         const actual = TextAssessmentService.matchBlocksWithFeedbacks(blocks, feedbacks);

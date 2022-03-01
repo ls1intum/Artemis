@@ -339,7 +339,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(importStub).toHaveBeenCalledWith(submission.id, exercise.id);
     });
 
-    it('should cancel assessment', fakeAsync(() => {
+    it('should cancel assessment', () => {
         component['setPropertiesFromServerResponse'](participation);
         fixture.detectChanges();
 
@@ -353,7 +353,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(navigateBackSpy).toHaveBeenCalledTimes(1);
         expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
-    }));
+    });
 
     it('should go to next submission', fakeAsync(() => {
         component['setPropertiesFromServerResponse'](participation);
