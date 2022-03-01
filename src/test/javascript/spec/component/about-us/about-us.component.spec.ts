@@ -9,6 +9,7 @@ import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { BehaviorSubject, of } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ContributorModel } from 'app/core/about-us/models/contributor-model';
 
 describe('AboutUsComponent', () => {
     let fixture: ComponentFixture<AboutUsComponent>;
@@ -45,6 +46,31 @@ describe('AboutUsComponent', () => {
         tick();
         fixture.whenStable().then(() => {
             expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledTimes(1);
+        });
+    }));
+
+    it('load and display contributors', fakeAsync(() => {
+        const staticContentService = TestBed.inject(StaticContentService);
+        const profileService = TestBed.inject(ProfileService);
+
+        const fullName = 'Full Name';
+        const photoDirectory = 'Photo Directory';
+        const role = 'ADMIN';
+        const website = 'www.website.de';
+
+        const contributors = [new ContributorModel(fullName, photoDirectory, role, website)];
+
+        const getStaticJsonFromArtemisServerStub = jest.spyOn(staticContentService, 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], contributors)));
+        const getProfileInfoStub = jest
+            .spyOn(profileService, 'getProfileInfo')
+            .mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
+
+        fixture.detectChanges();
+        tick();
+        fixture.whenStable().then(() => {
+            expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledTimes(1);
+            expect(getProfileInfoStub).toHaveBeenCalledTimes(1);
+            expect(fixture.debugElement.nativeElement.querySelector('#contributorsName').innerHTML).toBe(fullName);
         });
     }));
 });
