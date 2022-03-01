@@ -417,7 +417,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             next: (res) => {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
-                    message: 'Success',
+                    message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
                 console.log(this.buildStructuralSolutionEntriesMessage(res));
             },

@@ -104,6 +104,9 @@
             "deleteTasksAndSolutionEntriesWarning": "Only for testing purpose: Delete all tasks and solution entries.",
             "deleteTasksAndSolutionEntriesSuccess": "Successfully deleted all tasks and solution entries.",
             "deleteTasksAndSolutionEntriesTitle": "Delete Tasks",
+            "createStructuralSolutionEntriesTooltip": "Creates solution entries for all structural test cases of this exercise.",
+            "createStructuralSolutionEntriesTitle": "Create structural solution entries",
+            "createStructuralSolutionEntriesSuccess": "Structural solution entries have been created successfully",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
