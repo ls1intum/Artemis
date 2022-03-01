@@ -93,14 +93,14 @@ public class PlagiarismResource {
     }
 
     /**
-     * Retrieves all plagiarismCases related to a course that were previously confirmed.
+     * Retrieves all plagiarismComparisons related to a course that were previously confirmed.
      *
      * @param courseId the id of the course
      * @return all plagiarism cases
      */
     @GetMapping("courses/{courseId}/plagiarism-cases")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<PlagiarismComparison<?>>> getPlagiarismCasesForCourse(@PathVariable long courseId) {
+    public ResponseEntity<List<PlagiarismComparison<?>>> getPlagiarismComparisonsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get all plagiarism cases in course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
@@ -201,6 +201,16 @@ public class PlagiarismResource {
     public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForEditor(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
         var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
         var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        if (!authenticationCheckService.isAtLeastEditorInCourse(course, user)) {
+            throw new AccessForbiddenException("Only editors registered for this course can access this plagiarism comparison.");
+        }
+        if (!Objects.equals(comparisonA.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
+        }
+
         comparisonA.setSubmissionB(comparisonB.getSubmissionB());
         return ResponseEntity.ok(comparisonA);
     }

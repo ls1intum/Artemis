@@ -403,8 +403,10 @@ public class ModelingExerciseResource {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
-        for (var comparison : plagiarismResult.getComparisons()) {
-            comparison.setPlagiarismResult(null);
+        if (plagiarismResult != null) {
+            for (var comparison : plagiarismResult.getComparisons()) {
+                comparison.setPlagiarismResult(null);
+            }
         }
         return ResponseEntity.ok((ModelingPlagiarismResult) plagiarismResult);
     }

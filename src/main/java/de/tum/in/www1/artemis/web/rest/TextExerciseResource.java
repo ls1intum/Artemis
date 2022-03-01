@@ -469,8 +469,10 @@ public class TextExerciseResource {
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
-        for (var comparison : plagiarismResult.getComparisons()) {
-            comparison.setPlagiarismResult(null);
+        if (plagiarismResult != null) {
+            for (var comparison : plagiarismResult.getComparisons()) {
+                comparison.setPlagiarismResult(null);
+            }
         }
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }

@@ -142,29 +142,29 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     /**
-     * Checks the method getPlagiarismCasesForCourse as student
+     * Checks the method getPlagiarismComparisonsForCourse as student
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getPlagiarismCasesForCourse_student() throws Exception {
+    public void getPlagiarismComparisonsForCourse_student() throws Exception {
         request.getList("/api/courses/" + 1L + "/plagiarism-cases", HttpStatus.FORBIDDEN, PlagiarismCaseDTO.class);
     }
 
     /**
-     * Checks the method getPlagiarismCasesForCourse as tutor
+     * Checks the method getPlagiarismComparisonsForCourse as tutor
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TUTOR")
-    public void getPlagiarismCasesForCourse_tutor() throws Exception {
+    public void getPlagiarismComparisonsForCourse_tutor() throws Exception {
         request.getList("/api/courses/" + 1L + "/plagiarism-cases", HttpStatus.FORBIDDEN, PlagiarismCaseDTO.class);
     }
 
     /**
-     * Checks the method getPlagiarismCasesForCourse as instructor
+     * Checks the method getPlagiarismComparisonsForCourse as instructor
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getPlagiarismCasesForCourse_instructor() throws Exception {
+    public void getPlagiarismComparisonsForCourse_instructor() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
@@ -177,9 +177,8 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         plagiarismComparisonRepository.save(plagiarismComparison1);
         plagiarismComparisonRepository.save(plagiarismComparison2);
 
-        var cases = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases", HttpStatus.OK, PlagiarismCaseDTO.class);
-        assertThat(cases.size()).isEqualTo(1);
-        assertThat(cases.get(0).getComparisons().size()).isEqualTo(2);
+        var comparisons = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases", HttpStatus.OK, plagiarismComparison1.getClass());
+        assertThat(comparisons.size()).isEqualTo(2);
     }
 
     /**

@@ -80,8 +80,10 @@ public class ProgrammingExercisePlagiarismResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
-        for (var comparison : plagiarismResult.getComparisons()) {
-            comparison.setPlagiarismResult(null);
+        if (plagiarismResult != null) {
+            for (var comparison : plagiarismResult.getComparisons()) {
+                comparison.setPlagiarismResult(null);
+            }
         }
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }
