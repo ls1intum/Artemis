@@ -16,7 +16,7 @@ export class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
     /**
      * The plagiarism result
      */
-    plagiarismResult: PlagiarismResult<PlagiarismSubmissionElement>;
+    plagiarismResult?: PlagiarismResult<PlagiarismSubmissionElement>;
 
     /**
      * First submission involved in this comparison.

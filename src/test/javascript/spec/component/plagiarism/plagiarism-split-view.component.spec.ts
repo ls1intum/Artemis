@@ -1,7 +1,7 @@
 import { SimpleChange } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
@@ -16,6 +16,10 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { ArtemisTestModule } from '../../test.module';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
+import { HttpResponse } from '@angular/common/http';
 
 const collapse = jest.fn();
 const setSizes = jest.fn();
@@ -30,9 +34,10 @@ jest.mock('split.js', () => ({
 describe('Plagiarism Split View Component', () => {
     let comp: PlagiarismSplitViewComponent;
     let fixture: ComponentFixture<PlagiarismSplitViewComponent>;
+    let plagiarismCasesService: PlagiarismCasesService;
 
     const modelingExercise = { id: 123, type: ExerciseType.MODELING } as ModelingExercise;
-    const textExercise = { id: 234, type: ExerciseType.TEXT } as TextExercise;
+    const textExercise = { id: 234, type: ExerciseType.TEXT, course: { id: 1 } } as TextExercise;
     const splitControlSubject = new Subject<string>();
 
     const submissionA = { studentLogin: 'studentA' } as PlagiarismSubmission<TextSubmissionElement>;
@@ -51,18 +56,20 @@ describe('Plagiarism Split View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ArtemisTestModule],
             declarations: [PlagiarismSplitViewComponent, MockPipe(ArtemisDatePipe), MockComponent(ModelingSubmissionViewerComponent), MockComponent(TextSubmissionViewerComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismSplitViewComponent);
         comp = fixture.componentInstance;
+        plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
 
         comp.comparison = {
             submissionA,
             submissionB,
         } as PlagiarismComparison<TextSubmissionElement>;
+        comp.plagiarismComparison = comparison;
         comp.splitControlSubject = splitControlSubject;
     });
 
@@ -88,17 +95,23 @@ describe('Plagiarism Split View Component', () => {
         expect(comp.isModelingExercise).toEqual(false);
     });
 
-    it('should parse text matches for comparison', () => {
+    it('should parse text matches for comparison', fakeAsync(() => {
+        comp.exercise = textExercise;
         jest.spyOn(comp, 'parseTextMatches');
+        jest.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForEditor').mockReturnValue(
+            of({ body: comparison } as HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>),
+        );
         comp.ngOnChanges({
             exercise: { currentValue: textExercise } as SimpleChange,
             comparison: { currentValue: comparison } as SimpleChange,
         });
 
+        tick();
+
         expect(comp.isProgrammingOrTextExercise).toBe(true);
         expect(comp.isModelingExercise).toBe(false);
         expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
-    });
+    }));
 
     it('should subscribe to the split control subject', () => {
         comp.exercise = textExercise;
