@@ -719,12 +719,6 @@ public class ProgrammingExercise extends Exercise {
             throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
         }
 
-        // Check that Xcode has no SCA enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && ProjectType.XCODE.equals(getProjectType())) {
-            throw new BadRequestAlertException("The static code analysis is not supported for Xcode programming exercises", "Exercise",
-                    "staticCodeAnalysisNotSupportedForLanguage");
-        }
-
         // Check that FACT has no SCA enabled
         if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && ProjectType.FACT.equals(getProjectType())) {
             throw new BadRequestAlertException("The static code analysis is not supported for FACT programming exercises", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");

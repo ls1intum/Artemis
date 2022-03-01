@@ -251,8 +251,7 @@ public class BambooBuildPlanService {
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
-                // SCA for Xcode is not supported yet
-                if (!isXcodeProject && Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
+                if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
                     List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT);
                     Artifact[] artifacts = staticCodeAnalysisTools.stream()
