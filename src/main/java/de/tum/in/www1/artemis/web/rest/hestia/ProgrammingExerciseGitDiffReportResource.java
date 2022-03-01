@@ -64,7 +64,7 @@ public class ProgrammingExerciseGitDiffReportResource {
      * The fill diff report contains entries with the previous and current code blocks.
      *
      * @param exerciseId the exerciseId of the exercise of which to create the exerciseHint
-     * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with body the full diff report,
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the full diff report,
      */
     @GetMapping("programming-exercises/{exerciseId}/full-diff-report")
     @PreAuthorize("hasRole('EDITOR')")
