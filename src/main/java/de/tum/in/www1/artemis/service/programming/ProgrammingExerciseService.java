@@ -977,19 +977,6 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Recreates the template and solution build plans by deleting the old ones and creating them again as for a new exercise.
-     *
-     * The student build plans are also cleaned up so that no inconsistencies between the template/solution and the student build plans occur.
-     * The student build plans are not recreated, as that will happen automatically when the student submits the next time or the student resumes the exercise.
-     *
-     * @param programmingExercise The exercise for which the template and solution should be recreated.
-     */
-    public void recreateBuildPlans(final ProgrammingExercise programmingExercise) {
-        continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
-        participationService.cleanupAllStudentBuildPlans(programmingExercise);
-    }
-
-    /**
      * Delete all tasks with solution entries for an existing ProgrammingExercise.
      * This method can be used to reset the mappings in case of unconsidered edge cases.
      *

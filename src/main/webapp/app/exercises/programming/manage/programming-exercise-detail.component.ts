@@ -225,6 +225,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Deletes the template and solution build plans and recreates them from scratch.
+     */
     recreateBuildPlans() {
         this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
             next: (res) => {
@@ -233,15 +236,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     message: res,
                     disableTranslation: true,
                 });
+                this.dialogErrorSource.next('');
             },
-            error: (error) => {
-                const errorMessage = error.headers.get('X-artemisApp-alert');
-                this.alertService.addAlert({
-                    type: AlertType.DANGER,
-                    message: errorMessage,
-                    disableTranslation: true,
-                });
-            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 

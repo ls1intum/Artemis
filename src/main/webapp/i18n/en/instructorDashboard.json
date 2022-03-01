@@ -32,7 +32,7 @@
         },
         "cleanup": {
             "title": "Cleanup",
-            "question": "Are you sure you want to delete ALL student build plans for the programming exercise <strong>{{ title }}</strong>? This action can NOT be undone!"
+            "question": "Are you sure you want to delete ALL student build plans for the programming exercise <strong>{{ title }}</strong>? This action can NOT be undone!<br>Individual student build plans will be recreated automatically when students resume the exercise and submit the next time."
         },
         "archive": {
             "title": "Archive",
