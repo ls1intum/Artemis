@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -552,10 +551,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         // TODO: Change this to Gitlab4J api once it's supported: https://github.com/gitlab4j/gitlab4j-api/issues/653
         var body = new GitLabPersonalAccessTokenRequestDTO("Artemis-Automatic-Access-Token", userId, new String[] { "read_repository", "write_repository" });
 
-        var headers = new HttpHeaders();
-        headers.set("PRIVATE-TOKEN", gitlabApi.getAuthToken());
-
-        var entity = new HttpEntity<>(body, headers);
+        var entity = new HttpEntity<>(body);
 
         try {
             var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens", HttpMethod.POST, entity,
