@@ -282,14 +282,17 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/statistics")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ExamChecklistDTO> getExamStatistics(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam statistics: {}", examId);
 
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
+
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var isInstructorInCourse = authCheckService.isAtLeastInstructorInCourse(course, null);
 
         Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
-        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam);
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, isInstructorInCourse);
 
         return ResponseEntity.ok(examChecklistDTO);
     }
