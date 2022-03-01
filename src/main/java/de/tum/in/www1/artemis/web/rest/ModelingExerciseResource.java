@@ -441,6 +441,9 @@ public class ModelingExerciseResource {
         start = System.nanoTime();
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
+        for (var comparison : result.getComparisons()) {
+            comparison.setPlagiarismResult(null);
+        }
         return ResponseEntity.ok(result);
     }
 
