@@ -26,18 +26,25 @@
                     <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
                 </div>
             </div>
+            <!-- ngStyle: sshEnabled -> Remove round edges and edge on the left side || useSsh -> Remove round edges and edge on the right side -->
             <pre
                 style="flex: 1"
-                [ngStyle]="sshEnabled ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' } : {}"
+                [ngStyle]="
+                    sshEnabled && !useSsh
+                        ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none', borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' }
+                        : sshEnabled && useSsh
+                        ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' }
+                        : { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' }
+                "
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
-                >{{ getHttpOrSshRepositoryUrl() }}</pre
+                >{{ getHttpOrSshRepositoryUrl() }} </pre
             >
             <div *ngIf="!useSsh" style="display: flex; align-items: center">
                 <a
                     style="flex: 1"
                     class="btn btn-secondary btn-sm me-2"
-                    style="margin-bottom: 10px; padding-top: 5px; padding-bottom: 5px"
+                    style="margin-bottom: 10px; padding-top: 10px; padding-bottom: 10px; border-top-left-radius: 0; border-bottom-left-radius: 0"
                     [href]="getHttpRepositoryUrl() | safeUrl"
                     target="_blank"
                     rel="noopener noreferrer"

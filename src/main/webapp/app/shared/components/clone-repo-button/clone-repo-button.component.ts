@@ -85,6 +85,10 @@ export class CloneRepoButtonComponent implements OnInit {
         return this.repositoryUrl;
     }
 
+    /**
+     * Used for the Button to open the repository in a separate browser-window
+     * @return HTTPS-Repository link of the student
+     */
     getHttpRepositoryUrl(): string {
         if (this.isTeamParticipation) {
             return this.repositoryUrlForTeam(this.repositoryUrl);
