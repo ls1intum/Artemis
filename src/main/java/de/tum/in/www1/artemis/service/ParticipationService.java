@@ -535,22 +535,6 @@ public class ParticipationService {
     }
 
     /**
-     * Deletes the build plan on the continuous integration server for each student that participated in the exercise.
-     *
-     * This changes the participation state to inactive. Students can resume the exercise.
-     *
-     * @param exercise In which the student build plans will be deleted.
-     */
-    public void cleanupAllStudentBuildPlans(final ProgrammingExercise exercise) {
-        final var participations = studentParticipationRepository.findByExerciseId(exercise.getId());
-        for (final var participation : participations) {
-            if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                cleanupBuildPlan(studentParticipation);
-            }
-        }
-    }
-
-    /**
      * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive.
      * This means the participation can be resumed in the future
      *
