@@ -13,7 +13,7 @@ export class User extends Account {
     public lastNotificationRead?: dayjs.Dayjs;
     public visibleRegistrationNumber?: string;
     public password?: string;
-    public accessToken?: string;
+    public vcsAccessToken?: string;
 
     constructor(
         id?: number,
@@ -33,7 +33,7 @@ export class User extends Account {
         lastNotificationRead?: dayjs.Dayjs,
         password?: string,
         imageUrl?: string,
-        accessToken?: string,
+        vcsAccessToken?: string,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -44,6 +44,6 @@ export class User extends Account {
         this.lastModifiedDate = lastModifiedDate;
         this.lastNotificationRead = lastNotificationRead;
         this.password = password;
-        this.accessToken = accessToken;
+        this.vcsAccessToken = vcsAccessToken;
     }
 }

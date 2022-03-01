@@ -29,7 +29,7 @@
             <pre
                 style="flex: 1"
                 [ngStyle]="sshEnabled ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' } : {}"
-                [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
+                [cdkCopyToClipboard]="getHttpOrSshRepositoryUrlWithPasswordOrToken()"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }}</pre
             >
@@ -39,7 +39,7 @@
             {{ 'artemisApp.exerciseActions.hoverToShow' | artemisTranslate }}
         </p>
         <button
-            [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
+            [cdkCopyToClipboard]="getHttpOrSshRepositoryUrlWithPasswordOrToken()"
             (cdkCopyToClipboardCopied)="onCopyFinished($event)"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm me-2"

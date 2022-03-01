@@ -112,8 +112,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     private boolean isInternal;
 
     @Nullable
-    @Column(name = "access_token")
-    private String accessToken = null;
+    @Column(name = "vcs_access_token")
+    private String vcsAccessToken = null;
 
     /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
@@ -355,11 +355,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public String getAccessToken() {
-        return accessToken;
+    public String getVcsAccessToken() {
+        return vcsAccessToken;
     }
 
-    public void setAccessToken(@Nullable String accessToken) {
-        this.accessToken = accessToken;
+    public void setVcsAccessToken(@Nullable String vcsAccessToken) {
+        this.vcsAccessToken = vcsAccessToken;
     }
 }

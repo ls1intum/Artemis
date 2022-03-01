@@ -487,7 +487,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     .withCanCreateProject(false).withSkipConfirmation(true);
             gitlabUser = gitlabApi.getUserApi().createUser(gitlabUser, passwordService.decryptPassword(user), false);
             String personalAccessToken = createPersonalAccessToken(gitlabUser.getId());
-            user.setAccessToken(personalAccessToken);
+            user.setVcsAccessToken(personalAccessToken);
             userRepository.save(user);
             return gitlabUser;
         }

@@ -33,7 +33,8 @@ export class CloneRepoButtonComponent implements OnInit {
     sshTemplateUrl: string;
     repositoryPassword: string;
     versionControlUrl: string;
-    versionControlAccessToken?: boolean;
+    vcsAccessToken: string;
+    versionControlAccessTokenRequired?: boolean;
     wasCopied = false;
     FeatureToggle = FeatureToggle;
     user: User;
@@ -53,8 +54,8 @@ export class CloneRepoButtonComponent implements OnInit {
         this.accountService.identity().then((user) => {
             this.user = user!;
 
-            if (this.versionControlAccessToken && this.user && this.user.accessToken) {
-                this.repositoryPassword = this.user.accessToken;
+            if (this.versionControlAccessTokenRequired && this.user && this.user.vcsAccessToken) {
+                this.vcsAccessToken = this.user.vcsAccessToken;
             }
         });
 
@@ -66,9 +67,9 @@ export class CloneRepoButtonComponent implements OnInit {
             if (info.versionControlUrl) {
                 this.versionControlUrl = info.versionControlUrl;
             }
-            this.versionControlAccessToken = info.versionControlAccessToken;
-            if (this.versionControlAccessToken && this.user && this.user.accessToken) {
-                this.repositoryPassword = this.user.accessToken;
+            this.versionControlAccessTokenRequired = info.versionControlAccessToken;
+            if (this.versionControlAccessTokenRequired && this.user && this.user.vcsAccessToken) {
+                this.vcsAccessToken = this.user.vcsAccessToken;
             }
         });
 
@@ -90,7 +91,28 @@ export class CloneRepoButtonComponent implements OnInit {
             return this.repositoryUrlForTeam(this.repositoryUrl);
         }
 
+        if (this.versionControlAccessTokenRequired) {
+            return this.getHttpRepositoryUrlWithPasswordOrAccessToken('***********');
+        }
+
         return this.repositoryUrl;
+    }
+
+    getHttpOrSshRepositoryUrlWithPasswordOrToken(): string {
+        if (!this.useSsh && this.versionControlAccessTokenRequired) {
+            return this.getHttpRepositoryUrlWithPasswordOrAccessToken(this.vcsAccessToken);
+        }
+        return this.getHttpOrSshRepositoryUrl();
+    }
+
+    getHttpRepositoryUrlWithPasswordOrAccessToken(passwordOrToken: string) {
+        // repositoryUrl is in format: https://USERNAME@HOST
+
+        const repositoryUrlParts = this.repositoryUrl.split('@');
+        const protocolAndUsername = repositoryUrlParts[0];
+        const host = repositoryUrlParts[1];
+
+        return protocolAndUsername + ':' + passwordOrToken + '@' + host;
     }
 
     /**
@@ -134,6 +156,6 @@ export class CloneRepoButtonComponent implements OnInit {
      * @return sourceTreeUrl
      */
     buildSourceTreeUrl() {
-        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUrl());
+        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUrlWithPasswordOrToken());
     }
 }

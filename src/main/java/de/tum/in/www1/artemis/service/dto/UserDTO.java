@@ -63,7 +63,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     private Set<Organization> organizations;
 
-    private String accessToken;
+    private String vcsAccessToken;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -72,7 +72,7 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getAccessToken());
+                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getVcsAccessToken());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
@@ -100,7 +100,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.groups = groups;
         this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
-        this.accessToken = accessToken;
+        this.vcsAccessToken = accessToken;
     }
 
     public Long getId() {
@@ -223,12 +223,12 @@ public class UserDTO extends AuditingEntityDTO {
         this.guidedTourSettings = guidedTourSettings;
     }
 
-    public String getAccessToken() {
-        return accessToken;
+    public String getVcsAccessToken() {
+        return vcsAccessToken;
     }
 
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
+    public void setVcsAccessToken(String vcsAccessToken) {
+        this.vcsAccessToken = vcsAccessToken;
     }
 
     @Override
