@@ -100,13 +100,13 @@ public class PlagiarismResource {
      */
     @GetMapping("courses/{courseId}/plagiarism-cases")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<PlagiarismCaseDTO>> getPlagiarismCasesForCourse(@PathVariable long courseId) {
+    public ResponseEntity<List<PlagiarismComparison<?>>> getPlagiarismCasesForCourse(@PathVariable long courseId) {
         log.debug("REST request to get all plagiarism cases in course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        List<PlagiarismCaseDTO> foundPlagiarismCasesForCourse = this.plagiarismService.collectAllPlagiarismCasesForCourse(courseId);
+        var foundPlagiarismCasesForCourse = plagiarismComparisonRepository.findCasesForCourse(PlagiarismStatus.CONFIRMED, courseId);
         return ResponseEntity.ok(foundPlagiarismCasesForCourse);
     }
 
@@ -185,6 +185,24 @@ public class PlagiarismResource {
 
         PlagiarismComparison<?> anonymizedComparisonForStudentView = this.plagiarismService.anonymizeComparisonForStudentView(comparison, user.getLogin());
         return ResponseEntity.ok(new PlagiarismCaseDTO(anonymizedComparisonForStudentView.getPlagiarismResult().getExercise(), Set.of(anonymizedComparisonForStudentView)));
+    }
+
+    /**
+     * Retrieves the plagiarismComparison specified by its Id. The submissions are anonymized for the student.
+     * StudentIds are replaced with "Your Submission" and "Other Submission" based on the requesting user.
+     *
+     * @param courseId the id of the course
+     * @param comparisonId the id of the PlagiarismComparison
+     * @return the PlagiarismComparison
+     * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
+     */
+    @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-editor")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForEditor(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
+        var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
+        var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
+        comparisonA.setSubmissionB(comparisonB.getSubmissionB());
+        return ResponseEntity.ok(comparisonA);
     }
 
     /**

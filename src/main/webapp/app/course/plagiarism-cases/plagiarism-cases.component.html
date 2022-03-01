@@ -1,7 +1,7 @@
 <h3 jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases></h3>
 <h4 jhiTranslate="artemisApp.plagiarism.cases.pageSubtitle"></h4>
 
-<div *ngIf="confirmedPlagiarismCases">
+<div *ngIf="confirmedComparisons">
     <div class="row">
         <p class="col text-center m-0">{{ 'artemisApp.plagiarism.cases.notificationsSent' | artemisTranslate }}</p>
         <p class="col text-center m-0">{{ 'artemisApp.plagiarism.cases.responsesAssessed' | artemisTranslate }}</p>
@@ -32,16 +32,18 @@
             <span>{{ 'artemisApp.plagiarism.cases.hideFinished' | artemisTranslate }}</span>
         </label>
     </div>
-    <div *ngFor="let plagiarismCase of confirmedPlagiarismCases; let i = index">
+    <div *ngFor="let comparison of confirmedComparisons; let i = index">
         <div class="card mb-2">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <fa-icon *ngIf="plagiarismCase.exercise.type" [icon]="getIcon(plagiarismCase.exercise.type)"></fa-icon>
-                    {{ plagiarismCase.exercise.title }}
+                    <!--
+                    <fa-icon *ngIf="comparison.plagiarismResult.exercise.type" [icon]="getIcon(comparison.plagiarismResult.exercise.type)"></fa-icon>
+                    {{ comparison.plagiarismResult.exercise.title }}
+                    -->
                 </h5>
             </div>
             <div class="card-body">
-                <jhi-plagiarism-cases-list [courseId]="courseId" [plagiarismCase]="plagiarismCase" [hideFinished]="hideFinished"></jhi-plagiarism-cases-list>
+                <jhi-plagiarism-cases-list [courseId]="courseId" [plagiarismComparison]="comparison" [hideFinished]="hideFinished"></jhi-plagiarism-cases-list>
             </div>
         </div>
     </div>

@@ -7,6 +7,8 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { HttpResponse } from '@angular/common/http';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -25,6 +27,8 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
+    plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+
     public split: Split.Instance;
 
     public isModelingExercise: boolean;
@@ -32,6 +36,8 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     public matchesA: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
     public matchesB: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
+
+    constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
     /**
      * Initialize third party libs inside this lifecycle hook.
@@ -58,8 +64,15 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             this.isProgrammingOrTextExercise = exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT;
         }
 
-        if (changes.comparison && this.isProgrammingOrTextExercise) {
-            this.parseTextMatches(changes.comparison.currentValue as PlagiarismComparison<TextSubmissionElement>);
+        if (changes.comparison) {
+            this.plagiarismCasesService
+                .getPlagiarismComparisonForEditor(this.exercise.course?.id!, changes.comparison.currentValue.id)
+                .subscribe((resp: HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>) => {
+                    this.plagiarismComparison = resp.body!;
+                    if (this.isProgrammingOrTextExercise) {
+                        this.parseTextMatches(this.plagiarismComparison as PlagiarismComparison<TextSubmissionElement>);
+                    }
+                });
         }
     }
 
@@ -95,7 +108,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             if (length === 0) {
                 return;
             }
-            const file = submission.elements[start].file || 'none';
+            const file = submission.elements![start].file || 'none';
 
             if (!filesToMatchedElements.has(file)) {
                 filesToMatchedElements.set(file, []);
@@ -104,8 +117,8 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             const fileMatches = filesToMatchedElements.get(file)!;
 
             fileMatches.push({
-                from: submission.elements[start],
-                to: submission.elements[start + length - 1],
+                from: submission.elements![start],
+                to: submission.elements![start + length - 1],
             });
         });
 
@@ -113,19 +126,19 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     }
 
     getModelingSubmissionA() {
-        return this.comparison.submissionA as PlagiarismSubmission<ModelingSubmissionElement>;
+        return this.plagiarismComparison.submissionA as PlagiarismSubmission<ModelingSubmissionElement>;
     }
 
     getModelingSubmissionB() {
-        return this.comparison.submissionB as PlagiarismSubmission<ModelingSubmissionElement>;
+        return this.plagiarismComparison.submissionB as PlagiarismSubmission<ModelingSubmissionElement>;
     }
 
     getTextSubmissionA() {
-        return this.comparison.submissionA as PlagiarismSubmission<TextSubmissionElement>;
+        return this.plagiarismComparison.submissionA as PlagiarismSubmission<TextSubmissionElement>;
     }
 
     getTextSubmissionB() {
-        return this.comparison.submissionB as PlagiarismSubmission<TextSubmissionElement>;
+        return this.plagiarismComparison.submissionB as PlagiarismSubmission<TextSubmissionElement>;
     }
 
     handleSplitControl(pane: string) {

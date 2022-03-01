@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { ActivatedRoute } from '@angular/router';
 import { downloadFile } from 'app/shared/util/download.util';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { HttpResponse } from '@angular/common/http';
 import { getIcon } from 'app/entities/exercise.model';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 
 @Component({
     selector: 'jhi-plagiarism-cases',
@@ -14,7 +16,8 @@ import { getIcon } from 'app/entities/exercise.model';
 })
 export class PlagiarismCasesComponent implements OnInit {
     getIcon = getIcon;
-    confirmedPlagiarismCases: PlagiarismCase[] | undefined;
+    // TODO: group by exercise
+    confirmedComparisons: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[] = [];
     courseId: number;
     hideFinished = false;
 
@@ -22,9 +25,11 @@ export class PlagiarismCasesComponent implements OnInit {
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.plagiarismCasesService.getPlagiarismCases(this.courseId).subscribe((resp: HttpResponse<PlagiarismCase[]>) => {
-            this.confirmedPlagiarismCases = resp.body!;
-        });
+        this.plagiarismCasesService
+            .getConfirmedComparisons(this.courseId)
+            .subscribe((resp: HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[]>) => {
+                this.confirmedComparisons = resp.body!;
+            });
     }
 
     /**
@@ -32,20 +37,18 @@ export class PlagiarismCasesComponent implements OnInit {
      */
     export(): void {
         const blobParts: string[] = ['Student login,Exercise,Similarity,Status\n'];
-        this.confirmedPlagiarismCases?.forEach((c) => {
-            c.comparisons.forEach((comp) => {
-                const exerciseTitleCSVSanitized = c.exercise.title?.replace(',', '","');
-                if (comp.statusA === PlagiarismStatus.CONFIRMED) {
-                    blobParts.push(`${comp.submissionA.studentLogin},${exerciseTitleCSVSanitized},${comp.similarity},${comp.statusA}\n`);
-                } else if (!comp.studentStatementA) {
-                    blobParts.push(`${comp.submissionA.studentLogin},${exerciseTitleCSVSanitized},${comp.similarity},No statement from student\n`);
-                }
-                if (comp.statusB === PlagiarismStatus.CONFIRMED) {
-                    blobParts.push(`${comp.submissionB.studentLogin},${exerciseTitleCSVSanitized},${comp.similarity},${comp.statusB}\n`);
-                } else if (!comp.studentStatementB) {
-                    blobParts.push(`${comp.submissionB.studentLogin},${exerciseTitleCSVSanitized},${comp.similarity},No statement from student\n`);
-                }
-            });
+        this.confirmedComparisons.forEach((comparison) => {
+            const exerciseTitleCSVSanitized = comparison.plagiarismResult.exercise.title?.replace(',', '","');
+            if (comparison.statusA === PlagiarismStatus.CONFIRMED) {
+                blobParts.push(`${comparison.submissionA.studentLogin},${exerciseTitleCSVSanitized},${comparison.similarity},${comparison.statusA}\n`);
+            } else if (!comparison.studentStatementA) {
+                blobParts.push(`${comparison.submissionA.studentLogin},${exerciseTitleCSVSanitized},${comparison.similarity},No statement from student\n`);
+            }
+            if (comparison.statusB === PlagiarismStatus.CONFIRMED) {
+                blobParts.push(`${comparison.submissionB.studentLogin},${exerciseTitleCSVSanitized},${comparison.similarity},${comparison.statusB}\n`);
+            } else if (!comparison.studentStatementB) {
+                blobParts.push(`${comparison.submissionB.studentLogin},${exerciseTitleCSVSanitized},${comparison.similarity},No statement from student\n`);
+            }
         });
         downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
     }
@@ -55,15 +58,13 @@ export class PlagiarismCasesComponent implements OnInit {
      */
     numberOfInstructorStatements(): number {
         let size = 0;
-        this.confirmedPlagiarismCases?.forEach((c) => {
-            c.comparisons.forEach((comp) => {
-                if (comp.instructorStatementA) {
-                    size++;
-                }
-                if (comp.instructorStatementB) {
-                    size++;
-                }
-            });
+        this.confirmedComparisons.forEach((comp) => {
+            if (comp.instructorStatementA) {
+                size++;
+            }
+            if (comp.instructorStatementB) {
+                size++;
+            }
         });
         return size;
     }
@@ -72,11 +73,7 @@ export class PlagiarismCasesComponent implements OnInit {
      * calculate the total number of plagiarism cases
      */
     numberOfCases(): number {
-        let size = 0;
-        this.confirmedPlagiarismCases!.forEach((c) => {
-            c.comparisons.forEach(() => (size += 2));
-        });
-        return size;
+        return this.confirmedComparisons.length * 2;
     }
 
     /**
@@ -84,15 +81,13 @@ export class PlagiarismCasesComponent implements OnInit {
      */
     numberOfStudentStatements(): number {
         let size = 0;
-        this.confirmedPlagiarismCases!.forEach((c) => {
-            c.comparisons.forEach((cmp) => {
-                if (cmp.studentStatementA) {
-                    size++;
-                }
-                if (cmp.studentStatementB) {
-                    size++;
-                }
-            });
+        this.confirmedComparisons.forEach((comparison) => {
+            if (comparison.studentStatementA) {
+                size++;
+            }
+            if (comparison.studentStatementB) {
+                size++;
+            }
         });
         return size;
     }
@@ -102,15 +97,13 @@ export class PlagiarismCasesComponent implements OnInit {
      */
     numberOfFinalStatuses(): number {
         let size = 0;
-        this.confirmedPlagiarismCases?.forEach((c) => {
-            c.comparisons.forEach((cmp) => {
-                if (cmp.statusA) {
-                    size++;
-                }
-                if (cmp.statusB) {
-                    size++;
-                }
-            });
+        this.confirmedComparisons.forEach((comparison) => {
+            if (comparison.statusA) {
+                size++;
+            }
+            if (comparison.statusB) {
+                size++;
+            }
         });
         return size;
     }

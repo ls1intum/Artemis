@@ -3,6 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
@@ -18,8 +20,8 @@ export class PlagiarismCasesService {
      * Get all plagiarism cases for the course with the given id
      * @param { number } courseId
      */
-    public getPlagiarismCases(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<PlagiarismCase[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases`, { observe: 'response' });
+    public getConfirmedComparisons(courseId: number): Observable<HttpResponse<PlagiarismComparison<PlagiarismSubmissionElement>[]>> {
+        return this.http.get<PlagiarismComparison<PlagiarismSubmissionElement>[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases`, { observe: 'response' });
     }
 
     /**
@@ -30,6 +32,17 @@ export class PlagiarismCasesService {
      */
     public getPlagiarismComparisonForStudent(courseId: number, plagiarismComparisonId: number): Observable<EntityResponseType> {
         return this.http.get<PlagiarismCase>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}`, { observe: 'response' });
+    }
+
+    /**
+     * Get the plagiarism comparison with the given id
+     * @param { number } courseId
+     * @param { number } plagiarismComparisonId
+     */
+    public getPlagiarismComparisonForEditor(courseId: number, plagiarismComparisonId: number): Observable<HttpResponse<PlagiarismComparison<PlagiarismSubmissionElement>>> {
+        return this.http.get<PlagiarismComparison<PlagiarismSubmissionElement>>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-editor`, {
+            observe: 'response',
+        });
     }
 
     /**

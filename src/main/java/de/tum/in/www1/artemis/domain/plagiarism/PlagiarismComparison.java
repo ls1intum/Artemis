@@ -119,12 +119,12 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         return comparison;
     }
 
-    public void setSubmissionA(PlagiarismSubmission<E> submissionA) {
-        this.submissionA = submissionA;
+    public void setSubmissionA(PlagiarismSubmission<?> submissionA) {
+        this.submissionA = (PlagiarismSubmission<E>) submissionA;
     }
 
-    public void setSubmissionB(PlagiarismSubmission<E> submissionB) {
-        this.submissionB = submissionB;
+    public void setSubmissionB(PlagiarismSubmission<?> submissionB) {
+        this.submissionB = (PlagiarismSubmission<E>) submissionB;
     }
 
     public PlagiarismSubmission<E> getSubmissionA() {
