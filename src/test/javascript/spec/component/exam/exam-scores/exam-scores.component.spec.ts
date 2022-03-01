@@ -5,7 +5,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { AggregatedExerciseGroupResult, ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import {
+    AggregatedExamResult,
+    AggregatedExerciseGroupResult,
+    ExamScoreDTO,
+    ExerciseGroup,
+    ExerciseInfo,
+    ExerciseResult,
+    StudentResult,
+} from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -594,6 +602,9 @@ describe('ExamScoresComponent', () => {
         comp.gradingScaleExists = true;
         comp.exerciseGroups = examScoreDTO.exerciseGroups;
         comp.studentResults = examScoreDTO.studentResults;
+        comp.examScoreDTO = examScoreDTO;
+        comp.aggregatedExamResults = new AggregatedExamResult();
+        comp.course = { accuracyOfScores: 1 };
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
 
         comp.toggleFilterForNonEmptySubmission();

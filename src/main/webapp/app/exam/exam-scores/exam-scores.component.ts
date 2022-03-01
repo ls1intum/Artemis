@@ -359,7 +359,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
             if (studentResult.exerciseGroupIdToExerciseResult) {
                 const entries = Object.entries(studentResult.exerciseGroupIdToExerciseResult);
-                if (entries.some(([id, submission]) => !submission.hasNonEmptySubmission)) {
+                if (entries.some(([id, exerciseResult]) => exerciseResult.hasNonEmptySubmission)) {
                     numberNonEmptySubmissions += 1;
                     if (studentResult.submitted) {
                         numberNonEmptySubmittedSubmissions += 1;
@@ -1202,7 +1202,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     private setStandardDeviationForSubmittedFilter(tableState: TableState) {
-        const standardDeviationPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationSubmitted);
+        const standardDeviationPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationSubmitted);
         const standardDeviationPointsSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationInFirstCorrection);
         const standardGradeDeviationSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationSubmitted);
         const standardGradeDeviationInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationInFirstCorrection);
