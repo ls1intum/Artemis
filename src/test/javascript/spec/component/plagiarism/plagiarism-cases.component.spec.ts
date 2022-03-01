@@ -14,6 +14,9 @@ import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/Plag
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { HttpResponse } from '@angular/common/http';
+import { PlagiarismResult } from 'app/exercises/shared/plagiarism/types/PlagiarismResult';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 
 describe('Plagiarism Cases Component', () => {
     let comp: PlagiarismCasesComponent;
@@ -39,8 +42,8 @@ describe('Plagiarism Cases Component', () => {
 
     const plagiarismComparison1 = {
         id: 1,
-        submissionA: { studentLogin: studentLoginA },
-        submissionB: { studentLogin: studentLoginB },
+        submissionA: { studentLogin: studentLoginA } as PlagiarismSubmission<TextSubmissionElement | ModelingSubmissionElement>,
+        submissionB: { studentLogin: studentLoginB } as PlagiarismSubmission<TextSubmissionElement | ModelingSubmissionElement>,
         instructorStatementA: instructorStatement1A,
         instructorStatementB: instructorStatement1B,
         statusA: PlagiarismStatus.CONFIRMED,
@@ -49,21 +52,30 @@ describe('Plagiarism Cases Component', () => {
         studentStatementB: studentStatement1B,
         similarity: 0.5,
         status: PlagiarismStatus.CONFIRMED,
+        plagiarismResult: { id: 1, duration: 8, comparisons: [], similarityDistribution: [0, 10], exercise: { id: 1 } as TextExercise } as PlagiarismResult<
+            TextSubmissionElement | ModelingSubmissionElement
+        >,
+        matches: [],
     } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     const plagiarismComparison2 = {
         id: 2,
-        submissionA: { studentLogin: studentLoginA },
-        submissionB: { studentLogin: studentLoginB },
+        submissionA: { studentLogin: studentLoginA } as PlagiarismSubmission<TextSubmissionElement | ModelingSubmissionElement>,
+        submissionB: { studentLogin: studentLoginB } as PlagiarismSubmission<TextSubmissionElement | ModelingSubmissionElement>,
         instructorStatementA: instructorStatement2A,
         statusA: PlagiarismStatus.DENIED,
+        statusB: PlagiarismStatus.NONE,
         studentStatementA: studentStatement2A,
         similarity: 0.7,
         status: PlagiarismStatus.DENIED,
+        plagiarismResult: { id: 1, duration: 8, comparisons: [], similarityDistribution: [0, 10], exercise: { id: 1 } as TextExercise } as PlagiarismResult<
+            TextSubmissionElement | ModelingSubmissionElement
+        >,
+        matches: [],
     } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     const plagiarismComparison3 = {
         id: 3,
-        submissionA: { studentLogin: studentLoginA },
-        submissionB: { studentLogin: studentLoginB },
+        submissionA: { studentLogin: studentLoginA } as PlagiarismSubmission<TextSubmissionElement | ModelingSubmissionElement>,
+        submissionB: { studentLogin: studentLoginB } as PlagiarismSubmission<TextSubmissionElement | ModelingSubmissionElement>,
         instructorStatementA: instructorStatement3A,
         statusA: PlagiarismStatus.CONFIRMED,
         statusB: PlagiarismStatus.CONFIRMED,
@@ -71,15 +83,25 @@ describe('Plagiarism Cases Component', () => {
         studentStatementB: studentStatement3B,
         similarity: 0.4,
         status: PlagiarismStatus.CONFIRMED,
+        plagiarismResult: { id: 1, duration: 8, comparisons: [], similarityDistribution: [0, 10], exercise: { id: 1 } as TextExercise } as PlagiarismResult<
+            TextSubmissionElement | ModelingSubmissionElement
+        >,
+        matches: [],
     } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     const plagiarismComparison4 = {
         id: 4,
-        submissionA: { studentLogin: studentLoginA },
-        submissionB: { studentLogin: studentLoginB },
+        submissionA: { studentLogin: studentLoginA } as PlagiarismSubmission<TextSubmissionElement | ModelingSubmissionElement>,
+        submissionB: { studentLogin: studentLoginB } as PlagiarismSubmission<TextSubmissionElement | ModelingSubmissionElement>,
         instructorStatementA: instructorStatement4A,
         instructorStatementB: instructorStatement4B,
+        statusA: PlagiarismStatus.NONE,
+        statusB: PlagiarismStatus.NONE,
         similarity: 0.6,
         status: PlagiarismStatus.DENIED,
+        plagiarismResult: { id: 1, duration: 8, comparisons: [], similarityDistribution: [0, 10], exercise: { id: 1 } as TextExercise } as PlagiarismResult<
+            TextSubmissionElement | ModelingSubmissionElement
+        >,
+        matches: [],
     } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
 
     beforeEach(() => {

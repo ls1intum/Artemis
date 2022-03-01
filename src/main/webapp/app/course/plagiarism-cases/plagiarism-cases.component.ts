@@ -111,10 +111,10 @@ export class PlagiarismCasesComponent implements OnInit {
     numberOfFinalStatuses(): number {
         let size = 0;
         this.confirmedComparisons.forEach((comparison) => {
-            if (comparison.statusA) {
+            if (comparison.statusA && comparison.statusA !== PlagiarismStatus.NONE) {
                 size++;
             }
-            if (comparison.statusB) {
+            if (comparison.statusB && comparison.statusB !== PlagiarismStatus.NONE) {
                 size++;
             }
         });
