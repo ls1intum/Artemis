@@ -105,7 +105,7 @@ export class CloneRepoButtonComponent implements OnInit {
 
         // repositoryUrl must be in format https://USERNAME@HOST to insert token
         const repositoryUrlParts = url.split('@');
-        if (repositoryUrlParts.length != 2) {
+        if (repositoryUrlParts.length !== 2) {
             return url;
         }
 
