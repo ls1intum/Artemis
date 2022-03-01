@@ -76,8 +76,10 @@
                 "description": "Wähle einen Wert zwischen 0 und 100 Prozent oder fülle das Feld nicht aus. Wenn für eine zehn-Punkte-Aufgabe die maximale Strafe 20% beträgt, werden maximal zwei Punkte durch Probleme, die von der statischen Analyse gefunden wurden, abgezogen. Wenn kein Wert angegeben wird existiert kein Limit für den Punkteabzug."
             },
             "recreateBuildPlans": {
-                "title": "Build-Pläne",
-                "question": "Sollen die Build-Pläne des Templates und der Musterlösung für Programmieraufgabe <strong>{{ title }}</strong> wirklich neu erstellt werden? Alle vorherigen Änderungen werden überschrieben.<br>Build-Pläne der Studierenden werden <strong>nicht</strong> gelöscht. Diese können getrennt über die Aufräumen-Funktion entfernt werden. Zusammen können diese beiden Operationen dann wieder einen konsistenten Zustand zwischen den Systemen sichergestellen, etwa wenn der Muster-Build-Plan geändert wurde oder es zu einem Datenverlust im CI-System kam."
+                "title": "Build-Pläne neu erstellen",
+                "buttonText": "Build-Pläne",
+                "question": "Sollen die Build-Pläne des Templates und der Musterlösung für Programmieraufgabe <strong>{{ title }}</strong> wirklich neu erstellt werden? Alle vorherigen Änderungen werden überschrieben.<br>Build-Pläne der Studierenden werden <strong>nicht</strong> gelöscht. Diese können getrennt über die Aufräumen-Funktion entfernt werden. Zusammen können diese beiden Operationen dann wieder einen konsistenten Zustand zwischen den Systemen sicherstellen, etwa wenn der Muster-Build-Plan geändert wurde oder es zu einem Datenverlust im CI-System kam.",
+                "description": "Durch Aktivierung dieser Option werden die Build-Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build-Pläne unterstützen standardmäßig die neuesten Features der Artemis-Aufgabenvorlagen."
             },
             "updateTemplate": {
                 "title": "Aktualisiere Template",
