@@ -220,13 +220,14 @@ public class ProgrammingExerciseSolutionEntryResource {
      * POST programming-exercises/:exerciseId/structural-solution-entries : Create the structural solution entries for a programming exercise
      *
      * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 201} and with body the created solution entry,
+     * @return the {@link ResponseEntity} with status {@code 200} and with body the created solution entry,
      */
     @PostMapping("programming-exercises/{exerciseId}/structural-solution-entries")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ProgrammingExerciseSolutionEntry>> createStructuralSolutionEntries(@PathVariable Long exerciseId) {
         log.debug("REST request to create structural solution entries");
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         try {
             var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);

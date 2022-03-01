@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service.hestia.structural;
 
 import java.util.Arrays;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 class StructuralConstructor {
 
     private String[] modifiers;

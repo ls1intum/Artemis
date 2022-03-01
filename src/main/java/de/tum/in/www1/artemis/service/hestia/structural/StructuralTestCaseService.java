@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
@@ -39,11 +40,15 @@ public class StructuralTestCaseService {
 
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     public StructuralTestCaseService(GitService gitService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository) {
+            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.gitService = gitService;
         this.testCaseRepository = testCaseRepository;
         this.solutionEntryRepository = solutionEntryRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     /**
@@ -69,7 +74,11 @@ public class StructuralTestCaseService {
         Repository solutionRepository;
         Repository testRepository;
         try {
-            solutionRepository = gitService.getOrCheckoutRepository(programmingExercise.getVcsSolutionRepositoryUrl(), true);
+            var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
+            if (solutionParticipation.isEmpty()) {
+                return Collections.emptyList();
+            }
+            solutionRepository = gitService.getOrCheckoutRepository(solutionParticipation.get().getVcsRepositoryUrl(), true);
             testRepository = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUrl(), true);
         }
         catch (InterruptedException | GitAPIException e) {
@@ -86,7 +95,13 @@ public class StructuralTestCaseService {
             var packageName = classElement.getStructuralClass().getPackageName();
             var name = classElement.getStructuralClass().getName();
             var solutionClass = solutionClasses.get(packageName + "." + name);
-            var filePath = solutionClass.getSource().getURL().getPath().replace(solutionRepository.getLocalPath().toAbsolutePath().toString() + "/", "");
+            String filePath;
+            if (solutionClass != null) {
+                filePath = solutionClass.getSource().getURL().getPath().replace(solutionRepository.getLocalPath().toAbsolutePath().toString() + "/", "");
+            }
+            else {
+                filePath = "src/" + packageName.replaceAll("\\.", "/") + "/" + name + ".java";
+            }
 
             String classSolutionCode = generateCodeForClass(classElement.getStructuralClass(), classElement.getEnumValues(), solutionClass);
             List<String> constructorsSolutionCode = generateCodeForConstructor(classElement.getConstructors(), classElement.getStructuralClass().getName(), solutionClass);
@@ -148,8 +163,21 @@ public class StructuralTestCaseService {
             extendsSuperclassString = "extends " + structuralClass.getSuperclass() + "";
         }
 
-        classSolutionCode += String.join(" ", "public", classModifier, structuralClass.getName() + genericTypes, extendsSuperclassString, implementedInterfacesString, "{\n");
-        String classInnerContent = structuralClass.isEnum() ? String.join(",\n", enumValues) : "";
+        String concatenatedModifiers = structuralClass.getModifiers() == null ? "" : String.join(" ", structuralClass.getModifiers());
+
+        if (!concatenatedModifiers.isEmpty()) {
+            classSolutionCode += concatenatedModifiers + " ";
+        }
+        classSolutionCode += classModifier + " ";
+        classSolutionCode += structuralClass.getName() + genericTypes + " ";
+        if (!extendsSuperclassString.isEmpty()) {
+            classSolutionCode += extendsSuperclassString + " ";
+        }
+        if (!implementedInterfacesString.isEmpty()) {
+            classSolutionCode += implementedInterfacesString + " ";
+        }
+        classSolutionCode += "{\n";
+        String classInnerContent = structuralClass.isEnum() ? String.join(", ", enumValues) : "";
         classSolutionCode += SINGLE_INDENTATION + classInnerContent + "\n}";
 
         return classSolutionCode;
@@ -178,7 +206,7 @@ public class StructuralTestCaseService {
             List<JavaParameter> solutionParameters = getSolutionParameters(solutionClass, constructor);
             String concatenatedModifiers = constructor.getModifiers() == null ? "" : String.join(" ", constructor.getModifiers());
             String concatenatedParameters = generateArgumentsString(constructor.getParameters(), solutionParameters);
-            String result = String.join(" ", concatenatedModifiers, className + concatenatedParameters, "{\n\n}").trim();
+            String result = String.join(" ", concatenatedModifiers, className + concatenatedParameters, "{\n" + SINGLE_INDENTATION + "\n}").trim();
             constructorsSolutionCode.add(result);
         }
         return constructorsSolutionCode;
@@ -192,7 +220,7 @@ public class StructuralTestCaseService {
                 List<JavaParameter> solutionParameters = solutionMethod == null ? Collections.emptyList() : solutionMethod.getParameters();
                 String genericTypes = "";
                 if (solutionMethod != null && !solutionMethod.getTypeParameters().isEmpty()) {
-                    genericTypes = getGenericTypesString(solutionMethod.getTypeParameters());
+                    genericTypes = " " + getGenericTypesString(solutionMethod.getTypeParameters());
                 }
                 String concatenatedModifiers = method.getModifiers() == null ? "" : String.join(" ", method.getModifiers());
                 String concatenatedParameters = generateArgumentsString(method.getParameters(), solutionParameters);
@@ -200,7 +228,8 @@ public class StructuralTestCaseService {
                 if (solutionMethod != null) {
                     returnType = solutionMethod.getReturnType().getGenericValue();
                 }
-                String result = String.join(" ", concatenatedModifiers + genericTypes, returnType, method.getName() + concatenatedParameters, "{\n\n}").trim();
+                String result = String.join(" ", concatenatedModifiers + genericTypes, returnType, method.getName() + concatenatedParameters, "{\n" + SINGLE_INDENTATION + "\n}")
+                        .trim();
                 methodsSolutionCode.add(result);
             }
         }
@@ -209,7 +238,7 @@ public class StructuralTestCaseService {
     }
 
     private String getGenericTypesString(List<JavaTypeVariable<JavaGenericDeclaration>> typeParameters) {
-        return " <" + typeParameters.stream().map(JavaType::getGenericValue).map(type -> type.substring(1, type.length() - 1)).collect(Collectors.joining(", ")) + ">";
+        return "<" + typeParameters.stream().map(JavaType::getGenericValue).map(type -> type.substring(1, type.length() - 1)).collect(Collectors.joining(", ")) + ">";
     }
 
     private JavaField getSolutionAttribute(JavaClass solutionClass, StructuralAttribute attribute) {
@@ -248,7 +277,7 @@ public class StructuralTestCaseService {
             var typeMatches = parameters[i].equals(solutionParameters.get(i).getType().getValue());
             var isGeneric = false;
             for (JavaTypeVariable<JavaGenericDeclaration> type : genericDeclarations) {
-                if (type.getName().equals(solutionParameters.get(i).getType().getValue())) {
+                if (type.getName().equals(solutionParameters.get(i).getType().getValue()) || (type.getName() + "[]").equals(solutionParameters.get(i).getType().getValue())) {
                     isGeneric = true;
                     break;
                 }

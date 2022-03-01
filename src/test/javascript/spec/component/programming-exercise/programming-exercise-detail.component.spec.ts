@@ -19,6 +19,7 @@ import { Task } from 'app/exercises/programming/shared/instructions-render/task/
 import { MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -169,6 +170,24 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(addAlertSpy).toHaveBeenCalledWith({
             message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
             type: AlertType.SUCCESS,
+        });
+    });
+
+    it('Should create structural solution entries', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        jest.spyOn(programmingExerciseService, 'createStructuralSolutionEntries').mockReturnValue(of([] as ProgrammingExerciseSolutionEntry[]));
+        jest.spyOn(alertService, 'addAlert');
+
+        comp.createStructuralSolutionEntries();
+
+        expect(programmingExerciseService.createStructuralSolutionEntries).toHaveBeenCalledTimes(1);
+        expect(alertService.addAlert).toHaveBeenCalledTimes(1);
+        expect(alertService.addAlert).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
         });
     });
 });

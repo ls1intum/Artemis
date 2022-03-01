@@ -14,6 +14,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -203,6 +204,15 @@ describe('ProgrammingExercise Service', () => {
             tick();
         }));
     });
+
+    it('should make post request for structural solution entries', fakeAsync(() => {
+        const expected = [new ProgrammingExerciseSolutionEntry()];
+        expected[0].filePath = 'src/test.java';
+        service.createStructuralSolutionEntries(123).subscribe((resp) => expect(resp).toEqual(expected));
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/structural-solution-entries` });
+        req.flush(expected);
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();

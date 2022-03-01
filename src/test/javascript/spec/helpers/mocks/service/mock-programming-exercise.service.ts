@@ -11,4 +11,5 @@ export class MockProgrammingExerciseService {
     exportInstructorRepository = (exerciseId: number, repositoryType: ProgrammingExerciseInstructorRepositoryType) => of({ body: undefined });
     extractTasksFromProblemStatement = (exerciseId: number) => of();
     deleteTasksWithSolutionEntries = (exerciseId: number) => of();
+    createStructuralSolutionEntries = (exerciseId: number) => of({});
 }

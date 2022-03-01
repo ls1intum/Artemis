@@ -2,8 +2,10 @@ package de.tum.in.www1.artemis.service.hestia.structural;
 
 import java.util.Arrays;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class StructuralMethod {
 
     @JsonProperty(required = true)
