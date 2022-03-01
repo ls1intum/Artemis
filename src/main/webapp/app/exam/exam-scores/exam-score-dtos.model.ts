@@ -69,7 +69,9 @@ export class AggregatedExamResult {
     public meanPointsTotal: number;
     public meanPointsRelativeTotal: number;
     public meanPointsNonEmpty?: number;
+    public meanScoreNonEmpty: number;
     public meanPointsSubmittedAndNonEmpty?: number;
+    public meanScoreSubmittedAndNonEmpty: number;
     public meanGradePassed?: string;
     public meanGradeSubmitted?: string;
     public meanGradeTotal?: string;
@@ -82,7 +84,9 @@ export class AggregatedExamResult {
     public medianTotal: number;
     public medianRelativeTotal: number;
     public medianNonEmpty?: number;
+    public medianScoreNonEmpty: number;
     public medianSubmittedAndNonEmpty?: number;
+    public medianScoreSubmittedAndNonEmpty: number;
     public medianGradePassed?: string;
     public medianGradeSubmitted?: string;
     public medianGradeTotal?: string;
@@ -112,7 +116,9 @@ export class AggregatedExamResult {
     public meanPointsTotalInFirstCorrection: number;
     public meanPointsRelativeTotalInFirstCorrection: number;
     public meanPointsNonEmptyInFirstCorrection?: number;
+    public meanScoreNonEmptyInFirstCorrection: number;
     public meanPointsSubmittedAndNonEmptyInFirstCorrection?: number;
+    public meanScoreSubmittedAndNonEmptyInFirstCorrection: number;
     public meanGradePassedInFirstCorrection?: string;
     public meanGradeInFirstCorrection?: string;
     public meanGradeTotalInFirstCorrection?: string;
@@ -125,7 +131,9 @@ export class AggregatedExamResult {
     public medianTotalInFirstCorrection: number;
     public medianRelativeTotalInFirstCorrection: number;
     public medianNonEmptyInFirstCorrection?: number;
+    public medianScoreNonEmptyInFirstCorrection: number;
     public medianSubmittedAndNonEmptyInFirstCorrection?: number;
+    public medianScoreSubmittedAndNonEmptyInFirstCorrection: number;
     public medianGradePassedInFirstCorrection?: string;
     public medianGradeInFirstCorrection?: string;
     public medianGradeTotalInFirstCorrection?: string;
