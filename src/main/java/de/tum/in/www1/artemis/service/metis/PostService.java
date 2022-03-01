@@ -608,27 +608,21 @@ public class PostService extends PostingService {
 
     @Nullable
     private static Integer sortByPriority(Post postA, Post postB) {
-        if (postA.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT && postA.getDisplayPriority() == DisplayPriority.PINNED
-                && postB.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT) {
+        if ((postA.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT && postA.getDisplayPriority() == DisplayPriority.PINNED
+                && postB.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT)
+                || ((postA.getDisplayPriority() == DisplayPriority.PINNED && postB.getDisplayPriority() != DisplayPriority.PINNED)
+                        || postA.getDisplayPriority() != DisplayPriority.ARCHIVED && postB.getDisplayPriority() == DisplayPriority.ARCHIVED)) {
             return -1;
         }
-        if (postA.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT && postB.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT
-                && postB.getDisplayPriority() == DisplayPriority.PINNED) {
+        else if ((postA.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT && postB.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT
+                && postB.getDisplayPriority() == DisplayPriority.PINNED)
+                || (postA.getDisplayPriority() != DisplayPriority.PINNED && postB.getDisplayPriority() == DisplayPriority.PINNED)
+                || postA.getDisplayPriority() == DisplayPriority.ARCHIVED && postB.getDisplayPriority() != DisplayPriority.ARCHIVED) {
             return 1;
         }
-        if (postA.getDisplayPriority() == DisplayPriority.PINNED && postB.getDisplayPriority() != DisplayPriority.PINNED) {
-            return -1;
+        else {
+            return null;
         }
-        if (postA.getDisplayPriority() != DisplayPriority.PINNED && postB.getDisplayPriority() == DisplayPriority.PINNED) {
-            return 1;
-        }
-        if (postA.getDisplayPriority() == DisplayPriority.ARCHIVED && postB.getDisplayPriority() != DisplayPriority.ARCHIVED) {
-            return 1;
-        }
-        if (postA.getDisplayPriority() != DisplayPriority.ARCHIVED && postB.getDisplayPriority() == DisplayPriority.ARCHIVED) {
-            return -1;
-        }
-        return null;
     }
 
     @Nullable
