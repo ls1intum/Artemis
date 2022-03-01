@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { downloadFile } from 'app/shared/util/download.util';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { HttpResponse } from '@angular/common/http';
-import { getIcon } from 'app/entities/exercise.model';
+import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
@@ -16,8 +16,9 @@ import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types
 })
 export class PlagiarismCasesComponent implements OnInit {
     getIcon = getIcon;
-    // TODO: group by exercise
     confirmedComparisons: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[] = [];
+    exercises: Exercise[] = [];
+    groupedComparisons: any;
     courseId: number;
     hideFinished = false;
 
@@ -29,6 +30,18 @@ export class PlagiarismCasesComponent implements OnInit {
             .getConfirmedComparisons(this.courseId)
             .subscribe((resp: HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[]>) => {
                 this.confirmedComparisons = resp.body!;
+                this.groupedComparisons = this.confirmedComparisons.reduce((acc, comparison) => {
+                    // Group initialization
+                    if (!acc[comparison.plagiarismResult!.exercise.id!]) {
+                        acc[comparison.plagiarismResult!.exercise.id!] = [];
+                        this.exercises.push(comparison.plagiarismResult!.exercise);
+                    }
+
+                    // Grouping
+                    acc[comparison.plagiarismResult!.exercise.id!].push(comparison);
+
+                    return acc;
+                }, {});
             });
     }
 
@@ -38,7 +51,7 @@ export class PlagiarismCasesComponent implements OnInit {
     export(): void {
         const blobParts: string[] = ['Student login,Exercise,Similarity,Status\n'];
         this.confirmedComparisons.forEach((comparison) => {
-            const exerciseTitleCSVSanitized = comparison.plagiarismResult.exercise.title?.replace(',', '","');
+            const exerciseTitleCSVSanitized = comparison.plagiarismResult?.exercise.title?.replace(',', '","');
             if (comparison.statusA === PlagiarismStatus.CONFIRMED) {
                 blobParts.push(`${comparison.submissionA.studentLogin},${exerciseTitleCSVSanitized},${comparison.similarity},${comparison.statusA}\n`);
             } else if (!comparison.studentStatementA) {

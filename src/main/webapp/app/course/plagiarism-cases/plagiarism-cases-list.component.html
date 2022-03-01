@@ -1,5 +1,5 @@
 <ng-container *ngIf="!hideFinished || !(plagiarismComparison.statusA && plagiarismComparison.statusB)">
-    <div class="row">
+    <div class="row mb-3">
         <div class="col-6">
             <span class="ms-2" *ngIf="activeSplitViewComparison !== plagiarismComparison.id">{{ plagiarismComparison.submissionA.studentLogin }}</span>
             <span class="badge text-white bg-primary" *ngIf="plagiarismComparison.studentStatementA && !plagiarismComparison.statusA">
@@ -122,7 +122,7 @@
         </div>
         <jhi-plagiarism-split-view
             *ngIf="plagiarismComparison.id == activeSplitViewComparison"
-            [exercise]="plagiarismComparison.plagiarismResult.exercise"
+            [exercise]="plagiarismComparison.plagiarismResult!.exercise"
             [comparison]="plagiarismComparison"
             [splitControlSubject]="splitControlSubject"
         ></jhi-plagiarism-split-view>

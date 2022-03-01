@@ -32,18 +32,18 @@
             <span>{{ 'artemisApp.plagiarism.cases.hideFinished' | artemisTranslate }}</span>
         </label>
     </div>
-    <div *ngFor="let comparison of confirmedComparisons; let i = index">
+    <div *ngFor="let exercise of exercises; let i = index">
         <div class="card mb-2">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <!--
-                    <fa-icon *ngIf="comparison.plagiarismResult.exercise.type" [icon]="getIcon(comparison.plagiarismResult.exercise.type)"></fa-icon>
-                    {{ comparison.plagiarismResult.exercise.title }}
-                    -->
+                    <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)"></fa-icon>
+                    {{ exercise.title }}
                 </h5>
             </div>
             <div class="card-body">
-                <jhi-plagiarism-cases-list [courseId]="courseId" [plagiarismComparison]="comparison" [hideFinished]="hideFinished"></jhi-plagiarism-cases-list>
+                <ng-container *ngFor="let comparison of groupedComparisons[exercise!.id!]">
+                    <jhi-plagiarism-cases-list [courseId]="courseId" [plagiarismComparison]="comparison" [hideFinished]="hideFinished"></jhi-plagiarism-cases-list>
+                </ng-container>
             </div>
         </div>
     </div>

@@ -8,8 +8,6 @@ import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.jplag.JPlagComparison;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
@@ -24,7 +22,6 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     /**
      * The result this comparison belongs to.
      */
-    @JsonIgnore
     @ManyToOne(targetEntity = PlagiarismResult.class)
     private PlagiarismResult<E> plagiarismResult;
 
