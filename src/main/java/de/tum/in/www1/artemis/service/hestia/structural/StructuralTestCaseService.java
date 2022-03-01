@@ -27,6 +27,9 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
+/**
+ * Service for handling Solution Entries of structural Test Cases.
+ */
 @Service
 public class StructuralTestCaseService {
 
@@ -126,10 +129,27 @@ public class StructuralTestCaseService {
         return newSolutionEntries;
     }
 
+    /**
+     * Finds a structural test case of a specific type and class in the list of all test cases of an exercise.
+     *
+     * @param type The type of the structural test case (e.g. Class, Methods)
+     * @param className The name of the Class
+     * @param testCases The list of test cases
+     * @return The matching test case or empty in none found
+     */
     private Optional<ProgrammingExerciseTestCase> findStructuralTestCase(String type, String className, Set<ProgrammingExerciseTestCase> testCases) {
         return testCases.stream().filter(testCase -> testCase.getTestName().equals("test" + type + "[" + className + "]")).findFirst();
     }
 
+    /**
+     * Helper method for creating a solution entry.
+     * If the given test case is not present this will return null.
+     *
+     * @param filePath The filePath of the solution entry
+     * @param code The code of the solution entry
+     * @param testCase The test case of the solution entry
+     * @return A SolutionEntry if testCase is present otherwise null
+     */
     private ProgrammingExerciseSolutionEntry createSolutionEntry(String filePath, String code, Optional<ProgrammingExerciseTestCase> testCase) {
         return testCase.map(actualTestCase -> {
             var solutionEntry = new ProgrammingExerciseSolutionEntry();
@@ -143,6 +163,14 @@ public class StructuralTestCaseService {
         }).orElse(null);
     }
 
+    /**
+     * Generates well formatted the Java code for a class/interface/enum
+     *
+     * @param structuralClass The class object read from the test.json file
+     * @param enumValues The enum values if the class is an enum
+     * @param solutionClass The class read by QDox
+     * @return The code for the class
+     */
     private String generateCodeForClass(StructuralClass structuralClass, String[] enumValues, JavaClass solutionClass) {
         String classSolutionCode = "";
         classSolutionCode += String.join(" ", "package", structuralClass.getPackageName()) + ";\n";
@@ -183,6 +211,13 @@ public class StructuralTestCaseService {
         return classSolutionCode;
     }
 
+    /**
+     * Generates well formatted Java code for attributes of a class.
+     *
+     * @param attributes The attribute objects read from the test.json file
+     * @param solutionClass The class read by QDox that the attributes are a part of
+     * @return The code for each attribute
+     */
     private List<String> generateCodeForAttributes(StructuralAttribute[] attributes, JavaClass solutionClass) {
         List<String> attributesSolutionCode = new ArrayList<>();
         if (attributes != null) {
@@ -197,6 +232,14 @@ public class StructuralTestCaseService {
         return attributesSolutionCode;
     }
 
+    /**
+     * Generates well formatted Java code for constructors of a class.
+     *
+     * @param constructors The constructor objects read from the test.json file
+     * @param className The name of the class read from the test.json file
+     * @param solutionClass The class read by QDox that the constructors are a part of
+     * @return The code for each constructor
+     */
     private List<String> generateCodeForConstructor(StructuralConstructor[] constructors, String className, JavaClass solutionClass) {
         List<String> constructorsSolutionCode = new ArrayList<>();
         if (constructors == null) {
@@ -212,6 +255,13 @@ public class StructuralTestCaseService {
         return constructorsSolutionCode;
     }
 
+    /**
+     * Generates well formatted Java code for methods of a class.
+     *
+     * @param methods The method objects read from the test.json file
+     * @param solutionClass The class read by QDox that the methods are a part of
+     * @return The code for each method
+     */
     private List<String> generateCodeForMethods(StructuralMethod[] methods, JavaClass solutionClass) {
         List<String> methodsSolutionCode = new ArrayList<>();
         if (methods != null) {
