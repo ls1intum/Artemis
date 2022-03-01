@@ -100,7 +100,7 @@ public class StructuralTestCaseService {
             var solutionClass = solutionClasses.get(packageName + "." + name);
             String filePath;
             if (solutionClass != null) {
-                filePath = solutionClass.getSource().getURL().getPath().replace(solutionRepository.getLocalPath().toAbsolutePath().toString() + "/", "");
+                filePath = solutionClass.getSource().getURL().getPath().replace(solutionRepository.getLocalPath().toAbsolutePath() + "/", "");
             }
             else {
                 filePath = "src/" + packageName.replaceAll("\\.", "/") + "/" + name + ".java";
@@ -212,7 +212,7 @@ public class StructuralTestCaseService {
         if (attributes != null) {
             for (StructuralAttribute attribute : attributes) {
                 JavaField solutionAttribute = getSolutionAttribute(solutionClass, attribute);
-                String concatenatedModifiers = attribute.getModifiers() == null ? "" : String.join(" ", attribute.getModifiers());
+                String concatenatedModifiers = formatModifiers(attribute.getModifiers());
                 String result = String.join(" ", concatenatedModifiers, solutionAttribute == null ? attribute.getType() : solutionAttribute.getType().getGenericValue(),
                         attribute.getName()) + ";";
                 attributesSolutionCode.add(result);
@@ -236,7 +236,7 @@ public class StructuralTestCaseService {
         }
         for (StructuralConstructor constructor : constructors) {
             List<JavaParameter> solutionParameters = getSolutionParameters(solutionClass, constructor);
-            String concatenatedModifiers = constructor.getModifiers() == null ? "" : String.join(" ", constructor.getModifiers());
+            String concatenatedModifiers = formatModifiers(constructor.getModifiers());
             String concatenatedParameters = generateArgumentsString(constructor.getParameters(), solutionParameters);
             String result = String.join(" ", concatenatedModifiers, className + concatenatedParameters, "{\n" + SINGLE_INDENTATION + "\n}").trim();
             constructorsSolutionCode.add(result);
@@ -261,7 +261,7 @@ public class StructuralTestCaseService {
                 if (solutionMethod != null && !solutionMethod.getTypeParameters().isEmpty()) {
                     genericTypes = " " + getGenericTypesString(solutionMethod.getTypeParameters());
                 }
-                String concatenatedModifiers = method.getModifiers() == null ? "" : String.join(" ", method.getModifiers());
+                String concatenatedModifiers = formatModifiers(method.getModifiers());
                 String concatenatedParameters = generateArgumentsString(method.getParameters(), solutionParameters);
                 String returnType = method.getReturnType();
                 if (solutionMethod != null) {
@@ -274,6 +274,20 @@ public class StructuralTestCaseService {
         }
 
         return methodsSolutionCode;
+    }
+
+    /**
+     * Formats the modifiers properly.
+     * Currently, it only removes the 'optional: ' tags and joins them together.
+     *
+     * @param modifiers The modifiers array
+     * @return The formatted modifiers
+     */
+    private String formatModifiers(String[] modifiers) {
+        if (modifiers == null) {
+            return "";
+        }
+        return Arrays.stream(modifiers).map(modifier -> modifier.replaceAll("optional: ", "")).collect(Collectors.joining(" "));
     }
 
     private String getGenericTypesString(List<JavaTypeVariable<JavaGenericDeclaration>> typeParameters) {
