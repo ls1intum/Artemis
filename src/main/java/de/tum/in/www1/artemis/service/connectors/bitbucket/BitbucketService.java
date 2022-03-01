@@ -236,7 +236,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     /**
-     * Updates an user on Bitbucket
+     * Updates a user on Bitbucket
      *
      * @param username     The username of the user
      * @param emailAddress The new email address
@@ -297,7 +297,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     /**
-     * Deletes an user from Bitbucket. It also updates all previous occurrences of the username to a non-identifying username.
+     * Deletes a user from Bitbucket. It also updates all previous occurrences of the username to a non-identifying username.
      *
      * @param username The user to delete
      */
