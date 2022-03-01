@@ -81,7 +81,7 @@ export class AggregatedExamResult {
     public medianRelativeSubmitted: number;
     public medianTotal: number;
     public medianRelativeTotal: number;
-    public medianNonEmtpy?: number;
+    public medianNonEmpty?: number;
     public medianSubmittedAndNonEmpty?: number;
     public medianGradePassed?: string;
     public medianGradeSubmitted?: string;
@@ -111,24 +111,36 @@ export class AggregatedExamResult {
     public meanPointsRelativeInFirstCorrection: number;
     public meanPointsTotalInFirstCorrection: number;
     public meanPointsRelativeTotalInFirstCorrection: number;
+    public meanPointsNonEmptyInFirstCorrection?: number;
+    public meanPointsSubmittedAndNonEmptyInFirstCorrection?: number;
     public meanGradePassedInFirstCorrection?: string;
     public meanGradeInFirstCorrection?: string;
     public meanGradeTotalInFirstCorrection?: string;
+    public meanGradeNonEmptyInFirstCorrection?: string;
+    public meanGradeSubmittedAndNonEmptyInFirstCorrection?: string;
     public medianPassedInFirstCorrection?: number;
     public medianRelativePassedInFirstCorrection?: number;
     public medianInFirstCorrection: number;
     public medianRelativeInFirstCorrection: number;
     public medianTotalInFirstCorrection: number;
     public medianRelativeTotalInFirstCorrection: number;
+    public medianNonEmptyInFirstCorrection?: number;
+    public medianSubmittedAndNonEmptyInFirstCorrection?: number;
     public medianGradePassedInFirstCorrection?: string;
     public medianGradeInFirstCorrection?: string;
     public medianGradeTotalInFirstCorrection?: string;
+    public medianGradeNonEmptyInFirstCorrection?: string;
+    public medianGradeSubmittedAndNonEmptyInFirstCorrection?: string;
     public standardDeviationPassedInFirstCorrection?: number;
     public standardDeviationInFirstCorrection: number;
     public standardDeviationTotalInFirstCorrection: number;
+    public standardDeviationNonEmptyInFirstCorrection?: number;
+    public standardDeviationSubmittedAndNonEmptyInFirstCorrection?: number;
     public standardGradeDeviationPassedInFirstCorrection?: number;
     public standardGradeDeviationInFirstCorrection?: number;
     public standardGradeDeviationTotalInFirstCorrection?: number;
+    public standardGradeDeviationNonEmptyInFirstCorrection?: number;
+    public standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection?: number;
 
     constructor() {}
 }
