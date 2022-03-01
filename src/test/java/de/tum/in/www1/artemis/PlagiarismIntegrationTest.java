@@ -181,6 +181,22 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(comparisons.size()).isEqualTo(2);
     }
 
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void getPlagiarismComparisonsForEditor() throws Exception {
+        Course course = database.addCourseWithOneFinishedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
+        plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
+        plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
+        var savedComparison = plagiarismComparisonRepository.save(plagiarismComparison1);
+
+        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + savedComparison.getId() + "/for-editor", HttpStatus.OK,
+                plagiarismComparison1.getClass());
+        assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
+    }
+
     /**
      * Checks the method updatePlagiarismComparisonStudentStatement for student A
      */
