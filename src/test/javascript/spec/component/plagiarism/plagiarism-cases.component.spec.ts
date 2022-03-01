@@ -7,15 +7,13 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCasesListComponent } from 'app/course/plagiarism-cases/plagiarism-cases-list.component';
-import { EntityArrayResponseType, PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { HttpResponse } from '@angular/common/http';
 
 describe('Plagiarism Cases Component', () => {
     let comp: PlagiarismCasesComponent;
@@ -84,18 +82,6 @@ describe('Plagiarism Cases Component', () => {
         status: PlagiarismStatus.DENIED,
     } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
 
-    const textExercise1 = { id: 1, type: ExerciseType.TEXT } as TextExercise;
-    const textExercise2 = { id: 2, type: ExerciseType.TEXT } as TextExercise;
-
-    const plagiarismCase1 = {
-        exercise: textExercise1,
-        comparisons: [plagiarismComparison1, plagiarismComparison2],
-    } as PlagiarismCase;
-    const plagiarismCase2 = {
-        exercise: textExercise2,
-        comparisons: [plagiarismComparison3, plagiarismComparison4],
-    } as PlagiarismCase;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -109,8 +95,12 @@ describe('Plagiarism Cases Component', () => {
 
                 plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
                 getPlagiarismCasesStub = jest
-                    .spyOn(plagiarismCasesService, 'getPlagiarismCases')
-                    .mockReturnValue(of({ body: [plagiarismCase1, plagiarismCase2] } as EntityArrayResponseType));
+                    .spyOn(plagiarismCasesService, 'getConfirmedComparisons')
+                    .mockReturnValue(
+                        of({ body: [plagiarismComparison1, plagiarismComparison2, plagiarismComparison3, plagiarismComparison4] } as HttpResponse<
+                            PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[]
+                        >),
+                    );
             });
     });
 
@@ -124,46 +114,46 @@ describe('Plagiarism Cases Component', () => {
         tick();
 
         expect(comp.courseId).toBe(1);
-        expect(comp.confirmedPlagiarismCases).toEqual([plagiarismCase1, plagiarismCase2]);
+        expect(comp.confirmedComparisons).toEqual([plagiarismComparison1, plagiarismComparison2, plagiarismComparison3, plagiarismComparison4]);
         expect(getPlagiarismCasesStub).toHaveBeenCalledWith(1);
     }));
 
     it('should calculate the number of instructor statements', () => {
-        comp.confirmedPlagiarismCases = [plagiarismCase1, plagiarismCase2];
+        comp.confirmedComparisons = [plagiarismComparison1, plagiarismComparison2, plagiarismComparison3, plagiarismComparison4];
 
         expect(comp.numberOfInstructorStatements()).toBe(6);
 
-        comp.confirmedPlagiarismCases = [plagiarismCase1];
+        comp.confirmedComparisons = [plagiarismComparison1, plagiarismComparison2];
 
         expect(comp.numberOfInstructorStatements()).toBe(3);
     });
 
     it('should calculate the number of plagiarism cases', () => {
-        comp.confirmedPlagiarismCases = [plagiarismCase1, plagiarismCase2];
+        comp.confirmedComparisons = [plagiarismComparison1, plagiarismComparison2, plagiarismComparison3, plagiarismComparison4];
 
         expect(comp.numberOfCases()).toBe(8);
 
-        comp.confirmedPlagiarismCases = [plagiarismCase1];
+        comp.confirmedComparisons = [plagiarismComparison1, plagiarismComparison2];
 
         expect(comp.numberOfCases()).toBe(4);
     });
 
     it('should calculate the number of student statements', () => {
-        comp.confirmedPlagiarismCases = [plagiarismCase1, plagiarismCase2];
+        comp.confirmedComparisons = [plagiarismComparison1, plagiarismComparison2, plagiarismComparison3, plagiarismComparison4];
 
         expect(comp.numberOfStudentStatements()).toBe(5);
 
-        comp.confirmedPlagiarismCases = [plagiarismCase1];
+        comp.confirmedComparisons = [plagiarismComparison1, plagiarismComparison2];
 
         expect(comp.numberOfStudentStatements()).toBe(3);
     });
 
     it('should calculate the number of final statuses', () => {
-        comp.confirmedPlagiarismCases = [plagiarismCase1, plagiarismCase2];
+        comp.confirmedComparisons = [plagiarismComparison1, plagiarismComparison2, plagiarismComparison3, plagiarismComparison4];
 
         expect(comp.numberOfFinalStatuses()).toBe(5);
 
-        comp.confirmedPlagiarismCases = [plagiarismCase1];
+        comp.confirmedComparisons = [plagiarismComparison1, plagiarismComparison2];
 
         expect(comp.numberOfFinalStatuses()).toBe(3);
     });
