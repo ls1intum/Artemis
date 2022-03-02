@@ -5,14 +5,12 @@ import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -238,7 +236,7 @@ public class PostService extends PostingService {
 
         // search by text or #post
         if (postContextFilter.getSearchText() != null) {
-            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
+            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).toList();
         }
 
         final Page<Post> postsPage;
@@ -573,9 +571,8 @@ public class PostService extends PostingService {
      * @return number indicating the order of two elements
      */
     public static int postComparator(Post postA, Post postB, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
-
         // sort by priority
-        Integer order = compareByPriority(postA, postB);
+        int order = compareByPriority(postA, postB);
         if (order != 0) {
             return order;
         }
@@ -606,8 +603,7 @@ public class PostService extends PostingService {
         return 0;
     }
 
-    @Nullable
-    private static Integer compareByPriority(Post postA, Post postB) {
+    private static int compareByPriority(Post postA, Post postB) {
         if ((postA.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT && postA.getDisplayPriority() == DisplayPriority.PINNED
                 && postB.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT)
                 || ((postA.getDisplayPriority() == DisplayPriority.PINNED && postB.getDisplayPriority() != DisplayPriority.PINNED)
@@ -625,10 +621,8 @@ public class PostService extends PostingService {
         }
     }
 
-    @Nullable
     private static int compareByVotes(Post postA, Post postB, SortingOrder sortingOrder) {
-
-        Integer comparisonResult = 0;
+        int comparisonResult = 0;
 
         int postAVoteEmojiCount = 0;
         int postBVoteEmojiCount = 0;
@@ -644,17 +638,15 @@ public class PostService extends PostingService {
         if (postAVoteEmojiCount > postBVoteEmojiCount) {
             comparisonResult = 1;
         }
-        if (postAVoteEmojiCount < postBVoteEmojiCount) {
+        else if (postAVoteEmojiCount < postBVoteEmojiCount) {
             comparisonResult = -1;
         }
 
         return applySortingOrder(sortingOrder, comparisonResult);
     }
 
-    @Nullable
     private static int compareByCreationDate(Post postA, Post postB, SortingOrder sortingOrder) {
-
-        Integer comparisonResult = 0;
+        int comparisonResult = 0;
 
         if (postA.getCreationDate().compareTo(postB.getCreationDate()) > 0) {
             comparisonResult = 1;
@@ -666,10 +658,8 @@ public class PostService extends PostingService {
         return applySortingOrder(sortingOrder, comparisonResult);
     }
 
-    @Nullable
     private static int compareByAnswerCount(Post postA, Post postB, SortingOrder sortingOrder) {
-
-        Integer comparisonResult = 0;
+        int comparisonResult = 0;
 
         int postAAnswerCount = 0;
         int postBAnswerCount = 0;
@@ -684,7 +674,7 @@ public class PostService extends PostingService {
         if (postAAnswerCount > postBAnswerCount) {
             comparisonResult = 1;
         }
-        if (postAAnswerCount < postBAnswerCount) {
+        else if (postAAnswerCount < postBAnswerCount) {
             comparisonResult = -1;
         }
 
@@ -692,11 +682,6 @@ public class PostService extends PostingService {
     }
 
     private static int applySortingOrder(SortingOrder sortingOrder, int comparisonResult) {
-
-        if (comparisonResult == 0) {
-            return 0;
-        }
-
         if (SortingOrder.ASCENDING == sortingOrder) {
             return comparisonResult;
         }

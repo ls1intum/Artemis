@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -64,10 +63,10 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)
-        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream().filter(coursePost -> (coursePost.getAnswers() != null)).collect(Collectors.toList());
+        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream().filter(coursePost -> (coursePost.getAnswers() != null)).toList();
 
         // get all answerPosts
-        existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).collect(Collectors.toList());
+        existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
         courseId = existingPostsWithAnswers.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
     }
@@ -236,9 +235,8 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
 
-        existingPostsWithAnswers.sort(Comparator
-                .comparing((Post post) -> post.getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).collect(Collectors.toList()).size())
-                .reversed());
+        existingPostsWithAnswers
+                .sort(Comparator.comparing((Post post) -> post.getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count()).reversed());
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
     }
@@ -274,8 +272,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
 
-        existingPostsWithAnswers.sort(Comparator
-                .comparing((Post post) -> post.getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).collect(Collectors.toList()).size()));
+        existingPostsWithAnswers.sort(Comparator.comparing((Post post) -> post.getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count()));
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
     }
