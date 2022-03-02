@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -236,7 +237,7 @@ public class PostService extends PostingService {
 
         // search by text or #post
         if (postContextFilter.getSearchText() != null) {
-            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).toList();
+            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
         }
 
         final Page<Post> postsPage;
