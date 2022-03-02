@@ -878,14 +878,16 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty = mean(overallPointsSubmittedAndNonEmpty);
-        this.aggregatedExamResults.medianSubmittedAndNonEmpty = median(overallPointsSubmittedAndNonEmpty);
-        if (this.examScoreDTO.maxPoints) {
-            this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty = (this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty / this.examScoreDTO.maxPoints) * 100;
-            this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty = (this.aggregatedExamResults.medianSubmittedAndNonEmpty / this.examScoreDTO.maxPoints) * 100;
+        if (overallPointsSubmittedAndNonEmpty.length > 0) {
+            this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty = mean(overallPointsSubmittedAndNonEmpty);
+            this.aggregatedExamResults.medianSubmittedAndNonEmpty = median(overallPointsSubmittedAndNonEmpty);
+            if (this.examScoreDTO.maxPoints) {
+                this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty = (this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty / this.examScoreDTO.maxPoints) * 100;
+                this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty = (this.aggregatedExamResults.medianSubmittedAndNonEmpty / this.examScoreDTO.maxPoints) * 100;
+            }
+            this.aggregatedExamResults.standardDeviationSubmittedAndNonEmpty = standardDeviation(overallPointsSubmittedAndNonEmpty);
         }
-        this.aggregatedExamResults.standardDeviationSubmittedAndNonEmpty = standardDeviation(overallPointsSubmittedAndNonEmpty);
-        if (this.hasSecondCorrectionAndStarted) {
+        if (this.hasSecondCorrectionAndStarted && pointsSubmittedAndNonEmptyInFirstCorrection.length > 0) {
             this.aggregatedExamResults.meanPointsSubmittedAndNonEmptyInFirstCorrection = mean(pointsSubmittedAndNonEmptyInFirstCorrection);
             this.aggregatedExamResults.medianSubmittedAndNonEmptyInFirstCorrection = median(pointsSubmittedAndNonEmptyInFirstCorrection);
             if (this.examScoreDTO.maxPoints) {
@@ -897,17 +899,19 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.aggregatedExamResults.standardDeviationSubmittedAndNonEmptyInFirstCorrection = standardDeviation(pointsSubmittedAndNonEmptyInFirstCorrection);
         }
         if (this.gradingScale && !this.isBonus) {
-            this.aggregatedExamResults.meanGradeSubmittedAndNonEmpty = this.gradingSystemService.findMatchingGradeStep(
-                this.gradingScale!.gradeSteps,
-                this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty,
-            )!.gradeName;
+            if (overallPointsSubmittedAndNonEmpty.length > 0) {
+                this.aggregatedExamResults.meanGradeSubmittedAndNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+                    this.gradingScale!.gradeSteps,
+                    this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty,
+                )!.gradeName;
 
-            this.aggregatedExamResults.medianGradeSubmittedAndNonEmpty = this.gradingSystemService.findMatchingGradeStep(
-                this.gradingScale!.gradeSteps,
-                this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty,
-            )!.gradeName;
+                this.aggregatedExamResults.medianGradeSubmittedAndNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+                    this.gradingScale!.gradeSteps,
+                    this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty,
+                )!.gradeName;
+            }
 
-            if (this.hasSecondCorrectionAndStarted) {
+            if (this.hasSecondCorrectionAndStarted && pointsSubmittedAndNonEmptyInFirstCorrection.length > 0) {
                 this.aggregatedExamResults.meanGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
                     this.gradingScale!.gradeSteps,
                     this.aggregatedExamResults.meanScoreSubmittedAndNonEmptyInFirstCorrection,
@@ -956,14 +960,16 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.aggregatedExamResults.meanPointsNonEmpty = mean(overallPointsNonEmpty);
-        this.aggregatedExamResults.medianNonEmpty = median(overallPointsNonEmpty);
-        if (this.examScoreDTO.maxPoints) {
-            this.aggregatedExamResults.meanScoreNonEmpty = (this.aggregatedExamResults.meanPointsNonEmpty / this.examScoreDTO.maxPoints) * 100;
-            this.aggregatedExamResults.medianScoreNonEmpty = (this.aggregatedExamResults.medianNonEmpty / this.examScoreDTO.maxPoints) * 100;
+        if (overallPointsNonEmpty.length > 0) {
+            this.aggregatedExamResults.meanPointsNonEmpty = mean(overallPointsNonEmpty);
+            this.aggregatedExamResults.medianNonEmpty = median(overallPointsNonEmpty);
+            if (this.examScoreDTO.maxPoints) {
+                this.aggregatedExamResults.meanScoreNonEmpty = (this.aggregatedExamResults.meanPointsNonEmpty / this.examScoreDTO.maxPoints) * 100;
+                this.aggregatedExamResults.medianScoreNonEmpty = (this.aggregatedExamResults.medianNonEmpty / this.examScoreDTO.maxPoints) * 100;
+            }
+            this.aggregatedExamResults.standardDeviationNonEmpty = standardDeviation(overallPointsNonEmpty);
         }
-        this.aggregatedExamResults.standardDeviationNonEmpty = standardDeviation(overallPointsNonEmpty);
-        if (this.hasSecondCorrectionAndStarted) {
+        if (this.hasSecondCorrectionAndStarted && pointsNonEmptyInFirstCorrection.length > 0) {
             this.aggregatedExamResults.meanPointsNonEmptyInFirstCorrection = mean(pointsNonEmptyInFirstCorrection);
             this.aggregatedExamResults.medianNonEmptyInFirstCorrection = median(pointsNonEmptyInFirstCorrection);
             if (this.examScoreDTO.maxPoints) {
@@ -974,17 +980,19 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.aggregatedExamResults.standardDeviationNonEmptyInFirstCorrection = standardDeviation(pointsNonEmptyInFirstCorrection);
         }
         if (this.gradingScale && !this.isBonus) {
-            this.aggregatedExamResults.meanGradeNonEmpty = this.gradingSystemService.findMatchingGradeStep(
-                this.gradingScale!.gradeSteps,
-                this.aggregatedExamResults.meanScoreNonEmpty,
-            )!.gradeName;
+            if (overallPointsNonEmpty.length > 0) {
+                this.aggregatedExamResults.meanGradeNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+                    this.gradingScale!.gradeSteps,
+                    this.aggregatedExamResults.meanScoreNonEmpty,
+                )!.gradeName;
 
-            this.aggregatedExamResults.medianGradeNonEmpty = this.gradingSystemService.findMatchingGradeStep(
-                this.gradingScale!.gradeSteps,
-                this.aggregatedExamResults.medianScoreNonEmpty,
-            )!.gradeName;
+                this.aggregatedExamResults.medianGradeNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+                    this.gradingScale!.gradeSteps,
+                    this.aggregatedExamResults.medianScoreNonEmpty,
+                )!.gradeName;
+            }
 
-            if (this.hasSecondCorrectionAndStarted) {
+            if (this.hasSecondCorrectionAndStarted && pointsNonEmptyInFirstCorrection.length > 0) {
                 this.aggregatedExamResults.meanGradeNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
                     this.gradingScale!.gradeSteps,
                     this.aggregatedExamResults.meanScoreNonEmptyInFirstCorrection,
