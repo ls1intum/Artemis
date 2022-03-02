@@ -114,7 +114,8 @@ export class AlertService {
                     break;
 
                 case 404:
-                    this.addErrorAlert('Not found', 'error.url.not.found');
+                    // Disabled until we find a better solution
+                    // this.addErrorAlert('Not found', 'error.url.not.found');
                     break;
 
                 default:
@@ -253,7 +254,10 @@ export class AlertService {
         });
     }
 
-    private addErrorAlert(message?: string, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+    private addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+        if (message && typeof message !== 'string') {
+            message = '' + message;
+        }
         this.addAlert({ type: AlertType.DANGER, message, translationKey, translationParams });
     }
 }
