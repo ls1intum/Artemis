@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREF
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -1852,8 +1851,8 @@ public class CourseTestService {
 
         // Average Score
         assertThat(courseDTO.getCurrentPercentageAverageScore()).isEqualTo(60);
-        assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(3);
-        assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(5);
+        assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(18);
+        assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(30);
 
         // Active Users
         int periodIndex = 0;

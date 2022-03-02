@@ -1,11 +1,11 @@
-<div class="exam-action-buttons">
-    <button
-        id="evaluateQuizExercisesButton"
-        class="btn btn-primary mt-1"
-        (click)="evaluateQuizExercises()"
-        *ngIf="course?.isAtLeastInstructor"
-        [disabled]="isLoading || !isExamOver"
-    >
+<div class="exam-action-buttons" *ngIf="exam && course && course.isAtLeastInstructor">
+    <span>
+        <a [routerLink]="['/course-management', courseId, 'exams', examId, 'grading-system']" class="btn btn-info mt-1" id="grading-key-button-{{ exam.id }}">
+            <fa-icon [icon]="faClipboard"></fa-icon>
+            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
+        </a>
+    </span>
+    <button id="evaluateQuizExercisesButton" class="btn btn-primary mt-1" (click)="evaluateQuizExercises()" [disabled]="isLoading || !isExamOver">
         <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
     </button>
@@ -13,7 +13,6 @@
         class="btn btn-primary mt-1"
         id="assessUnsubmittedExamModelingAndTextParticipationsButton"
         (click)="assessUnsubmittedExamModelingAndTextParticipations()"
-        *ngIf="course?.isAtLeastInstructor"
         [disabled]="isLoading || !isExamOver"
     >
         <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>

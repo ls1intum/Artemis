@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -441,6 +442,28 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+
+        modelingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now());
+
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setCourse(course2);
+
+        ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
+        assertThat(newModelingExercise.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the response").isNull();
+
+        ModelingExercise newModelingExerciseFromDatabase = modelingExerciseRepository.findById(newModelingExercise.getId()).get();
+        assertThat(newModelingExerciseFromDatabase.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the database")
+                .isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExerciseForExam() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
@@ -720,5 +743,72 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         final Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         request.delete("/api/modeling-exercises/" + modelingExercise.getId() + "/clusters", HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetModelingExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        testGetModelingExercise_exampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetModelingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        testGetModelingExercise_exampleSolutionVisibility(false, "instructor1");
+    }
+
+    private void testGetModelingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+        // Utility function to avoid duplication
+        Function<Course, ModelingExercise> modelingExerciseGetter = c -> (ModelingExercise) c.getExercises().stream().filter(e -> e.getId().equals(classExercise.getId())).findAny()
+                .get();
+
+        classExercise.setExampleSolutionModel("<Sample solution model>");
+        classExercise.setExampleSolutionExplanation("<Sample solution explanation>");
+
+        if (isStudent) {
+            database.createAndSaveParticipationForExercise(classExercise, username);
+        }
+
+        // Test example solution publication date not set.
+        classExercise.setExampleSolutionPublicationDate(null);
+        modelingExerciseRepository.save(classExercise);
+
+        Course course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        ModelingExercise modelingExercise = modelingExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(modelingExercise.getExampleSolutionModel()).isNull();
+            assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
+        }
+        else {
+            assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
+            assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
+        }
+
+        // Test example solution publication date in the past.
+        classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        modelingExerciseRepository.save(classExercise);
+
+        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        modelingExercise = modelingExerciseGetter.apply(course);
+
+        assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
+        assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
+
+        // Test example solution publication date in the future.
+        classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        modelingExerciseRepository.save(classExercise);
+
+        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        modelingExercise = modelingExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(modelingExercise.getExampleSolutionModel()).isNull();
+            assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
+        }
+        else {
+            assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
+            assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
+        }
     }
 }

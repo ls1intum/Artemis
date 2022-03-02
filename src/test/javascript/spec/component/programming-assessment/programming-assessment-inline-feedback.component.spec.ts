@@ -126,6 +126,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const feedback = {
             id: 1,
             detailText: 'feedback1',
+            text: 'File src/sorting/BubbleSort.java at line 4',
             credits: 1.5,
         } as Feedback;
 

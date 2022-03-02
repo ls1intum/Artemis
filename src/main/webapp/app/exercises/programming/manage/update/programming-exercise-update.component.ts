@@ -1,7 +1,7 @@
 import { ActivatedRoute, Params } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
@@ -263,8 +263,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private updateProjectTypeSettings(type: ProjectType) {
         if (ProjectType.XCODE === type) {
-            // Disable SCA for Xcode
-            this.disableStaticCodeAnalysis();
             // Disable Online Editor
             this.programmingExercise.allowOnlineEditor = false;
         } else if (ProjectType.FACT === type) {
@@ -484,9 +482,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private onSaveError(error: HttpErrorResponse) {
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
-        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.alertService.error(errorMessage);
-        jhiAlert.message = errorMessage;
+        this.alertService.addAlert({
+            type: AlertType.DANGER,
+            message: errorMessage,
+            disableTranslation: true,
+        });
         this.isSaving = false;
         window.scrollTo(0, 0);
     }

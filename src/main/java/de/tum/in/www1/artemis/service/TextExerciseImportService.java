@@ -61,7 +61,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         TextExercise newExercise = new TextExercise();
 
         super.copyExerciseBasis(newExercise, importedExercise);
-        newExercise.setSampleSolution(importedExercise.getSampleSolution());
+        newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
     }
 
@@ -161,7 +161,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         Map<String, String> textBlockIdPair = new HashMap<>();
 
         // collect <original text block id, new text block id> pair, it will help to find the feedback which has old reference
-        newSubmissionTextBlocks.stream().forEach(newTextBlock -> {
+        newSubmissionTextBlocks.forEach(newTextBlock -> {
             TextBlock oldTextBlock = originalTextBlockMap.get(newTextBlock.getStartIndex());
             textBlockIdPair.put(oldTextBlock.getId(), newTextBlock.getId());
         });

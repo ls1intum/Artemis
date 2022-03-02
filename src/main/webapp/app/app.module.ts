@@ -12,7 +12,6 @@ import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
-import { ArtemisConnectionNotificationModule } from 'app/shared/notification/connection-notification/connection-notification.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ArtemisLegalModule } from 'app/core/legal/legal.module';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
@@ -37,7 +36,6 @@ import { UserSettingsModule } from 'app/shared/user-settings/user-settings.modul
         ArtemisCoreModule,
         ArtemisHomeModule,
         ArtemisAppRoutingModule,
-        ArtemisConnectionNotificationModule,
         GuidedTourModule,
         ArtemisLegalModule,
         ArtemisCoursesModule,

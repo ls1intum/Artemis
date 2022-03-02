@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -109,7 +108,6 @@ describe('StudentExamDetailComponent', () => {
             ],
             declarations: [
                 StudentExamDetailComponent,
-                MockComponent(AlertComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(StudentExamWorkingTimeComponent),
                 MockDirective(NgForm),

@@ -17,8 +17,8 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.2.0"
-    id "com.github.node-gradle.node" version "3.2.0"
-    id "com.diffplug.spotless" version "6.2.2"
+    id "com.github.node-gradle.node" version "3.2.1"
+    id "com.diffplug.spotless" version "6.3.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.5.5"
+    version = "5.6.0"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -86,6 +86,10 @@ modernizer {
 }
 
 apply from: "gradle/tasks.gradle"
+
+jar {
+    enabled = false
+}
 
 // configure excluded classes from the test coverage report
 private excludedClassFilesForReport(classDirectories) {
@@ -154,7 +158,6 @@ dependencies {
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
-
     implementation "org.springframework.ldap:spring-ldap-core:${spring_ldap_core_version}"
     implementation "org.springframework.data:spring-data-ldap:${spring_data_ldap_version}"
 

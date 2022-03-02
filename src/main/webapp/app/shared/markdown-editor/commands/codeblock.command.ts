@@ -14,7 +14,7 @@ export class CodeBlockCommand extends Command {
         let selectedText = this.getSelectedText();
         const range = this.getRange();
         const initText = 'Source Code';
-        selectedText = '```java\n ' + (selectedText || initText) + '\n```';
+        selectedText = '```java\n' + (selectedText || initText) + '\n```';
         this.replace(range, selectedText);
         this.focus();
     }

@@ -231,8 +231,7 @@ public class NotificationSettingsService {
         // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
 
         if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(loadedNotificationSettingSet, DEFAULT_NOTIFICATION_SETTINGS)) {
-            Set<NotificationSetting> updatedNotificationSettingSet = new HashSet<>();
-            updatedNotificationSettingSet.addAll(DEFAULT_NOTIFICATION_SETTINGS);
+            Set<NotificationSetting> updatedNotificationSettingSet = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
 
             loadedNotificationSettingSet.forEach(loadedSetting -> {
                 DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {

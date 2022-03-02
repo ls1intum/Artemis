@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsock
 import java.net.InetSocketAddress;
 import java.security.Principal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -132,7 +131,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      */
     private ReactorNettyTcpClient<byte[]> createTcpClient() {
         final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toList());
+                .toList();
 
         // Return null if no valid addresses can be found. This is e.g. due to an invalid config or a development setup without a broker.
         if (!brokerAddressList.isEmpty()) {

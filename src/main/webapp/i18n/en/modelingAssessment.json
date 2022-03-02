@@ -9,12 +9,12 @@
             "conflictsResolved": "All conflicts have been processed."
         },
         "dashboard": {
-            "heading": "Submissions and assessments of modelling exercise  \"{{ title }}\"",
+            "heading": "Submissions and assessments of modeling exercise  \"{{ title }}\"",
             "actions": {
                 "open": "Assess model"
             }
         },
-        "notFound": "We couldn't find any unassessed modelling submissions. Please return to the dashboard.",
+        "notFound": "We couldn't find any unassessed modeling submissions. Please return to the dashboard.",
         "impactWarning": "This feedback might affect {{affectedSubmissionsCount}} other similar submission/s."
     }
 }

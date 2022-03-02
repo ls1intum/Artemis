@@ -22,7 +22,6 @@ import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mo
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-submission-state.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
@@ -50,7 +49,6 @@ describe('ParticipationComponent', () => {
             imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
             declarations: [
                 ParticipationComponent,
-                MockComponent(AlertComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(ProgrammingExerciseInstructorSubmissionStateComponent),
