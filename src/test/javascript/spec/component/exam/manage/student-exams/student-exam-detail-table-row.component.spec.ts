@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -47,13 +46,7 @@ describe('StudentExamDetailTableRowComponent', () => {
 
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), NgbModule, NgxDatatableModule, FontAwesomeTestingModule, ReactiveFormsModule, TranslateModule.forRoot()],
-            declarations: [
-                StudentExamDetailTableRowComponent,
-                MockComponent(AlertComponent),
-                MockComponent(DataTableComponent),
-                MockTranslateValuesDirective,
-                MockPipe(ArtemisTranslatePipe),
-            ],
+            declarations: [StudentExamDetailTableRowComponent, MockComponent(DataTableComponent), MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(AlertService), MockDirective(TranslateDirective)],
         })
             .compileComponents()

@@ -8,7 +8,7 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -88,6 +88,7 @@ export abstract class Exercise implements BaseEntity {
     public teamAssignmentConfig?: TeamAssignmentConfig;
     public categories?: ExerciseCategory[];
     public type?: ExerciseType;
+    public exampleSolutionPublicationDate?: dayjs.Dayjs;
 
     public teams?: Team[];
     public studentParticipations?: StudentParticipation[];
@@ -231,4 +232,5 @@ export function resetDates(exercise: Exercise) {
     exercise.releaseDate = undefined;
     exercise.dueDate = undefined;
     exercise.assessmentDueDate = undefined;
+    exercise.exampleSolutionPublicationDate = undefined;
 }

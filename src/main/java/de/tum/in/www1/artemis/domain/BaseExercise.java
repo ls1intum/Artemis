@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
 
+import javax.annotation.Nullable;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -48,6 +49,10 @@ public abstract class BaseExercise extends DomainObject {
     @Column(name = "assessment_due_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime assessmentDueDate;
+
+    @Nullable
+    @Column(name = "example_solution_publication_date")
+    private ZonedDateTime exampleSolutionPublicationDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
@@ -158,6 +163,30 @@ public abstract class BaseExercise extends DomainObject {
         return this.assessmentDueDate == null || ZonedDateTime.now().isAfter(this.assessmentDueDate);
     }
 
+    @Nullable
+    public ZonedDateTime getExampleSolutionPublicationDate() {
+        return exampleSolutionPublicationDate;
+    }
+
+    public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
+        this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
+    }
+
+    /**
+     * Checks whether students should be able to see the example solution.
+     *
+     * @return true if example solution publication date is in the past, false otherwise (including null case).
+     */
+    @JsonIgnore
+    public boolean isExampleSolutionPublished() {
+        if (this.isExamExercise()) {
+            // This feature is currently not available for exam exercises, this should return false
+            // for exam exercises until the conditions for them is fully implemented.
+            return false;
+        }
+        return this.exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(this.exampleSolutionPublicationDate);
+    }
+
     /**
      * check if students are allowed to see this exercise
      *
@@ -179,7 +208,7 @@ public abstract class BaseExercise extends DomainObject {
      */
     public void validateDates() {
         // All fields are optional, so there is no error if none of them is set
-        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null) {
+        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
             return;
         }
         if (isExamExercise()) {

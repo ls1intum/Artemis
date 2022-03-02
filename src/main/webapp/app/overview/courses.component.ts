@@ -99,7 +99,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private onError(error: string) {
-        this.alertService.error('error.unexpectedError', { error }, undefined);
+        this.alertService.error('error.unexpectedError', { error });
     }
 
     findNextRelevantExercise() {

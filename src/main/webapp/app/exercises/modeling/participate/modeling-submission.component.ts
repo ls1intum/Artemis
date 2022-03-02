@@ -44,6 +44,8 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly addParticipationToResult = addParticipationToResult;
+    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
+
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     ButtonType = ButtonType;
@@ -587,9 +589,5 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         return 'entity.action.submitDeadlineMissedTooltip';
-    }
-
-    public buildFeedbackTextForReview(feedback: Feedback): string {
-        return buildFeedbackTextForReview(feedback);
     }
 }
