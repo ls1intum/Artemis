@@ -395,6 +395,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.isExamMode) {
             // Set exerciseGroup to undefined if an exam exercise is imported
             this.programmingExercise.exerciseGroup = undefined;
+            // Exam exercises cannot be not included into the total score. NOT_INCLUDED exercises will be converted to INCLUDED ones
+            if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            }
         }
     }
 
