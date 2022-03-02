@@ -90,10 +90,16 @@
             <tbody>
                 <tr>
                     <th scope="row">{{ 'artemisApp.examScores.noOfExams' | artemisTranslate }}</th>
-                    <td *ngIf="gradingScaleExists && !isBonus">{{ aggregatedExamResults.noOfExamsFilteredForPassed }} ({{ relativeAmountOfPassedExams }}%)</td>
-                    <td>{{ absoluteAmountOfSubmittedExams }} ({{ relativeAmountOfSubmittedExams }}%)</td>
+                    <td *ngIf="gradingScaleExists && !isBonus">
+                        {{ aggregatedExamResults.noOfExamsFilteredForPassed }}
+                        ({{ tableState.relativeAmountOfPassedExams }}%)
+                    </td>
                     <td>
-                        {{ absoluteAmountOfTotalExams }}
+                        {{ tableState.absoluteAmountOfSubmittedExams }}
+                        ({{ tableState.relativeAmountOfSubmittedExams }}%)
+                    </td>
+                    <td>
+                        {{ tableState.absoluteAmountOfTotalExams }}
                     </td>
                     <td *ngIf="hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus" style="border-left: 3px solid lightgrey"></td>
                     <td *ngIf="hasSecondCorrectionAndStarted" [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '3px solid lightgrey' } : {}"></td>
