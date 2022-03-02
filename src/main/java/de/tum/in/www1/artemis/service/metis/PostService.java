@@ -575,7 +575,7 @@ public class PostService extends PostingService {
     public static int postComparator(Post postA, Post postB, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
 
         // sort by priority
-        Integer order = sortByPriority(postA, postB);
+        Integer order = compareByPriority(postA, postB);
         if (order != null) {
             return order;
         }
@@ -590,7 +590,7 @@ public class PostService extends PostingService {
 
         // sort by creation date
         if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
-            order = sortByCreationDate(postA, postB, sortingOrder);
+            order = compareByCreationDate(postA, postB, sortingOrder);
             if (order != null) {
                 return order;
             }
@@ -598,7 +598,7 @@ public class PostService extends PostingService {
 
         // sort by answer count
         if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-            order = sortByAnswerCount(postA, postB, sortingOrder);
+            order = compareByAnswerCount(postA, postB, sortingOrder);
             if (order != null) {
                 return order;
             }
@@ -607,7 +607,7 @@ public class PostService extends PostingService {
     }
 
     @Nullable
-    private static Integer sortByPriority(Post postA, Post postB) {
+    private static Integer compareByPriority(Post postA, Post postB) {
         if ((postA.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT && postA.getDisplayPriority() == DisplayPriority.PINNED
                 && postB.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT)
                 || ((postA.getDisplayPriority() == DisplayPriority.PINNED && postB.getDisplayPriority() != DisplayPriority.PINNED)
@@ -627,6 +627,9 @@ public class PostService extends PostingService {
 
     @Nullable
     private static Integer sortByVotes(Post postA, Post postB, SortingOrder sortingOrder) {
+
+        Integer comparisonResult = null;
+
         int postAVoteEmojiCount = 0;
         int postBVoteEmojiCount = 0;
 
@@ -639,27 +642,35 @@ public class PostService extends PostingService {
         }
 
         if (postAVoteEmojiCount > postBVoteEmojiCount) {
-            return sortingOrder == SortingOrder.DESCENDING ? -1 : 1;
+            comparisonResult = 1;
         }
         if (postAVoteEmojiCount < postBVoteEmojiCount) {
-            return sortingOrder == SortingOrder.DESCENDING ? 1 : -1;
+            comparisonResult = -1;
         }
-        return null;
+
+        return applySortingOrder(sortingOrder, comparisonResult);
     }
 
     @Nullable
-    private static Integer sortByCreationDate(Post postA, Post postB, SortingOrder sortingOrder) {
+    private static Integer compareByCreationDate(Post postA, Post postB, SortingOrder sortingOrder) {
+
+        Integer comparisonResult = null;
+
         if (postA.getCreationDate().compareTo(postB.getCreationDate()) > 0) {
-            return sortingOrder == SortingOrder.DESCENDING ? -1 : 1;
+            comparisonResult = 1;
         }
-        if (postA.getCreationDate().compareTo(postB.getCreationDate()) < 0) {
-            return sortingOrder == SortingOrder.DESCENDING ? 1 : -1;
+        else if (postA.getCreationDate().compareTo(postB.getCreationDate()) < 0) {
+            comparisonResult = -1;
         }
-        return null;
+
+        return applySortingOrder(sortingOrder, comparisonResult);
     }
 
     @Nullable
-    private static Integer sortByAnswerCount(Post postA, Post postB, SortingOrder sortingOrder) {
+    private static Integer compareByAnswerCount(Post postA, Post postB, SortingOrder sortingOrder) {
+
+        Integer comparisonResult = null;
+
         int postAAnswerCount = 0;
         int postBAnswerCount = 0;
 
@@ -671,12 +682,27 @@ public class PostService extends PostingService {
         }
 
         if (postAAnswerCount > postBAnswerCount) {
-            return sortingOrder == SortingOrder.DESCENDING ? -1 : 1;
+            comparisonResult = 1;
         }
         if (postAAnswerCount < postBAnswerCount) {
-            return sortingOrder == SortingOrder.DESCENDING ? 1 : -1;
+            comparisonResult = -1;
         }
-        return null;
+
+        return applySortingOrder(sortingOrder, comparisonResult);
+    }
+
+    private static Integer applySortingOrder(SortingOrder sortingOrder, Integer comparisonResult) {
+
+        if (comparisonResult == null) {
+            return null;
+        }
+
+        if (SortingOrder.ASCENDING == sortingOrder) {
+            return comparisonResult;
+        }
+        else {
+            return -1 * comparisonResult;
+        }
     }
 
     /**
