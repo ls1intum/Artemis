@@ -307,7 +307,7 @@
         "invalid.auxiliary.repository.checkout.directory": "Das Checkout-Verzeichnis von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jedes Checkout-Verzeichnis gültig ist und es keine Duplikate gibt.",
         "invalid.auxiliary.repository.description": "Die Beschreibung von mindestens einem Hilfs-Repository ist zu lang!",
         "invalid.testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
-        "invalid.page.request": "Die Seitenanforderung scheint ungültig zu sein. Bitte stellen Sie sicher, dass genügend {{entityName}}-Entitäten vorhanden sind, damit die Anforderungsseite erstellt werden kann.",
+        "invalid.page.request": "Die Seitenanforderung scheint ungültig zu sein. Stelle bitte sicher, dass genügend {{entityName}}-Entitäten vorhanden sind, damit die Anforderungsseite erstellt werden kann.",
         "idnull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",
         "manualCodeHintOperation": "Dieser Endpunkt erlaubt keine manuelle Bearbeitung von Codehinweisen.",
