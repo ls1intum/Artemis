@@ -6,7 +6,7 @@ artemis:
     course-archives-path: ./exports/server-integration-test/courses         # a folder in which archived courses and exams are stored.
     repo-clone-path: ./repos/server-integration-test
     repo-download-clone-path: ./repos-download/server-integration-test
-    encryption-password: fake-password
+    encryption-password: fake-password                                     # LEGACY: arbitrary password for encrypting database values
     user-management:
         use-external: true
         external:

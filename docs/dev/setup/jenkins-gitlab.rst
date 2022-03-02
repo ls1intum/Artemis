@@ -41,7 +41,7 @@ below into your ``application-artemis.yml`` or ``application-local.yml`` file (t
     course-archives-path: ./exports/courses
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download
-    encryption-password: artemis_admin
+    encryption-password: artemis_admin           # LEGACY: arbitrary password for encrypting database values
     user-management:
         use-external: false
         internal-admin:

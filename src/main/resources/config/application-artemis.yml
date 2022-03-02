@@ -6,7 +6,7 @@ artemis:
     course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
     repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
     repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
-    encryption-password: <encrypt-password>         # arbitrary password for encrypting database values
+    encryption-password: <encrypt-password>         # LEGACY: arbitrary password for encrypting database values
     user-management:
         use-external: true
         password-reset:

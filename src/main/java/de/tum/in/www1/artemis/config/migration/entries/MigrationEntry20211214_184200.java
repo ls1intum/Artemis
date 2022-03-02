@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.user.LegacyPasswordService;
 
 /**
  * This migration separates the users into internal and external users and sets the newly created attribute isInternal in {@link User}
@@ -17,9 +17,9 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
 
     private final UserRepository userRepository;
 
-    private final PasswordService passwordService;
+    private final LegacyPasswordService passwordService;
 
-    public MigrationEntry20211214_184200(UserRepository userRepository, PasswordService passwordService) {
+    public MigrationEntry20211214_184200(UserRepository userRepository, LegacyPasswordService passwordService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
     }

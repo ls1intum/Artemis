@@ -293,7 +293,7 @@ Configure Artemis
 
            repo-clone-path: ./repos/
            repo-download-clone-path: ./repos-download/
-           encryption-password: artemis-encrypt   # arbitrary password for encrypting database values
+           encryption-password: artemis-encrypt         # LEGACY: arbitrary password for encrypting database values
            user-management:
                use-external: true
                external:

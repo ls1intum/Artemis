@@ -39,7 +39,7 @@ artemis:
   repo-download-clone-path: repos-download
   file-upload-path: ./uploads
   submission-export-path: exports
-  encryption-password: cypressEncryptionPassword
+  encryption-password: cypressEncryptionPassword # LEGACY: arbitrary password for encrypting database values
   user-management:
     use-external: true
     external:

@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 /**
  * PBEPasswordEncoder for Spring, based on org.jasypt.spring.security3.PBEPasswordEncoder;
  */
+@Deprecated
 public class PBEPasswordEncoder implements PasswordEncoder {
 
     private final PBEStringEncryptor pbeStringEncryptor;

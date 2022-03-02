@@ -95,7 +95,7 @@ You can override the following configuration options in this file.
    artemis:
        repo-clone-path: ./repos/
        repo-download-clone-path: ./repos-download/
-       encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
+       encryption-password: <encrypt-password>      # LEGACY: arbitrary password for encrypting database values
        user-management:
            use-external: true
            password-reset:
