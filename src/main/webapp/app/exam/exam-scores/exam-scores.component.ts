@@ -1167,7 +1167,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         tableState.medianScoreSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty);
         tableState.medianScoreTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreNonEmpty);
         tableState.medianScoreSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreSubmittedAndNonEmptyInFirstCorrection);
-        tableState.medianPointsTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreNonEmpty);
+        tableState.medianScoreTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreNonEmptyInFirstCorrection);
         tableState.medianGradeSubmitted = this.aggregatedExamResults.medianGradeSubmittedAndNonEmpty ?? '-';
         tableState.medianGradeTotal = this.aggregatedExamResults.medianGradeNonEmpty ?? '-';
         tableState.medianGradeSubmittedInFirstCorrection = this.aggregatedExamResults.medianGradeSubmittedAndNonEmptyInFirstCorrection ?? '-';
