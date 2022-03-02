@@ -359,7 +359,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
             if (studentResult.exerciseGroupIdToExerciseResult) {
                 const entries = Object.entries(studentResult.exerciseGroupIdToExerciseResult);
-                if (entries.some(([id, exerciseResult]) => exerciseResult.hasNonEmptySubmission)) {
+                if (entries.some(([, exerciseResult]) => exerciseResult.hasNonEmptySubmission)) {
                     numberNonEmptySubmissions += 1;
                     if (studentResult.submitted) {
                         numberNonEmptySubmittedSubmissions += 1;
@@ -866,7 +866,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         let submittedAndNonEmptyGradesInFirstCorrection: number[] = [];
         this.studentResults.forEach((result) => {
             if (result.exerciseGroupIdToExerciseResult) {
-                const hasAtLeastOneSubmission = Object.entries(result.exerciseGroupIdToExerciseResult).some(([id, exerciseResult]) => exerciseResult.hasNonEmptySubmission);
+                const hasAtLeastOneSubmission = Object.entries(result.exerciseGroupIdToExerciseResult).some(([, exerciseResult]) => exerciseResult.hasNonEmptySubmission);
                 if (result.submitted && hasAtLeastOneSubmission) {
                     overallPointsSubmittedAndNonEmpty.push(result.overallPointsAchieved ?? 0);
                     submittedAndNonEmptyGrades = this.collectOverallGrades(submittedAndNonEmptyGrades, result);
@@ -882,7 +882,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.aggregatedExamResults.medianSubmittedAndNonEmpty = median(overallPointsSubmittedAndNonEmpty);
         if (this.examScoreDTO.maxPoints) {
             this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty = (this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty / this.examScoreDTO.maxPoints) * 100;
-            this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty = (this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty / this.examScoreDTO.maxPoints) * 100;
+            this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty = (this.aggregatedExamResults.medianSubmittedAndNonEmpty / this.examScoreDTO.maxPoints) * 100;
         }
         this.aggregatedExamResults.standardDeviationSubmittedAndNonEmpty = standardDeviation(overallPointsSubmittedAndNonEmpty);
         if (this.hasSecondCorrectionAndStarted) {
@@ -892,7 +892,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 this.aggregatedExamResults.meanScoreSubmittedAndNonEmptyInFirstCorrection =
                     (this.aggregatedExamResults.meanPointsSubmittedAndNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
                 this.aggregatedExamResults.medianScoreSubmittedAndNonEmptyInFirstCorrection =
-                    (this.aggregatedExamResults.medianScoreSubmittedAndNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                    (this.aggregatedExamResults.medianSubmittedAndNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
             }
             this.aggregatedExamResults.standardDeviationSubmittedAndNonEmptyInFirstCorrection = standardDeviation(pointsSubmittedAndNonEmptyInFirstCorrection);
         }
@@ -944,7 +944,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         let nonEmptyGradesInFirstCorrection: number[] = [];
         this.studentResults.forEach((result) => {
             if (result.exerciseGroupIdToExerciseResult) {
-                const hasAtLeastOneSubmission = Object.entries(result.exerciseGroupIdToExerciseResult).some(([id, exerciseResult]) => exerciseResult.hasNonEmptySubmission);
+                const hasAtLeastOneSubmission = Object.entries(result.exerciseGroupIdToExerciseResult).some(([, exerciseResult]) => exerciseResult.hasNonEmptySubmission);
                 if (hasAtLeastOneSubmission) {
                     overallPointsNonEmpty.push(result.overallPointsAchieved ?? 0);
                     nonEmptyGrades = this.collectOverallGrades(nonEmptyGrades, result);
@@ -960,7 +960,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.aggregatedExamResults.medianNonEmpty = median(overallPointsNonEmpty);
         if (this.examScoreDTO.maxPoints) {
             this.aggregatedExamResults.meanScoreNonEmpty = (this.aggregatedExamResults.meanPointsNonEmpty / this.examScoreDTO.maxPoints) * 100;
-            this.aggregatedExamResults.medianScoreNonEmpty = (this.aggregatedExamResults.medianScoreNonEmpty / this.examScoreDTO.maxPoints) * 100;
+            this.aggregatedExamResults.medianScoreNonEmpty = (this.aggregatedExamResults.medianNonEmpty / this.examScoreDTO.maxPoints) * 100;
         }
         this.aggregatedExamResults.standardDeviationNonEmpty = standardDeviation(overallPointsNonEmpty);
         if (this.hasSecondCorrectionAndStarted) {
@@ -969,8 +969,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (this.examScoreDTO.maxPoints) {
                 this.aggregatedExamResults.meanScoreNonEmptyInFirstCorrection =
                     (this.aggregatedExamResults.meanPointsNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
-                this.aggregatedExamResults.medianScoreNonEmptyInFirstCorrection =
-                    (this.aggregatedExamResults.medianScoreNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                this.aggregatedExamResults.medianScoreNonEmptyInFirstCorrection = (this.aggregatedExamResults.medianNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
             }
             this.aggregatedExamResults.standardDeviationNonEmptyInFirstCorrection = standardDeviation(pointsNonEmptyInFirstCorrection);
         }
