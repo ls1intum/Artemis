@@ -576,14 +576,14 @@ public class PostService extends PostingService {
 
         // sort by priority
         Integer order = compareByPriority(postA, postB);
-        if (order != null) {
+        if (order != 0) {
             return order;
         }
 
         // sort by votes via voteEmojiCount
         if (postSortCriterion == PostSortCriterion.VOTES) {
-            order = sortByVotes(postA, postB, sortingOrder);
-            if (order != null) {
+            order = compareByVotes(postA, postB, sortingOrder);
+            if (order != 0) {
                 return order;
             }
         }
@@ -591,7 +591,7 @@ public class PostService extends PostingService {
         // sort by creation date
         if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
             order = compareByCreationDate(postA, postB, sortingOrder);
-            if (order != null) {
+            if (order != 0) {
                 return order;
             }
         }
@@ -599,7 +599,7 @@ public class PostService extends PostingService {
         // sort by answer count
         if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
             order = compareByAnswerCount(postA, postB, sortingOrder);
-            if (order != null) {
+            if (order != 0) {
                 return order;
             }
         }
@@ -621,14 +621,14 @@ public class PostService extends PostingService {
             return 1;
         }
         else {
-            return null;
+            return 0;
         }
     }
 
     @Nullable
-    private static Integer sortByVotes(Post postA, Post postB, SortingOrder sortingOrder) {
+    private static int compareByVotes(Post postA, Post postB, SortingOrder sortingOrder) {
 
-        Integer comparisonResult = null;
+        Integer comparisonResult = 0;
 
         int postAVoteEmojiCount = 0;
         int postBVoteEmojiCount = 0;
@@ -652,9 +652,9 @@ public class PostService extends PostingService {
     }
 
     @Nullable
-    private static Integer compareByCreationDate(Post postA, Post postB, SortingOrder sortingOrder) {
+    private static int compareByCreationDate(Post postA, Post postB, SortingOrder sortingOrder) {
 
-        Integer comparisonResult = null;
+        Integer comparisonResult = 0;
 
         if (postA.getCreationDate().compareTo(postB.getCreationDate()) > 0) {
             comparisonResult = 1;
@@ -667,9 +667,9 @@ public class PostService extends PostingService {
     }
 
     @Nullable
-    private static Integer compareByAnswerCount(Post postA, Post postB, SortingOrder sortingOrder) {
+    private static int compareByAnswerCount(Post postA, Post postB, SortingOrder sortingOrder) {
 
-        Integer comparisonResult = null;
+        Integer comparisonResult = 0;
 
         int postAAnswerCount = 0;
         int postBAnswerCount = 0;
@@ -691,10 +691,10 @@ public class PostService extends PostingService {
         return applySortingOrder(sortingOrder, comparisonResult);
     }
 
-    private static Integer applySortingOrder(SortingOrder sortingOrder, Integer comparisonResult) {
+    private static int applySortingOrder(SortingOrder sortingOrder, int comparisonResult) {
 
-        if (comparisonResult == null) {
-            return null;
+        if (comparisonResult == 0) {
+            return 0;
         }
 
         if (SortingOrder.ASCENDING == sortingOrder) {
