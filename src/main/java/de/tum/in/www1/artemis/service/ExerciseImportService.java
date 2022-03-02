@@ -6,7 +6,6 @@ import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.repository.*;
 
 public abstract class ExerciseImportService {
@@ -38,13 +37,7 @@ public abstract class ExerciseImportService {
         newExercise.setTitle(importedExercise.getTitle());
         newExercise.setMaxPoints(importedExercise.getMaxPoints());
         newExercise.setBonusPoints(importedExercise.getBonusPoints());
-        // Exam exercises cannot be not included into the total score. NOT_INCLUDED exercises will be converted to INCLUDED ones
-        if (newExercise.isExamExercise() && importedExercise.getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
-            newExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        }
-        else {
-            newExercise.setIncludedInOverallScore(importedExercise.getIncludedInOverallScore());
-        }
+        newExercise.setIncludedInOverallScore(importedExercise.getIncludedInOverallScore());
         newExercise.setAssessmentType(importedExercise.getAssessmentType());
         newExercise.setProblemStatement(importedExercise.getProblemStatement());
         newExercise.setReleaseDate(importedExercise.getReleaseDate());
