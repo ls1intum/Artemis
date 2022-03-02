@@ -98,6 +98,12 @@
             "combineTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
             "combineTemplateCommitsError": "Template-Repository-Commits konnten nicht zusammengeführt werden.",
             "combineTemplateCommitsSuccess": "Template-Repository-Commits wurden zusammengeführt.",
+            "extractTasksFromProblemStatementWarning": "Nur zu Testzwecken: Extrahiere alle Aufgaben und Tests aus der Aufgabenstellung.",
+            "extractTasksFromProblemStatementSuccess": "{{numberTasks}} extrahierte Aufgaben mit {{numberTestCases}} Tests geladen:\n{{detailedResult}}",
+            "extractTasksFromProblemStatementTitle": "Lade extrahierte Aufgaben",
+            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Solution Entries wurden gelöscht.",
+            "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Solution Entries.",
+            "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -191,7 +197,8 @@
                     "weight": "Die Gewichtung eines Testfalls bestimmt die Punkte, die Studierende für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
                     "bonusMultiplier": "Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
                     "bonusPoints": "Bonuspunkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
-                    "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen."
+                    "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
+                    "type": "Der Typ des Tests gibt an, ob dieser aus der test.json-Datei generiert wurde (STRUCTURAL), oder manuell geschrieben wurde (BEHAVIORAL)."
                 },
                 "updatedGradingConfigShort": "Veränderte Bewertung",
                 "updatedGradingConfig": "Achtung: Du hast die Bewertung der Aufgabe verändert, aber nicht alle Einreichungen der Studierenden mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studierenden zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",

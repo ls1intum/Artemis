@@ -78,6 +78,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(Long exerciseId);
 
     /**
+     * Returns all programming exercises with its test cases
+     * @return all programming exercises
+     */
+    @Query("SELECT p FROM ProgrammingExercise p LEFT JOIN FETCH p.testCases")
+    Set<ProgrammingExercise> findAllWithEagerTestCases();
+
+    /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
      *
      * @param exerciseId the id of the exercise that should be fetched.
@@ -234,9 +241,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH p.templateParticipation
             LEFT JOIN FETCH p.solutionParticipation
             LEFT JOIN FETCH p.auxiliaryRepositories
+            LEFT JOIN FETCH p.tasks t
+            LEFT JOIN FETCH t.testCases
             WHERE p.id = :#{#exerciseId}
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(@Param("exerciseId") Long exerciseId);
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(
+            @Param("exerciseId") Long exerciseId);
 
     /**
      * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.

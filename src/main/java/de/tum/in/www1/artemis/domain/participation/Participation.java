@@ -230,7 +230,7 @@ public abstract class Participation extends DomainObject implements Participatio
         }
 
         List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
-                .sorted((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate())).collect(Collectors.toList());
+                .sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
 
         if (sortedResultsWithCompletionDate.size() == 0) {
             return null;

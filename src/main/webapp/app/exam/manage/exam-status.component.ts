@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { faArrowRight, faCalendarCheck, faCheckCircle, faTimes, faTimesCircle, faCalendarTimes, faDotCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faCheckCircle, faTimes, faTimesCircle, faDotCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
@@ -28,6 +28,9 @@ export class ExamStatusComponent implements OnChanges {
     @Input()
     public exam: Exam;
 
+    @Input()
+    public isAtLeastInstructor: boolean;
+
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
 
@@ -39,6 +42,7 @@ export class ExamStatusComponent implements OnChanges {
     examPreparationFinished = false;
     examConductionState: ExamConductionState;
     examReviewState: ExamReviewState;
+    examCorrectionState: ExamReviewState;
 
     readonly examConductionStateEnum = ExamConductionState;
     readonly examReviewStateEnum = ExamReviewState;
@@ -51,8 +55,6 @@ export class ExamStatusComponent implements OnChanges {
     faCheckCircle = faCheckCircle;
     faArrowRight = faArrowRight;
     faDotCircle = faDotCircle;
-    faCalendarCheck = faCalendarCheck;
-    faCalendarTimes = faCalendarTimes;
 
     constructor(private examChecklistService: ExamChecklistService) {}
 
@@ -61,15 +63,18 @@ export class ExamStatusComponent implements OnChanges {
             this.examChecklist = examStats;
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
 
-            // Step 1:
-            this.setExamPreparation();
+            if (this.isAtLeastInstructor) {
+                // Step 1:
+                this.setExamPreparation();
+            }
+
+            // Step 2: Exam conduction
+            this.setConductionState();
+
+            // Step 3: Exam correction
+            this.setReviewState();
+            this.setCorrectionState();
         });
-
-        // Step 2: Exam conduction
-        this.setConductionState();
-
-        // Step 3: Exam correction
-        this.setReviewState();
     }
 
     /**
@@ -100,9 +105,9 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private setConductionState(): void {
-        if (this.examAlreadyEnded()) {
+        if (this.examAlreadyEnded() && (!this.isAtLeastInstructor || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
-        } else if (this.examAlreadyStarted()) {
+        } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState = ExamConductionState.RUNNING;
         } else {
             this.examConductionState = ExamConductionState.PLANNED;
@@ -116,12 +121,30 @@ export class ExamStatusComponent implements OnChanges {
     private setReviewState(): void {
         if (!this.exam.examStudentReviewEnd) {
             this.examReviewState = ExamReviewState.UNSET;
+        } else if (this.isExamReviewPlanned()) {
+            this.examReviewState = ExamReviewState.PLANNED;
         } else if (this.isExamReviewRunning()) {
             this.examReviewState = ExamReviewState.RUNNING;
-        } else if (this.exam.examStudentReviewEnd.isBefore(dayjs())) {
-            this.examReviewState = ExamReviewState.FINISHED;
         } else {
-            this.examReviewState = ExamReviewState.PLANNED;
+            this.examReviewState = ExamReviewState.FINISHED;
+        }
+    }
+
+    /**
+     * Auxiliary method that sets the state for the whole Exam correction section
+     * @private
+     */
+    private setCorrectionState(): void {
+        if (this.examReviewState === ExamReviewState.RUNNING) {
+            this.examCorrectionState = ExamReviewState.RUNNING;
+        } else if (!this.exam.publishResultsDate || this.examReviewState === ExamReviewState.UNSET) {
+            this.examCorrectionState = ExamReviewState.UNSET;
+        } else if (this.exam.publishResultsDate && this.examReviewState === ExamReviewState.PLANNED) {
+            this.examCorrectionState = ExamReviewState.PLANNED;
+        } else if (this.examReviewState === ExamReviewState.FINISHED && this.allComplaintsResolved()) {
+            this.examCorrectionState = ExamReviewState.FINISHED;
+        } else {
+            this.examCorrectionState = ExamReviewState.RUNNING;
         }
     }
 
@@ -168,5 +191,21 @@ export class ExamStatusComponent implements OnChanges {
                 (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isBefore(dayjs()) && this.exam.examStudentReviewEnd!.isAfter(dayjs()))) ??
             false
         );
+    }
+
+    /**
+     * Indicates whether exam review is planned
+     * @private
+     */
+    private isExamReviewPlanned(): boolean {
+        return (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isAfter(dayjs())) ?? false;
+    }
+
+    /**
+     * Indicates whether all complaints are resolved
+     * @private
+     */
+    private allComplaintsResolved(): boolean {
+        return this.examChecklist.numberOfAllComplaints === this.examChecklist.numberOfAllComplaintsDone;
     }
 }

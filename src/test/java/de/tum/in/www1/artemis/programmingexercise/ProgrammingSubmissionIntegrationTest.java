@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.time.ZoneId;

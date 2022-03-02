@@ -4,12 +4,10 @@ import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../../test.module';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
@@ -48,8 +46,6 @@ describe('ExamChecklistComponent', () => {
             declarations: [
                 ExamChecklistComponent,
                 MockPipe(ArtemisDatePipe),
-                MockComponent(AlertComponent),
-                MockComponent(AlertErrorComponent),
                 MockDirective(TranslateDirective),
                 ExamChecklistExerciseGroupTableComponent,
                 ProgressBarComponent,

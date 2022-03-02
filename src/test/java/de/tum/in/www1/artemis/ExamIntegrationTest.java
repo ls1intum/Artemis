@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.nio.file.Files;
@@ -1464,11 +1463,22 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser("instructor1");
 
         // instructor exam checklist checks
-        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam);
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotEqualTo(null);
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(15L);
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(true);
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(0);
+
+        // check that an adapted version is computed for tutors
+        database.changeUser("tutor1");
+
+        examChecklistDTO = examService.getStatsForChecklist(exam, false);
+        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(null);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(0);
+
+        database.changeUser("instructor1");
 
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
@@ -1642,7 +1652,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser("instructor1");
 
         // check if stats are set correctly for the instructor
-        examChecklistDTO = examService.getStatsForChecklist(exam);
+        examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotEqualTo(null);
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(15);
         assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(15);
@@ -1653,6 +1663,25 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound().length).isEqualTo(1);
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).containsAll((Collections.singletonList(90L)));
 
+        // change to a tutor
+        database.changeUser("tutor1");
+
+        // check that a modified version is returned
+        // check if stats are set correctly for the instructor
+        examChecklistDTO = examService.getStatsForChecklist(exam, false);
+        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(null);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(75);
+        assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound().length).isEqualTo(1);
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).containsAll((Collections.singletonList(90L)));
+
+        // change back to instructor user
+        database.changeUser("instructor1");
+
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
@@ -1660,7 +1689,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamStatistics() throws Exception {
-        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1);
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, true);
         ExamChecklistDTO returnedStatistics = request.get("/api/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
                 ExamChecklistDTO.class);
         assertThat(returnedStatistics.isAllExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.isAllExamExercisesAllStudentsPrepared());

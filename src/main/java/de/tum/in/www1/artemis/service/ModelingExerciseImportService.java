@@ -60,8 +60,8 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         super.copyExerciseBasis(newExercise, importedExercise);
 
         newExercise.setDiagramType(((ModelingExercise) importedExercise).getDiagramType());
-        newExercise.setSampleSolutionModel(((ModelingExercise) importedExercise).getSampleSolutionModel());
-        newExercise.setSampleSolutionExplanation(((ModelingExercise) importedExercise).getSampleSolutionExplanation());
+        newExercise.setExampleSolutionModel(((ModelingExercise) importedExercise).getExampleSolutionModel());
+        newExercise.setExampleSolutionExplanation(((ModelingExercise) importedExercise).getExampleSolutionExplanation());
         return newExercise;
     }
 

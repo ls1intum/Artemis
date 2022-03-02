@@ -17,11 +17,10 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -51,7 +50,6 @@ describe('Exam Management Component', () => {
                 MockPipe(ArtemisDatePipe),
                 MockRouterLinkDirective,
                 MockDirective(SortDirective),
-                MockComponent(AlertComponent),
                 MockPipe(DurationPipe),
                 MockDirective(DeleteButtonDirective),
             ],
@@ -138,23 +136,6 @@ describe('Exam Management Component', () => {
         // THEN
         expect(service.findAllExamsForCourse).toHaveBeenCalledTimes(1);
         expect(comp.exams).toEqual([exam]);
-    });
-
-    it('should delete an exam when delete exam is called', () => {
-        // GIVEN
-        comp.exams = [exam];
-        comp.course = course;
-        const responseFakeDelete = {} as HttpResponse<any[]>;
-        const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
-        jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
-        jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
-
-        // WHEN
-        comp.deleteExam(exam.id!);
-
-        // THEN
-        expect(service.delete).toHaveBeenCalledTimes(1);
-        expect(comp.exams.length).toEqual(0);
     });
 
     it('should return false for examHasFinished when component has no exam information ', () => {

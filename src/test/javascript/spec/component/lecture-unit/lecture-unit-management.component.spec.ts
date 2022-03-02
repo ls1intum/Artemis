@@ -3,10 +3,9 @@ import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Component, Input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
@@ -20,7 +19,6 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { HttpResponse } from '@angular/common/http';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { of } from 'rxjs';
@@ -70,7 +68,6 @@ describe('LectureUnitManagementComponent', () => {
                 MockComponent(VideoUnitComponent),
                 MockComponent(TextUnitComponent),
                 MockComponent(FaIconComponent),
-                MockComponent(AlertComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(RouterOutlet),

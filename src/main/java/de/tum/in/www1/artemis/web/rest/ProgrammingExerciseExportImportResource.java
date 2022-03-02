@@ -154,7 +154,7 @@ public class ProgrammingExerciseExportImportResource {
         programmingExerciseRepository.validateCourseSettings(newExercise, course);
 
         final var originalProgrammingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(sourceExerciseId)
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(sourceExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", sourceExerciseId));
 
         // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded

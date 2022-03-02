@@ -1,6 +1,7 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
 .chart-wrapper {
-    width: 100%;
-    max-width: 1700px;
+    width: 90%;
 }
 
 .filter {
@@ -13,8 +14,26 @@
 
 :host::ng-deep .chart-legend {
     padding: 104px 0 0 0 !important;
+
+    .legend-labels {
+        background-color: transparent !important;
+    }
+
+    .legend-label {
+        color: $artemis-dark;
+
+        :hover {
+            color: $primary !important;
+        }
+    }
+
+    .legend-label-text {
+        font-weight: bolder;
+    }
 }
 
-:host::ng-deep.legend-labels {
-    background-color: transparent !important;
+:host::ng-deep.line-series {
+    path {
+        stroke-width: 2px;
+    }
 }

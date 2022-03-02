@@ -6,8 +6,6 @@
                 {{ exam.title }}
             </h2>
             <hr />
-            <jhi-alert></jhi-alert>
-            <jhi-alert-error></jhi-alert-error>
             <div *ngIf="exam.course?.isAtLeastInstructor">
                 <a [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']" class="btn btn-primary mt-1">
                     <fa-icon [icon]="faTable"></fa-icon>
@@ -54,10 +52,24 @@
                     (delete)="resetExam()"
                     [dialogError]="dialogError$"
                     class="btn mt-1"
+                    style="margin-right: 0 !important"
                 >
                     <fa-icon [icon]="faUndo"></fa-icon>
                 </button>
-                <div *ngIf="exam && isExamOver && exam.course" class="my-2 me-1 mt-1">
+                <button
+                    id="exam-delete"
+                    jhiDeleteButton
+                    [buttonSize]="buttonSize"
+                    [entityTitle]="exam.title || ''"
+                    deleteQuestion="artemisApp.examManagement.delete.question"
+                    deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
+                    (delete)="deleteExam(exam.id!)"
+                    [dialogError]="dialogError$"
+                    class="btn mt-1"
+                >
+                    <fa-icon [icon]="faTimes"></fa-icon>
+                </button>
+                <div *ngIf="exam && isExamOver && exam.course" class="mt-1 d-inline">
                     <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam" [course]="exam.course"></jhi-course-exam-archive-button>
                 </div>
             </div>
