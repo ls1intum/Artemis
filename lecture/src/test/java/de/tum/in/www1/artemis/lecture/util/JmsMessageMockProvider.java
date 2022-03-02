@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
-import java.util.HashSet;
 import java.util.Set;
 
 @SpringBootTest

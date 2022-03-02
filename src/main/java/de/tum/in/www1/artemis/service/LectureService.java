@@ -55,21 +55,6 @@ public class LectureService {
     }
 
     /**
-     * Filter active attachments for a set of lectures.
-     *
-     * @param lecturesWithAttachments lectures that have attachments
-     * @param user the user for which this call should filter
-     * @return lectures with filtered attachments
-     */
-    public Set<Lecture> filterActiveAttachments(Set<Lecture> lecturesWithAttachments, User user) {
-        Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
-        for (Lecture lecture : lecturesWithAttachments) {
-            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
-        }
-        return lecturesWithFilteredAttachments;
-    }
-
-    /**
      * Deletes the given lecture.
      * Attachments and Lecture Units are not explicitly deleted, as the delete operation is cascaded by the database.
      * @param lecture the lecture to be deleted
