@@ -114,7 +114,8 @@
         <!-- list of posts -->
         <jhi-posting-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-posting-thread>
         <!-- paginator -->
-        <div *ngIf="posts">
+        <div *ngIf="totalItems !== 0">
+            <br />
             <div class="row justify-content-center">
                 <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
             </div>
