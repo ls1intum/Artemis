@@ -188,24 +188,23 @@ public class PlagiarismResource {
     }
 
     /**
-     * Retrieves the plagiarismComparison specified by its Id. The submissions are anonymized for the student.
-     * StudentIds are replaced with "Your Submission" and "Other Submission" based on the requesting user.
+     * Retrieves the plagiarismComparison specified by its Id.
      *
      * @param courseId the id of the course
      * @param comparisonId the id of the PlagiarismComparison
      * @return the PlagiarismComparison
      * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
      */
-    @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-editor")
-    @PreAuthorize("hasRole('EDITOR')")
+    @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-split-view")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForEditor(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
         var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
         var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (!authenticationCheckService.isAtLeastEditorInCourse(course, user)) {
-            throw new AccessForbiddenException("Only editors registered for this course can access this plagiarism comparison.");
+        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
         }
         if (!Objects.equals(comparisonA.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
             throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");

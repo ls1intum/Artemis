@@ -192,7 +192,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
         var savedComparison = plagiarismComparisonRepository.save(plagiarismComparison1);
 
-        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + savedComparison.getId() + "/for-editor", HttpStatus.OK,
+        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + savedComparison.getId() + "/for-split-view", HttpStatus.OK,
                 plagiarismComparison1.getClass());
         assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
     }

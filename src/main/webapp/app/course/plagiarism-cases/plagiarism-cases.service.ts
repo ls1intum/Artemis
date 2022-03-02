@@ -40,7 +40,7 @@ export class PlagiarismCasesService {
      * @param { number } plagiarismComparisonId
      */
     public getPlagiarismComparisonForEditor(courseId: number, plagiarismComparisonId: number): Observable<HttpResponse<PlagiarismComparison<PlagiarismSubmissionElement>>> {
-        return this.http.get<PlagiarismComparison<PlagiarismSubmissionElement>>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-editor`, {
+        return this.http.get<PlagiarismComparison<PlagiarismSubmissionElement>>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-split-view`, {
             observe: 'response',
         });
     }
