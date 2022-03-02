@@ -113,7 +113,7 @@
             </div>
             <div class="row">
                 <div class="col">
-                    <div class="form-group" *ngIf="!isExamMode">
+                    <div class="form-group">
                         <label class="form-control-label">{{
                             'artemisApp.exercise.includedInOverallScore' + (quizExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
                         }}</label>
@@ -122,14 +122,9 @@
                                 *ngIf="quizExercise.includedInOverallScore"
                                 [includedInOverallScore]="quizExercise.includedInOverallScore!"
                                 (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
+                                [excludeNotIncluded]="isExamMode"
                             ></jhi-included-in-overall-score-picker>
                         </div>
-                    </div>
-                </div>
-                <div class="form-group" *ngIf="isExamMode">
-                    <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + 'Exam' + 'Label' | artemisTranslate }}</label>
-                    <div>
-                        <jhi-exam-included-in-overall-score-picker [(includedInOverallScore)]="quizExercise.includedInOverallScore"></jhi-exam-included-in-overall-score-picker>
                     </div>
                 </div>
             </div>

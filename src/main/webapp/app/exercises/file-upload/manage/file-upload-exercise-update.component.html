@@ -61,18 +61,15 @@
             ></jhi-date-time-picker>
             <span *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
         </div>
-        <div class="form-group" *ngIf="!isExamMode">
+        <div class="form-group" *ngIf="isExamMode">
             <label class="form-control-label">{{
                 'artemisApp.exercise.includedInOverallScore' + (fileUploadExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
             }}</label>
             <div>
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
-            </div>
-        </div>
-        <div class="form-group" *ngIf="isExamMode">
-            <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + 'Exam' + 'Label' | artemisTranslate }}</label>
-            <div>
-                <jhi-exam-included-in-overall-score-picker [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"></jhi-exam-included-in-overall-score-picker>
+                <jhi-included-in-overall-score-picker
+                    [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"
+                    [excludeNotIncluded]="isExamMode"
+                ></jhi-included-in-overall-score-picker>
             </div>
         </div>
         <div class="row">

@@ -11,6 +11,8 @@ export class IncludedInOverallScorePickerComponent {
 
     @Input()
     includedInOverallScore: IncludedInOverallScore | undefined;
+    @Input()
+    excludeNotIncluded: boolean;
     @Output()
     includedInOverallScoreChange = new EventEmitter();
 

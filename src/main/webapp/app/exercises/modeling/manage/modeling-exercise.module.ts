@@ -20,7 +20,6 @@ import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.module';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
-import { ArtemisExamIncludedInOverallScorePickerModule } from 'app/exercises/shared/exam-included-in-overall-score-picker/exam-included-in-overall-score-picker.module';
 
 @NgModule({
     imports: [
@@ -42,7 +41,6 @@ import { ArtemisExamIncludedInOverallScorePickerModule } from 'app/exercises/sha
         ArtemisMarkdownModule,
         NonProgrammingExerciseDetailCommonActionsModule,
         ExampleSubmissionsModule,
-        ArtemisExamIncludedInOverallScorePickerModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     exports: [ModelingExerciseComponent],
