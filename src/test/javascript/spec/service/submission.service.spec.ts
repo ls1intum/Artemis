@@ -61,13 +61,18 @@ describe('Submission Service', () => {
         ];
     });
 
+    afterEach(() => {
+        httpMock.verify();
+        jest.restoreAllMocks();
+    });
+
     it('should delete an existing submission', fakeAsync(() => {
         service.delete(187).subscribe((resp) => (expectedResult = resp.ok));
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
         tick();
 
-        expect(expectedResult).toBeTrue();
+        expect(expectedResult).toBe(true);
     }));
 
     it('should find all submissions of a given participation', fakeAsync(() => {
@@ -134,14 +139,17 @@ describe('Submission Service', () => {
         const latestResultFeedbacks = getLatestSubmissionResult(submission)!.feedbacks!;
         latestResultFeedbacks?.push(secondFeedback);
 
+        // Copy checking should not be done for correction round 0.
         service.handleFeedbackCorrectionRoundTag(0, submission);
         expect(secondFeedback.copiedFeedbackId).toBe(undefined);
 
+        // Only the second feedback has identical values to the first one, the other feedback should remain untouched.
         service.handleFeedbackCorrectionRoundTag(1, submission);
         expect(latestResultFeedbacks[0].copiedFeedbackId).toBe(undefined);
         expect(secondFeedback.copiedFeedbackId).toBe(firstFeedback.id);
 
         secondFeedback.text = 'Feedback changed';
+        // Feedback.text is changed so the Feedback is not a direct copy anymore.
         service.handleFeedbackCorrectionRoundTag(2, submission);
         expect(secondFeedback.copiedFeedbackId).toBe(undefined);
     });
@@ -187,8 +195,4 @@ describe('Submission Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
-
-    afterEach(() => {
-        httpMock.verify();
-    });
 });
