@@ -675,6 +675,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
                 .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));
+        submissions.forEach(programmingSubmission -> {
+            Participation participation = programmingSubmission.getParticipation();
+            participation.setExercise(null);
+            participation.setSubmissionCount(participation.getSubmissions().size());
+            participation.setSubmissions(null);
+            participation.filterSensitiveInformation();
+        });
         return submissions;
     }
 
