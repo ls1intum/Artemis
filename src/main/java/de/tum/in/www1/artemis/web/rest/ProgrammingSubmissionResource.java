@@ -345,6 +345,13 @@ public class ProgrammingSubmissionResource {
         if (!examMode) {
             programmingSubmissions.forEach(Submission::removeNullResults);
         }
+        // Removes the attributes exercise and the set containing all submissions in order to decrease the data transferred to the client
+        programmingSubmissions.forEach(programmingSubmission -> {
+            Participation participation = programmingSubmission.getParticipation();
+            participation.setExercise(null);
+            participation.setSubmissionCount(participation.getSubmissions().size());
+            participation.setSubmissions(null);
+        });
         return ResponseEntity.ok().body(programmingSubmissions);
     }
 
