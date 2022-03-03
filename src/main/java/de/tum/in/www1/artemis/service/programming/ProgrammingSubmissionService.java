@@ -680,7 +680,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             participation.setExercise(null);
             participation.setSubmissionCount(participation.getSubmissions().size());
             participation.setSubmissions(null);
-            participation.filterSensitiveInformation();
         });
         return submissions;
     }
