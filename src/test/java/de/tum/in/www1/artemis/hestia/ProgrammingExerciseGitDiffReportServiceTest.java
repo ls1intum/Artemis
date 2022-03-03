@@ -56,8 +56,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getNonExistingGitDiff() throws Exception {
-        exercise = hestiaUtilService.setupTemplate("Line 1\nLine 2", FILE_NAME, exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution("Line 1\nLine 2", FILE_NAME, exercise, solutionRepo);
+        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
+        exercise = hestiaUtilService.setupSolution(FILE_NAME, "Line 1\nLine 2", exercise, solutionRepo);
         var report = reportService.getFullReport(exercise);
         assertThat(report).isNull();
     }
@@ -65,8 +65,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateGitDiffNoChanges() throws Exception {
-        exercise = hestiaUtilService.setupTemplate("Line 1\nLine 2", FILE_NAME, exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution("Line 1\nLine 2", FILE_NAME, exercise, solutionRepo);
+        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
+        exercise = hestiaUtilService.setupSolution(FILE_NAME, "Line 1\nLine 2", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
         assertThat(report.getEntries()).isNullOrEmpty();
 
@@ -77,8 +77,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateGitDiffAppendLine1() throws Exception {
-        exercise = hestiaUtilService.setupTemplate("Line 1\nLine 2", FILE_NAME, exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution("Line 1\nLine 2\nLine 3\n", FILE_NAME, exercise, solutionRepo);
+        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
+        exercise = hestiaUtilService.setupSolution(FILE_NAME, "Line 1\nLine 2\nLine 3\n", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
         assertThat(report.getEntries()).hasSize(1);
         var entry = report.getEntries().stream().findFirst().orElseThrow();
@@ -99,8 +99,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateGitDiffAppendLine2() throws Exception {
-        exercise = hestiaUtilService.setupTemplate("Line 1\nLine 2\n", FILE_NAME, exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution("Line 1\nLine 2\nLine 3\n", FILE_NAME, exercise, solutionRepo);
+        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "Line 1\nLine 2\n", exercise, templateRepo);
+        exercise = hestiaUtilService.setupSolution(FILE_NAME, "Line 1\nLine 2\nLine 3\n", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
         assertThat(report.getEntries()).hasSize(1);
         var entry = report.getEntries().stream().findFirst().orElseThrow();
@@ -121,8 +121,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateGitDiffAddToEmptyFile() throws Exception {
-        exercise = hestiaUtilService.setupTemplate("", FILE_NAME, exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution("Line 1\nLine 2", FILE_NAME, exercise, solutionRepo);
+        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "", exercise, templateRepo);
+        exercise = hestiaUtilService.setupSolution(FILE_NAME, "Line 1\nLine 2", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
         assertThat(report.getEntries()).hasSize(1);
         var entry = report.getEntries().stream().findFirst().orElseThrow();
@@ -143,8 +143,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateGitDiffClearFile() throws Exception {
-        exercise = hestiaUtilService.setupTemplate("Line 1\nLine 2", FILE_NAME, exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution("", FILE_NAME, exercise, solutionRepo);
+        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
+        exercise = hestiaUtilService.setupSolution(FILE_NAME, "", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
         assertThat(report.getEntries()).hasSize(1);
         var entry = report.getEntries().stream().findFirst().orElseThrow();
@@ -165,8 +165,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateGitDiffDoubleModify() throws Exception {
-        exercise = hestiaUtilService.setupTemplate("L1\nL2\nL3\nL4", FILE_NAME, exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution("L1\nL2a\nL3\nL4a", FILE_NAME, exercise, solutionRepo);
+        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "L1\nL2\nL3\nL4", exercise, templateRepo);
+        exercise = hestiaUtilService.setupSolution(FILE_NAME, "L1\nL2a\nL3\nL4a", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
         assertThat(report.getEntries()).hasSize(2);
         var entries = new ArrayList<>(report.getEntries());
@@ -199,8 +199,8 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateGitDiffReuseExisting() throws Exception {
-        exercise = hestiaUtilService.setupTemplate("Line 1\nLine 2", FILE_NAME, exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution("Line 1\nLine 2\nLine 3\n", FILE_NAME, exercise, solutionRepo);
+        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
+        exercise = hestiaUtilService.setupSolution(FILE_NAME, "Line 1\nLine 2\nLine 3\n", exercise, solutionRepo);
         var report1 = reportService.updateReport(exercise);
         assertThat(report1.getEntries()).hasSize(1);
         var report2 = reportService.updateReport(exercise);

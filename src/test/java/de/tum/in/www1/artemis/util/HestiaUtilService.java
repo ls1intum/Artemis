@@ -9,6 +9,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,15 @@ import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
+/**
+ * Utility service specifically used for testing Hestia related functionality.
+ * This currently includes:
+ * - Setting up a template repository
+ * - Setting up a solution repository
+ * - Setting up a test repository
+ *
+ * In the future this service will be extended to make testing of the code hint generation easier.
+ */
 @Service
 public class HestiaUtilService {
 
@@ -53,22 +64,39 @@ public class HestiaUtilService {
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     /**
-     * Sets up the template repository of a programming exercise with a single file with content
+     * Sets up the template repository of a programming exercise with a single file
      *
-     * @param content The content of the fill
      * @param fileName The name of the file
+     * @param content The content of the file
      * @param exercise The programming exercise
      * @param templateRepo The repository
      * @return The programming exercise
      */
-    public ProgrammingExercise setupTemplate(String content, String fileName, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
+    public ProgrammingExercise setupTemplate(String fileName, String content, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
+        return setupTemplate(Collections.singletonMap(fileName, content), exercise, templateRepo);
+    }
+
+    /**
+     * Sets up the template repository of a programming exercise with specified files
+     *
+     * @param files        The fileNames mapped to the content of the files
+     * @param exercise     The programming exercise
+     * @param templateRepo The repository
+     * @return The programming exercise
+     */
+    public ProgrammingExercise setupTemplate(Map<String, String> files, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
         templateRepo.configureRepos("templateLocalRepo", "templateOriginRepo");
 
-        // add file to the repository folder
-        Path filePath = Paths.get(templateRepo.localRepoFile + "/" + fileName);
-        File templateFile = Files.createFile(filePath).toFile();
-        // write content to the created file
-        FileUtils.write(templateFile, content, Charset.defaultCharset());
+        for (Map.Entry<String, String> entry : files.entrySet()) {
+            String fileName = entry.getKey();
+            String content = entry.getValue();
+            // add file to the repository folder
+            Path filePath = Paths.get(templateRepo.localRepoFile + "/" + fileName);
+            Files.createDirectories(filePath.getParent());
+            File solutionFile = Files.createFile(filePath).toFile();
+            // write content to the created file
+            FileUtils.write(solutionFile, content, Charset.defaultCharset());
+        }
 
         var templateRepoUrl = new GitUtilService.MockFileRepositoryUrl(templateRepo.localRepoFile);
         exercise.setTemplateRepositoryUrl(templateRepoUrl.toString());
@@ -90,29 +118,46 @@ public class HestiaUtilService {
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         var templateSubmission = new ProgrammingSubmission();
         templateSubmission.setParticipation(templateParticipation);
-        templateSubmission.setCommitHash(String.valueOf(content.hashCode()));
+        templateSubmission.setCommitHash(String.valueOf(files.hashCode()));
         programmingSubmissionRepository.save(templateSubmission);
 
         return savedExercise;
     }
 
     /**
-     * Sets up the solution repository of a programming exercise with a single file with content
+     * Sets up the solution repository of a programming exercise with a single file
      *
-     * @param content The content of the fill
      * @param fileName The name of the file
+     * @param content The content of the file
      * @param exercise The programming exercise
      * @param solutionRepo The repository
      * @return The programming exercise
      */
-    public ProgrammingExercise setupSolution(String content, String fileName, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
+    public ProgrammingExercise setupSolution(String fileName, String content, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
+        return setupSolution(Collections.singletonMap(fileName, content), exercise, solutionRepo);
+    }
+
+    /**
+     * Sets up the solution repository of a programming exercise with specified files
+     *
+     * @param files        The fileNames mapped to the content of the files
+     * @param exercise     The programming exercise
+     * @param solutionRepo The repository
+     * @return The programming exercise
+     */
+    public ProgrammingExercise setupSolution(Map<String, String> files, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
-        // add file to the repository folder
-        Path filePath = Paths.get(solutionRepo.localRepoFile + "/" + fileName);
-        File solutionFile = Files.createFile(filePath).toFile();
-        // write content to the created file
-        FileUtils.write(solutionFile, content, Charset.defaultCharset());
+        for (Map.Entry<String, String> entry : files.entrySet()) {
+            String fileName = entry.getKey();
+            String content = entry.getValue();
+            // add file to the repository folder
+            Path filePath = Paths.get(solutionRepo.localRepoFile + "/" + fileName);
+            Files.createDirectories(filePath.getParent());
+            File solutionFile = Files.createFile(filePath).toFile();
+            // write content to the created file
+            FileUtils.write(solutionFile, content, Charset.defaultCharset());
+        }
 
         var solutionRepoUrl = new GitUtilService.MockFileRepositoryUrl(solutionRepo.localRepoFile);
         exercise.setSolutionRepositoryUrl(solutionRepoUrl.toString());
@@ -134,9 +179,60 @@ public class HestiaUtilService {
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         var solutionSubmission = new ProgrammingSubmission();
         solutionSubmission.setParticipation(solutionParticipation);
-        solutionSubmission.setCommitHash(String.valueOf(content.hashCode()));
+        solutionSubmission.setCommitHash(String.valueOf(files.hashCode()));
         programmingSubmissionRepository.save(solutionSubmission);
 
         return savedExercise;
+    }
+
+    /**
+     * Sets up the test repository of a programming exercise with a single file
+     *
+     * @param fileName The name of the file
+     * @param content The content of the file
+     * @param exercise The programming exercise
+     * @param testRepo The repository
+     * @return The programming exercise
+     */
+    public ProgrammingExercise setupTests(String fileName, String content, ProgrammingExercise exercise, LocalRepository testRepo) throws Exception {
+        return setupTests(Collections.singletonMap(fileName, content), exercise, testRepo);
+    }
+
+    /**
+     * Sets up the test repository of a programming exercise with specified files
+     *
+     * @param files    The fileNames mapped to the content of the files
+     * @param exercise The programming exercise
+     * @param testRepo The repository
+     * @return The programming exercise
+     */
+    public ProgrammingExercise setupTests(Map<String, String> files, ProgrammingExercise exercise, LocalRepository testRepo) throws Exception {
+        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        for (Map.Entry<String, String> entry : files.entrySet()) {
+            String fileName = entry.getKey();
+            String content = entry.getValue();
+            // add file to the repository folder
+            Path filePath = Paths.get(testRepo.localRepoFile + "/" + fileName);
+            Files.createDirectories(filePath.getParent());
+            File solutionFile = Files.createFile(filePath).toFile();
+            // write content to the created file
+            FileUtils.write(solutionFile, content, Charset.defaultCharset());
+        }
+
+        var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.localRepoFile);
+        exercise.setTestRepositoryUrl(testRepoUrl.toString());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(testRepoUrl, false);
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUrl), eq(true),
+                any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUrl), eq(false),
+                any());
+
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
+
+        return exerciseRepository.save(exercise);
     }
 }
