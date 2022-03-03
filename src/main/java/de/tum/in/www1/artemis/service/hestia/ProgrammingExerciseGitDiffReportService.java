@@ -176,12 +176,11 @@ public class ProgrammingExerciseGitDiffReportService {
             newReport.setTemplateRepositoryCommitHash(templateHash);
             newReport.setSolutionRepositoryCommitHash(solutionHash);
             newReport.setProgrammingExercise(programmingExercise);
+            // Delete the old report first
+            programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExercise.getId());
             newReport = programmingExerciseGitDiffReportRepository.save(newReport);
             programmingExercise.setGitDiffReport(newReport);
             programmingExerciseRepository.save(programmingExercise);
-            if (existingReport != null) {
-                programmingExerciseGitDiffReportRepository.delete(existingReport);
-            }
             return newReport;
         }
         catch (InterruptedException | GitAPIException | IOException e) {
