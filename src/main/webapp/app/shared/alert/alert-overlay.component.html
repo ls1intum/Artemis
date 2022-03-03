@@ -1,0 +1,19 @@
+<!-- <jhi-single-alert *ngFor="let alert of alerts" [alert]="alert"></jhi-single-alert> -->
+<div class="alert-wrap" *ngFor="let alert of alerts" @alertAnimation>
+    <div class="alert-inner" [ngClass]="alert.type.containerClassName">
+        <div class="left">
+            <fa-icon [icon]="alert.type.icon" size="2x"></fa-icon>
+            <div class="message" [innerHTML]="alert.message"></div>
+        </div>
+        <button *ngIf="alert.action" type="button" [ngClass]="'btn ' + alert.type.buttonClassName" (click)="alert.action.callback(alert)">{{ alert.action.label }}</button>
+        <div class="close-circle" *ngIf="alert.dismissible" (click)="alert.close()">
+            <svg role="img" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 352 512" width="12" height="12">
+                <path
+                    fill="currentColor"
+                    d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"
+                ></path>
+            </svg>
+        </div>
+        <div class="time-bar" *ngIf="(alert?.timeout || 0) > 0" [ngStyle]="{ animationDuration: alert.timeout + 'ms' }"></div>
+    </div>
+</div>

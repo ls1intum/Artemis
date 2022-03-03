@@ -228,6 +228,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.checkPermissions();
         this.handleFeedback();
         this.getComplaint();
+        this.calculateTotalScore();
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
@@ -306,6 +307,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     submit(): void {
         this.submitBusy = true;
         this.handleSaveOrSubmit(true, 'artemisApp.textAssessment.submitSuccessful');
+        this.assessmentsAreValid = false;
     }
 
     /**
@@ -392,11 +394,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResultService.updateAfterComplaint(this.manualResult!.feedbacks!, complaintResponse, this.submission!.id!).subscribe({
             next: (result: Result) => {
                 this.participation.results![0] = this.manualResult = result;
-                this.alertService.clear();
+                this.alertService.closeAll();
                 this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
-                this.alertService.clear();
+                this.alertService.closeAll();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
                     this.alertService.error(error.message, error.params);
@@ -493,7 +495,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.participation.results = [];
         }
         this.participation.results![0] = this.manualResult = response.body!;
-        this.alertService.clear();
+        this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
     }
@@ -539,7 +541,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.unreferencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.onFeedbackLoaded.emit();
-        this.validateFeedback();
     }
 
     private setFeedbacksForManualResult() {

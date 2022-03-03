@@ -15,7 +15,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { of } from 'rxjs';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Result } from 'app/entities/result.model';
@@ -64,7 +63,7 @@ describe('ListOfComplaintsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(AlertComponent), MockComponent(FaIconComponent)],
+            declarations: [ListOfComplaintsComponent, TranslatePipeMock, MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(SortService),

@@ -3,7 +3,6 @@
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #hintForm="ngForm">
             <h2 id="jhi-exercise-hint-heading" jhiTranslate="artemisApp.exerciseHint.home.createOrEditLabel">Create or edit a Exercise Hint</h2>
             <div>
-                <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!exerciseHint?.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" readonly [(ngModel)]="exerciseHint.id" />

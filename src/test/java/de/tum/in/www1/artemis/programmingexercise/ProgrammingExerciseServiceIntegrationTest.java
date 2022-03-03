@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
@@ -86,7 +87,8 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         final var newTestCaseIDs = newlyImported.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getTestCases().size()).isEqualTo(programmingExercise.getTestCases().size());
         assertThat(programmingExercise.getTestCases()).noneMatch(testCase -> newTestCaseIDs.contains(testCase.getId()));
-        assertThat(programmingExercise.getTestCases()).usingElementComparatorIgnoringFields("id", "exercise").containsExactlyInAnyOrderElementsOf(newlyImported.getTestCases());
+        assertThat(programmingExercise.getTestCases()).usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries")
+                .containsExactlyInAnyOrderElementsOf(newlyImported.getTestCases());
         final var newHintIDs = newlyImported.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getExerciseHints().size()).isEqualTo(programmingExercise.getExerciseHints().size());
         assertThat(programmingExercise.getExerciseHints()).noneMatch(hint -> newHintIDs.contains(hint.getId()));
@@ -113,7 +115,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
         final var imported = importExerciseBase();
 
-        // All copied hints/tests have the same content are are referenced to the new exercise
+        // All copied hints/tests have the same content are referenced to the new exercise
         assertThat(imported.getExerciseHints()).allMatch(hint -> programmingExercise.getExerciseHints().stream().anyMatch(
                 oldHint -> oldHint.getContent().equals(hint.getContent()) && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(imported.getId())));
         assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
