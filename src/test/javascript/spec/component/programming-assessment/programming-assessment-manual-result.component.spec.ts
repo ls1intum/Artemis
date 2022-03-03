@@ -368,6 +368,16 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         flush();
     }));
 
+    it('should calculate score for result of submission', fakeAsync(() => {
+        // When score is undefined
+        result.score = undefined;
+        comp.ngOnInit();
+        tick(100);
+
+        // Should calculate the score
+        expect(comp.submission?.results?.[0].score).not.toBe(undefined);
+    }));
+
     it('should save and submit manual result', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);

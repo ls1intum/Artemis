@@ -51,4 +51,35 @@ describe('TextAssessmentAreaComponent', () => {
             expect(all.length).toBe(i);
         }
     });
+
+    it('should toggle on alt', () => {
+        const spyOnAlt = jest.spyOn(component, 'onAltToggle');
+        const eventMock = new KeyboardEvent('keydown', { key: 'Alt' });
+
+        component.onAltToggle(eventMock, false);
+        expect(spyOnAlt).toHaveBeenCalledTimes(1);
+        expect(component.autoTextBlockAssessment).toBe(false);
+    });
+
+    it('should add TextBlockRef if text block is added manually', () => {
+        component.textBlockRefs = [TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new()];
+        jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
+
+        component.addTextBlockRef(TextBlockRef.new());
+        fixture.detectChanges();
+
+        expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledTimes(1);
+        expect(component.textBlockRefs).toHaveLength(5);
+    });
+
+    it('should remove TextBlockRef if text block is deleted', () => {
+        component.textBlockRefs = [TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new()];
+        jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
+
+        component.removeTextBlockRef(component.textBlockRefs[0]);
+        fixture.detectChanges();
+
+        expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledTimes(1);
+        expect(component.textBlockRefs).toHaveLength(3);
+    });
 });
