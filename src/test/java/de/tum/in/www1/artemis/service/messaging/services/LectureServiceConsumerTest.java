@@ -121,6 +121,44 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
     }
 
     @Test
+    public void testGetExercisesAndRespond_emptyDTO_shouldResponseWithEmptyList() throws JMSException {
+        UserExerciseDTO dto = new UserExerciseDTO();
+        when(message.getBody(UserExerciseDTO.class)).thenReturn(dto);
+        when(message.getJMSCorrelationID()).thenReturn(Integer.toString(dto.hashCode()));
+
+        lectureServiceConsumer.getExercisesAndRespond(message);
+
+        Mockito.verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
+        assertThat(setCaptor.getValue().size()).isEqualTo(0);
+    }
+
+    @Test
+    public void testGetExercisesAndRespond_onlyUserSet_shouldResponseWithEmptyList() throws JMSException {
+        UserExerciseDTO dto = new UserExerciseDTO();
+        dto.setUser(user1);
+        when(message.getBody(UserExerciseDTO.class)).thenReturn(dto);
+        when(message.getJMSCorrelationID()).thenReturn(Integer.toString(dto.hashCode()));
+
+        lectureServiceConsumer.getExercisesAndRespond(message);
+
+        Mockito.verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
+        assertThat(setCaptor.getValue().size()).isEqualTo(0);
+    }
+
+    @Test
+    public void testGetExercisesAndRespond_onlyExercisesSet_shouldResponseWithEmptyList() throws JMSException {
+        UserExerciseDTO dto = new UserExerciseDTO();
+        dto.setExercises(exercises);
+        when(message.getBody(UserExerciseDTO.class)).thenReturn(dto);
+        when(message.getJMSCorrelationID()).thenReturn(Integer.toString(dto.hashCode()));
+
+        lectureServiceConsumer.getExercisesAndRespond(message);
+
+        Mockito.verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
+        assertThat(setCaptor.getValue().size()).isEqualTo(0);
+    }
+
+    @Test
     public void testGetExercisesAndRespond_shouldThrowException() throws JMSException {
         when(message.getBody(UserExerciseDTO.class)).thenThrow(new JMSException("Error"));
 

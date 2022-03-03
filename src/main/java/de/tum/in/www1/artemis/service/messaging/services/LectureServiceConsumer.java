@@ -14,6 +14,7 @@ import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import de.tum.in.www1.artemis.config.MessageBrokerConstants;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -57,12 +58,18 @@ public class LectureServiceConsumer {
         }
         LOGGER.info("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, userExerciseDTO);
         SecurityUtils.setAuthorizationObject();
-        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(userExerciseDTO.getExercises()),
-                userExerciseDTO.getUser());
-        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
-                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), userExerciseDTO.getUser());
-        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, exercisesWithAllInformationNeeded);
-        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, exercisesWithAllInformationNeeded, msg -> {
+        Set<Exercise> result;
+        if (userExerciseDTO == null || userExerciseDTO.getUser() == null || CollectionUtils.isEmpty(userExerciseDTO.getExercises())) {
+            result = Set.of();
+        }
+        else {
+            Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(userExerciseDTO.getExercises()),
+                    userExerciseDTO.getUser());
+            result = exerciseService.loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()),
+                    userExerciseDTO.getUser());
+        }
+        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, result);
+        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, result, msg -> {
             msg.setJMSCorrelationID(message.getJMSCorrelationID());
             return msg;
         });
