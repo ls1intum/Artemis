@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 public class ProgrammingExerciseGitDiffReport extends DomainObject {
 
     // FetchType.LAZY here, as we always already have the exercise when retrieving the report
-    @OneToOne(mappedBy = "gitDiffReport", fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("gitDiffReport")
     private ProgrammingExercise programmingExercise;
 

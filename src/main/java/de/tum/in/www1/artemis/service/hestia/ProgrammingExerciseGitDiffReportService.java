@@ -252,8 +252,10 @@ public class ProgrammingExerciseGitDiffReportService {
                 // Start of a new file
                 var newFilePath = getFilePath(lines, i);
                 var newPreviousFilePath = getPreviousFilePath(lines, i);
-                currentFilePath = newFilePath == null ? currentFilePath : newFilePath;
-                currentPreviousFilePath = newPreviousFilePath == null ? currentPreviousFilePath : newPreviousFilePath;
+                if (newFilePath != null || newPreviousFilePath != null) {
+                    currentFilePath = newFilePath;
+                    currentPreviousFilePath = newPreviousFilePath;
+                }
                 currentEntry = new ProgrammingExerciseGitDiffEntry();
                 currentEntry.setFilePath(currentFilePath);
                 currentEntry.setPreviousFilePath(currentPreviousFilePath);

@@ -14,21 +14,18 @@
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="template_repository_commit_hash" type="VARCHAR(255)">
+            <column name="programming_exercise_id" type="BIGINT"/>
+            <column name="template_repository_commit_hash" type="VARCHAR(40)">
                 <constraints nullable="false"/>
             </column>
-            <column name="solution_repository_commit_hash" type="VARCHAR(255)">
+            <column name="solution_repository_commit_hash" type="VARCHAR(40)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-
-        <addColumn tableName="exercise">
-            <column name="git_diff_report_id" type="BIGINT"/>
-        </addColumn>
-        <addForeignKeyConstraint baseTableName="exercise"
-                                 baseColumnNames="git_diff_report_id"
-                                 constraintName="fk_programming_exercise_git_diff_report_id"
-                                 referencedTableName="programming_exercise_git_diff_report"
+        <addForeignKeyConstraint baseTableName="programming_exercise_git_diff_report"
+                                 baseColumnNames="programming_exercise_id"
+                                 constraintName="fk_programming_exercise_git_diff_report_exercise_id"
+                                 referencedTableName="exercise"
                                  referencedColumnNames="id"/>
 
         <createTable tableName="programming_exercise_git_diff_entry">

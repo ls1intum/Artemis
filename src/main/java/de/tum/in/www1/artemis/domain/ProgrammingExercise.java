@@ -122,7 +122,7 @@ public class ProgrammingExercise extends Exercise {
     private ProjectType projectType;
 
     // FetchType.LAZY here, as only need the git-diff very rarely
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExercise")
     private ProgrammingExerciseGitDiffReport gitDiffReport;
 

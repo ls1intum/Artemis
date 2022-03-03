@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -74,13 +75,16 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
-            SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -97,6 +101,7 @@ public class ProgrammingExerciseGradingService {
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.exerciseDateService = exerciseDateService;
+        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
     }
 
     /**
@@ -142,6 +147,17 @@ public class ProgrammingExerciseGradingService {
         // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
         if (isSolutionParticipation) {
             extractTestCasesFromResult(programmingExercise, newResult);
+        }
+
+        // Update the git-diff of the programming exercise when the push was to a solution or template repository
+        // This has to be done here, as we need to do this after the test case results have been extracted from the solution result
+        if (isTemplateParticipation || isSolutionParticipation) {
+            try {
+                programmingExerciseGitDiffReportService.updateReport(programmingExercise);
+            }
+            catch (Exception e) {
+                log.error("Unable to update git-diff for programming exercise " + programmingExercise.getId(), e);
+            }
         }
 
         Result processedResult = calculateScoreForResult(newResult, programmingExercise, isStudentParticipation);
