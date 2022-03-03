@@ -12,4 +12,6 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 public interface ProgrammingExerciseGitDiffReportRepository extends JpaRepository<ProgrammingExerciseGitDiffReport, Long> {
 
     ProgrammingExerciseGitDiffReport findByProgrammingExerciseId(Long exerciseId);
+
+    void deleteByProgrammingExerciseId(Long exerciseId);
 }
