@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -22,7 +21,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
@@ -75,14 +76,20 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
     }
 
-    /**
-     * Auxiliary repositories are not supported for Gitlab/Jenkins configurations.
-     *
-     * @param exercise for which the build plans should be recreated
-     */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
-        // Auxiliary repositories are currently not supported for Gitlab/Jenkins configurations.
+        final String projectKey = exercise.getProjectKey();
+
+        if (!jenkinsBuildPlanService.projectFolderExists(projectKey)) {
+            createProjectForExercise(exercise);
+        }
+
+        deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
+        deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
+
+        final VcsRepositoryUrl testsRepositoryUrl = exercise.getRepositoryURL(RepositoryType.TESTS);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE), testsRepositoryUrl);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION), testsRepositoryUrl);
     }
 
     @Override
@@ -310,7 +317,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         filteredBuildLogs = filteredBuildLogs.filter(buildLog -> !buildLog.getLog().startsWith("+"));
 
         // Filter out the remainder of unnecessary logs
-        return removeUnnecessaryLogsForProgrammingLanguage(filteredBuildLogs.collect(Collectors.toList()), programmingLanguage);
+        return removeUnnecessaryLogsForProgrammingLanguage(filteredBuildLogs.toList(), programmingLanguage);
     }
 
     @Override
