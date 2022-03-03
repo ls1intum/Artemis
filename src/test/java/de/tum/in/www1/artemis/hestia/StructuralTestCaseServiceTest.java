@@ -22,6 +22,10 @@ import de.tum.in.www1.artemis.util.HestiaUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
+/**
+ * Tests for the StructuralTestCaseService
+ * Test if solution entries are generated as expected for structural tests
+ */
 public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final LocalRepository solutionRepo = new LocalRepository();

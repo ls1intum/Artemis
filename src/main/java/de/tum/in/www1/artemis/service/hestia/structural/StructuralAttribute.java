@@ -5,6 +5,10 @@ import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Element of the test.json file representing the properties of an attribute of a class
+ * Used for the generation of solution entries for structural test cases
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 class StructuralAttribute {
 

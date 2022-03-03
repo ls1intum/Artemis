@@ -26,6 +26,15 @@ import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
+/**
+ * Utility service specifically used for testing Hestia related functionality.
+ * This currently includes:
+ * - Setting up a template repository
+ * - Setting up a solution repository
+ * - Setting up a test repository
+ *
+ * In the future this service will be extended to make testing of the code hint generation easier.
+ */
 @Service
 public class HestiaUtilService {
 

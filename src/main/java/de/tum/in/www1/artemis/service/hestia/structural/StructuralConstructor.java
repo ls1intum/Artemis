@@ -4,6 +4,10 @@ import java.util.Arrays;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/**
+ * Element of the test.json file representing the properties of a constructor of a class
+ * Used for the generation of solution entries for structural test cases
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 class StructuralConstructor {
 
