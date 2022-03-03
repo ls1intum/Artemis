@@ -71,15 +71,12 @@ describe(`ArtemisVersionInterceptor`, () => {
         const addAlertSpy = jest.spyOn(alertService, 'addAlert').mockImplementation(funMock);
         new ArtemisVersionInterceptor(appRef, swUpdate as any as SwUpdate, serverDateService, alertService, { location: { reload: jest.fn() } } as any as Window);
         tick();
-        expect(addAlertSpy).toHaveBeenCalled();
-        expect(funMock.mock.calls).toHaveLength(1);
-        expect(funMock.mock.calls[0]).toHaveLength(1);
-        const arg = funMock.mock.calls[0][0];
-        expect(arg.type).toBe(AlertType.INFO);
-        expect(arg.message).toBe('artemisApp.outdatedAlert');
+        expect(addAlertSpy).toHaveBeenCalledTimes(1);
+        expect(funMock).toHaveBeenCalledTimes(1);
+        expect(funMock).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.INFO, message: 'artemisApp.outdatedAlert' }));
 
         expect(activateUpdateSpy).not.toHaveBeenCalled();
-        arg.action.callback();
+        funMock.mock.calls[0][0].action.callback();
         expect(activateUpdateSpy).toHaveBeenCalledTimes(1);
         discardPeriodicTasks();
     }));
