@@ -40,7 +40,7 @@ describe('TextExercise Import Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    it('should initialize the subjects', () => {
         // GIVEN
         const searchSpy = jest.spyOn(comp, 'performSearch' as any);
 
@@ -53,9 +53,7 @@ describe('TextExercise Import Component', () => {
         expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 300);
     });
 
-    it('should initialize', () => {
-        // GIVEN
-
+    it('should initialize the content', () => {
         // WHEN
         fixture.detectChanges();
 
