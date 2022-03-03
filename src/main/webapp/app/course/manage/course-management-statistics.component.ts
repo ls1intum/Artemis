@@ -8,6 +8,7 @@ import { CourseManagementStatisticsDTO } from './course-management-statistics-dt
 @Component({
     selector: 'jhi-course-management-statistics',
     templateUrl: './course-management-statistics.component.html',
+    styleUrls: ['./course-management-statistics.component.scss'],
 })
 export class CourseManagementStatisticsComponent implements OnInit {
     // html properties

@@ -76,7 +76,7 @@ describe('TextExercise Service', () => {
         });
 
         it('should update a TextExercise', () => {
-            const returnedFromService = Object.assign({ sampleSolution: 'BBBBBB' }, elemDefault);
+            const returnedFromService = Object.assign({ exampleSolution: 'BBBBBB' }, elemDefault);
             const expected = Object.assign({}, returnedFromService);
             service
                 .update(expected)
@@ -88,7 +88,7 @@ describe('TextExercise Service', () => {
         });
 
         it('should return a list of TextExercise', () => {
-            const returnedFromService = Object.assign({ sampleSolution: 'BBBBBB' }, elemDefault);
+            const returnedFromService = Object.assign({ exampleSolution: 'BBBBBB' }, elemDefault);
             const expected = Object.assign({}, returnedFromService);
             service
                 .query(expected)
