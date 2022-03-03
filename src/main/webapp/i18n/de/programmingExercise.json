@@ -77,7 +77,8 @@
             },
             "recreateBuildPlans": {
                 "title": "Build-Pläne neu erstellen",
-                "warning": "Die Build-Pläne werden neu erstellt. Alle bisherigen Veränderungen gehen verloren!",
+                "buttonText": "Build-Pläne",
+                "question": "Sollen die Build-Pläne des Templates und der Musterlösung für Programmieraufgabe <strong>{{ title }}</strong> wirklich neu erstellt werden? Alle vorherigen Änderungen werden überschrieben.<br>Build-Pläne der Studierenden werden <strong>nicht</strong> gelöscht. Diese können getrennt über die Aufräumen-Funktion entfernt werden. Zusammen können diese beiden Operationen dann wieder einen konsistenten Zustand zwischen den Systemen sicherstellen, etwa wenn der Muster-Build-Plan geändert wurde oder es zu einem Datenverlust im CI-System kam.",
                 "description": "Durch Aktivierung dieser Option werden die Build-Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build-Pläne unterstützen standardmäßig die neuesten Features der Artemis-Aufgabenvorlagen."
             },
             "updateTemplate": {
