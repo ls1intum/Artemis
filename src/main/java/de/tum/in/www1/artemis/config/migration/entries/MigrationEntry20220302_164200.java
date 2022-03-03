@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.LegacyPasswordService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
@@ -27,6 +28,7 @@ public class MigrationEntry20220302_164200 extends MigrationEntry {
 
     @Override
     public void execute() {
+        SecurityUtils.setAuthorizationObject();
         int listSize = 100;
         List<User> users = userRepository.findAllByInternal(true);
         // Cut list in parts to prevent any timeouts
