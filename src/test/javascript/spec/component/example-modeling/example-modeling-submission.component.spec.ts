@@ -2,27 +2,30 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router, convertToParamMap, ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { UMLModel } from '@ls1intum/apollon';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.component';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { routes } from 'app/exercises/modeling/manage/modeling-exercise.route';
 import { ArtemisExampleModelingSubmissionRoutingModule } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.route';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;
@@ -43,7 +46,9 @@ describe('Example Modeling Submission Component', () => {
     };
 
     const exercise = {
+        id: 22,
         diagramType: UMLDiagramType.ClassDiagram,
+        course: { id: 2 },
     } as ModelingExercise;
 
     const mockFeedbackWithReference = {
@@ -65,9 +70,20 @@ describe('Example Modeling Submission Component', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]]), MockModule(ArtemisExampleModelingSubmissionRoutingModule)],
-            declarations: [ExampleModelingSubmissionComponent, MockComponent(ModelingEditorComponent), MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ChangeDetectorRef), { provide: ActivatedRoute, useValue: route }],
+            imports: [ArtemisTestModule, MockModule(ArtemisExampleModelingSubmissionRoutingModule), TranslateTestingModule],
+            declarations: [
+                ExampleModelingSubmissionComponent,
+                MockComponent(ModelingEditorComponent),
+                MockTranslateValuesDirective,
+                MockComponent(FaLayersComponent),
+                MockComponent(CollapsableAssessmentInstructionsComponent),
+            ],
+            providers: [
+                MockProvider(ChangeDetectorRef),
+                { provide: Router, useClass: MockRouter },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -187,6 +203,7 @@ describe('Example Modeling Submission Component', () => {
         comp.exampleSubmission = exampleSubmission;
 
         // WHEN
+        fixture.detectChanges();
         comp.readAndUnderstood();
 
         // THEN

@@ -126,7 +126,7 @@ export class ExerciseScoresExportButtonComponent {
         const { participantName, participantIdentifier } = participation;
         const score = roundValueSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise));
 
-        const columns = [participantName, participantIdentifier, score, resultWithPoints.totalPoints];
+        const columns = [`"${participantName}"`, participantIdentifier, score, resultWithPoints.totalPoints];
 
         gradingCriteria.map((criterion) => resultWithPoints.pointsPerCriterion.get(criterion.id!) || 0).forEach((criterionPoints) => columns.push(criterionPoints));
 

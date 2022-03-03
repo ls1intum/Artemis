@@ -186,11 +186,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.submission.model) {
             this.model = JSON.parse(this.submission.model);
         } else {
-            this.alertService.clear();
+            this.alertService.closeAll();
             this.alertService.error('modelingAssessmentEditor.messages.noModel');
         }
         if ((!this.result?.assessor || this.result.assessor.id === this.userId) && !this.result?.completionDate) {
-            this.alertService.clear();
+            this.alertService.closeAll();
             this.alertService.info('modelingAssessmentEditor.messages.lock');
         }
         this.checkPermissions();
@@ -305,7 +305,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingExercise = undefined;
         this.result = undefined;
         this.model = undefined;
-        this.alertService.clear();
+        this.alertService.closeAll();
         this.alertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
 
@@ -319,11 +319,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             next: (result: Result) => {
                 this.result = result;
                 this.handleFeedback(this.result.feedbacks);
-                this.alertService.clear();
+                this.alertService.closeAll();
                 this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
             error: () => {
-                this.alertService.clear();
+                this.alertService.closeAll();
                 this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
             },
         });
@@ -361,7 +361,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 result.participation!.results = [result];
                 this.result = result;
 
-                this.alertService.clear();
+                this.alertService.closeAll();
                 this.alertService.success('modelingAssessmentEditor.messages.submitSuccessful');
 
                 this.highlightMissingFeedback = false;
@@ -371,7 +371,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (error.error && error.error.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                 }
-                this.alertService.clear();
+                this.alertService.closeAll();
                 this.alertService.error(errorMessage);
             },
         });
@@ -390,11 +390,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.result = response.body!;
                 // reconnect
                 this.result.participation!.results = [this.result];
-                this.alertService.clear();
+                this.alertService.closeAll();
                 this.alertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
-                this.alertService.clear();
+                this.alertService.closeAll();
                 const error = httpErrorResponse.error;
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
                     this.alertService.error(error.message, error.params);

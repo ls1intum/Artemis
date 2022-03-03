@@ -6,12 +6,13 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -24,7 +25,7 @@ describe('ExerciseHint Management Update Component', () => {
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
-            declarations: [ExerciseHintUpdateComponent],
+            declarations: [ExerciseHintUpdateComponent, MockComponent(MarkdownEditorComponent)],
             providers: [
                 FormBuilder,
                 MockProvider(ExerciseService),

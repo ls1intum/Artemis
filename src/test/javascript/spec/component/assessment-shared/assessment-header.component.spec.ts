@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
@@ -52,7 +52,7 @@ describe('AssessmentHeaderComponent', () => {
             declarations: [
                 AssessmentHeaderComponent,
                 AssessmentWarningComponent,
-                AlertComponent,
+                AlertOverlayComponent,
                 MockComponent(NgbAlert),
                 MockDirective(NgbTooltip),
                 TranslateDirective,
@@ -100,20 +100,6 @@ describe('AssessmentHeaderComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should include jhi-alert', () => {
-        const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
-        expect(jhiAlertComponent).toBeTruthy();
-    });
-
-    it('should display alerts', () => {
-        const alertService = TestBed.inject(AlertService);
-        const testAlert = 'test-alert-string';
-        const alert = alertService.success(testAlert);
-        fixture.detectChanges();
-
-        expect(alert.message).toBe(testAlert);
-    });
-
     it('should display warning when assessment due date has not passed', () => {
         component.exercise = {
             id: 16,
@@ -131,8 +117,10 @@ describe('AssessmentHeaderComponent', () => {
         // @ts-ignore
         component.result = undefined;
         fixture.detectChanges();
+
         const alertComponent = fixture.debugElement.query(By.css('ngb-alert'));
-        expect(alertComponent).toBeTruthy();
+        expect(alertComponent).not.toBe(undefined);
+        expect(alertComponent.nativeElement.innerHTML).toContain('Assessment Due Date is over, the assessment will be published immediately after submitting');
     });
 
     it('should hide right side row-container if loading', () => {

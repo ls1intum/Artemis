@@ -224,7 +224,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             this.result!.feedbacks = [];
         }
         if ((!this.result?.assessor || this.result?.assessor.id === this.userId) && !this.result?.completionDate) {
-            this.alertService.clear();
+            this.alertService.closeAll();
             this.alertService.info('artemisApp.fileUploadAssessment.messages.lock');
         }
 
@@ -300,11 +300,11 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (result: Result) => {
                     this.result = result;
-                    this.alertService.clear();
+                    this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
                 error: () => {
-                    this.alertService.clear();
+                    this.alertService.closeAll();
                     this.alertService.error('artemisApp.assessment.messages.saveFailed');
                 },
             });
@@ -324,7 +324,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 next: (result: Result) => {
                     this.result = result;
                     this.updateParticipationWithResult();
-                    this.alertService.clear();
+                    this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.submitSuccessful');
                 },
                 error: (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
@@ -476,11 +476,11 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 next: (response) => {
                     this.result = response.body!;
                     this.updateParticipationWithResult();
-                    this.alertService.clear();
+                    this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
                 error: (httpErrorResponse: HttpErrorResponse) => {
-                    this.alertService.clear();
+                    this.alertService.closeAll();
                     const error = httpErrorResponse.error;
                     if (error && error.errorKey && error.errorKey === 'complaintLock') {
                         this.alertService.error(error.message, error.params);

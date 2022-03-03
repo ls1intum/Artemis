@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
@@ -44,7 +43,7 @@ describe('ExamParticipantScores', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExamParticipantScoresComponent, ParticipantScoresTableContainerStubComponent, MockPipe(ArtemisTranslatePipe), MockComponent(AlertComponent)],
+            declarations: [ExamParticipantScoresComponent, ParticipantScoresTableContainerStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(GradingSystemService),
                 MockProvider(ParticipantScoresService),
