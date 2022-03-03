@@ -90,7 +90,8 @@ describe('TextExercise Import Component', () => {
     it('should change the page on active modal', fakeAsync(() => {
         const defaultPageSize = 10;
         const numberOfPages = 5;
-        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises').mockReturnValue(of({ numberOfPages } as SearchResult<TextExercise>));
+        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
 
@@ -110,5 +111,38 @@ describe('TextExercise Import Component', () => {
         comp.onPageChange(0);
         tick();
         expect(comp.page).toBe(expectedPageNumber);
+
+        // Number of times onPageChange is called with a truthy value.
+        expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
+    }));
+
+    it('should sort rows with default values', () => {
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+
+        fixture.detectChanges();
+        comp.sortRows();
+
+        expect(sortServiceSpy).toHaveBeenCalledTimes(1);
+        expect(sortServiceSpy).toHaveBeenCalledWith([], comp.column.ID, false);
+    });
+
+    it('should set search term and search', fakeAsync(() => {
+        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
+
+        fixture.detectChanges();
+
+        let expectedPageNumber = 1;
+        const expectedSearchTerm = 'search term';
+        comp.searchTerm = expectedSearchTerm;
+        tick();
+        expect(comp.searchTerm).toBe(expectedSearchTerm);
+
+        // It should wait first before executing search.
+        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+
+        tick(300);
+
+        expect(pagingServiceSpy).toHaveBeenCalledTimes(1);
     }));
 });
