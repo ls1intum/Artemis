@@ -42,7 +42,7 @@ describe('TextExercise Import Component', () => {
 
     it('should initialize', () => {
         // GIVEN
-        const searchSpy = jest.spyOn(comp, 'performSearch');
+        const searchSpy = jest.spyOn(comp, 'performSearch' as any);
 
         // WHEN
         fixture.detectChanges();
@@ -132,7 +132,6 @@ describe('TextExercise Import Component', () => {
 
         fixture.detectChanges();
 
-        let expectedPageNumber = 1;
         const expectedSearchTerm = 'search term';
         comp.searchTerm = expectedSearchTerm;
         tick();
