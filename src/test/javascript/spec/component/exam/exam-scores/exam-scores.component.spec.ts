@@ -37,6 +37,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -268,6 +269,11 @@ describe('ExamScoresComponent', () => {
                 MockProvider(CourseManagementService, {
                     find: () => {
                         return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
+                    },
+                }),
+                MockProvider(LocaleConversionService, {
+                    toLocaleString: (value: number) => {
+                        return isNaN(value) ? '-' : value.toString();
                     },
                 }),
             ],
@@ -624,13 +630,13 @@ describe('ExamScoresComponent', () => {
             comp.toggleFilterForNonEmptySubmission();
 
             expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
-            expect(comp.tableState.relativeAmountOfSubmittedExams).toBe('66,7');
+            expect(comp.tableState.relativeAmountOfSubmittedExams).toBe('66.7');
             expect(comp.tableState.absoluteAmountOfTotalExams).toBe(3);
-            expect(comp.tableState.relativeAmountOfPassedExams).toBe('33,3');
+            expect(comp.tableState.relativeAmountOfPassedExams).toBe('33.3');
             expect(comp.tableState.averagePointsSubmitted).toBe('60');
-            expect(comp.tableState.averagePointsTotal).toBe('56,7');
+            expect(comp.tableState.averagePointsTotal).toBe('56.7');
             expect(comp.tableState.averageScoreSubmitted).toBe('60');
-            expect(comp.tableState.averageScoreTotal).toBe('56,7');
+            expect(comp.tableState.averageScoreTotal).toBe('56.7');
             expect(comp.tableState.medianPointsSubmitted).toBe('60');
             expect(comp.tableState.medianPointsTotal).toBe('50');
             expect(comp.tableState.medianScoreSubmitted).toBe('60');
@@ -652,7 +658,7 @@ describe('ExamScoresComponent', () => {
             expect(comp.tableState.averageGradeSubmitted).toBe('4');
             expect(comp.tableState.averageGradeTotal).toBe('4');
             expect(comp.tableState.standardDeviationSubmittedInFirstCorrection).toBe('35');
-            expect(comp.tableState.standardDeviationTotalInFirstCorrection).toBe('29,4');
+            expect(comp.tableState.standardDeviationTotalInFirstCorrection).toBe('29.4');
             expect(comp.tableState.standardGradeDeviationSubmittedInFirstCorrection).toBe('-');
             expect(comp.tableState.standardGradeDeviationTotalInFirstCorrection).toBe('-');
             expect(comp.tableState.averageGradeSubmittedInFirstCorrection).toBe('4');
