@@ -190,7 +190,7 @@
                     </button>
 
                     <button
-                        *ngIf="programmingExercise.isAtLeastInstructor"
+                        *ngIf="programmingExercise.isAtLeastEditor"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         jhiDeleteButton
                         [actionType]="ActionType.Reset"
