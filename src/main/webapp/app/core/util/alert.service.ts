@@ -106,23 +106,16 @@ export class AlertService {
                         }
                     } else if (httpErrorResponse.error && httpErrorResponse.error.message) {
                         this.addErrorAlert(httpErrorResponse.error.message, httpErrorResponse.error.message, httpErrorResponse.error.params);
-                    } else if (httpErrorResponse.message) {
-                        this.addErrorAlert(httpErrorResponse.message, httpErrorResponse.message);
-                    } else {
-                        this.addErrorAlert(httpErrorResponse.error);
                     }
                     break;
 
                 case 404:
-                    // Disabled until we find a better solution
-                    // this.addErrorAlert('Not found', 'error.url.not.found');
+                    // Disabled
                     break;
 
                 default:
                     if (httpErrorResponse.error && httpErrorResponse.error.message) {
                         this.addErrorAlert(httpErrorResponse.error.message);
-                    } else {
-                        this.addErrorAlert(httpErrorResponse.error);
                     }
             }
         });
