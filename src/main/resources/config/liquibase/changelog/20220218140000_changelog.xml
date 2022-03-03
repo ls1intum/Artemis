@@ -15,10 +15,10 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="programming_exercise_id" type="BIGINT"/>
-            <column name="template_repository_commit_hash" type="VARCHAR(40)">
+            <column name="template_repository_commit_hash" type="VARCHAR(60)">
                 <constraints nullable="false"/>
             </column>
-            <column name="solution_repository_commit_hash" type="VARCHAR(40)">
+            <column name="solution_repository_commit_hash" type="VARCHAR(60)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
