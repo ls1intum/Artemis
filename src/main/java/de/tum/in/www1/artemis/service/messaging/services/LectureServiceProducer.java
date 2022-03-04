@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.messaging.services;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.jms.JMSException;
@@ -45,7 +46,7 @@ public class LectureServiceProducer {
      */
     public Set<Lecture> filterActiveAttachments(Set<Lecture> lectures, User user) {
         if (CollectionUtils.isEmpty(lectures) || user == null) {
-            return lectures;
+            return new HashSet<>();
         }
         UserLectureDTO userLectureDTO = new UserLectureDTO(lectures, user);
         LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, userLectureDTO);
@@ -86,7 +87,7 @@ public class LectureServiceProducer {
     }
 
     public boolean deleteLecturesOfCourse(Course course) {
-        if (CollectionUtils.isEmpty(course.getLectures())) {
+        if (course == null || CollectionUtils.isEmpty(course.getLectures())) {
             return true;
         }
         Set<Lecture> lectures = course.getLectures();

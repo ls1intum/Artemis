@@ -55,7 +55,7 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
     @Autowired
     private UserRepository userRepository;
 
-    ArgumentCaptor<Set<String>> setCaptor;
+    private ArgumentCaptor<Set<String>> setCaptor;
 
     private Set<Exercise> exercises;
 
@@ -88,7 +88,6 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         this.user2 = userRepository.findUserWithGroupsAndAuthoritiesByLogin("student42").get();
         this.exercises = lecture.getLectureUnits().stream().filter(unit -> unit instanceof ExerciseUnit).map(unit -> ((ExerciseUnit) unit).getExercise())
                 .collect(Collectors.toSet());
-
     }
 
     @AfterEach
