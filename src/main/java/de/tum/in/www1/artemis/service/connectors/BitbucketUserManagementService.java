@@ -80,8 +80,8 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      *     <li>Update the password of the user</li>
      *     <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
      * </ul>
-     * @param vcsLogin                  The username of the user in the VCS
      *
+     * @param vcsLogin                  The username of the user in the VCS
      * @param user                      The updated user in Artemis
      * @param removedGroups             groups that the user does not belong to any longer
      * @param addedGroups               The new groups the Artemis user got added to
@@ -90,7 +90,10 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
     @Override
     public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
         bitbucketService.updateUserDetails(vcsLogin, user.getEmail(), user.getName());
-        if (user.isInternal() && shouldSynchronizePassword) {
+        if (!user.isInternal()) {
+            return;
+        }
+        if (shouldSynchronizePassword) {
             bitbucketService.updateUserPassword(vcsLogin, passwordService.decryptPassword(user));
         }
         if (addedGroups != null && !addedGroups.isEmpty()) {
@@ -108,6 +111,9 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      */
     @Override
     public void deleteVcsUser(String login) throws VersionControlException {
+        if (!userRepository.findOneByLogin(login).orElseThrow().isInternal()) {
+            return;
+        }
         bitbucketService.deleteAndEraseUser(login);
     }
 

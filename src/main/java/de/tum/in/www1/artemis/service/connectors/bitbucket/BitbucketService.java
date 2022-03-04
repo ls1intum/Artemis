@@ -365,6 +365,11 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
         catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+                log.warn("Could not remove Bitbucket user {} from groups {}. Either the user or the groups were not found or the user is not assigned to a group.", username,
+                        groups);
+                return;
+            }
             log.error("Could not remove Bitbucket user " + username + " from groups" + groups, e);
             throw new BitbucketException("Error while removing Bitbucket user from groups");
         }
