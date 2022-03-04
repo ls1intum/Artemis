@@ -649,6 +649,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             if (latestResult != null) {
                 latestResult.setSubmission(null);
             }
+            // Remove the exercise from the submission to reduce the transferred data into the client
+            submission.getParticipation().setExercise(null);
         });
         return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
 
