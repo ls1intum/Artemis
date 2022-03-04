@@ -153,7 +153,7 @@ public class ProgrammingExerciseGradingService {
         // This has to be done here, as we need to do this after the test case results have been extracted from the solution result
         if (isTemplateParticipation || isSolutionParticipation) {
             try {
-                programmingExerciseGitDiffReportService.updateReport(programmingExercise);
+                programmingExerciseGitDiffReportService.updateReport(programmingExercise, isTemplateParticipation);
             }
             catch (Exception e) {
                 log.error("Unable to update git-diff for programming exercise " + programmingExercise.getId(), e);
