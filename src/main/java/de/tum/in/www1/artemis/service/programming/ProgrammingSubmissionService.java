@@ -656,13 +656,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-    * Given an exerciseId, returns all the programming submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
-    * submissions
-    *
-    * @param exerciseId    - the id of the exercise we are interested into
-    * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-    * @param examMode - set flag to ignore test run submissions for exam exercises
-    * @return a list of programming submissions for the given exercise id
+     * Given an exerciseId, returns all the programming submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+     * submissions
+     *
+     * @param exerciseId    - the id of the exercise we are interested into
+     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @param examMode - set flag to ignore test run submissions for exam exercises
+     * @return a list of programming submissions for the given exercise id
     */
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
         List<StudentParticipation> participations;
