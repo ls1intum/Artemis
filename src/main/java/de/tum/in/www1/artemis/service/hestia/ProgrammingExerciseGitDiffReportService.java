@@ -149,19 +149,6 @@ public class ProgrammingExerciseGitDiffReportService {
      * @return The git-diff report for the given programming exercise
      */
     public ProgrammingExerciseGitDiffReport updateReport(ProgrammingExercise programmingExercise) {
-        return this.updateReport(programmingExercise, false);
-    }
-
-    /**
-     * Updates the ProgrammingExerciseGitDiffReport of a programming exercise.
-     * If there were no changes since the last report was created this will not do anything.
-     * If there were changes to at least one of the repositories a new report will be created.
-     *
-     * @param programmingExercise The programming exercise
-     * @param sourceIsTemplate If the update was caused by a push to the template repository
-     * @return The git-diff report for the given programming exercise
-     */
-    public ProgrammingExerciseGitDiffReport updateReport(ProgrammingExercise programmingExercise, boolean sourceIsTemplate) {
         var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
         var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
         if (templateParticipationOptional.isEmpty() || solutionParticipationOptional.isEmpty()) {
@@ -181,20 +168,8 @@ public class ProgrammingExerciseGitDiffReportService {
         var templateHash = templateSubmission.getCommitHash();
         var solutionHash = solutionSubmission.getCommitHash();
         var existingReport = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
-        if (existingReport != null) {
-            var hasTemplateBeenUpdated = !existingReport.getTemplateRepositoryCommitHash().equals(templateHash);
-            var hasSolutionBeenUpdated = !existingReport.getSolutionRepositoryCommitHash().equals(solutionHash);
-            if (!hasTemplateBeenUpdated && !hasSolutionBeenUpdated) {
-                return existingReport;
-            }
-            else if (hasTemplateBeenUpdated && hasSolutionBeenUpdated && sourceIsTemplate) {
-                // When both repos have been updated we only want to generate the diff after the solution build finished
-                return null;
-            }
-        }
-        else if (sourceIsTemplate) {
-            // When the exercise has been created we only want to generate the diff after the solution build finished
-            return null;
+        if (existingReport != null && canUseExistingReport(existingReport, templateHash, solutionHash)) {
+            return existingReport;
         }
 
         try {
@@ -402,5 +377,9 @@ public class ProgrammingExerciseGitDiffReportService {
             }
         }
         return null;
+    }
+
+    private boolean canUseExistingReport(ProgrammingExerciseGitDiffReport report, String templateHash, String solutionHash) {
+        return report.getTemplateRepositoryCommitHash().equals(templateHash) && report.getSolutionRepositoryCommitHash().equals(solutionHash);
     }
 }
