@@ -649,22 +649,21 @@ public class ProgrammingSubmissionService extends SubmissionService {
             if (latestResult != null) {
                 latestResult.setSubmission(null);
             }
-            // Remove the exercise from the submission to reduce the transferred data into the client
-            submission.getParticipation().setExercise(null);
         });
-        return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
+        List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
+        return removeExerciseAndSubmissionSet(programmingSubmissions);
 
     }
 
     /**
-     * Given an exerciseId, returns all the programming submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
-     * submissions
-     *
-     * @param exerciseId    - the id of the exercise we are interested into
-     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @param examMode - set flag to ignore test run submissions for exam exercises
-     * @return a list of programming submissions for the given exercise id
-     */
+    * Given an exerciseId, returns all the programming submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
+    * submissions
+    *
+    * @param exerciseId    - the id of the exercise we are interested into
+    * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+    * @param examMode - set flag to ignore test run submissions for exam exercises
+    * @return a list of programming submissions for the given exercise id
+    */
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
         List<StudentParticipation> participations;
         if (examMode) {
@@ -678,14 +677,24 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 // filter out non submitted submissions if the flag is set to true
                 .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
                 .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));
-        // Removes the attributes participation.exercise and participation.submissions to reduce the transferred data into the client
-        submissions.forEach(programmingSubmission -> {
+        return removeExerciseAndSubmissionSet(submissions);
+    }
+
+    /**
+     * Given a List of ProgrammingSubmissions, this method will remove the attributes participation.exercise and participation.submissions
+     * to reduce the amount of data transferred to the client. Th number of submissions will be stored in the attribute participation.SubmissionCount
+     * instead instead of the number of submissions being determined by the size of the set of all submissions.
+     * @param programmingSubmissions the submissions for which the attributes are to be removed
+     * @return a List, were the attributes have been removed
+     */
+    private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissions) {
+        programmingSubmissions.forEach(programmingSubmission -> {
             Participation participation = programmingSubmission.getParticipation();
             participation.setExercise(null);
             participation.setSubmissionCount(participation.getSubmissions().size());
             participation.setSubmissions(null);
         });
-        return submissions;
+        return programmingSubmissions;
     }
 
     /**
