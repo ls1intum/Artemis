@@ -4,13 +4,20 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
-import { CourseScoresComponent, EMAIL_KEY, NAME_KEY, OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
+import {
+    CourseScoresComponent,
+    EMAIL_KEY,
+    HighlightType,
+    NAME_KEY,
+    OVERALL_COURSE_POINTS_KEY,
+    OVERALL_COURSE_SCORE_KEY,
+    USERNAME_KEY,
+} from 'app/course/course-scores/course-scores.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
@@ -28,6 +35,8 @@ import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/m
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -38,6 +47,10 @@ describe('CourseScoresComponent', () => {
     const exerciseWithFutureReleaseDate = {
         title: 'exercise with future release date',
         releaseDate: dayjs().add(1, 'day'),
+        id: 6,
+        type: ExerciseType.TEXT,
+        includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED,
+        maxPoints: 10,
     } as Exercise;
 
     const overallPoints = 10 + 10 + 10;
@@ -223,7 +236,7 @@ describe('CourseScoresComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 CourseScoresComponent,
-                MockComponent(AlertComponent),
+                MockComponent(ParticipantScoresDistributionComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(OrionFilterDirective),
@@ -231,6 +244,7 @@ describe('CourseScoresComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
                 MockTranslateValuesDirective,
             ],
             providers: [
@@ -387,7 +401,7 @@ describe('CourseScoresComponent', () => {
         fixture.detectChanges();
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
         component.exportResults();
-        const generatedRows = exportAsCsvStub.mock.calls[0][0];
+        const generatedRows = exportAsCsvStub.mock.calls[0][1];
         const user1Row = generatedRows[0];
         validateUserRow(
             user1Row,
@@ -396,6 +410,7 @@ describe('CourseScoresComponent', () => {
             user1.email!,
             '0',
             '0%',
+            '10',
             '10',
             '100%',
             '20',
@@ -406,7 +421,7 @@ describe('CourseScoresComponent', () => {
             roundScorePercentSpecifiedByCourseSettings(40 / 30, course).toLocaleString() + '%',
         );
         const user2Row = generatedRows[1];
-        validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
+        validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
         expect(maxRow[OVERALL_COURSE_POINTS_KEY]).toEqual('30');
     });
@@ -437,6 +452,27 @@ describe('CourseScoresComponent', () => {
         expect(component.averageGrade).toEqual('A');
     });
 
+    it('should set highlighting to default if current highlighting is deselected', () => {
+        component.highlightedType = HighlightType.AVERAGE;
+
+        // we deselect the current highlighting
+        component.highlightBar(HighlightType.AVERAGE);
+
+        expect(component.highlightedType).toBe(HighlightType.NONE);
+        expect(component.valueToHighlight).toBe(undefined);
+    });
+
+    it('should highlight the median correctly', () => {
+        component.highlightedType = HighlightType.AVERAGE;
+        component.medianScoreIncluded = 55.5;
+
+        // we select the median
+        component.highlightBar(HighlightType.MEDIAN);
+
+        expect(component.highlightedType).toBe(HighlightType.MEDIAN);
+        expect(component.valueToHighlight).toBe(55.5);
+    });
+
     function validateUserRow(
         userRow: any,
         expectedName: string,
@@ -444,6 +480,7 @@ describe('CourseScoresComponent', () => {
         expectedEmail: string,
         expectedQuizPoints: string,
         expectedQuizScore: string,
+        expectedScoreModelingExercise: string,
         expectedModelingPoints: string,
         expectedModelingScore: string,
         expectedTextPoints: string,
@@ -458,6 +495,7 @@ describe('CourseScoresComponent', () => {
         expect(userRow[EMAIL_KEY]).toEqual(expectedEmail);
         expect(userRow['Quiz Points']).toEqual(expectedQuizPoints);
         expect(userRow['Quiz Score']).toEqual(expectedQuizScore);
+        expect(userRow['exercise four']).toEqual(expectedScoreModelingExercise);
         expect(userRow['Modeling Points']).toEqual(expectedModelingPoints);
         expect(userRow['Modeling Score']).toEqual(expectedModelingScore);
         expect(userRow['File-upload Points']).toEqual(expectedFileUploadPoints);

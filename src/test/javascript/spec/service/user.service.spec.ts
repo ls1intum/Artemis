@@ -61,6 +61,13 @@ describe('User Service', () => {
             expect(req.request.url).toEqual(`${resourceUrl}`);
         });
 
+        it('should call correct URL to initialize LTI user', () => {
+            service.initializeLTIUser().subscribe();
+            const req = httpMock.expectOne({ method: 'PUT' });
+            const resourceUrl = SERVER_API_URL + 'api/users/initialize';
+            expect(req.request.url).toEqual(`${resourceUrl}`);
+        });
+
         it('should propagate not found response', () => {
             service.find('user').subscribe({
                 error: (_error: any) => {

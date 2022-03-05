@@ -48,7 +48,6 @@
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
-            "examStudentReviewEnabled": "Einsichtnahme ist möglich",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl registrierter Studierender",
             "created": "Neue Klausur erstellt",
@@ -83,7 +82,18 @@
         },
         "examScores": {
             "xAxes": "Ergebnis in %",
+            "xAxesSuffix": " + {Notenname}",
+            "xAxesSuffixBonus": " + {Bonuspunkte}",
             "yAxes": "Anzahl Teilnehmende",
+            "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagram hervor: {{ median }}%",
+            "highlightOverallMedian": "Hebe Median aller Klausuren im Diagram hervor: {{ median }}%",
+            "criticalPerformance": "Bedenkliche Leistung",
+            "uncriticalPerformance": "Undbedenkliche Leistung",
+            "noGradingScaleExplanation": "Eine Leistung gilt als bedenklich falls sie unter 40% der maximal zu erreichenden Punktzahl erzielt und somit in den meisten Fällen zum Nichtbestehen einer Klausur führen würde. Andernfalls gilt eine Leistung als unbedenklich.",
+            "sufficientPerformance": "Ausreichende Leistung",
+            "insufficientPerformance": "Ungenügende Leistung",
+            "gradingScaleExplanationNotBonus": "Eine Leistung gilt als ungenügend falls sie nicht zum Bestehen der Klausur genügt. Andernfalls gilt eine Leistung als ausreichend.",
+            "gradingScaleExplanationBonus": "Eine Leistung gilt als bedenklich falls sie keine Bonuspunkte erzielt. Andernfalls gilt eine Leistung als unbedenklich.",
             "maxPoints": "Maximale Punktzahl",
             "title": "Klausurergebnisse",
             "examStatisticsTitle": "Klausurstatistik",
@@ -225,6 +235,8 @@
             "unlockAllRepositoriesFailure": "Es gab einen Fehler beim Entsperren der Repositories:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
             "lockAllRepositoriesFailure": "Es gab einen Fehler beim Sperren der Repositories:\n {{message}}",
+            "setWorkingTime": "Absolut:",
+            "setWorkingTimeRelative": "Verlängerung relativ zur normalen Bearbeitungszeit:",
             "removeAllStudents": {
                 "title": "Entferne alle Studierenden",
                 "question": "Bist du sicher, dass du <strong class='text-danger'>alle Studierenden</strong> von der Klausur abmelden möchtest?",
@@ -273,7 +285,7 @@
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
             "confirmationEndText": "Bestätigungstext zum Klausurende",
-            "assessmentDashboard": "Bewertungs-Dashboard",
+            "assessmentDashboard": "Bewertung",
             "examChecklist": "Klausurcheckliste",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
@@ -373,8 +385,8 @@
                 "descriptionItem": {
                     "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder es können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal angemeldet werden.",
                     "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
-                    "generateStudentExams": "Die Klausuren der Studierenden müssen generiert worden sein, bevor die Klausur beginnt. Die Arbeitszeit kann dabei individuell angepasst werden.\nZudem werden alle Commits des Templates von Programmieraufgaben in einem Commit zusammengefasst.",
-                    "prepareExerciseStart": "Vorbereiten der Aufgaben kann die Serverlast während der Klausur reduzieren.",
+                    "generateStudentExams": "Du musst die individuellen Klausuren der Studierenden vor Start der Klausur generieren. Die Arbeitszeit kann dabei individuell angepasst werden.\nZudem werden alle Commits des Templates von Programmieraufgaben in einem Commit zusammengefasst.",
+                    "prepareExerciseStart": "Du musst die Aufgaben vor Beginn der Klausur vorbereiten.",
                     "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
                     "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
                     "assessAllSubmissions": "Die Anzahl der Korrekturrunden der Aufgaben entspricht der in der Klausur angegebenen Anzahl von Korrekturrunden.",
@@ -447,6 +459,35 @@
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+        },
+        "examStatus": {
+            "columnTitle": "Klausurstatus",
+            "preparation": {
+                "examPreparation": "Klausurvorbereitung",
+                "configureExercises": "Konfiguriere Klausuraufgaben: {{ amount }} Aufgabengruppen",
+                "registerStudents": "Registriere Studierende: {{ registered }} registiert",
+                "generateStudentExams": "Generiere Klausuren: ",
+                "registered": "{{ generated }} von {{ total }}",
+                "notRegistered": "Keine Studierenden registriert",
+                "prepareExerciseStart": "Bereite Aufgabenstart vor"
+            },
+            "conduction": {
+                "examConduction": "Klausurdurchführung",
+                "startedExams": "Begonnene Klausuren",
+                "submittedExams": "Abgegebene Klausuren"
+            },
+            "correction": {
+                "examCorrection": "Klausurkorrektur",
+                "correctionRoundProgress": "Korrekturfortschritt in Runde {{ index }}",
+                "publishResultDate": "Veröffentlichung der Ergebnisse",
+                "notSet": "Nicht gesetzt",
+                "examReview": "Klausureinsicht",
+                "unset": "Nicht angesetzt",
+                "planned": "Geplant",
+                "running": "Im Gange",
+                "finished": "Abgeschlossen",
+                "complaints": "Beschwerden"
+            }
         }
     }
 }

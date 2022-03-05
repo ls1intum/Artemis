@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,8 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -72,6 +69,7 @@ public class AccountResource {
     /**
      * the registration is only enabled when the configuration artemis.user-management.registration.enabled is set to true.
      * A non existing entry or false mean that the registration is not enabled
+     *
      * @return whether the registration is enabled or not
      */
     private boolean isRegistrationDisabled() {
@@ -91,7 +89,7 @@ public class AccountResource {
      * {@code POST  /register} : register the user.
      *
      * @param managedUserVM the managed user View Model.
-     * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
+     * @throws InvalidPasswordException  {@code 400 (Bad Request)} if the password is incorrect.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
      */
@@ -164,25 +162,11 @@ public class AccountResource {
     }
 
     /**
-     * GET /account/password : get the current users password.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the current user password in body, or status 500 (Internal Server Error) if the user couldn't be returned
-     */
-    @GetMapping(value = "/account/password", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getPassword() {
-        // This method is used to show the password for users that have been generated automatically based on LTI
-        // It only allows to decrypt and return the password of internal users and only of the currently logged in user
-        Map<String, String> body = new HashMap<>();
-        body.put("password", passwordService.decryptPasswordOfCurrentUser());
-        return new ResponseEntity<>(body, HttpStatus.OK);
-    }
-
-    /**
      * {@code PUT  /account} : update the current user information.
      *
      * @param userDTO the current user information.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
-     * @throws RuntimeException {@code 500 (Internal Server Error)} if the user login wasn't found.
+     * @throws RuntimeException          {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
     @PutMapping("/account")
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
@@ -221,21 +205,24 @@ public class AccountResource {
     /**
      * {@code POST   /account/reset-password/init} : Send an email to reset the password of the user.
      *
-     * @param mail the mail of the user.
+     * @param mailUsername string containing either mail or username of the user.
      */
     @PostMapping(path = "/account/reset-password/init")
-    public void requestPasswordReset(@RequestBody String mail) {
-        if (isRegistrationDisabled() && isSAML2Disabled()) {
-            throw new AccessForbiddenException("User Registration is disabled");
-        }
-        Optional<User> user = userService.requestPasswordReset(mail);
-        if (user.isPresent()) {
-            mailService.sendPasswordResetMail(user.get());
+    public void requestPasswordReset(@RequestBody String mailUsername) {
+        List<User> user = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
+        if (!user.isEmpty()) {
+            List<User> internalUsers = user.stream().filter(User::isInternal).toList();
+            if (internalUsers.isEmpty()) {
+                throw new BadRequestAlertException("The user is handled externally. The password can't be reset within Artemis.", "Account", "externalUser");
+            }
+            else if (userService.prepareUserForPasswordReset(internalUsers.get(0))) {
+                mailService.sendPasswordResetMail(internalUsers.get(0));
+            }
         }
         else {
-            // Pretend the request has been successful to prevent checking which emails really exist
+            // Pretend the request has been successful to prevent checking which emails or usernames really exist
             // but log that an invalid attempt has been made
-            log.warn("Password reset requested for non existing mail '{}'", mail);
+            log.warn("Password reset requested for non existing mail or username '{}'", mailUsername);
         }
     }
 
@@ -244,13 +231,10 @@ public class AccountResource {
      *
      * @param keyAndPassword the generated key and the new password.
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the password is incorrect.
-     * @throws RuntimeException {@code 500 (Internal Server Error)} if the password could not be reset.
+     * @throws RuntimeException         {@code 500 (Internal Server Error)} if the password could not be reset.
      */
     @PostMapping(path = "/account/reset-password/finish")
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
-        if (isRegistrationDisabled() && isSAML2Disabled()) {
-            throw new AccessForbiddenException("User Registration is disabled");
-        }
         if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new InvalidPasswordException();
         }

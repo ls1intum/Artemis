@@ -46,7 +46,6 @@
             ></jhi-team-delete-button>
         </div>
     </div>
-    <jhi-alert></jhi-alert>
     <jhi-data-table [isLoading]="isLoading" [isTransitioning]="isTransitioning" [showPageSizeDropdownAndSearchField]="false" [allEntities]="team?.students || []">
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
@@ -99,7 +98,6 @@
             </ngx-datatable>
         </ng-template>
     </jhi-data-table>
-    <jhi-assessment-warning *ngIf="exercise && exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-assessment-warning>
 
     <ng-container *ngIf="exercise && team">
         <h4 class="mt-4 d-flex align-items-baseline">

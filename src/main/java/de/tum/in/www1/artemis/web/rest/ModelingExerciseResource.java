@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +20,8 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
@@ -30,6 +29,8 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
@@ -50,6 +51,8 @@ public class ModelingExerciseResource {
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
+
+    private final CourseService courseService;
 
     private final ParticipationRepository participationRepository;
 
@@ -73,22 +76,20 @@ public class ModelingExerciseResource {
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
-
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final ModelClusterRepository modelClusterRepository;
 
     private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
-    public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository, ParticipationRepository participationRepository, ModelingExerciseService modelingExerciseService,
-            ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, ModelingExerciseImportService modelingExerciseImportService,
-            SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            GradingCriterionRepository gradingCriterionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
-            ExampleSubmissionRepository exampleSubmissionRepository, InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository,
-            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+    public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
+            ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
+            ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
+            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -102,7 +103,6 @@ public class ModelingExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.modelClusterRepository = modelClusterRepository;
         this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
@@ -123,23 +123,25 @@ public class ModelingExerciseResource {
     public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
         log.debug("REST request to save ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() != null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new modeling exercise cannot already have an ID")).body(null);
+            throw new BadRequestAlertException("A new modeling exercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        modelingExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
-        // make sure the course actually exists
-        var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        if (modelingExercise.getTitle() == null) {
+            throw new BadRequestAlertException("A new modeling exercise needs a title", ENTITY_NAME, "missingtitle");
+        }
         // validates general settings: points, dates
         modelingExercise.validateGeneralSettings();
+        // Valid exercises have set either a course or an exerciseGroup
+        modelingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        // if exercise is created from scratch we create a new knowledge instance
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(modelingExercise);
+        // Check that the user is authorized to create the exercise
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        // if exercise is created from scratch we create new knowledge instance
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
-
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-
         modelingExerciseService.scheduleOperations(result.getId());
-
         groupNotificationService.checkNotificationsForNewExercise(modelingExercise, instanceMessageSendService);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
@@ -177,36 +179,32 @@ public class ModelingExerciseResource {
         if (modelingExercise.getId() == null) {
             return createModelingExercise(modelingExercise);
         }
-        modelingExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        // make sure the course actually exists
-        var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         // validates general settings: points, dates
         modelingExercise.validateGeneralSettings();
+        // Valid exercises have set either a course or an exerciseGroup
+        modelingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
+        // Check that the user is authorized to update the exercise
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Important: use the original exercise for permission check
         final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findByIdElseThrow(modelingExercise.getId());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExerciseBeforeUpdate, user);
 
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
-            return conflict("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
+
+        // Forbid conversion between normal course exercise and exam exercise
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
-        // Avoid recursions
-        if (updatedModelingExercise.getExampleSubmissions().size() != 0) {
-            Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(updatedModelingExercise.getId());
-            updatedModelingExercise.setExampleSubmissions(exampleSubmissionsWithResults);
-            updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
-            updatedModelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
-        }
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, modelingExerciseBeforeUpdate.getDueDate());
-
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
+        exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText,
                 instanceMessageSendService);
@@ -226,10 +224,7 @@ public class ModelingExerciseResource {
     public ResponseEntity<List<ModelingExercise>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseIdWithCategories(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
@@ -351,22 +346,15 @@ public class ModelingExerciseResource {
     public ResponseEntity<ModelingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
-            return badRequest();
+            throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
-        final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
         importedExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
-
-        if (importedExercise.isExamExercise()) {
-            log.debug("REST request to import text exercise {} into exercise group {}", sourceExerciseId, importedExercise.getExerciseGroup().getId());
-        }
-        else {
-            log.debug("REST request to import text exercise with {} into course {}", sourceExerciseId, importedExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        }
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
         ModelingExercise result = modelingExerciseRepository.save(newModelingExercise);
@@ -432,14 +420,16 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
     @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")
+    @FeatureToggle(Feature.PlagiarismChecks)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) {
         var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
         long start = System.nanoTime();
-        ModelingPlagiarismResult result = modelingPlagiarismDetectionService.compareSubmissions(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
-        log.info("Finished modelingPlagiarismDetectionService.compareSubmissions call for {} comparisons in {}", result.getComparisons().size(),
+        log.info("Start modelingPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
+        ModelingPlagiarismResult result = modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
+        log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
         result.sortAndLimit(500);
         log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());

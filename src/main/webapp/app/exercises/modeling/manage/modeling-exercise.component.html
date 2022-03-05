@@ -26,7 +26,6 @@
             <span jhiTranslate="artemisApp.modelingExercise.home.importLabel"> Import Modeling Exercise </span>
         </button>
     </h4>
-    <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row"></div>
     <br />
     <div class="table-responsive" *ngIf="modelingExercises && filteredModelingExercises.length > 0">
@@ -70,6 +69,7 @@
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
+                            <!-- Scores -->
                             <a
                                 *ngIf="modelingExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'scores']"
@@ -78,6 +78,7 @@
                                 <fa-icon [icon]="faTable"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                             </a>
+                            <!-- Participations -->
                             <a
                                 *ngIf="modelingExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'participations']"
@@ -86,6 +87,7 @@
                                 <fa-icon [icon]="farListAlt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </a>
+                            <!-- Submissions -->
                             <a
                                 *ngIf="modelingExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', courseId, 'modeling-exercises', modelingExercise.id, 'submissions']"
@@ -103,6 +105,7 @@
                                 <fa-icon [icon]="faBook"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
                             </a>
+                            <!-- Teams -->
                             <a
                                 *ngIf="modelingExercise.teamMode && modelingExercise.isAtLeastTutor"
                                 [routerLink]="['/course-management', modelingExercise.course?.id, 'exercises', modelingExercise.id, 'teams']"
@@ -111,6 +114,7 @@
                                 <fa-icon [icon]="faUsers"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                             </a>
+                            <!-- Edit -->
                             <a
                                 *ngIf="modelingExercise.isAtLeastEditor"
                                 [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']"
@@ -119,7 +123,9 @@
                                 <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>
+                            <!-- Delete -->
                             <button
+                                id="delete-exercise"
                                 *ngIf="modelingExercise.isAtLeastInstructor"
                                 jhiDeleteButton
                                 [entityTitle]="modelingExercise.title || ''"

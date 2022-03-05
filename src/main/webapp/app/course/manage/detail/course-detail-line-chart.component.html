@@ -1,7 +1,7 @@
 <div class="course-detail-parent-container col">
     <div class="row justify-content-center chart-title-line">
         <div class="d-inline-flex flex-nowrap justify-content-center">
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
+            <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
                 <h5>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
             </a>
             <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
@@ -11,7 +11,7 @@
         <fa-icon [icon]="faArrowLeft" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
         <div #containerRef class="chart col-md-9 mt-1 justify-content-center h-99">
             <ngx-charts-line-chart
-                [view]="[containerRef.offsetWidth, 450]"
+                [view]="[containerRef.offsetWidth, 500]"
                 [scheme]="chartColor"
                 [legend]="legend"
                 [showXAxisLabel]="showXAxisLabel"

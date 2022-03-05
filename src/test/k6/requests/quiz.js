@@ -8,7 +8,7 @@ export function createQuizExercise(artemis, course, exerciseGroup = null, startQ
 
     // The actual exercise
     const exercise = {
-        title: 'TEST-Quiz ' + nextAlphanumeric(10),
+        title: 'Quiz K6' + nextAlphanumeric(10),
         type: 'quiz',
         teamMode: false,
         releaseDate: null,

@@ -25,7 +25,7 @@ import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
             [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.resubmitAll'"
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="openTriggerAllModal()"
         >
         </jhi-button>
@@ -86,7 +86,6 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
                 <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
             </div>
             <div class="modal-body">
-                <jhi-alert-error></jhi-alert-error>
                 <p *ngIf="deadlinePassed" class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDeadline">
                     The deadline has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results
                     would replace the manual results as the latest result for the participation.

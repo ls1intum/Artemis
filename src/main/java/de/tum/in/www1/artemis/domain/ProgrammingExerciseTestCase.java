@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 
@@ -11,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -40,9 +46,22 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Column(name = "bonus_points")
     private Double bonusPoints;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "programming_exercise_task_test_case", joinColumns = @JoinColumn(name = "test_case_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id"))
+    @JsonIgnoreProperties("testCases")
+    private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
+
+    @OneToMany(mappedBy = "testCase", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("programmingExerciseTestCase")
+    private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties("programmingExerciseTestCase")
     private ProgrammingExercise exercise;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "test_case_type")
+    private ProgrammingExerciseTestCaseType type;
 
     public ProgrammingExerciseTestCase id(Long id) {
         setId(id);
@@ -103,6 +122,22 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.bonusPoints = bonusPoints;
     }
 
+    public Set<ProgrammingExerciseTask> getTasks() {
+        return tasks;
+    }
+
+    public void setTasks(Set<ProgrammingExerciseTask> tasks) {
+        this.tasks = tasks;
+    }
+
+    public Set<ProgrammingExerciseSolutionEntry> getSolutionEntries() {
+        return solutionEntries;
+    }
+
+    public void setSolutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
+        this.solutionEntries = solutionEntries;
+    }
+
     public Boolean isActive() {
         return active;
     }
@@ -150,6 +185,14 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     public ProgrammingExerciseTestCase visibility(Visibility visibility) {
         this.visibility = visibility;
         return this;
+    }
+
+    public ProgrammingExerciseTestCaseType getType() {
+        return type;
+    }
+
+    public void setType(ProgrammingExerciseTestCaseType programmingExerciseTestCaseType) {
+        this.type = programmingExerciseTestCaseType;
     }
 
     /**

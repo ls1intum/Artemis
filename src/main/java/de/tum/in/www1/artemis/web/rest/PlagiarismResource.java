@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -79,7 +81,12 @@ public class PlagiarismResource {
         log.info("REST request to update the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        // TODO: check that the comparisonId belongs to the courseId
+
+        // TODO: this check can take up to a few seconds in the worst case, we should do it directly in the database
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
+        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
+        }
         plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparisonId, statusDTO.getStatus());
         log.info("Finished updating the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
         return ResponseEntity.ok().body(null);
@@ -118,8 +125,8 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonInstructorStatement(@PathVariable("courseId") long courseId,
             @PathVariable("comparisonId") long comparisonId, @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismStatementDTO statement) {
-        // TODO: this database call might not work for large comparisons and lead to server crashes, we should do it differently in the future
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
+
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User affectedUser = userRepository.getUserByLoginElseThrow(studentLogin);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -127,6 +134,9 @@ public class PlagiarismResource {
 
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("Only instructors responsible for this course can access this plagiarism case.");
+        }
+        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
         }
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
@@ -156,18 +166,21 @@ public class PlagiarismResource {
     @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PlagiarismCaseDTO> getPlagiarismComparisonForStudent(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
-        // TODO: this database call might not work for large comparisons and lead to server crashes, we should do it differently in the future
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
         }
+        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
+        }
 
         // check if current user is part of the comparison or not
         if (!(comparison.getSubmissionA().getStudentLogin().equals(user.getLogin()) || comparison.getSubmissionB().getStudentLogin().equals(user.getLogin()))) {
-            throw new AccessForbiddenException("User tried updating plagiarism case they're not affected by.");
+            log.error("User {} tried accessing plagiarism case with comparison id {} they're not affected by.", user.getLogin(), comparisonId);
+            throw new AccessForbiddenException("User tried accessing plagiarism case they're not affected by.");
         }
 
         PlagiarismComparison<?> anonymizedComparisonForStudentView = this.plagiarismService.anonymizeComparisonForStudentView(comparison, user.getLogin());
@@ -187,8 +200,7 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PlagiarismStatementDTO> updatePlagiarismComparisonStudentStatement(@PathVariable("courseId") long courseId,
             @PathVariable("comparisonId") long comparisonId, @RequestBody PlagiarismStatementDTO statement) {
-        // TODO: this database call might not work for large comparisons and lead to server crashes, we should do it differently in the future
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         String studentLogin = user.getLogin();
@@ -196,6 +208,9 @@ public class PlagiarismResource {
 
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
+        }
+        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
         }
 
         if (comparison.getInstructorStatementA() != null && comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {
@@ -225,8 +240,8 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismComparisonStatusDTO> updatePlagiarismComparisonFinalStatus(@PathVariable("courseId") long courseId,
             @PathVariable("comparisonId") long comparisonId, @PathVariable("studentLogin") String studentLogin, @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
-        // TODO: this database call might not work for large comparisons and lead to server crashes, we should do it differently in the future
-        var comparison = plagiarismComparisonRepository.findByIdElseThrow(comparisonId);
+
+        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User affectedUser = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -234,6 +249,9 @@ public class PlagiarismResource {
 
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("Only instructors responsible for this course can access this plagiarism comparison.");
+        }
+        if (!Objects.equals(comparison.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
         }
 
         if (comparison.getSubmissionA().getStudentLogin().equals(studentLogin)) {

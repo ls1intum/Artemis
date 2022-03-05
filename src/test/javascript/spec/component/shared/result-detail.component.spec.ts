@@ -357,15 +357,10 @@ describe('ResultDetailComponent', () => {
     });
 
     it('should calculate the correct chart values and update the score chart', () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems(true);
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.showScoreChart = true;
-        comp.showTestDetails = true;
-        comp.result.feedbacks = feedbacks;
-
-        comp.ngOnInit();
+        const { feedbacks, expectedItems } = setupComponent();
 
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
+        expect(comp.backupFilteredFeedbackList).toEqual(expectedItems);
         expect(comp.showScoreChartTooltip).toBe(true);
 
         checkChartPreset(5, 5, '10', '5 of 6');
@@ -397,11 +392,48 @@ describe('ResultDetailComponent', () => {
         checkChartPreset(0, 10, '10', '10 of 206');
     });
 
+    it('should filter feedback items correctly', () => {
+        const { expectedItems } = setupComponent();
+        const event = { isPositive: true, series: {} };
+        let currentlyVisibleItems = expectedItems.filter((item) => !!item.positive);
+
+        comp.onSelect(event);
+
+        expect(comp.showOnlyPositiveFeedback).toBe(true);
+        expect(comp.showOnlyNegativeFeedback).toBe(false);
+        expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
+
+        event.isPositive = false;
+        currentlyVisibleItems = expectedItems.filter((item) => item.positive === false && item.appliedCredits! < 0);
+
+        comp.onSelect(event);
+
+        expect(comp.showOnlyNegativeFeedback).toBe(true);
+        expect(comp.showOnlyPositiveFeedback).toBe(false);
+        expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
+
+        comp.resetChartFilter();
+
+        expect(comp.showOnlyNegativeFeedback).toBe(false);
+        expect(comp.filteredFeedbackList).toEqual(expectedItems);
+    });
+
     const checkChartPreset = (d1: number, d2: number, l1: string, l2: string) => {
         expect(comp.ngxData[0].series).toHaveLength(2);
         expect(comp.ngxData[0].series[0].name).toBe('artemisApp.result.chart.points: ' + l1);
         expect(comp.ngxData[0].series[0].value).toBe(d1);
         expect(comp.ngxData[0].series[1].name).toBe('artemisApp.result.chart.deductions: ' + l2);
         expect(comp.ngxData[0].series[1].value).toBe(d2);
+    };
+
+    const setupComponent = () => {
+        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems(true);
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.showScoreChart = true;
+        comp.showTestDetails = true;
+        comp.result.feedbacks = feedbacks;
+
+        comp.ngOnInit();
+        return { feedbacks, expectedItems };
     };
 });

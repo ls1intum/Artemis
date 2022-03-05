@@ -10,7 +10,6 @@
         <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <jhi-alert-error></jhi-alert-error>
         <div *ngIf="isRepoExportForMultipleExercises" class="table-responsive m-2 p-1">
             <span style="font-weight: bold" jhiTranslate="instructorDashboard.exportRepos.currentlySelected"
                 >You are about to download all teams'/students' submissions of the following exercises:</span
@@ -114,7 +113,7 @@
             <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             type="submit"
             [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"
@@ -124,7 +123,7 @@
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
         </button>
         <button
-            [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             type="submit"
             [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"

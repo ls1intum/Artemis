@@ -1,16 +1,15 @@
-require('jest-preset-angular/ngcc-jest-processor');
-
 const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common', '@ls1intum/apollon',
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts'].join('|');
 
 const {
-    compilerOptions: { paths = {}, baseUrl = './' },
+    compilerOptions: { baseUrl = './' },
 } = require('./tsconfig.json');
 const environment = require('./webpack/environment');
 
 module.exports = {
+    globalSetup: 'jest-preset-angular/global-setup',
     globals: {
         ...environment,
         'ts-jest': {
@@ -47,15 +46,18 @@ module.exports = {
         'src/main/webapp/app/exam/exam-scores/exam-scores.route.ts',
         'src/main/webapp/app/exam/participate/exam-participation.route.ts',
         'src/main/webapp/app/exercises/file-upload/manage/file-upload-exercise-management.route.ts',
-        'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts'
+        'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
+        'src/main/webapp/app/exam/manage/exam-management.route.ts',
+        'src/main/webapp/app/exercises/shared/exercise-hint/manage/exercise-hint.route.ts',
+        'src/main/webapp/app/core/config/prod.config.ts'
     ],
     coverageThreshold: {
         global: {
-            // TODO: in the future, the following values should be increase to at least 80%
-            statements: 78.1,
-            branches: 65.7,
-            functions: 69.6,
-            lines: 77.7,
+            // TODO: in the future, the following values should be increase to at least 85%
+            statements: 81.8,
+            branches: 68.6,
+            functions: 73.9,
+            lines: 81.5,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
@@ -70,10 +72,13 @@ module.exports = {
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/entities/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/integration/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/interceptor/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/config/**/*.spec.ts',
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',

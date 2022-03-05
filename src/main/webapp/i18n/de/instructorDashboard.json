@@ -16,9 +16,23 @@
         "max": "Max",
         "average": "Durchschnitt",
         "students": "Studierende",
+        "courseScoreChart": {
+            "noGradingScaleExplanation": "Eine Leistung gilt als bedenklich falls sie unter 40% der maximal zu erreichenden Punktzahl erzielt und somit in den meisten Fällen zum Nichtbestehen eines Kurses führen würde. Andernfalls gilt eine Leistung als unbedenklich.",
+            "gradingScaleExplanationNotBonus": "Eine Leistung gilt als ungenügend falls sie nicht zum Bestehen des Kurses genügt. Andernfalls gilt eine Leistung als ausreichend.",
+            "scoreDistribution": "Verteilung des Kursergebnisses"
+        },
+        "statisticsTable": {
+            "included": "Im Ergebnis enthalten",
+            "total": "Alle",
+            "amountOfReleasedExercises": "# veröffentlichter Aufgaben",
+            "averagePoints": "Punkte Durchschnitt (Ergebnis)",
+            "medianPoints": "Punkte Median (Ergebnis)",
+            "standardPointDeviation": "Punkte Standardabweichung",
+            "highlightInChart": "In Verteilung hervorheben"
+        },
         "cleanup": {
             "title": "Aufräumen",
-            "question": "Sollen wirklich ALLE Studierenden-Build-Pläne für die Programmieraufgabe <strong>{{ title }}</strong> dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+            "question": "Sollen wirklich ALLE Studierenden-Build-Pläne für die Programmieraufgabe <strong>{{ title }}</strong> dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!.<br>Individuelle Studierenden-Build-Pläne werden automatisch neu erstellt sobald Studierende die nächste Einreichung hochladen."
         },
         "archive": {
             "title": "Archivieren",

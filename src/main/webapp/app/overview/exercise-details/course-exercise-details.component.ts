@@ -43,7 +43,13 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { UMLModel } from '@ls1intum/apollon';
+import { SafeHtml } from '@angular/platform-browser';
 import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -79,12 +85,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isAfterAssessmentDueDate: boolean;
     allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
-    showWelcomeAlert = false;
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
     isExamExercise: boolean;
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
+
+    public modelingExercise?: ModelingExercise;
+    public exampleSolution?: SafeHtml;
+    public exampleSolutionUML?: UMLModel;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -129,6 +138,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private submissionService: ProgrammingSubmissionService,
         private complaintService: ComplaintService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
     ngOnInit() {
@@ -142,14 +152,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
             if (didExerciseChange || didCourseChange) {
                 this.loadExercise();
-            }
-        });
-
-        this.route.queryParams.subscribe((queryParams) => {
-            if (queryParams['welcome'] === '') {
-                setTimeout(() => {
-                    this.showWelcomeAlert = true;
-                }, 500);
             }
         });
 
@@ -215,6 +217,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
         }
 
+        this.showIfExampleSolutionPresent(newExercise);
+
         // This is only needed in the local environment
         if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
             this.noVersionControlAndContinuousIntegrationServerAvailable = true;
@@ -233,6 +237,31 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.discussionComponent.exercise = this.exercise;
         }
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+    }
+
+    /**
+     * Sets example solution and related fields if exampleSolution exists on newExercise,
+     * otherwise clears the previously set example solution related fields.
+     *
+     * @param newExercise Exercise model that may have an exampleSolution.
+     */
+    showIfExampleSolutionPresent(newExercise: Exercise) {
+        // Clear fields below to avoid displaying old data if this method is called more than once.
+        this.modelingExercise = undefined;
+        this.exampleSolution = undefined;
+        this.exampleSolutionUML = undefined;
+
+        if (newExercise.type === ExerciseType.MODELING) {
+            this.modelingExercise = newExercise as ModelingExercise;
+            if (this.modelingExercise.exampleSolutionModel) {
+                this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
+            }
+        } else if (newExercise.type === ExerciseType.TEXT || newExercise.type === ExerciseType.FILE_UPLOAD) {
+            const exercise = newExercise as TextExercise & FileUploadExercise;
+            if (exercise.exampleSolution) {
+                this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
+            }
+        }
     }
 
     /**

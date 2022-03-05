@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
@@ -31,7 +31,7 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
@@ -52,7 +52,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
     @ViewChildren(MultipleChoiceQuestionComponent)
@@ -724,13 +724,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             const course = this.quizExercise.course || this.quizExercise?.exerciseGroup?.exam?.course;
 
             // assign user score (limit decimal places to 2)
-            this.userScore = this.submission.scoreInPoints ? roundScoreSpecifiedByCourseSettings(this.submission.scoreInPoints, course) : 0;
+            this.userScore = this.submission.scoreInPoints ? roundValueSpecifiedByCourseSettings(this.submission.scoreInPoints, course) : 0;
 
             // create dictionary with scores for each question
             this.questionScores = {};
             this.submission.submittedAnswers!.forEach((submittedAnswer) => {
                 // limit decimal places to 2
-                this.questionScores[submittedAnswer.quizQuestion!.id!] = roundScoreSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
+                this.questionScores[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
         }
     }
@@ -773,9 +773,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     onSaveError(error: string) {
         if (error) {
             const errorMessage = 'Saving answers failed: ' + error;
-            // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-            const jhiAlert = this.alertService.error(errorMessage);
-            jhiAlert.message = errorMessage;
+            this.alertService.addAlert({
+                type: AlertType.DANGER,
+                message: errorMessage,
+                disableTranslation: true,
+            });
             this.unsavedChanges = true;
             this.isSubmitting = false;
         }
@@ -888,9 +890,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     onSubmitError(error: HttpErrorResponse) {
         const errorMessage = 'Submitting the quiz was not possible. ' + error.headers?.get('X-artemisApp-message') || error.message;
-        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.alertService.error(errorMessage);
-        jhiAlert.message = errorMessage;
+        this.alertService.addAlert({
+            type: AlertType.DANGER,
+            message: errorMessage,
+            disableTranslation: true,
+        });
         this.isSubmitting = false;
     }
 

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -98,6 +99,10 @@ public class ProgrammingExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
+    private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
@@ -503,6 +508,14 @@ public class ProgrammingExercise extends Exercise {
         this.testCases = testCases;
     }
 
+    public Set<ProgrammingExerciseTask> getTasks() {
+        return tasks;
+    }
+
+    public void setTasks(Set<ProgrammingExerciseTask> tasks) {
+        this.tasks = tasks;
+    }
+
     public Set<StaticCodeAnalysisCategory> getStaticCodeAnalysisCategories() {
         return staticCodeAnalysisCategories;
     }
@@ -706,10 +719,9 @@ public class ProgrammingExercise extends Exercise {
             throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
         }
 
-        // Check that Xcode has no SCA enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && ProjectType.XCODE.equals(getProjectType())) {
-            throw new BadRequestAlertException("The static code analysis is not supported for Xcode programming exercises", "Exercise",
-                    "staticCodeAnalysisNotSupportedForLanguage");
+        // Check that FACT has no SCA enabled
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && ProjectType.FACT.equals(getProjectType())) {
+            throw new BadRequestAlertException("The static code analysis is not supported for FACT programming exercises", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
         }
 
         // Static code analysis max penalty must only be set if static code analysis is enabled

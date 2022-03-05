@@ -23,8 +23,8 @@ export class QuizExerciseService {
      * @param quizExercise the quiz exercise that should be created
      */
     create(quizExercise: QuizExercise): Observable<EntityResponseType> {
-        const copy = this.exerciseService.convertDateFromClient(quizExercise);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
+        const copy = ExerciseService.convertDateFromClient(quizExercise);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
@@ -37,8 +37,8 @@ export class QuizExerciseService {
      */
     update(quizExercise: QuizExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        const copy = this.exerciseService.convertDateFromClient(quizExercise);
-        copy.categories = this.exerciseService.stringifyExerciseCategories(copy);
+        const copy = ExerciseService.convertDateFromClient(quizExercise);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .put<QuizExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));

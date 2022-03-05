@@ -181,8 +181,7 @@ public class StudentExamService {
         // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
         if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
             for (StudentParticipation studentParticipation : exercise.getStudentParticipations()) {
-                StudentParticipation existingParticipation = existingParticipations.stream().filter(p -> p.getId().equals(studentParticipation.getId()))
-                        .collect(Collectors.toList()).get(0);
+                StudentParticipation existingParticipation = existingParticipations.stream().filter(p -> p.getId().equals(studentParticipation.getId())).findFirst().orElseThrow();
                 // if exactly one submission exists we save the submission
                 if (studentParticipation.getSubmissions() != null && studentParticipation.getSubmissions().size() == 1) {
                     // check that the current user owns the participation
@@ -509,14 +508,14 @@ public class StudentExamService {
         });
 
         List<StudentExam> otherTestRunsOfInstructor = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(testRun.getExam().getId(), instructor.getId()).stream()
-                .filter(studentExam -> !studentExam.getId().equals(testRunId)).collect(Collectors.toList());
+                .filter(studentExam -> !studentExam.getId().equals(testRunId)).toList();
 
         // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
         var testRunExercises = testRun.getExercises();
         // Collect all distinct exercises of other instructor test runs
-        var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(tr -> tr.getExercises().stream()).distinct().collect(Collectors.toList());
+        var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(tr -> tr.getExercises().stream()).distinct().toList();
         // Collect exercises which are not referenced by other test runs. Their participations can be safely deleted
-        var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).collect(Collectors.toList());
+        var exercisesToBeDeleted = testRunExercises.stream().filter(exercise -> !allInstructorTestRunExercises.contains(exercise)).toList();
 
         for (final Exercise exercise : exercisesToBeDeleted) {
             // Only delete participations that exist (and were not deleted in some other way)

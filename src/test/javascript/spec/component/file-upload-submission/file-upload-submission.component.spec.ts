@@ -32,8 +32,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -41,6 +39,8 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { FileService } from 'app/shared/http/file.service';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
@@ -56,13 +56,11 @@ describe('FileUploadSubmissionComponent', () => {
     const result = { id: 1 } as Result;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([routes[0]])],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),
-                MockComponent(AlertErrorComponent),
-                MockComponent(AlertComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockComponent(ButtonComponent),
@@ -326,5 +324,79 @@ describe('FileUploadSubmissionComponent', () => {
         expect(unreferencedFeedback).toHaveLength(2);
         expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
         expect(unreferencedFeedback![1].isSubsequent).toBe(true);
+    });
+
+    it('should download file', () => {
+        const fileService = TestBed.inject(FileService);
+        const fileServiceStub = jest.spyOn(fileService, 'downloadFileWithAccessToken').mockImplementation();
+
+        comp.downloadFile('');
+
+        expect(fileServiceStub).toHaveBeenCalledTimes(1);
+    });
+
+    it('should decide over deactivation correctly', () => {
+        const submission = createFileUploadSubmission();
+
+        expect(comp.canDeactivate()).toBe(true);
+
+        submission.submitted = true;
+        comp.submission = submission;
+
+        expect(comp.canDeactivate()).toBe(true);
+
+        comp.submissionFile = new File([''], 'exampleSubmission.png');
+
+        expect(comp.canDeactivate()).toBe(true);
+
+        submission.submitted = false;
+        comp.submission = submission;
+
+        expect(comp.canDeactivate()).toBe(false);
+    });
+
+    it('should set alert correctly', () => {
+        // Ignore window confirm
+        window.confirm = () => {
+            return false;
+        };
+        const fileName = 'exampleSubmission';
+        comp.submissionFile = new File([''], fileName, { type: 'application/pdf' });
+        const submission = createFileUploadSubmission();
+        submission.filePath = 'test/exampleSubmission.pdf';
+        submission.participation = new StudentParticipation();
+        submission.participation.exercise = fileUploadExercise;
+        submission.participation.exercise.exerciseGroup = new ExerciseGroup();
+        const jhiWarningSpy = jest.spyOn(alertService, 'warning');
+        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+        fixture.detectChanges();
+
+        comp.submitExercise();
+
+        expect(comp.isActive).toBe(false);
+        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
+
+        submission.participation.exercise = undefined;
+        comp.ngOnInit();
+        fixture.detectChanges();
+        comp.submitExercise();
+
+        expect(comp.isActive).toBe(false);
+        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
+    });
+
+    it('should set file name and type correctly', () => {
+        const fileName = 'exampleSubmission';
+        comp.submissionFile = new File([''], fileName, { type: 'application/pdf' });
+        const submission = createFileUploadSubmission();
+        submission.filePath = 'test/exampleSubmission.pdf';
+        comp.submission = submission;
+        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+        fixture.detectChanges();
+
+        comp.submitExercise();
+
+        expect(comp.submittedFileName).toBe(fileName + '.pdf');
+        expect(comp.submittedFileExtension).toBe('pdf');
     });
 });

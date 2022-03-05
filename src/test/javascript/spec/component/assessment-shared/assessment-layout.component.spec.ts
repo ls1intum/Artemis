@@ -6,13 +6,12 @@ import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/asse
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { Complaint } from 'app/entities/complaint.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockRouterLinkDirective, MockQueryParamsDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -29,7 +28,6 @@ describe('AssessmentLayoutComponent', () => {
                 AssessmentHeaderComponent,
                 MockComponent(ComplaintsForTutorComponent),
                 MockComponent(AssessmentComplaintAlertComponent),
-                MockComponent(AlertComponent),
                 MockComponent(NgbAlert),
                 MockComponent(AssessmentWarningComponent),
                 MockDirective(TranslateDirective),
@@ -50,11 +48,6 @@ describe('AssessmentLayoutComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
-    });
-
-    it('should include jhi-alert', () => {
-        const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
-        expect(jhiAlertComponent).toBeTruthy();
     });
 
     it('should include jhi-assessment-header', () => {

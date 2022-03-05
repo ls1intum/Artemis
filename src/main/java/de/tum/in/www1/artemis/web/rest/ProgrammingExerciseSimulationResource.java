@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -12,13 +10,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -47,15 +47,12 @@ public class ProgrammingExerciseSimulationResource {
 
     private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
 
-    private final UserRepository userRepository;
-
     private final AuthorizationCheckService authCheckService;
 
     public ProgrammingExerciseSimulationResource(CourseRepository courseRepository, ProgrammingExerciseSimulationService programmingExerciseSimulationService,
-            UserRepository userRepository, AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService) {
         this.courseRepository = courseRepository;
         this.programmingExerciseSimulationService = programmingExerciseSimulationService;
-        this.userRepository = userRepository;
         this.authCheckService = authCheckService;
     }
 
@@ -69,20 +66,16 @@ public class ProgrammingExerciseSimulationResource {
      */
     @PostMapping(ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION)
     @PreAuthorize("hasRole('EDITOR')")
-    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> createProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(
             @RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseRepository.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorInCourse(course, user)) {
-            return forbidden();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         programmingExercise.setCourse(course);
-
         programmingExercise.generateAndSetProjectKey();
         try {
             ProgrammingExercise newProgrammingExercise = programmingExerciseSimulationService

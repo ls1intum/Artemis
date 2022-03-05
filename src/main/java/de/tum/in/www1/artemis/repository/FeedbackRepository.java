@@ -106,6 +106,13 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
                 // Remove CI specific path segments
                 issue.setFilePath(removeCIDirectoriesFromPath(issue.getFilePath()));
 
+                if (issue.getMessage() != null) {
+                    // Note: the feedback detail text is limited to 5.000 characters, so we limit the issue message to 4.500 characters to avoid issues
+                    // the remaining 500 characters are used for the json structure of the issue
+                    int maxLength = Math.min(issue.getMessage().length(), FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS - 500);
+                    issue.setMessage(issue.getMessage().substring(0, maxLength));
+                }
+
                 Feedback feedback = new Feedback();
                 feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
                 feedback.setReference(tool.name());
@@ -140,9 +147,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
         if (!successful) {
             String errorMessageString = testMessages.stream().map(errorString -> processResultErrorMessage(programmingLanguage, errorString)).collect(Collectors.joining("\n\n"));
-            if (errorMessageString.length() > FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
-                errorMessageString = errorMessageString.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
-            }
             feedback.setDetailText(errorMessageString);
         }
         else if (!testMessages.isEmpty()) {
@@ -196,7 +200,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
         Pattern findGeneralTimeoutPattern = Pattern.compile("^.*:(.*timed out after.*)", Pattern.CASE_INSENSITIVE);
         matcher = findGeneralTimeoutPattern.matcher(message);
         if (matcher.find()) {
-            // overwrite AJTS: TimeoutException
+            // overwrite Ares: TimeoutException
             String generalTimeOutExceptionText = matcher.group(1);
             return timeoutDetailText + "\n" + exceptionPrefix + generalTimeOutExceptionText.trim();
         }

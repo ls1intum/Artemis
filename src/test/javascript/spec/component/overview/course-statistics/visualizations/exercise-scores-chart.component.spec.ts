@@ -16,6 +16,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { GraphColors } from 'app/entities/statistics.model';
 
 class MockActivatedRoute {
     parent: any;
@@ -137,7 +138,7 @@ describe('ExerciseScoresChartComponent', () => {
         expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([0, 0]);
 
         component.onSelect(legendClickEvent);
-        expect(component.ngxColor.domain[2]).toBe('#32cd32');
+        expect(component.ngxColor.domain[2]).toBe(GraphColors.GREEN);
         expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([61, 71]);
     });
 
@@ -176,7 +177,7 @@ describe('ExerciseScoresChartComponent', () => {
             expect(component.typeSet.has(type)).toBe(true);
             expect(component.chartFilter.get(type)).toBe(true);
 
-            component.toggleExerciseType(type);
+            component.toggleType(type);
 
             expect(component.numberOfActiveFilters).toBe(4 - index);
             expect(component.chartFilter.get(type)).toBe(false);

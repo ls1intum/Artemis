@@ -1,21 +1,20 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AggregatedExerciseGroupResult, ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { ExamScoresComponent } from 'app/exam/exam-scores/exam-scores.component';
+import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -25,13 +24,21 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { AccountService } from 'app/core/auth/account.service';
+import { Course } from 'app/entities/course.model';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
     let comp: ExamScoresComponent;
     let examService: ExamManagementService;
     let gradingSystemService: GradingSystemService;
+    let accountService: AccountService;
+    let router: Router;
+
+    let navigateSpy: jest.SpyInstance;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -211,11 +218,9 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(BarChartModule)],
             declarations: [
                 ExamScoresComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(AlertComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
                 MockDirective(TranslateDirective),
@@ -223,9 +228,13 @@ describe('ExamScoresComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ExamScoresAverageScoresGraphComponent),
+                MockRouterLinkDirective,
+                MockComponent(ParticipantScoresDistributionComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
+                { provide: Router, useClass: MockRouter },
+                MockProvider(AccountService),
                 MockProvider(TranslateService),
                 MockProvider(ExamManagementService),
                 MockProvider(SortService),
@@ -265,6 +274,10 @@ describe('ExamScoresComponent', () => {
                 findExamScoresSpy = jest
                     .spyOn(participationScoreService, 'findExamScores')
                     .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
+                accountService = TestBed.inject(AccountService);
+                router = TestBed.inject(Router);
+
+                navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
             });
     });
 
@@ -341,10 +354,8 @@ describe('ExamScoresComponent', () => {
 
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
 
-        // check histogram
-        expectCorrectHistogram(comp, examScoreDTO);
         // expect three distinct scores
-        expect(comp.histogramData.filter((hd) => hd === 1).length).toBe(3);
+        expect(comp.scores).toHaveLength(3);
         expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
 
         // expect correct calculated exercise group statistics
@@ -426,10 +437,8 @@ describe('ExamScoresComponent', () => {
 
         // it should skip the not submitted one
         const noOfSubmittedExercises = examScoreDTO.studentResults.length - 1;
-        // check histogram
-        expectCorrectHistogram(comp, examScoreDTO);
         // expect two distinct scores
-        expect(comp.histogramData.filter((hd) => hd === 1).length).toBe(noOfSubmittedExercises);
+        expect(comp.scores).toHaveLength(2);
         expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
 
         // expect correct calculated exercise group statistics
@@ -565,13 +574,6 @@ describe('ExamScoresComponent', () => {
         comp.exportToCsv();
     });
 
-    it('should find grade step index correctly', () => {
-        jest.spyOn(gradingSystemService, 'matchGradePercentage');
-        comp.gradingScale = gradingScale;
-
-        expect(comp.findGradeStepIndex(20)).toBe(0);
-    });
-
     it('should set grading scale properties', () => {
         const examScoreDTOWithGrades = examScoreDTO;
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
@@ -598,28 +600,60 @@ describe('ExamScoresComponent', () => {
 
         expect(comp.filterForNonEmptySubmissions).toBe(true);
     });
+
+    it('should not delegate user if authorisation is not sufficient', () => {
+        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+
+        comp.onSelect();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should delegate user if authorisation is sufficient', () => {
+        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+        comp.course = { id: 42 } as Course;
+        comp.examScoreDTO = examScoreDTO;
+
+        comp.onSelect();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 42, 'exams', 1, 'participant-scores']);
+    });
+
+    it('should toggle median correctly', () => {
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        comp.isBonus = false;
+        fixture.detectChanges();
+
+        expect(comp.showPassedMedian).toBe(true);
+
+        comp.toggleMedian(MedianType.PASSED);
+
+        expect(comp.showPassedMedian).toBe(false);
+
+        comp.toggleMedian(MedianType.OVERALL);
+
+        expect(comp.overallChartMedian).toBe(50);
+        expect(comp.showOverallMedian).toBe(true);
+
+        comp.toggleMedian(MedianType.PASSED);
+
+        expect(comp.showPassedMedian).toBe(true);
+        expect(comp.showOverallMedian).toBe(false);
+    });
+
+    it('should return data label correctly if noOfExamsFiltered is 0', () => {
+        comp.noOfExamsFiltered = 0;
+
+        const dataLabel = comp.formatDataLabel(0);
+
+        expect(dataLabel).toBe('0 (0%)');
+    });
 });
 
 function expectCorrectExamScoreDto(comp: ExamScoresComponent, examScoreDTO: ExamScoreDTO) {
     expect(comp.examScoreDTO).toEqual(examScoreDTO);
     expect(comp.studentResults).toEqual(examScoreDTO.studentResults);
     expect(comp.exerciseGroups).toEqual(examScoreDTO.exerciseGroups);
-}
-
-function expectCorrectHistogram(comp: ExamScoresComponent, examScoreDTO: ExamScoreDTO) {
-    examScoreDTO.studentResults.forEach((studentResult) => {
-        let histogramIndex = Math.floor(studentResult.overallScoreAchieved! / comp.binWidth);
-        if (histogramIndex >= comp.histogramData.length) {
-            histogramIndex = comp.histogramData.length - 1;
-        }
-        // expect one exercise with 20% and one with 100%
-        if (studentResult.submitted || !comp.filterForSubmittedExams) {
-            expect(comp.histogramData[histogramIndex]).toBe(1);
-        } else {
-            // the not submitted exercise counts not towards histogram
-            expect(comp.histogramData[histogramIndex]).toBe(0);
-        }
-    });
 }
 
 function validateUserRow(

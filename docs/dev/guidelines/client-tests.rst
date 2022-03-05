@@ -107,7 +107,6 @@ Some guidelines:
                             MockPipe(ArtemisDatePipe),
                             MockPipe(ArtemisTimeAgoPipe),
                             MockDirective(DeleteButtonDirective),
-                            MockComponent(AlertComponent),
                             MockComponent(ResultComponent),
                         ],
                         providers: [
@@ -148,7 +147,6 @@ Some guidelines:
         + MockPipe(ArtemisDatePipe)
         + MockPipe(ArtemisTimeAgoPipe)
         + MockDirective(DeleteButtonDirective)
-        + MockComponent(AlertComponent)
         + MockComponent(ResultComponent)
         + MockComponent(FaIconComponent)
 

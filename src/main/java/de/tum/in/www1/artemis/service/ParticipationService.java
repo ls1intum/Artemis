@@ -535,7 +535,7 @@ public class ParticipationService {
     }
 
     /**
-     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactivate.
+     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive.
      * This means the participation can be resumed in the future
      *
      * @param participation that will be set to inactive
@@ -615,7 +615,7 @@ public class ParticipationService {
      */
     @Transactional // ok
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
-        StudentParticipation participation = studentParticipationRepository.findWithEagerLegalSubmissionsResultsFeedbacksById(participationId).get();
+        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         log.info("Request to delete Participation : {}", participation);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseParticipation) {
@@ -642,7 +642,7 @@ public class ParticipationService {
         complaintRepository.deleteByResult_Participation_Id(participationId);
         ratingRepository.deleteByResult_Participation_Id(participationId);
 
-        participation = (StudentParticipation) deleteResultsAndSubmissionsOfParticipation(participation.getId());
+        deleteResultsAndSubmissionsOfParticipation(participationId);
 
         Exercise exercise = participation.getExercise();
         exercise.removeParticipation(participation);
@@ -654,25 +654,24 @@ public class ParticipationService {
      * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
      *
      * @param participationId the id of the participation to delete results/submissions from.
-     * @return participation without submissions and results.
      */
     @Transactional // ok
-    public Participation deleteResultsAndSubmissionsOfParticipation(Long participationId) {
+    public void deleteResultsAndSubmissionsOfParticipation(Long participationId) {
         log.info("Request to delete all results and submissions of participation with id : {}", participationId);
-        Participation participation = participationRepository.getOneWithEagerSubmissionsAndResults(participationId);
+        var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         Set<Submission> submissions = participation.getSubmissions();
         List<Result> resultsToBeDeleted = new ArrayList<>();
 
         // The result of the submissions will be deleted via cascade
         submissions.forEach(submission -> {
-            resultsToBeDeleted.addAll(Objects.requireNonNull(submission.getResults()));
+            resultsToBeDeleted.addAll(submission.getResults());
             submissionRepository.deleteById(submission.getId());
         });
         resultsToBeDeleted.forEach(result -> participantScoreRepository.deleteAllByResultIdTransactional(result.getId()));
         // The results that are only connected to a participation are also deleted
         resultsToBeDeleted.forEach(participation::removeResult);
         participation.getResults().forEach(result -> resultRepository.deleteById(result.getId()));
-        return participation;
     }
 
     /**

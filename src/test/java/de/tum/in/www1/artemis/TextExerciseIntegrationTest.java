@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
@@ -593,6 +594,26 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importTextExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+
+        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now());
+
+        textExerciseRepository.save(textExercise);
+        textExercise.setCourse(course2);
+
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        assertThat(newTextExercise.getExampleSolutionPublicationDate()).as("text example solution publication date was correctly set to null in the response").isNull();
+
+        TextExercise newTextExerciseFromDatabase = textExerciseRepository.findById(newTextExercise.getId()).get();
+        assertThat(newTextExerciseFromDatabase.getExampleSolutionPublicationDate()).as("text example solution publication date was correctly set to null in the database").isNull();
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllTextExercisesForCourse() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
@@ -747,6 +768,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         teamAssignmentConfig.setMaxTeamSize(10);
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
         exerciseToBeImported.setCourse(course2);
+        exerciseToBeImported.setMaxPoints(1.0);
 
         exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 
@@ -784,6 +806,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var exerciseToBeImported = new TextExercise();
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
         exerciseToBeImported.setCourse(course2);
+        exerciseToBeImported.setMaxPoints(1.0);
 
         exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
 
@@ -850,15 +873,15 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var plagiarismStatusDto = new PlagiarismComparisonStatusDTO();
         plagiarismStatusDto.setStatus(PlagiarismStatus.CONFIRMED);
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
-        assertThat(plagiarismComparisonRepository.findByIdElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.CONFIRMED);
+        assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.CONFIRMED);
 
         plagiarismStatusDto.setStatus(PlagiarismStatus.DENIED);
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
-        assertThat(plagiarismComparisonRepository.findByIdElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.DENIED);
+        assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.DENIED);
 
         plagiarismStatusDto.setStatus(PlagiarismStatus.NONE);
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
-        assertThat(plagiarismComparisonRepository.findByIdElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.NONE);
+        assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.NONE);
     }
 
     @Test
@@ -1037,5 +1060,68 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         request.putWithResponseBody("/api/text-exercises/" + 123456789 + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetTextExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        testGetTextExercise_exampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetTextExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        testGetTextExercise_exampleSolutionVisibility(false, "instructor1");
+    }
+
+    private void testGetTextExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        final TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+
+        // Utility function to avoid duplication
+        Function<Course, TextExercise> textExerciseGetter = c -> (TextExercise) c.getExercises().stream().filter(e -> e.getId().equals(textExercise.getId())).findAny().get();
+
+        textExercise.setExampleSolution("Sample<br>solution");
+
+        if (isStudent) {
+            database.createAndSaveParticipationForExercise(textExercise, username);
+        }
+
+        // Test example solution publication date not set.
+        textExercise.setExampleSolutionPublicationDate(null);
+        textExerciseRepository.save(textExercise);
+
+        course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        TextExercise textExerciseFromApi = textExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
+        }
+        else {
+            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
+        }
+
+        // Test example solution publication date in the past.
+        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        textExerciseRepository.save(textExercise);
+
+        course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        textExerciseFromApi = textExerciseGetter.apply(course);
+
+        assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
+
+        // Test example solution publication date in the future.
+        textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        textExerciseRepository.save(textExercise);
+
+        course = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        textExerciseFromApi = textExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(textExerciseFromApi.getExampleSolution()).isNull();
+        }
+        else {
+            assertThat(textExerciseFromApi.getExampleSolution()).isEqualTo(textExercise.getExampleSolution());
+        }
     }
 }

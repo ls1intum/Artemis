@@ -11,6 +11,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -176,6 +177,7 @@ export class SubmissionService {
         const convertedSubmission = this.convert(submission);
         setLatestSubmissionResult(convertedSubmission, getLatestSubmissionResult(convertedSubmission));
         this.setSubmissionAccessRights(convertedSubmission);
+        SubmissionService.convertConnectedParticipationFromServer(convertedSubmission);
         return convertedSubmission;
     }
 
@@ -200,6 +202,18 @@ export class SubmissionService {
     }
 
     /**
+     * Converts the participation that is connected to the given submission from server to client format.
+     * @param submission to which the conversion should be applied.
+     * @private
+     */
+    private static convertConnectedParticipationFromServer(submission: Submission): Submission {
+        if (submission.participation) {
+            submission.participation = ParticipationService.convertParticipationDatesFromServer(submission.participation);
+        }
+        return submission;
+    }
+
+    /**
      * Sets the transient property copiedFeedback for feedbacks when comparing a submissions results of two correction rounds
      * copiedFeedback indicates if the feedback is directly copied and unmodified compared to the first correction round
      *
@@ -212,29 +226,30 @@ export class SubmissionService {
             const secondCorrectionFeedback1 = submission!.results![1].feedbacks as Feedback[];
             secondCorrectionFeedback1!.forEach((secondFeedback) => {
                 firstResult.feedbacks!.forEach((firstFeedback) => {
-                    if (
-                        secondFeedback.copiedFeedbackId === undefined &&
-                        secondFeedback.type === firstFeedback.type &&
-                        secondFeedback.credits === firstFeedback.credits &&
-                        secondFeedback.detailText === firstFeedback.detailText &&
-                        secondFeedback.reference === firstFeedback.reference &&
-                        secondFeedback.text === firstFeedback.text
-                    ) {
+                    if (secondFeedback.copiedFeedbackId === undefined && this.areFeedbacksCopies(firstFeedback, secondFeedback)) {
                         secondFeedback.copiedFeedbackId = firstFeedback.id;
-                    } else if (
-                        secondFeedback.copiedFeedbackId === firstFeedback.id &&
-                        !(
-                            secondFeedback.type === firstFeedback.type &&
-                            secondFeedback.credits === firstFeedback.credits &&
-                            secondFeedback.detailText === firstFeedback.detailText &&
-                            secondFeedback.reference === firstFeedback.reference &&
-                            secondFeedback.text === firstFeedback.text
-                        )
-                    ) {
+                    } else if (secondFeedback.copiedFeedbackId === firstFeedback.id && !this.areFeedbacksCopies(firstFeedback, secondFeedback)) {
                         secondFeedback.copiedFeedbackId = undefined;
                     }
                 });
             });
         }
+    }
+
+    /**
+     * Checks if one of the two Feedback instances directly copied from the other and unmodified
+     * by comparing a set of fields for equality.
+     * @param firstFeedback
+     * @param secondFeedback
+     * @returns true if the compared set of fields match, false otherwise.
+     */
+    private areFeedbacksCopies(firstFeedback: Feedback, secondFeedback: Feedback) {
+        return (
+            secondFeedback.type === firstFeedback.type &&
+            secondFeedback.credits === firstFeedback.credits &&
+            secondFeedback.detailText === firstFeedback.detailText &&
+            secondFeedback.reference === firstFeedback.reference &&
+            secondFeedback.text === firstFeedback.text
+        );
     }
 }

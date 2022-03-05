@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
@@ -645,7 +644,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(illegalSubmission.getLatestResult().getId()).isEqualTo(createdResult.getId());
 
         // Check that the result belongs to the participation
-        Participation updatedParticipation = participationRepository.getOneWithEagerSubmissionsAndResults(participation.getId());
+        Participation updatedParticipation = participationRepository.findByIdWithResultsAndSubmissionsResults(participation.getId()).orElseThrow();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
     }
 
@@ -688,7 +687,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(illegalSubmission.getLatestResult().getId()).isEqualTo(createdResult.getId());
 
         // Check that the result belongs to the participation
-        Participation updatedParticipation = participationRepository.getOneWithEagerSubmissionsAndResults(participation.getId());
+        Participation updatedParticipation = participationRepository.findByIdWithResultsAndSubmissionsResults(participation.getId()).orElseThrow();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
     }
 

@@ -22,7 +22,7 @@ import { faRedo } from '@fortawesome/free-solid-svg-icons';
             [tooltip]="'artemisApp.programmingExercise.reEvaluateTooltip'"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.reEvaluate'"
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
             (onClick)="triggerReEvaluate()"
         >
         </jhi-button>

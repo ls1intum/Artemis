@@ -20,7 +20,6 @@
                 </div>
             </div>
         </div>
-        <jhi-alert></jhi-alert>
         <div class="tab-bar tab-bar-course-detail">
             <a [routerLink]="['/course-management', course.id, 'exercises']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="faListAlt"></fa-icon>
@@ -144,8 +143,6 @@
             <h2><span jhiTranslate="artemisApp.course.detail.title">Course Details:</span></h2>
         </div>
         <hr />
-        <jhi-alert></jhi-alert>
-        <jhi-alert-error></jhi-alert-error>
         <dl class="row-md jh-entity-details">
             <dt><span jhiTranslate="artemisApp.course.title">Title</span></dt>
             <dd>

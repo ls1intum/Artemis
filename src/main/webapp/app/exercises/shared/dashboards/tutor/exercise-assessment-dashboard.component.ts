@@ -37,14 +37,16 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/sha
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { roundScoreSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { GraphColors } from 'app/entities/statistics.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -58,7 +60,7 @@ export interface ExampleSubmissionQueryParams {
     providers: [CourseManagementService],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
-    readonly roundScoreSpecifiedByCourseSettings = roundScoreSpecifiedByCourseSettings;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
     exercise: Exercise;
     modelingExercise: ModelingExercise;
@@ -111,6 +113,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     notYetAssessed: number[] = [];
     firstRoundAssessments: number;
 
+    // attributes for sorting the tables
+    sortPredicates = ['submissionDate', 'complaint.accepted', 'complaint.accepted'];
+    reverseOrders = [true, false, false];
+
     readonly ExerciseType = ExerciseType;
 
     stats = {
@@ -139,9 +145,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
 
     // graph
-    unassessessedSubmissions: string;
-    automaticAssisstedSubmissions: string;
-    manualAssessedSubmissions: string;
     view: [number, number] = [350, 150];
     legendPosition = LegendPosition.Below;
     assessments: any[];
@@ -161,8 +164,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faCheckCircle = faCheckCircle;
     faFolderOpen = faFolderOpen;
+    faSort = faSort;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
+        public complaintService: ComplaintService,
         private exerciseService: ExerciseService,
         private alertService: AlertService,
         private translateService: TranslateService,
@@ -175,7 +181,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private artemisMarkdown: ArtemisMarkdownService,
         private router: Router,
-        private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
@@ -204,39 +209,49 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     setupGraph() {
-        this.unassessessedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
-        this.automaticAssisstedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
-        this.manualAssessedSubmissions = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
-
-        this.customColors = [
-            {
-                name: this.unassessessedSubmissions,
-                value: '#F4A7B6',
-            },
-            {
-                name: this.manualAssessedSubmissions,
-                value: '#98C7EF',
-            },
-            {
-                name: this.automaticAssisstedSubmissions,
-                value: '#FFDD9C',
-            },
-        ];
-
-        this.assessments = [
-            {
-                name: this.unassessessedSubmissions,
-                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
-            },
-            {
-                name: this.manualAssessedSubmissions,
-                value: this.totalNumberOfAssessments.total - this.numberOfAutomaticAssistedAssessments.total,
-            },
-            {
-                name: this.automaticAssisstedSubmissions,
-                value: this.numberOfAutomaticAssistedAssessments.total,
-            },
-        ];
+        // If the programming exercise is assessed automatically but complaints are enabled, the term "unassessed submissions" might be misleading.
+        // In this case, we only show open and resolved complaints
+        if (this.programmingExercise && this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC && this.programmingExercise.allowComplaintsForAutomaticAssessments) {
+            const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
+            const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
+            this.customColors = [
+                { name: numberOfComplaintsLabel, value: GraphColors.YELLOW },
+                { name: numberOfResolvedComplaintsLabel, value: GraphColors.GREEN },
+            ];
+            this.assessments = [
+                {
+                    name: numberOfComplaintsLabel,
+                    value: this.statsForDashboard.numberOfOpenComplaints,
+                },
+                {
+                    name: numberOfResolvedComplaintsLabel,
+                    value: this.statsForDashboard.numberOfComplaints - this.statsForDashboard.numberOfOpenComplaints,
+                },
+            ];
+        } else {
+            const numberOfUnassessedSubmissionLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
+            const numberOfAutomaticAssistedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
+            const numberOfManualAssessedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
+            this.customColors = [
+                { name: numberOfUnassessedSubmissionLabel, value: GraphColors.RED },
+                { name: numberOfManualAssessedSubmissionsLabel, value: GraphColors.BLUE },
+                { name: numberOfAutomaticAssistedSubmissionsLabel, value: GraphColors.YELLOW },
+            ];
+            this.assessments = [
+                {
+                    name: numberOfUnassessedSubmissionLabel,
+                    value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
+                },
+                {
+                    name: numberOfManualAssessedSubmissionsLabel,
+                    value: this.totalNumberOfAssessments.total - this.numberOfAutomaticAssistedAssessments.total,
+                },
+                {
+                    name: numberOfAutomaticAssistedSubmissionsLabel,
+                    value: this.numberOfAutomaticAssistedAssessments.total,
+                },
+            ];
+        }
     }
 
     setupLinks() {
@@ -261,18 +276,18 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:
                         const textExercise = this.exercise as TextExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(textExercise.sampleSolution);
+                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(textExercise.exampleSolution);
                         break;
                     case ExerciseType.MODELING:
                         this.modelingExercise = this.exercise as ModelingExercise;
-                        if (this.modelingExercise.sampleSolutionModel) {
-                            this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
-                            this.exampleSolutionModel = JSON.parse(this.modelingExercise.sampleSolutionModel);
+                        if (this.modelingExercise.exampleSolutionModel) {
+                            this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.exampleSolutionExplanation);
+                            this.exampleSolutionModel = JSON.parse(this.modelingExercise.exampleSolutionModel);
                         }
                         break;
                     case ExerciseType.FILE_UPLOAD:
                         const fileUploadExercise = this.exercise as FileUploadExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.sampleSolution);
+                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution);
                         break;
                     case ExerciseType.PROGRAMMING:
                         this.programmingExercise = this.exercise as ProgrammingExercise;
@@ -326,6 +341,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithComplaints = res.body || [];
+                    this.sortComplaintRows();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -333,6 +349,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
                     this.submissionsWithMoreFeedbackRequests = res.body || [];
+                    this.sortMoreFeedbackRows();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -493,7 +510,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         return submission;
                     });
 
-                this.submissionsByCorrectionRound!.set(correctionRound, sub);
+                this.submissionsByCorrectionRound.set(correctionRound, sub);
+                this.sortSubmissionRows(correctionRound);
             });
     }
 
@@ -626,33 +644,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         return !(tmpResult && tmpResult!.completionDate && Result.isManualResult(tmpResult!));
     }
 
-    calculateComplaintStatus(complaint: Complaint) {
-        // a complaint is handled if it is either accepted or denied and a complaint response exists
-        const handled = complaint.accepted !== undefined && complaint.complaintResponse !== undefined;
-        if (handled) {
-            return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintEvaluated');
-        } else {
-            if (this.complaintService.isComplaintLocked(complaint)) {
-                if (this.complaintService.isComplaintLockedByLoggedInUser(complaint)) {
-                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
-                    return this.translateService.instant('artemisApp.locks.lockInformationYou', {
-                        endDate,
-                    });
-                } else {
-                    const endDate = this.artemisDatePipe.transform(complaint.complaintResponse?.lockEndDate);
-                    const user = complaint.complaintResponse?.reviewer?.login;
-
-                    return this.translateService.instant('artemisApp.locks.lockInformation', {
-                        endDate,
-                        user,
-                    });
-                }
-            } else {
-                return this.translateService.instant('artemisApp.exerciseAssessmentDashboard.complaintNotEvaluated');
-            }
-        }
-    }
-
     /**
      * Uses the router to navigate to a given example submission
      * @param submissionId Id of submission where to navigate to
@@ -772,6 +763,50 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // lock-count from the remaining unassessed submissions of the current correction round.
                 this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
             }
+        }
+    }
+
+    /**
+     * Handles the click event of a user on a part of the chart.
+     * Given the user has the right permissions, navigates to the submissions page of the exercise
+     * @param event event that is delegated by ngx-charts. Used here to trigger the delegation only if the user clicks on the pie chart
+     * not the legend
+     */
+    navigateToExerciseSubmissionOverview(event: any): void {
+        if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+            this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
+        }
+    }
+
+    sortSubmissionRows(correctionRound: number) {
+        this.sortService.sortByProperty(
+            this.submissionsByCorrectionRound.get(correctionRound)!,
+            this.sortPredicates[0].replace('correctionRound', correctionRound + ''),
+            this.reverseOrders[0],
+        );
+    }
+
+    sortComplaintRows() {
+        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
+        this.sortService.sortByProperty(this.submissionsWithComplaints, 'complaint.submittedTime', true);
+        if (this.sortPredicates[1] === 'responseTime') {
+            this.sortService.sortByFunction(this.submissionsWithComplaints, (element) => this.complaintService.getResponseTimeInSeconds(element.complaint), this.reverseOrders[1]);
+        } else {
+            this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortPredicates[1], this.reverseOrders[1]);
+        }
+    }
+
+    sortMoreFeedbackRows() {
+        // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
+        this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, 'complaint.submittedTime', true);
+        if (this.sortPredicates[2] === 'responseTime') {
+            this.sortService.sortByFunction(
+                this.submissionsWithMoreFeedbackRequests,
+                (element) => this.complaintService.getResponseTimeInSeconds(element.complaint),
+                this.reverseOrders[2],
+            );
+        } else {
+            this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortPredicates[2], this.reverseOrders[2]);
         }
     }
 }

@@ -6,8 +6,8 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 import { ExerciseHintService } from '../manage/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 /**
  * This component is a modal that shows the exercise's hints.

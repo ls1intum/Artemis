@@ -1,0 +1,138 @@
+<div class="exam-status-wrapper" [ngClass]="isAtLeastInstructor ? 'instructor-view' : 'tutor-view'">
+    <!-- 1. Exam preparation -->
+    <ng-container *ngIf="isAtLeastInstructor">
+        <div class="status-step">
+            <!-- If all preparation tasks are finished, show a green check as header, show a red cross else -->
+            <div class="d-flex justify-content-center header-icon">
+                <fa-icon *ngIf="examPreparationFinished" [icon]="faCheckCircle" class="check"></fa-icon>
+                <fa-icon *ngIf="!examPreparationFinished" [icon]="faTimesCircle" class="cross"></fa-icon>
+            </div>
+            <div class="status-step-content">
+                <h6 class="text-center">{{ 'artemisApp.examStatus.preparation.examPreparation' | artemisTranslate }}</h6>
+                <ol>
+                    <li class="d-flex align-items-center">
+                        <span>{{
+                            'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate: { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }
+                        }}</span>
+                        <fa-icon *ngIf="configuredExercises" [icon]="faCheckCircle" class="check"></fa-icon>
+                        <fa-icon *ngIf="!configuredExercises" [icon]="faTimes" class="cross"></fa-icon>
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <span>{{ 'artemisApp.examStatus.preparation.registerStudents' | artemisTranslate: { registered: exam.numberOfRegisteredUsers } }} </span>
+                        <fa-icon *ngIf="registeredStudents" [icon]="faCheckCircle" class="check"></fa-icon>
+                        <fa-icon *ngIf="!registeredStudents" [icon]="faTimes" class="cross"></fa-icon>
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <span>{{ 'artemisApp.examStatus.preparation.generateStudentExams' | artemisTranslate }}</span>
+                        <!-- If no students are registered yet, we do not want to display "0 of 0" -->
+                        <span *ngIf="!registeredStudents">{{ 'artemisApp.examStatus.preparation.notRegistered' | artemisTranslate }}</span>
+                        <span *ngIf="registeredStudents">
+                            {{
+                                'artemisApp.examStatus.preparation.registered' | artemisTranslate: { generated: numberOfGeneratedStudentExams, total: exam.numberOfRegisteredUsers }
+                            }}
+                        </span>
+                        <fa-icon *ngIf="generatedStudentExams" [icon]="faCheckCircle" class="check"></fa-icon>
+                        <fa-icon *ngIf="!generatedStudentExams" [icon]="faTimes" class="cross"></fa-icon>
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <span>{{ 'artemisApp.examStatus.preparation.prepareExerciseStart' | artemisTranslate }}</span>
+                        <fa-icon *ngIf="preparedExerciseStart" [icon]="faCheckCircle" class="check"></fa-icon>
+                        <fa-icon *ngIf="!preparedExerciseStart" [icon]="faTimes" class="cross"></fa-icon>
+                    </li>
+                </ol>
+            </div>
+        </div>
+        <div class="connector" [ngClass]="examPreparationFinished ? 'check' : 'cross'"></div>
+    </ng-container>
+
+    <!-- 2. Exam conduction -->
+    <div class="status-step">
+        <!-- If exam conduction is planned, but not started yet, show a red cross,
+             If exam is currently conducted, show a yellow dot
+             If the exam preparation and the conduction period are finished, show a green check -->
+        <div class="d-flex justify-content-center header-icon" [ngSwitch]="examConductionState">
+            <fa-icon *ngSwitchCase="examConductionStateEnum.PLANNED" [icon]="faTimesCircle" class="cross"></fa-icon>
+            <fa-icon *ngSwitchCase="examConductionStateEnum.RUNNING" [icon]="faDotCircle" class="running"></fa-icon>
+            <fa-icon *ngSwitchCase="examConductionStateEnum.FINISHED" [icon]="faCheckCircle" class="check"></fa-icon>
+        </div>
+        <div class="status-step-content">
+            <div class="text-center mb-1">
+                <h6>{{ 'artemisApp.examStatus.conduction.examConduction' | artemisTranslate }}</h6>
+                <b>{{ exam.startDate | artemisDate }} - {{ exam.endDate | artemisDate }}</b>
+            </div>
+            <ol *ngIf="isAtLeastInstructor && examChecklist">
+                <li>
+                    <span>
+                        {{ 'artemisApp.examStatus.conduction.startedExams' | artemisTranslate }}:
+                        {{ examChecklist.numberOfExamsStarted }}
+                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsStarted * 100) / examChecklist.numberOfGeneratedStudentExams!, 1) : 0 }}%)
+                    </span>
+                </li>
+                <li>
+                    <span>
+                        {{ 'artemisApp.examStatus.conduction.submittedExams' | artemisTranslate }}:
+                        {{ examChecklist.numberOfExamsSubmitted }}
+                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsSubmitted * 100) / numberOfGeneratedStudentExams!, 1) : 0 }}%)
+                    </span>
+                </li>
+            </ol>
+        </div>
+    </div>
+    <div class="connector" [ngClass]="examConductionState === examConductionStateEnum.FINISHED ? 'check' : ''"></div>
+    <!-- 3. Exam correction -->
+    <div class="status-step">
+        <!-- If exam review phase is running or there are still open complaints, show a yellow dot,
+             If exam review phase is finished and all complaints are resolved, show a green check
+             Else, show a red cross -->
+        <div class="d-flex justify-content-center header-icon" [ngSwitch]="examCorrectionState">
+            <fa-icon *ngSwitchCase="examReviewStateEnum.RUNNING" [icon]="faDotCircle" class="running"></fa-icon>
+            <fa-icon *ngSwitchCase="examReviewStateEnum.FINISHED" [icon]="faCheckCircle" class="check"></fa-icon>
+            <fa-icon *ngSwitchDefault [icon]="faTimesCircle" class="cross"></fa-icon>
+        </div>
+        <div class="status-step-content">
+            <h6 class="text-center">{{ 'artemisApp.examStatus.correction.examCorrection' | artemisTranslate }}</h6>
+            <ol *ngIf="examChecklist">
+                <div *ngIf="examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && examChecklist.numberOfExamsSubmitted !== 0">
+                    <li *ngFor="let finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let i = index">
+                        <span>
+                            {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate: { index: i + 1 } }}:
+                            {{
+                                Math.min(
+                                    examChecklist.numberOfTotalParticipationsForAssessment > 0
+                                        ? round((finishedByCorrectionRound * 100) / examChecklist.numberOfTotalParticipationsForAssessment, 1)
+                                        : 0,
+                                    100
+                                )
+                            }}%
+                        </span>
+                    </li>
+                </div>
+                <li class="d-flex align-items-center">
+                    <span>{{ 'artemisApp.examStatus.correction.publishResultDate' | artemisTranslate }}: </span>
+                    <b *ngIf="exam.publishResultsDate">
+                        {{ exam.publishResultsDate | artemisDate }}
+                        <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                    </b>
+                    <b *ngIf="!exam.publishResultsDate" class="unset">
+                        {{ 'artemisApp.examStatus.correction.notSet' | artemisTranslate }}
+                    </b>
+                    <br />
+                </li>
+                <li>
+                    <span>{{ 'artemisApp.examStatus.correction.examReview' | artemisTranslate }}:</span>
+                    <b *ngIf="examReviewState" [ngClass]="examReviewState">{{ 'artemisApp.examStatus.correction.' + examReviewState | artemisTranslate }}</b>
+                </li>
+                <li>
+                    <span>
+                        {{ 'artemisApp.examStatus.correction.complaints' | artemisTranslate }}:
+                        {{
+                            examChecklist.numberOfAllComplaintsDone !== undefined && examChecklist.numberOfAllComplaints && examChecklist.numberOfAllComplaints > 0
+                                ? round((examChecklist.numberOfAllComplaintsDone * 100) / examChecklist.numberOfAllComplaints, 1)
+                                : 100
+                        }}%
+                    </span>
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>

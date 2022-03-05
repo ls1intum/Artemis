@@ -23,14 +23,19 @@ export function newCourseShortName(artemis, courseId) {
 }
 
 export function newCourse(artemis) {
+    const currentDate = new Date();
+    const startDate = new Date(currentDate.getTime() - 2 * 60 * 60 * 1000); // - 2h
+    const endDate = new Date(currentDate.getTime() + 2 * 60 * 60 * 1000); // + 2h
     const course = {
-        title: 'Test Course',
+        title: 'K6 Test Course',
         description: 'K6 performance tests generated course',
-        shortName: 'test' + nextAlphanumeric(5),
+        shortName: 'testk6' + nextAlphanumeric(5),
         registrationEnabled: false,
         maxComplaints: 3,
         maxComplaintTimeDays: 7,
         accuracyOfScores: 1,
+        startDate: startDate,
+        endDate: endDate,
     };
 
     const res = artemis.post(COURSES, course);

@@ -2,8 +2,7 @@ import { NgModule } from '@angular/core';
 
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
+import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -18,8 +17,7 @@ import { DurationPipe } from 'app/shared/pipes/duration.pipe';
     declarations: [
         ArtemisDatePipe,
         FindLanguageFromKeyPipe,
-        AlertComponent,
-        AlertErrorComponent,
+        AlertOverlayComponent,
         TranslateDirective,
         SortByDirective,
         SortDirective,
@@ -32,8 +30,7 @@ import { DurationPipe } from 'app/shared/pipes/duration.pipe';
         ArtemisSharedLibsModule,
         ArtemisDatePipe,
         FindLanguageFromKeyPipe,
-        AlertComponent,
-        AlertErrorComponent,
+        AlertOverlayComponent,
         TranslateDirective,
         SortByDirective,
         SortDirective,

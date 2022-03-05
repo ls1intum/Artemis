@@ -43,6 +43,7 @@ public abstract class ExerciseImportService {
         newExercise.setReleaseDate(importedExercise.getReleaseDate());
         newExercise.setDueDate(importedExercise.getDueDate());
         newExercise.setAssessmentDueDate(importedExercise.getAssessmentDueDate());
+        newExercise.setExampleSolutionPublicationDate(null); // This should not be imported.
         newExercise.validateDates();
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());

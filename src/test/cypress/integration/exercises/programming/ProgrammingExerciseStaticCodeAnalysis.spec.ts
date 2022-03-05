@@ -55,7 +55,7 @@ describe('Static code analysis tests', () => {
      */
     function makeSuccessfulSubmissionWithScaErrors() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, scaSubmission, () => {
-            editorPage.getResultPanel().contains('50%').should('be.visible');
+            editorPage.getResultScorePercentage().should('contain.text', '50%').and('be.visible');
             editorPage.getResultPanel().contains('13 of 13 passed').click();
             scaFeedback.shouldShowPointChart();
             scaFeedback.shouldShowFeedback(13, '10');

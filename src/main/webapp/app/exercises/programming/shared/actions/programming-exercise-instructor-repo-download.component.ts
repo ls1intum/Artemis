@@ -14,7 +14,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
-            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            [featureToggle]="FeatureToggle.ProgrammingExercises"
             [icon]="faDownload"
             [title]="'artemisApp.programmingExercise.export.downloadRepo'"
             (onClick)="exportRepository()"

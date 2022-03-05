@@ -4,7 +4,6 @@
         <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam?.title }} - {{ exercise.title }}</span>
         <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: filteredResultsSize }">results</small>
     </h2>
-    <jhi-alert></jhi-alert>
     <div class="mb-2 clearfix">
         <div class="exercise-scores-filter-toolbar d-flex align-content-center my-2">
             <div class="d-flex align-items-center">
@@ -262,7 +261,7 @@
                             [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id]"
                             class="btn btn-info btn-sm me-1"
                             *ngIf="value.participation.exercise.allowOnlineEditor"
-                            [jhiFeatureToggleLink]="FeatureToggle.PROGRAMMING_EXERCISES"
+                            [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                         >
                             <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             Online editor

@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
@@ -102,7 +103,8 @@ public class JenkinsBuildPlanService {
         var isSequentialTestRuns = exercise.hasSequentialTestRuns();
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, testRepositoryURL, repositoryURL, staticCodeAnalysisEnabled, isSequentialTestRuns);
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), testRepositoryURL, repositoryURL,
+                staticCodeAnalysisEnabled, isSequentialTestRuns);
 
         var jobFolder = exercise.getProjectKey();
         var job = jobFolder + "-" + planKey;
@@ -303,6 +305,22 @@ public class JenkinsBuildPlanService {
         catch (NullPointerException | HttpClientErrorException e) {
             log.error("Error while trying to fetch build status from Jenkins for {}: {}", planKey, e.getMessage());
             return ContinuousIntegrationService.BuildStatus.INACTIVE;
+        }
+    }
+
+    /**
+     * Checks if a project folder exists.
+     *
+     * @param projectKey The name of the project folder.
+     * @return True, only if the folder exists.
+     */
+    public boolean projectFolderExists(String projectKey) {
+        try {
+            var project = jenkinsJobService.getFolderConfig(projectKey);
+            return project != null;
+        }
+        catch (IOException e) {
+            return false;
         }
     }
 

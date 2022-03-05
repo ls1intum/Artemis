@@ -267,6 +267,8 @@ export class NotificationSidebarComponent implements OnInit {
                     UserSettingsCategory.NOTIFICATION_SETTINGS,
                 ) as NotificationSetting[];
                 this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationSettings);
+                // update the notification settings in the service to make them reusable for others (to avoid unnecessary server calls)
+                this.notificationSettingsService.setNotificationSettings(this.notificationSettings);
             },
             error: (res: HttpErrorResponse) => (this.error = res.message),
         });

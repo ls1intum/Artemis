@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
@@ -105,7 +104,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
     @Test
@@ -169,11 +168,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1")
     public void participateInProgrammingExercise_featureDisabled() throws Exception {
-        featureToggleService.disableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.disableFeature(Feature.ProgrammingExercises);
         request.post("/api/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
 
         // Reset
-        featureToggleService.enableFeature(Feature.PROGRAMMING_EXERCISES);
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
     @Test
@@ -393,11 +392,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
                 assertThat(quizExercise.getQuizQuestions()).isEmpty();
             }
             else if (exercise instanceof TextExercise textExercise) {
-                assertThat(textExercise.getSampleSolution()).isNull();
+                assertThat(textExercise.getExampleSolution()).isNull();
             }
             else if (exercise instanceof ModelingExercise modelingExercise) {
-                assertThat(modelingExercise.getSampleSolutionModel()).isNull();
-                assertThat(modelingExercise.getSampleSolutionExplanation()).isNull();
+                assertThat(modelingExercise.getExampleSolutionModel()).isNull();
+                assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
             }
         });
     }

@@ -35,7 +35,6 @@
             [exercise]="exercise"
         ></jhi-programming-exercise-instructor-submission-state>
     </div>
-    <jhi-alert></jhi-alert>
     <jhi-data-table
         [isLoading]="isLoading"
         entityType="participation"
@@ -246,7 +245,7 @@
 
                 <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-end">
+                        <div class="text-end">
                             <div class="btn-group">
                                 <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
                                     <jhi-programming-exercise-instructor-trigger-build-button
@@ -262,7 +261,7 @@
                                 </ng-container>
                                 <button
                                     *ngIf="exercise.isAtLeastInstructor"
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     [skipFeatureToggle]="exercise.type !== ExerciseType.PROGRAMMING"
                                     jhiDeleteButton
                                     [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
@@ -279,7 +278,7 @@
                                 </button>
                                 <button
                                     *ngIf="exercise?.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
-                                    [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     jhiDeleteButton
                                     [actionType]="ActionType.Cleanup"
                                     deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"

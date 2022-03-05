@@ -10,10 +10,9 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { FileService } from 'app/shared/http/file.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockPipe, MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -86,7 +85,6 @@ describe('LectureAttachmentsComponent', () => {
             declarations: [
                 LectureAttachmentsComponent,
                 MockComponent(FormDateTimePickerComponent),
-                MockComponent(AlertErrorComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
@@ -224,7 +222,7 @@ describe('LectureAttachmentsComponent', () => {
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
         } as Attachment;
-        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
+        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
         comp.deleteAttachment(toDelete);
         expect(comp.attachments.length).toBe(1);
         expect(attachmentServiceDeleteStub).toHaveBeenCalledTimes(1);
