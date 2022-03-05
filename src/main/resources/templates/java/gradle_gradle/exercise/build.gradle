@@ -23,8 +23,3 @@ sourceSets {
         }
     }
 }
-
-test {
-    useJUnitPlatform()
-    ignoreFailures = true
-}

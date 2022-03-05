@@ -532,13 +532,11 @@ public class ProgrammingExerciseService {
             // Keep or delete static code analysis configuration in pom.xml
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
 
-            // TODO: allow sequential test runs for Gradle builds
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles/**/*.*";
                 Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
                 String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
-                // currently, only supported for maven builds, but does no harm if also applied on build.gradle (whose support will be added later)
                 sectionsMap.put("non-sequential", true);
                 sectionsMap.put("sequential", false);
 
