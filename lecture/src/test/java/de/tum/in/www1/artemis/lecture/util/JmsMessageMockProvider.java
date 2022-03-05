@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,7 +25,7 @@ public class JmsMessageMockProvider {
     private Message message;
 
     public JmsMessageMockProvider() {
-        this.message = Mockito.mock(Message.class);
+        this.message = mock(Message.class);
     }
 
     /**
