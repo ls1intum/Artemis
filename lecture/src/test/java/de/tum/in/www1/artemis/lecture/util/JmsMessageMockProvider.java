@@ -29,6 +29,12 @@ public class JmsMessageMockProvider {
         this.message = Mockito.mock(Message.class);
     }
 
+    /**
+     * Mock send and receive getting lecture exercises
+     *
+     * @param exercises the exercises to return as response
+     * @throws JMSException
+     */
     public void mockSendAndReceiveGetLectureExercises(Set<Exercise> exercises) throws JMSException {
         doReturn(message).when(jmsTemplate).receiveSelected(anyString(), anyString());
         doReturn(exercises).when(message).getBody(Set.class);

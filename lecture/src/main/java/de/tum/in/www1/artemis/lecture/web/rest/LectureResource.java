@@ -121,7 +121,7 @@ public class LectureResource {
      * @param courseId         the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
-    @GetMapping(value = "/courses/{courseId}/lectures")
+    @GetMapping("/courses/{courseId}/lectures")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
@@ -183,7 +183,7 @@ public class LectureResource {
      * @param lectureId the id of the lecture
      * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
      */
-    @GetMapping(value = "/lectures/{lectureId}/title")
+    @GetMapping("/lectures/{lectureId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
@@ -191,15 +191,15 @@ public class LectureResource {
     }
 
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {
-        lecture = lectureService.filterActiveAttachments(lecture, user);
+        Lecture filteredLecture = lectureService.filterActiveAttachments(lecture, user);
 
         // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
         // hibernate sometimes adds nulls into the list of lecture units to keep the order
-        Set<Exercise> relatedExercises = lecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
+        Set<Exercise> relatedExercises = filteredLecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
                 .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
 
         Set<Exercise> exercisesWithAllInformationNeeded = lectureServiceProducer.getLectureExercises(relatedExercises, user);
-        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> {
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = filteredLecture.getLectureUnits().stream().filter(lectureUnit -> {
             if (lectureUnit == null) {
                 return false;
             }
@@ -221,20 +221,20 @@ public class LectureResource {
             }
         }).collect(Collectors.toList());
 
-        lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
-        return lecture;
+        filteredLecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
+        return filteredLecture;
     }
 
     /**
      * DELETE /lectures/:id : delete the "id" lecture.
      *
-     * @param id the id of the lecture to delete
+     * @param lectureId the id of the lecture to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/lectures/{id}")
+    @DeleteMapping("/lectures/{lectureId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
-        Optional<Lecture> optionalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(id);
+    public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
+        Optional<Lecture> optionalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
         if (optionalLecture.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -244,8 +244,8 @@ public class LectureResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        log.debug("REST request to delete Lecture : {}", id);
+        log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
 }

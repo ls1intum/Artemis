@@ -13,9 +13,7 @@ import javax.jms.Message;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
 
@@ -34,8 +32,6 @@ public class LectureServiceProducerTest extends AbstractSpringDevelopmentTest {
     @Autowired
     private LectureServiceProducer lectureServiceProducer;
 
-    private ArgumentCaptor<Set<String>> setCaptor;
-
     private User user;
 
     private Set<Lecture> lectures;
@@ -44,8 +40,7 @@ public class LectureServiceProducerTest extends AbstractSpringDevelopmentTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        this.message = Mockito.mock(Message.class);
-        setCaptor = ArgumentCaptor.forClass(Set.class);
+        this.message = mock(Message.class);
 
         user = new User();
         user.setLogin("student");
@@ -61,7 +56,7 @@ public class LectureServiceProducerTest extends AbstractSpringDevelopmentTest {
 
     @AfterEach
     public void resetDatabase() {
-        Mockito.reset(message);
+        reset(message);
     }
 
     @Test

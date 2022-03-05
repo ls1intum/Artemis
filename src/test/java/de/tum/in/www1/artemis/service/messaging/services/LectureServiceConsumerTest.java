@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.core.JmsTemplate;
 
@@ -65,7 +64,7 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        this.message = Mockito.mock(Message.class);
+        this.message = mock(Message.class);
         setCaptor = ArgumentCaptor.forClass(Set.class);
 
         SecurityUtils.setAuthorizationObject();
@@ -101,9 +100,9 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         when(message.getBody(UserExerciseDTO.class)).thenReturn(dto);
         when(message.getJMSCorrelationID()).thenReturn(Integer.toString(dto.hashCode()));
 
-        lectureServiceConsumer.getExercisesAndRespond(message);
+        lectureServiceConsumer.filterExercisesAndRespond(message);
 
-        Mockito.verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
+        verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
         assertThat(setCaptor.getValue()).isEqualTo(exercises);
     }
 
@@ -113,9 +112,9 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         when(message.getBody(UserExerciseDTO.class)).thenReturn(dto);
         when(message.getJMSCorrelationID()).thenReturn(Integer.toString(dto.hashCode()));
 
-        lectureServiceConsumer.getExercisesAndRespond(message);
+        lectureServiceConsumer.filterExercisesAndRespond(message);
 
-        Mockito.verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
+        verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
         assertThat(setCaptor.getValue().size()).isEqualTo(0);
     }
 
@@ -125,9 +124,9 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         when(message.getBody(UserExerciseDTO.class)).thenReturn(dto);
         when(message.getJMSCorrelationID()).thenReturn(Integer.toString(dto.hashCode()));
 
-        lectureServiceConsumer.getExercisesAndRespond(message);
+        lectureServiceConsumer.filterExercisesAndRespond(message);
 
-        Mockito.verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
+        verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
         assertThat(setCaptor.getValue().size()).isEqualTo(0);
     }
 
@@ -138,9 +137,9 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         when(message.getBody(UserExerciseDTO.class)).thenReturn(dto);
         when(message.getJMSCorrelationID()).thenReturn(Integer.toString(dto.hashCode()));
 
-        lectureServiceConsumer.getExercisesAndRespond(message);
+        lectureServiceConsumer.filterExercisesAndRespond(message);
 
-        Mockito.verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
+        verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
         assertThat(setCaptor.getValue().size()).isEqualTo(0);
     }
 
@@ -151,9 +150,9 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         when(message.getBody(UserExerciseDTO.class)).thenReturn(dto);
         when(message.getJMSCorrelationID()).thenReturn(Integer.toString(dto.hashCode()));
 
-        lectureServiceConsumer.getExercisesAndRespond(message);
+        lectureServiceConsumer.filterExercisesAndRespond(message);
 
-        Mockito.verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
+        verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
         assertThat(setCaptor.getValue().size()).isEqualTo(0);
     }
 
@@ -161,7 +160,7 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
     public void testGetExercisesAndRespond_shouldThrowException() throws JMSException {
         when(message.getBody(UserExerciseDTO.class)).thenThrow(new JMSException("Error"));
 
-        assertThrows(InternalServerErrorException.class, () -> lectureServiceConsumer.getExercisesAndRespond(message));
-        Mockito.verify(jmsTemplate, times(0)).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), any(), any());
+        assertThrows(InternalServerErrorException.class, () -> lectureServiceConsumer.filterExercisesAndRespond(message));
+        verify(jmsTemplate, times(0)).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), any(), any());
     }
 }

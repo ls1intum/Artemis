@@ -48,7 +48,7 @@ public class LectureServiceConsumer {
      * @param message the received message
      */
     @JmsListener(destination = MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES)
-    public void getExercisesAndRespond(Message message) {
+    public void filterExercisesAndRespond(Message message) {
         UserExerciseDTO userExerciseDTO;
         try {
             userExerciseDTO = message.getBody(UserExerciseDTO.class);

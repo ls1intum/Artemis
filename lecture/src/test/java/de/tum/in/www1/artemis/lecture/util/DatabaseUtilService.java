@@ -333,12 +333,12 @@ public class DatabaseUtilService {
         return videoUnitRepository.save(videoUnit);
     }
 
-    public Lecture addLectureUnitsToLecture(Lecture lecture, Set<de.tum.in.www1.artemis.domain.lecture.LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+    public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
+        Lecture lecture1 = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
         for (LectureUnit lectureUnit : lectureUnits) {
-            l.addLectureUnit(lectureUnit);
+            lecture1.addLectureUnit(lectureUnit);
         }
-        return lectureRepo.save(l);
+        return lectureRepo.save(lecture1);
     }
 
     public void changeUser(String username) {

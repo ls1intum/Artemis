@@ -52,6 +52,11 @@ public class JmsMessageMockProvider {
         this.message = Mockito.mock(Message.class);
     }
 
+    /**
+     * Mock removal of exercise units messaging exchange by removing the ecercise unit.
+     *
+     * @throws JMSException
+     */
     public void mockRemoveExerciseUnits() throws JMSException {
         doAnswer(invocation -> {
             long exerciseId = invocation.getArgument(1);
@@ -84,6 +89,11 @@ public class JmsMessageMockProvider {
         doReturn(true).when(message).getBody(Boolean.class);
     }
 
+    /**
+     * Mock deletion of lectures messaging exchange by removing the ecercise unit.
+     *
+     * @throws JMSException
+     */
     public void mockDeleteLectures() throws JMSException {
         doAnswer(invocation -> {
             Set<Lecture> lectures = invocation.getArgument(1);
