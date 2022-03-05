@@ -98,7 +98,7 @@ describe('Plagiarism Split View Component', () => {
     it('should parse text matches for comparison', fakeAsync(() => {
         comp.exercise = textExercise;
         jest.spyOn(comp, 'parseTextMatches');
-        jest.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForEditor').mockReturnValue(
+        jest.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(
             of({ body: comparison } as HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>),
         );
         comp.ngOnChanges({

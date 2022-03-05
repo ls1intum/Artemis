@@ -189,9 +189,11 @@ public class PlagiarismResource {
 
     /**
      * Retrieves the plagiarismComparison specified by its Id.
+     * If a studentLogin is passed the comparison is anonymized
      *
      * @param courseId the id of the course
      * @param comparisonId the id of the PlagiarismComparison
+     * @param studentLogin optional login of the student
      * @return the PlagiarismComparison
      * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
      */
