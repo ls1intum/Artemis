@@ -197,7 +197,8 @@ public class PlagiarismResource {
      */
     @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-split-view")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForEditor(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
+    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForEditor(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId,
+            @RequestParam(value = "studentLogin", required = false) String studentLogin) {
         var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
         var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -211,6 +212,9 @@ public class PlagiarismResource {
         }
 
         comparisonA.setSubmissionB(comparisonB.getSubmissionB());
+        if (studentLogin != null) {
+            comparisonA = this.plagiarismService.anonymizeComparisonForStudentView(comparisonA, studentLogin);
+        }
         return ResponseEntity.ok(comparisonA);
     }
 

@@ -38,11 +38,19 @@ export class PlagiarismCasesService {
      * Get the plagiarism comparison with the given id
      * @param { number } courseId
      * @param { number } plagiarismComparisonId
+     * @param { string } studentLogin
      */
-    public getPlagiarismComparisonForEditor(courseId: number, plagiarismComparisonId: number): Observable<HttpResponse<PlagiarismComparison<PlagiarismSubmissionElement>>> {
-        return this.http.get<PlagiarismComparison<PlagiarismSubmissionElement>>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-split-view`, {
-            observe: 'response',
-        });
+    public getPlagiarismComparisonForSplitView(
+        courseId: number,
+        plagiarismComparisonId: number,
+        studentLogin = '',
+    ): Observable<HttpResponse<PlagiarismComparison<PlagiarismSubmissionElement>>> {
+        return this.http.get<PlagiarismComparison<PlagiarismSubmissionElement>>(
+            `${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-split-view` + (studentLogin ? `?studentLogin=${studentLogin}` : ''),
+            {
+                observe: 'response',
+            },
+        );
     }
 
     /**
