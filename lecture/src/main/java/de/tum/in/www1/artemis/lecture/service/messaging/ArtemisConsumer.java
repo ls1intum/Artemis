@@ -20,7 +20,7 @@ import javax.jms.Message;
 import java.util.Set;
 
 /**
- * Message broker producer to send messages related to the exercise service
+ * Message broker consumer to consume messages coming from Artemis
  */
 @Component
 @EnableJms
@@ -43,7 +43,9 @@ public class ArtemisConsumer {
     }
 
     /**
-     * Return response to notify the action is successful
+     * Consume message, filter active lecture attachments and send response
+     *
+     * @param message the message to consume
      */
     @JmsListener(destination = MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS)
     public void filterLectureActiveAttachments(Message message) {
@@ -64,7 +66,9 @@ public class ArtemisConsumer {
     }
 
     /**
-     * Return response to notify the action is successful
+     * Consume message, remove exercise units and send response
+     *
+     * @param message the message to consume
      */
     @JmsListener(destination = MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS)
     public void sendRemoveExerciseUnitsResponse(Message message) {
@@ -88,7 +92,9 @@ public class ArtemisConsumer {
     }
 
     /**
-     * Return response to notify the action is successful
+     * Consume message, delete lectures and send response
+     *
+     * @param message the message to consume
      */
     @JmsListener(destination = MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES)
     public void deleteLectures(Message message) {
