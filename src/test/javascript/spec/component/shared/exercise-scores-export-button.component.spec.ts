@@ -82,13 +82,13 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     const expectedCSVWithCriteria = [
         'data:text/csv;charset=utf-8,Name,Username,Score,Points,"Criterion 1","Criterion 2",Repo Link',
-        'Student A,studentA,1,2,2,10,https://www.gitlab.local/studentA',
-        'Student B,studentB,2,4,0,0,https://www.gitlab.local/studentB',
+        '"Student A",studentA,1,2,2,10,https://www.gitlab.local/studentA',
+        '"Student B",studentB,2,4,0,0,https://www.gitlab.local/studentB',
     ];
     const expectedCSVNoCriteria = [
         'data:text/csv;charset=utf-8,Name,Username,Score,Points,Repo Link',
-        'Student A,studentA,1,2,https://www.gitlab.local/studentA',
-        'Student B,studentB,2,4,https://www.gitlab.local/studentB',
+        '"Student A",studentA,1,2,https://www.gitlab.local/studentA',
+        '"Student B",studentB,2,4,https://www.gitlab.local/studentB',
     ];
 
     beforeEach(() => {
@@ -152,7 +152,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
         const expectedCSVTeamExercise = [
             'data:text/csv;charset=utf-8,Team Name,Team Short Name,Score,Points,Students',
-            'Testteam 01,tt01,50,100,"Student 1, Student 2, Student 3, Student 4"',
+            '"Testteam 01",tt01,50,100,"Student 1, Student 2, Student 3, Student 4"',
         ];
 
         testCsvExport(exerciseTeam, [teamResultWithPoints], expectedCSVTeamExercise, 'ex1-results-scores.csv');

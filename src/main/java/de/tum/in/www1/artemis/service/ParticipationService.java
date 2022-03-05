@@ -535,7 +535,7 @@ public class ParticipationService {
     }
 
     /**
-     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactivate.
+     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive.
      * This means the participation can be resumed in the future
      *
      * @param participation that will be set to inactive

@@ -102,7 +102,7 @@ public class ExerciseDeletionService {
             }
 
             if (!deleteRepositories) {
-                return;    // in this case, we are done
+                return; // in this case, we are done
             }
 
             for (StudentParticipation participation : exercise.getStudentParticipations()) {
