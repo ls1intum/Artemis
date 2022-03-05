@@ -1,18 +1,18 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
-            <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
+            <h2 id="jhi-lecture-heading" jhiTranslate="lectureApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
             <div>
                 <div class="form-group" [hidden]="!lecture.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" [(ngModel)]="lecture.id" readonly />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
+                    <label class="form-control-label" jhiTranslate="lectureApp.lecture.title" for="field_title">Title</label>
                     <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
                 </div>
                 <div class="form-group" id="field_description">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
+                    <label class="form-control-label" jhiTranslate="lectureApp.lecture.description" for="field_description">Description</label>
                     <jhi-markdown-editor
                         class="markdown-editor"
                         [domainCommands]="domainCommandsDescription"
@@ -23,7 +23,7 @@
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
                         <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
+                            labelName="{{ 'lectureApp.lecture.startDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.startDate"
                             name="startDate"
                             id="start-date"
@@ -31,7 +31,7 @@
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
+                            labelName="{{ 'lectureApp.lecture.endDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.endDate"
                             name="endDate"
                             id="end-date"
@@ -39,7 +39,7 @@
                     </div>
                 </div>
                 <div class="form-group" *ngIf="lecture.course">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course">Course</label>
+                    <label class="form-control-label" jhiTranslate="lectureApp.lecture.course" for="field_course">Course</label>
                     <div class="d-flex">
                         <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture.course.title" />
                     </div>

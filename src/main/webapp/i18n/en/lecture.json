@@ -1,5 +1,5 @@
 {
-    "artemisApp": {
+    "lectureApp": {
         "lecture": {
             "home": {
                 "title": "Lectures",
@@ -40,7 +40,9 @@
                 "notificationPlaceholder": "Optional: Notification about changes",
                 "error": "The file {{ fileName }} is too large. The maximum filesize is 10MB"
             }
-        },
+        }
+    },
+    "artemisApp": {
         "attachment": {
             "deleteQuestion": "Do you really want to delete the attachment?",
             "created": "Created new attachment with identifier {{ param }}",

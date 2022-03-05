@@ -1,9 +1,9 @@
 <div>
     <h2 id="page-heading">
-        <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
+        <span jhiTranslate="lectureApp.lecture.home.title">Lectures</span>
         <a id="jh-create-entity" class="btn btn-primary float-end jh-create-entity create-lecture" [routerLink]="['new']">
             <fa-icon [icon]="faPlus"></fa-icon>
-            <span jhiTranslate="artemisApp.lecture.home.createLabel">Create Lecture</span>
+            <span jhiTranslate="lectureApp.lecture.home.createLabel">Create Lecture</span>
         </a>
     </h2>
     <br />
@@ -12,11 +12,11 @@
             <thead>
                 <tr>
                     <th><span jhiTranslate="global.field.id">ID</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.title">Title</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.description">Description</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.course">Course</span></th>
+                    <th><span jhiTranslate="lectureApp.lecture.title">Title</span></th>
+                    <th><span jhiTranslate="lectureApp.lecture.description">Description</span></th>
+                    <th><span jhiTranslate="lectureApp.lecture.startDate">Start Date</span></th>
+                    <th><span jhiTranslate="lectureApp.lecture.endDate">End Date</span></th>
+                    <th><span jhiTranslate="lectureApp.lecture.course">Course</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -60,8 +60,8 @@
                                     id="delete-lecture"
                                     *ngIf="lecture.isAtLeastInstructor"
                                     [entityTitle]="lecture.title || ''"
-                                    deleteQuestion="artemisApp.lecture.delete.question"
-                                    deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
+                                    deleteQuestion="lectureApp.lecture.delete.question"
+                                    deleteConfirmationText="lectureApp.lecture.delete.typeNameToConfirm"
                                     (delete)="deleteLecture(lecture.id!)"
                                     [dialogError]="dialogError$"
                                 >

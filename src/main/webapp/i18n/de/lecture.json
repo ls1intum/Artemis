@@ -1,5 +1,5 @@
 {
-    "artemisApp": {
+    "lectureApp": {
         "lecture": {
             "home": {
                 "title": "Vorlesungen",
@@ -40,7 +40,9 @@
                 "notificationPlaceholder": "Optional: Mitteilung über die Änderung",
                 "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 10MB"
             }
-        },
+        }
+    },
+    "artemisApp": {
         "attachment": {
             "deleteQuestion": "Soll der Anhang wirklich gelöscht werden?",
             "created": "Anhang erstellt mit ID {{ param }}",

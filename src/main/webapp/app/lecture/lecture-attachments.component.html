@@ -1,17 +1,17 @@
 <div class="row justify-content-center">
     <div class="col-12">
         <div *ngIf="lecture">
-            <h2><span jhiTranslate="artemisApp.lecture.attachments.title">Lecture</span>: {{ lecture.title }} - {{ lecture.course?.shortName }}</h2>
+            <h2><span jhiTranslate="lectureApp.lecture.attachments.title">Lecture</span>: {{ lecture.title }} - {{ lecture.course?.shortName }}</h2>
             <hr />
             <div class="row">
                 <div class="col-6">
-                    <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
+                    <dt><span jhiTranslate="lectureApp.lecture.startDate">Start Date</span></dt>
                     <dd>
                         <span>{{ lecture.startDate | artemisDate }}</span>
                     </dd>
                 </div>
                 <div class="col-6">
-                    <dt><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></dt>
+                    <dt><span jhiTranslate="lectureApp.lecture.endDate">End Date</span></dt>
                     <dd>
                         <span>{{ lecture.endDate | artemisDate }}</span>
                     </dd>
@@ -19,14 +19,14 @@
             </div>
             <div class="row">
                 <div class="col-12">
-                    <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
+                    <dt><span jhiTranslate="lectureApp.lecture.description">Description</span></dt>
                     <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
                 </div>
             </div>
             <hr class="mt-2 mb-2" />
             <div class="row">
                 <div class="col-12">
-                    <h4 jhiTranslate="artemisApp.lecture.attachments.attachments">Attachments</h4>
+                    <h4 jhiTranslate="lectureApp.lecture.attachments.attachments">Attachments</h4>
                 </div>
             </div>
 
@@ -37,12 +37,12 @@
                             <thead>
                                 <tr>
                                     <th><span jhiTranslate="global.field.id">ID</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.name">Title</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.type">Type</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.link">Link</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.releaseDate">Release Date</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.uploadDate">Upload Date</span></th>
-                                    <th><span jhiTranslate="artemisApp.lecture.attachments.version">Version</span></th>
+                                    <th><span jhiTranslate="lectureApp.lecture.attachments.name">Title</span></th>
+                                    <th><span jhiTranslate="lectureApp.lecture.attachments.type">Type</span></th>
+                                    <th><span jhiTranslate="lectureApp.lecture.attachments.link">Link</span></th>
+                                    <th><span jhiTranslate="lectureApp.lecture.attachments.releaseDate">Release Date</span></th>
+                                    <th><span jhiTranslate="lectureApp.lecture.attachments.uploadDate">Upload Date</span></th>
+                                    <th><span jhiTranslate="lectureApp.lecture.attachments.version">Version</span></th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -50,7 +50,7 @@
                                 <tr *ngFor="let attachment of attachments; trackBy: trackId" class="position-relative">
                                     <td [ngClass]="{ 'edit-overlay': attachmentToBeCreated && attachmentToBeCreated.id === attachment.id }">
                                         <span *ngIf="attachmentToBeCreated && attachmentToBeCreated.id === attachment.id">{{
-                                            'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate
+                                            'lectureApp.lecture.attachments.isBeingEdited' | artemisTranslate
                                         }}</span>
                                         <span *ngIf="!attachmentToBeCreated || attachmentToBeCreated.id !== attachment.id">{{ attachment.id }}</span>
                                     </td>
@@ -95,18 +95,18 @@
             <div *ngIf="attachmentToBeCreated">
                 <div class="row">
                     <div class="col-12">
-                        <h4 jhiTranslate="artemisApp.lecture.attachments.newAttachment" *ngIf="!attachmentToBeCreated.id">New Attachment</h4>
-                        <h4 jhiTranslate="artemisApp.lecture.attachments.editAttachment" *ngIf="attachmentToBeCreated.id">Edit Attachment</h4>
+                        <h4 jhiTranslate="lectureApp.lecture.attachments.newAttachment" *ngIf="!attachmentToBeCreated.id">New Attachment</h4>
+                        <h4 jhiTranslate="lectureApp.lecture.attachments.editAttachment" *ngIf="attachmentToBeCreated.id">Edit Attachment</h4>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-12 col-md-6">
                         <div class="form-group">
-                            <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.name">Name</label>
+                            <label for="attachmentName" jhiTranslate="lectureApp.lecture.attachments.name">Name</label>
                             <input type="text" class="form-control" id="attachmentName" name="attachmentName" [(ngModel)]="attachmentToBeCreated.name" />
                         </div>
                         <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.lecture.attachments.file">File</label>
+                            <label class="form-control-label" jhiTranslate="lectureApp.lecture.attachments.file">File</label>
                             <div class="input-group background-file">
                                 <div class="custom-file overflow-ellipsis">
                                     <input
@@ -126,19 +126,19 @@
                         </div>
                         <div class="form-group">
                             <jhi-date-time-picker
-                                labelName="{{ 'artemisApp.lecture.attachments.releaseDate' | artemisTranslate }}"
+                                labelName="{{ 'lectureApp.lecture.attachments.releaseDate' | artemisTranslate }}"
                                 [(ngModel)]="attachmentToBeCreated.releaseDate"
                                 name="endDate"
                             ></jhi-date-time-picker>
                         </div>
                         <div class="form-group" *ngIf="attachmentToBeCreated.id">
-                            <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.notificationText">Notification Text</label>
+                            <label for="attachmentName" jhiTranslate="lectureApp.lecture.attachments.notificationText">Notification Text</label>
                             <input
                                 type="text"
                                 class="form-control"
                                 id="notificationText"
                                 name="attachmentName"
-                                [placeholder]="'artemisApp.lecture.attachments.notificationPlaceholder' | artemisTranslate"
+                                [placeholder]="'lectureApp.lecture.attachments.notificationPlaceholder' | artemisTranslate"
                                 [(ngModel)]="notificationText"
                             />
                         </div>
@@ -149,7 +149,7 @@
                     <div class="col-12">
                         <button id="upload-attachment" type="submit" [disabled]="isUploadingAttachment" (click)="uploadLectureAttachmentAndSave()" class="btn btn-primary me-2">
                             <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;
-                            <span *ngIf="isUploadingAttachment" jhiTranslate="artemisApp.lecture.attachments.uploading"></span>
+                            <span *ngIf="isUploadingAttachment" jhiTranslate="lectureApp.lecture.attachments.uploading"></span>
                             <span *ngIf="!isUploadingAttachment" jhiTranslate="entity.action.saveAttachment"></span>
                         </button>
                         <button type="submit" (click)="cancel()" class="btn btn-default">

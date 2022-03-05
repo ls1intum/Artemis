@@ -1,24 +1,24 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <div *ngIf="lecture">
-            <h2><span jhiTranslate="artemisApp.lecture.detail.title">Lecture</span> {{ lecture.id }}</h2>
+            <h2><span jhiTranslate="lectureApp.lecture.detail.title">Lecture</span> {{ lecture.id }}</h2>
             <hr />
             <dl class="row-md jh-entity-details markdown-preview">
-                <dt><span jhiTranslate="artemisApp.lecture.title">Title</span></dt>
+                <dt><span jhiTranslate="lectureApp.lecture.title">Title</span></dt>
                 <dd>
                     <span>{{ lecture.title }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
+                <dt><span jhiTranslate="lectureApp.lecture.description">Description</span></dt>
                 <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
-                <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
+                <dt><span jhiTranslate="lectureApp.lecture.startDate">Start Date</span></dt>
                 <dd>
                     <span>{{ lecture.startDate | artemisDate }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></dt>
+                <dt><span jhiTranslate="lectureApp.lecture.endDate">End Date</span></dt>
                 <dd>
                     <span>{{ lecture.endDate | artemisDate }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.lecture.course">Course</span></dt>
+                <dt><span jhiTranslate="lectureApp.lecture.course">Course</span></dt>
                 <dd>
                     <div *ngIf="lecture.course">
                         <a [routerLink]="['/course-management', lecture.course?.id]">{{ lecture.course?.title }}</a>
