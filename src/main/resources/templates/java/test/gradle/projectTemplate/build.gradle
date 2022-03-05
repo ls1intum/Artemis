@@ -1,0 +1,136 @@
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id 'pmd'
+    id "com.github.spotbugs" version "5.0.6"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation files('artemis-java-test-sandbox-1.8.2-SNAPSHOT.jar')
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation 'org.assertj:assertj-core:3.22.0'
+    implementation 'org.json:json:20211205'
+    implementation 'info.debatty:java-string-similarity:2.0.0'
+    implementation 'org.slf4j:slf4j-api:1.7.36'
+    testImplementation 'ch.qos.logback:logback-classic:1.2.10'
+    implementation 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.11.0'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+}
+
+def assignmentSrcDir = "assignment/src"
+// %static-code-analysis-start%
+def scaConfigDirectory = "$projectDir/staticCodeAnalysisConfig"
+// %static-code-analysis-stop%
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+sourceSets {
+    // %non-sequential-start%
+    test {
+        java {
+            srcDir "test"
+        }
+        resources {
+            srcDir "test"
+        }
+    }
+    // %non-sequential-stop%
+
+    // %sequential-start%
+    structuralTest {
+        java {
+            srcDir 'structural/test'
+        }
+        resources {
+            srcDir 'structural/test'
+        }
+    }
+
+    behaviorTest {
+        java {
+            srcDir 'behavior/test'
+            compileClasspath += sourceSets.main.runtimeClasspath
+        }
+        resources {
+            srcDir 'behavior/test'
+        }
+    }
+    // %sequential-stop%
+
+    main {
+        java {
+            srcDir assignmentSrcDir
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// %sequential-start%
+configurations {
+    structuralTestImplementation.extendsFrom testImplementation
+    structuralTestRuntime.extendsFrom testRuntime
+    behaviorTestImplementation.extendsFrom testImplementation
+    behaviorTestRuntime.extendsFrom testRuntime
+}
+
+task structuralTests(type: Test) {
+    testClassesDirs = sourceSets.structuralTest.output.classesDirs
+    classpath += sourceSets.structuralTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+
+task behaviorTests(type: Test) {
+    testClassesDirs = sourceSets.behaviorTest.output.classesDirs
+    classpath += sourceSets.behaviorTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+// %sequential-stop%
+
+// %static-code-analysis-start%
+checkstyle {
+    configFile = file("$scaConfigDirectory/checkstyle-configuration.xml")
+    ignoreFailures = true
+    // exclude the test files
+    checkstyleTest.enabled = false
+    checkstyleMain.reports {
+        xml.outputLocation = file('target/checkstyle-result.xml')
+    }
+}
+
+spotbugs {
+    excludeFilter = file("$scaConfigDirectory/spotbugs-exclusions.xml")
+    ignoreFailures = true
+    // exclude the test files
+    spotbugsTest.enabled = false
+    spotbugsMain.reports {
+        xml {
+            enabled = true
+            outputLocation = file('target/spotbugsXml.xml')
+        }
+        html.enabled = false
+    }
+}
+
+pmd {
+    ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
+    rulesMinimumPriority = 5
+    ignoreFailures = true
+    // exclude the test files
+    pmdTest.enabled = false
+    pmdMain.reports {
+        xml.outputLocation = file('target/pmd.xml')
+    }
+}
+// %static-code-analysis-stop%

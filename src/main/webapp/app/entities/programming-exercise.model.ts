@@ -23,6 +23,8 @@ export enum ProgrammingLanguage {
 export enum ProjectType {
     MAVEN = 'MAVEN',
     ECLIPSE = 'ECLIPSE',
+    PLAIN_GRADLE = 'PLAIN_GRADLE',
+    GRADLE_GRADLE = 'GRADLE_GRADLE',
     PLAIN = 'PLAIN',
     XCODE = 'XCODE',
     FACT = 'FACT',

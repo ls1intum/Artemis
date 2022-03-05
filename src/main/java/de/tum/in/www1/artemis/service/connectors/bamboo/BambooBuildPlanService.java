@@ -179,25 +179,16 @@ public class BambooBuildPlanService {
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
+                boolean isMavenProject = ProjectType.ECLIPSE.equals(projectType) || ProjectType.MAVEN.equals(projectType);
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
-                    // Create artifacts and a final task for the execution of static code analysis
-                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
-                    String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
-                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
-                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
-                    defaultJob.finalTasks(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
-                    defaultJob.artifacts(artifacts);
+                    setStaticCodeAnalysisJobsForJavaAndKotlinExercise(defaultJob, isMavenProject);
                 }
 
                 if (!sequentialBuildRuns) {
-                    return defaultStage
-                            .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
+                    return getNonSequentialTestTaskForJavaAndKotlinExercise(defaultStage, defaultJob, checkoutTask, isMavenProject);
                 }
                 else {
-                    return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                            new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests")
-                                    .hasTests(true),
-                            new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+                    return getSequentialTestTaskForJavaAndKotlinExercise(defaultStage, defaultJob, checkoutTask, isMavenProject);
                 }
             }
             case PYTHON -> {
@@ -275,6 +266,69 @@ public class BambooBuildPlanService {
             // this is needed, otherwise the compiler complaints with missing return
             // statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
+        }
+    }
+
+    /**
+     * Adds the Bamboo final task for the static code analysis to the
+     * @param defaultJob job to which the task should be added
+     * @param isMavenProject whether the project is a Maven build (or implicitly a Gradle build)
+     */
+    private void setStaticCodeAnalysisJobsForJavaAndKotlinExercise(Job defaultJob, boolean isMavenProject) {
+        // Create artifacts and a final task for the execution of static code analysis
+        List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
+        Artifact[] artifacts = staticCodeAnalysisTools.stream()
+                .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+        if (isMavenProject) {
+            defaultJob.finalTasks(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
+        }
+        else {
+            defaultJob.finalTasks(new ScriptTask().inlineBody("gradle check -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle").description("Static Code Analysis"));
+        }
+        defaultJob.artifacts(artifacts);
+    }
+
+    /**
+     * Adds the tasks for executing a non-sequential test run to the stage and returns the stage for the Bamboo Build Plan for Java and Kotlin Exercises.
+     * @param defaultStage the stage to which the jobs are added
+     * @param defaultJob the job to which the tasks are added
+     * @param checkoutTask the vcs checkout task
+     * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
+     * @return the stage with the tasks for the non-sequential test run
+     */
+    private Stage getNonSequentialTestTaskForJavaAndKotlinExercise(Stage defaultStage, Job defaultJob, VcsCheckoutTask checkoutTask, boolean isMavenProject) {
+        if (isMavenProject) {
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
+        }
+        else {
+            return defaultStage.jobs(
+                    defaultJob.tasks(checkoutTask, new ScriptTask().inlineBody("gradle clean test -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle").description("Tests")),
+                    defaultJob.finalTasks(new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/test/*.xml").description("JUnit Parser")));
+        }
+    }
+
+    /**
+     * Adds the tasks for executing a sequential test run to the stage and returns the stage for the Bamboo Build Plan for Java and Kotlin Exercises.
+     * @param defaultStage the stage to which the jobs are added
+     * @param defaultJob the job to which the tasks are added
+     * @param checkoutTask the vcs checkout task
+     * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
+     * @return the stage with the tasks for the sequential test run
+     */
+    private Stage getSequentialTestTaskForJavaAndKotlinExercise(Stage defaultStage, Job defaultJob, VcsCheckoutTask checkoutTask, boolean isMavenProject) {
+        if (isMavenProject) {
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+                    new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                    new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+        }
+        else {
+            // the script task for executing the behavior tests must not clean the build files because the test parser would not have parsed the tests for the structural tests yet
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+                    new ScriptTask().inlineBody("gradle clean structuralTests -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle").description("Structural tests"),
+                    new ScriptTask().inlineBody("gradle behaviorTests -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle").description("Behavior tests"),
+                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/structuralTests/*.xml,**/test-results/behaviorTests/*.xml")
+                            .description("JUnit Parser")));
         }
     }
 

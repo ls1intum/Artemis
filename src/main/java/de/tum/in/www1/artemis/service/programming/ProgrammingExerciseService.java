@@ -501,7 +501,15 @@ public class ProgrammingExerciseService {
             // First get files that are not dependent on the project type
             String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
 
-            String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
+            // Java both supports Gradle and Maven as a test template
+            String projectTemplatePath = templatePath;
+            if (ProjectType.PLAIN_GRADLE.equals(programmingExercise.getProjectType()) || ProjectType.GRADLE_GRADLE.equals(programmingExercise.getProjectType())) {
+                projectTemplatePath += "/gradle";
+            }
+            else if (ProjectType.ECLIPSE.equals(programmingExercise.getProjectType()) || ProjectType.MAVEN.equals(programmingExercise.getProjectType())) {
+                projectTemplatePath += "/maven";
+            }
+            projectTemplatePath += "/projectTemplate/**/*.*";
             Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
@@ -509,7 +517,6 @@ public class ProgrammingExerciseService {
             ProjectType projectType = programmingExercise.getProjectType();
             if (projectType != null) {
                 String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
-
                 String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
 
                 try {
@@ -525,15 +532,26 @@ public class ProgrammingExerciseService {
             // Keep or delete static code analysis configuration in pom.xml
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
 
+            // TODO: allow sequential test runs for Gradle builds
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles/**/*.*";
                 Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
                 String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
+                // currently, only supported for maven builds, but does no harm if also applied on build.gradle (whose support will be added later)
                 sectionsMap.put("non-sequential", true);
                 sectionsMap.put("sequential", false);
 
-                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
+                // replace placeholder settings in project file
+                String projectFileFileName;
+                if (ProjectType.PLAIN_GRADLE.equals(programmingExercise.getProjectType()) || ProjectType.GRADLE_GRADLE.equals(programmingExercise.getProjectType())) {
+                    projectFileFileName = "build.gradle";
+                }
+                else {
+                    projectFileFileName = "pom.xml";
+                }
+                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), projectFileFileName).toAbsolutePath().toString(),
+                        sectionsMap);
 
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
 
@@ -566,21 +584,33 @@ public class ProgrammingExerciseService {
                 }
             }
             else {
-                String stagePomXmlPath = templatePath + "/stagePom.xml";
-                if (new java.io.File(projectTemplatePath + "/stagePom.xml").exists()) {
-                    stagePomXmlPath = projectTemplatePath + "/stagePom.xml";
+                boolean isMaven = ProjectType.ECLIPSE.equals(projectType) || ProjectType.MAVEN.equals(projectType);
+                sectionsMap.put("non-sequential", false);
+                sectionsMap.put("sequential", true);
+
+                String projectFileName;
+                if (isMaven) {
+                    projectFileName = "pom.xml";
                 }
-                Resource stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
+                else {
+                    projectFileName = "build.gradle";
+                }
+                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), projectFileName).toAbsolutePath().toString(), sectionsMap);
+
+                // staging project files are only required for maven
+                Resource stagePomXml = null;
+                if (isMaven) {
+                    String stagePomXmlPath = templatePath + "/stagePom.xml";
+                    if (new java.io.File(projectTemplatePath + "/stagePom.xml").exists()) {
+                        stagePomXmlPath = projectTemplatePath + "/stagePom.xml";
+                    }
+                    stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
+                }
 
                 // This is done to prepare for a feature where instructors/tas can add multiple build stages.
                 List<String> sequentialTestTasks = new ArrayList<>();
                 sequentialTestTasks.add("structural");
                 sequentialTestTasks.add("behavior");
-
-                sectionsMap.put("non-sequential", false);
-                sectionsMap.put("sequential", true);
-
-                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
                 for (String buildStage : sequentialTestTasks) {
 
@@ -595,7 +625,11 @@ public class ProgrammingExerciseService {
 
                     String packagePath = Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
-                    Files.copy(stagePomXml.getInputStream(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
+                    // staging project files are only required for maven
+                    if (isMaven && stagePomXml != null) {
+                        Files.copy(stagePomXml.getInputStream(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
+                    }
+
                     fileService.copyResources(buildStageResources, prefix, packagePath, false);
 
                     // Possibly overwrite files if the project type is defined

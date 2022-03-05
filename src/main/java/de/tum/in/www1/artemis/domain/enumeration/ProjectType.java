@@ -5,5 +5,5 @@ package de.tum.in.www1.artemis.domain.enumeration;
  * Differentiates different templates for a programming language.
  */
 public enum ProjectType {
-    MAVEN, ECLIPSE, PLAIN, XCODE, FACT, GCC
+    MAVEN, ECLIPSE, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE, GRADLE_GRADLE
 }
