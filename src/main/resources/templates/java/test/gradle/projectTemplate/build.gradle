@@ -2,7 +2,8 @@ plugins {
     id 'java'
     id 'checkstyle'
     id 'pmd'
-    id "com.github.spotbugs" version "5.0.6"
+    id 'com.github.spotbugs' version '5.0.6'
+    id 'org.kordamp.gradle.project-enforcer' version '0.9.0'
 }
 
 repositories {
@@ -134,3 +135,25 @@ pmd {
     }
 }
 // %static-code-analysis-stop%
+
+enforce {
+    rule(enforcer.rules.RequireFilesDontExist) { r ->
+        r.file("{$project.buildDir}/ch/qos/logback/")
+        r.file("{$project.buildDir}/com/intellij/")
+        r.file("{$project.buildDir}/com/sun/")
+        r.file("{$project.buildDir}/de/tum/in/test/api/")
+        r.file("{$project.buildDir}/java/")
+        r.file("{$project.buildDir}/javafx/")
+        r.file("{$project.buildDir}/jdk/")
+        r.file("{$project.buildDir}/net/jwik/")
+        r.file("{$project.buildDir}/org/apache/")
+        r.file("{$project.buildDir}/org/assertj/")
+        r.file("{$project.buildDir}/org/eclipse/")
+        r.file("{$project.buildDir}/org/jacoco/")
+        r.file("{$project.buildDir}/org/json/")
+        r.file("{$project.buildDir}/org/junit/")
+        r.file("{$project.buildDir}/org/opentest4j/")
+        r.file("{$project.buildDir}/sun/")
+        r.file("{$project.buildDir}/org/gradle/")
+    }
+}
