@@ -309,6 +309,22 @@ public class JenkinsBuildPlanService {
     }
 
     /**
+     * Checks if a project folder exists.
+     *
+     * @param projectKey The name of the project folder.
+     * @return True, only if the folder exists.
+     */
+    public boolean projectFolderExists(String projectKey) {
+        try {
+            var project = jenkinsJobService.getFolderConfig(projectKey);
+            return project != null;
+        }
+        catch (IOException e) {
+            return false;
+        }
+    }
+
+    /**
      * Returns true if the build plan exists.
      * @param projectKey the project key
      * @param buildPlanId the build plan id
