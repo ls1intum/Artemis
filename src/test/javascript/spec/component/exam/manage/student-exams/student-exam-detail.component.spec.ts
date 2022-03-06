@@ -137,16 +137,6 @@ describe('StudentExamDetailComponent', () => {
                         );
                     },
                 }),
-                MockProvider(CourseManagementService, {
-                    find: () => {
-                        return of(
-                            new HttpResponse({
-                                body: course,
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
                 MockPipe(ArtemisDurationFromSecondsPipe),
                 MockProvider(AlertService),
                 MockDirective(TranslateDirective),
@@ -179,7 +169,6 @@ describe('StudentExamDetailComponent', () => {
             .then(() => {
                 studentExamDetailComponentFixture = TestBed.createComponent(StudentExamDetailComponent);
                 studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
-                courseManagementService = TestBed.inject(CourseManagementService);
                 studentExamService = TestBed.inject(StudentExamService);
                 gradingSystemService = TestBed.inject(GradingSystemService);
             });
