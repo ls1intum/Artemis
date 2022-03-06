@@ -196,11 +196,9 @@ describe('StudentExamDetailComponent', () => {
     };
 
     it('initialize', () => {
-        const findCourseSpy = jest.spyOn(courseManagementService, 'find');
         const gradeSpy = jest.spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam');
         studentExamDetailComponentFixture.detectChanges();
 
-        expect(findCourseSpy).toHaveBeenCalledTimes(1);
         expect(gradeSpy).toHaveBeenCalledTimes(1);
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
