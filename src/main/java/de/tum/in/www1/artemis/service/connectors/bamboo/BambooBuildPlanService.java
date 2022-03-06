@@ -302,9 +302,9 @@ public class BambooBuildPlanService {
             return defaultStage.jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
         }
         else {
-            return defaultStage.jobs(
-                    defaultJob.tasks(checkoutTask, new ScriptTask().inlineBody("gradle clean test -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle").description("Tests")),
-                    defaultJob.finalTasks(new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/test/*.xml").description("JUnit Parser")));
+            defaultJob.finalTasks(new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/test/*.xml").description("JUnit Parser"));
+            return defaultStage
+                    .jobs(defaultJob.tasks(checkoutTask, new ScriptTask().inlineBody("gradle clean test -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle").description("Tests")));
         }
     }
 
@@ -323,12 +323,12 @@ public class BambooBuildPlanService {
                     new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
         }
         else {
+            defaultJob.finalTasks(new TestParserTask(TestParserTaskProperties.TestType.JUNIT)
+                    .resultDirectories("**/test-results/structuralTests/*.xml,**/test-results/behaviorTests/*.xml").description("JUnit Parser"));
             // the script task for executing the behavior tests must not clean the build files because the test parser would not have parsed the tests for the structural tests yet
             return defaultStage.jobs(defaultJob.tasks(checkoutTask,
                     new ScriptTask().inlineBody("gradle clean structuralTests -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle").description("Structural tests"),
-                    new ScriptTask().inlineBody("gradle behaviorTests -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle").description("Behavior tests"),
-                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/structuralTests/*.xml,**/test-results/behaviorTests/*.xml")
-                            .description("JUnit Parser")));
+                    new ScriptTask().inlineBody("gradle behaviorTests -Dorg.gradle.java.home=/usr/lib/jvm/java-17-oracle").description("Behavior tests")));
         }
     }
 
