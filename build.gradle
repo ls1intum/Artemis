@@ -181,8 +181,8 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation "com.atlassian.bamboo:bamboo-specs:7.2.5"
     implementation "com.thoughtworks.qdox:qdox:2.0.1"
-    implementation "io.sentry:sentry-logback:5.6.1"
-    implementation "io.sentry:sentry-spring-boot-starter:5.6.1"
+    implementation "io.sentry:sentry-logback:5.6.2"
+    implementation "io.sentry:sentry-spring-boot-starter:5.6.2"
     implementation "org.jsoup:jsoup:1.14.3"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
@@ -284,7 +284,7 @@ dependencies {
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
-    testImplementation "org.awaitility:awaitility:4.1.1"
+    testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M5"
     testImplementation "com.opencsv:opencsv:5.6"
