@@ -1987,7 +1987,7 @@ public class DatabaseUtilService {
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            programmingExercise.setProjectType(ProjectType.ECLIPSE);
+            programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setProjectType(ProjectType.PLAIN);

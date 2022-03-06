@@ -162,7 +162,14 @@
         </div>
 
         <div class="form-group" *ngIf="programmingExercise.programmingLanguage && projectTypes && projectTypes.length > 0">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+                <jhi-help-icon
+                    *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA"
+                    placement="auto"
+                    text="artemisApp.programmingExercise.projectTypeTooltip"
+                ></jhi-help-icon>
+            </div>
             <select
                 #select
                 required
@@ -173,8 +180,8 @@
                 id="field_projectType"
                 [disabled]="isImport || !!programmingExercise.id"
             >
-                <option value="ECLIPSE" *ngIf="projectTypes.includes(ProjectType.ECLIPSE)">Eclipse</option>
-                <option value="MAVEN" *ngIf="projectTypes.includes(ProjectType.MAVEN)">Maven</option>
+                <option value="PLAIN_MAVEN" *ngIf="projectTypes.includes(ProjectType.PLAIN_MAVEN)">Plain - Maven</option>
+                <option value="MAVEN_MAVEN" *ngIf="projectTypes.includes(ProjectType.MAVEN_MAVEN)">Maven - Maven</option>
                 <option value="PLAIN" *ngIf="projectTypes.includes(ProjectType.PLAIN)">Plain</option>
                 <option value="XCODE" *ngIf="projectTypes.includes(ProjectType.XCODE)">Xcode</option>
                 <option value="GCC" *ngIf="projectTypes.includes(ProjectType.GCC)">GCC</option>
