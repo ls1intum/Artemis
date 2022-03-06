@@ -283,7 +283,7 @@ describe('Alert Service Test', () => {
         });
 
         // Check that it is actually the same object by reference
-        expect(secondAlert).toBe(secondAlert);
+        expect(secondAlert).toBe(initialAlert);
         expect(service.get()).toEqual([initialAlert]);
 
         // After at least 50ms, the new alert should actually be added again
