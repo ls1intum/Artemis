@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
 import { captureException } from '@sentry/browser';
 import { faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
+import dayjs from 'dayjs';
 
 export class AlertType {
     public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'btn-success');
@@ -44,6 +45,7 @@ export interface AlertCreationProperties extends AlertBase {
 interface AlertInternal extends AlertBase {
     close: () => void;
     isOpen: boolean;
+    openedAt?: dayjs.Dayjs;
 }
 
 export interface Alert extends Readonly<AlertInternal> {}
@@ -197,6 +199,18 @@ export class AlertService {
 
         if (alert.message) {
             alertInternal.isOpen = true;
+            alertInternal.openedAt = dayjs();
+
+            // Due to duplicate alerts spawned by the global http error interceptor and some components,
+            // we prevent more than one alert with the same content to be spawned within 50 milliseconds.
+            // If such an alert already exists, we return the old one instead.
+            const olderAlertWithIdenticalContent: AlertInternal | undefined = this.alerts.find(
+                (otherAlert) => alertInternal.message === otherAlert.message && Math.abs(alertInternal.openedAt!.diff(otherAlert.openedAt!, 'ms')) <= 50,
+            );
+            if (olderAlertWithIdenticalContent) {
+                return olderAlertWithIdenticalContent;
+            }
+
             this.alerts.unshift(alertInternal);
 
             if (alertInternal.timeout > 0) {

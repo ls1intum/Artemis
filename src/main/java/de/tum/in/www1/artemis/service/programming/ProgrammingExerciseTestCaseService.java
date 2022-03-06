@@ -149,7 +149,7 @@ public class ProgrammingExerciseTestCaseService {
                     "TestCaseGrading", "settingNull", Map.of("testCase", testCase.getTestName()));
         }
         if (testCase.getWeight() < 0 || testCase.getBonusMultiplier() < 0 || testCase.getBonusPoints() < 0) {
-            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings set to negative numbers.",
+            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings set to negative values.",
                     "TestCaseGrading", "settingNegative", Map.of("testCase", testCase.getTestName()));
         }
     }
