@@ -89,10 +89,10 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      */
     @Override
     public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
-        bitbucketService.updateUserDetails(vcsLogin, user.getEmail(), user.getName());
         if (!user.isInternal()) {
             return;
         }
+        bitbucketService.updateUserDetails(vcsLogin, user.getEmail(), user.getName());
         if (shouldSynchronizePassword) {
             bitbucketService.updateUserPassword(vcsLogin, passwordService.decryptPassword(user));
         }
