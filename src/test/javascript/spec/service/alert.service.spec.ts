@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { inject, TestBed } from '@angular/core/testing';
+import { fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { MissingTranslationHandler, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { missingTranslationHandler } from 'app/core/config/translation.config';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/core/util/alert.service';
@@ -279,4 +279,36 @@ describe('Alert Service Test', () => {
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Error Message');
     });
+
+    it('should not show two alerts with the same content if spawned within 50ms', fakeAsync(() => {
+        const initialAlert = service.addAlert({
+            type: AlertType.DANGER,
+            message: 'Test123',
+        });
+        expect(service.get()).toEqual([initialAlert]);
+
+        tick(25);
+
+        const secondAlert = service.addAlert({
+            type: AlertType.DANGER,
+            message: 'Test123',
+        });
+
+        // Check that it is actually the same object by reference
+        expect(secondAlert).toBe(secondAlert);
+        expect(service.get()).toEqual([initialAlert]);
+
+        // After at least 50ms, the new alert should actually be added again
+        tick(30);
+
+        const thirdAlert = service.addAlert({
+            type: AlertType.DANGER,
+            message: 'Test123',
+        });
+
+        expect(thirdAlert).not.toBe(initialAlert);
+        expect(service.get()).toEqual([thirdAlert, initialAlert]);
+
+        flush();
+    }));
 });
