@@ -27,6 +27,7 @@ def assignmentSrcDir = "assignment/src"
 // %static-code-analysis-start%
 def scaConfigDirectory = "$projectDir/staticCodeAnalysisConfig"
 // %static-code-analysis-stop%
+def studentOutputDir = sourceSets.main.java.destinationDirectory.get()
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -72,7 +73,14 @@ sourceSets {
     }
 }
 
+// do not change this
+def filesToNotExist = ["/ch/qos/logback/","/com/intellij/","/com/sun/","/de/tum/in/test/api/","/java/","/javax/","/jdk/","/net/jqwik/","/org/assertj/","/org/apache/","/org/eclipse/","/org/gradle/","/org/jacoco/","/org/json/","/org/junit/","/org/opentest4j/","/sun/","/worker/org/gradle/"]
 test {
+    doFirst {
+        for (String fileName in filesToNotExist) {
+            assert !file("$studentOutputDir/$fileName").exists(): "$fileName must not exist within the submission."
+        }
+    }
     useJUnitPlatform()
 }
 
@@ -135,25 +143,3 @@ pmd {
     }
 }
 // %static-code-analysis-stop%
-
-enforce {
-    rule(enforcer.rules.RequireFilesDontExist) { r ->
-        r.file("{$project.buildDir}/ch/qos/logback/")
-        r.file("{$project.buildDir}/com/intellij/")
-        r.file("{$project.buildDir}/com/sun/")
-        r.file("{$project.buildDir}/de/tum/in/test/api/")
-        r.file("{$project.buildDir}/java/")
-        r.file("{$project.buildDir}/javafx/")
-        r.file("{$project.buildDir}/jdk/")
-        r.file("{$project.buildDir}/net/jwik/")
-        r.file("{$project.buildDir}/org/apache/")
-        r.file("{$project.buildDir}/org/assertj/")
-        r.file("{$project.buildDir}/org/eclipse/")
-        r.file("{$project.buildDir}/org/jacoco/")
-        r.file("{$project.buildDir}/org/json/")
-        r.file("{$project.buildDir}/org/junit/")
-        r.file("{$project.buildDir}/org/opentest4j/")
-        r.file("{$project.buildDir}/sun/")
-        r.file("{$project.buildDir}/org/gradle/")
-    }
-}
