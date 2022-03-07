@@ -12,7 +12,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ITEMS_PER_PAGE_COURSE_DISCUSSION } from 'app/shared/constants/pagination.constants';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -37,7 +37,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     isLoading = true;
     totalItems = 0;
     pagingEnabled = true;
-    itemsPerPage = ITEMS_PER_PAGE_COURSE_DISCUSSION;
+    itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
     readonly CourseWideContext = CourseWideContext;
     readonly SortBy = PostSortCriterion;
