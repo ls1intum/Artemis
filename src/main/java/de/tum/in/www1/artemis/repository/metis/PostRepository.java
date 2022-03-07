@@ -20,18 +20,70 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     List<Post> findPostsByAuthorLogin(String login);
 
-    List<Post> findPostsByExerciseId(Long exerciseId);
+    @Query("""
+            SELECT DISTINCT post FROM Post post
+            LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
+            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
+            WHERE (lecture.course.id = :#{#courseId}
+                OR exercise.course.id = :#{#courseId}
+                OR post.course.id = :#{#courseId})
+            AND (:#{#courseWideContext} IS NULL
+                OR post.courseWideContext = :#{#courseWideContext})
+            AND (:#{#own} IS NULL
+                OR post.author.id = :#{#userId})
+            AND (:#{#reactedOrReplied} IS NULL
+                OR answer.author.id = :#{#userId}
+                OR reaction.user.id = :#{#userId})
+            AND (:#{#unresolved} IS NULL
+                OR NOT EXISTS (SELECT answerPost FROM AnswerPost answerPost
+                    WHERE answerPost.resolvesPost = true
+                    AND answerPost.post.id = post.id))
+            """)
+    List<Post> findPostsForCourse(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext, @Param("unresolved") Boolean unresolved,
+            @Param("own") Boolean own, @Param("reactedOrReplied") Boolean reactedOrReplied, @Param("userId") Long userId);
 
-    List<Post> findPostsByLectureId(Long lectureId);
-
-    @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( post.courseWideContext = :#{#courseWideContext} and (lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} ))")
-    List<Post> findPostsForCourseWideContext(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext);
-
-    @Query("select distinct post from Post post left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} )")
-    List<Post> findPostsForCourse(@Param("courseId") Long courseId);
-
-    @Query("select distinct tag from Post post left join post.tags tag left join post.lecture lecture left join post.exercise exercise where ( lecture.course.id = :#{#courseId} or exercise.course.id = :#{#courseId} or post.course.id = :#{#courseId} )")
+    @Query("""
+            SELECT DISTINCT tag FROM Post post
+            LEFT JOIN post.tags tag LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
+            WHERE (lecture.course.id = :#{#courseId}
+            OR exercise.course.id = :#{#courseId}
+            OR post.course.id = :#{#courseId})
+            """)
     List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT DISTINCT post FROM Post post
+            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
+            WHERE post.lecture.id = :#{#lectureId}
+            AND (:#{#own} IS NULL
+                OR post.author.id = :#{#userId})
+            AND (:#{#reactedOrReplied} IS NULL
+                OR answer.author.id = :#{#userId}
+                OR reaction.user.id = :#{#userId})
+            AND (:#{#unresolved} IS NULL
+                OR NOT EXISTS (SELECT answerPost FROM AnswerPost answerPost
+                    WHERE answerPost.resolvesPost = true
+                    AND answerPost.post.id = post.id))
+                """)
+    List<Post> findPostsByLectureId(@Param("lectureId") Long lectureId, @Param("unresolved") Boolean unresolved, @Param("own") Boolean own,
+            @Param("reactedOrReplied") Boolean reactedOrReplied, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT DISTINCT post FROM Post post
+            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
+            WHERE post.exercise.id = :#{#exerciseId}
+            AND (:#{#own} IS NULL
+                OR post.author.id = :#{#userId})
+            AND (:#{#reactedOrReplied} IS NULL
+                OR answer.author.id = :#{#userId}
+                OR reaction.user.id = :#{#userId})
+            AND (:#{#unresolved} IS NULL
+                OR NOT EXISTS (SELECT answerPost FROM AnswerPost answerPost
+                    WHERE answerPost.resolvesPost = true
+                    AND answerPost.post.id = post.id))
+            """)
+    List<Post> findPostsByExerciseId(@Param("exerciseId") Long exerciseId, @Param("unresolved") Boolean unresolved, @Param("own") Boolean own,
+            @Param("reactedOrReplied") Boolean reactedOrReplied, @Param("userId") Long userId);
 
     default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));
