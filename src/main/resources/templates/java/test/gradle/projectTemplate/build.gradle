@@ -1,9 +1,10 @@
 plugins {
     id 'java'
+    // %sequential-start%
     id 'checkstyle'
     id 'pmd'
     id 'com.github.spotbugs' version '5.0.6'
-    id 'org.kordamp.gradle.project-enforcer' version '0.9.0'
+    // %sequential-stop%
 }
 
 repositories {
