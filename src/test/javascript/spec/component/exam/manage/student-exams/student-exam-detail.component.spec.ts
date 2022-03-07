@@ -7,7 +7,6 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
@@ -47,7 +46,6 @@ describe('StudentExamDetailComponent', () => {
     let studentParticipation: StudentParticipation;
     let result: Result;
 
-    let courseManagementService: any;
     let studentExamService: any;
     let gradingSystemService: GradingSystemService;
 
