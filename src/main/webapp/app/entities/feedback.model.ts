@@ -110,7 +110,7 @@ export class Feedback implements BaseEntity {
      * @param that
      */
     public static isEmpty(that: Feedback): boolean {
-        return (that.credits == undefined || that.credits === 0) && !Feedback.hasContent(that);
+        return !that.credits && !Feedback.hasContent(that);
     }
 
     /**
