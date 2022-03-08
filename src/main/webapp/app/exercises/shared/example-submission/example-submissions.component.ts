@@ -46,9 +46,8 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             this.accountService.setAccessRightsForCourse(exercise.course);
             this.exercise = exercise;
 
-            this.createdExampleAssessment = this.exercise.exampleSubmissions!.map(
-                (exampleSubmission) => exampleSubmission.submission?.results?.some((result) => result.exampleResult) ?? false,
-            );
+            this.createdExampleAssessment =
+                this.exercise.exampleSubmissions?.map((exampleSubmission) => exampleSubmission.submission?.results?.some((result) => result.exampleResult) ?? false) ?? [];
         });
         this.exercise?.exampleSubmissions?.forEach((exampleSubmission) => {
             if (exampleSubmission.submission) {

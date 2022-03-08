@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,7 +38,47 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
         return findByIdWithSubmissions(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
     }
 
+    // TODO add a new method which loads the comparison together with the 2 submissions and their elements, but be careful that it does not load too many elements
+    @Query("""
+            SELECT DISTINCT comparison FROM PlagiarismComparison comparison
+            LEFT JOIN FETCH comparison.matches matches
+            LEFT JOIN FETCH comparison.submissionA submissionA
+            LEFT JOIN FETCH submissionA.elements elementsA
+            LEFT JOIN FETCH comparison.plagiarismResult result
+            LEFT JOIN FETCH result.exercise exercise
+            LEFT JOIN FETCH exercise.course
+            WHERE comparison.id = :comparisonId
+            """)
+    Optional<PlagiarismComparison<?>> findByIdWithSubmissionsAndElementsA(@Param("comparisonId") long comparisonId);
+
+    default PlagiarismComparison<?> findByIdWithSubmissionsStudentsAndElementsAElseThrow(long comparisonId) {
+        return findByIdWithSubmissionsAndElementsA(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
+    }
+
+    @Query("""
+            SELECT DISTINCT comparison FROM PlagiarismComparison comparison
+            LEFT JOIN FETCH comparison.matches matches
+            LEFT JOIN FETCH comparison.submissionB submissionB
+            LEFT JOIN FETCH submissionB.elements elementsB
+            WHERE comparison.id = :comparisonId
+            """)
+    Optional<PlagiarismComparison<?>> findByIdWithSubmissionsAndElementsB(@Param("comparisonId") long comparisonId);
+
+    default PlagiarismComparison<?> findByIdWithSubmissionsStudentsAndElementsBElseThrow(long comparisonId) {
+        return findByIdWithSubmissionsAndElementsB(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
+    }
+
     Optional<Set<PlagiarismComparison<?>>> findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(long submissionA_submissionId, long submissionB_submissionId);
+
+    // TODO: only load comparisons for the last plagiarismResultId that belongs to one exercise
+    @Query("""
+            SELECT DISTINCT comparison FROM PlagiarismComparison comparison
+            LEFT JOIN FETCH comparison.plagiarismResult plagiarismResult
+            LEFT JOIN FETCH plagiarismResult.exercise exercise
+            WHERE comparison.status = :status
+            AND comparison.plagiarismResult.exercise.course.id = :courseId
+            """)
+    List<PlagiarismComparison<?>> findCasesForCourse(@Param("status") PlagiarismStatus status, @Param("courseId") Long courseId);
 
     // we can't simply call save() on plagiarismComparisons because the plagiarismComparisonMatches have no id
     // and would be recreated. Therefore, we need some update methods:
@@ -76,5 +117,4 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
     @Transactional // ok because of modifying query
     @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.studentStatementB = :statement where plagiarismComparison.id = :plagiarismComparisonId")
     void updatePlagiarismComparisonStudentStatementB(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("statement") String statement);
-
 }
