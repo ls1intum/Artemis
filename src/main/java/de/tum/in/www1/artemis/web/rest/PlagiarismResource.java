@@ -93,20 +93,20 @@ public class PlagiarismResource {
     }
 
     /**
-     * Retrieves all plagiarismCases related to a course that were previously confirmed.
+     * Retrieves all plagiarismComparisons related to a course that were previously confirmed.
      *
      * @param courseId the id of the course
      * @return all plagiarism cases
      */
     @GetMapping("courses/{courseId}/plagiarism-cases")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<PlagiarismCaseDTO>> getPlagiarismCasesForCourse(@PathVariable long courseId) {
+    public ResponseEntity<List<PlagiarismComparison<?>>> getPlagiarismComparisonsForCourse(@PathVariable long courseId) {
         log.debug("REST request to get all plagiarism cases in course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        List<PlagiarismCaseDTO> foundPlagiarismCasesForCourse = this.plagiarismService.collectAllPlagiarismCasesForCourse(courseId);
+        var foundPlagiarismCasesForCourse = plagiarismComparisonRepository.findCasesForCourse(PlagiarismStatus.CONFIRMED, courseId);
         return ResponseEntity.ok(foundPlagiarismCasesForCourse);
     }
 
@@ -185,6 +185,39 @@ public class PlagiarismResource {
 
         PlagiarismComparison<?> anonymizedComparisonForStudentView = this.plagiarismService.anonymizeComparisonForStudentView(comparison, user.getLogin());
         return ResponseEntity.ok(new PlagiarismCaseDTO(anonymizedComparisonForStudentView.getPlagiarismResult().getExercise(), Set.of(anonymizedComparisonForStudentView)));
+    }
+
+    /**
+     * Retrieves the plagiarismComparison specified by its Id.
+     * If a studentLogin is passed the comparison is anonymized
+     *
+     * @param courseId the id of the course
+     * @param comparisonId the id of the PlagiarismComparison
+     * @param studentLogin optional login of the student
+     * @return the PlagiarismComparison
+     * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
+     */
+    @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-split-view")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForEditor(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId,
+            @RequestParam(value = "studentLogin", required = false) String studentLogin) {
+        var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
+        var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
+        }
+        if (!Objects.equals(comparisonA.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
+            throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
+        }
+
+        comparisonA.setSubmissionB(comparisonB.getSubmissionB());
+        if (studentLogin != null) {
+            comparisonA = this.plagiarismService.anonymizeComparisonForStudentView(comparisonA, studentLogin);
+        }
+        return ResponseEntity.ok(comparisonA);
     }
 
     /**
