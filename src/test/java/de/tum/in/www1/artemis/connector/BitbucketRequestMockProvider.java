@@ -216,52 +216,68 @@ public class BitbucketRequestMockProvider {
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockUpdateUserDetails(String username, String emailAddress, String displayName) throws JsonProcessingException {
+    public void mockUpdateUserDetails(String username, String emailAddress, String displayName, boolean exists) throws JsonProcessingException {
         final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").build().toUri();
         Map<String, Object> body = new HashMap<>();
         body.put("name", username);
         body.put("email", emailAddress);
         body.put("displayName", displayName);
+        var responseActions = mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(body)));
 
-        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
+        if (exists) {
+            responseActions.andRespond(withStatus(HttpStatus.OK));
+        }
+        else {
+            responseActions.andRespond(withStatus(HttpStatus.NOT_FOUND).body("404 : \"{\"errors:[{\"exceptionName\":\"com.atlassian.bitbucket.user.NoSuchUserException\"}]}\""));
+        }
     }
 
-    public void mockUpdateUserPassword(String username, String password, boolean passwordShouldMatch) {
+    public void mockUpdateUserDetails(String username, String emailAddress, String displayName) throws JsonProcessingException {
+        mockUpdateUserDetails(username, emailAddress, displayName, true);
+    }
+
+    public void mockUpdateUserPassword(String username, String password, boolean passwordShouldMatch, boolean userExists) {
         final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials").build().toUri();
 
-        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT)).andExpect(content().string(new BaseMatcher<>() {
+        var responseActions = mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT));
+        if (userExists) {
+            responseActions.andExpect(content().string(new BaseMatcher<>() {
 
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("Matcher for the password reset Bitbucket Mock Provider");
-            }
-
-            @Override
-            public boolean matches(Object actual) {
-                if (actual instanceof String) {
-                    if (passwordShouldMatch) {
-                        Map<String, Object> body = new HashMap<>();
-                        body.put("name", username);
-                        body.put("password", password);
-                        body.put("passwordConfirm", password);
-                        try {
-                            return actual.equals(mapper.writeValueAsString(body));
-                        }
-                        catch (JsonProcessingException e) {
-                            e.printStackTrace();
-                            return false;
-                        }
-                    }
-                    else {
-                        JsonObject actualObject = JsonParser.parseString(actual.toString()).getAsJsonObject();
-                        return actualObject.get("name").getAsString().equals(username)
-                                && Objects.equals(actualObject.get("password").getAsString(), actualObject.get("passwordConfirm").getAsString())
-                                && actualObject.get("password").getAsString() != null && !actualObject.get("password").getAsString().equals(password);
-                    }
+                @Override
+                public void describeTo(Description description) {
+                    description.appendText("Matcher for the password reset Bitbucket Mock Provider");
                 }
-                return false;
-            }
-        })).andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+                @Override
+                public boolean matches(Object actual) {
+                    if (actual instanceof String) {
+                        if (passwordShouldMatch) {
+                            Map<String, Object> body = new HashMap<>();
+                            body.put("name", username);
+                            body.put("password", password);
+                            body.put("passwordConfirm", password);
+                            try {
+                                return actual.equals(mapper.writeValueAsString(body));
+                            }
+                            catch (JsonProcessingException e) {
+                                e.printStackTrace();
+                                return false;
+                            }
+                        }
+                        else {
+                            JsonObject actualObject = JsonParser.parseString(actual.toString()).getAsJsonObject();
+                            return actualObject.get("name").getAsString().equals(username)
+                                    && Objects.equals(actualObject.get("password").getAsString(), actualObject.get("passwordConfirm").getAsString())
+                                    && actualObject.get("password").getAsString() != null && !actualObject.get("password").getAsString().equals(password);
+                        }
+                    }
+                    return false;
+                }
+            })).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        }
+        else {
+            responseActions.andRespond(withStatus(HttpStatus.NOT_FOUND).body("404 : \"{\"errors:[{\"exceptionName\":\"com.atlassian.bitbucket.user.NoSuchUserException\"}]}\""));
+        }
     }
 
     public void mockDeleteUser(String username, boolean fail) {

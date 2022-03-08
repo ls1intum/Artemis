@@ -102,6 +102,8 @@ public class UserTestService {
 
     // Test
     public void deleteUser_isSuccessful() throws Exception {
+        student.setInternal(true);
+        userRepository.save(student);
         mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
 
         request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);

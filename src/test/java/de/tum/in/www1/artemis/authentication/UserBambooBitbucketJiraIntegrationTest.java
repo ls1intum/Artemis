@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
@@ -10,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.UserTestService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
@@ -17,6 +21,12 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     private UserTestService userTestService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordService passwordService;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -27,6 +37,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
 
     @AfterEach
     public void teardown() throws IOException {
+        bitbucketRequestMockProvider.reset();
         userTestService.tearDown();
     }
 
@@ -77,6 +88,25 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
         bitbucketRequestMockProvider.mockUpdateUserDetails(userTestService.student.getLogin(), userTestService.student.getEmail(),
                 "changed " + userTestService.student.getLastName());
         userTestService.updateUser_withExternalUserManagement();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void updateUser_withVcsUserNotExisting_isSuccessful() throws Exception {
+        var student = userTestService.student;
+        jiraRequestMockProvider.mockIsGroupAvailable("testgroup");
+        jiraRequestMockProvider.mockIsGroupAvailable("tumuser");
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName(), false);
+        bitbucketRequestMockProvider.mockUpdateUserPassword(student.getLogin(), "newPassword", true, false);
+        student.setFirstName("changed");
+
+        request.put("/api/users", new ManagedUserVM(student, "newPassword"), HttpStatus.OK);
+
+        var updatedStudent = userRepository.getUserByLoginElseThrow(student.getLogin());
+
+        assertThat(updatedStudent.getFirstName()).isEqualTo(student.getFirstName());
+        assertThat(updatedStudent.getPassword()).isNotEqualTo(student.getPassword());
+        assertThat(passwordService.checkPasswordMatch("newPassword", updatedStudent.getPassword())).isTrue();
     }
 
     @Test
@@ -233,7 +263,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     public void initializeUser() throws Exception {
         bitbucketRequestMockProvider.mockUserExists(userTestService.student.getLogin());
         bitbucketRequestMockProvider.mockUpdateUserDetails(userTestService.student.getLogin(), userTestService.student.getEmail(), userTestService.student.getName());
-        bitbucketRequestMockProvider.mockUpdateUserPassword(userTestService.student.getLogin(), "ThisIsAPassword", false);
+        bitbucketRequestMockProvider.mockUpdateUserPassword(userTestService.student.getLogin(), "ThisIsAPassword", false, true);
         userTestService.initializeUser(false);
     }
 

@@ -411,6 +411,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
         // User management and CI not needed here
         bitbucketRequestMockProvider.mockDeleteUser(user.getLogin(), failInVcs);
+        if (!failInVcs) {
+            bitbucketRequestMockProvider.mockEraseDeletedUser(user.getLogin());
+        }
     }
 
     @Override
