@@ -91,4 +91,4 @@ out
 .gradle
 gradlew.bat
 gradlew
-gradle/wrapper/gradle-wrapper.properties
+gradle
