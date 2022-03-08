@@ -225,6 +225,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (languageChanged) {
             // Reset project type when changing programming language as not all programming languages support (the same) project types
             this.programmingExercise.projectType = this.projectTypes[0];
+            this.selectedProjectTypeValue = this.projectTypes[0]!;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
