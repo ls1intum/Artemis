@@ -92,7 +92,7 @@ public class EmailSummaryService {
         // currently, only weekly summaries are supported -> for daily just add one more case
         if (scheduleInterval.equals(weekly)) {
             return notificationSettingRepository
-                    .findAllUsersWhoEnabledSpecifiedNotificationSettingWithEagerGroupsAndAuthorities(NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
+                    .findAllUsersWhoEnabledSpecifiedEmailNotificationSettingWithEagerGroupsAndAuthorities(NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY);
         }
         else {
             throw new UnsupportedOperationException("Unsupported scheduleInterval: " + scheduleInterval);

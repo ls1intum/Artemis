@@ -35,14 +35,14 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
             WHERE setting.settingId = :#{#settingId}
                 AND setting.email = TRUE
             """)
-    Set<NotificationSetting> findAllNotificationSettingForUsersWhoEnabledSpecifiedNotificationSettingWithEagerGroupsAndAuthorities(@Param("settingId") String settingId);
+    Set<NotificationSetting> findAllNotificationSettingsForUsersWhoEnabledSpecifiedEmailSettingWithEagerGroupsAndAuthorities(@Param("settingId") String settingId);
 
     /**
      * @param settingId of the notification setting (e.g. NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY)
-     * @return all users who enabled the provided notification setting with eager groups and authorities
+     * @return all users who enabled the provided email notification setting with eager groups and authorities
      */
-    default Set<User> findAllUsersWhoEnabledSpecifiedNotificationSettingWithEagerGroupsAndAuthorities(String settingId) {
-        return findAllNotificationSettingForUsersWhoEnabledSpecifiedNotificationSettingWithEagerGroupsAndAuthorities(settingId).stream().map(NotificationSetting::getUser)
+    default Set<User> findAllUsersWhoEnabledSpecifiedEmailNotificationSettingWithEagerGroupsAndAuthorities(String settingId) {
+        return findAllNotificationSettingsForUsersWhoEnabledSpecifiedEmailSettingWithEagerGroupsAndAuthorities(settingId).stream().map(NotificationSetting::getUser)
                 .collect(Collectors.toSet());
     }
 }
