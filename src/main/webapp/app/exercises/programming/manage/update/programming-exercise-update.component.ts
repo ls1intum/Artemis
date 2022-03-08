@@ -281,6 +281,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return type;
     }
 
+    /**
+     * Updates the test repository project type. This only applies to Java exercises with project type 'Plain Java'
+     * @param type the type to update to
+     */
     set selectedTestRepositoryProjectType(type: JavaTestRepositoryProjectType) {
         // this has only effect for plain java which is represented by PLAIN_MAVEN (or PLAIN_GRADLE later)
         if (type === JavaTestRepositoryProjectType.MAVEN) {
