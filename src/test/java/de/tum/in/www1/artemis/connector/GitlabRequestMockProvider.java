@@ -209,19 +209,15 @@ public class GitlabRequestMockProvider {
         mockCreateRepository(exercise, clonedRepoName);
     }
 
-    public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean ltiUserExists)
+    public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean userExists)
             throws GitLabApiException {
         var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
         for (var user : users) {
             String loginName = user.getLogin();
-            if ((userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && loginName.startsWith((userPrefixU4I.get())))) {
-                mockUserExists(loginName, ltiUserExists);
-                if (!ltiUserExists) {
-                    mockImportUser(user, false);
-                }
+            mockUserExists(loginName, userExists);
+            if (userExists) {
+                mockAddMemberToRepository(repositoryUrl, user.getLogin());
             }
-
-            mockAddMemberToRepository(repositoryUrl, user.getLogin());
         }
         var defaultBranch = "main";
         mockGetDefaultBranch(defaultBranch, repositoryUrl);

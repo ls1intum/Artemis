@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -100,7 +101,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private GradingScaleRepository gradingScaleRepository;
 
     @Autowired
-    ZipFileTestUtilService zipFileTestUtilService;
+    private PasswordService passwordService;
+
+    @Autowired
+    private ZipFileTestUtilService zipFileTestUtilService;
 
     private List<User> users;
 
@@ -127,9 +131,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         instructor = users.get(users.size() - 1);
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("student42"));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor6"));
+        userRepo.save(ModelFactory.generateActivatedUser("student42", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("tutor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("instructor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -1354,15 +1358,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2)).isPresent();
         assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2).get()).isEqualTo(studentExam2);
 
-        bitbucketRequestMockProvider.mockUserExists(student1.getLogin());
-        mockConfigureRepository(programmingExercise, "student1", Set.of(student1), false);
-        bitbucketRequestMockProvider.mockUserExists(student2.getLogin());
-        mockConfigureRepository(programmingExercise, "student2", Set.of(student2), false);
-
-        bitbucketRequestMockProvider.mockUserExists(student1.getLogin());
-        mockConfigureRepository(programmingExercise2, "student1", Set.of(student1), false);
-        bitbucketRequestMockProvider.mockUserExists(student2.getLogin());
-        mockConfigureRepository(programmingExercise2, "student2", Set.of(student2), false);
+        mockConfigureRepository(programmingExercise, "student1", Set.of(student1), true);
+        mockConfigureRepository(programmingExercise, "student2", Set.of(student2), true);
+        mockConfigureRepository(programmingExercise2, "student1", Set.of(student1), true);
+        mockConfigureRepository(programmingExercise2, "student2", Set.of(student2), true);
 
         Integer numOfUnlockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories",
                 Optional.empty(), Integer.class, HttpStatus.OK);

@@ -739,8 +739,6 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void unlockAllRepositories() throws Exception {
-        bitbucketRequestMockProvider.mockUserExists("student1");
-        bitbucketRequestMockProvider.mockUserExists("student2");
         programmingExerciseIntegrationTestService.unlockAllRepositories();
     }
 

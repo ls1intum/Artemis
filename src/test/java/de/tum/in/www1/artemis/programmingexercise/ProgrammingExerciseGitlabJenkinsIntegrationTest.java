@@ -170,7 +170,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "edx_student1", roles = "USER")
     public void startProgrammingExerciseEdxUser_correctInitializationState() throws Exception {
-        programmingExerciseTestService.startProgrammingExerciseAutomaticallyCreateEdxUser_correctInitializationState();
+        programmingExerciseTestService.startProgrammingExercise_correctInitializationState();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

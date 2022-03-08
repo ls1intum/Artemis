@@ -431,8 +431,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception {
-        gitlabRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, ltiUserExists);
+    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
+        gitlabRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, userExists);
     }
 
     @Override

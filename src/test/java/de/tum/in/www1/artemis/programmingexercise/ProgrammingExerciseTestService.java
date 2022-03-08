@@ -782,7 +782,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void startProgrammingExerciseAutomaticallyCreateEdxUser_correctInitializationState() throws Exception {
+    public void startProgrammingExercise_correctInitializationState() throws Exception {
         var user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         user.setLogin("edx_student1");
         user = userRepo.save(user);
@@ -790,7 +790,7 @@ public class ProgrammingExerciseTestService {
         final Course course = setupCourseWithProgrammingExercise(ExerciseMode.INDIVIDUAL);
         Participant participant = user;
 
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), false, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
 
         final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
                 .replace("{exerciseId}", String.valueOf(exercise.getId()));

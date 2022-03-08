@@ -52,7 +52,7 @@ public class UserTestService {
     private UserRepository userRepository;
 
     @Autowired
-    PasswordService passwordService;
+    private PasswordService passwordService;
 
     @Autowired
     private CacheManager cacheManager;

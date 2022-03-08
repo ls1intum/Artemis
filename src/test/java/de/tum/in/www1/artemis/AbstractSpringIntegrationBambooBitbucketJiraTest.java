@@ -515,8 +515,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception {
-        bitbucketRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, ltiUserExists);
+    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
+        bitbucketRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, userExists);
     }
 
     @Override
