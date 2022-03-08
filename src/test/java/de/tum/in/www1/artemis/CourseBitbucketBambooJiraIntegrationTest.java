@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.util.CourseTestService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -25,6 +29,9 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
 
     @Autowired
     private CourseRepository courseRepo;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @BeforeEach
     public void setup() {
@@ -340,6 +347,19 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
         courseTestService.testRemoveTutorFromCourse_failsToRemoveUserFromGroup();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveTutorFromCourse_userNotFoundInJira_successful() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        database.addProgrammingExerciseToCourse(course, false);
+        course = courseRepo.save(course);
+
+        User tutor = userRepository.findOneWithGroupsByLogin("tutor1").get();
+        jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getTeachingAssistantGroupName()), tutor.getLogin(), false, true);
+        request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.OK);
     }
 
     @Test
