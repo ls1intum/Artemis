@@ -87,6 +87,7 @@
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
+            "testRepositoryProjectType": "Test Repository Project Type",
             "packageName": "Package Name",
             "appName": "App Name",
             "templateResult": "Template Result",
