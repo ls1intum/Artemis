@@ -29,6 +29,10 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 
+// this will be extended with Gradle later on
+export enum JavaTestRepositoryProjectType {
+    MAVEN = 'MAVEN',
+}
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
@@ -64,6 +68,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
+    // This is used to distinguish the project type between template & solution and test repository (only applies for Java exercises)
+    private selectedTestRepositoryProjectTypeValue: JavaTestRepositoryProjectType;
 
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
@@ -211,11 +217,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
         this.projectTypes = programmingLanguageFeature.projectTypes;
+        // set the test repository project type
+        if (language === ProgrammingLanguage.JAVA) {
+            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
+        }
 
         if (languageChanged) {
             // Reset project type when changing programming language as not all programming languages support (the same) project types
             this.programmingExercise.projectType = this.projectTypes[0];
-            this.selectedProjectTypeValue = this.projectTypes[0]!;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -249,6 +258,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         this.updateProjectTypeSettings(type);
 
+        // TODO: extend this for gradle
+        if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
+            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
+        }
+
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, type);
@@ -261,6 +275,24 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return this.selectedProjectTypeValue;
     }
 
+    onTestRepositoryProjectTypeChange(type: JavaTestRepositoryProjectType) {
+        this.selectedTestRepositoryProjectType = type;
+        return type;
+    }
+
+    set selectedTestRepositoryProjectType(type: JavaTestRepositoryProjectType) {
+        // this has only effect for plain java which is represented by PLAIN_MAVEN (or PLAIN_GRADLE later)
+        if (type === JavaTestRepositoryProjectType.MAVEN) {
+            // only the underlying value should be changed, not the value which is displayed in the dropdown
+            this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+        }
+        // TODO: set the project type to PLAIN_GRADLE otherwise
+    }
+
+    get selectedTestRepositoryProjectType() {
+        return this.selectedTestRepositoryProjectTypeValue;
+    }
+
     private updateProjectTypeSettings(type: ProjectType) {
         if (ProjectType.XCODE === type) {
             // Disable Online Editor
@@ -268,7 +300,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else if (ProjectType.FACT === type) {
             // Disallow SCA for C (FACT)
             this.disableStaticCodeAnalysis();
+        } else if (ProjectType.PLAIN_MAVEN === type || ProjectType.MAVEN_MAVEN === type) {
+            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
         }
+        // TODO: extend check for gradle project
     }
 
     private disableStaticCodeAnalysis() {
