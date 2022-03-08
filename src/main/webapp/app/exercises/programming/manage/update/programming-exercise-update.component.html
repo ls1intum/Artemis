@@ -162,7 +162,14 @@
         </div>
 
         <div class="form-group" *ngIf="programmingExercise.programmingLanguage && projectTypes && projectTypes.length > 0">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+                <jhi-help-icon
+                    *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA"
+                    placement="auto"
+                    text="artemisApp.programmingExercise.projectTypeTooltip"
+                ></jhi-help-icon>
+            </div>
             <select
                 #select
                 required
@@ -184,6 +191,7 @@
 
         <div class="form-group" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
             <label class="label-narrow" for="field_testProjectType">Test Repository Project Type</label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.testRepositoryProjectTypeTooltip"></jhi-help-icon>
             <select
                 #selectTestRepoProject
                 required
