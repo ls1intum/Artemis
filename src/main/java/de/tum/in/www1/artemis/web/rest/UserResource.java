@@ -258,7 +258,10 @@ public class UserResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
         log.debug("REST request to get User : {}", login);
-        return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(UserDTO::new));
+        return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(user -> {
+            user.setVisibleRegistrationNumber();
+            return new UserDTO(user);
+        }));
     }
 
     /**
