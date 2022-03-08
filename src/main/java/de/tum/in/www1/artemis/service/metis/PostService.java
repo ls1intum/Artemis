@@ -1,11 +1,20 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.*;
+import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import javax.validation.Valid;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +25,10 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -28,6 +39,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
@@ -195,32 +207,59 @@ public class PostService extends PostingService {
     }
 
     /**
-     * @param courseId          id of the course the fetch posts for
-     * @param courseWideContext course-wide context for which the posts should be fetched
-     * @param exerciseId        id of the exercise for which the posts should be fetched
-     * @param lectureId         id of the lecture for which the posts should be fetched
-     * @return list of posts that match the given context
+     * @param pagingEnabled     fetches single page instead of all entities
+     * @param pageable          requested page and page size
+     * @param postContextFilter request object to fetch posts
+     * @return page of posts that match the given context
      */
-    public List<Post> getPostsInCourse(Long courseId, CourseWideContext courseWideContext, Long exerciseId, Long lectureId) {
+    public Page<Post> getPostsInCourse(boolean pagingEnabled, Pageable pageable, @Valid PostContextFilter postContextFilter) {
+
+        List<Post> postsInCourse;
         // no filter -> get all posts in course
-        if (courseWideContext == null && exerciseId == null && lectureId == null) {
-            return this.getAllCoursePosts(courseId);
+        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
+            postsInCourse = this.getAllCoursePosts(postContextFilter);
         }
         // filter by course-wide context
-        else if (courseWideContext != null && exerciseId == null && lectureId == null) {
-            return this.getAllPostsByCourseWideContext(courseId, courseWideContext);
+        else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
+            postsInCourse = this.getAllPostsByCourseWideContext(postContextFilter);
         }
         // filter by exercise
-        else if (courseWideContext == null && exerciseId != null && lectureId == null) {
-            return this.getAllExercisePosts(courseId, exerciseId);
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null) {
+            postsInCourse = this.getAllExercisePosts(postContextFilter);
         }
         // filter by lecture
-        else if (courseWideContext == null && exerciseId == null && lectureId != null) {
-            return this.getAllLecturePosts(courseId, lectureId);
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null) {
+            postsInCourse = this.getAllLecturePosts(postContextFilter);
         }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
+
+        // search by text or #post
+        if (postContextFilter.getSearchText() != null) {
+            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
+        }
+
+        final Page<Post> postsPage;
+        if (pagingEnabled) {
+            int startIndex = pageable.getPageNumber() * pageable.getPageSize();
+            int endIndex = Math.min(startIndex + pageable.getPageSize(), postsInCourse.size());
+
+            // sort (only used by CourseDiscussionsPage, which has pagination enabled)
+            postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
+
+            try {
+                postsPage = new PageImpl<>(postsInCourse.subList(startIndex, endIndex), pageable, postsInCourse.size());
+            }
+            catch (IllegalArgumentException ex) {
+                throw new BadRequestAlertException("Not enough posts to fetch " + pageable.getPageNumber() + "'th page", METIS_POST_ENTITY_NAME, "invalidPageRequest");
+            }
+        }
+        else {
+            postsPage = new PageImpl<>(postsInCourse);
+        }
+
+        return postsPage;
     }
 
     /**
@@ -239,7 +278,7 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        List<Post> coursePosts = postRepository.findPostsForCourse(courseId);
+        List<Post> coursePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null);
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
@@ -248,22 +287,51 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user and post validity,
-     * retrieves all posts with a certain course-wide context by course id
+     * retrieves and filters posts for a course by its id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId          id of the course the post belongs to
-     * @param courseWideContext specific course-wide context to filter course get posts for
-     * @return list of posts for a certain course-wide context
+     * @param postContextFilter filter object
+     * @return page of posts that belong to the course
      */
-    public List<Post> getAllPostsByCourseWideContext(Long courseId, CourseWideContext courseWideContext) {
+    public List<Post> getAllCoursePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        List<Post> coursePosts = postRepository.findPostsForCourseWideContext(courseId, courseWideContext);
+        List<Post> coursePosts;
+        coursePosts = postRepository.findPostsForCourse(postContextFilter.getCourseId(), null, postContextFilter.getFilterToUnresolved(), postContextFilter.getFilterToOwn(),
+                postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves and filters posts with a certain course-wide context by course id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param postContextFilter filter object
+     * @return page of posts for a certain course-wide context
+     */
+    public List<Post> getAllPostsByCourseWideContext(PostContextFilter postContextFilter) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // retrieve posts
+        List<Post> coursePosts;
+        // retrieve posts
+        coursePosts = postRepository.findPostsForCourse(postContextFilter.getCourseId(), postContextFilter.getCourseWideContext(), postContextFilter.getFilterToUnresolved(),
+                postContextFilter.getFilterToOwn(), postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
@@ -272,22 +340,24 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user, exercise and post validity,
-     * retrieves all posts for an exercise by its id
+     * retrieves and filters posts for an exercise by its id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId   id of the course the post belongs to
-     * @param exerciseId id of the exercise for which the posts should be retrieved
-     * @return list of posts that belong to the exercise
+     * @param postContextFilter filter object
+     * @return page of posts that belong to the exercise
      */
-    public List<Post> getAllExercisePosts(Long courseId, Long exerciseId) {
+    public List<Post> getAllExercisePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
-        preCheckExercise(user, courseId, exerciseId);
+        preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        preCheckExercise(user, postContextFilter.getCourseId(), postContextFilter.getExerciseId());
 
         // retrieve posts
-        List<Post> exercisePosts = postRepository.findPostsByExerciseId(exerciseId);
+        List<Post> exercisePosts;
+        exercisePosts = postRepository.findPostsByExerciseId(postContextFilter.getExerciseId(), postContextFilter.getFilterToUnresolved(), postContextFilter.getFilterToOwn(),
+                postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+
         // protect sample solution, grading instructions, etc.
         exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
 
@@ -296,22 +366,24 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user, lecture and post validity,
-     * retrieves all posts for a lecture by its id
+     * retrieves and filters posts for a lecture by its id
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId  id of the course the post belongs to
-     * @param lectureId id of the lecture for which the posts should be retrieved
-     * @return list of posts that belong to the lecture
+     * @param postContextFilter filter object
+     * @return page of posts that belong to the lecture
      */
-    public List<Post> getAllLecturePosts(Long courseId, Long lectureId) {
+    public List<Post> getAllLecturePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        preCheckUserAndCourse(user, courseId);
-        preCheckLecture(user, courseId, lectureId);
+        preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        preCheckLecture(user, postContextFilter.getCourseId(), postContextFilter.getLectureId());
 
         // retrieve posts
-        List<Post> lecturePosts = postRepository.findPostsByLectureId(lectureId);
+        List<Post> lecturePosts;
+        lecturePosts = postRepository.findPostsByLectureId(postContextFilter.getLectureId(), postContextFilter.getFilterToUnresolved(), postContextFilter.getFilterToOwn(),
+                postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+
         // protect sample solution, grading instructions, etc.
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
@@ -460,16 +532,16 @@ public class PostService extends PostingService {
     /**
      * Calculates k similar posts based on the underlying content comparison strategy
      *
-     * @param courseId  id of the course in which similar posts are searched for
-     * @param post      post that is to be created and check for similar posts beforehand
+     * @param courseId id of the course in which similar posts are searched for
+     * @param post     post that is to be created and check for similar posts beforehand
      * @return list of similar posts
      */
     public List<Post> getSimilarPosts(Long courseId, Post post) {
         List<Post> coursePosts = this.getAllCoursePosts(courseId);
 
         // sort course posts by calculated similarity scores
-        coursePosts.sort(Comparator.comparing((coursePost) -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
-        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).collect(Collectors.toList());
+        coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
+        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
     }
 
     /**
@@ -484,5 +556,164 @@ public class PostService extends PostingService {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
+    }
+
+    /**
+     * sorts posts by following criteria
+     * 1. criterion: displayPriority is PINNED -> pinned posts come first
+     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
+     * -- in between pinned and archived posts --
+     * 3. criterion: currently selected criterion in combination with currently selected order
+     *
+     * @param postA             post 1 to be compared
+     * @param postB             post 2 to be compared
+     * @param postSortCriterion criterion to sort posts (CREATION_DATE, #VOTES,#ANSWERS)
+     * @param sortingOrder      direction of sorting (ASC, DESC)
+     * @return number indicating the order of two elements
+     */
+    public static int postComparator(Post postA, Post postB, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
+        // sort by priority
+        int order = compareByPriority(postA, postB);
+        if (order != 0) {
+            return order;
+        }
+
+        // sort by votes via voteEmojiCount
+        if (postSortCriterion == PostSortCriterion.VOTES) {
+            order = compareByVotes(postA, postB, sortingOrder);
+            if (order != 0) {
+                return order;
+            }
+        }
+
+        // sort by creation date
+        if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
+            order = compareByCreationDate(postA, postB, sortingOrder);
+            if (order != 0) {
+                return order;
+            }
+        }
+
+        // sort by answer count
+        if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
+            order = compareByAnswerCount(postA, postB, sortingOrder);
+            if (order != 0) {
+                return order;
+            }
+        }
+        return 0;
+    }
+
+    private static int compareByPriority(Post postA, Post postB) {
+        if ((postA.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT && postA.getDisplayPriority() == DisplayPriority.PINNED
+                && postB.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT)
+                || ((postA.getDisplayPriority() == DisplayPriority.PINNED && postB.getDisplayPriority() != DisplayPriority.PINNED)
+                        || postA.getDisplayPriority() != DisplayPriority.ARCHIVED && postB.getDisplayPriority() == DisplayPriority.ARCHIVED)) {
+            return -1;
+        }
+        else if ((postA.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT && postB.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT
+                && postB.getDisplayPriority() == DisplayPriority.PINNED)
+                || (postA.getDisplayPriority() != DisplayPriority.PINNED && postB.getDisplayPriority() == DisplayPriority.PINNED)
+                || postA.getDisplayPriority() == DisplayPriority.ARCHIVED && postB.getDisplayPriority() != DisplayPriority.ARCHIVED) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    private static int compareByVotes(Post postA, Post postB, SortingOrder sortingOrder) {
+        int comparisonResult = 0;
+
+        int postAVoteEmojiCount = 0;
+        int postBVoteEmojiCount = 0;
+
+        if (postA.getReactions() != null) {
+            postAVoteEmojiCount = (int) postA.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
+        }
+
+        if (postB.getReactions() != null) {
+            postBVoteEmojiCount = (int) postB.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
+        }
+
+        if (postAVoteEmojiCount > postBVoteEmojiCount) {
+            comparisonResult = 1;
+        }
+        else if (postAVoteEmojiCount < postBVoteEmojiCount) {
+            comparisonResult = -1;
+        }
+
+        return applySortingOrder(sortingOrder, comparisonResult);
+    }
+
+    private static int compareByCreationDate(Post postA, Post postB, SortingOrder sortingOrder) {
+        int comparisonResult = 0;
+
+        if (postA.getCreationDate().compareTo(postB.getCreationDate()) > 0) {
+            comparisonResult = 1;
+        }
+        else if (postA.getCreationDate().compareTo(postB.getCreationDate()) < 0) {
+            comparisonResult = -1;
+        }
+
+        return applySortingOrder(sortingOrder, comparisonResult);
+    }
+
+    private static int compareByAnswerCount(Post postA, Post postB, SortingOrder sortingOrder) {
+        int comparisonResult = 0;
+
+        int postAAnswerCount = 0;
+        int postBAnswerCount = 0;
+
+        if (postA.getAnswers() != null) {
+            postAAnswerCount = postA.getAnswers().size();
+        }
+        if (postB.getAnswers() != null) {
+            postBAnswerCount = postB.getAnswers().size();
+        }
+
+        if (postAAnswerCount > postBAnswerCount) {
+            comparisonResult = 1;
+        }
+        else if (postAAnswerCount < postBAnswerCount) {
+            comparisonResult = -1;
+        }
+
+        return applySortingOrder(sortingOrder, comparisonResult);
+    }
+
+    private static int applySortingOrder(SortingOrder sortingOrder, int comparisonResult) {
+        if (SortingOrder.ASCENDING == sortingOrder) {
+            return comparisonResult;
+        }
+        else {
+            return -1 * comparisonResult;
+        }
+    }
+
+    /**
+     * filters posts on a search string in a match-all-manner
+     * - currentPostContentFilter: post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
+     *
+     * @param post          checked post for including searchText
+     * @param searchText    text to be searched within posts
+     * @return boolean predicate if the post is kept (true) or filtered out (false)
+     */
+    public static boolean postFilter(Post post, String searchText) {
+        boolean keepPost = true;
+
+        if (searchText != null && searchText.trim().length() > 0) {
+            // check if the search text is either contained in the title or in the content
+            String lowerCasedSearchString = searchText.toLowerCase();
+            // if searchText starts with a # and is followed by a post id, filter for post with id
+            if (lowerCasedSearchString.startsWith("#") && (lowerCasedSearchString.substring(1) != null && !lowerCasedSearchString.substring(1).isBlank())) {
+                return post.getId() == Integer.parseInt(lowerCasedSearchString.substring(1));
+            }
+            // regular search on content, title, and tags
+            return post.getTitle() != null && post.getTitle().toLowerCase().contains(lowerCasedSearchString)
+                    || post.getContent() != null && post.getContent().toLowerCase().contains(lowerCasedSearchString)
+                    || post.getTags() != null && String.join(" ", post.getTags()).toLowerCase().contains(lowerCasedSearchString);
+        }
+        return keepPost;
     }
 }
