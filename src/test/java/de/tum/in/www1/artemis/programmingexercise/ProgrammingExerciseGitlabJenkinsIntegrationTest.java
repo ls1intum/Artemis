@@ -262,8 +262,8 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
-        programmingExerciseTestService.configureRepository_createTeamUserWhenLtiUserIsNotExistent();
+    public void configureRepository_throwExceptionWhenLtiUserIsNotExistent() throws Exception {
+        programmingExerciseTestService.configureRepository_throwExceptionWhenLtiUserIsNotExistent();
     }
 
     @Test

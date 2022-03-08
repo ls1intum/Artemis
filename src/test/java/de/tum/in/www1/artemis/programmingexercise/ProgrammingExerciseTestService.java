@@ -57,6 +57,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
@@ -1383,7 +1384,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
+    public void configureRepository_throwExceptionWhenLtiUserIsNotExistent() throws Exception {
         setupTeamExercise();
 
         // create a team for the user (necessary condition before starting an exercise)
@@ -1398,7 +1399,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists, HttpStatus.CREATED);
 
         // Start participation with original team
-        participationService.startExercise(exercise, team, false);
+        assertThrows(GitLabException.class, () -> participationService.startExercise(exercise, team, false));
     }
 
     // TEST
