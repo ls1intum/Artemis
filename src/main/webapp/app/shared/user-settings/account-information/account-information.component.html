@@ -3,6 +3,13 @@
     {{ 'artemisApp.userSettings.accountInformation' | artemisTranslate }}
 </h1>
 <div class="list-group d-block" *ngIf="currentUser">
+    <div class="list-group-item" *ngIf="currentUser.visibleRegistrationNumber">
+        <dt>
+            <!--Registration Number-->
+            {{ 'artemisApp.userSettings.accountInformationPage.registrationNumber' | artemisTranslate }}
+        </dt>
+        <dd>{{ currentUser.visibleRegistrationNumber }}</dd>
+    </div>
     <div class="list-group-item" *ngIf="currentUser.name">
         <dt>
             <!--Full Name-->
