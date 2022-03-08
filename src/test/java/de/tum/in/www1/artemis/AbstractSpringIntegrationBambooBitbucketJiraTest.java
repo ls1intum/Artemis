@@ -10,6 +10,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -46,6 +47,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketService;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
@@ -86,6 +88,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Autowired
     protected JiraRequestMockProvider jiraRequestMockProvider;
+
+    @Autowired
+    protected PasswordService passwordService;
 
     @AfterEach
     public void resetSpyBeans() {
@@ -386,13 +391,26 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws JsonProcessingException {
+    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws JsonProcessingException, URISyntaxException {
         var managedUserVM = new ManagedUserVM(user);
         jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
         jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin(), false, true);
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
 
         bitbucketRequestMockProvider.mockUpdateUserDetails(oldLogin, user.getEmail(), user.getFirstName() + " " + user.getLastName());
+        if (password != null) {
+            bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), password, true, true);
+        }
+        Set<String> groupsToAdd = new HashSet<>(user.getGroups());
+        groupsToAdd.removeAll(oldGroups);
+        Set<String> groupsToRemove = new HashSet<>(oldGroups);
+        groupsToRemove.removeAll(user.getGroups());
+        if (groupsToAdd.size() > 0) {
+            bitbucketRequestMockProvider.mockAddUserToGroups();
+        }
+        for (String group : groupsToRemove) {
+            bitbucketRequestMockProvider.mockRemoveUserFromGroup(user.getLogin(), group);
+        }
     }
 
     @Override

@@ -144,6 +144,8 @@ public class UserTestService {
 
     // Test
     public void updateUser_asAdmin_isSuccessful() throws Exception {
+        student.setInternal(true);
+        student = userRepository.save(student);
         final var newPassword = "bonobo42";
         final var newEmail = "bonobo42@tum.com";
         final var newFirstName = "Bruce";
@@ -163,9 +165,9 @@ public class UserTestService {
         student.setLangKey(newLangKey);
 
         student.setPassword(newPassword);
-        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, oldGroups);
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, newPassword, oldGroups);
 
-        var managedUserVM = new ManagedUserVM(student);
+        var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
@@ -181,7 +183,7 @@ public class UserTestService {
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         student.setPassword(null);
         final var oldPassword = userRepository.findById(student.getId()).get().getPassword();
-        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student), HttpStatus.OK);
         final var userInDB = userRepository.findById(student.getId()).get();
@@ -193,7 +195,7 @@ public class UserTestService {
     public void updateUserLogin() throws Exception {
         var oldLogin = student.getLogin();
         student.setLogin("new-login");
-        mockDelegate.mockUpdateUserInUserManagement(oldLogin, student, student.getGroups());
+        mockDelegate.mockUpdateUserInUserManagement(oldLogin, student, null, student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student), HttpStatus.OK);
         final var userInDB = userRepository.findById(student.getId()).get();
@@ -206,7 +208,7 @@ public class UserTestService {
     public void updateUserInvalidId() throws Exception {
         long oldId = student.getId();
         student.setId(oldId + 1);
-        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userRepository.findById(oldId).get();
@@ -219,7 +221,7 @@ public class UserTestService {
         long oldId = student.getId();
         student.setId(oldId + 1);
         student.setEmail("newEmail@testing.user");
-        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userRepository.findById(oldId).get();
@@ -230,7 +232,7 @@ public class UserTestService {
     // Test
     public void updateUser_withExternalUserManagement() throws Exception {
         student.setFirstName("changed");
-        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, student.getGroups());
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student), HttpStatus.OK);
 
@@ -252,7 +254,7 @@ public class UserTestService {
         // We will then update the user by modifying the groups
         var updatedUser = student;
         updatedUser.setGroups(Set.of("tutor"));
-        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), updatedUser, student.getGroups());
+        mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), updatedUser, null, student.getGroups());
         request.put("/api/users", new ManagedUserVM(updatedUser, updatedUser.getPassword()), HttpStatus.OK);
 
         var updatedUserOrEmpty = userRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
@@ -595,7 +597,7 @@ public class UserTestService {
         if (mock) {
             // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
             mockDelegate.mockCreateUserInUserManagement(user, false);
-            mockDelegate.mockUpdateUserInUserManagement(user.getLogin(), user, new HashSet<>());
+            mockDelegate.mockUpdateUserInUserManagement(user.getLogin(), user, null, new HashSet<>());
         }
 
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));

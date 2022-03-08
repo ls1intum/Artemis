@@ -44,10 +44,6 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUser_asAdmin_isSuccessful() throws Exception {
-        bitbucketRequestMockProvider.mockUpdateUserDetails(userTestService.student.getLogin(), "bonobo42@tum.com", "Bruce Wayne");
-        bitbucketRequestMockProvider.mockAddUserToGroups();
-        bitbucketRequestMockProvider.mockRemoveUserFromGroup(userTestService.student.getLogin(), "testgroup");
-        bitbucketRequestMockProvider.mockRemoveUserFromGroup(userTestService.student.getLogin(), "tumuser");
         userTestService.updateUser_asAdmin_isSuccessful();
     }
 
@@ -94,11 +90,13 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUser_withVcsUserNotExisting_isSuccessful() throws Exception {
         var student = userTestService.student;
+        student.setInternal(true);
+        student = userRepository.save(student);
+        student.setFirstName("changed");
         jiraRequestMockProvider.mockIsGroupAvailable("testgroup");
         jiraRequestMockProvider.mockIsGroupAvailable("tumuser");
         bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName(), false);
         bitbucketRequestMockProvider.mockUpdateUserPassword(student.getLogin(), "newPassword", true, false);
-        student.setFirstName("changed");
 
         request.put("/api/users", new ManagedUserVM(student, "newPassword"), HttpStatus.OK);
 
