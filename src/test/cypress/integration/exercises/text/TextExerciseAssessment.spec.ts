@@ -51,7 +51,7 @@ describe('Text exercise assessment', () => {
         exerciseAssessment.clickStartNewAssessment();
         textAssessment.getInstructionsRootElement().contains(exercise.title!).should('be.visible');
         textAssessment.getInstructionsRootElement().contains(exercise.problemStatement!).should('be.visible');
-        textAssessment.getInstructionsRootElement().contains(exercise.sampleSolution!).should('be.visible');
+        textAssessment.getInstructionsRootElement().contains(exercise.exampleSolution!).should('be.visible');
         textAssessment.getInstructionsRootElement().contains(exercise.gradingInstructions!).should('be.visible');
         // Assert the correct word and character count without relying on translations
         textAssessment.getWordCountElement().should('contain.text', 100).and('be.visible');

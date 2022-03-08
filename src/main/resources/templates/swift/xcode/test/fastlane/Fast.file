@@ -26,7 +26,6 @@ lane :test do
        		  scheme: "${appName}")
 end
 
-    
 desc "Run Unit Tests only"
 lane :unittest do
     # Run Unit Tests
@@ -43,4 +42,14 @@ lane :uitest do
       		  derived_data_path: "DerivedData",
       		  clean: true,
        		  scheme: "${appName}UITest")
+end
+
+desc "Run Static Code Analysis"
+lane :sca do
+    # Run Static Code Analysis with swiftlint
+    swiftlint(
+        output_file: "target/swiftlint-result.xml",
+        config_file: ".swiftlint.yml",
+        ignore_exit_status: true
+    )
 end

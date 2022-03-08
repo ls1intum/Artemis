@@ -3,8 +3,6 @@
         <div *ngIf="textExercise">
             <h2><span jhiTranslate="artemisApp.textExercise.detail.title">Text Exercise</span> {{ textExercise.id }}</h2>
             <hr />
-            <jhi-alert></jhi-alert>
-            <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions
                     *ngIf="course"
@@ -31,8 +29,13 @@
                 <dd>
                     <span>{{ (textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="formattedSampleSolution"></dd>
+                <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>
+                <dd class="editor-outline-background" [innerHTML]="formattedExampleSolution"></dd>
+                <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>
+                <dd>
+                    <span *ngIf="textExercise.exampleSolutionPublicationDate">{{ textExercise.exampleSolutionPublicationDate | artemisDate }}</span>
+                    <span *ngIf="!textExercise.exampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                </dd>
             </dl>
         </div>
     </div>

@@ -16,7 +16,14 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { ExportToCsv } from 'export-to-csv';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
+
+const NAME_KEY = 'Name';
+const USERNAME_KEY = 'Username';
+const EMAIL_KEY = 'Email';
+const REGISTRATION_NUMBER_KEY = 'Registration Number';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -45,7 +52,6 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isAdmin = false;
-
     isLoading = false;
     isSearching = false;
     searchFailed = false;
@@ -54,6 +60,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     rowClass: string | undefined = undefined;
 
     // Icons
+    faDownload = faDownload;
     faUserSlash = faUserSlash;
 
     constructor(
@@ -272,4 +279,43 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         this.rowClass = className;
         setTimeout(() => (this.rowClass = undefined));
     };
+
+    /**
+     * Method for exporting the csv with the needed data
+     */
+    exportUserInformation() {
+        if (this.allCourseGroupUsers.length > 0) {
+            const rows: any[] = this.allCourseGroupUsers.map((user: User) => {
+                const data = {};
+                data[NAME_KEY] = user.name?.trim() ?? '';
+                data[USERNAME_KEY] = user.login?.trim() ?? '';
+                data[EMAIL_KEY] = user.email?.trim() ?? '';
+                data[REGISTRATION_NUMBER_KEY] = user.visibleRegistrationNumber?.trim() ?? '';
+                return data;
+            });
+            const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
+            this.exportAsCsv(rows, keys);
+        }
+    }
+
+    /**
+     * Method for generating the csv file containing the user information
+     *
+     * @param rows the data to export
+     * @param keys the keys of the data
+     */
+    exportAsCsv(rows: any[], keys: string[]) {
+        const options = {
+            fieldSeparator: ';',
+            quoteStrings: '"',
+            showLabels: true,
+            showTitle: false,
+            filename: this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + ' ' + this.course.title,
+            useTextFile: false,
+            useBom: true,
+            headers: keys,
+        };
+        const csvExporter = new ExportToCsv(options);
+        csvExporter.generateCsv(rows);
+    }
 }

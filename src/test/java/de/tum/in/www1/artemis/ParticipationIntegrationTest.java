@@ -392,11 +392,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
                 assertThat(quizExercise.getQuizQuestions()).isEmpty();
             }
             else if (exercise instanceof TextExercise textExercise) {
-                assertThat(textExercise.getSampleSolution()).isNull();
+                assertThat(textExercise.getExampleSolution()).isNull();
             }
             else if (exercise instanceof ModelingExercise modelingExercise) {
-                assertThat(modelingExercise.getSampleSolutionModel()).isNull();
-                assertThat(modelingExercise.getSampleSolutionExplanation()).isNull();
+                assertThat(modelingExercise.getExampleSolutionModel()).isNull();
+                assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
             }
         });
     }

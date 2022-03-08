@@ -1,23 +1,27 @@
 <div class="plagiarism-split-view">
     <div class="plagiarism-split-pane" jhiPane>
-        <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
+        <ng-container *ngIf="plagiarismComparison">
+            <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
 
-        <jhi-text-submission-viewer
-            *ngIf="isProgrammingOrTextExercise"
-            [exercise]="exercise"
-            [matches]="matchesA"
-            [plagiarismSubmission]="getTextSubmissionA()"
-        ></jhi-text-submission-viewer>
+            <jhi-text-submission-viewer
+                *ngIf="isProgrammingOrTextExercise"
+                [exercise]="exercise"
+                [matches]="matchesA"
+                [plagiarismSubmission]="getTextSubmissionA()"
+            ></jhi-text-submission-viewer>
+        </ng-container>
     </div>
 
     <div class="plagiarism-split-pane" jhiPane>
-        <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
+        <ng-container *ngIf="plagiarismComparison">
+            <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
 
-        <jhi-text-submission-viewer
-            *ngIf="isProgrammingOrTextExercise"
-            [exercise]="exercise"
-            [matches]="matchesB"
-            [plagiarismSubmission]="getTextSubmissionB()"
-        ></jhi-text-submission-viewer>
+            <jhi-text-submission-viewer
+                *ngIf="isProgrammingOrTextExercise"
+                [exercise]="exercise"
+                [matches]="matchesB"
+                [plagiarismSubmission]="getTextSubmissionB()"
+            ></jhi-text-submission-viewer>
+        </ng-container>
     </div>
 </div>

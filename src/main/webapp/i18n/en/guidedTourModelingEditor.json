@@ -2,8 +2,8 @@
     "tour": {
         "modelingExercise": {
             "editorArea": {
-                "headline": "Modelling Exercise",
-                "content": "On this page you will solve a modelling exercise. We will guide you on how to do that."
+                "headline": "Modeling Exercise",
+                "content": "On this page you will solve a modeling exercise. We will guide you on how to do that."
             },
             "addEditUmlElement": {
                 "headline": "Add and edit UML elements",
@@ -16,7 +16,7 @@
                 "hint": "You can change the relationship type by double-clicking it."
             },
             "executeTasks": {
-                "headline": "Modelling exercise.",
+                "headline": "Modeling exercise.",
                 "content": "Solve the exercise below and proceed to the next step.",
                 "personClass": "Create the UML class <tt>Person</tt> with the attribute <tt>name: String</tt>",
                 "studentClass": "Create the UML class <tt>Student</tt> with the attribute <tt>major: String</tt> and method <tt>visitLecture()</tt>.",

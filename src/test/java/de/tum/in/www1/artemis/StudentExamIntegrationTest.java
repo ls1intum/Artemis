@@ -309,7 +309,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             // Check that sensitive information has been removed
             assertThat(textExercise.getGradingCriteria()).isEmpty();
             assertThat(textExercise.getGradingInstructions()).isEqualTo(null);
-            assertThat(textExercise.getSampleSolution()).isEqualTo(null);
+            assertThat(textExercise.getExampleSolution()).isEqualTo(null);
 
             // Check that sensitive information has been removed
             assertThat(quizExercise.getGradingCriteria()).isEmpty();
