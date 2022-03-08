@@ -503,10 +503,11 @@ public class ProgrammingExerciseService {
 
             // Java both supports Gradle and Maven as a test template
             String projectTemplatePath = templatePath;
-            if (ProjectType.PLAIN_GRADLE.equals(programmingExercise.getProjectType()) || ProjectType.GRADLE_GRADLE.equals(programmingExercise.getProjectType())) {
+            ProjectType projectType = programmingExercise.getProjectType();
+            if (projectType != null && projectType.isGradle()) {
                 projectTemplatePath += "/gradle";
             }
-            else if (ProjectType.ECLIPSE.equals(programmingExercise.getProjectType()) || ProjectType.MAVEN.equals(programmingExercise.getProjectType())) {
+            else if (projectType != null && projectType.isMaven()) {
                 projectTemplatePath += "/maven";
             }
             projectTemplatePath += "/projectTemplate/**/*.*";
@@ -514,7 +515,6 @@ public class ProgrammingExerciseService {
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
 
             // These resources might override the programming language dependent resources as they are project type dependent.
-            ProjectType projectType = programmingExercise.getProjectType();
             if (projectType != null) {
                 String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
                 String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
@@ -542,7 +542,7 @@ public class ProgrammingExerciseService {
 
                 // replace placeholder settings in project file
                 String projectFileFileName;
-                if (ProjectType.PLAIN_GRADLE.equals(programmingExercise.getProjectType()) || ProjectType.GRADLE_GRADLE.equals(programmingExercise.getProjectType())) {
+                if (projectType != null && projectType.isGradle()) {
                     projectFileFileName = "build.gradle";
                 }
                 else {
@@ -582,7 +582,7 @@ public class ProgrammingExerciseService {
                 }
             }
             else {
-                boolean isMaven = ProjectType.ECLIPSE.equals(projectType) || ProjectType.MAVEN.equals(projectType);
+                boolean isMaven = projectType != null && projectType.isMaven();
                 sectionsMap.put("non-sequential", false);
                 sectionsMap.put("sequential", true);
 
