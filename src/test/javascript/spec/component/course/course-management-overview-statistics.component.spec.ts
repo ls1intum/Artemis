@@ -99,6 +99,8 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
     it('should adapt if course phase is smaller than 4 weeks', () => {
         component.course = { startDate: dayjs().subtract(2, 'weeks'), endDate: dayjs().subtract(1, 'weeks') };
+        component.amountOfStudentsInCourse = amountOfStudentsInCourse;
+        component.initialStats = initialStats;
 
         component.ngOnInit();
 

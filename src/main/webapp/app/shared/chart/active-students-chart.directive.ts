@@ -7,6 +7,7 @@ export class ActiveStudentsChartDirective {
     startDateAlreadyPassed = true;
     currentSpanToStartDate: number; // the number of weeks between the start date of the course and the current date
     currentOffsetToEndDate = 0; // the number of weeks between the end date of the course and the current date
+    currentSpanSize: number;
 
     /**
      * sets values for the offset attributes of this directive
@@ -16,16 +17,22 @@ export class ActiveStudentsChartDirective {
      */
     protected determineDisplayedPeriod(course: Course, normalTimeSpan: number): void {
         const now = dayjs();
-        this.currentSpanToStartDate = normalTimeSpan;
+        this.currentSpanSize = normalTimeSpan;
         if (course.startDate) {
             if (now.isBefore(course.startDate)) {
                 this.startDateAlreadyPassed = false;
             } else if (this.determineDifferenceBetweenIsoWeeks(dayjs(course.startDate), now) < normalTimeSpan - 1) {
                 this.currentSpanToStartDate = this.determineDifferenceBetweenIsoWeeks(dayjs(course.startDate), now) + 1;
+                this.currentSpanSize = this.currentSpanToStartDate;
             }
         }
-        if (course.endDate && now.isAfter(course.endDate) && this.determineDifferenceBetweenIsoWeeks(dayjs(course.endDate), now) > 0) {
-            this.currentOffsetToEndDate = this.determineDifferenceBetweenIsoWeeks(dayjs(course.endDate), now);
+        if (course.endDate && now.isAfter(course.endDate)) {
+            if (this.determineDifferenceBetweenIsoWeeks(dayjs(course.endDate), now) > 0) {
+                this.currentOffsetToEndDate = this.determineDifferenceBetweenIsoWeeks(dayjs(course.endDate), now);
+            }
+            if (course.startDate) {
+                this.currentSpanSize = Math.min(this.determineDifferenceBetweenIsoWeeks(dayjs(course.startDate), dayjs(course.endDate)) + 1, this.currentSpanSize);
+            }
         }
     }
 

@@ -68,10 +68,13 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
         const set: any[] = [];
         this.ngxData = [];
         if (this.amountOfStudentsInCourse > 0 && !!this.initialStats) {
-            this.initialStats.forEach((value, index) => {
-                if (index >= 4 - this.currentSpanToStartDate) {
-                    set.push({ name: this.lineChartLabels[index], value: (value * 100) / this.amountOfStudentsInCourse, absoluteValue: value });
-                }
+            this.lineChartLabels.forEach((label, index) => {
+                const absoluteValue = this.initialStats![this.initialStats!.length - this.currentSpanSize + index];
+                set.push({
+                    name: label,
+                    value: (absoluteValue * 100) / this.amountOfStudentsInCourse,
+                    absoluteValue,
+                });
             });
         } else {
             this.lineChartLabels.forEach((label) => {
@@ -90,9 +93,9 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
     }
 
     private createChartLabels(weekOffset: number): void {
-        for (let i = 0; i < this.currentSpanToStartDate; i++) {
+        for (let i = 0; i < this.currentSpanSize; i++) {
             let translatePath: string;
-            const week = Math.min(this.currentSpanToStartDate - 1, 3) - i + weekOffset;
+            const week = Math.min(this.currentSpanSize - 1, 3) - i + weekOffset;
             switch (week) {
                 case 0: {
                     translatePath = 'overview.currentWeek';

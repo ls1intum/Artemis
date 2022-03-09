@@ -66,7 +66,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChartDirective
     average = { name: 'Average', value: 0 };
     showAverage = true;
     startDateDisplayed = false;
-    currentSpanSize: number;
 
     // Icons
     faSpinner = faSpinner;
