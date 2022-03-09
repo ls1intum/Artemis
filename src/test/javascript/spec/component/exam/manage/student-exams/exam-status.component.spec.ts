@@ -127,6 +127,7 @@ describe('ExamStatusComponent', () => {
         examChecklist.numberOfGeneratedStudentExams = 42;
         getExamStatisticsStub = jest.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
         component.exam = exam;
+        component.isAtLeastInstructor = true;
 
         component.ngOnChanges();
 

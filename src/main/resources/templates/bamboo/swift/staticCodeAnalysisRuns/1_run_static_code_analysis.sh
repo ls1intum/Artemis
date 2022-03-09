@@ -1,7 +1,5 @@
-# Copy SwiftLint rules
-cp .swiftlint.yml assignment || true
-# create target directory for SCA Parser
-mkdir target
-cd assignment
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+
 # Execute static code analysis
-swiftlint > ../target/swiftlint-result.xml
+fastlane sca

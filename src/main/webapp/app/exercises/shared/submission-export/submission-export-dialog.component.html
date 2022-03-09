@@ -4,7 +4,6 @@
         <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <jhi-alert-error></jhi-alert-error>
         <p [jhiTranslate]="'instructorDashboard.exportSubmissions.question'" [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }">
             Confirm export
         </p>

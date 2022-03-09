@@ -1,8 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService, StatementEntityResponseType } from 'app/course/plagiarism-cases/plagiarism-cases.service';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 
 @Component({
     selector: 'jhi-plagiarism-cases-list',
@@ -12,7 +14,7 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
 })
 export class PlagiarismCasesListComponent {
     @Input() courseId: number;
-    @Input() plagiarismCase: PlagiarismCase;
+    @Input() plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() hideFinished: boolean;
     instructorStatement = '';
     activeComparisonId?: number;
@@ -27,18 +29,16 @@ export class PlagiarismCasesListComponent {
 
     /**
      * checks if there is an instructorStatement for student A
-     * @param comparisonIndex
      */
-    hasInstructorStatementA(comparisonIndex: number): boolean {
-        return !!this.plagiarismCase.comparisons[comparisonIndex].instructorStatementA;
+    hasInstructorStatementA(): boolean {
+        return !!this.plagiarismComparison.instructorStatementA;
     }
 
     /**
      * checks if there is an instructorStatement for student B
-     * @param comparisonIndex
      */
-    hasInstructorStatementB(comparisonIndex: number): boolean {
-        return !!this.plagiarismCase.comparisons[comparisonIndex].instructorStatementB;
+    hasInstructorStatementB(): boolean {
+        return !!this.plagiarismComparison.instructorStatementB;
     }
 
     /**
@@ -70,26 +70,25 @@ export class PlagiarismCasesListComponent {
     /**
      * save the instructorStatement for a student
      * @param student
-     * @param i
      */
-    saveInstructorStatement(student: string, i: number) {
+    saveInstructorStatement(student: string) {
         let studentLogin = '';
         switch (student) {
             case 'A':
-                studentLogin = this.plagiarismCase.comparisons[i].submissionA.studentLogin;
+                studentLogin = this.plagiarismComparison.submissionA.studentLogin;
                 break;
             case 'B':
-                studentLogin = this.plagiarismCase.comparisons[i].submissionB.studentLogin;
+                studentLogin = this.plagiarismComparison.submissionB.studentLogin;
                 break;
         }
 
         this.plagiarismCasesService
-            .saveInstructorStatement(this.courseId, this.plagiarismCase.comparisons[i].id, studentLogin, this.instructorStatement)
+            .saveInstructorStatement(this.courseId, this.plagiarismComparison.id, studentLogin, this.instructorStatement)
             .subscribe((resp: StatementEntityResponseType) => {
                 if (student === 'A') {
-                    this.plagiarismCase.comparisons[i].instructorStatementA = resp.body!;
+                    this.plagiarismComparison.instructorStatementA = resp.body!;
                 } else if (student === 'B') {
-                    this.plagiarismCase.comparisons[i].instructorStatementB = resp.body!;
+                    this.plagiarismComparison.instructorStatementB = resp.body!;
                 }
             });
     }
@@ -97,18 +96,15 @@ export class PlagiarismCasesListComponent {
     /**
      * update the final status of a comparison for a student
      * @param confirm
-     * @param comparisonIndex
      * @param studentLogin
      */
-    updateStatus(confirm: boolean, comparisonIndex: number, studentLogin: string) {
-        this.plagiarismCasesService
-            .updatePlagiarismComparisonFinalStatus(this.courseId, this.plagiarismCase.comparisons[comparisonIndex].id, confirm, studentLogin)
-            .subscribe(() => {
-                if (this.plagiarismCase.comparisons[comparisonIndex].submissionA.studentLogin === studentLogin) {
-                    this.plagiarismCase.comparisons[comparisonIndex].statusA = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
-                } else {
-                    this.plagiarismCase.comparisons[comparisonIndex].statusB = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
-                }
-            });
+    updateStatus(confirm: boolean, studentLogin: string) {
+        this.plagiarismCasesService.updatePlagiarismComparisonFinalStatus(this.courseId, this.plagiarismComparison.id, confirm, studentLogin).subscribe(() => {
+            if (this.plagiarismComparison.submissionA.studentLogin === studentLogin) {
+                this.plagiarismComparison.statusA = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
+            } else {
+                this.plagiarismComparison.statusB = confirm ? PlagiarismStatus.CONFIRMED : PlagiarismStatus.DENIED;
+            }
+        });
     }
 }

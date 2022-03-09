@@ -80,8 +80,8 @@ describe('ModelingExercise Service', () => {
     it('should update a ModelingExercise', fakeAsync(() => {
         const returnedFromService = {
             diagramType: UMLDiagramType.ClassDiagram,
-            sampleSolutionModel: 'BBBBBB',
-            sampleSolutionExplanation: 'BBBBBB',
+            exampleSolutionModel: 'BBBBBB',
+            exampleSolutionExplanation: 'BBBBBB',
             ...elemDefault,
             categories,
         };

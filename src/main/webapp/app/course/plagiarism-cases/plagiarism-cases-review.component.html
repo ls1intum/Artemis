@@ -14,7 +14,12 @@
         <span *ngIf="!isConfirmed()" class="text-success">{{ 'artemisApp.plagiarism.cases.finallyDenied' | artemisTranslate }}</span>
     </p>
     <div *ngIf="!loading">
-        <jhi-plagiarism-split-view [exercise]="exercise" [comparison]="comparison" [splitControlSubject]="splitControlSubject"></jhi-plagiarism-split-view>
+        <jhi-plagiarism-split-view
+            [exercise]="exercise"
+            [comparison]="comparison"
+            [splitControlSubject]="splitControlSubject"
+            [studentLogin]="studentLogin"
+        ></jhi-plagiarism-split-view>
     </div>
 
     <p>{{ 'artemisApp.plagiarism.cases.yourStatement' | artemisTranslate }}</p>

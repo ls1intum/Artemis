@@ -66,6 +66,16 @@ You can achieve this e.g. by using a ``my.cnf`` file in the location ``/etc``.
 Make sure the configuration file is used by MySQL when you start the server.
 You can find more information on `<https://dev.mysql.com/doc/refman/8.0/en/option-files.html>`__
 
+Set empty root password for MySQL 8
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If you have problems connecting to the MySQL 8 database using an empty root password, you can try the following command to reset the root password to an empty password:
+
+.. code::
+
+    mysql -u root --execute "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY ''";
+
+Note: this should only be used in a development environment. The root password for a production environment should never be empty.
+
 Server Setup
 ------------
 

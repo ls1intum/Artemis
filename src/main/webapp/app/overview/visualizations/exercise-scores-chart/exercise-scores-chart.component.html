@@ -11,15 +11,15 @@
             </li>
             <li *ngFor="let type of typeSet">
                 <label>
-                    <input class="ms-2" (change)="toggleExerciseType(type)" [checked]="chartFilter.get(type.toLowerCase().replace('_', '-'))" type="checkbox" />
+                    <input class="ms-2" (change)="toggleType(type)" [checked]="chartFilter.get(convertToMapKey(type))" type="checkbox" />
                     <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
                 </label>
             </li>
         </ul>
     </div>
 </div>
-<div class="row chart-wrapper mx-auto">
-    <div #containerRef class="col-11">
+<div class="d-flex justify-content-center">
+    <div #containerRef class="chart-wrapper">
         <ngx-charts-line-chart
             [view]="[containerRef.offsetWidth, 350]"
             [results]="ngxData"
@@ -42,12 +42,14 @@
                 <span>{{ model.series }}: {{ Math.max(model.value - 1, 0) }} %</span>
             </ng-template>
             <ng-template #seriesTooltipTemplate let-model="model">
-                <h6>{{ model[0].name }}</h6>
-                <div *ngFor="let entry of model">{{ entry.series }}: {{ Math.max(entry.value - 1, 0) }}%</div>
-                <b>
-                    {{ 'artemisApp.exercise-scores-chart.exerciseType' | artemisTranslate }}
-                    {{ 'artemisApp.exercise-scores-chart.' + model[0].exerciseType.toLowerCase() | artemisTranslate }}</b
-                >
+                <ng-container *ngIf="model.length">
+                    <h6>{{ model[0].name }}</h6>
+                    <div *ngFor="let entry of model">{{ entry.series }}: {{ Math.max(entry.value - 1, 0) }}%</div>
+                    <b>
+                        {{ 'artemisApp.exercise-scores-chart.exerciseType' | artemisTranslate }}
+                        {{ 'artemisApp.exercise-scores-chart.' + model[0].exerciseType.toLowerCase() | artemisTranslate }}</b
+                    >
+                </ng-container>
             </ng-template>
         </ngx-charts-line-chart>
     </div>

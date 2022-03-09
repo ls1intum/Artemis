@@ -14,12 +14,12 @@
                 "course": {
                     "title": "Confirm Archive Course Operation",
                     "question": "Are you sure you want to archive the course <strong>{{ title }}</strong>?",
-                    "statement1": "The process will compress all student code repositories, file upload exercises, modelling exercises, and text exercises in the course and in all its exams."
+                    "statement1": "The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises in the course and in all its exams."
                 },
                 "exam": {
                     "title": "Confirm Archive Exam Operation",
                     "question": "Are you sure you want to archive the exam <strong>{{ title }}</strong>?",
-                    "statement1": "The process will compress all student code repositories, file upload exercises, modelling exercises, and text exercises in the exam."
+                    "statement1": "The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises in the exam."
                 },
                 "statement2": "<strong class='text-danger'>This process can take several hours depending on the number of students and programming exercises and will take up many server resources. Please start this process only once when the server load is low (e.g. early in the morning)</strong>",
                 "footerStatement": "You will receive a notification when the process is finished. Then you can download the archive as zip file on this page."

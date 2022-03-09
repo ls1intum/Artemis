@@ -1,10 +1,8 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class SourceTreeService {
-    constructor(private httpClient: HttpClient) {}
+    constructor() {}
 
     /**
      * Build source tree url.
@@ -13,12 +11,5 @@ export class SourceTreeService {
      */
     buildSourceTreeUrl(baseUrl: string, cloneUrl: string | undefined) {
         return cloneUrl ? 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=' + baseUrl : undefined;
-    }
-
-    /**
-     * Return password of the repository.
-     */
-    getRepositoryPassword(): Observable<Object> {
-        return this.httpClient.get(`${SERVER_API_URL}/api/account/password`);
     }
 }

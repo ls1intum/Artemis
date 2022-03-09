@@ -3,7 +3,6 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ArtemisTestModule } from '../../test.module';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -20,7 +19,6 @@ import { of } from 'rxjs';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 
@@ -44,12 +42,10 @@ describe('CourseOverviewExerciseListControls', () => {
                 CourseOverviewComponent,
                 CourseExercisesComponent,
                 MockDirective(OrionFilterDirective),
-                MockComponent(AlertComponent),
                 MockComponent(SidePanelComponent),
                 TranslatePipeMock,
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
-                MockComponent(AlertErrorComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

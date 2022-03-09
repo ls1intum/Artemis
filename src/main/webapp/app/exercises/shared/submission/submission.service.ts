@@ -226,29 +226,30 @@ export class SubmissionService {
             const secondCorrectionFeedback1 = submission!.results![1].feedbacks as Feedback[];
             secondCorrectionFeedback1!.forEach((secondFeedback) => {
                 firstResult.feedbacks!.forEach((firstFeedback) => {
-                    if (
-                        secondFeedback.copiedFeedbackId === undefined &&
-                        secondFeedback.type === firstFeedback.type &&
-                        secondFeedback.credits === firstFeedback.credits &&
-                        secondFeedback.detailText === firstFeedback.detailText &&
-                        secondFeedback.reference === firstFeedback.reference &&
-                        secondFeedback.text === firstFeedback.text
-                    ) {
+                    if (secondFeedback.copiedFeedbackId === undefined && this.areFeedbacksCopies(firstFeedback, secondFeedback)) {
                         secondFeedback.copiedFeedbackId = firstFeedback.id;
-                    } else if (
-                        secondFeedback.copiedFeedbackId === firstFeedback.id &&
-                        !(
-                            secondFeedback.type === firstFeedback.type &&
-                            secondFeedback.credits === firstFeedback.credits &&
-                            secondFeedback.detailText === firstFeedback.detailText &&
-                            secondFeedback.reference === firstFeedback.reference &&
-                            secondFeedback.text === firstFeedback.text
-                        )
-                    ) {
+                    } else if (secondFeedback.copiedFeedbackId === firstFeedback.id && !this.areFeedbacksCopies(firstFeedback, secondFeedback)) {
                         secondFeedback.copiedFeedbackId = undefined;
                     }
                 });
             });
         }
+    }
+
+    /**
+     * Checks if one of the two Feedback instances directly copied from the other and unmodified
+     * by comparing a set of fields for equality.
+     * @param firstFeedback
+     * @param secondFeedback
+     * @returns true if the compared set of fields match, false otherwise.
+     */
+    private areFeedbacksCopies(firstFeedback: Feedback, secondFeedback: Feedback) {
+        return (
+            secondFeedback.type === firstFeedback.type &&
+            secondFeedback.credits === firstFeedback.credits &&
+            secondFeedback.detailText === firstFeedback.detailText &&
+            secondFeedback.reference === firstFeedback.reference &&
+            secondFeedback.text === firstFeedback.text
+        );
     }
 }
