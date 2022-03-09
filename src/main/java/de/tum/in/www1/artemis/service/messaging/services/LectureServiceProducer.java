@@ -8,7 +8,6 @@ import javax.jms.Message;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
@@ -28,9 +27,8 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @EnableJms
 public class LectureServiceProducer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LectureServiceProducer.class);
+    private final Logger log = LoggerFactory.getLogger(LectureServiceProducer.class);
 
-    @Autowired
     private final JmsTemplate jmsTemplate;
 
     public LectureServiceProducer(JmsTemplate jmsTemplate) {
@@ -49,7 +47,7 @@ public class LectureServiceProducer {
             return new HashSet<>();
         }
         UserLectureDTO userLectureDTO = new UserLectureDTO(lectures, user);
-        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, userLectureDTO);
+        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, userLectureDTO);
         String correlationId = Integer.toString(userLectureDTO.hashCode());
         jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, userLectureDTO, message -> {
             message.setJMSCorrelationID(correlationId);
@@ -59,7 +57,7 @@ public class LectureServiceProducer {
         Set<Lecture> filteredLectures;
         try {
             filteredLectures = responseMessage.getBody(Set.class);
-            LOGGER.info("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE, filteredLectures);
+            log.debug("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE, filteredLectures);
         }
         catch (JMSException e) {
             throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
@@ -74,7 +72,7 @@ public class LectureServiceProducer {
      * @return true or false whether the exercise unit has been successfully removed
      */
     public boolean removeExerciseUnits(long exerciseId) {
-        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, exerciseId);
+        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, exerciseId);
         String correlationId = Long.toString(exerciseId);
         jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, exerciseId, message -> {
             message.setJMSCorrelationID(correlationId);
@@ -84,7 +82,7 @@ public class LectureServiceProducer {
         boolean result;
         try {
             result = responseMessage.getBody(Boolean.class);
-            LOGGER.info("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE, result);
+            log.debug("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE, result);
         }
         catch (JMSException e) {
             throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
@@ -103,7 +101,7 @@ public class LectureServiceProducer {
             return true;
         }
         Set<Lecture> lectures = course.getLectures();
-        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, lectures);
+        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, lectures);
         String correlationId = Integer.toString(lectures.hashCode());
         jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, lectures, message -> {
             message.setJMSCorrelationID(correlationId);
@@ -113,7 +111,7 @@ public class LectureServiceProducer {
         boolean result;
         try {
             result = responseMessage.getBody(Boolean.class);
-            LOGGER.info("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES_RESPONSE, result);
+            log.debug("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES_RESPONSE, result);
         }
         catch (JMSException e) {
             throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");

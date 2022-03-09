@@ -23,7 +23,8 @@ public class UserExerciseDTO implements Serializable {
     private User user;
 
     public UserExerciseDTO() {
-        /* Needed from the object mapper in order to construct the object */}
+        // Needed from the object mapper in order to construct the object
+    }
 
     public UserExerciseDTO(Set<Exercise> exercises, User user) {
         this.exercises = exercises;

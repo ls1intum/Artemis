@@ -115,7 +115,7 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         lectureServiceConsumer.filterExercisesAndRespond(message);
 
         verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
-        assertThat(setCaptor.getValue().size()).isEqualTo(0);
+        assertThat(setCaptor.getValue()).isEmpty();
     }
 
     @Test
@@ -127,7 +127,7 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         lectureServiceConsumer.filterExercisesAndRespond(message);
 
         verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
-        assertThat(setCaptor.getValue().size()).isEqualTo(0);
+        assertThat(setCaptor.getValue()).isEmpty();
     }
 
     @Test
@@ -140,7 +140,7 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         lectureServiceConsumer.filterExercisesAndRespond(message);
 
         verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
-        assertThat(setCaptor.getValue().size()).isEqualTo(0);
+        assertThat(setCaptor.getValue()).isEmpty();
     }
 
     @Test
@@ -153,7 +153,7 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
         lectureServiceConsumer.filterExercisesAndRespond(message);
 
         verify(jmsTemplate, atLeastOnce()).convertAndSend(eq(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE), setCaptor.capture(), any());
-        assertThat(setCaptor.getValue().size()).isEqualTo(0);
+        assertThat(setCaptor.getValue()).isEmpty();
     }
 
     @Test

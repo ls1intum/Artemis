@@ -25,15 +25,12 @@ import java.util.Set;
 @Component
 @EnableJms
 public class ArtemisConsumer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ArtemisConsumer.class);
+    private final Logger log = LoggerFactory.getLogger(ArtemisConsumer.class);
 
-    @Autowired
     private final JmsTemplate jmsTemplate;
 
-    @Autowired
     private LectureUnitService lectureUnitService;
 
-    @Autowired
     private LectureService lectureService;
 
     public ArtemisConsumer(JmsTemplate jmsTemplate,LectureUnitService lectureUnitService,LectureService lectureService) {
@@ -49,16 +46,17 @@ public class ArtemisConsumer {
      */
     @JmsListener(destination = MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS)
     public void filterLectureActiveAttachments(Message message) {
+        log.debug("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, message.toString());
         UserLectureDTO userLectureDTO;
         try {
             userLectureDTO = message.getBody(UserLectureDTO.class);
         } catch (JMSException e) {
             throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
         }
-        LOGGER.info("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, userLectureDTO);
+        log.debug("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, userLectureDTO);
         SecurityUtils.setAuthorizationObject();
         Set<Lecture> lectures = lectureService.filterActiveAttachments(userLectureDTO.getLectures(), userLectureDTO.getUser());
-        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE, lectures);
+        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE, lectures);
         jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE, lectures, msg -> {
             msg.setJMSCorrelationID(message.getJMSCorrelationID());
             return msg;
@@ -72,19 +70,17 @@ public class ArtemisConsumer {
      */
     @JmsListener(destination = MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS)
     public void sendRemoveExerciseUnitsResponse(Message message) {
-        LOGGER.info("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, message.toString());
-
+        log.debug("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, message.toString());
         Long exerciseId;
         try {
-            LOGGER.info("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, message);
             exerciseId = message.getBody(Long.class);
         } catch (JMSException e) {
             throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
         }
-        LOGGER.info("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, exerciseId);
+        log.debug("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, exerciseId);
         SecurityUtils.setAuthorizationObject();
         lectureUnitService.removeExerciseUnitsByExerciseId(exerciseId);
-        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE, true);
+        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE, true);
         jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE, true, msg -> {
             msg.setJMSCorrelationID(message.getJMSCorrelationID());
             return msg;
@@ -98,19 +94,19 @@ public class ArtemisConsumer {
      */
     @JmsListener(destination = MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES)
     public void deleteLectures(Message message) {
+        log.debug("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, message.toString());
         Set<Lecture> lectures;
         try {
             lectures = message.getBody(Set.class);
         } catch (JMSException e) {
             throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
         }
-        LOGGER.info("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, lectures);
         SecurityUtils.setAuthorizationObject();
         for (Lecture lecture : lectures) {
             lectureService.delete(lecture);
         }
 
-        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES_RESPONSE, true);
+        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES_RESPONSE, true);
         jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES_RESPONSE, true, msg -> {
             msg.setJMSCorrelationID(message.getJMSCorrelationID());
             return msg;

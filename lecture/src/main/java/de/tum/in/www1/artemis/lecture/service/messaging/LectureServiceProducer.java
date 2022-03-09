@@ -22,9 +22,8 @@ import java.util.Set;
 @Component
 @EnableJms
 public class LectureServiceProducer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LectureServiceProducer.class);
+    private final Logger log = LoggerFactory.getLogger(LectureServiceProducer.class);
 
-    @Autowired
     private final JmsTemplate jmsTemplate;
 
     public LectureServiceProducer(JmsTemplate jmsTemplate) {
@@ -35,19 +34,19 @@ public class LectureServiceProducer {
      * Send a message to Artemis get lecture exercises accessible for the given user and wait for response
      *
      * @param exercises the exercises
-     * @param user the user
+     * @param user      the user
      * @return the response from Artemis including set of exercises
      */
     public Set<Exercise> getLectureExercises(Set<Exercise> exercises, User user) {
         UserExerciseDTO userExerciseDTO = new UserExerciseDTO(exercises, user);
-        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, userExerciseDTO);
+        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, userExerciseDTO);
         String correlationId = Integer.toString(userExerciseDTO.hashCode());
         jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, userExerciseDTO, message -> {
             message.setJMSCorrelationID(correlationId);
             return message;
         });
-        Message responseMessage = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, "JMSCorrelationID='"+correlationId+"'");
-        LOGGER.info("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, userExerciseDTO);
+        Message responseMessage = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, "JMSCorrelationID='" + correlationId + "'");
+        log.debug("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, userExerciseDTO);
         try {
             return responseMessage.getBody(Set.class);
         } catch (JMSException e) {

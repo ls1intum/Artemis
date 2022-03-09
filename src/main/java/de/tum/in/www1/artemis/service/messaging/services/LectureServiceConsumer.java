@@ -9,7 +9,6 @@ import javax.jms.Message;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
@@ -30,9 +29,8 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @EnableJms
 public class LectureServiceConsumer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LectureServiceConsumer.class);
+    private final Logger log = LoggerFactory.getLogger(LectureServiceConsumer.class);
 
-    @Autowired
     private final JmsTemplate jmsTemplate;
 
     private ExerciseService exerciseService;
@@ -49,6 +47,7 @@ public class LectureServiceConsumer {
      */
     @JmsListener(destination = MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES)
     public void filterExercisesAndRespond(Message message) {
+        log.debug("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, message.toString());
         UserExerciseDTO userExerciseDTO;
         try {
             userExerciseDTO = message.getBody(UserExerciseDTO.class);
@@ -56,7 +55,6 @@ public class LectureServiceConsumer {
         catch (JMSException e) {
             throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
         }
-        LOGGER.info("Received message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, userExerciseDTO);
         SecurityUtils.setAuthorizationObject();
         Set<Exercise> result;
         if (userExerciseDTO == null || userExerciseDTO.getUser() == null || CollectionUtils.isEmpty(userExerciseDTO.getExercises())) {
@@ -68,7 +66,7 @@ public class LectureServiceConsumer {
             result = exerciseService.loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()),
                     userExerciseDTO.getUser());
         }
-        LOGGER.info("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, result);
+        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, result);
         jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, result, msg -> {
             msg.setJMSCorrelationID(message.getJMSCorrelationID());
             return msg;
