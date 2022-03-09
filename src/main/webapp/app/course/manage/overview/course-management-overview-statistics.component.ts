@@ -69,7 +69,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
         this.ngxData = [];
         if (this.amountOfStudentsInCourse > 0 && !!this.initialStats) {
             this.initialStats.forEach((value, index) => {
-                if (index < this.currentSpanToStartDate) {
+                if (index >= 4 - this.currentSpanToStartDate) {
                     set.push({ name: this.lineChartLabels[index], value: (value * 100) / this.amountOfStudentsInCourse, absoluteValue: value });
                 }
             });

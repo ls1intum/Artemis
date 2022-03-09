@@ -67,4 +67,44 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         expect(component.ngxData[0].series[2].value).toBe(0);
         expect(component.ngxData[0].series[3].value).toBe(0);
     });
+
+    it('should show lettering if course did not start yet', () => {
+        component.course = { startDate: dayjs().add(1, 'week') };
+        component.initialStats = [];
+
+        component.ngOnInit();
+
+        expect(component.startDateAlreadyPassed).toBe(false);
+    });
+
+    it('should show only 2 weeks if start date is 1 week ago', () => {
+        component.course = { startDate: dayjs().subtract(1, 'week') };
+        component.initialStats = initialStats;
+        component.amountOfStudentsInCourse = amountOfStudentsInCourse;
+
+        component.ngOnInit();
+
+        expect(component.ngxData[0].series).toHaveLength(2);
+        expect(component.ngxData[0].series[0].value).toBe(36);
+        expect(component.ngxData[0].series[1].value).toBe(92);
+    });
+
+    it('should adapt labels if end date is passed', () => {
+        component.course = { endDate: dayjs().subtract(1, 'week') };
+
+        component.ngOnInit();
+
+        expect(component.ngxData[0].series[3].name).toBe('overview.weekAgo');
+    });
+
+    it('should adapt if course phase is smaller than 4 weeks', () => {
+        component.course = { startDate: dayjs().subtract(2, 'weeks'), endDate: dayjs().subtract(1, 'weeks') };
+
+        component.ngOnInit();
+
+        expect(component.ngxData[0].series).toHaveLength(2);
+        expect(component.ngxData[0].series[0].value).toBe(36);
+        expect(component.ngxData[0].series[1].value).toBe(92);
+        expect(component.ngxData[0].series[1].name).toBe('overview.weekAgo');
+    });
 });
