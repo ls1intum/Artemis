@@ -21,6 +21,9 @@ import org.apache.maven.plugins.surefire.report.SurefireReportParser;
 import org.apache.maven.reporting.MavenReportException;
 import org.apache.maven.shared.invoker.*;
 import org.apache.maven.shared.utils.Os;
+import org.gradle.tooling.BuildLauncher;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.ProjectConnection;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -37,6 +40,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import net.sourceforge.plantuml.Log;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -56,6 +60,10 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     private final LocalRepository solutionRepo = new LocalRepository();
 
     private final LocalRepository auxRepo = new LocalRepository();
+
+    private final static String MAVEN_TEST_RESULTS_PATH = "target/surefire-reports";
+
+    private final static String GRADLE_TEST_RESULTS_PATH = "build/test-results/test";
 
     @BeforeAll
     public static void detectMavenHome() {
@@ -163,7 +171,14 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
-        int exitCode = invokeMaven();
+        int exitCode;
+        if (projectType != null && projectType.isGradle()) {
+            exitCode = invokeGradle();
+        }
+        else {
+            exitCode = invokeMaven();
+        }
+
         if (TestResult.SUCCESSFUL.equals(testResult)) {
             assertThat(exitCode).isEqualTo(0);
         }
@@ -171,7 +186,8 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
             assertThat(exitCode).isNotEqualTo(0);
         }
 
-        var testResults = readTestReports();
+        var testReportPath = projectType.isGradle() ? GRADLE_TEST_RESULTS_PATH : MAVEN_TEST_RESULTS_PATH;
+        var testResults = readTestReports(testReportPath);
         assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
     }
 
@@ -188,6 +204,21 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         return result.getExitCode();
     }
 
+    private int invokeGradle() {
+        try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepo.localRepoFile).useBuildDistribution().connect()) {
+            BuildLauncher launcher = connector.newBuild();
+            var x = String.join(", ", testRepo.localRepoFile.list());
+            launcher.forTasks("clean", "test");
+            launcher.run();
+        }
+        catch (Exception e) {
+            // printing the cause because this contains the relevant error message (and not a generic one from the connector)
+            Log.error("Error occurred while executing Gradle build: " + e.getCause());
+            return -1;
+        }
+        return 0;
+    }
+
     private void moveAssignmentSourcesOf(LocalRepository localRepository) throws IOException {
         Path sourceSrc = localRepository.localRepoFile.toPath().resolve("src");
         Path assignment = testRepo.localRepoFile.toPath().resolve("assignment");
@@ -195,8 +226,9 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         Files.move(sourceSrc, assignment.resolve("src"));
     }
 
-    private Map<TestResult, Integer> readTestReports() throws MavenReportException {
-        File reportFolder = testRepo.localRepoFile.toPath().resolve("target/surefire-reports").toFile();
+    private Map<TestResult, Integer> readTestReports(String testResultPath) throws MavenReportException {
+        // maven: "target/surefire-reports"
+        File reportFolder = testRepo.localRepoFile.toPath().resolve(testResultPath).toFile();
         assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles);
 
         // Note that the locale does not have any effect on parsing and is only used in some other methods

@@ -162,6 +162,9 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url "https://repo.gradle.org/gradle/libs-releases/"
+    }
 }
 
 dependencies {
@@ -286,6 +289,7 @@ dependencies {
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.1.1"
     testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
+    testImplementation 'org.gradle:gradle-tooling-api:7.3'
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M5"
     testImplementation "com.opencsv:opencsv:5.6"
 
