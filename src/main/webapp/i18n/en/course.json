@@ -171,7 +171,8 @@
                 "moreFeedbackTitle": "More Feedback Requests",
                 "averageStudentScoreTitle": "Average Student Score"
             },
-            "activeStudents": "Active students: {{ students }}"
+            "activeStudents": "Active students: {{ students }}",
+            "notStartedYet": "The course has not officially started yet"
         },
         "courseStatistics": {
             "statistics": "Statistics",

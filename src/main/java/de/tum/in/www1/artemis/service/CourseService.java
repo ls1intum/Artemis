@@ -461,8 +461,12 @@ public class CourseService {
         dto.setNumberOfTeachingAssistantsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName())));
         dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
         dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
+        var endDate = ZonedDateTime.now();
+        if (course.getEndDate() != null && ZonedDateTime.now().isAfter(course.getEndDate())) {
+            endDate = course.getEndDate();
+        }
 
-        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 17, ZonedDateTime.now()));
+        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 17, endDate));
         return dto;
     }
 

@@ -5,14 +5,14 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import * as shape from 'd3-shape';
-import dayjs from 'dayjs/esm';
+import { ActiveStudentsChartDirective } from 'app/shared/chart/active-students-chart.directive';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
 })
-export class CourseManagementOverviewStatisticsComponent implements OnInit, OnChanges {
+export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChartDirective implements OnInit, OnChanges {
     @Input()
     amountOfStudentsInCourse: number;
 
@@ -40,14 +40,16 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private translateService: TranslateService) {}
+    constructor(private translateService: TranslateService) {
+        super();
+    }
 
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
             this.updateTranslation();
         });
-
-        this.createChartLabels();
+        this.determineDisplayedPeriod(this.course, 4);
+        this.createChartLabels(this.currentOffsetToEndDate);
         this.createChartData();
     }
 
@@ -67,7 +69,9 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
         this.ngxData = [];
         if (this.amountOfStudentsInCourse > 0 && !!this.initialStats) {
             this.initialStats.forEach((value, index) => {
-                set.push({ name: this.lineChartLabels[index], value: (value * 100) / this.amountOfStudentsInCourse, absoluteValue: value });
+                if (index < this.currentSpanToStartDate) {
+                    set.push({ name: this.lineChartLabels[index], value: (value * 100) / this.amountOfStudentsInCourse, absoluteValue: value });
+                }
             });
         } else {
             this.lineChartLabels.forEach((label) => {
@@ -85,21 +89,25 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
         return value.toLocaleString() + ' %';
     }
 
-    private createChartLabels(): void {
-        let weekOffset = 0;
+    /*private determineDisplayedPeriod() {
         const now = dayjs();
-        // If the course end date is passed, the server returns the data until the end date. We have to adapt the labels accordingly
-        if (this.course.endDate && now.isAfter(this.course.endDate) && now.isoWeek() !== dayjs(this.course.endDate).isoWeek()) {
-            const endDateIsoWeek = dayjs(this.course.endDate).isoWeek();
-            if (endDateIsoWeek > now.isoWeek()) {
-                weekOffset = dayjs(this.course.endDate).isoWeeksInYear() - endDateIsoWeek + now.isoWeek();
-            } else {
-                weekOffset = now.isoWeek() - endDateIsoWeek;
+        if (this.course.startDate) {
+            if (now.isBefore(this.course.startDate)) {
+                this.startDateAlreadyPassed = false;
+            } else if (determineDifferenceBetweenIsoWeeks(dayjs(this.course.startDate), now) < 3) {
+                this.displayedTimeSpan = determineDifferenceBetweenIsoWeeks(dayjs(this.course.startDate), now) + 1;
             }
+        } else if (this.course.endDate && now.isAfter(this.course.endDate) && determineDifferenceBetweenIsoWeeks(dayjs(this.course.endDate), now) > 0) {
+            this.weekOffset = determineDifferenceBetweenIsoWeeks(dayjs(this.course.endDate), now);
         }
-        for (let i = 0; i < 4; i++) {
+
+        this.createChartLabels(this.weekOffset);
+    }*/
+
+    private createChartLabels(weekOffset: number): void {
+        for (let i = 0; i < this.currentSpanToStartDate; i++) {
             let translatePath: string;
-            const week = 3 - i + weekOffset;
+            const week = Math.min(this.currentSpanToStartDate - 1, 3) - i + weekOffset;
             switch (week) {
                 case 0: {
                     translatePath = 'overview.currentWeek';
@@ -122,7 +130,7 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
      * @private
      */
     private updateTranslation(): void {
-        this.createChartLabels();
+        this.createChartLabels(this.currentOffsetToEndDate);
         this.createChartData();
     }
 }

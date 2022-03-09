@@ -8,13 +8,14 @@ import { Course } from 'app/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import * as shape from 'd3-shape';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ActiveStudentsChartDirective } from 'app/shared/chart/active-students-chart.directive';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
 })
-export class CourseDetailLineChartComponent implements OnChanges {
+export class CourseDetailLineChartComponent extends ActiveStudentsChartDirective implements OnChanges {
     @Input()
     course: Course;
     @Input()
@@ -26,7 +27,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
 
     LEFT = false;
     RIGHT = true;
-    displayedNumberOfWeeks = 17;
+    readonly displayedNumberOfWeeks = 17;
     showsCurrentWeek = true;
 
     // Chart related
@@ -64,13 +65,17 @@ export class CourseDetailLineChartComponent implements OnChanges {
     curve: any = shape.curveMonotoneX;
     average = { name: 'Average', value: 0 };
     showAverage = true;
+    startDateDisplayed = false;
+    currentSpanSize: number;
 
     // Icons
     faSpinner = faSpinner;
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(private service: CourseManagementService, private translateService: TranslateService) {}
+    constructor(private service: CourseManagementService, private translateService: TranslateService) {
+        super();
+    }
 
     ngOnChanges() {
         this.loading = true;
@@ -80,6 +85,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
             return;
         }
         this.initialStatsReceived = true;
+        this.determineDisplayedPeriod(this.course, this.displayedNumberOfWeeks);
         this.createLabels();
         this.processDataAndCreateChart(this.initialStats);
         this.data = this.dataCopy;
@@ -103,6 +109,9 @@ export class CourseDetailLineChartComponent implements OnChanges {
     private processDataAndCreateChart(array: number[]) {
         if (this.numberOfStudentsInCourse > 0) {
             const allValues = [];
+            if (this.currentSpanSize < 17) {
+                array = array.slice(this.displayedNumberOfWeeks - this.currentSpanSize);
+            }
             for (let i = 0; i < array.length; i++) {
                 allValues.push(roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course));
                 this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
@@ -121,13 +130,18 @@ export class CourseDetailLineChartComponent implements OnChanges {
     }
 
     private createLabels() {
+        this.dataCopy[0].series = [{}];
+        this.absoluteSeries = [{}];
         const prefix = this.translateService.instant('calendar_week');
-        const startDate = dayjs().subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
-        const endDate = this.currentPeriod !== 0 ? dayjs().subtract(this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : dayjs();
+        const endDate = this.currentPeriod !== 0 ? dayjs().subtract(this.currentOffsetToEndDate + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : dayjs();
+        const remainingWeeksTillStartDate = this.course.startDate ? this.determineDifferenceBetweenIsoWeeks(this.course.startDate, endDate) + 1 : this.displayedNumberOfWeeks;
+        this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks);
+        const startDate = dayjs().subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
+        this.startDateDisplayed = this.course.startDate ? remainingWeeksTillStartDate <= this.displayedNumberOfWeeks : false;
         let currentWeek;
-        for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
+        for (let i = 0; i < this.currentSpanSize; i++) {
             currentWeek = dayjs()
-                .subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
+                .subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
             this.dataCopy[0].series[i] = {};
