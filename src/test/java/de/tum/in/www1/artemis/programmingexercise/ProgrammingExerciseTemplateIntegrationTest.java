@@ -172,7 +172,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
         moveAssignmentSourcesOf(repository);
         int exitCode;
-        if (projectType != null && projectType.isGradle()) {
+        if (projectType.isGradle()) {
             exitCode = invokeGradle();
         }
         else {
@@ -227,7 +227,6 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     }
 
     private Map<TestResult, Integer> readTestReports(String testResultPath) throws MavenReportException {
-        // maven: "target/surefire-reports"
         File reportFolder = testRepo.localRepoFile.toPath().resolve(testResultPath).toFile();
         assertThat(reportFolder).as("test reports generated").matches(SurefireReportParser::hasReportFiles);
 
