@@ -1,20 +1,43 @@
-import { Injectable } from '@angular/core';
+import { ApplicationRef, Inject, Injectable, InjectionToken } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
-import { tap, throttleTime } from 'rxjs/operators';
+import { concat, interval, Observable, of } from 'rxjs';
+import { catchError, first, tap, timeout } from 'rxjs/operators';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { SwUpdate } from '@angular/service-worker';
+import { Alert, AlertService, AlertType } from 'app/core/util/alert.service';
+
+export const WINDOW_INJECTOR_TOKEN = new InjectionToken<Window>('Window');
 
 @Injectable()
 export class ArtemisVersionInterceptor implements HttpInterceptor {
-    private showAlert = new Subject<void>();
+    // The currently displayed alert
+    private alert: Alert;
+    // Indicates whether we ever saw an outdated state since last reload
+    private hasSeenOutdatedInThisSession = false;
 
-    constructor(alertService: AlertService, private serverDateService: ArtemisServerDateService) {
-        this.showAlert.pipe(throttleTime(10000)).subscribe(() => {
-            // show the outdated alert for 30s so users update by reloading the browser, only show this every 10s
-            alertService.addAlert({ type: AlertType.INFO, message: 'artemisApp.outdatedAlert', timeout: 30000 });
-        });
+    constructor(
+        private appRef: ApplicationRef,
+        private updates: SwUpdate,
+        private serverDateService: ArtemisServerDateService,
+        private alertService: AlertService,
+        @Inject(WINDOW_INJECTOR_TOKEN) private injectedWindow: Window,
+    ) {
+        // Allow the app to stabilize first, before starting
+        // polling for updates with `interval()`.
+        const appIsStableOrTimeout = appRef.isStable.pipe(
+            first((isStable) => isStable === true),
+            // Sometimes, the application does not become stable apparently.
+            // This is a workaround. Using the same timeout as the service worker as well.
+            // TODO: Look for the cause why the app doesn't become stable
+            timeout(30000),
+            // Ignore error thrown by timeout
+            catchError(() => of(true)),
+        );
+        const updateInterval = interval(60 * 1000); // every 60s
+        const updateIntervalOnceAppIsStable$ = concat(appIsStableOrTimeout, updateInterval);
+
+        updateIntervalOnceAppIsStable$.subscribe(() => this.checkForUpdates());
     }
 
     intercept(request: HttpRequest<any>, nextHandler: HttpHandler): Observable<HttpEvent<any>> {
@@ -24,8 +47,10 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                     const isTranslationStringsRequest = response.url?.includes('/i18n/');
                     const serverVersion = response.headers.get(ARTEMIS_VERSION_HEADER);
                     if (VERSION && serverVersion && VERSION !== serverVersion && !isTranslationStringsRequest) {
-                        this.showAlert.next();
+                        // Version mismatch detected from HTTP headers. Let SW look for updates!
+                        this.checkForUpdates();
                     }
+
                     // only invoke the time call if the call was not already the time call to prevent recursion here
                     if (!request.url.includes('time')) {
                         this.serverDateService.updateTime();
@@ -33,5 +58,46 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                 }
             }),
         );
+    }
+
+    /**
+     * Tells the service worker to check for updates and display an update alert if an update is available.
+     * This is either exactly if
+     * - the service worker detects an update right now, or
+     * - the first condition was ever true since the app loaded (aka last reload)
+     *
+     * We need to have this second option because the "checkForUpdate()" call sometimes starts to return false after a while, even though we didn't reload / update yet.
+     *
+     * @private
+     */
+    private checkForUpdates() {
+        // first update the service worker
+        this.updates.checkForUpdate().then((updateAvailable: boolean) => {
+            if (this.hasSeenOutdatedInThisSession || updateAvailable) {
+                this.hasSeenOutdatedInThisSession = true;
+
+                // If we haven't shown an alert yet or the alert has been closed: Spawn new alert
+                if (!this.alert?.isOpen) {
+                    this.alert = this.alertService.addAlert({
+                        type: AlertType.INFO,
+                        message: 'artemisApp.outdatedAlert',
+                        timeout: 0,
+                        action: {
+                            label: 'artemisApp.outdatedAction',
+                            callback: () =>
+                                // Apply the update
+                                this.updates
+                                    .activateUpdate()
+                                    // Ignore any error. Any error happening here doesn't matter
+                                    // If we reach this point, we want to load an update
+                                    // so in any case, we should reload
+                                    .catch(() => {})
+                                    // Reload the page with the new version
+                                    .then(() => this.injectedWindow.location.reload()),
+                        },
+                    });
+                }
+            }
+        });
     }
 }

@@ -5,6 +5,7 @@
             "disconnected": "You are not connected to the Artemis Server. Please check your internet connection.",
             "reconnected": "You were reconnected to the Artemis Server."
         },
-        "outdatedAlert": "<b>Your Artemis version is outdated:</b> Please reload the browser page to prevent incompatibilities."
+        "outdatedAlert": "<b>Your Artemis version is outdated.</b> Please update to the latest version.",
+        "outdatedAction": "Update"
     }
 }

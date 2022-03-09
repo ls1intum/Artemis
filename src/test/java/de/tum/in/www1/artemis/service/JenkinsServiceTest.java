@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.StreamUtils;
+
+import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.ContinuousIntegrationTestService;
@@ -194,6 +197,30 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
             programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise);
         });
         assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    public void testRecreateBuildPlanDeletedFolder() throws Exception {
+        var programmingExercise = continuousIntegrationTestService.programmingExercise;
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        database.addTestCasesToProgrammingExercise(programmingExercise);
+
+        final String templateJobName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
+        final String solutionJobName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
+
+        jenkinsRequestMockProvider.mockCreateProjectForExercise(programmingExercise, false);
+        jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), templateJobName, null, false);
+        jenkinsRequestMockProvider.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateJobName, false);
+        jenkinsRequestMockProvider.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionJobName, false);
+        jenkinsRequestMockProvider.mockCreateBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), false);
+        jenkinsRequestMockProvider.mockCreateBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), false);
+        when(jenkinsServer.getJob(programmingExercise.getProjectKey())).thenReturn(null).thenReturn(new JobWithDetails());
+
+        continuousIntegrationService.recreateBuildPlansForExercise(programmingExercise);
+
+        verify(jenkinsServer, times(1)).createFolder(eq(null), eq(programmingExercise.getProjectKey()), any());
     }
 
     @Test

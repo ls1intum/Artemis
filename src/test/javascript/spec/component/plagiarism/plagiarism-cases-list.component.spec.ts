@@ -8,12 +8,9 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { HttpResponse } from '@angular/common/http';
 
 describe('Plagiarism Cases List Component', () => {
@@ -36,13 +33,6 @@ describe('Plagiarism Cases List Component', () => {
         similarity: 0.5,
         status: PlagiarismStatus.NONE,
     } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
-
-    const textExercise = { id: 234, type: ExerciseType.TEXT } as TextExercise;
-
-    const plagiarismCase = {
-        exercise: textExercise,
-        comparisons: [plagiarismComparison],
-    } as PlagiarismCase;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -67,33 +57,33 @@ describe('Plagiarism Cases List Component', () => {
     });
 
     it('should have instructor statement for student A', () => {
-        comp.plagiarismCase = plagiarismCase;
-        comp.plagiarismCase.comparisons[0].instructorStatementA = instructorStatementA;
+        comp.plagiarismComparison = plagiarismComparison;
+        comp.plagiarismComparison.instructorStatementA = instructorStatementA;
 
-        expect(comp.hasInstructorStatementA(0)).toBe(true);
+        expect(comp.hasInstructorStatementA()).toBe(true);
     });
 
     it('should not have instructor statement for student A', () => {
-        comp.plagiarismCase = plagiarismCase;
-        comp.plagiarismCase.comparisons[0].instructorStatementA = undefined;
-        comp.plagiarismCase.comparisons[0].instructorStatementB = undefined;
+        comp.plagiarismComparison = plagiarismComparison;
+        comp.plagiarismComparison.instructorStatementA = undefined;
+        comp.plagiarismComparison.instructorStatementB = undefined;
 
-        expect(comp.hasInstructorStatementA(0)).toBe(false);
+        expect(comp.hasInstructorStatementA()).toBe(false);
     });
 
     it('should have instructor statement for student B', () => {
-        comp.plagiarismCase = plagiarismCase;
-        comp.plagiarismCase.comparisons[0].instructorStatementB = instructorStatementB;
+        comp.plagiarismComparison = plagiarismComparison;
+        comp.plagiarismComparison.instructorStatementB = instructorStatementB;
 
-        expect(comp.hasInstructorStatementB(0)).toBe(true);
+        expect(comp.hasInstructorStatementB()).toBe(true);
     });
 
     it('should not have instructor statement for student B', () => {
-        comp.plagiarismCase = plagiarismCase;
-        comp.plagiarismCase.comparisons[0].instructorStatementA = undefined;
-        comp.plagiarismCase.comparisons[0].instructorStatementB = undefined;
+        comp.plagiarismComparison = plagiarismComparison;
+        comp.plagiarismComparison.instructorStatementA = undefined;
+        comp.plagiarismComparison.instructorStatementB = undefined;
 
-        expect(comp.hasInstructorStatementB(0)).toBe(false);
+        expect(comp.hasInstructorStatementB()).toBe(false);
     });
 
     it('should hide instructor statement form', () => {
@@ -120,66 +110,66 @@ describe('Plagiarism Cases List Component', () => {
     });
 
     it('should save instructor statement for student a', () => {
-        comp.plagiarismCase = plagiarismCase;
+        comp.plagiarismComparison = plagiarismComparison;
         comp.instructorStatement = 'instructor statement text a';
         saveInstructorStatementStub.mockReturnValue(of({ body: instructorStatementA }));
         comp.courseId = 1;
 
-        comp.saveInstructorStatement('A', 0);
+        comp.saveInstructorStatement('A');
 
-        expect(comp.plagiarismCase.comparisons[0].instructorStatementA).toBe(instructorStatementA);
+        expect(comp.plagiarismComparison.instructorStatementA).toBe(instructorStatementA);
         expect(saveInstructorStatementStub).toHaveBeenCalledWith(1, plagiarismComparison.id, studentLoginA, 'instructor statement text a');
     });
 
     it('should save instructor statement for student b', () => {
-        comp.plagiarismCase = plagiarismCase;
+        comp.plagiarismComparison = plagiarismComparison;
         comp.instructorStatement = 'instructor statement text b';
         saveInstructorStatementStub.mockReturnValue(of({ body: instructorStatementB }));
         comp.courseId = 1;
 
-        comp.saveInstructorStatement('B', 0);
+        comp.saveInstructorStatement('B');
 
-        expect(comp.plagiarismCase.comparisons[0].instructorStatementB).toBe(instructorStatementB);
+        expect(comp.plagiarismComparison.instructorStatementB).toBe(instructorStatementB);
         expect(saveInstructorStatementStub).toHaveBeenCalledWith(1, plagiarismComparison.id, studentLoginB, 'instructor statement text b');
     });
 
     it('should update status to confirmed for student a', () => {
-        comp.plagiarismCase = plagiarismCase;
+        comp.plagiarismComparison = plagiarismComparison;
         comp.courseId = 1;
 
-        comp.updateStatus(true, 0, studentLoginA);
+        comp.updateStatus(true, studentLoginA);
 
-        expect(comp.plagiarismCase.comparisons[0].statusA).toBe(PlagiarismStatus.CONFIRMED);
+        expect(comp.plagiarismComparison.statusA).toBe(PlagiarismStatus.CONFIRMED);
         expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, true, studentLoginA);
     });
 
     it('should update status to denied for student a', () => {
-        comp.plagiarismCase = plagiarismCase;
+        comp.plagiarismComparison = plagiarismComparison;
         comp.courseId = 1;
 
-        comp.updateStatus(false, 0, studentLoginA);
+        comp.updateStatus(false, studentLoginA);
 
-        expect(comp.plagiarismCase.comparisons[0].statusA).toBe(PlagiarismStatus.DENIED);
+        expect(comp.plagiarismComparison.statusA).toBe(PlagiarismStatus.DENIED);
         expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, false, studentLoginA);
     });
 
     it('should update status to confirmed for student b', () => {
-        comp.plagiarismCase = plagiarismCase;
+        comp.plagiarismComparison = plagiarismComparison;
         comp.courseId = 1;
 
-        comp.updateStatus(true, 0, studentLoginB);
+        comp.updateStatus(true, studentLoginB);
 
-        expect(comp.plagiarismCase.comparisons[0].statusB).toBe(PlagiarismStatus.CONFIRMED);
+        expect(comp.plagiarismComparison.statusB).toBe(PlagiarismStatus.CONFIRMED);
         expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, true, studentLoginB);
     });
 
     it('should update status to denied for student b', () => {
-        comp.plagiarismCase = plagiarismCase;
+        comp.plagiarismComparison = plagiarismComparison;
         comp.courseId = 1;
 
-        comp.updateStatus(false, 0, studentLoginB);
+        comp.updateStatus(false, studentLoginB);
 
-        expect(comp.plagiarismCase.comparisons[0].statusB).toBe(PlagiarismStatus.DENIED);
+        expect(comp.plagiarismComparison.statusB).toBe(PlagiarismStatus.DENIED);
         expect(updatePlagiarismComparisonFinalStatusStub).toHaveBeenCalledWith(1, plagiarismComparison.id, false, studentLoginB);
     });
 });

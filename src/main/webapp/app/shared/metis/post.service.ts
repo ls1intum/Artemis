@@ -38,6 +38,13 @@ export class PostService extends PostingService<Post> {
      */
     getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<EntityArrayResponseType> {
         let params = new HttpParams();
+
+        if (postContextFilter.postSortCriterion) {
+            params = params.set('postSortCriterion', postContextFilter.postSortCriterion.toString());
+        }
+        if (postContextFilter.sortingOrder) {
+            params = params.set('sortingOrder', postContextFilter.sortingOrder.toString());
+        }
         if (postContextFilter.courseWideContext) {
             params = params.set('courseWideContext', postContextFilter.courseWideContext.toString());
         }
@@ -46,6 +53,23 @@ export class PostService extends PostingService<Post> {
         }
         if (postContextFilter.exerciseId) {
             params = params.set('exerciseId', postContextFilter.exerciseId.toString());
+        }
+        if (postContextFilter.searchText) {
+            params = params.set('searchText', postContextFilter.searchText.toString());
+        }
+        if (postContextFilter.filterToUnresolved) {
+            params = params.set('filterToUnresolved', postContextFilter.filterToUnresolved);
+        }
+        if (postContextFilter.filterToOwn) {
+            params = params.set('filterToOwn', postContextFilter.filterToOwn);
+        }
+        if (postContextFilter.filterToAnsweredOrReacted) {
+            params = params.set('filterToAnsweredOrReacted', postContextFilter.filterToAnsweredOrReacted);
+        }
+        if (!!postContextFilter.pagingEnabled) {
+            params = params.set('pagingEnabled', postContextFilter.pagingEnabled);
+            params = params.set('page', postContextFilter.page!);
+            params = params.set('size', postContextFilter.pageSize!);
         }
         return this.http
             .get<Post[]>(`${this.resourceUrl}${courseId}/posts`, {

@@ -111,7 +111,7 @@ public class ProgrammingExerciseTestCaseService {
         }
 
         if (!isTestCaseWeightSumValid(programmingExercise, existingTestCases)) {
-            throw new BadRequestAlertException("The sum of all test case weights is 0 or below.", "TestCaseGrading", "weightSumError");
+            throw new BadRequestAlertException("The sum of all test case weights is 0 or below.", "TestCaseGrading", "weightSumError", true);
         }
 
         testCaseRepository.saveAll(updatedTests);
@@ -146,11 +146,11 @@ public class ProgrammingExerciseTestCaseService {
     private static void validateTestCase(ProgrammingExerciseTestCase testCase) {
         if (testCase.getWeight() == null || testCase.getBonusMultiplier() == null || testCase.getBonusPoints() == null || testCase.getVisibility() == null) {
             throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings that are null.",
-                    "TestCaseGrading", "settingNull", Map.of("testCase", testCase.getTestName()));
+                    "TestCaseGrading", "settingNull", Map.of("testCase", testCase.getTestName(), "skipAlert", true));
         }
         if (testCase.getWeight() < 0 || testCase.getBonusMultiplier() < 0 || testCase.getBonusPoints() < 0) {
-            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings set to negative numbers.",
-                    "TestCaseGrading", "settingNegative", Map.of("testCase", testCase.getTestName()));
+            throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Test case " + testCase.getTestName() + " must not have settings set to negative values.",
+                    "TestCaseGrading", "settingNegative", Map.of("testCase", testCase.getTestName(), "skipAlert", true));
         }
     }
 
