@@ -33,10 +33,10 @@ public class ArtemisConsumer {
 
     private LectureService lectureService;
 
-    public ArtemisConsumer(JmsTemplate jmsTemplate,LectureUnitService lectureUnitService,LectureService lectureService) {
+    public ArtemisConsumer(JmsTemplate jmsTemplate, LectureUnitService lectureUnitService, LectureService lectureService) {
         this.jmsTemplate = jmsTemplate;
         this.lectureUnitService = lectureUnitService;
-        this.lectureService  = lectureService;
+        this.lectureService = lectureService;
     }
 
     /**
