@@ -43,7 +43,7 @@
     "calendar_week": "KW",
     "overview": {
         "weeksAgo": "Vor {{ amount }} Wochen",
-        "weekAgo": "Vor 1 Woce",
+        "weekAgo": "Vor 1 Woche",
         "currentWeek": "Aktuelle Woche"
     },
     "weekdays": {

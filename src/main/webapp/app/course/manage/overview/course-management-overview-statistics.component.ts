@@ -89,21 +89,6 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
         return value.toLocaleString() + ' %';
     }
 
-    /*private determineDisplayedPeriod() {
-        const now = dayjs();
-        if (this.course.startDate) {
-            if (now.isBefore(this.course.startDate)) {
-                this.startDateAlreadyPassed = false;
-            } else if (determineDifferenceBetweenIsoWeeks(dayjs(this.course.startDate), now) < 3) {
-                this.displayedTimeSpan = determineDifferenceBetweenIsoWeeks(dayjs(this.course.startDate), now) + 1;
-            }
-        } else if (this.course.endDate && now.isAfter(this.course.endDate) && determineDifferenceBetweenIsoWeeks(dayjs(this.course.endDate), now) > 0) {
-            this.weekOffset = determineDifferenceBetweenIsoWeeks(dayjs(this.course.endDate), now);
-        }
-
-        this.createChartLabels(this.weekOffset);
-    }*/
-
     private createChartLabels(weekOffset: number): void {
         for (let i = 0; i < this.currentSpanToStartDate; i++) {
             let translatePath: string;

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -7,6 +7,8 @@ import { LineChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import dayjs from 'dayjs/esm';
 
 describe('CourseManagementOverviewStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementOverviewStatisticsComponent>;
@@ -14,6 +16,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
     const amountOfStudentsInCourse = 25;
     const initialStats = [0, 11, 9, 23];
+    const course = { startDate: dayjs().subtract(5, 'weeks'), endDate: dayjs().add(5, 'weeks') };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -25,12 +28,13 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(HelpIconComponent),
             ],
-            providers: [MockProvider(TranslateService)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseManagementOverviewStatisticsComponent);
                 component = fixture.componentInstance;
+                component.course = course;
             });
     });
 
