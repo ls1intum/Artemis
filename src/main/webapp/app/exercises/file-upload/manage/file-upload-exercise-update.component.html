@@ -61,7 +61,7 @@
             ></jhi-date-time-picker>
             <span *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
         </div>
-        <div class="form-group" *ngIf="isExamMode">
+        <div class="form-group">
             <label class="form-control-label">{{
                 'artemisApp.exercise.includedInOverallScore' + (fileUploadExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
             }}</label>
