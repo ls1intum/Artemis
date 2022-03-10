@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'de.tum.in.ase:artemis-java-test-sandbox:1.8.0'
+    implementation 'de.tum.in.ase:artemis-java-test-sandbox:1.9.0'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
 }
 
@@ -67,12 +67,30 @@ sourceSets {
     }
 }
 
-// do not change this
-def filesToNotExist = ["/ch/qos/logback/","/com/intellij/","/com/sun/","/de/tum/in/test/api/","/java/","/javax/","/jdk/","/net/jqwik/","/org/assertj/","/org/apache/","/org/eclipse/","/org/gradle/","/org/jacoco/","/org/json/","/org/junit/","/org/opentest4j/","/sun/","/worker/org/gradle/"]
+def forbiddenPackageFolders = [ //(2)
+                                "$studentOutputDir/ch/qos/logback/",
+                                "$studentOutputDir/com/intellij/",
+                                "$studentOutputDir/com/sun/",
+                                "$studentOutputDir/de/tum/in/test/api/",
+                                "$studentOutputDir/java/",
+                                "$studentOutputDir/javax/",
+                                "$studentOutputDir/jdk/",
+                                "$studentOutputDir/net/jqwik/",
+                                "$studentOutputDir/org/assertj/",
+                                "$studentOutputDir/org/apache/",
+                                "$studentOutputDir/org/eclipse/",
+                                "$studentOutputDir/org/gradle/",
+                                "$studentOutputDir/org/jacoco/",
+                                "$studentOutputDir/org/json/",
+                                "$studentOutputDir/org/junit/",
+                                "$studentOutputDir/org/opentest4j/",
+                                "$studentOutputDir/sun/",
+                                "$studentOutputDir/worker/org/gradle/"
+]
 test {
-    doFirst {
-        for (String fileName in filesToNotExist) {
-            assert !file("$studentOutputDir/$fileName").exists(): "$fileName must not exist within the submission."
+    doFirst { //(1)
+        for (String packageFolder in forbiddenPackageFolders) {
+            assert !file(packageFolder).exists(): "$packageFolder must not exist within the submission."
         }
     }
     useJUnitPlatform()
