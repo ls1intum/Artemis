@@ -1129,7 +1129,12 @@ public class CourseResource {
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 17, ZonedDateTime.now()));
+        var spanEndDate = now().plusWeeks(17 * periodIndex);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var returnedSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, ZonedDateTime.now());
+        // We omit data concerning the time before the start date
+        return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
     }
 
     /**

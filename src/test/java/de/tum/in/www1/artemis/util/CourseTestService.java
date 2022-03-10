@@ -1621,6 +1621,7 @@ public class CourseTestService {
         assertThat(courseDtos.size()).isEqualTo(1);
         var dto = courseDtos.get(0);
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+        assertThat(dto.getActiveStudents().size()).as("course was only active for 3 days").isEqualTo(1);
 
         // Expect our three created exercises
         var exerciseDTOS = dto.getExerciseDTOS();
