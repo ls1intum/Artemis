@@ -1868,7 +1868,7 @@ public class CourseTestService {
         var activeStudents = request.get("/api/courses/" + course.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
-        assertThat(activeStudents.length).isEqualTo(17);
+        assertThat(activeStudents.length).isEqualTo(3);
     }
 
     // Test

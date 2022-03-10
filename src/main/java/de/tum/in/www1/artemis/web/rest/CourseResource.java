@@ -1132,7 +1132,7 @@ public class CourseResource {
         var spanEndDate = now().plusWeeks(17 * periodIndex);
         var course = courseRepository.findByIdElseThrow(courseId);
         var returnedSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
-        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, ZonedDateTime.now());
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, now());
         // We omit data concerning the time before the start date
         return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
     }
