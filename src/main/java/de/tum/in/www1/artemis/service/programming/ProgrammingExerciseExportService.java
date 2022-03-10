@@ -251,6 +251,19 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
+     * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
+     *
+     * The repository download directory is used as the output directory and is destroyed after 5 minutes.
+     * @param exerciseId The id of the programming exercise that has the repository
+     * @param exportErrors List of failures that occurred during the export
+     * @return a zipped file
+     */
+    public Optional<File> exportSolutionRepositoryForExercise(long exerciseId, List<String> exportErrors) {
+        Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
+        return exportInstructorRepositoryForExercise(exerciseId, RepositoryType.SOLUTION, outputDir, exportErrors);
+    }
+
+    /**
      * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
@@ -435,9 +448,10 @@ public class ProgrammingExerciseExportService {
         Repository repository;
 
         // Checkout the repository
-        repository = gitService.getOrCheckoutRepository(repositoryUrl, repositoryDir, true);
-        gitService.resetToOriginHead(repository);
-        repository.close();
+        try (Repository repositoryToClose = gitService.getOrCheckoutRepository(repositoryUrl, repositoryDir, true)) {
+            repository = repositoryToClose; // Try-with-resources requires the variable to be declared inside try.
+            gitService.resetToOriginHead(repositoryToClose);
+        }
 
         // Zip it and return the path to the file
         return gitService.zipRepository(repository, zipFilename, repositoryDir);

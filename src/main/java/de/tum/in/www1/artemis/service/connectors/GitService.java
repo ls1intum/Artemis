@@ -1226,15 +1226,16 @@ public class GitService {
     }
 
     /**
-     * Zips the contents of a git repository.
+     * Zips the contents of a git repository with or without ".git" directory.
      *
      * @param repository    The repository
      * @param zipFilename   the name of the zipped file
      * @param repositoryDir path where the repo is located on disk
+     * @param excludeGitDir flag to determine to exclude ".git" directory from the resulting zip file
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepository(Repository repository, String zipFilename, String repositoryDir) throws IOException, UncheckedIOException {
+    public Path zipRepository(Repository repository, String zipFilename, String repositoryDir, boolean excludeGitDir) throws IOException, UncheckedIOException {
         // Strip slashes from name
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
@@ -1245,6 +1246,14 @@ public class GitService {
         Path zipFilePath = Paths.get(repositoryDir, zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(repositoryDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath());
+    }
+
+    /**
+     * Zips the contents of a git repository with ".git" directory.
+     * @see #zipRepository(Repository, String, String, boolean)
+     */
+    public Path zipRepository(Repository repository, String zipFilename, String repositoryDir) throws IOException, UncheckedIOException {
+        return zipRepository(repository, zipFilename, repositoryDir, false);
     }
 
     /**

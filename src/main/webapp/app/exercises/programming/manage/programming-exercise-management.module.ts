@@ -22,6 +22,7 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../shared/ac
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 
 @NgModule({
     imports: [
@@ -50,6 +51,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ProgrammingExerciseEditSelectedComponent,
         ProgrammingExerciseInstructorRepoDownloadComponent,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
+        ProgrammingExerciseExampleSolutionRepoDownloadComponent,
     ],
 })
 export class ArtemisProgrammingExerciseManagementModule {}
