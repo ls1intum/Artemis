@@ -34,12 +34,15 @@ import dayjs from 'dayjs/esm';
 export class MetisService implements OnDestroy {
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
+    private totalItems$: ReplaySubject<number> = new ReplaySubject<number>(1);
+
     private currentPostContextFilter: PostContextFilter = {};
     private user: User;
     private pageType: PageType;
     private course: Course;
     private courseId: number;
     private cachedPosts: Post[];
+    private cachedTotalItems: number;
     private subscriptionChannel?: string;
 
     constructor(
@@ -62,6 +65,10 @@ export class MetisService implements OnDestroy {
 
     get tags(): Observable<string[]> {
         return this.tags$.asObservable();
+    }
+
+    get totalItems(): Observable<number> {
+        return this.totalItems$.asObservable();
     }
 
     static getLinkForLecturePost(courseId: number, lectureId: number): RouteComponents {
@@ -163,13 +170,16 @@ export class MetisService implements OnDestroy {
                 // cache the fetched posts, that can be emitted on next call of this `getFilteredPosts`
                 // that does not require to send a request to actually fetch posts from the DB
                 this.cachedPosts = res.body!;
+                this.cachedTotalItems = Number(res.headers.get('X-Total-Count'));
                 this.posts$.next(res.body!);
+                this.totalItems$.next(Number(res.headers.get('X-Total-Count')));
                 this.createSubscriptionFromPostContextFilter();
             });
         } else {
             // if we do not require force update, e.g. because only the sorting criterion changed,
             // we can emit the previously cached posts
             this.posts$.next(this.cachedPosts);
+            this.totalItems$.next(this.cachedTotalItems);
         }
     }
 
@@ -429,8 +439,13 @@ export class MetisService implements OnDestroy {
                     break;
             }
             // emit updated version of cachedPosts to subscribing components
-            // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
-            this.getFilteredPosts(this.currentPostContextFilter, false);
+            if (this.currentPostContextFilter.pagingEnabled) {
+                // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. fetching a page of posts from the server
+                this.getFilteredPosts(this.currentPostContextFilter);
+            } else {
+                // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
+                this.getFilteredPosts(this.currentPostContextFilter, false);
+            }
         });
     }
 

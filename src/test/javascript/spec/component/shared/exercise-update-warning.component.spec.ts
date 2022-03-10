@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
-import { MockDirective, MockProvider, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgModel } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -57,6 +57,7 @@ describe('Exercise Update Warning Component Tests', () => {
 
     it('should trigger clear once', () => {
         const clearSpy = jest.spyOn(comp, 'clear');
+        const cancelledEmitSpy = jest.spyOn(comp.canceled, 'emit');
 
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-button');
         button.click();
@@ -64,6 +65,7 @@ describe('Exercise Update Warning Component Tests', () => {
         fixture.detectChanges();
 
         expect(clearSpy).toHaveBeenCalledTimes(1);
+        expect(cancelledEmitSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should toggle deleteFeedback', () => {
