@@ -1067,7 +1067,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        programmingExercise.setProjectType(ProjectType.MAVEN);
+        programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
