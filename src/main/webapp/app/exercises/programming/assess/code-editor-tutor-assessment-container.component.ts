@@ -228,6 +228,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.checkPermissions();
         this.handleFeedback();
         this.getComplaint();
+        this.calculateTotalScore();
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {

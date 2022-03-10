@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 export enum ScoreType {
     ABSOLUTE_SCORE = 'absoluteScore',
@@ -26,20 +28,15 @@ export class CourseScoreCalculationService {
     calculateTotalScores(courseExercises: Exercise[], course: Course): Map<string, number> {
         const scores = new Map<string, number>();
         let pointsAchievedByStudentInCourse = 0.0;
-        let maxPointsInCourse = 0;
-        let reachableMaxPointsInCourse = 0;
+        let maxPointsInCourse = 0; // the sum of all included exercises, whose due date is over or unset or who are automatically assessed and assessment is done
+        let reachableMaxPointsInCourse = 0; // the sum of all included and already assessed exercises
         let presentationScore = 0;
         for (const exercise of courseExercises) {
-            const isExerciseFinished = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
-            const isAssessmentOver = !exercise.assessmentDueDate || exercise.assessmentDueDate.isBefore(dayjs());
-            const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
-
-            if (isExerciseFinished && isExerciseIncluded) {
+            if (this.includeIntoScoreCalculation(exercise)) {
                 const maxPointsReachableInExercise = exercise.maxPoints!;
                 if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                     maxPointsInCourse += maxPointsReachableInExercise;
-                    // points are reachable if the exercise is released and the assessment is over --> It was possible for the student to get points
-                    if (isAssessmentOver) {
+                    if (this.isAssessmentDone(exercise)) {
                         reachableMaxPointsInCourse += maxPointsReachableInExercise;
                     }
                 }
@@ -164,5 +161,54 @@ export class CourseScoreCalculationService {
     private static convertDateForParticipationFromServer(participation: Participation): Participation {
         participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
         return participation;
+    }
+
+    /**
+     * Determines whether a given exercise will be included into course score calculation
+     *
+     * The requirement that has to be fulfilled for every exercise: It has to be included in score.
+     * The base case: An exercise that is not an automatically assessed programming exercise
+     *                  -> include in maxPointsInCourse after due date.
+     * Edge case 1: An automatically assessed programming exercise without test runs after the due date
+     *                  -> include in maxPointsInCourse directly after release because the student can achieve points immediately.
+     * Edge case 2: An automatically assessed programming exercise with test runs after the due date
+     *                  -> include in maxPointsInCourse after the final test run is over, not immediately after release because
+     *                      the test run after due date is important for the final course score (hidden tests).
+     * @param exercise the exercise whose involvement should be determined
+     * @private
+     */
+    private includeIntoScoreCalculation(exercise: Exercise): boolean {
+        const isExerciseIncluded = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
+        const isExerciseFinished = !this.isAssessedAutomatically(exercise) && (!exercise.dueDate || exercise.dueDate.isBefore(dayjs()));
+
+        return isExerciseIncluded && (isExerciseFinished || this.isAutomaticAssessmentDone(exercise));
+    }
+
+    /**
+     * Determines whether the max points of a given exercise should be included in the amount of reachable points of a course.
+     *
+     * Base case: points are reachable if the exercise is released and the assessment is over -> It was possible for the student to get points.
+     Addition regarding edge case 1: the exercise score is reachable immediately after release since the student score only depends on the
+                                    immediate automatic feedback.
+     Addition regarding edge case 2: the exercise score is officially reachable after the final test run
+                                    (so after the buildAndTestStudentSubmissionsAfterDueDate is over).
+     * @param exercise the exercise whose assessment state should be determined
+     * @private
+     */
+    private isAssessmentDone(exercise: Exercise): boolean {
+        const isNonAutomaticAssessmentDone = !this.isAssessedAutomatically(exercise) && (!exercise.assessmentDueDate || exercise.assessmentDueDate.isBefore(dayjs()));
+        return isNonAutomaticAssessmentDone || this.isAutomaticAssessmentDone(exercise);
+    }
+
+    private isAssessedAutomatically(exercise: Exercise): boolean {
+        return exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType === AssessmentType.AUTOMATIC;
+    }
+
+    private isAutomaticAssessmentDone(exercise: Exercise): boolean {
+        return (
+            this.isAssessedAutomatically(exercise) &&
+            (!(exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate ||
+                (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate!.isBefore(dayjs()))
+        );
     }
 }
