@@ -172,7 +172,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
         moveAssignmentSourcesOf(repository);
         int exitCode;
-        if (projectType.isGradle()) {
+        if (projectType != null && projectType.isGradle()) {
             exitCode = invokeGradle();
         }
         else {
@@ -186,7 +186,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
             assertThat(exitCode).isNotEqualTo(0);
         }
 
-        var testReportPath = projectType.isGradle() ? GRADLE_TEST_RESULTS_PATH : MAVEN_TEST_RESULTS_PATH;
+        var testReportPath = projectType != null && projectType.isGradle() ? GRADLE_TEST_RESULTS_PATH : MAVEN_TEST_RESULTS_PATH;
         var testResults = readTestReports(testReportPath);
         assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
     }
