@@ -677,11 +677,9 @@ public class CourseResource {
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-            var endDate = ZonedDateTime.now();
-            if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
-                endDate = course.getEndDate();
-            }
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4, endDate));
+            var endDate = this.courseService.determineEndDateForActiveStudents(course);
+            var timeSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate));
             courseDTOs.add(courseDTO);
         }
 

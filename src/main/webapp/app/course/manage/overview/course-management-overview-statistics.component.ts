@@ -68,10 +68,9 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
         const set: any[] = [];
         this.ngxData = [];
         if (this.amountOfStudentsInCourse > 0 && !!this.initialStats) {
-            this.lineChartLabels.forEach((label, index) => {
-                const absoluteValue = this.initialStats![this.initialStats!.length - this.currentSpanSize + index];
+            this.initialStats.forEach((absoluteValue, index) => {
                 set.push({
-                    name: label,
+                    name: this.lineChartLabels[index],
                     value: (absoluteValue * 100) / this.amountOfStudentsInCourse,
                     absoluteValue,
                 });

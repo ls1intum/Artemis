@@ -108,9 +108,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChartDirective
     private processDataAndCreateChart(array: number[]) {
         if (this.numberOfStudentsInCourse > 0) {
             const allValues = [];
-            if (this.currentSpanSize < 17) {
-                array = array.slice(this.displayedNumberOfWeeks - this.currentSpanSize);
-            }
             for (let i = 0; i < array.length; i++) {
                 allValues.push(roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course));
                 this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
@@ -132,10 +129,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChartDirective
         this.dataCopy[0].series = [{}];
         this.absoluteSeries = [{}];
         const prefix = this.translateService.instant('calendar_week');
-        const endDate =
-            this.currentPeriod !== 0
-                ? dayjs().subtract(this.currentOffsetToEndDate + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks')
-                : dayjs().subtract(this.currentOffsetToEndDate, 'weeks');
+        const endDate = dayjs().subtract(this.currentOffsetToEndDate + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
         const remainingWeeksTillStartDate = this.course.startDate ? this.determineDifferenceBetweenIsoWeeks(this.course.startDate, endDate) + 1 : this.displayedNumberOfWeeks;
         this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks);
         const startDate = dayjs().subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');

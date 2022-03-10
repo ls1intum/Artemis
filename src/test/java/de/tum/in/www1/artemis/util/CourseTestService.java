@@ -1719,6 +1719,7 @@ public class CourseTestService {
         // add courses with exercises
 
         var course = database.createCoursesWithExercisesAndLectures(true).get(0);
+        course.setStartDate(now.minusWeeks(2));
 
         var student1 = ModelFactory.generateActivatedUser("user1");
         var student2 = ModelFactory.generateActivatedUser("user2");
@@ -1750,7 +1751,7 @@ public class CourseTestService {
         submissionRepository.save(submission1);
 
         Submission submission2 = result2.getSubmission();
-        submission2.setSubmissionDate(now.minusDays(3));
+        submission2.setSubmissionDate(now.minusWeeks(2));
         submissionRepository.save(submission2);
 
         result1.setAssessor(instructor);
@@ -1821,7 +1822,7 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        assertThat(courseDTO.getActiveStudents().size()).isEqualTo(17);
+        assertThat(courseDTO.getActiveStudents().size()).isEqualTo(3);
 
         // number of users in course
         assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
@@ -1848,6 +1849,15 @@ public class CourseTestService {
         assertThat(courseDTO.getCurrentPercentageAverageScore()).isEqualTo(60);
         assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(30);
+
+        course.setEndDate(now.minusWeeks(1));
+        courseRepo.save(course);
+
+        // API call
+        courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+
+        var expectedActiveStudentDistribution = List.of(1, 0);
+        assertThat(courseDTO.getActiveStudents()).as("submission 3 days ago should not be included").isEqualTo(expectedActiveStudentDistribution);
 
         // Active Users
         int periodIndex = 0;

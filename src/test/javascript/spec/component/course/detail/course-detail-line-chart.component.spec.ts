@@ -86,7 +86,7 @@ describe('CourseDetailLineChartComponent', () => {
 
     it('should show only 2 weeks if start date is 1 week ago', () => {
         component.course = { startDate: dayjs().subtract(1, 'week') };
-        component.initialStats = initialStats;
+        component.initialStats = initialStats.slice(15);
 
         component.ngOnChanges();
 
@@ -108,7 +108,7 @@ describe('CourseDetailLineChartComponent', () => {
     it('should adapt if course phase is smaller than 4 weeks', () => {
         const endDate = dayjs().subtract(1, 'weeks');
         component.course = { startDate: dayjs().subtract(2, 'weeks'), endDate };
-        component.initialStats = initialStats;
+        component.initialStats = initialStats.slice(15);
 
         component.ngOnChanges();
 
@@ -120,7 +120,7 @@ describe('CourseDetailLineChartComponent', () => {
     });
 
     it('should limit the next view if start date is reached', () => {
-        const getStatisticsDataMock = jest.spyOn(service, 'getStatisticsData').mockReturnValue(of(initialStats));
+        const getStatisticsDataMock = jest.spyOn(service, 'getStatisticsData').mockReturnValue(of(initialStats.slice(16)));
         const startDate = dayjs().subtract(17, 'weeks');
         component.course = { id: 42, startDate };
         component.initialStats = initialStats;

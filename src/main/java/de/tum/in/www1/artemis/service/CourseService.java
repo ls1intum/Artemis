@@ -461,12 +461,9 @@ public class CourseService {
         dto.setNumberOfTeachingAssistantsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName())));
         dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
         dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
-        var endDate = ZonedDateTime.now();
-        if (course.getEndDate() != null && ZonedDateTime.now().isAfter(course.getEndDate())) {
-            endDate = course.getEndDate();
-        }
-
-        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, 17, endDate));
+        var endDate = this.determineEndDateForActiveStudents(course);
+        var spanSize = this.determineTimeSpanSizeForActiveStudents(course, endDate, 17);
+        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, spanSize, endDate));
         return dto;
     }
 
@@ -677,5 +674,40 @@ public class CourseService {
             }
             courseRepository.save(course);
         }
+    }
+
+    /**
+     * Determines end date for the displayed time span of active student charts
+     * If the course end date is passed, only information until this date are collected and sent
+     * @param course the corresponding course the active students should be collected
+     * @return end date of the time span
+     */
+    public ZonedDateTime determineEndDateForActiveStudents(Course course) {
+        var endDate = ZonedDateTime.now();
+        if (course.getEndDate() != null && ZonedDateTime.now().isAfter(course.getEndDate())) {
+            endDate = course.getEndDate();
+        }
+        return endDate;
+    }
+
+    /**
+     * Determines the allowed time span for active student charts
+     * The span time can be restricted if the temporal distance between the course start date
+     * and the priorly determined end date is smaller than the intended time frame
+     * @param course the corresponding course the time frame should be computed
+     * @param endDate the priorly determined end date of the time span
+     * @param maximalSize the normal time span size
+     * @return the allowed time span size
+     */
+    public int determineTimeSpanSizeForActiveStudents(Course course, ZonedDateTime endDate, int maximalSize) {
+        var spanTime = maximalSize;
+        if (course.getStartDate() != null) {
+            var startDateIsoWeek = statisticsRepository.getWeekOfDate(course.getStartDate());
+            var endDateIsoWeek = statisticsRepository.getWeekOfDate(endDate);
+            int weeksInYear = Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(course.getStartDate()).getMaximum());
+            int amountOfWeeksBetween = (endDateIsoWeek - startDateIsoWeek + weeksInYear) % weeksInYear;
+            spanTime = Math.min(maximalSize, amountOfWeeksBetween + 1);
+        }
+        return spanTime;
     }
 }

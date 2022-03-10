@@ -79,7 +79,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
     it('should show only 2 weeks if start date is 1 week ago', () => {
         component.course = { startDate: dayjs().subtract(1, 'week') };
-        component.initialStats = initialStats;
+        component.initialStats = initialStats.slice(2);
         component.amountOfStudentsInCourse = amountOfStudentsInCourse;
 
         component.ngOnInit();
@@ -100,7 +100,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
     it('should adapt if course phase is smaller than 4 weeks', () => {
         component.course = { startDate: dayjs().subtract(2, 'weeks'), endDate: dayjs().subtract(1, 'weeks') };
         component.amountOfStudentsInCourse = amountOfStudentsInCourse;
-        component.initialStats = initialStats;
+        component.initialStats = initialStats.slice(2);
 
         component.ngOnInit();
 
