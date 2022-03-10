@@ -281,6 +281,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return type;
     }
 
+    get selectedTestRepositoryProjectType() {
+        return this.selectedTestRepositoryProjectTypeValue;
+    }
+
     private updateProjectTypeSettings(type: ProjectType) {
         if (ProjectType.XCODE === type) {
             // Disable Online Editor
