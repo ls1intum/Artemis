@@ -207,7 +207,6 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     private int invokeGradle() {
         try (ProjectConnection connector = GradleConnector.newConnector().forProjectDirectory(testRepo.localRepoFile).useBuildDistribution().connect()) {
             BuildLauncher launcher = connector.newBuild();
-            var x = String.join(", ", testRepo.localRepoFile.list());
             launcher.forTasks("clean", "test");
             launcher.run();
         }
