@@ -441,7 +441,7 @@ public class ProgrammingExerciseTestService {
     public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
         setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
-        exercise.setProjectType(ProjectType.MAVEN);
+        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
         exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         var sourceExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
