@@ -35,7 +35,7 @@ public class ProgrammingExerciseTask extends DomainObject {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "programming_exercise_task_test_case", joinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "test_case_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties("tasks")
+    @JsonIgnoreProperties({ "tasks", "exercise" })
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
     @ManyToOne
