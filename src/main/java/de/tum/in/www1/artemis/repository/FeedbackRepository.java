@@ -33,10 +33,14 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     String DEFAULT_FILEPATH = "notAvailable";
 
+    String PYTHON_EXCEPTION_LINE_PREFIX = "E       ";
+
     Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(
             List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError", "de.tum.in.test.api.util.UnexpectedExceptionError"));
 
     Predicate<String> IS_NOT_STACK_TRACE_LINE = line -> !line.startsWith("\tat ");
+
+    Predicate<String> IS_PYTHON_EXCEPTION_LINE = line -> line.startsWith(PYTHON_EXCEPTION_LINE_PREFIX);
 
     List<Feedback> findByResult(Result result);
 
@@ -209,6 +213,13 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
         if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
             String messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
             return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
+        }
+
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            Optional<String> firstExceptionMessage = message.lines().filter(IS_PYTHON_EXCEPTION_LINE).findFirst();
+            if (firstExceptionMessage.isPresent()) {
+                return firstExceptionMessage.get().replace(PYTHON_EXCEPTION_LINE_PREFIX, "") + "\n\n" + message;
+            }
         }
 
         return message;
