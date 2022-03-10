@@ -277,25 +277,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     onTestRepositoryProjectTypeChange(type: JavaTestRepositoryProjectType) {
-        this.selectedTestRepositoryProjectType = type;
+        this.selectedTestRepositoryProjectTypeValue = type;
         return type;
-    }
-
-    /**
-     * Updates the test repository project type. This only applies to Java exercises with project type 'Plain Java'
-     * @param type the type to update to
-     */
-    set selectedTestRepositoryProjectType(type: JavaTestRepositoryProjectType) {
-        // this has only effect for plain java which is represented by PLAIN_MAVEN (or PLAIN_GRADLE later)
-        if (type === JavaTestRepositoryProjectType.MAVEN) {
-            // only the underlying value should be changed, not the value which is displayed in the dropdown
-            this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
-        }
-        // TODO: set the project type to PLAIN_GRADLE otherwise
-    }
-
-    get selectedTestRepositoryProjectType() {
-        return this.selectedTestRepositoryProjectTypeValue;
     }
 
     private updateProjectTypeSettings(type: ProjectType) {
