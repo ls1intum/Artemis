@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { User } from 'app/core/user/user.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
@@ -55,7 +54,6 @@ export class StudentExamDetailComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private studentExamService: StudentExamService,
-        private courseService: CourseManagementService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: AlertService,
         private modalService: NgbModal,
@@ -77,11 +75,6 @@ export class StudentExamDetailComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.route.data.subscribe(({ studentExam }) => this.setStudentExam(studentExam));
-
-        this.courseService.find(this.courseId).subscribe((courseResponse) => {
-            this.course = courseResponse.body!;
-        });
-        this.student = this.studentExam.user!;
         this.calculateGrade();
     }
 
@@ -134,6 +127,9 @@ export class StudentExamDetailComponent implements OnInit {
         this.maxTotalPoints = 0;
         this.achievedTotalPoints = 0;
         this.bonusTotalPoints = 0;
+
+        this.student = this.studentExam.user!;
+        this.course = this.studentExam.exam!.course!;
 
         studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
     }
