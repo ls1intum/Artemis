@@ -132,7 +132,10 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChartDirective
         this.dataCopy[0].series = [{}];
         this.absoluteSeries = [{}];
         const prefix = this.translateService.instant('calendar_week');
-        const endDate = this.currentPeriod !== 0 ? dayjs().subtract(this.currentOffsetToEndDate + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : dayjs();
+        const endDate =
+            this.currentPeriod !== 0
+                ? dayjs().subtract(this.currentOffsetToEndDate + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks')
+                : dayjs().subtract(this.currentOffsetToEndDate, 'weeks');
         const remainingWeeksTillStartDate = this.course.startDate ? this.determineDifferenceBetweenIsoWeeks(this.course.startDate, endDate) + 1 : this.displayedNumberOfWeeks;
         this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks);
         const startDate = dayjs().subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
