@@ -5,7 +5,6 @@ import dayjs from 'dayjs/esm';
 @Directive()
 export class ActiveStudentsChartDirective {
     startDateAlreadyPassed = true;
-    currentSpanToStartDate: number; // the number of weeks between the start date of the course and the current date
     currentOffsetToEndDate = 0; // the number of weeks between the end date of the course and the current date
     currentSpanSize: number;
 
@@ -19,20 +18,38 @@ export class ActiveStudentsChartDirective {
         const now = dayjs();
         this.currentSpanSize = normalTimeSpan;
         if (course.startDate) {
-            if (now.isBefore(course.startDate)) {
-                this.startDateAlreadyPassed = false;
-            } else if (this.determineDifferenceBetweenIsoWeeks(dayjs(course.startDate), now) < normalTimeSpan - 1) {
-                this.currentSpanToStartDate = this.determineDifferenceBetweenIsoWeeks(dayjs(course.startDate), now) + 1;
-                this.currentSpanSize = this.currentSpanToStartDate;
-            }
+            this.handleCourseStartDate(dayjs(course.startDate), now, normalTimeSpan);
         }
         if (course.endDate && now.isAfter(course.endDate)) {
-            if (this.determineDifferenceBetweenIsoWeeks(dayjs(course.endDate), now) > 0) {
-                this.currentOffsetToEndDate = this.determineDifferenceBetweenIsoWeeks(dayjs(course.endDate), now);
-            }
-            if (course.startDate) {
-                this.currentSpanSize = Math.min(this.determineDifferenceBetweenIsoWeeks(dayjs(course.startDate), dayjs(course.endDate)) + 1, this.currentSpanSize);
-            }
+            this.handleCourseEndDate(course, now);
+        }
+    }
+
+    /**
+     * Helper method that handles the existence of a course start date
+     * @param courseStartDate the start date of a course
+     * @param currentDate the current date
+     * @param normalTimeSpan the normal time span an active students line chart displays
+     * @private
+     */
+    private handleCourseStartDate(courseStartDate: dayjs.Dayjs, currentDate: dayjs.Dayjs, normalTimeSpan: number): void {
+        if (currentDate.isBefore(courseStartDate)) {
+            this.startDateAlreadyPassed = false;
+        } else {
+            this.currentSpanSize = Math.min(this.determineDifferenceBetweenIsoWeeks(courseStartDate, currentDate) + 1, normalTimeSpan);
+        }
+    }
+
+    /**
+     * Helper method that handles the existence of a course end date and its side effects if a start date exists as well
+     * @param course the corresponding course
+     * @param currentDate the current date
+     * @private
+     */
+    private handleCourseEndDate(course: Course, currentDate: dayjs.Dayjs): void {
+        this.currentOffsetToEndDate = this.determineDifferenceBetweenIsoWeeks(dayjs(course.endDate), currentDate);
+        if (course.startDate) {
+            this.currentSpanSize = Math.min(this.determineDifferenceBetweenIsoWeeks(dayjs(course.startDate), dayjs(course.endDate)) + 1, this.currentSpanSize);
         }
     }
 
