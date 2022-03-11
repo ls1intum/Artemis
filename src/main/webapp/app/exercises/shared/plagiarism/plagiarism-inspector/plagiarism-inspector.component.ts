@@ -295,7 +295,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         }
 
         this.plagiarismResult = result;
-        this.visibleComparisons = result.comparisons;
+        this.visibleComparisons = result?.comparisons;
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {
