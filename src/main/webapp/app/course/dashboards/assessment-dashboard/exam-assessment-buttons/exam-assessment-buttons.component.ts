@@ -31,7 +31,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     paramSub: Subscription;
     isLoading: boolean;
     isEvaluatingQuizExercises: boolean;
-    isAssessingUnsubmittedExamModelingAndTextParticipations: boolean;
+    isAssessingUnsubmittedExams: boolean;
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
@@ -108,15 +108,15 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     }
 
     assessUnsubmittedExamModelingAndTextParticipations() {
-        this.isAssessingUnsubmittedExamModelingAndTextParticipations = true;
+        this.isAssessingUnsubmittedExams = true;
         this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
-                this.isAssessingUnsubmittedExamModelingAndTextParticipations = false;
+                this.isAssessingUnsubmittedExams = false;
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
-                this.isAssessingUnsubmittedExamModelingAndTextParticipations = false;
+                this.isAssessingUnsubmittedExams = false;
             },
         });
     }
@@ -150,13 +150,6 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             }
             this.isExamOver = endDate.isBefore(dayjs());
         }
-    }
-
-    /**
-     * Returns whether the evaluation of quizzes or the evaluation of unsubmitted exercises is disabled.
-     */
-    isEvaluatingQuizOrAssessingUnsubmittedExamDisabled(): boolean {
-        return this.isLoading || this.isAssessingUnsubmittedExamModelingAndTextParticipations || this.isEvaluatingQuizExercises || !this.isExamOver;
     }
 
     private setStudentExams(studentExams: any): void {

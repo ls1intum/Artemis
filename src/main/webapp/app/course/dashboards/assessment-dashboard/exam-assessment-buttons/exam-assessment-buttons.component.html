@@ -5,7 +5,12 @@
             <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
         </a>
     </span>
-    <button id="evaluateQuizExercisesButton" class="btn btn-primary mt-1" (click)="evaluateQuizExercises()" [disabled]="isEvaluatingQuizOrAssessingUnsubmittedExamDisabled()">
+    <button
+        id="evaluateQuizExercisesButton"
+        class="btn btn-primary mt-1"
+        (click)="evaluateQuizExercises()"
+        [disabled]="isLoading || isAssessingUnsubmittedExams || isEvaluatingQuizExercises || !isExamOver"
+    >
         <span *ngIf="isEvaluatingQuizExercises" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         <span jhiTranslate="artemisApp.studentExams.evaluateQuizExercises">Evaluate Quizzes</span>
     </button>
@@ -13,9 +18,9 @@
         class="btn btn-primary mt-1"
         id="assessUnsubmittedExamModelingAndTextParticipationsButton"
         (click)="assessUnsubmittedExamModelingAndTextParticipations()"
-        [disabled]="isEvaluatingQuizOrAssessingUnsubmittedExamDisabled()"
+        [disabled]="isLoading || isAssessingUnsubmittedExams || isEvaluatingQuizExercises || !isExamOver"
     >
-        <span *ngIf="isAssessingUnsubmittedExamModelingAndTextParticipations" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span *ngIf="isAssessingUnsubmittedExams" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         <span jhiTranslate="artemisApp.studentExams.assessUnsubmittedStudentExams">Assess unsubmitted student exams</span>
     </button>
 </div>
