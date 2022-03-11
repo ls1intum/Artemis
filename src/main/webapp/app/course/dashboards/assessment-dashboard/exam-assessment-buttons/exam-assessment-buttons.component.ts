@@ -30,6 +30,8 @@ export class ExamAssessmentButtonsComponent implements OnInit {
 
     paramSub: Subscription;
     isLoading: boolean;
+    isEvaluatingQuizExercises: boolean;
+    isAssessingUnsubmittedExamModelingAndTextParticipations: boolean;
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
@@ -92,29 +94,29 @@ export class ExamAssessmentButtonsComponent implements OnInit {
      * Evaluates all the quiz exercises that belong to the exam
      */
     evaluateQuizExercises() {
-        this.isLoading = true;
+        this.isEvaluatingQuizExercises = true;
         this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
-                this.isLoading = false;
+                this.isEvaluatingQuizExercises = false;
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
-                this.isLoading = false;
+                this.isEvaluatingQuizExercises = false;
             },
         });
     }
 
     assessUnsubmittedExamModelingAndTextParticipations() {
-        this.isLoading = true;
+        this.isAssessingUnsubmittedExamModelingAndTextParticipations = true;
         this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
-                this.isLoading = false;
+                this.isAssessingUnsubmittedExamModelingAndTextParticipations = false;
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
-                this.isLoading = false;
+                this.isAssessingUnsubmittedExamModelingAndTextParticipations = false;
             },
         });
     }
