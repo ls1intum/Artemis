@@ -64,7 +64,7 @@
         <div class="grading-body-container mt-3">
             <div *ngIf="activeTab == 'test-cases'">
                 <div class="grading-table-layout">
-                    <div>
+                    <div class="col-7">
                         <div class="d-flex justify-content-between mb-3">
                             <div>
                                 <h2 class="mb-1 fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.title">Test Cases</h2>
@@ -239,7 +239,7 @@
                             </ngx-datatable-column>
                         </ngx-datatable>
                     </div>
-                    <div>
+                    <div class="col-5">
                         <h2 class="mb-5 fw-medium">
                             <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
                             <span *ngIf="!!changedTestCaseIds.length" class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
