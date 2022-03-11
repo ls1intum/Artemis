@@ -174,7 +174,7 @@
                                     class="me-1"
                                     (ngModelChange)="toggleSecondCorrection(exercise.id!)"
                                     [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
-                                    [toggelingSecondCorrectionButton]="exercise.isToggelingSecondCorrection"
+                                    [toggelingSecondCorrectionButton]="exercise.isTogglingSecondCorrection"
                                 ></jhi-second-correction-enable-button>
                             </ng-container>
                             <a class="btn btn-primary btn-sm" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
