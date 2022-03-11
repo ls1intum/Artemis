@@ -152,6 +152,13 @@ export class ExamAssessmentButtonsComponent implements OnInit {
         }
     }
 
+    /**
+     * Returns whether the evaluation of quizzes or the evaluation of unsubmitted exercises is possible.
+     */
+    isEvaluatingQuizOrAssessingUnsubmittedExamDisabled(): boolean {
+        return this.isLoading || this.isAssessingUnsubmittedExamModelingAndTextParticipations || this.isEvaluatingQuizExercises || !this.isExamOver;
+    }
+
     private setStudentExams(studentExams: any): void {
         if (studentExams) {
             this.studentExams = studentExams;
