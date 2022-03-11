@@ -21,8 +21,8 @@ export enum ProgrammingLanguage {
 }
 
 export enum ProjectType {
-    MAVEN = 'MAVEN',
-    ECLIPSE = 'ECLIPSE',
+    MAVEN_MAVEN = 'MAVEN_MAVEN',
+    PLAIN_MAVEN = 'PLAIN_MAVEN',
     PLAIN = 'PLAIN',
     XCODE = 'XCODE',
     FACT = 'FACT',
@@ -75,7 +75,7 @@ export class ProgrammingExercise extends Exercise {
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
         this.checkoutSolutionRepository = false; // default value
-        this.projectType = ProjectType.ECLIPSE; // default value
+        this.projectType = ProjectType.PLAIN_MAVEN; // default value
         this.showTestNamesToStudents = false; // default value
     }
 }

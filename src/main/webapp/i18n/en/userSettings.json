@@ -9,6 +9,7 @@
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "accountInformationPage": {
+                "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
                 "login": "Login",
                 "email": "Email",

@@ -32,17 +32,45 @@
         <table class="table table-striped" aria-describedby="user-management-page-heading">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="login"><span jhiTranslate="userManagement.login">Login</span> <fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="email"><span jhiTranslate="userManagement.email">Email</span> <fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="lastName"><span jhiTranslate="userManagement.name">Name</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="id">
+                        <span jhiTranslate="global.field.id">ID</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="login">
+                        <span jhiTranslate="userManagement.login">Login</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="email">
+                        <span jhiTranslate="userManagement.email">Email</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="registrationNumber">
+                        <span jhiTranslate="userManagement.registrationNumber">Registration Number</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="lastName">
+                        <span jhiTranslate="userManagement.name">Name</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th></th>
-                    <th jhiSortBy="langKey"><span jhiTranslate="userManagement.langKey">Lang Key</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="langKey">
+                        <span jhiTranslate="userManagement.langKey">Lang Key</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th><span jhiTranslate="userManagement.profiles">Profiles</span></th>
                     <th><span>Groups</span></th>
-                    <th jhiSortBy="createdDate"><span jhiTranslate="userManagement.createdDate">Created Date</span> <fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="lastModifiedBy"><span jhiTranslate="userManagement.lastModifiedBy">Last Modified By</span> <fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="lastModifiedDate"><span jhiTranslate="userManagement.lastModifiedDate">Last Modified Date</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="createdDate">
+                        <span jhiTranslate="userManagement.createdDate">Created Date</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="lastModifiedBy">
+                        <span jhiTranslate="userManagement.lastModifiedBy">Last Modified By</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="lastModifiedDate">
+                        <span jhiTranslate="userManagement.lastModifiedDate">Last Modified Date</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th></th>
                 </tr>
             </thead>
@@ -56,6 +84,9 @@
                     </td>
                     <td>
                         <ngb-highlight [result]="user.email" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="user.visibleRegistrationNumber" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
                         <ngb-highlight [result]="user.name" [term]="searchTerm"></ngb-highlight>

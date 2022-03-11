@@ -182,7 +182,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
         var sorting = Sort.by(userSearch.getSortedColumn());
         sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
-        return searchByLoginOrNameWithGroups(searchTerm, sorted).map(UserDTO::new);
+        return searchByLoginOrNameWithGroups(searchTerm, sorted).map(user -> {
+            user.setVisibleRegistrationNumber();
+            return new UserDTO(user);
+        });
     }
 
     /**
