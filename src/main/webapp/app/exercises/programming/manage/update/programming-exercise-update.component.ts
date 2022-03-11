@@ -395,7 +395,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.submissionPolicy.id = undefined;
         }
         if (this.isExamMode && this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-            // Exam exercises cannot be not included into the total score. NOT_INCLUDED exercises will be converted to INCLUDED ones() {
+            // Exam exercises cannot be not included into the total score. NOT_INCLUDED exercises will be converted to INCLUDED ones
             this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         }
     }
