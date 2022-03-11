@@ -80,7 +80,7 @@ export class CourseScoreCalculationService {
 
     updateCourse(course: Course) {
         // filter out the old course object with the same id
-        this.courses = this.courses.filter((existingCourses) => existingCourses.id !== course.id);
+        this.courses = this.courses.filter((existingCourse) => existingCourse.id !== course.id);
         this.courses.push(course);
     }
 
