@@ -62,6 +62,7 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /**
@@ -254,6 +255,9 @@ public class DatabaseUtilService {
     @Autowired
     private RatingRepository ratingRepo;
 
+    @Autowired
+    private PasswordService passwordService;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -300,11 +304,15 @@ public class DatabaseUtilService {
 
         authorityRepository.saveAll(adminAuthorities);
 
-        List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, studentAuthorities, numberOfStudents);
-        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
-        List<User> editors = ModelFactory.generateActivatedUsers("editor", new String[] { "editor", "testgroup" }, editorAuthorities, numberOfEditors);
-        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
-        User admin = ModelFactory.generateActivatedUser("admin");
+        List<User> students = ModelFactory.generateActivatedUsers("student", passwordService.encryptPassword(ModelFactory.USER_PASSWORD), new String[] { "tumuser", "testgroup" },
+                studentAuthorities, numberOfStudents);
+        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", passwordService.encryptPassword(ModelFactory.USER_PASSWORD), new String[] { "tutor", "testgroup" },
+                tutorAuthorities, numberOfTutors);
+        List<User> editors = ModelFactory.generateActivatedUsers("editor", passwordService.encryptPassword(ModelFactory.USER_PASSWORD), new String[] { "editor", "testgroup" },
+                editorAuthorities, numberOfEditors);
+        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", passwordService.encryptPassword(ModelFactory.USER_PASSWORD),
+                new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
+        User admin = ModelFactory.generateActivatedUser("admin", passwordService.encryptPassword(ModelFactory.USER_PASSWORD));
         admin.setGroups(Set.of("admin"));
         admin.setAuthorities(adminAuthorities);
         List<User> usersToAdd = new ArrayList<>();
@@ -2408,16 +2416,20 @@ public class DatabaseUtilService {
     }
 
     /**
-     * With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text exercises in a cyclic manner.
+     * With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text
+     * exercises in a cyclic manner.
      *
-     * @param numberOfExercises             - number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated. (thats why there is the %3 check)
-     * @param numberOfSubmissionPerExercise - for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8 submissions will be created.
-     * @param numberOfAssessments           - generates the assessments for a submission of an exercise. Example from abobe, 2 exrecises, 4 submissions each. If you set numberOfAssessments to 2, for each exercise 2 assessmetns will be created.
-     *                                      In total there will be 4 assessments then. (by two different tutors, as each exercise is assesssed by an individual tutor. There are 4 tutors that create assessments)
-     * @param numberOfComplaints            - generates the complaints for assessments, in the same way as results are created.
-     * @param typeComplaint                 - true: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
-     * @param numberComplaintResponses      - generates responses for the complaint/feedback request (as above)
-     * @param validModel                    - model for the modeling submission
+     * @param numberOfExercises             number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
+     *                                      (thats why there is the %3 check)
+     * @param numberOfSubmissionPerExercise for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
+     *                                      submissions will be created.
+     * @param numberOfAssessments           generates the assessments for a submission of an exercise. Example from abobe, 2 exrecises, 4 submissions each. If you set
+     *                                      numberOfAssessments to 2, for each exercise 2 assessmetns will be created. In total there will be 4 assessments then. (by two
+     *                                      different tutors, as each exercise is assessed by an individual tutor. There are 4 tutors that create assessments)
+     * @param numberOfComplaints            generates the complaints for assessments, in the same way as results are created.
+     * @param typeComplaint                 true: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
+     * @param numberComplaintResponses      generates responses for the complaint/feedback request (as above)
+     * @param validModel                    model for the modeling submission
      * @return - the generated course
      */
     public Course addCourseWithExercisesAndSubmissions(int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints,
@@ -2575,7 +2587,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Add a submission with a result to the given programming exercise. The submission will be assigned to the corresponding participation of the given login (if exists or create a new participation).
+     * Add a submission with a result to the given programming exercise. The submission will be assigned to the corresponding participation of the given login (if exists or
+     * create a new participation).
      * The method will make sure that all necessary entities are connected.
      *
      * @param exercise   for which to create the submission/participation/result combination.

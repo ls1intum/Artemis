@@ -53,8 +53,6 @@ public class AccountResource {
 
     private final UserCreationService userCreationService;
 
-    private final PasswordService passwordService;
-
     private final MailService mailService;
 
     public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, MailService mailService,
@@ -63,7 +61,6 @@ public class AccountResource {
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.mailService = mailService;
-        this.passwordService = passwordService;
     }
 
     /**
@@ -194,8 +191,9 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/change-password")
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
-        if (isRegistrationDisabled() && isSAML2Disabled()) {
-            throw new AccessForbiddenException("User Registration is disabled");
+        User user = userRepository.getUser();
+        if (!user.isInternal()) {
+            throw new AccessForbiddenException("Only users with internally saved credentials can change their password.");
         }
         if (isPasswordLengthInvalid(passwordChangeDto.getNewPassword())) {
             throw new InvalidPasswordException();

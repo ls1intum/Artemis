@@ -160,6 +160,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+        for (int i = 1; i <= 12; i++) {
+            bitbucketRequestMockProvider.mockUserExists("student" + i);
+        }
         programmingExerciseTestService.startProgrammingExercise_correctInitializationState(exerciseMode);
     }
 
@@ -225,24 +228,36 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
+        for (int i = 1; i <= 12; i++) {
+            bitbucketRequestMockProvider.mockUserExists("student" + i);
+        }
         programmingExerciseTestService.startProgrammingExerciseStudentSubmissionFailedWithBuildlog();
     }
 
     @Test
     @WithMockUser(username = studentLogin, roles = "USER")
     public void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
+        for (int i = 1; i <= 12; i++) {
+            bitbucketRequestMockProvider.mockUserExists("student" + i);
+        }
         programmingExerciseTestService.startProgrammingExerciseStudentRetrieveEmptyArtifactPage();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
+        for (int i = 1; i <= 12; i++) {
+            bitbucketRequestMockProvider.mockUserExists("student" + i);
+        }
         programmingExerciseTestService.repositoryAccessIsAdded_whenStudentIsAddedToTeam();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
+        for (int i = 1; i <= 12; i++) {
+            bitbucketRequestMockProvider.mockUserExists("student" + i);
+        }
         programmingExerciseTestService.repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam();
     }
 
@@ -260,13 +275,10 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
-        programmingExerciseTestService.configureRepository_createTeamUserWhenLtiUserIsNotExistent();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void copyRepository_testConflictError() throws Exception {
+        for (int i = 1; i <= 12; i++) {
+            bitbucketRequestMockProvider.mockUserExists("student" + i);
+        }
         programmingExerciseTestService.copyRepository_testConflictError();
     }
 
@@ -279,6 +291,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void configureRepository_testBadRequestError() throws Exception {
+        for (int i = 1; i <= 12; i++) {
+            bitbucketRequestMockProvider.mockUserExists("student" + i);
+        }
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 

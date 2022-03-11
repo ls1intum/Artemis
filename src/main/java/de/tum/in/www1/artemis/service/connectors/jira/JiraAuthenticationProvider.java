@@ -17,8 +17,14 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
-import org.springframework.security.authentication.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.ProviderNotFoundException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
@@ -178,8 +184,8 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     /**
      * Adds a JIRA user to a JIRA group. Ignores "user is already a member of" errors.
      *
-     * @param user     The user
-     * @param group    The JIRA group name
+     * @param user  The user
+     * @param group The JIRA group name
      * @throws ArtemisAuthenticationException if JIRA returns an error
      */
     @Override
@@ -275,7 +281,15 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                     .build().toUri();
             restTemplate.delete(path);
         }
-        catch (HttpClientErrorException | URISyntaxException e) {
+        catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+                log.warn("Could not delete user {} from group {} as the user doesn't exist.", user.getLogin(), group);
+                return;
+            }
+            log.error("Could not delete user {} from group {}; Error: {}", user.getLogin(), group, e.getMessage());
+            throw new ArtemisAuthenticationException(String.format("Error while deleting user %s from Jira group %s", user.getLogin(), group), e);
+        }
+        catch (URISyntaxException e) {
             log.error("Could not delete user {} from group {}; Error: {}", user.getLogin(), group, e.getMessage());
             throw new ArtemisAuthenticationException(String.format("Error while deleting user %s from Jira group %s", user.getLogin(), group), e);
         }
