@@ -208,7 +208,7 @@ export class CourseScoreCalculationService {
         return (
             this.isAssessedAutomatically(exercise) &&
             (!(exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate ||
-                dayjs().isSameOrAfter((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate))
+                dayjs().isAfter((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate))
         );
     }
 }
