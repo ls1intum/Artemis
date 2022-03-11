@@ -16,8 +16,8 @@ let component: ExamInformationComponent;
 
 const user = { id: 1, name: 'Test User' } as User;
 
-const startDate = dayjs().subtract(5, 'hours');
-const endDate = dayjs().subtract(4, 'hours');
+const startDate = dayjs('2022-02-06 02:00:00');
+const endDate = dayjs(startDate).add(1, 'hours');
 
 let exam = {
     id: 1,

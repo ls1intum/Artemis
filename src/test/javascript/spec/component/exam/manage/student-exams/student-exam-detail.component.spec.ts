@@ -53,6 +53,7 @@ describe('StudentExamDetailComponent', () => {
         course = { id: 1 };
 
         student = {
+            internal: true,
             guidedTourSettings: [],
             name: 'name',
             login: 'login',
