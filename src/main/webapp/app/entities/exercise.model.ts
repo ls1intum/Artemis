@@ -120,6 +120,7 @@ export abstract class Exercise implements BaseEntity {
 
     // helper attributes
     public secondCorrectionEnabled = false;
+    public isTogglingSecondCorrection = false;
     public isAtLeastTutor?: boolean;
     public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;

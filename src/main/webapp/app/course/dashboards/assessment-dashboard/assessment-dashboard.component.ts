@@ -67,7 +67,6 @@ export class AssessmentDashboardComponent implements OnInit {
 
     isExamMode = false;
     isTestRun = false;
-    toggelingSecondCorrectionButton = false;
 
     tutorIssues: TutorIssue[] = [];
 
@@ -371,14 +370,14 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     toggleSecondCorrection(exerciseId: number) {
-        this.toggelingSecondCorrectionButton = true;
         const currentExercise = this.currentlyShownExercises.find((exercise) => exercise.id === exerciseId)!;
+        currentExercise.isTogglingSecondCorrection = true;
         const index = this.currentlyShownExercises.indexOf(currentExercise);
         this.exerciseService.toggleSecondCorrection(exerciseId).subscribe({
             next: (res: Boolean) => {
                 this.currentlyShownExercises[index].secondCorrectionEnabled = !this.currentlyShownExercises[index].secondCorrectionEnabled;
                 currentExercise!.secondCorrectionEnabled = res as boolean;
-                this.toggelingSecondCorrectionButton = false;
+                currentExercise.isTogglingSecondCorrection = false;
             },
             error: (err: string) => {
                 this.onError(err);
