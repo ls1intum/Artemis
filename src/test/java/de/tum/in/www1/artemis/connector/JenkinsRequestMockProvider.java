@@ -340,10 +340,6 @@ public class JenkinsRequestMockProvider {
 
     private void mockUpdateUser(User user, boolean userExists) throws URISyntaxException, IOException {
         mockGetUser(user.getLogin(), userExists, false);
-
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
-
         mockDeleteUser(user, userExists, false);
         mockCreateUser(user, false, false, false);
     }
@@ -410,9 +406,6 @@ public class JenkinsRequestMockProvider {
 
     public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail, boolean shouldFailToGetUser) throws URISyntaxException, IOException {
         mockGetUser(user.getLogin(), userExistsInCi, shouldFailToGetUser);
-
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
         var status = shouldFail ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.FOUND;

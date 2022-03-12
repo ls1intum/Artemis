@@ -146,8 +146,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         assertThat(mrrobotUser.getGroups()).contains(course.getStudentGroupName());
         assertThat(mrrobotUser.getAuthorities()).containsAll(authorityRepository.findAll());
 
-        final var password = passwordService.decryptPassword(mrrobotUser.getPassword());
-        final var auth = new TestingAuthenticationToken(username, password);
+        final var auth = new TestingAuthenticationToken(username, mrrobotUser.getPassword());
         final var responseAuth = jiraAuthenticationProvider.authenticate(auth);
 
         assertThat(responseAuth.getPrincipal()).isEqualTo(username);
