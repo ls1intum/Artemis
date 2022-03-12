@@ -507,7 +507,7 @@ public class ProgrammingExerciseService {
             if (projectType != null && projectType.isGradle()) {
                 projectTemplatePath += "/gradle";
             }
-            else if (projectType != null && projectType.isMaven()) {
+            else {
                 projectTemplatePath += "/maven";
             }
             // rerun the build agent
