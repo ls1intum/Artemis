@@ -82,3 +82,8 @@ nbdist/
 *.iws
 *.iml
 out
+
+
+#################
+.gradle
+!gradle/wrapper/gradle-wrapper.jar
