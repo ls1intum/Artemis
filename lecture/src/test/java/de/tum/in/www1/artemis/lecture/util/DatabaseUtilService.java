@@ -202,7 +202,7 @@ public class DatabaseUtilService {
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
-        fileUploadExercise.setSampleSolution("Sample Solution");
+        fileUploadExercise.setExampleSolution("Sample Solution");
         fileUploadExercise.getCategories().add("File");
         course1.addExercises(fileUploadExercise);
 

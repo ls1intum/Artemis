@@ -4,15 +4,13 @@ import de.tum.in.www1.artemis.config.MessageBrokerConstants;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.dto.UserExerciseDTO;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.in.www1.artemis.service.util.JmsMessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
 
-import javax.jms.JMSException;
 import javax.jms.Message;
 import java.util.Set;
 
@@ -39,18 +37,14 @@ public class LectureServiceProducer {
      */
     public Set<Exercise> getLectureExercises(Set<Exercise> exercises, User user) {
         UserExerciseDTO userExerciseDTO = new UserExerciseDTO(exercises, user);
-        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, userExerciseDTO);
         String correlationId = Integer.toString(userExerciseDTO.hashCode());
-        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, userExerciseDTO, message -> {
-            message.setJMSCorrelationID(correlationId);
-            return message;
-        });
-        Message responseMessage = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, "JMSCorrelationID='" + correlationId + "'");
-        log.debug("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, userExerciseDTO);
-        try {
-            return responseMessage.getBody(Set.class);
-        } catch (JMSException e) {
-            throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
-        }
+        log.debug("Send message in queue {} with correlation id {} and body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, correlationId, userExerciseDTO);
+        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES, userExerciseDTO, JmsMessageUtil.withCorrelationId(correlationId));
+
+        Message message = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, JmsMessageUtil.getJmsMessageSelector(correlationId));
+        Set<Exercise> result = JmsMessageUtil.parseBody(message, Set.class);
+        log.debug("Received message in queue {} with correlation id {} and body {}", MessageBrokerConstants.LECTURE_QUEUE_GET_EXERCISES_RESPONSE, correlationId, result);
+
+        return result;
     }
 }

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.messaging.services;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.jms.JMSException;
 import javax.jms.Message;
 
 import org.slf4j.Logger;
@@ -18,7 +17,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.dto.UserLectureDTO;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.in.www1.artemis.service.util.JmsMessageUtil;
 
 /**
  * Message broker producer to send messages related to the exercise service
@@ -47,21 +46,15 @@ public class LectureServiceProducer {
             return new HashSet<>();
         }
         UserLectureDTO userLectureDTO = new UserLectureDTO(lectures, user);
-        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, userLectureDTO);
         String correlationId = Integer.toString(userLectureDTO.hashCode());
-        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, userLectureDTO, message -> {
-            message.setJMSCorrelationID(correlationId);
-            return message;
-        });
-        Message responseMessage = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE, "JMSCorrelationID='" + correlationId + "'");
-        Set<Lecture> filteredLectures;
-        try {
-            filteredLectures = responseMessage.getBody(Set.class);
-            log.debug("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE, filteredLectures);
-        }
-        catch (JMSException e) {
-            throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
-        }
+        log.debug("Send message in queue {} with correlation id {} and body {}.", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, correlationId, userLectureDTO);
+        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS, userLectureDTO, JmsMessageUtil.withCorrelationId(correlationId));
+
+        Message message = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE, JmsMessageUtil.getJmsMessageSelector(correlationId));
+        Set<Lecture> filteredLectures = JmsMessageUtil.parseBody(message, Set.class);
+        log.debug("Received message in queue {} with correlation id {} and body {}", MessageBrokerConstants.LECTURE_QUEUE_FILTER_ACTIVE_ATTACHMENTS_RESPONSE, correlationId,
+                filteredLectures);
+
         return filteredLectures;
     }
 
@@ -72,21 +65,14 @@ public class LectureServiceProducer {
      * @return true or false whether the exercise unit has been successfully removed
      */
     public boolean removeExerciseUnits(long exerciseId) {
-        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, exerciseId);
         String correlationId = Long.toString(exerciseId);
-        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, exerciseId, message -> {
-            message.setJMSCorrelationID(correlationId);
-            return message;
-        });
-        Message responseMessage = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE, "JMSCorrelationID='" + correlationId + "'");
-        boolean result;
-        try {
-            result = responseMessage.getBody(Boolean.class);
-            log.debug("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE, result);
-        }
-        catch (JMSException e) {
-            throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
-        }
+        log.debug("Send message in queue {} with correlation id {} and body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, correlationId, exerciseId);
+        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS, exerciseId, JmsMessageUtil.withCorrelationId(correlationId));
+
+        Message message = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE, JmsMessageUtil.getJmsMessageSelector(correlationId));
+        boolean result = JmsMessageUtil.parseBody(message, Boolean.class);
+        log.debug("Received message in queue {} with correlation id {} and body {}", MessageBrokerConstants.LECTURE_QUEUE_REMOVE_EXERCISE_UNITS_RESPONSE, correlationId, result);
+
         return result;
     }
 
@@ -101,21 +87,14 @@ public class LectureServiceProducer {
             return true;
         }
         Set<Lecture> lectures = course.getLectures();
-        log.debug("Send message in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, lectures);
         String correlationId = Integer.toString(lectures.hashCode());
-        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, lectures, message -> {
-            message.setJMSCorrelationID(correlationId);
-            return message;
-        });
-        Message responseMessage = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES_RESPONSE, "JMSCorrelationID='" + correlationId + "'");
-        boolean result;
-        try {
-            result = responseMessage.getBody(Boolean.class);
-            log.debug("Received response in queue {} with body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES_RESPONSE, result);
-        }
-        catch (JMSException e) {
-            throw new InternalServerErrorException("There was a problem with the communication between server components. Please try again later!");
-        }
+        log.debug("Send message in queue {} with correlation id {} and body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, correlationId, lectures);
+        jmsTemplate.convertAndSend(MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES, lectures, JmsMessageUtil.withCorrelationId(correlationId));
+
+        Message message = jmsTemplate.receiveSelected(MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES_RESPONSE, JmsMessageUtil.getJmsMessageSelector(correlationId));
+        boolean result = JmsMessageUtil.parseBody(message, Boolean.class);
+        log.debug("Received message in queue {} with correlation id {} and body {}", MessageBrokerConstants.LECTURE_QUEUE_DELETE_LECTURES_RESPONSE, correlationId, result);
+
         return result;
     }
 }

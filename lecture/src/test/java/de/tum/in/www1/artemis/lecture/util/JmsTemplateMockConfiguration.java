@@ -7,10 +7,8 @@ import org.springframework.jms.core.JmsTemplate;
 
 @Configuration
 public class JmsTemplateMockConfiguration {
-
     @Bean
     public JmsTemplate getJmsTemplate() {
         return Mockito.mock(JmsTemplate.class);
     }
-
 }
