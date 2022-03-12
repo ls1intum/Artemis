@@ -206,7 +206,12 @@
             >
                 <!-- This ngIf is needed do differentiate when Gradle has been introduced, because Maven-Gradle and Gradle-Maven should not be possible -->
                 <option value="MAVEN" *ngIf="selectedProjectType === ProjectType.PLAIN_MAVEN || selectedProjectType === ProjectType.MAVEN_MAVEN">Maven</option>
-                <option value="GRADLE" *ngIf="selectedProjectType === ProjectType.PLAIN_GRADLE || selectedProjectType === ProjectType.GRADLE_GRADLE">Gradle</option>
+                <option
+                    value="GRADLE"
+                    *ngIf="selectedProjectType === ProjectType.PLAIN_MAVEN || selectedProjectType === ProjectType.PLAIN_GRADLE || selectedProjectType === ProjectType.GRADLE_GRADLE"
+                >
+                    Gradle
+                </option>
             </select>
         </div>
 

@@ -507,7 +507,7 @@ public class ProgrammingExerciseService {
             if (projectType != null && projectType.isGradle()) {
                 projectTemplatePath += "/gradle";
             }
-            else if (projectType != null && projectType.isMaven()) {
+            else {
                 projectTemplatePath += "/maven";
             }
             projectTemplatePath += "/projectTemplate/**/*.*";
@@ -582,7 +582,8 @@ public class ProgrammingExerciseService {
                 }
             }
             else {
-                boolean isMaven = projectType != null && projectType.isMaven();
+                // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
+                boolean isMaven = projectType == null || projectType.isMaven();
                 sectionsMap.put("non-sequential", false);
                 sectionsMap.put("sequential", true);
 

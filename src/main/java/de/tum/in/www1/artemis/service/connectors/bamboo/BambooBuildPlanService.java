@@ -179,7 +179,7 @@ public class BambooBuildPlanService {
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                boolean isMavenProject = ProjectType.ECLIPSE.equals(projectType) || ProjectType.MAVEN.equals(projectType);
+                boolean isMavenProject = ProjectType.PLAIN_MAVEN.equals(projectType) || ProjectType.MAVEN_MAVEN.equals(projectType);
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     setStaticCodeAnalysisJobsForJavaAndKotlinExercise(defaultJob, isMavenProject);
                 }
