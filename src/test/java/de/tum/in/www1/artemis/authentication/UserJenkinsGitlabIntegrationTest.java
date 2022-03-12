@@ -101,17 +101,24 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     public void createUserWithPseudonymsIsSuccessful() throws Exception {
         ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", true);
         ReflectionTestUtils.setField(gitLabUserManagementService, "usePseudonyms", true);
-        userTestService.createUser_asAdmin_isSuccessful();
+        userTestService.createExternalUser_asAdmin_isSuccessful();
         ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", usePseudonymsJenkins);
         ReflectionTestUtils.setField(gitLabUserManagementService, "usePseudonyms", usePseudonymsGitlab);
-
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createAdminUserSkippedInJenkins() throws Exception {
         ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", "batman");
-        userTestService.createUser_asAdmin_isSuccessful();
+        userTestService.createExternalUser_asAdmin_isSuccessful();
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createAdminInternalUserSkippedInJenkins() throws Exception {
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", "batman");
+        userTestService.createInternalUser_asAdmin_isSuccessful();
         ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
     }
 
@@ -134,7 +141,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_asAdmin_isSuccessful() throws Exception {
-        userTestService.createUser_asAdmin_isSuccessful();
+        userTestService.createExternalUser_asAdmin_isSuccessful();
     }
 
     @Test

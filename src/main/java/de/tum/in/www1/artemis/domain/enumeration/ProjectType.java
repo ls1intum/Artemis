@@ -6,7 +6,7 @@ package de.tum.in.www1.artemis.domain.enumeration;
  */
 public enum ProjectType {
 
-    MAVEN, ECLIPSE, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE, GRADLE_GRADLE;
+    MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE, GRADLE_GRADLE
 
     public boolean isMaven() {
         return this == MAVEN || this == ECLIPSE;
