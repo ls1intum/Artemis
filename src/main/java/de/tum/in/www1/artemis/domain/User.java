@@ -64,14 +64,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private String registrationNumber;
 
-    // this value is typically null, except the registration number should be explicitly shown in the client
-    // currently this is only the case for the course scores page and its csv export, and also for the individual student exam detail
-    @Transient
-    private String visibleRegistrationNumberTransient = null;
-
     @Email
     @Size(max = 100)
     @Column(length = 100)
+    @JsonIgnore
     private String email;
 
     @NotNull
@@ -110,6 +106,13 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Column(name = "is_internal")
     private boolean isInternal;
+
+    // These values are typically null, except when they should be explicitly shown in the client
+    @Transient
+    private String visibleRegistrationNumberTransient = null;
+
+    @Transient
+    private String visibleEmailTransient = null;
 
     /**
      * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
@@ -270,10 +273,6 @@ public class User extends AbstractAuditingEntity implements Participant {
         return visibleRegistrationNumberTransient;
     }
 
-    public void setVisibleRegistrationNumber(String visibleRegistrationNumber) {
-        this.visibleRegistrationNumberTransient = visibleRegistrationNumber;
-    }
-
     public void setVisibleRegistrationNumber() {
         this.visibleRegistrationNumberTransient = this.getRegistrationNumber();
     }
@@ -348,5 +347,13 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setInternal(boolean internal) {
         isInternal = internal;
+    }
+
+    public String getVisibleEmail() {
+        return visibleEmailTransient;
+    }
+
+    public void setVisibleEmail() {
+        this.visibleEmailTransient = this.getEmail();
     }
 }

@@ -256,7 +256,7 @@ public class ExamResource {
         }
 
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
-        exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
+        exam.getRegisteredUsers().forEach(User::setVisibleRegistrationNumber);
 
         return ResponseEntity.ok(exam);
     }

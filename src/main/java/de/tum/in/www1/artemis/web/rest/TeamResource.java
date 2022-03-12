@@ -131,7 +131,7 @@ public class TeamResource {
         }
         Team savedTeam = teamRepository.save(exercise, team);
         savedTeam.filterSensitiveInformation();
-        savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
+        savedTeam.getStudents().forEach(User::setVisibleRegistrationNumber);
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
         return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
@@ -203,7 +203,7 @@ public class TeamResource {
         }
 
         savedTeam.filterSensitiveInformation();
-        savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
+        savedTeam.getStudents().forEach(User::setVisibleRegistrationNumber);
         var participationsOfSavedTeam = studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(exercise.getId(), savedTeam.getId());
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
@@ -252,7 +252,7 @@ public class TeamResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
-        teams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
+        teams.forEach(team -> team.getStudents().forEach(User::setVisibleRegistrationNumber));
         return ResponseEntity.ok().body(teams);
     }
 
@@ -359,7 +359,7 @@ public class TeamResource {
         // Import teams and return the teams that now belong to the destination exercise
         List<Team> destinationTeams = teamService.importTeamsFromTeamListIntoExerciseUsingStrategy(exercise, filledTeams, importStrategyType);
         destinationTeams.forEach(Team::filterSensitiveInformation);
-        destinationTeams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
+        destinationTeams.forEach(team -> team.getStudents().forEach(User::setVisibleRegistrationNumber));
 
         // Send out team assignment update via websockets
         sendTeamAssignmentUpdates(exercise, destinationTeams);
@@ -405,7 +405,7 @@ public class TeamResource {
         // Import teams and return the teams that now belong to the destination exercise
         List<Team> destinationTeams = teamService.importTeamsFromSourceExerciseIntoDestinationExerciseUsingStrategy(sourceExercise, destinationExercise, importStrategyType);
         destinationTeams.forEach(Team::filterSensitiveInformation);
-        destinationTeams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
+        destinationTeams.forEach(team -> team.getStudents().forEach(User::setVisibleRegistrationNumber));
         // Send out team assignment update via websockets
         sendTeamAssignmentUpdates(destinationExercise, destinationTeams);
 
