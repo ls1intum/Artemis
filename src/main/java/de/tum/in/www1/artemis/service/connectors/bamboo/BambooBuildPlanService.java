@@ -325,6 +325,8 @@ public class BambooBuildPlanService {
                     new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
         }
         else {
+            // setting the permission as a final task is required as a workaround because the docker container runs as a root user
+            // and creates files that cannot be deleted by Bamboo because it does not have these root permissions
             defaultJob.finalTasks(
                     new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/structuralTests/*.xml,**/test-results/behaviorTests/*.xml")
                             .description("JUnit Parser"),
