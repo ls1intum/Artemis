@@ -652,7 +652,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         });
         List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
         return removeExerciseAndSubmissionSet(programmingSubmissions);
-
     }
 
     /**
@@ -682,17 +681,22 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     /**
      * Given a List of ProgrammingSubmissions, this method will remove the attributes participation.exercise and participation.submissions
-     * to reduce the amount of data transferred to the client. Th number of submissions will be stored in the attribute participation.SubmissionCount
-     * instead instead of the number of submissions being determined by the size of the set of all submissions.
+     * to reduce the amount of data transferred to the client. The number of submissions will be stored in the attribute participation.SubmissionCount
+     * instead of the number of submissions being determined by the size of the set of all submissions.
      * @param programmingSubmissions the submissions for which the attributes are to be removed
      * @return a List, were the attributes have been removed
      */
     private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissions) {
         programmingSubmissions.forEach(programmingSubmission -> {
-            Participation participation = programmingSubmission.getParticipation();
-            participation.setExercise(null);
-            participation.setSubmissionCount(participation.getSubmissions().size());
-            participation.setSubmissions(null);
+            if (programmingSubmission.getParticipation() != null) {
+                Participation participation = programmingSubmission.getParticipation();
+                participation.setExercise(null);
+                if (participation.getSubmissions() != null && participation.getSubmissionCount() != null) {
+                    // Only remove the Submissions and store them in submissionsCount, if both are present.
+                    participation.setSubmissionCount(participation.getSubmissions().size());
+                    participation.setSubmissions(null);
+                }
+            }
         });
         return programmingSubmissions;
     }
