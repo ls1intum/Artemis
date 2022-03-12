@@ -4,10 +4,11 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
+
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.LegacyPasswordService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
@@ -28,41 +29,27 @@ public class MigrationEntry20220302_164200 extends MigrationEntry {
 
     @Override
     public void execute() {
-        SecurityUtils.setAuthorizationObject();
-        int listSize = 100;
-        List<User> users = userRepository.findAllByInternal(true);
-        // Cut list in parts to prevent any timeouts
-        int remainder = users.size() % listSize;
-        int listCount = (int) Math.floor(users.size() / 100f);
-        for (int i = 0; i < listCount - 1; i++) {
-            List<User> sublist = users.subList(i * listSize, (i + 1) * listSize);
-            processInternalUsers(sublist);
-        }
-        if (remainder > 0) {
-            List<User> sublist = users.subList(listCount * listSize, (listCount * listSize) + remainder);
-            processInternalUsers(sublist);
-        }
-
-        processExternalUsers();
+        List<User> users = userRepository.findAll();
+        Lists.partition(users, 100).forEach(list -> {
+            list = list.stream().peek(this::processUser).toList();
+            userRepository.saveAll(list);
+        });
     }
 
-    private void processInternalUsers(List<User> userList) {
-        userList = userList.stream().peek(user -> {
-            String password = legacyPasswordService.decryptPassword(user);
+    private void processUser(User user) {
+        String password = legacyPasswordService.decryptPassword(user);
+
+        // Set internal state again due to an issue with setting the correct status during registration (PR #4806)
+        // As the passwords of all external users were set to the encrypted empty string in Migration Entry 20211214_184200
+        user.setInternal(!password.equals(""));
+
+        if (user.isInternal()) {
             String hash = passwordService.hashPassword(password);
             user.setPassword(hash);
-        }).toList();
-
-        userRepository.saveAll(userList);
-    }
-
-    private void processExternalUsers() {
-        List<User> userList = userRepository.findAllByInternal(false);
-        userList = userList.stream().peek(user -> {
+        }
+        else {
             user.setPassword(null);
-        }).toList();
-
-        userRepository.saveAll(userList);
+        }
     }
 
     /**
