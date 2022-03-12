@@ -56,6 +56,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(String login, boolean isInternal);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })

@@ -105,7 +105,7 @@ public class UserCreationService {
         if (password == null) {
             password = RandomUtil.generatePassword();
         }
-        String encryptedPassword = passwordService.encodePassword(password);
+        String encryptedPassword = passwordService.hashPassword(password);
         // new user gets initially a generated password
         newUser.setPassword(encryptedPassword);
 
@@ -165,7 +165,7 @@ public class UserCreationService {
                     .collect(Collectors.toSet());
             user.setAuthorities(authorities);
         }
-        String encryptedPassword = passwordService.encodePassword(userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword());
+        String encryptedPassword = passwordService.hashPassword(userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword());
         user.setPassword(encryptedPassword);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
@@ -185,8 +185,8 @@ public class UserCreationService {
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         saveUser(user);
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, userDTO.getPassword()));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, userDTO.getPassword()));
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
@@ -213,8 +213,8 @@ public class UserCreationService {
             user.setImageUrl(imageUrl);
             saveUser(user);
             log.info("Changed Information for User: {}", user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, null));
         });
     }
 
@@ -228,7 +228,6 @@ public class UserCreationService {
      */
     @NotNull
     public User updateInternalUser(@NotNull User user, ManagedUserVM updatedUserDTO) {
-
         user.setLogin(updatedUserDTO.getLogin().toLowerCase());
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
@@ -239,7 +238,7 @@ public class UserCreationService {
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());
         if (updatedUserDTO.getPassword() != null) {
-            user.setPassword(passwordService.encodePassword(updatedUserDTO.getPassword()));
+            user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
         }
         user.setOrganizations(updatedUserDTO.getOrganizations());
         Set<Authority> managedAuthorities = user.getAuthorities();
@@ -283,16 +282,16 @@ public class UserCreationService {
      */
     public String setRandomPasswordAndReturn(User user) {
         String newPassword = RandomUtil.generatePassword();
-        user.setPassword(passwordService.encryptPassword(newPassword));
+        user.setPassword(passwordService.hashPassword(newPassword));
         user.setActivated(true);
         userRepository.save(user);
 
         optionalCIUserManagementService.ifPresent(service -> {
-            service.updateUser(user);
+            service.updateUser(user, newPassword);
         });
 
         optionalVcsUserManagementService.ifPresent(service -> {
-            service.updateVcsUser(user.getLogin(), user, new HashSet<>(), new HashSet<>(), true);
+            service.updateVcsUser(user.getLogin(), user, new HashSet<>(), new HashSet<>(), newPassword);
         });
 
         return newPassword;

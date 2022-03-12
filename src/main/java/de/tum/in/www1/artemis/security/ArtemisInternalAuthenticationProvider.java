@@ -33,8 +33,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         if (!user.get().getActivated()) {
             throw new UserNotActivatedException("User " + user.get().getLogin() + " was not activated");
         }
-        final var storedPassword = passwordService.decryptPassword(user.get());
-        if (!authentication.getCredentials().toString().equals(storedPassword)) {
+        if (!passwordService.checkPasswordMatch(authentication.getCredentials().toString(), user.get().getPassword())) {
             throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
         }
         return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), user.get().getGrantedAuthorities());
@@ -51,8 +50,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         else {
             user = optionalUser.get();
             if (!skipPasswordCheck) {
-                final var storedPassword = passwordService.decryptPassword(user);
-                if (!password.equals(storedPassword)) {
+                if (!passwordService.checkPasswordMatch(password, user.getPassword())) {
                     throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
                 }
             }

@@ -74,10 +74,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * Creates a user in Jenkins. Note that the user login acts as
      * a unique identifier in Jenkins.
      *
-     * @param user The user to create
+     * @param user     The user to create
+     * @param password The user's password
      */
     @Override
-    public void createUser(User user) throws ContinuousIntegrationException {
+    public void createUser(User user, String password) throws ContinuousIntegrationException {
         if (user.getLogin().equals(jenkinsAdminUsername)) {
             log.debug("Jenkins createUser: Skipping jenkinsAdminUser: {}.", jenkinsAdminUsername);
             return;
@@ -95,7 +96,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         try {
             // Create the Jenkins user
             var uri = UriComponentsBuilder.fromHttpUrl(jenkinsServerUrl.toString()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
-            restTemplate.exchange(uri, HttpMethod.POST, getCreateUserFormHttpEntity(user), Void.class);
+            restTemplate.exchange(uri, HttpMethod.POST, getCreateUserFormHttpEntity(user, password), Void.class);
 
             // Adds the user to groups of existing programming exercises
             addUserToGroups(user.getLogin(), getUserWithGroups(user).getGroups());
@@ -109,14 +110,15 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * Creates an HttpEntity containing the form data required by the POST request for creating a
      * new Jenkins user.
      *
-     * @param user the user to create
+     * @param user     the user to create
+     * @param password the user's password
      * @return http entity with the user encoded as the form data.
      */
-    private HttpEntity<MultiValueMap<String, String>> getCreateUserFormHttpEntity(User user) {
+    private HttpEntity<MultiValueMap<String, String>> getCreateUserFormHttpEntity(User user, String password) {
         var formData = new LinkedMultiValueMap<String, String>();
         formData.add("username", user.getLogin());
-        formData.add("password1", passwordService.decryptPassword(user));
-        formData.add("password2", passwordService.decryptPassword(user));
+        formData.add("password1", password);
+        formData.add("password2", password);
         if (usePseudonyms) {
             formData.add("fullname", String.format("User %s", user.getLogin()));
         }
@@ -159,13 +161,18 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * the user if it doesn't exist.
      * <p>
      * Note that it's not possible to change the username of the Jenkins user.
+     * We can't support updating the user without setting a new password at the moment. See {@link #updateUserLogin(String, User, String)} for more information
      *
-     * @param user The user to update.
+     * @param user     The user to update.
+     * @param password The user's password
      */
     @Override
-    public void updateUser(User user) throws ContinuousIntegrationException {
+    public void updateUser(User user, String password) throws ContinuousIntegrationException {
         if (user.getLogin().equals(jenkinsAdminUsername)) {
             log.debug("Jenkins updateUser: Skipping jenkinsAdminUser: {}.", jenkinsAdminUsername);
+            return;
+        }
+        if (password == null) {
             return;
         }
 
@@ -173,46 +180,38 @@ public class JenkinsUserManagementService implements CIUserManagementService {
         var jenkinsUser = getUser(user.getLogin());
         if (jenkinsUser != null) {
             deleteUser(user);
-            createUser(user);
+            createUser(user, password);
         }
     }
 
     /**
-     * Updates the user login of the Jenkins user. Jenkins uses the user login as the unique
-     * id. In order to change that, we delete the Jenkins user with the old login and create
-     * a new one with the new login.
+     * We don't support this for Jenkins because Jenkins doesn't support such a user update
+     * We would have to delete and recreate the user, but we can't do this without a new password
+     * In the future this could be supported by forcing to set a new password on update.
      *
      * @param oldLogin the old login
-     * @param user The Artemis user with the new login
+     * @param user     The Artemis user with the new login
+     * @param password The user's password
      * @throws ContinuousIntegrationException if something went wrong deleting/creating the user
      */
     @Override
-    public void updateUserLogin(String oldLogin, User user) throws ContinuousIntegrationException {
-        if (oldLogin.equals(user.getLogin())) {
-            return;
-        }
-
-        // We create a new user object which has the old user login and groups.
-        // We do this to revoke the old permissions for that user before creating
-        // the new one.
-        var oldUser = new User();
-        oldUser.setLogin(oldLogin);
-        oldUser.setGroups(getUserWithGroups(user).getGroups());
-        deleteUser(oldUser);
-
-        createUser(user);
+    public void updateUserLogin(String oldLogin, User user, String password) throws ContinuousIntegrationException {
     }
 
+    /**
+     * We only support updating the groups. See {@link #updateUserLogin(String, User, String)} for more information.
+     *
+     * @param oldLogin       the old login if it was updated
+     * @param user           the Artemis user
+     * @param password       the user's password
+     * @param groupsToAdd    groups to add the user to
+     * @param groupsToRemove groups to remove the user from
+     * @throws ContinuousIntegrationException
+     */
     @Override
-    public void updateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException {
-        if (!oldLogin.equals(user.getLogin())) {
-            updateUserLogin(oldLogin, user);
-        }
-        else {
-            updateUser(user);
-        }
-        removeUserFromGroups(user.getLogin(), groupsToRemove);
-        addUserToGroups(user.getLogin(), groupsToAdd);
+    public void updateUserAndGroups(String oldLogin, User user, String password, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException {
+        removeUserFromGroups(oldLogin, groupsToRemove);
+        addUserToGroups(oldLogin, groupsToAdd);
     }
 
     /**
@@ -220,8 +219,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * groups so this function fetches all programming exercises belonging to
      * the groups and assigns the user permissions to them.
      *
-     * @param userLogin   The user login to add to the group
-     * @param groups The groups to add the user to
+     * @param userLogin The user login to add to the group
+     * @param groups    The groups to add the user to
      */
     @Override
     public void addUserToGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
@@ -270,8 +269,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * Removes the Artemis user from the specified groups. Jenkins doesn't support groups so this function fetches
      * all programming exercises belonging to the groups, and revokes the user's permissions from them.
      *
-     * @param userLogin   The login of the Artemis user to remove from the group
-     * @param groups The groups to remove the user from
+     * @param userLogin The login of the Artemis user to remove from the group
+     * @param groups    The groups to remove the user from
      */
     @Override
     public void removeUserFromGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
@@ -315,7 +314,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     /**
      * Assigns teaching assistant and/or editor and/or instructor permissions to each user belonging to the teaching assistant/editor/instructor groups of the course.
      *
-     * @param course the course
+     * @param course               the course
      * @param programmingExercises list of programmingExercises for which the permissions should be changed
      */
     private void assignPermissionsToInstructorAndEditorAndTAsForCourse(Course course, List<ProgrammingExercise> programmingExercises) {
@@ -342,11 +341,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * fetches all exercises that belong to the course and removes all permissions assigned to all instructors and editors and
      * teaching assistants belonging to the groups.
      *
-     * @param instructorGroup the group of instructors
-     * @param editorGroup the group of editors
+     * @param instructorGroup        the group of instructors
+     * @param editorGroup            the group of editors
      * @param teachingAssistantGroup the group of teaching assistants
-     * @param course the course
-     * @param programmingExercises list of programmingExercises for which the permissions should be changed
+     * @param course                 the course
+     * @param programmingExercises   list of programmingExercises for which the permissions should be changed
      */
     private void removePermissionsFromInstructorsAndEditorsAndTAsForCourse(String instructorGroup, String editorGroup, String teachingAssistantGroup, Course course,
             List<ProgrammingExercise> programmingExercises) {
