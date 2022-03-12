@@ -510,6 +510,7 @@ public class ProgrammingExerciseService {
             else if (projectType != null && projectType.isMaven()) {
                 projectTemplatePath += "/maven";
             }
+            // rerun the build agent
             projectTemplatePath += "/projectTemplate/**/*.*";
             Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
