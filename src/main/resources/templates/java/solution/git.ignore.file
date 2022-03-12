@@ -86,4 +86,4 @@ out
 
 #################
 .gradle
-!gradle/wrapper/gradle-wrapper.jar
+gradle

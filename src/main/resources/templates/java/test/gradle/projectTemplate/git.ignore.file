@@ -89,4 +89,4 @@ out
 ################
 # Gradle
 .gradle
-!**/gradle-wrapper.jar
+gradle
