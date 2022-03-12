@@ -284,7 +284,7 @@ public class BambooBuildPlanService {
             defaultJob.finalTasks(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
         }
         else {
-            defaultJob.finalTasks(new ScriptTask().inlineBody("gradle check").description("Static Code Analysis"));
+            defaultJob.finalTasks(new ScriptTask().inlineBody("./gradlew check").description("Static Code Analysis"));
         }
         defaultJob.artifacts(artifacts);
     }
@@ -306,7 +306,7 @@ public class BambooBuildPlanService {
             // and creates files that cannot be deleted by Bamboo because it does not have these root permissions
             defaultJob.finalTasks(new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/test/*.xml").description("JUnit Parser"),
                     new ScriptTask().inlineBody("chmod -R 777 ${bamboo.working.directory}").description("Setup working directory for cleanup"));
-            return defaultStage.jobs(defaultJob.tasks(checkoutTask, new ScriptTask().inlineBody("gradle clean test").description("Tests")));
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask, new ScriptTask().inlineBody("./gradlew clean test").description("Tests")));
         }
     }
 
@@ -332,8 +332,8 @@ public class BambooBuildPlanService {
                             .description("JUnit Parser"),
                     new ScriptTask().inlineBody("chmod -R 777 ${bamboo.working.directory}").description("Setup working directory for cleanup"));
             // the script task for executing the behavior tests must not clean the build files because the test parser would not have parsed the tests for the structural tests yet
-            return defaultStage.jobs(defaultJob.tasks(checkoutTask, new ScriptTask().inlineBody("gradle clean structuralTests").description("Structural tests"),
-                    new ScriptTask().inlineBody("gradle behaviorTests").description("Behavior tests")));
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask, new ScriptTask().inlineBody("./gradlew clean structuralTests").description("Structural tests"),
+                    new ScriptTask().inlineBody("./gradlew behaviorTests").description("Behavior tests")));
         }
     }
 
