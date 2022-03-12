@@ -366,6 +366,9 @@ public class FileService implements DisposableBean {
             if (targetFilePath.endsWith("Scan.file")) {
                 targetFilePath = targetFilePath.replace("Scan.file", "Scanfile");
             }
+            if (targetFilePath.endsWith("gradlew.file")) {
+                targetFilePath = targetFilePath.replace("gradlew.file", "gradlew");
+            }
             // special case for Xcode where directories get falsely scanned as files
             if (targetFilePath.endsWith(".xcassets/") || targetFilePath.endsWith(".colorset/") || targetFilePath.endsWith(".appiconset/")
                     || targetFilePath.endsWith(".xcworkspace/") || targetFilePath.endsWith(".xcodeproj/")) {
@@ -379,6 +382,9 @@ public class FileService implements DisposableBean {
             }
 
             Files.copy(resource.getInputStream(), copyPath, StandardCopyOption.REPLACE_EXISTING);
+            if (targetFilePath.endsWith("gradlew")) {
+                copyPath.toFile().setExecutable(true);
+            }
         }
     }
 

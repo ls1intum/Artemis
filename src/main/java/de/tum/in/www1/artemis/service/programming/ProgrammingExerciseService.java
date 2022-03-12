@@ -513,6 +513,7 @@ public class ProgrammingExerciseService {
             projectTemplatePath += "/projectTemplate/**/*.*";
             Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
             fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+            var x = new java.io.File(repository.getLocalPath().toAbsolutePath().toString()).list();
 
             // These resources might override the programming language dependent resources as they are project type dependent.
             if (projectType != null) {
