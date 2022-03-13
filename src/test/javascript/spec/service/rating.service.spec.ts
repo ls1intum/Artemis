@@ -25,7 +25,8 @@ describe('Rating Service', () => {
             id: 0,
             ...elemDefault,
         };
-        service.createRating(new Rating(new Result(), 3)).pipe(take(1)).subscribe();
+        const result = new Result();
+        service.createRating(3, result.id!).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
@@ -46,7 +47,8 @@ describe('Rating Service', () => {
             id: 0,
             ...elemDefault,
         };
-        service.updateRating(new Rating(new Result(), 3)).pipe(take(1)).subscribe();
+        const result = new Result();
+        service.updateRating(3, result.id!).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);

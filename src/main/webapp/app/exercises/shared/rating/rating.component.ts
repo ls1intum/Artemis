@@ -39,34 +39,25 @@ export class RatingComponent implements OnInit {
      */
     onRate(event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
         // block rating to prevent double sending of post request
-        if (this.disableRating) {
+        if (this.disableRating || !this.rating.result) {
             return;
         }
 
         // update feedback locally
         this.rating.rating = event.newValue;
+
         // Break circular dependency
-        if (this.rating.result) {
-            this.rating.result.participation = undefined;
-            const submission = this.rating.result.submission;
-            if (submission) {
-                submission.participation = undefined;
-                const latestResult = getLatestSubmissionResult(submission);
-                if (latestResult) {
-                    latestResult.participation = undefined;
-                    latestResult.submission = undefined;
-                }
-            }
-        }
+        const resultId = this.rating.result.id!;
+        this.rating.result = undefined;
 
         // set/update feedback on the server
         if (this.rating.id) {
-            this.ratingService.updateRating(this.rating).subscribe((rating) => {
+            this.ratingService.updateRating(this.rating.rating, resultId).subscribe((rating) => {
                 this.rating = rating;
             });
         } else {
             this.disableRating = true;
-            this.ratingService.createRating(this.rating).subscribe((rating) => {
+            this.ratingService.createRating(this.rating.rating, resultId).subscribe((rating) => {
                 this.rating = rating;
                 this.disableRating = false;
             });
