@@ -12,6 +12,7 @@ import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-clone-repo-button',
     templateUrl: './clone-repo-button.component.html',
+    styleUrls: ['./clone-repo-button.component.scss'],
 })
 export class CloneRepoButtonComponent implements OnInit {
     @Input()

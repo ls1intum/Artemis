@@ -1,0 +1,25 @@
+.repository-button {
+    margin-bottom: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+.remove-line-left {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+}
+.remove-line-right {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top: none;
+}
+.remove-line-left-right {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top: none;
+}

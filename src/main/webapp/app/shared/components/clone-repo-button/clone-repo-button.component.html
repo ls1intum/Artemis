@@ -29,26 +29,13 @@
             <!-- ngStyle: sshEnabled -> Remove round edges and edge on the left side || useSsh -> Remove round edges and edge on the right side -->
             <pre
                 style="flex: 1"
-                [ngStyle]="
-                    sshEnabled && !useSsh
-                        ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none', borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' }
-                        : sshEnabled && useSsh
-                        ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' }
-                        : { borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 'none' }
-                "
+                [ngClass]="sshEnabled && !useSsh ? 'remove-line-left-right' : sshEnabled && useSsh ? 'remove-line-left' : 'remove-line-right'"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }} </pre
             >
             <div *ngIf="!useSsh" style="display: flex; align-items: center">
-                <a
-                    style="flex: 1"
-                    class="btn btn-secondary btn-sm me-2"
-                    style="margin-bottom: 10px; padding-top: 10px; padding-bottom: 10px; border-top-left-radius: 0; border-bottom-left-radius: 0"
-                    [href]="getHttpRepositoryUrl() | safeUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
+                <a style="flex: 1" class="btn btn-secondary btn-sm me-2 repository-button" [href]="getHttpRepositoryUrl() | safeUrl" target="_blank" rel="noopener noreferrer">
                     <fa-icon [icon]="faExternalLink"></fa-icon>
                 </a>
             </div>
