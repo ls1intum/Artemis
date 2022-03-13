@@ -409,20 +409,22 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should call save assessment on control and s', () => {
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
         const spyOnControlAndS = jest.spyOn(component, 'saveOnControlAndS');
         const saveSpy = jest.spyOn(component, 'save');
-        component.saveOnControlAndS();
+        document.dispatchEvent(eventMock);
 
         expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
         expect(saveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should call submit assessment on control and enter', () => {
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
         const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
-        const spySubmit = jest.spyOn(component, 'submit');
-        component.submitOnControlAndEnter();
+        const submitSpy = jest.spyOn(component, 'submit');
+        document.dispatchEvent(eventMock);
 
         expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
-        expect(spySubmit).toHaveBeenCalledTimes(1);
+        expect(submitSpy).toHaveBeenCalledTimes(1);
     });
 });
