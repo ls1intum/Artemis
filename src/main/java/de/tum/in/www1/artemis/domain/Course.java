@@ -674,8 +674,16 @@ public class Course extends DomainObject {
         if (getMaxComplaintTextLimit() < 0) {
             throw new BadRequestAlertException("Max Complaint text limit cannot be negative", ENTITY_NAME, "maxComplaintTextLimitInvalid", true);
         }
+        if (getMaxComplaintTextLimit() > Complaint.COMPLAINT_TEXT_LIMIT) {
+            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + Complaint.COMPLAINT_TEXT_LIMIT + " characters.", ENTITY_NAME,
+                    "maxComplaintResponseTextLimitInvalid", true);
+        }
         if (getMaxComplaintResponseTextLimit() < 0) {
             throw new BadRequestAlertException("Max Complaint response text limit cannot be negative", ENTITY_NAME, "maxComplaintResponseTextLimitInvalid", true);
+        }
+        if (getMaxComplaintResponseTextLimit() > ComplaintResponse.COMPLAINT_RESPONSE_TEXT_LIMIT) {
+            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + ComplaintResponse.COMPLAINT_RESPONSE_TEXT_LIMIT + " characters.", ENTITY_NAME,
+                    "maxComplaintResponseTextLimitInvalid", true);
         }
         if (getMaxRequestMoreFeedbackTimeDays() < 0) {
             throw new BadRequestAlertException("Max Request More Feedback Days cannot be negative", ENTITY_NAME, "maxRequestMoreFeedbackDaysInvalid", true);
