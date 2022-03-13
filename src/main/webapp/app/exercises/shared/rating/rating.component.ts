@@ -5,7 +5,6 @@ import { Result } from 'app/entities/result.model';
 import { Rating } from 'app/entities/rating.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-rating',

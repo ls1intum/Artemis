@@ -29,7 +29,7 @@ export class RatingService {
 
     /**
      * Update rating for "resultId" Result
-     * @param rating - Rating for the result (1- 5)
+     * @param rating - Rating for the result
      */
     updateRating(rating: Rating): Observable<Rating> {
         return this.http.put<Rating>(this.ratingResourceUrl + `${rating.result!.id!}/rating/${rating.rating}`, null);
