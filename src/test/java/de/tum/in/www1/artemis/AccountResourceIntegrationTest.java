@@ -34,7 +34,8 @@ import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
- * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal structure will cause these tests to fail.
+ * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal
+ * structure will cause these tests to fail.
  */
 public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -76,10 +77,16 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     public void registerAccount() throws Exception {
+        String login = "abd123cd";
+        String password = getValidPassword();
         // setup user
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = ModelFactory.generateActivatedUser(login);
         ManagedUserVM userVM = new ManagedUserVM(user);
-        userVM.setPassword(getValidPassword());
+        userVM.setPassword(password);
+
+        bitbucketRequestMockProvider.mockUserDoesNotExist(login);
+        bitbucketRequestMockProvider.mockCreateUser(login, password, login + "@test.de", login + "First " + login + "Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
 
         // make request
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
