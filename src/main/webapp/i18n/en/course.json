@@ -37,7 +37,7 @@
                 "description": "This number indicates the maximum number of characters a student may use per complaint."
             },
             "maxComplaintResponseTextLimit": {
-                "title": "Maximum number of characters for complaint responses",
+                "title": "Maximum number of characters per complaint response",
                 "description": "This number indicates the maximum number of characters that may be used for the response per complaint."
             },
             "postsEnabled": {

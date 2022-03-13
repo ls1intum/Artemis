@@ -153,10 +153,10 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 maxComplaintTextLimit: new FormControl(this.course.maxComplaintTextLimit, {
-                    validators: [Validators.required, Validators.min(1), Validators.max(5000)],
+                    validators: [Validators.required, Validators.min(0), Validators.max(5000)],
                 }),
                 maxComplaintResponseTextLimit: new FormControl(this.course.maxComplaintResponseTextLimit, {
-                    validators: [Validators.required, Validators.min(1), Validators.max(5000)],
+                    validators: [Validators.required, Validators.min(0), Validators.max(5000)],
                 }),
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],

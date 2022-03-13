@@ -97,11 +97,11 @@ public class Course extends DomainObject {
 
     @Column(name = "max_complaints")
     @JsonView(QuizView.Before.class)
-    private Integer maxComplaints;
+    private int maxComplaints;
 
     @Column(name = "max_team_complaints")
     @JsonView(QuizView.Before.class)
-    private Integer maxTeamComplaints;
+    private int maxTeamComplaints;
 
     @Column(name = "max_complaint_time_days")
     @JsonView(QuizView.Before.class)
@@ -320,19 +320,19 @@ public class Course extends DomainObject {
         this.onlineCourse = onlineCourse;
     }
 
-    public Integer getMaxComplaints() {
+    public int getMaxComplaints() {
         return maxComplaints;
     }
 
-    public void setMaxComplaints(Integer maxComplaints) {
+    public void setMaxComplaints(int maxComplaints) {
         this.maxComplaints = maxComplaints;
     }
 
-    public Integer getMaxTeamComplaints() {
+    public int getMaxTeamComplaints() {
         return maxTeamComplaints;
     }
 
-    public void setMaxTeamComplaints(Integer maxTeamComplaints) {
+    public void setMaxTeamComplaints(int maxTeamComplaints) {
         this.maxTeamComplaints = maxTeamComplaints;
     }
 
@@ -662,14 +662,6 @@ public class Course extends DomainObject {
      * validates that the configuration for complaints and more feedback requests is correct
      */
     public void validateComplaintsAndRequestMoreFeedbackConfig() {
-        if (getMaxComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
-            setMaxComplaints(3);
-        }
-        if (getMaxTeamComplaints() == null) {
-            // set the default value to prevent null pointer exceptions
-            setMaxTeamComplaints(3);
-        }
         if (getMaxComplaints() < 0) {
             throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
         }
@@ -678,6 +670,12 @@ public class Course extends DomainObject {
         }
         if (getMaxComplaintTimeDays() < 0) {
             throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
+        }
+        if (getMaxComplaintTextLimit() < 0) {
+            throw new BadRequestAlertException("Max Complaint text limit cannot be negative", ENTITY_NAME, "maxComplaintTextLimitInvalid", true);
+        }
+        if (getMaxComplaintResponseTextLimit() < 0) {
+            throw new BadRequestAlertException("Max Complaint response text limit cannot be negative", ENTITY_NAME, "maxComplaintResponseTextLimitInvalid", true);
         }
         if (getMaxRequestMoreFeedbackTimeDays() < 0) {
             throw new BadRequestAlertException("Max Request More Feedback Days cannot be negative", ENTITY_NAME, "maxRequestMoreFeedbackDaysInvalid", true);
