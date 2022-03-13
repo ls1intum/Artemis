@@ -79,6 +79,18 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithNegativeMaxComplaintTextLimit() throws Exception {
+        courseTestService.testCreateCourseWithNegativeMaxComplaintTextLimit();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithNegativeMaxComplaintResponseTextLimit() throws Exception {
+        courseTestService.testCreateCourseWithNegativeMaxComplaintResponseTextLimit();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         courseTestService.testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains();
     }
