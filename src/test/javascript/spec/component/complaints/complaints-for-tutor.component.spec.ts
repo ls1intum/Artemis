@@ -13,6 +13,12 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { By } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { Course } from 'app/entities/course.model';
+
+// Mock getCourseFromExercise(exercise) to get a course even if there isn't a course.
+jest.mock('app/entities/exercise.model', () => ({
+    getCourseFromExercise: () => new Course(),
+}));
 
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
@@ -212,6 +218,7 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
+        // @ts-ignore
         complaintForTutorComponentFixture.detectChanges();
 
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;

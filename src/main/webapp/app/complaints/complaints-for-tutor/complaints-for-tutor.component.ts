@@ -48,12 +48,11 @@ export class ComplaintsForTutorComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.course = getCourseFromExercise(this.exercise!);
+
         if (this.complaint) {
             this.complaintText = this.complaint.complaintText;
             this.handled = this.complaint.accepted !== undefined;
-
-            this.course = getCourseFromExercise(this.exercise!);
-
             if (this.handled) {
                 this.complaintResponse = this.complaint.complaintResponse!;
                 this.showRemoveLockButton = false;
