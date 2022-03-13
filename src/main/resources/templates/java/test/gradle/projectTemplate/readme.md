@@ -13,7 +13,7 @@ files as a dependency to the test project. Follow this description for IntelliJ:
 "File" -> "Project Structure..." -> "Modules" -> "&lt;ProjectName>-Tests" -> Sub-Option "test" -> "Dependencies" -> Button
 "+" -> "3. Module Dependency" -> Select the respective repository name with an appended ".main".
 
-**Note**: For sequential test projects, you have to select the respective repository name with an appended ".behavior".
+**Note**: For sequential test projects, you have to perform these steps for both Sub-Options "structural" and "behavior".
 
 #### Sequential test runs
 If you have decided to use the sequential test runs feature for this exercise, read the following instructions:
