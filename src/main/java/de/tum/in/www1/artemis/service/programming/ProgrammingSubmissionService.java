@@ -636,6 +636,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(toList());
+
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
@@ -651,7 +652,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
             }
         });
         List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
-        return removeExerciseAndSubmissionSet(programmingSubmissions);
+        if (examMode) {
+            // In Exam-Mode, the Submissions are retrieved from the studentParticipationRepository, for which the Set<Submission> is appended
+            return removeExerciseAndSubmissionSet(programmingSubmissions, true);
+        }
+        else {
+            // In non-Exam Mode, the Submissions are retrieved from the submissionRepository, for which no Set<submission> is appended
+            return removeExerciseAndSubmissionSet(programmingSubmissions, false);
+        }
     }
 
     /**
@@ -678,7 +686,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     Submission submission = optionalSubmission.get();
                     programmingSubmissions.add((ProgrammingSubmission) submission);
                 });
-        return removeExerciseAndSubmissionSet(programmingSubmissions);
+        return removeExerciseAndSubmissionSet(programmingSubmissions, true);
     }
 
     /**
@@ -686,20 +694,18 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * the amount of data transferred to the client. The number of submissions will be stored in the attribute participation.SubmissionCount
      * instead of the number of submissions being determined by the size of the set of all submissions.
      * @param programmingSubmissionList - a List with all ProgrammingSubmissions to be modified
+     * @param removeSubmissionSet - also remove the SubmissionSet from the ProgrammingSubmission
      * @return a List with ProgrammingSubmissions and removed attributes
      */
-    private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissionList) {
+    private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissionList, boolean removeSubmissionSet) {
         programmingSubmissionList.forEach(programmingSubmission -> {
             if (programmingSubmission.getParticipation() != null) {
                 Participation participation = programmingSubmission.getParticipation();
                 participation.setExercise(null);
-                if (participation.getSubmissions() != null) {
+                if (removeSubmissionSet && participation.getSubmissions() != null) {
                     // Only remove the Submissions and store them in submissionsCount, if the Set<Submissions> is present.
                     participation.setSubmissionCount(participation.getSubmissions().size());
                     participation.setSubmissions(null);
-                }
-                else {
-                    participation.setSubmissionCount(0);
                 }
             }
         });
