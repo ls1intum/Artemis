@@ -382,8 +382,9 @@ public class FileService implements DisposableBean {
             // make gradlew executable
             if (targetFilePath.endsWith("gradlew")) {
                 boolean success = copyPath.toFile().setExecutable(true);
-                if (!success)
+                if (!success) {
                     throw new RuntimeException("The permissions of " + targetFilePath + " could not be set to executable");
+                }
             }
         }
     }
