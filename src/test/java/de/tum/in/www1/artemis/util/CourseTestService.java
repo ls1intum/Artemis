@@ -182,73 +182,49 @@ public class CourseTestService {
     }
 
     // Test
-    public void testCreateCourseWithNegativeMaxComplainNumber() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
+    private void testCreateCourseWithNegativeValue(Course course) throws Exception {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        course.setMaxComplaints(-1);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+    }
+
+    // Test
+    public void testCreateCourseWithNegativeMaxComplainNumber() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxComplaints(-1);
+        testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxComplainTimeDays() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxComplaintTimeDays(-1);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+        testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxTeamComplainNumber() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxTeamComplaints(-1);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+        testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxComplaintTextLimit() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxComplaintTextLimit(-1);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+        testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxComplaintResponseTextLimit() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxComplaintResponseTextLimit(-1);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent.size()).as("Course has not been stored").isEqualTo(0);
+        testCreateCourseWithNegativeValue(course);
     }
 
     // Test

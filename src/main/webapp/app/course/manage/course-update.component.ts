@@ -84,7 +84,6 @@ export class CourseUpdateComponent implements OnInit {
                     this.course.maxComplaintTimeDays! > 0 &&
                     this.course.maxComplaintTextLimit! > 0 &&
                     this.course.maxComplaintResponseTextLimit! > 0;
-                console.log(this.course.maxComplaintTextLimit!);
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             }
         });
