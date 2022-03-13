@@ -438,4 +438,21 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(importSpy).toHaveBeenCalledTimes(1);
         expect(importSpy).toHaveBeenCalledWith(component.submission.id, component.modelingExercise!.id);
     });
+
+    it('should call save assessment on control and s', () => {
+        const spyOnControlAndS = jest.spyOn(component, 'saveOnControlAndS');
+        const saveStub = jest.spyOn(component, 'onSaveAssessment').mockImplementation();
+        component.saveOnControlAndS();
+
+        expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
+        expect(saveStub).toHaveBeenCalledTimes(1);
+    });
+    it('should call submit assessment on control and enter', () => {
+        const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
+        const submitStub = jest.spyOn(component, 'onSubmitAssessment').mockImplementation();
+        component.submitOnControlAndEnter();
+
+        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
+        expect(submitStub).toHaveBeenCalledTimes(1);
+    });
 });

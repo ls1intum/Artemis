@@ -407,4 +407,22 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(routerSpy).toHaveBeenCalledTimes(1);
         expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission } });
     });
+
+    it('should call save assessment on control and s', () => {
+        const spyOnControlAndS = jest.spyOn(component, 'saveOnControlAndS');
+        const saveSpy = jest.spyOn(component, 'save');
+        component.saveOnControlAndS();
+
+        expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
+        expect(saveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call submit assessment on control and enter', () => {
+        const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
+        const spySubmit = jest.spyOn(component, 'submit');
+        component.submitOnControlAndEnter();
+
+        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
+        expect(spySubmit).toHaveBeenCalledTimes(1);
+    });
 });
