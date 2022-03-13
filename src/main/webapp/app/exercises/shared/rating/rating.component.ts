@@ -46,18 +46,14 @@ export class RatingComponent implements OnInit {
         // update feedback locally
         this.rating.rating = event.newValue;
 
-        // Break circular dependency
-        const resultId = this.rating.result.id!;
-        this.rating.result = undefined;
-
         // set/update feedback on the server
         if (this.rating.id) {
-            this.ratingService.updateRating(this.rating.rating, resultId).subscribe((rating) => {
+            this.ratingService.updateRating(this.rating).subscribe((rating) => {
                 this.rating = rating;
             });
         } else {
             this.disableRating = true;
-            this.ratingService.createRating(this.rating.rating, resultId).subscribe((rating) => {
+            this.ratingService.createRating(this.rating).subscribe((rating) => {
                 this.rating = rating;
                 this.disableRating = false;
             });

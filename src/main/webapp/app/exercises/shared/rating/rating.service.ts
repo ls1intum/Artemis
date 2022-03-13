@@ -14,10 +14,9 @@ export class RatingService {
     /**
      * Create the student rating for feedback on the server.
      * @param rating - Rating for the result
-     * @param resultId - Id of the linked result
      */
-    createRating(rating: number, resultId: number): Observable<Rating> {
-        return this.http.post<Rating>(this.ratingResourceUrl + `${resultId}/rating/${rating}`, rating);
+    createRating(rating: Rating): Observable<Rating> {
+        return this.http.post<Rating>(this.ratingResourceUrl + `${rating.result!.id!}/rating/${rating.rating}`, null);
     }
 
     /**
@@ -31,10 +30,9 @@ export class RatingService {
     /**
      * Update rating for "resultId" Result
      * @param rating - Rating for the result (1- 5)
-     * @param resultId - Id of the linked result
      */
-    updateRating(rating: number, resultId: number): Observable<Rating> {
-        return this.http.put<Rating>(this.ratingResourceUrl + `${resultId}/rating/${rating}`, null);
+    updateRating(rating: Rating): Observable<Rating> {
+        return this.http.put<Rating>(this.ratingResourceUrl + `${rating.result!.id!}/rating/${rating.rating}`, null);
     }
 
     /**
