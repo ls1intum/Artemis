@@ -198,7 +198,7 @@ public class JenkinsJobService {
     }
 
     /**
-     * Updates the xml desription of the folder job.
+     * Updates the xml description of the folder job.
      *
      * @param folderName the name of the folder
      * @param folderConfig the xml document of the folder
