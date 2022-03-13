@@ -37,7 +37,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     showLockDuration = false;
     showRemoveLockButton = false;
     isLockedForLoggedInUser = false;
-    course: Course | undefined;
+    course?: Course;
 
     constructor(
         private alertService: AlertService,

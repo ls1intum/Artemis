@@ -26,7 +26,7 @@ export class ComplaintsFormComponent implements OnInit {
     maxComplaintsPerCourse = 1;
     complaintText?: string;
     ComplaintType = ComplaintType;
-    course: Course | undefined;
+    course?: Course;
 
     // Icons
     faInfoCircle = faInfoCircle;
