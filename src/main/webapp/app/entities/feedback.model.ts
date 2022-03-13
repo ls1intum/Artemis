@@ -100,12 +100,17 @@ export class Feedback implements BaseEntity {
         return that.detailText != undefined && that.detailText.length > 0;
     }
 
+    public static hasContent(that: Feedback): boolean {
+        // if the feedback is associated with the grading instruction, the detail text is optional
+        return Feedback.hasDetailText(that) || !!(that.gradingInstruction && that.gradingInstruction.feedback);
+    }
+
     /**
-     * Feedback is empty if it has 0 creits and the comment is empty.
+     * Feedback is empty if it has 0 credits and the comment is empty.
      * @param that
      */
     public static isEmpty(that: Feedback): boolean {
-        return (that.credits == undefined || that.credits === 0) && !Feedback.hasDetailText(that);
+        return !that.credits && !Feedback.hasContent(that);
     }
 
     /**
@@ -117,11 +122,7 @@ export class Feedback implements BaseEntity {
     }
 
     public static hasCreditsAndComment(that: Feedback): boolean {
-        // if the feedback is associated with the grading instruction, detail-text would be additional, do not need to validate the detail-text
-        if (that.gradingInstruction && that.gradingInstruction.feedback) {
-            return that.credits != undefined;
-        }
-        return that.credits != undefined && Feedback.hasDetailText(that);
+        return that.credits != undefined && Feedback.hasContent(that);
     }
 
     public static haveCredits(that: Feedback[]): boolean {

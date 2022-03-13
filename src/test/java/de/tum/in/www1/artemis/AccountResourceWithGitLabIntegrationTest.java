@@ -69,7 +69,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         userVM.setPassword("password");
 
         // Simulate failure to delete GitLab user, this should not keep Artemis from creating a new user
-        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), true);
+        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), true, true);
 
         // Simulate creation of GitLab user
         gitlabRequestMockProvider.mockCreateVcsUser(user, false);

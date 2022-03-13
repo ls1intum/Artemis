@@ -234,6 +234,7 @@ public class UserCreationService {
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
         user.setEmail(updatedUserDTO.getEmail().toLowerCase());
+        user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
         user.setImageUrl(updatedUserDTO.getImageUrl());
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
@@ -245,10 +246,9 @@ public class UserCreationService {
         Set<Authority> managedAuthorities = user.getAuthorities();
         managedAuthorities.clear();
         updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
-        user = saveUser(user);
-
         log.debug("Changed Information for User: {}", user);
-        return user;
+
+        return saveUser(user);
     }
 
     /**

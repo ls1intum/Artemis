@@ -142,6 +142,7 @@ dependencies {
     implementation "com.thoughtworks.qdox:qdox:${thoughtworks_qdox_version}"
 
     implementation "org.springdoc:springdoc-openapi-ui:${springdoc_openapi_ui_version}"
+
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:${hazelcast_hibernate53_version}"
@@ -197,7 +198,7 @@ task executeTests (type: Exec) {
 
 allprojects {
     wrapper {
-        gradleVersion = "7.4"
+        gradleVersion = "7.4.1"
     }
 }
 

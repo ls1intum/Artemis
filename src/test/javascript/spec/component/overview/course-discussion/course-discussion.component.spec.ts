@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { getElement } from '../../../helpers/utils/general.utils';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPaginationModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -26,8 +26,6 @@ import { CourseDiscussionComponent } from 'app/overview/course-discussion/course
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Reaction } from 'app/entities/metis/reaction.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
@@ -50,6 +48,7 @@ import {
     metisUpVoteReactionUser1,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -62,7 +61,6 @@ describe('CourseDiscussionComponent', () => {
     let post2: Post;
     let post3: Post;
     let post4: Post;
-    let posts: Post[];
 
     const id = metisCourse.id;
     const parentRoute = {
@@ -75,7 +73,7 @@ describe('CourseDiscussionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbPaginationModule)],
             declarations: [
                 CourseDiscussionComponent,
                 MockComponent(PostingThreadComponent),
@@ -84,6 +82,7 @@ describe('CourseDiscussionComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
                 MockComponent(ButtonComponent),
+                MockComponent(ItemCountComponent),
             ],
             providers: [
                 FormBuilder,
@@ -125,6 +124,12 @@ describe('CourseDiscussionComponent', () => {
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
+            searchText: undefined,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+            postSortCriterion: PostSortCriterion.CREATION_DATE,
+            sortingOrder: SortDirection.DESCENDING,
         });
     }));
 
@@ -136,8 +141,17 @@ describe('CourseDiscussionComponent', () => {
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
+            searchText: undefined,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+            postSortCriterion: PostSortCriterion.CREATION_DATE,
+            sortingOrder: SortDirection.DESCENDING,
         });
-        expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
+        expect(component.formGroup.get('sortBy')?.value).toBe(PostSortCriterion.CREATION_DATE);
+        expect(component.formGroup.get('filterToUnresolved')?.value).toBe(false);
+        expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
+        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
     }));
 
     it('should initialize overview page with course posts for default settings correctly', fakeAsync(() => {
@@ -148,9 +162,15 @@ describe('CourseDiscussionComponent', () => {
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
+            searchText: undefined,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+            postSortCriterion: PostSortCriterion.CREATION_DATE,
+            sortingOrder: SortDirection.DESCENDING,
         });
         expect(component.formGroup.get('sortBy')?.value).toEqual(PostSortCriterion.CREATION_DATE);
-        expect(component.currentSortDirection).toEqual(SortDirection.DESC);
+        expect(component.currentSortDirection).toBe(SortDirection.DESCENDING);
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         expect(searchInput.textContent).toBe('');
@@ -176,34 +196,30 @@ describe('CourseDiscussionComponent', () => {
         expect(postCountInformation.textContent).not.toBeNull();
     }));
 
-    it('should invoke metis service without forcing a reload when search text changed', fakeAsync(() => {
+    it('should invoke metis service forcing a reload from server when search text changed', fakeAsync(() => {
         component.ngOnInit();
         tick();
-        component.onSearch();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            {
-                courseId: metisCourse.id,
-                courseWideContext: undefined,
-                exerciseId: undefined,
-                lectureId: undefined,
-            },
-            false, // forceReload false
-        );
+        component.searchText = 'textToSearch';
+        component.onSelectContext();
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
+            courseId: metisCourse.id,
+            courseWideContext: undefined,
+            exerciseId: undefined,
+            lectureId: undefined,
+            searchText: component.searchText,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+            page: component.page - 1,
+            pageSize: component.itemsPerPage,
+            pagingEnabled: true,
+            postSortCriterion: 'CREATION_DATE',
+            sortingOrder: 'DESCENDING',
+        });
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(2);
     }));
 
-    it('should search for posts with certain id when pattern is used', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-        component.searchText = '#1';
-        component.onSearch();
-        tick();
-        fixture.detectChanges();
-        expect(component.posts).toHaveLength(1);
-    }));
-
-    it('should invoke metis service, update filter setting and displayed posts when filterToUnresolved checkbox is checked', fakeAsync(() => {
+    it('should invoke metis service and update filter setting when filterToUnresolved checkbox is checked', fakeAsync(() => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -217,12 +233,11 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.filterToUnresolved).toBe(true);
-        // one of the posts has an answer post that is has resolvesPost set to true, i.e. one post is resolved and therefore filtered out
-        expect(component.posts).toHaveLength(metisCoursePosts.length - 1);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
+        // actual post filtering done at server side, tested by AnswerPostIntegrationTest
     }));
 
-    it('should invoke metis service, update filter setting and displayed posts when filterToUnresolved and filterToOwn checkbox is checked', fakeAsync(() => {
+    it('should invoke metis service and update filter setting when filterToUnresolved and filterToOwn checkbox is checked', fakeAsync(() => {
         const currentUser = metisUser1;
         metisServiceGetUserStub.mockReturnValue(currentUser);
         component.ngOnInit();
@@ -240,17 +255,13 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
-        expect(component.filterToUnresolved).toBe(true);
-        expect(component.filterToOwn).toBe(true);
-        expect(component.filterToAnsweredOrReactedByUser).toBe(false);
-        // determine expected posts
-        const expectedPosts = metisCoursePosts.filter(
-            (post: Post) => post.author === currentUser && !(post.answers && post.answers.some((answer: AnswerPost) => answer.resolvesPost === true)),
-        );
-        expect(component.posts).toHaveLength(expectedPosts.length);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
+        expect(component.currentPostContextFilter.filterToOwn).toBe(true);
+        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(false);
+        // actual post filtering done at server side, tested by AnswerPostIntegrationTest
     }));
 
-    it('should invoke metis service, update filter setting and displayed posts when filterToOwn checkbox is checked', fakeAsync(() => {
+    it('should invoke metis service and update filter setting when filterToOwn checkbox is checked', fakeAsync(() => {
         const currentUser = metisUser1;
         metisServiceGetUserStub.mockReturnValue(currentUser);
         component.ngOnInit();
@@ -266,44 +277,10 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.filterToUnresolved).toBe(false);
-        expect(component.filterToOwn).toBe(true);
-        expect(component.filterToAnsweredOrReactedByUser).toBe(false);
-        // determine expected posts
-        const expectedPosts = metisCoursePosts.filter((post: Post) => post.author === currentUser);
-        expect(component.posts).toHaveLength(expectedPosts.length);
-    }));
-
-    it('should invoke metis service, update filter setting and displayed posts when filterToUnresolved and filterToAnsweredOrReactedByUser checkbox is checked', fakeAsync(() => {
-        const currentUser = metisUser1;
-        metisServiceGetUserStub.mockReturnValue(currentUser);
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-        component.formGroup.patchValue({
-            filterToUnresolved: true,
-            filterToOwn: false,
-            filterToAnsweredOrReacted: true,
-        });
-        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
-        const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
-        filterResolvedCheckbox.dispatchEvent(new Event('change'));
-        tick();
-        filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
-        tick();
-        fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
-        expect(component.filterToUnresolved).toBe(true);
-        expect(component.filterToOwn).toBe(false);
-        expect(component.filterToAnsweredOrReactedByUser).toBe(true);
-        // determine expected posts
-        const expectedPosts = metisCoursePosts.filter(
-            (post: Post) =>
-                ((post.answers && post.answers.some((answer: AnswerPost) => answer.author === currentUser)) ||
-                    (post.reactions && post.reactions.some((reaction: Reaction) => reaction.user?.id! === currentUser.id))) &&
-                !(post.answers && post.answers.some((answer: AnswerPost) => answer.resolvesPost === true)),
-        );
-        expect(component.posts).toHaveLength(expectedPosts.length);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBe(false);
+        expect(component.currentPostContextFilter.filterToOwn).toBe(true);
+        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(false);
+        // actual post filtering done at server side, tested by PostIntegrationTest
     }));
 
     it('should fetch new posts when context filter changes to course-wide-context', fakeAsync(() => {
@@ -366,39 +343,43 @@ describe('CourseDiscussionComponent', () => {
         expect(component.posts).toEqual(metisLecturePosts);
     }));
 
-    it('should invoke metis service without forcing a reload when sort criterion changed', fakeAsync(() => {
+    it('should invoke metis service forcing a reload when sort criterion changed', fakeAsync(() => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
         const sortByOptions = getElement(fixture.debugElement, 'select[name=sortBy]');
         sortByOptions.dispatchEvent(new Event('change'));
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            {
-                courseId: metisCourse.id,
-                courseWideContext: undefined,
-                exerciseId: undefined,
-                lectureId: undefined,
-            },
-            false, // forceReload false
-        );
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
+            courseId: metisCourse.id,
+            courseWideContext: undefined,
+            exerciseId: undefined,
+            lectureId: undefined,
+            page: component.page - 1,
+            pageSize: component.itemsPerPage,
+            pagingEnabled: true,
+            postSortCriterion: 'CREATION_DATE',
+            sortingOrder: 'DESCENDING',
+        });
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
     }));
 
-    it('should invoke metis service without forcing a reload when sort direction changed', fakeAsync(() => {
+    it('should invoke metis service forcing a reload when sort direction changed', fakeAsync(() => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
         const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
         selectedDirectionOption.dispatchEvent(new Event('click'));
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            {
-                courseId: metisCourse.id,
-                courseWideContext: undefined,
-                exerciseId: undefined,
-                lectureId: undefined,
-            },
-            false, // forceReload false
-        );
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
+            courseId: metisCourse.id,
+            courseWideContext: undefined,
+            exerciseId: undefined,
+            lectureId: undefined,
+            page: component.page - 1,
+            pageSize: component.itemsPerPage,
+            pagingEnabled: true,
+            postSortCriterion: 'CREATION_DATE',
+            sortingOrder: 'DESCENDING',
+        });
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
     }));
 
@@ -422,56 +403,6 @@ describe('CourseDiscussionComponent', () => {
             post4.creationDate = dayjs().subtract(2, 'minute');
             post4.reactions = [metisUpVoteReactionUser1];
             post4.displayPriority = DisplayPriority.ARCHIVED;
-
-            posts = [post1, post2, post3, post4];
-        });
-
-        it('should sort posts correctly by creation date desc', () => {
-            component.currentSortCriterion = PostSortCriterion.CREATION_DATE;
-            component.currentSortDirection = SortDirection.DESC;
-            posts = posts.sort(component.overviewSortFn);
-            // pinned is first, archived is last independent of sort criterion
-            expect(posts).toEqual([post1, post2, post3, post4]);
-        });
-
-        it('should sort posts correctly by creation date asc', () => {
-            component.currentSortCriterion = PostSortCriterion.CREATION_DATE;
-            component.currentSortDirection = SortDirection.ASC;
-            posts = posts.sort(component.overviewSortFn);
-            // pinned is first, archived is last independent of sort criterion
-            expect(posts).toEqual([post1, post3, post2, post4]);
-        });
-
-        it('should sort posts correctly by votes desc', () => {
-            component.currentSortCriterion = PostSortCriterion.VOTES;
-            component.currentSortDirection = SortDirection.DESC;
-            posts = posts.sort(component.overviewSortFn);
-            // pinned is first, archived is last independent of sort criterion
-            expect(posts).toEqual([post1, post3, post2, post4]);
-        });
-
-        it('should sort posts correctly by votes asc', () => {
-            component.currentSortCriterion = PostSortCriterion.VOTES;
-            component.currentSortDirection = SortDirection.ASC;
-            posts = posts.sort(component.overviewSortFn);
-            // pinned is first, archived is last independent of sort criterion
-            expect(posts).toEqual([post1, post2, post3, post4]);
-        });
-
-        it('should sort posts correctly by answer count desc', () => {
-            component.currentSortCriterion = PostSortCriterion.ANSWER_COUNT;
-            component.currentSortDirection = SortDirection.DESC;
-            posts = posts.sort(component.overviewSortFn);
-            // pinned is first, archived is last independent of sort criterion
-            expect(posts).toEqual([post1, post3, post2, post4]);
-        });
-
-        it('should sort posts correctly by answer count asc', () => {
-            component.currentSortCriterion = PostSortCriterion.ANSWER_COUNT;
-            component.currentSortDirection = SortDirection.ASC;
-            posts = posts.sort(component.overviewSortFn);
-            // pinned is first, archived is last independent of sort criterion
-            expect(posts).toEqual([post1, post2, post3, post4]);
         });
 
         it('should distinguish context filter options for properly show them in form', () => {
