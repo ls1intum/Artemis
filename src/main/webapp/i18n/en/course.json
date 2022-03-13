@@ -32,6 +32,14 @@
                 "title": "Complaint deadline in days after result date",
                 "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this deadline."
             },
+            "maxComplaintTextLimit": {
+                "title": "Maximum number of characters per complaint",
+                "description": "This number indicates the maximum number of characters a student may use per complaint."
+            },
+            "maxComplaintResponseTextLimit": {
+                "title": "Maximum number of characters for complaint responses",
+                "description": "This number indicates the maximum number of characters that may be used for the response per complaint."
+            },
             "postsEnabled": {
                 "title": "Enable postings by students",
                 "description": "Enable postings section on lecture and exercise page."

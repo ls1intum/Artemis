@@ -107,6 +107,14 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private int maxComplaintTimeDays;
 
+    @Column(name = "max_complaint_text_limit")
+    @JsonView(QuizView.Before.class)
+    private int maxComplaintTextLimit;
+
+    @Column(name = "max_complaint_response_text_limit")
+    @JsonView(QuizView.Before.class)
+    private int maxComplaintResponseTextLimit;
+
     @Column(name = "posts_enabled")
     @JsonView(QuizView.Before.class)
     private boolean postsEnabled;
@@ -334,6 +342,22 @@ public class Course extends DomainObject {
 
     public void setMaxComplaintTimeDays(int maxComplaintTimeDays) {
         this.maxComplaintTimeDays = maxComplaintTimeDays;
+    }
+
+    public int getMaxComplaintTextLimit() {
+        return maxComplaintTextLimit;
+    }
+
+    public void setMaxComplaintTextLimit(int maxComplaintTextLimit) {
+        this.maxComplaintTextLimit = maxComplaintTextLimit;
+    }
+
+    public int getMaxComplaintResponseTextLimit() {
+        return maxComplaintResponseTextLimit;
+    }
+
+    public void setMaxComplaintResponseTextLimit(int maxComplaintResponseTextLimit) {
+        this.maxComplaintResponseTextLimit = maxComplaintResponseTextLimit;
     }
 
     public boolean getComplaintsEnabled() {

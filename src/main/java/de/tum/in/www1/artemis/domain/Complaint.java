@@ -25,8 +25,8 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Complaint extends DomainObject {
 
-    @Column(name = "complaint_text", length = 2000)
-    @Size(max = 2000)
+    @Column(name = "complaint_text", length = 5000)
+    @Size(max = 5000)
     private String complaintText;
 
     @Column(name = "accepted")
