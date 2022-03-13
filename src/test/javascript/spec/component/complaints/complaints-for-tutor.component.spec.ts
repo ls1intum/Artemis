@@ -218,7 +218,6 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        // @ts-ignore
         complaintForTutorComponentFixture.detectChanges();
 
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
