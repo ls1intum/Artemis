@@ -42,21 +42,10 @@ describe('User Management Detail Component', () => {
             // WHEN
             comp.ngOnInit();
 
+            const user = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], ['admin']);
+
             // THEN
-            expect(comp.user).toEqual(
-                expect.objectContaining({
-                    id: 1,
-                    login: 'user',
-                    firstName: 'first',
-                    lastName: 'last',
-                    email: 'first@last.com',
-                    activated: true,
-                    langKey: 'en',
-                    authorities: [Authority.USER],
-                    groups: ['admin'],
-                    guidedTourSettings: [],
-                }),
-            );
+            expect(comp.user).toEqual(user);
         });
     });
 });
