@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.hibernate.collection.internal.PersistentSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -694,7 +693,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             if (programmingSubmission.getParticipation() != null) {
                 Participation participation = programmingSubmission.getParticipation();
                 participation.setExercise(null);
-                if (participation.getSubmissions() != null && !(participation.getSubmissions() instanceof PersistentSet)) {
+                if (participation.getSubmissions() != null) {
                     // Only remove the Submissions and store them in submissionsCount, if the Set<Submissions> is present.
                     participation.setSubmissionCount(participation.getSubmissions().size());
                     participation.setSubmissions(null);
