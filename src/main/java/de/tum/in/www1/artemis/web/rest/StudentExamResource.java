@@ -174,6 +174,7 @@ public class StudentExamResource {
         }
 
         studentExam.setWorkingTime(workingTime);
+        studentExam.getUser().setVisibleEmail();
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
     }
 

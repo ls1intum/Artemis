@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.dto;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -8,14 +9,20 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.GuidedTourSetting;
+import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * A DTO representing a user, with his authorities.
@@ -70,9 +77,9 @@ public class UserDTO extends AuditingEntityDTO {
     }
 
     public UserDTO(User user) {
-        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
-                user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations());
+        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getVisibleEmail(), user.getVisibleRegistrationNumber(),
+                user.getActivated(), user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(),
+                user.getLastModifiedDate(), user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
@@ -225,10 +232,9 @@ public class UserDTO extends AuditingEntityDTO {
 
     @Override
     public String toString() {
-        return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
-                + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
-                + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", lastNotificationRead=" + lastNotificationRead
-                + ", authorities=" + authorities + "}";
+        return "UserDTO{" + "login='" + login + "', firstName='" + firstName + "', lastName='" + lastName + "', imageUrl='" + imageUrl + "', activated="
+                + activated + ", langKey='" + langKey + "', createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate() + ", lastModifiedBy='" + getLastModifiedBy()
+                + "', lastModifiedDate=" + getLastModifiedDate() + ", lastNotificationRead=" + lastNotificationRead + ", authorities=" + authorities + "}";
     }
 
     public boolean isInternal() {

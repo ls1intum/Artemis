@@ -374,8 +374,11 @@ public class ParticipationResource {
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
         int resultCount = 0;
         for (StudentParticipation participation : participations) {
-            // make sure the registration number is explicitly shown in the client
-            participation.getStudents().forEach(User::setVisibleRegistrationNumber);
+            // make sure registration number and email are explicitly shown in the client
+            participation.getStudents().forEach(user -> {
+                user.setVisibleRegistrationNumber();
+                user.setVisibleEmail();
+            });
             // we only need participationId, title, dates and max points
             // remove unnecessary elements
             Exercise exercise = participation.getExercise();

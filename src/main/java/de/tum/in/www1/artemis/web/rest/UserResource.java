@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
@@ -84,7 +85,8 @@ public class UserResource {
     private final LtiUserIdRepository ltiUserIdRepository;
 
     public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, LtiUserIdRepository ltiUserIdRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, LtiUserIdRepository ltiUserIdRepository,
+            MailService mailService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
@@ -125,10 +127,8 @@ public class UserResource {
     @PostMapping("users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
-
-        checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
-
         log.debug("REST request to save User : {}", managedUserVM);
+        checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
 
         if (managedUserVM.getId() != null) {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idexists");
@@ -143,14 +143,11 @@ public class UserResource {
         else if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
             throw new EntityNotFoundException("Not all groups are available: " + managedUserVM.getGroups());
         }
-        else {
-            User newUser = userCreationService.createUser(managedUserVM);
+        User createdUser = userCreationService.createUser(managedUserVM);
+        createdUser.setVisibleEmail();
 
-            // NOTE: Mail service is NOT active at the moment
-            // mailService.sendCreationEmail(newUser);
-            return ResponseEntity.created(new URI("/api/users/" + newUser.getLogin()))
-                    .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", newUser.getLogin())).body(newUser);
-        }
+        return ResponseEntity.created(new URI("/api/users/" + createdUser.getLogin()))
+                .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", createdUser.getLogin())).body(createdUser);
     }
 
     /**
@@ -260,6 +257,7 @@ public class UserResource {
         log.debug("REST request to get User : {}", login);
         return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(user -> {
             user.setVisibleRegistrationNumber();
+            user.setVisibleEmail();
             return new UserDTO(user);
         }));
     }

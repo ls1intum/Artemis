@@ -234,6 +234,8 @@ public class TeamResource {
             throw new AccessForbiddenException();
         }
         team.filterSensitiveInformation();
+        // We want to show the email of the tutor to the team members so they can contact the tutor if they need help
+        team.getOwner().setVisibleEmail();
         return ResponseEntity.ok().body(team);
     }
 
