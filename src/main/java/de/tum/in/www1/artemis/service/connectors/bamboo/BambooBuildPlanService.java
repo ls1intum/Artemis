@@ -179,7 +179,10 @@ public class BambooBuildPlanService {
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                boolean isMavenProject = ProjectType.PLAIN_MAVEN.equals(projectType) || ProjectType.MAVEN_MAVEN.equals(projectType);
+                // the project type can be null for Kotlin exercises and exercises created before the project type was
+                // added to Artemis. The project type for these exercises is implicitly Maven (because Gradle did not
+                // exist in Artemis yet)
+                boolean isMavenProject = projectType == null || projectType.isMaven();
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     setStaticCodeAnalysisJobsForJavaAndKotlinExercise(defaultJob, isMavenProject);
                 }
