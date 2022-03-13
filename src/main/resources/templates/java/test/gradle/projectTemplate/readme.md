@@ -1,7 +1,7 @@
 ## Test Repository instructions
 
 #### Test tool & command
-Tests will be run using the command gradle clean test.
+Tests will be run using the command ./gradlew clean test.
 
 #### Project structure
 Make sure that the package structure of your test classes is equivalent to the package structure of your base and solution repository.
