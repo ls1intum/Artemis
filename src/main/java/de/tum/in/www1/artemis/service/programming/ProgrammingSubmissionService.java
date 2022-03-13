@@ -636,7 +636,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(toList());
-
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
@@ -682,19 +681,18 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<ProgrammingSubmission> programmingSubmissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestLegalOrIllegalSubmission)
                 // filter out non submitted submissions if the flag is set to true
-                .filter(optionalSubmission -> optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())).forEach(optionalSubmission -> {
-                    Submission submission = optionalSubmission.get();
-                    programmingSubmissions.add((ProgrammingSubmission) submission);
-                });
+                .filter(optionalSubmission -> optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted()))
+                .forEach(optionalSubmission -> programmingSubmissions.add((ProgrammingSubmission) optionalSubmission.get()));
         return removeExerciseAndSubmissionSet(programmingSubmissions, true);
     }
 
     /**
-     * Given a Submission, this method will remove the attributes participation.exercise and participation.submissions to reduce
-     * the amount of data transferred to the client. The number of submissions will be stored in the attribute participation.SubmissionCount
-     * instead of the number of submissions being determined by the size of the set of all submissions.
+     * Given a List of ProgrammingSubmissions, this method will remove the attribute participation.exercise.
+     * If removeSubmissionSet = true, also the Set participation.submissions is removed. The number of submissions will be
+     * stored in the attribute participation.SubmissionCount instead of being determined by the size of the set of all submissions.
+     * This method is intended to reduce the amount of data transferred to the client.
      * @param programmingSubmissionList - a List with all ProgrammingSubmissions to be modified
-     * @param removeSubmissionSet - also remove the SubmissionSet from the ProgrammingSubmission
+     * @param removeSubmissionSet - option to also remove the SubmissionSet from the ProgrammingSubmssion
      * @return a List with ProgrammingSubmissions and removed attributes
      */
     private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissionList, boolean removeSubmissionSet) {
