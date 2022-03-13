@@ -651,8 +651,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 latestResult.setSubmission(null);
             }
         });
-        submissions.forEach(this::removeExerciseAndSubmissionSet);
-        return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
+        List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
+        return removeExerciseAndSubmissionSet(programmingSubmissions);
     }
 
     /**
@@ -677,31 +677,34 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 // filter out non submitted submissions if the flag is set to true
                 .filter(optionalSubmission -> optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())).forEach(optionalSubmission -> {
                     Submission submission = optionalSubmission.get();
-                    removeExerciseAndSubmissionSet(submission);
                     programmingSubmissions.add((ProgrammingSubmission) submission);
                 });
-        return programmingSubmissions;
+        return removeExerciseAndSubmissionSet(programmingSubmissions);
     }
 
     /**
      * Given a Submission, this method will remove the attributes participation.exercise and participation.submissions to reduce
      * the amount of data transferred to the client. The number of submissions will be stored in the attribute participation.SubmissionCount
      * instead of the number of submissions being determined by the size of the set of all submissions.
-     * @param submission - the submission to be modified
+     * @param programmingSubmissionList - a List with all ProgrammingSubmissions to be modified
+     * @return a List with ProgrammingSubmissions and removed attributes
      */
-    private void removeExerciseAndSubmissionSet(Submission submission) {
-        if (submission.getParticipation() != null) {
-            Participation participation = submission.getParticipation();
-            participation.setExercise(null);
-            if (participation.getSubmissions() != null && !(participation.getSubmissions() instanceof PersistentSet)) {
-                // Only remove the Submissions and store them in submissionsCount, if both are present.
-                participation.setSubmissionCount(participation.getSubmissions().size());
-                participation.setSubmissions(null);
+    private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissionList) {
+        programmingSubmissionList.forEach(programmingSubmission -> {
+            if (programmingSubmission.getParticipation() != null) {
+                Participation participation = programmingSubmission.getParticipation();
+                participation.setExercise(null);
+                if (participation.getSubmissions() != null && !(participation.getSubmissions() instanceof PersistentSet)) {
+                    // Only remove the Submissions and store them in submissionsCount, if both are present.
+                    participation.setSubmissionCount(participation.getSubmissions().size());
+                    participation.setSubmissions(null);
+                }
+                else {
+                    participation.setSubmissionCount(0);
+                }
             }
-            else {
-                participation.setSubmissionCount(0);
-            }
-        }
+        });
+        return programmingSubmissionList;
     }
 
     /**
