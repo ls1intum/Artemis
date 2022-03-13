@@ -7,6 +7,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -24,6 +26,7 @@ export class ComplaintsFormComponent implements OnInit {
     maxComplaintsPerCourse = 1;
     complaintText?: string;
     ComplaintType = ComplaintType;
+    course: Course | undefined;
 
     // Icons
     faInfoCircle = faInfoCircle;
@@ -31,6 +34,7 @@ export class ComplaintsFormComponent implements OnInit {
     constructor(private complaintService: ComplaintService, private alertService: AlertService) {}
 
     ngOnInit(): void {
+        this.course = getCourseFromExercise(this.exercise);
         if (this.exercise.course) {
             this.maxComplaintsPerCourse = this.exercise.teamMode ? this.exercise.course.maxTeamComplaints! : this.exercise.course.maxComplaints!;
         }

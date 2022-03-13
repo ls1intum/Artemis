@@ -31,7 +31,7 @@
                 {{ 'artemisApp.complaint.exclusivityDisclaimer' | artemisTranslate }}
             </p>
 
-            <textarea id="complainTextArea" class="col-12 px-1" rows="4" maxLength="2000" [(ngModel)]="complaintText"></textarea>
+            <textarea id="complainTextArea" class="col-12 px-1" rows="4" [maxLength]="this.course!.maxComplaintTextLimit!" [(ngModel)]="complaintText"></textarea>
 
             <div class="row">
                 <div class="col-6">

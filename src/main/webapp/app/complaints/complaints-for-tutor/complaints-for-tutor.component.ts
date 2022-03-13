@@ -11,6 +11,8 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
+import { Course } from 'app/entities/course.model';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -35,6 +37,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     showLockDuration = false;
     showRemoveLockButton = false;
     isLockedForLoggedInUser = false;
+    course: Course | undefined;
 
     constructor(
         private alertService: AlertService,
@@ -48,6 +51,8 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (this.complaint) {
             this.complaintText = this.complaint.complaintText;
             this.handled = this.complaint.accepted !== undefined;
+
+            this.course = getCourseFromExercise(this.exercise!);
 
             if (this.handled) {
                 this.complaintResponse = this.complaint.complaintResponse!;

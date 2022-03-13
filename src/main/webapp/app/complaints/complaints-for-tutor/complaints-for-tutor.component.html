@@ -62,7 +62,7 @@
                 id="responseTextArea"
                 class="col-12 px-1"
                 rows="4"
-                maxlength="2000"
+                [maxlength]="this.course!.maxComplaintResponseTextLimit!"
                 [(ngModel)]="complaintResponse.responseText"
                 [readonly]="handled || isLockedForLoggedInUser"
                 [disabled]="handled || isLockedForLoggedInUser"
