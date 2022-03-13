@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 
 /**
  * A Post, i.e. start of a Metis thread.
@@ -64,6 +65,10 @@ public class Post extends Posting {
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority")
     private DisplayPriority displayPriority;
+
+    @OneToOne
+    @JoinColumn(name = "plagiarism_case_id")
+    private PlagiarismCase plagiarismCase;
 
     public String getTitle() {
         return title;
@@ -167,6 +172,14 @@ public class Post extends Posting {
 
     public void setDisplayPriority(DisplayPriority displayPriority) {
         this.displayPriority = displayPriority;
+    }
+
+    public PlagiarismCase getPlagiarismCase() {
+        return plagiarismCase;
+    }
+
+    public void setPlagiarismCase(PlagiarismCase plagiarismCase) {
+        this.plagiarismCase = plagiarismCase;
     }
 
     /**

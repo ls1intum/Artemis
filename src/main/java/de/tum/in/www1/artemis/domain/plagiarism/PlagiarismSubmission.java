@@ -49,6 +49,12 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     @JoinTable(name = "plagiarism_submission_elements", joinColumns = @JoinColumn(name = "plagiarism_submission_id"), inverseJoinColumns = @JoinColumn(name = "plagiarism_submission_element_id"))
     private List<E> elements;
 
+    @ManyToOne(targetEntity = PlagiarismCase.class)
+    private PlagiarismCase plagiarismCase;
+
+    @ManyToOne(targetEntity = PlagiarismComparison.class)
+    private PlagiarismComparison<E> plagiarismComparison;
+
     /**
      * Size of the related submission.
      * <p>
@@ -154,6 +160,22 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
 
     public void setScore(Double score) {
         this.score = score;
+    }
+
+    public PlagiarismCase getPlagiarismCase() {
+        return plagiarismCase;
+    }
+
+    public void setPlagiarismCase(PlagiarismCase plagiarismCase) {
+        this.plagiarismCase = plagiarismCase;
+    }
+
+    public PlagiarismComparison<E> getPlagiarismComparison() {
+        return plagiarismComparison;
+    }
+
+    public void setPlagiarismComparison(PlagiarismComparison<E> plagiarismComparison) {
+        this.plagiarismComparison = plagiarismComparison;
     }
 
     @Override
