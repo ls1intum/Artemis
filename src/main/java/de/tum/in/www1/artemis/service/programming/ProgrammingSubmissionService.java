@@ -695,7 +695,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 Participation participation = programmingSubmission.getParticipation();
                 participation.setExercise(null);
                 if (participation.getSubmissions() != null && !(participation.getSubmissions() instanceof PersistentSet)) {
-                    // Only remove the Submissions and store them in submissionsCount, if both are present.
+                    // Only remove the Submissions and store them in submissionsCount, if the Set<Submissions> is present.
                     participation.setSubmissionCount(participation.getSubmissions().size());
                     participation.setSubmissions(null);
                 }
