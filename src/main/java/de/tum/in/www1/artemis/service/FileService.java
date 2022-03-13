@@ -363,6 +363,7 @@ public class FileService implements DisposableBean {
             if (targetFilePath.endsWith("Scan.file")) {
                 targetFilePath = targetFilePath.replace("Scan.file", "Scanfile");
             }
+            // special case for "gradlew" files which would not be included in the build otherwise
             if (targetFilePath.endsWith("gradlew.file")) {
                 targetFilePath = targetFilePath.replace("gradlew.file", "gradlew");
             }
