@@ -25,7 +25,7 @@
                 <strong jhiTranslate="artemisApp.studentExamDetail.email">Email:</strong>
                 {{ student.email }}
             </li>
-            <li>
+            <li *ngIf="student.visibleRegistrationNumber">
                 <strong jhiTranslate="artemisApp.studentExamDetail.matriculationNumber">Matriculation number:</strong>
                 {{ student.visibleRegistrationNumber }}
             </li>

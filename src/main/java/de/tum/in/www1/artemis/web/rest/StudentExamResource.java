@@ -119,6 +119,7 @@ public class StudentExamResource {
             filterParticipationForExercise(studentExam, exercise, participations, true);
         }
         studentExam.getUser().setVisibleRegistrationNumber();
+        studentExam.getUser().setVisibleEmail();
 
         return ResponseEntity.ok(studentExam);
     }
