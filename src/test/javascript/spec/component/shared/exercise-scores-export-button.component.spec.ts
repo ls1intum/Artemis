@@ -40,13 +40,15 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     const gradingCriterion2 = new GradingCriterion();
     gradingCriterion2.id = 2;
-    gradingCriterion2.title = 'Criterion 2';
+
+    const gradingCriterion3 = new GradingCriterion();
+    gradingCriterion3.id = 3;
 
     const exercise1 = new ProgrammingExercise(course1, exerciseGroup1);
     exercise1.id = 1;
     exercise1.shortName = 'ex1';
     exercise1.maxPoints = 200;
-    exercise1.gradingCriteria = [gradingCriterion1, gradingCriterion2];
+    exercise1.gradingCriteria = [gradingCriterion1, gradingCriterion2, gradingCriterion3];
 
     const exercise2 = new ProgrammingExercise(course1, exerciseGroup1);
     exercise2.id = 2;
@@ -67,7 +69,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
     resultWithPoints1.totalPoints = 2;
     resultWithPoints1.pointsPerCriterion = new Map([
         [1, 2.0],
-        [2, 10.0],
+        [3, 10.0],
     ]);
 
     const result2 = new Result();
@@ -80,15 +82,46 @@ describe('ExerciseScoresExportButtonComponent', () => {
     resultWithPoints2.totalPoints = 4;
     resultWithPoints2.pointsPerCriterion = new Map();
 
-    const expectedCSVWithCriteria = [
-        'data:text/csv;charset=utf-8,Name,Username,Score,Points,"Criterion 1","Criterion 2",Repo Link',
-        '"Student A",studentA,1,2,2,10,https://www.gitlab.local/studentA',
-        '"Student B",studentB,2,4,0,0,https://www.gitlab.local/studentB',
+    const expectedColumnsWithCriteria = ['Name', 'Username', 'Score', 'Points', 'Criterion 1', 'Unnamed Criterion 1', 'Unnamed Criterion 2', 'Repo Link'];
+    const expectedRowsWithCriteria = [
+        {
+            Name: 'Student A',
+            Username: 'studentA',
+            Score: 1,
+            Points: 2,
+            'Criterion 1': 2,
+            'Unnamed Criterion 1': 0,
+            'Unnamed Criterion 2': 10,
+            'Repo Link': 'https://www.gitlab.local/studentA',
+        },
+        {
+            Name: 'Student B',
+            Username: 'studentB',
+            Score: 2,
+            Points: 4,
+            'Criterion 1': 0,
+            'Unnamed Criterion 1': 0,
+            'Unnamed Criterion 2': 0,
+            'Repo Link': 'https://www.gitlab.local/studentB',
+        },
     ];
-    const expectedCSVNoCriteria = [
-        'data:text/csv;charset=utf-8,Name,Username,Score,Points,Repo Link',
-        '"Student A",studentA,1,2,https://www.gitlab.local/studentA',
-        '"Student B",studentB,2,4,https://www.gitlab.local/studentB',
+
+    const expectedColumnsNoCriteria = ['Name', 'Username', 'Score', 'Points', 'Repo Link'];
+    const expectedRowsNoCriteria = [
+        {
+            Name: 'Student A',
+            Username: 'studentA',
+            Score: 1,
+            Points: 2,
+            'Repo Link': 'https://www.gitlab.local/studentA',
+        },
+        {
+            Name: 'Student B',
+            Username: 'studentB',
+            Score: 2,
+            Points: 4,
+            'Repo Link': 'https://www.gitlab.local/studentB',
+        },
     ];
 
     beforeEach(() => {
@@ -123,7 +156,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
     });
 
     it('should export results for one exercise', () => {
-        testCsvExport(exercise1, [resultWithPoints1, resultWithPoints2], expectedCSVWithCriteria, 'ex1-results-scores.csv');
+        testCsvExport(exercise1, [resultWithPoints1, resultWithPoints2], 'ex1-results-scores.csv', expectedColumnsWithCriteria, expectedRowsWithCriteria);
     });
 
     it('should export results for a team exercise', () => {
@@ -150,17 +183,22 @@ describe('ExerciseScoresExportButtonComponent', () => {
         teamResultWithPoints.totalPoints = 100;
         teamResultWithPoints.pointsPerCriterion = new Map();
 
-        const expectedCSVTeamExercise = [
-            'data:text/csv;charset=utf-8,Team Name,Team Short Name,Score,Points,Students',
-            '"Testteam 01",tt01,50,100,"Student 1, Student 2, Student 3, Student 4"',
-        ];
+        const expectedTeamColumns = ['Team Name', 'Team Short Name', 'Score', 'Points', 'Students'];
+        const expectedRow = {
+            'Team Name': 'Testteam 01',
+            'Team Short Name': 'tt01',
+            Points: 100,
+            Score: 50,
+            Students: 'Student 1, Student 2, Student 3, Student 4',
+        };
 
-        testCsvExport(exerciseTeam, [teamResultWithPoints], expectedCSVTeamExercise, 'ex1-results-scores.csv');
+        testCsvExport(exerciseTeam, [teamResultWithPoints], 'ex1-results-scores.csv', expectedTeamColumns, [expectedRow]);
     });
 
-    it('should export results for multiple exercise', () => {
+    it('should export results for multiple exercises', () => {
         // GIVEN
-        const exportCSVStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+        // @ts-ignore (stubbing a private method)
+        const exportAsCsvStub = jest.spyOn(ExerciseScoresExportButtonComponent, 'exportAsCsv').mockImplementation();
         const getResultsStub = jest
             .spyOn(resultService, 'getResultsWithPointsPerGradingCriterion')
             .mockReturnValue(of(new HttpResponse({ body: [resultWithPoints1, resultWithPoints2] })));
@@ -172,14 +210,15 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
         // THEN
         expect(getResultsStub).toHaveBeenCalledTimes(2);
-        expect(exportCSVStub).toHaveBeenCalledTimes(2);
-        expect(exportCSVStub).toHaveBeenNthCalledWith(1, expectedCSVWithCriteria, 'ex1-results-scores.csv');
-        expect(exportCSVStub).toHaveBeenNthCalledWith(2, expectedCSVNoCriteria, 'Exercise_title_with_spaces-results-scores.csv');
+        expect(exportAsCsvStub).toHaveBeenCalledTimes(2);
+        expect(exportAsCsvStub).toHaveBeenNthCalledWith(1, 'ex1-results-scores.csv', expectedColumnsWithCriteria, expectedRowsWithCriteria);
+        expect(exportAsCsvStub).toHaveBeenNthCalledWith(2, 'Exercise_title_with_spaces-results-scores.csv', expectedColumnsNoCriteria, expectedRowsNoCriteria);
     });
 
-    function testCsvExport(exercise: Exercise, results: ResultWithPointsPerGradingCriterion[], expectedCsvRows: string[], expectedCsvFilename: string) {
+    function testCsvExport(exercise: Exercise, results: ResultWithPointsPerGradingCriterion[], expectedCsvFilename: string, expectedCsvColumns: string[], expectedCsvRows: any[]) {
         // GIVEN
-        const exportCSVStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+        // @ts-ignore (stubbing a private method)
+        const exportAsCsvStub = jest.spyOn(ExerciseScoresExportButtonComponent, 'exportAsCsv').mockImplementation();
         const getResultsStub = jest.spyOn(resultService, 'getResultsWithPointsPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: results })));
         component.exercise = exercise;
 
@@ -188,8 +227,9 @@ describe('ExerciseScoresExportButtonComponent', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(getResultsStub).toHaveBeenCalled();
-        expect(exportCSVStub).toHaveBeenCalledWith(expectedCsvRows, expectedCsvFilename);
+        expect(getResultsStub).toHaveBeenCalledTimes(1);
+        expect(exportAsCsvStub).toHaveBeenCalledTimes(1);
+        expect(exportAsCsvStub).toHaveBeenCalledWith(expectedCsvFilename, expectedCsvColumns, expectedCsvRows);
     }
 
     function setupParticipation(studentLogin: string, studentName: string, isProgramming: boolean): StudentParticipation {
