@@ -331,9 +331,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     private calculateExerciseLevelStatistics() {
         for (const exerciseType of this.exerciseTypes) {
-            const exercisesOfType = this.exercisesOfCourseThatAreIncludedInScoreCalculation
-                .filter((exercise) => exercise.type === exerciseType)
-                .sort(CourseScoresComponent.compareExercises);
+            const exercisesOfType = this.exercisesOfCourseThatAreIncludedInScoreCalculation.filter((exercise) => exercise.type === exerciseType);
             this.exercisesPerType.set(exerciseType, exercisesOfType);
             this.exerciseTitlesPerType.set(
                 exerciseType,
@@ -478,12 +476,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     exercise.numberOfSuccessfulParticipations! += 1;
                 }
 
-                student.pointsPerExerciseType.get(exercise.type!)!.push(pointsAchievedByStudentInExercise);
+                student.pointsPerExerciseType.get(exercise.type!)!.set(exercise.title!, pointsAchievedByStudentInExercise);
             }
         } else {
             // there is no result, the student has not participated or submitted too late
             student.pointsPerExercise.set(exercise.id!, 0);
-            student.pointsPerExerciseType.get(exercise.type!)!.push(Number.NaN);
+            student.pointsPerExerciseType.get(exercise.type!)!.set(exercise.title!, Number.NaN);
         }
     }
 
@@ -628,8 +626,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             }
             const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
             const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
-            exerciseTitleKeys.forEach((title, index) => {
-                const points = roundValueSpecifiedByCourseSettings(exercisePointValues[index], this.course);
+            exerciseTitleKeys.forEach((title) => {
+                const points = roundValueSpecifiedByCourseSettings(exercisePointValues.get(title), this.course);
                 rowData.setLocalized(title, points);
             });
 
@@ -840,7 +838,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @private
      */
     private determineReleasedExercises(course: Course): Exercise[] {
-        return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs())).sort(CourseScoresComponent.compareExercises);
+        return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs()));
     }
 
     /**

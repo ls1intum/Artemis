@@ -210,8 +210,8 @@ describe('CourseScoresComponent', () => {
         participation9,
         participation10,
     ];
-    const pointsOfStudent1 = new Map<ExerciseType, number[]>();
-    const pointsOfStudent2 = new Map<ExerciseType, number[]>();
+    const pointsOfStudent1 = new Map<ExerciseType, Map<string, number>>();
+    const pointsOfStudent2 = new Map<ExerciseType, Map<String, number>>();
 
     beforeEach(() => {
         exerciseMaxPointsPerType.set(ExerciseType.QUIZ, [10]);
@@ -220,17 +220,25 @@ describe('CourseScoresComponent', () => {
         exerciseMaxPointsPerType.set(ExerciseType.PROGRAMMING, []);
         exerciseMaxPointsPerType.set(ExerciseType.TEXT, [10]);
 
-        pointsOfStudent1.set(ExerciseType.QUIZ, [Number.NaN]);
-        pointsOfStudent1.set(ExerciseType.FILE_UPLOAD, [10]);
-        pointsOfStudent1.set(ExerciseType.MODELING, [10]);
-        pointsOfStudent1.set(ExerciseType.PROGRAMMING, []);
-        pointsOfStudent1.set(ExerciseType.TEXT, [20]);
+        pointsOfStudent1.set(ExerciseType.QUIZ, new Map());
+        pointsOfStudent1.get(ExerciseType.QUIZ)!.set('exercise (id=2)', Number.NaN);
+        pointsOfStudent1.set(ExerciseType.FILE_UPLOAD, new Map());
+        pointsOfStudent1.get(ExerciseType.FILE_UPLOAD)!.set(fileBonusWith10Points0BonusPoints.title!, 10);
+        pointsOfStudent1.set(ExerciseType.MODELING, new Map());
+        pointsOfStudent1.get(ExerciseType.MODELING)!.set(modelingIncludedWith10Points0BonusPoints.title!, 10);
+        pointsOfStudent1.set(ExerciseType.PROGRAMMING, new Map());
+        pointsOfStudent1.set(ExerciseType.TEXT, new Map());
+        pointsOfStudent1.get(ExerciseType.TEXT)!.set('exercise (id=1)', 20);
 
-        pointsOfStudent2.set(ExerciseType.QUIZ, [Number.NaN]);
-        pointsOfStudent2.set(ExerciseType.FILE_UPLOAD, [10]);
-        pointsOfStudent2.set(ExerciseType.MODELING, [5]);
-        pointsOfStudent2.set(ExerciseType.PROGRAMMING, []);
-        pointsOfStudent2.set(ExerciseType.TEXT, [Number.NaN]);
+        pointsOfStudent2.set(ExerciseType.QUIZ, new Map());
+        pointsOfStudent2.get(ExerciseType.QUIZ)!.set('exercise (id=2)', Number.NaN);
+        pointsOfStudent2.set(ExerciseType.FILE_UPLOAD, new Map());
+        pointsOfStudent2.get(ExerciseType.FILE_UPLOAD)!.set(fileBonusWith10Points0BonusPoints.title!, 10);
+        pointsOfStudent2.set(ExerciseType.MODELING, new Map());
+        pointsOfStudent2.get(ExerciseType.MODELING)!.set(modelingIncludedWith10Points0BonusPoints.title!, 5);
+        pointsOfStudent2.set(ExerciseType.PROGRAMMING, new Map());
+        pointsOfStudent2.set(ExerciseType.TEXT, new Map());
+        pointsOfStudent2.get(ExerciseType.TEXT)!.set('exercise (id=1)', Number.NaN);
 
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],

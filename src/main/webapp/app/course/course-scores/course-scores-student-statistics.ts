@@ -10,10 +10,14 @@ export class CourseScoresStudentStatistics {
     numberOfParticipatedExercises = 0;
     numberOfSuccessfulExercises = 0;
     overallPoints = 0;
-    pointsPerExercise = new Map<number, number>(); // the index is the exercise id
-    sumPointsPerExerciseType = new Map<ExerciseType, number>(); // the absolute number (sum) of points the students received per exercise type
-    scorePerExerciseType = new Map<ExerciseType, number>(); // the relative number of points the students received per exercise type (divided by the max points per exercise type)
-    pointsPerExerciseType = new Map<ExerciseType, number[]>(); // a string containing the points for all exercises of a specific type
+    // the index is the exercise id
+    pointsPerExercise = new Map<number, number>();
+    // the absolute number (sum) of points the students received per exercise type
+    sumPointsPerExerciseType = new Map<ExerciseType, number>();
+    // the relative number of points the students received per exercise type (divided by the max points per exercise type)
+    scorePerExerciseType = new Map<ExerciseType, number>();
+    // containing the points for all exercises of a specific type; for each type the exercise title is mapped to the number of points
+    pointsPerExerciseType = new Map<ExerciseType, Map<string, number>>();
     gradeStep?: GradeStep;
 
     constructor(user: User) {
@@ -22,7 +26,7 @@ export class CourseScoresStudentStatistics {
         for (const exerciseType of Object.values(ExerciseType)) {
             this.sumPointsPerExerciseType.set(exerciseType, 0);
             this.scorePerExerciseType.set(exerciseType, 0);
-            this.pointsPerExerciseType.set(exerciseType, []);
+            this.pointsPerExerciseType.set(exerciseType, new Map());
         }
     }
 }
