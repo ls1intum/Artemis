@@ -16,7 +16,7 @@ export class CourseScoresStudentStatistics {
     sumPointsPerExerciseType = new Map<ExerciseType, number>();
     // the relative number of points the students received per exercise type (divided by the max points per exercise type)
     scorePerExerciseType = new Map<ExerciseType, number>();
-    // containing the points for all exercises of a specific type; for each type the exercise title is mapped to the number of points
+    // the points for all exercises of a specific type; for each type the exercise titles are mapped to the number of points
     pointsPerExerciseType = new Map<ExerciseType, Map<string, number>>();
     gradeStep?: GradeStep;
 
