@@ -331,7 +331,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     private calculateExerciseLevelStatistics() {
         for (const exerciseType of this.exerciseTypes) {
-            const exercisesOfType = this.exercisesOfCourseThatAreIncludedInScoreCalculation.filter((exercise) => exercise.type === exerciseType);
+            const exercisesOfType = this.exercisesOfCourseThatAreIncludedInScoreCalculation
+                .filter((exercise) => exercise.type === exerciseType)
+                .sort(CourseScoresComponent.compareExercises);
             this.exercisesPerType.set(exerciseType, exercisesOfType);
             this.exerciseTitlesPerType.set(
                 exerciseType,
@@ -838,7 +840,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @private
      */
     private determineReleasedExercises(course: Course): Exercise[] {
-        return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs()));
+        return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs())).sort(CourseScoresComponent.compareExercises);
     }
 
     /**
