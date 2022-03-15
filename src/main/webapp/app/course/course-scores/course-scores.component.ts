@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, exerciseTypes, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -49,19 +49,15 @@ export enum HighlightType {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
-    // supported exercise types
-    readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
-    private exerciseTypesWithExercises: ExerciseType[];
-
-    // Expose the functions to the template
-    readonly roundScorePercentSpecifiedByCourseSettings = roundScorePercentSpecifiedByCourseSettings;
-    readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    private paramSub: Subscription;
+    private languageChangeSubscription?: Subscription;
 
     course: Course;
     allParticipationsOfCourse: StudentParticipation[] = [];
     exercisesOfCourseThatAreIncludedInScoreCalculation: Exercise[] = [];
     students: CourseScoresStudentStatistics[] = [];
 
+    private exerciseTypesWithExercises: ExerciseType[];
     private exerciseSuccessfulPerType = new ExerciseTypeStatisticsMap();
     private exerciseParticipationsPerType = new ExerciseTypeStatisticsMap();
     private exerciseAveragePointsPerType = new ExerciseTypeStatisticsMap();
@@ -69,7 +65,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private exercisesPerType = new Map<ExerciseType, Exercise[]>();
 
     exportReady = false;
-    paramSub: Subscription;
     predicate: string;
     reverse: boolean;
 
@@ -85,7 +80,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     // note: these represent the course scores using the participation score table. We might switch to this new
     // calculation method completely if it is confirmed that it produces correct results
-    studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
+    private studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
 
     gradingScaleExists = false;
     gradingScale?: GradingScale;
@@ -109,9 +104,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     standardDeviationPointsIncluded = 0;
     standardDeviationPointsTotal = 0;
 
+    // Expose the imports to the template
+    readonly exerciseTypes = exerciseTypes;
     readonly highlightType = HighlightType;
-
-    private languageChangeSubscription?: Subscription;
+    readonly roundScorePercentSpecifiedByCourseSettings = roundScorePercentSpecifiedByCourseSettings;
+    readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     // Icons
     faSort = faSort;
