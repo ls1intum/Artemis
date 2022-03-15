@@ -10,10 +10,10 @@ First, we need to implement two sorting algorithms, in this case `MergeSort` and
 
 **You have the following tasks:**
 
-1. [task][Implement Bubble Sort](testBubbleSort)
+1. [task][Implement Bubble Sort](testBubbleSort())
 Implement the method `performSort(List<Date>)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
-2. [task][Implement Merge Sort](testMergeSort)
+2. [task][Implement Merge Sort](testMergeSort())
 Implement the method `performSort(List<Date>)` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
 
 ### Part 2: Strategy Pattern
@@ -32,10 +32,10 @@ Create and implement a `Context` class following the below class diagram
 3. [task][Context Policy](testConstructors[Policy],testAttributes[Policy],testMethods[Policy])
 Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
 
-    1. [task][Select MergeSort](testClass[MergeSort],testUseMergeSortForBigList)
+    1. [task][Select MergeSort](testClass[MergeSort],testUseMergeSortForBigList())
     Select `MergeSort` when the List has more than 10 dates.
 
-    2. [task][Select BubbleSort](testClass[BubbleSort],testUseBubbleSortForSmallList)
+    2. [task][Select BubbleSort](testClass[BubbleSort],testUseBubbleSortForSmallList())
     Select `BubbleSort` when the List has less or equal 10 dates.
 
 4. Complete the `Client` class which demonstrates switching between two strategies at runtime.
