@@ -375,7 +375,6 @@ describe('CourseScoresComponent', () => {
 
         expect(component.allParticipationsOfCourse).toEqual(participations);
         expect(component.maxNumberOfOverallPoints).toEqual(overallPoints);
-        // @ts-ignore
         expect(component.exerciseMaxPointsPerType).toEqual(exerciseMaxPointsPerType);
     });
 

@@ -61,7 +61,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private exerciseSuccessfulPerType = new ExerciseTypeStatisticsMap();
     private exerciseParticipationsPerType = new ExerciseTypeStatisticsMap();
     private exerciseAveragePointsPerType = new ExerciseTypeStatisticsMap();
-    private exerciseMaxPointsPerType = new ExerciseTypeStatisticsMap();
+    exerciseMaxPointsPerType = new ExerciseTypeStatisticsMap();
     private exercisesPerType = new Map<ExerciseType, Exercise[]>();
 
     exportReady = false;
