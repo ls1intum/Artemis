@@ -64,7 +64,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
         } else {
             errorLogRegex = this.mavenErrorLogRegex;
         }
-        const res = Array.from(
+        return Array.from(
             this
                 // Parse build logs
                 .map(({ log, time }) => ({ log: log.match(errorLogRegex), time }))
@@ -92,7 +92,5 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                     timestamp: Date.parse(time),
                 })),
         );
-        console.log(res);
-        return res;
     }
 }
