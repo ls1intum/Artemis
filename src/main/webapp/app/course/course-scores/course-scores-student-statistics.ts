@@ -2,6 +2,7 @@ import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GradeStep } from 'app/entities/grade-step.model';
+import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 
 export class CourseScoresStudentStatistics {
     user: User;
@@ -16,8 +17,8 @@ export class CourseScoresStudentStatistics {
     sumPointsPerExerciseType = new Map<ExerciseType, number>();
     // the relative number of points the students received per exercise type (divided by the max points per exercise type)
     scorePerExerciseType = new Map<ExerciseType, number>();
-    // the points for all exercises of a specific type; for each type the exercise titles are mapped to the number of points
-    pointsPerExerciseType = new Map<ExerciseType, Map<string, number>>();
+    // the points for all exercises of a specific type
+    pointsPerExerciseType = new ExerciseTypeStatisticsMap();
     gradeStep?: GradeStep;
 
     constructor(user: User) {

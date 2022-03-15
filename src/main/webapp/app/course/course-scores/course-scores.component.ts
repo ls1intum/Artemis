@@ -22,6 +22,7 @@ import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons
 import { CourseScoresCsvRow, CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
+import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -48,8 +49,7 @@ export enum HighlightType {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
-    // supported exercise type
-
+    // supported exercise types
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
     private exerciseTypesWithExercises: ExerciseType[];
 
@@ -62,12 +62,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     exercisesOfCourseThatAreIncludedInScoreCalculation: Exercise[] = [];
     students: CourseScoresStudentStatistics[] = [];
 
-    exerciseSuccessfulPerType = new Map<ExerciseType, number[]>();
-    exerciseParticipationsPerType = new Map<ExerciseType, number[]>();
-    exerciseAveragePointsPerType = new Map<ExerciseType, number[]>();
-    exerciseMaxPointsPerType = new Map<ExerciseType, number[]>();
-    exerciseTitlesPerType = new Map<ExerciseType, string[]>();
-    exercisesPerType = new Map<ExerciseType, Exercise[]>();
+    private exerciseSuccessfulPerType = new ExerciseTypeStatisticsMap();
+    private exerciseParticipationsPerType = new ExerciseTypeStatisticsMap();
+    private exerciseAveragePointsPerType = new ExerciseTypeStatisticsMap();
+    private exerciseMaxPointsPerType = new ExerciseTypeStatisticsMap();
+    private exercisesPerType = new Map<ExerciseType, Exercise[]>();
 
     exportReady = false;
     paramSub: Subscription;
@@ -227,7 +226,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     private filterExercisesTypesWithExercises(): Array<ExerciseType> {
         return this.exerciseTypes.filter((exerciseType) => {
-            const exercisesWithType = this.exerciseTitlesPerType.get(exerciseType)?.length ?? 0;
+            const exercisesWithType = this.exercisesPerType.get(exerciseType)?.length ?? 0;
             return exercisesWithType !== 0;
         });
     }
@@ -333,13 +332,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         for (const exerciseType of this.exerciseTypes) {
             const exercisesOfType = this.exercisesOfCourseThatAreIncludedInScoreCalculation.filter((exercise) => exercise.type === exerciseType);
             this.exercisesPerType.set(exerciseType, exercisesOfType);
-            this.exerciseTitlesPerType.set(
-                exerciseType,
-                exercisesOfType.map((exercise) => exercise.title!),
-            );
 
-            const maxPointsOfAllExercisesOfType = exercisesOfType.map((exercise) => exercise.maxPoints!);
-
+            const maxPointsOfAllExercisesOfType = new Map();
+            exercisesOfType.forEach((exercise) => maxPointsOfAllExercisesOfType.set(exercise.id!, exercise.maxPoints));
             this.exerciseMaxPointsPerType.set(exerciseType, maxPointsOfAllExercisesOfType);
 
             const maxPointsOfAllIncludedExercisesOfType = exercisesOfType
@@ -397,15 +392,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.averageNumberOfParticipatedExercises = this.students.reduce((total, student) => total + student.numberOfParticipatedExercises, 0) / this.students.length;
 
         for (const exerciseType of this.exerciseTypes) {
-            this.exerciseAveragePointsPerType.set(exerciseType, []); // initialize with empty array
-            this.exerciseParticipationsPerType.set(exerciseType, []); // initialize with empty array
-            this.exerciseSuccessfulPerType.set(exerciseType, []); // initialize with empty array
-
             for (const exercise of this.exercisesPerType.get(exerciseType)!) {
                 exercise.averagePoints = this.students.reduce((total, student) => total + student.pointsPerExercise.get(exercise.id!)!, 0) / this.students.length;
-                this.exerciseAveragePointsPerType.get(exerciseType)!.push(exercise.averagePoints);
-                this.exerciseParticipationsPerType.get(exerciseType)!.push(exercise.numberOfParticipationsWithRatedResult!);
-                this.exerciseSuccessfulPerType.get(exerciseType)!.push(exercise.numberOfSuccessfulParticipations!);
+                this.exerciseAveragePointsPerType.setValue(exerciseType, exercise, exercise.averagePoints);
+                this.exerciseParticipationsPerType.setValue(exerciseType, exercise, exercise.numberOfParticipationsWithRatedResult!);
+                this.exerciseSuccessfulPerType.setValue(exerciseType, exercise, exercise.numberOfSuccessfulParticipations!);
             }
         }
 
@@ -476,12 +467,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     exercise.numberOfSuccessfulParticipations! += 1;
                 }
 
-                student.pointsPerExerciseType.get(exercise.type!)!.set(exercise.title!, pointsAchievedByStudentInExercise);
+                student.pointsPerExerciseType.setValue(exercise.type!, exercise, pointsAchievedByStudentInExercise);
             }
         } else {
             // there is no result, the student has not participated or submitted too late
             student.pointsPerExercise.set(exercise.id!, 0);
-            student.pointsPerExerciseType.get(exercise.type!)!.set(exercise.title!, Number.NaN);
+            student.pointsPerExerciseType.setValue(exercise.type!, exercise, Number.NaN);
         }
     }
 
@@ -587,7 +578,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            keys.push(...this.exerciseTitlesPerType.get(exerciseType)!);
+            keys.push(...this.exercisesPerType.get(exerciseType)!.map((exercise) => exercise.title!));
             keys.push(CourseScoresCsvRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY));
             keys.push(CourseScoresCsvRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY));
         }
@@ -624,11 +615,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     this.course,
                 );
             }
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
-            exerciseTitleKeys.forEach((title) => {
-                const points = roundValueSpecifiedByCourseSettings(exercisePointValues.get(title), this.course);
-                rowData.setLocalized(title, points);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                const points = roundValueSpecifiedByCourseSettings(student.pointsPerExerciseType.getValue(exerciseType, exercise), this.course);
+                rowData.setLocalized(exercise.title!, points);
             });
 
             rowData.setExerciseTypePoints(exerciseType, exercisePointsPerType);
@@ -656,11 +646,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const rowData = this.prepareEmptyCsvRow('Max');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exerciseMaxPoints = this.exerciseMaxPointsPerType.get(exerciseType)!;
-
-            exerciseTitleKeys.forEach((title, index) => {
-                rowData.setLocalized(title, exerciseMaxPoints[index]);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                rowData.setLocalized(exercise.title!, this.exerciseMaxPointsPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
             rowData.setExerciseTypeScore(exerciseType, 100);
@@ -686,12 +674,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const rowData = this.prepareEmptyCsvRow('Average');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
-
-            exerciseTitleKeys.forEach((title, index) => {
-                const points = roundValueSpecifiedByCourseSettings(exerciseAveragePoints[index], this.course);
-                rowData.setLocalized(title, points);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                const points = roundValueSpecifiedByCourseSettings(this.exerciseAveragePointsPerType.getValue(exerciseType, exercise), this.course);
+                rowData.setLocalized(exercise.title!, points);
             });
 
             const averageScore = roundScorePercentSpecifiedByCourseSettings(
@@ -724,11 +710,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const rowData = this.prepareEmptyCsvRow('Number of Participations');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exerciseParticipations = this.exerciseParticipationsPerType.get(exerciseType)!;
-
-            exerciseTitleKeys.forEach((title, index) => {
-                rowData.setLocalized(title, exerciseParticipations[index]);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                rowData.setLocalized(exercise.title!, this.exerciseParticipationsPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, '');
             rowData.setExerciseTypeScore(exerciseType, '');
@@ -746,11 +730,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const rowData = this.prepareEmptyCsvRow('Number of Successful Participations');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exerciseParticipationsSuccessful = this.exerciseSuccessfulPerType.get(exerciseType)!;
-
-            exerciseTitleKeys.forEach((title, index) => {
-                rowData.setLocalized(title, exerciseParticipationsSuccessful[index]);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                rowData.setLocalized(exercise.title!, this.exerciseSuccessfulPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, '');
             rowData.setExerciseTypeScore(exerciseType, '');
@@ -776,9 +758,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         emptyLine.set(OVERALL_COURSE_SCORE_KEY, '');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            exerciseTitleKeys.forEach((title) => {
-                emptyLine.set(title, '');
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                emptyLine.set(exercise.title!, '');
             });
             emptyLine.setExerciseTypePoints(exerciseType, '');
             emptyLine.setExerciseTypeScore(exerciseType, '');
@@ -830,6 +812,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             return -1;
         }
         return 0;
+    }
+
+    private static average(values: Array<number>): number {
+        if (values.length === 0) {
+            return 0;
+        } else {
+            return sum(values) / values.length;
+        }
     }
 
     /**
