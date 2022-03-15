@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angu
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
+import { RenderedQuizQuestionMarkDownElement, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { Result } from 'app/entities/result.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -87,6 +87,8 @@ export class MultipleChoiceQuestionComponent {
         }
         if (this.isAnswerOptionSelected(answerOption)) {
             this.selectedAnswerOptions = this.selectedAnswerOptions.filter((selectedAnswerOption) => selectedAnswerOption.id !== answerOption.id);
+        } else if (this.isSingleChoice) {
+            this.selectedAnswerOptions = [answerOption];
         } else {
             this.selectedAnswerOptions.push(answerOption);
         }
@@ -107,5 +109,9 @@ export class MultipleChoiceQuestionComponent {
                 return selected.id === answerOption.id;
             }) !== -1
         );
+    }
+
+    get isSingleChoice() {
+        return this.question.scoringType === ScoringType.SINGLE_CHOICE
     }
 }

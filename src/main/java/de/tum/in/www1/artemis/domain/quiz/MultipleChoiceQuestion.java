@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 
 /**
  * A MultipleChoiceQuestion.
@@ -173,17 +174,18 @@ public class MultipleChoiceQuestion extends QuizQuestion {
             return false;
         }
 
+        int correctAnswerCount = 0;
+
         // check answer options
         if (getAnswerOptions() != null) {
             for (AnswerOption answerOption : getAnswerOptions()) {
                 if (answerOption.isIsCorrect()) {
-                    // at least one correct answer option exists
-                    return true;
+                    correctAnswerCount++;
                 }
             }
         }
-        // no correct answer option exists
-        return false;
+
+        return getScoringType() == ScoringType.SINGLE_CHOICE ? correctAnswerCount == 1 : correctAnswerCount > 0;
     }
 
     /**
@@ -194,7 +196,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @Override
     public ScoringStrategy makeScoringStrategy() {
         return switch (getScoringType()) {
-            case ALL_OR_NOTHING -> new ScoringStrategyMultipleChoiceAllOrNothing();
+            case ALL_OR_NOTHING, SINGLE_CHOICE -> new ScoringStrategyMultipleChoiceAllOrNothing();
             case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyMultipleChoiceProportionalWithPenalty();
             case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyMultipleChoiceProportionalWithoutPenalty();
         };

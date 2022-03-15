@@ -155,7 +155,8 @@ entity QuizQuestion {                   //abstract
 enum ScoringType {
 	ALL_OR_NOTHING,
     PROPORTIONAL_WITH_PENALTY,
-    PROPORTIONAL_WITHOUT_PENALTY
+    PROPORTIONAL_WITHOUT_PENALTY,
+    SINGLE_CHOICE
 }
 
 entity MultipleChoiceQuestion {             //extends QuizQuestion

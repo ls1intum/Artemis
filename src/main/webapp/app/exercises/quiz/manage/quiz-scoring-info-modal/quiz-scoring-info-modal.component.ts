@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -10,6 +10,9 @@ export class QuizScoringInfoModalComponent implements OnInit {
     // Icons
     farQuestionCircle = faQuestionCircle;
     constructor(private modalService: NgbModal) {}
+
+    @Input()
+    hasSingleChoice = false;
 
     /**
      * Do nothing on init.

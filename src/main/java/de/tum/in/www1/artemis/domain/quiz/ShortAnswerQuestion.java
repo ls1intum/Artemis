@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
@@ -121,6 +122,11 @@ public class ShortAnswerQuestion extends QuizQuestion {
     public Boolean isValid() {
         // check general validity (using superclass)
         if (!super.isValid()) {
+            return false;
+        }
+
+        // only MC questions can be SINGLE_CHOICE
+        if (getScoringType() == ScoringType.SINGLE_CHOICE) {
             return false;
         }
 
@@ -346,6 +352,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
             case ALL_OR_NOTHING -> new ScoringStrategyShortAnswerAllOrNothing();
             case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyShortAnswerProportionalWithPenalty();
             case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyShortAnswerProportionalWithoutPenalty();
+            case SINGLE_CHOICE -> throw new IllegalStateException("A short answer question cannot have the ScoringType SINGLE_CHOICE");
         };
     }
 

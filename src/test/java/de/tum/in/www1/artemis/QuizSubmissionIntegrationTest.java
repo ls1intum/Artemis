@@ -758,7 +758,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         var result = results.get(0);
 
         var resultString = switch (scoringType) {
-            case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> "0 of 9 points";
+            case ALL_OR_NOTHING, SINGLE_CHOICE, PROPORTIONAL_WITH_PENALTY -> "0 of 9 points";
             case PROPORTIONAL_WITHOUT_PENALTY -> "4 of 9 points";
         };
         assertThat(result.getResultString()).isEqualTo(resultString);

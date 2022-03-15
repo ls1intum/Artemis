@@ -8,6 +8,7 @@ export enum ScoringType {
     ALL_OR_NOTHING = 'ALL_OR_NOTHING',
     PROPORTIONAL_WITH_PENALTY = 'PROPORTIONAL_WITH_PENALTY',
     PROPORTIONAL_WITHOUT_PENALTY = 'PROPORTIONAL_WITHOUT_PENALTY',
+    SINGLE_CHOICE = 'SINGLE_CHOICE',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Question.java

@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
@@ -129,6 +130,11 @@ public class DragAndDropQuestion extends QuizQuestion {
     public Boolean isValid() {
         // check general validity (using superclass)
         if (!super.isValid()) {
+            return false;
+        }
+
+        // only MC questions can be SINGLE_CHOICE
+        if (getScoringType() == ScoringType.SINGLE_CHOICE) {
             return false;
         }
 
@@ -422,6 +428,7 @@ public class DragAndDropQuestion extends QuizQuestion {
             case ALL_OR_NOTHING -> new ScoringStrategyDragAndDropAllOrNothing();
             case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyDragAndDropProportionalWithPenalty();
             case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyDragAndDropProportionalWithoutPenalty();
+            case SINGLE_CHOICE -> throw new IllegalStateException("A drag and drop question cannot have the ScoringType SINGLE_CHOICE");
         };
     }
 

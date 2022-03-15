@@ -367,6 +367,42 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditQuizExercise_SingleChoiceMC() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setScoringType(ScoringType.SINGLE_CHOICE);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        assertThat(quizExercise.getQuizQuestions().get(0).getScoringType()).as("Scoring type was changed").isEqualTo(ScoringType.SINGLE_CHOICE);
+
+        // multiple correct answers are not allowed
+        mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.getAnswerOptions().get(1).setIsCorrect(true);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditQuizExercise_SingleChoiceDD() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+
+        DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
+        dnd.setScoringType(ScoringType.SINGLE_CHOICE);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditQuizExercise_SingleChoiceSA() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+
+        ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+        sa.setScoringType(ScoringType.SINGLE_CHOICE);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditQuizExerciseForExam() throws Exception {
         quizExercise = createQuizOnServerForExam();
 

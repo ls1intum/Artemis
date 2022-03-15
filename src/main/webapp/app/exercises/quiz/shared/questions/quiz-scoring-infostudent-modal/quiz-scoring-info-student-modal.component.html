@@ -89,6 +89,27 @@
         </div>
     </div>
 
+    <div class="modal-body" *ngIf="this.question.scoringType === ScoringType.SINGLE_CHOICE">
+        <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoice"></span>
+        <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoiceExplanation"></span>
+        <br />
+        <div *ngIf="this.question.type === QuizQuestionType.MULTIPLE_CHOICE">
+            <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
+                <span
+                    jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceSingleChoiceCorrect"
+                    [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.points, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
+                ></span
+                ></span>
+
+            <span *ngIf="!(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)">
+                <span
+                    jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceSingleChoiceNotCorrect"
+                    [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.points, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
+                ></span
+                ></span>
+        </div>
+    </div>
+
     <div class="modal-body" *ngIf="this.question.scoringType === ScoringType.PROPORTIONAL_WITH_PENALTY">
         <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportional"></span>
         <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span>

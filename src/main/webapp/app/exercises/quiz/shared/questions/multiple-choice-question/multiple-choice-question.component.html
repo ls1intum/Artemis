@@ -7,7 +7,8 @@
     </h4>
     <p [innerHTML]="renderedQuestion.text"></p>
     <span style="color: red" *ngIf="question.invalid" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
-    <h6>{{ 'artemisApp.quizQuestion.allOptions' | artemisTranslate }}</h6>
+    <h6 *ngIf="!isSingleChoice">{{ 'artemisApp.quizQuestion.allOptions' | artemisTranslate }}</h6>
+    <h6 *ngIf="isSingleChoice">{{ 'artemisApp.quizQuestion.singleOption' | artemisTranslate }}</h6>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="renderedQuestion.hint"></div>

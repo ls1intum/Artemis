@@ -165,6 +165,7 @@
                 "questionTitle": "Question {{index}}: The title is missing.",
                 "questionScore": "Question {{index}}: At least one point is required per question.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
+                "questionSingleChoiceCorrectAnswerOptions": "Question {{index}}: Multiple answer options are correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
@@ -186,11 +187,13 @@
             "scoringType": {
                 "all_or_nothing": "All or Nothing",
                 "proportional_with_penalty": "Proportional with Penalty",
-                "proportional_without_penalty": "Proportional without Penalty"
+                "proportional_without_penalty": "Proportional without Penalty",
+                "single_choice": "Single Choice"
             },
             "scoringTypeExplanation": {
                 "title": "Scoring Types",
                 "all_or_nothing": "All correct options must be selected and all incorrect options must not be selected to achieve the full score. If a mistake is made the participant achieves 0 points. There is no score in between.",
+                "single_choice": "Same as All or Nothing, but there is only one correct answer.",
                 "proportional_with_penalty": "Each correct answer is awarded with a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. Each wrong answer option subtracts 0.6 points. A student with 3 correct and 2 wrong answers would then receive 0.6 points.",
                 "proportional_without_penalty": "Each correct answer is awarded with a fraction of the total score. No points are deducted for mistakes. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. A student with 3 correct and 2 wrong answers would then receive 1.8 points."
             },
@@ -211,11 +214,15 @@
                 "scoringTypeProportional": "Scoring Proportional with Penalty: ",
                 "scoringTypeProportionalWithout": "Scoring Proportional without Penalty: ",
                 "scoringTypeAllOrNothing": "Scoring All or Nothing: ",
+                "scoringTypeSingleChoice": "Scoring Single Choice: ",
                 "scoringTypeProportionalExplanation": "Every correct answer is awarded with points, every mistake results in a point penalty to prevent guesswork. ",
                 "scoringTypeProportionalWithoutExplanation": "Every correct answer is awarded with points. No points are deducted for mistakes. ",
                 "scoringTypeAllOrNothingExplanation": "You either get all points or none at all.",
+                "scoringTypeSingleChoiceExplanation": "There is only one correct answer.",
                 "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you selected all answer options correctly you have received full credit for this question. Great Job!",
                 "multipleChoiceAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you selected {{paramInTotalRightOptions}} answer {{rightOption}} correctly and {{paramInTotalWrongOptions}} answer {{wrongOption}} incorrectly. Keep trying!",
+                "multipleChoiceSingleChoiceCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you selected the correct answer option you have received full credit for this question. Great Job!",
+                "multipleChoiceSingleChoiceNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you didn't select the correct answer option. Keep trying!",
                 "multipleChoiceProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramAmountOfAnswerOptions}} options grants you {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} points for selecting the answer options correctly. You selected {{paramInTotalRightOptions}} answer {{rightOption}} correctly and {{paramInTotalWrongOptions}} answer {{wrongOption}} incorrectly. In total you have",
                 "dragAndDropAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you mapped all the items correctly you have received full credit for this question. Great Job!",
                 "dragAndDropAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you mapped {{paramRightMapping}} {{rightMap}} correctly and mapped {{paramWrongMappedItems}} {{wrongMap}} incorrectly. Keep trying!",
