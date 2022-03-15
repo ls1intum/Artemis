@@ -12,7 +12,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -381,19 +381,16 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
         for (const exerciseType of this.exerciseTypes) {
             // TODO: can we calculate this average only with students who participated in the exercise?
-            this.averageNumberOfPointsPerExerciseTypes.set(
-                exerciseType,
-                this.students.reduce((total, student) => total + student.sumPointsPerExerciseType.get(exerciseType)!, 0) / this.students.length,
-            );
+            this.averageNumberOfPointsPerExerciseTypes.set(exerciseType, average(this.students.map((student) => student.sumPointsPerExerciseType.get(exerciseType)!)));
         }
 
-        this.averageNumberOfOverallPoints = this.students.reduce((total, student) => total + student.overallPoints, 0) / this.students.length;
-        this.averageNumberOfSuccessfulExercises = this.students.reduce((total, student) => total + student.numberOfSuccessfulExercises, 0) / this.students.length;
-        this.averageNumberOfParticipatedExercises = this.students.reduce((total, student) => total + student.numberOfParticipatedExercises, 0) / this.students.length;
+        this.averageNumberOfOverallPoints = average(this.students.map((student) => student.overallPoints));
+        this.averageNumberOfSuccessfulExercises = average(this.students.map((student) => student.numberOfSuccessfulExercises));
+        this.averageNumberOfParticipatedExercises = average(this.students.map((student) => student.numberOfParticipatedExercises));
 
         for (const exerciseType of this.exerciseTypes) {
             for (const exercise of this.exercisesPerType.get(exerciseType)!) {
-                exercise.averagePoints = this.students.reduce((total, student) => total + student.pointsPerExercise.get(exercise.id!)!, 0) / this.students.length;
+                exercise.averagePoints = sum(this.students.map((student) => student.pointsPerExercise.get(exercise.id!))) / this.students.length;
                 this.exerciseAveragePointsPerType.setValue(exerciseType, exercise, exercise.averagePoints);
                 this.exerciseParticipationsPerType.setValue(exerciseType, exercise, exercise.numberOfParticipationsWithRatedResult!);
                 this.exerciseSuccessfulPerType.setValue(exerciseType, exercise, exercise.numberOfSuccessfulParticipations!);
@@ -459,7 +456,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             // We only include this exercise if it is included in the exercise score
             if (includedIDs.includes(exercise.id)) {
                 student.overallPoints += pointsAchievedByStudentInExercise;
-                student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
+                const oldPointsSum = student.sumPointsPerExerciseType.get(exercise.type!)!;
+                student.sumPointsPerExerciseType.set(exercise.type!, oldPointsSum + pointsAchievedByStudentInExercise);
                 student.numberOfParticipatedExercises += 1;
                 exercise.numberOfParticipationsWithRatedResult! += 1;
                 if (result.score! >= 100) {
@@ -814,14 +812,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         return 0;
     }
 
-    private static average(values: Array<number>): number {
-        if (values.length === 0) {
-            return 0;
-        } else {
-            return sum(values) / values.length;
-        }
-    }
-
     /**
      * Filters the course exercises and returns the exercises that are already released or do not have a release date
      * @param course the course whose exercises are filtered
@@ -872,16 +862,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @private
      */
     private calculateAverageAndMedianScores(): void {
-        const allCoursePoints = this.course.exercises!.map((exercise) => exercise.maxPoints ?? 0).reduce((points1, points2) => points1 + points2, 0);
+        const allCoursePoints = sum(this.course.exercises!.map((exercise) => exercise.maxPoints ?? 0));
         const includedPointsPerStudent = this.students.map((student) => student.overallPoints);
         // average points and score included
         const scores = includedPointsPerStudent.map((point) => point / this.maxNumberOfOverallPoints);
         this.averageScoreIncluded = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
 
         // average points and score total
-        const achievedPointsTotal = this.students.map((student) => {
-            return Array.from(student.pointsPerExercise.values()).reduce((points1, points2) => points1 + points2, 0);
-        });
+        const achievedPointsTotal = this.students.map((student) => sum(Array.from(student.pointsPerExercise.values())));
         const averageScores = achievedPointsTotal.map((totalPoints) => totalPoints / allCoursePoints);
 
         this.averagePointsTotal = this.calculateAveragePoints(achievedPointsTotal);
