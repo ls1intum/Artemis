@@ -62,7 +62,10 @@ sourceSets {
 
     main {
         java {
-            srcDir assignmentSrcDir
+            srcDirs = [assignmentSrcDir]
+        }
+        resources {
+            srcDirs = []
         }
     }
 }
