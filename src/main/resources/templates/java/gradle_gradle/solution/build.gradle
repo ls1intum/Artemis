@@ -22,9 +22,4 @@ sourceSets {
             srcDir assignmentSrcDir
         }
     }
-    test {
-        java {
-            srcDir "test"
-        }
-    }
 }
