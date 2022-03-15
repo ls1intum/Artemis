@@ -335,10 +335,6 @@ public class FileService implements DisposableBean {
             if (targetFilePath.endsWith("git.attributes.file")) {
                 targetFilePath = targetFilePath.replaceAll("git.attributes.file", ".gitattributes");
             }
-            // special case for '.gitkeep' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("gitkeep.file")) {
-                targetFilePath = targetFilePath.replaceAll("gitkeep.file", ".gitkeep");
-            }
             // special case for 'Makefile' files which would not be included in the build otherwise
             if (targetFilePath.endsWith("Makefile.file")) {
                 targetFilePath = targetFilePath.replace("Makefile.file", "Makefile");
