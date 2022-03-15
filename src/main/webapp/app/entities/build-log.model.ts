@@ -1,6 +1,6 @@
 import { safeUnescape } from 'app/shared/util/security.util';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 
 export enum BuildLogType {
     ERROR = 'ERROR',
@@ -21,7 +21,8 @@ type ParsedLogEntry = [string, string, string, string, string, string];
  * Wrapper class for build log output.
  */
 export class BuildLogEntryArray extends Array<BuildLogEntry> {
-    private defaultErrorLogRegex = /\[?(ERROR)?\]?.*\/?(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
+    private mavenErrorLogRegex = /\[?(ERROR)?\]?.*\/?(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
+    private gradleErrorLogRegex = /(src\/.+):(\d+)():\s(error:)\s(.*$)/;
     private swiftErrorLogRegex = /.*\/?(Sources\/.+):(\d+):(\d+):\s(error:)(.*$)/;
 
     /**
@@ -53,15 +54,17 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
      * Safely unescapes messages within the build log to avoid vulnerability to injection.
      *
      */
-    extractErrors(programmingLanguage: ProgrammingLanguage | undefined): Array<Annotation> {
+    extractErrors(programmingLanguage: ProgrammingLanguage | undefined, projectType: ProjectType | undefined): Array<Annotation> {
         let errorLogRegex: RegExp;
         // TODO: implement build error regex for other programming languages
         if (programmingLanguage === ProgrammingLanguage.SWIFT) {
             errorLogRegex = this.swiftErrorLogRegex;
+        } else if (projectType === ProjectType.PLAIN_GRADLE || projectType === ProjectType.GRADLE_GRADLE) {
+            errorLogRegex = this.gradleErrorLogRegex;
         } else {
-            errorLogRegex = this.defaultErrorLogRegex;
+            errorLogRegex = this.mavenErrorLogRegex;
         }
-        return Array.from(
+        const res = Array.from(
             this
                 // Parse build logs
                 .map(({ log, time }) => ({ log: log.match(errorLogRegex), time }))
@@ -73,7 +76,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                 // Sort entries to fit a standard format
                 .map(({ log, time }) => {
                     const sortedLog = [...log!];
-                    if (programmingLanguage === ProgrammingLanguage.SWIFT) {
+                    if (programmingLanguage === ProgrammingLanguage.SWIFT || projectType === ProjectType.PLAIN_GRADLE || projectType === ProjectType.GRADLE_GRADLE) {
                         const errorIndicator = sortedLog!.splice(sortedLog!.indexOf('error:'), 1)[0];
                         sortedLog.unshift(errorIndicator);
                     }
@@ -89,5 +92,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                     timestamp: Date.parse(time),
                 })),
         );
+        console.log(res);
+        return res;
     }
 }
