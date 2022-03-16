@@ -11,6 +11,7 @@ export class IncludedInOverallScorePickerComponent {
 
     @Input()
     includedInOverallScore: IncludedInOverallScore | undefined;
+    // Option to hide the NOT_INCLUDED option (used for exam exercises)
     @Input()
     excludeNotIncluded: boolean;
     @Output()
