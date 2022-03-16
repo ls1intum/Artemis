@@ -15,7 +15,7 @@ public class JmsMessageUtil {
     public static final String ERROR_MESSAGE = "There was a problem with the communication between server components. Please try again later!";
 
     /**
-     * Parse the vody of a JMS message accoring to thegiven body type.
+     * Parse the body of a JMS message according to the given body type.
      *
      * @param message  the message
      * @param bodyType the body type

@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
- * DTO for sending exercises and user who wants to access those exercises
+ * DTO for sending lectures and user who wants to access those lectures
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserLectureDTO implements Serializable {
