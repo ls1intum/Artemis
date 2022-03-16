@@ -445,7 +445,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         return switch (permission) {
             case EDIT -> "WRITE";
             case CREATE -> "CREATE";
-            case CREATEREPRO -> "CREATEREPOSITORY";
+            case CREATEREPOSITORY -> "CREATEREPOSITORY";
             case READ -> "READ";
             case ADMIN -> "ADMINISTRATION";
         };
