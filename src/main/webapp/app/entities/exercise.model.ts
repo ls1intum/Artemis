@@ -120,7 +120,6 @@ export abstract class Exercise implements BaseEntity {
 
     // helper attributes
     public secondCorrectionEnabled = false;
-    public isTogglingSecondCorrection?: boolean;
     public isAtLeastTutor?: boolean;
     public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;
@@ -145,7 +144,6 @@ export abstract class Exercise implements BaseEntity {
         this.dueDateError = false;
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;
-        this.isTogglingSecondCorrection = false; // default value
     }
 
     /**
