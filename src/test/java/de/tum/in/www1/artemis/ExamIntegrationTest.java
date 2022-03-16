@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -100,7 +101,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private GradingScaleRepository gradingScaleRepository;
 
     @Autowired
-    ZipFileTestUtilService zipFileTestUtilService;
+    private PasswordService passwordService;
+
+    @Autowired
+    private ZipFileTestUtilService zipFileTestUtilService;
 
     private List<User> users;
 
@@ -127,26 +131,30 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         instructor = users.get(users.size() - 1);
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("student42"));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor6"));
+        userRepo.save(ModelFactory.generateActivatedUser("student42", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("tutor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("instructor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
+        bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     public void resetDatabase() {
+        bitbucketRequestMockProvider.reset();
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
+        User student42 = database.getUserByLogin("student42");
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student42.getLogin(), student42.getEmail(), student42.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
 
         List<User> studentsInCourseBefore = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/student42", null, HttpStatus.OK, null);
         List<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
-        User student42 = database.getUserByLogin("student42");
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
     }
@@ -215,9 +223,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             jiraRequestMockProvider.mockAddUserToGroup(course1.getStudentGroupName(), false);
         }
 
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student5.getLogin(), student5.getEmail(), student5.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+
         var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
         student99.setRegistrationNumber(registrationNumber99);
         userRepo.save(student99);
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student99.getLogin(), student99.getEmail(), student99.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
         student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").get();
         assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
@@ -255,6 +268,20 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         studentDto6.setLogin(student6.getLogin());
         var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto5, studentDto99, studentDto100, studentDto6, studentDto7, studentDto8, studentDto9,
                 studentDto10);
+        bitbucketRequestMockProvider.mockUpdateUserDetails("student100", "student100@tum.de", "Student100 Student100");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student6.getLogin(), student6.getEmail(), student6.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student7.getLogin(), student7.getEmail(), student7.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student8.getLogin(), student8.getEmail(), student8.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student9.getLogin(), student9.getEmail(), student9.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(student10.getLogin(), student10.getEmail(), student10.getName());
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails("student100", "student100@tum.de", "Student100 Student100");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
 
         // now we register all these students for the exam.
         List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
@@ -1287,7 +1314,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void unlockAllRepositories() throws Exception {
-
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         assertThat(studentExamRepository.findStudentExam(new ProgrammingExercise(), null)).isEmpty();
 
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
@@ -1332,12 +1359,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2)).isPresent();
         assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2).get()).isEqualTo(studentExam2);
 
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        mockConfigureRepository(programmingExercise, "student1", Set.of(student1), false);
-        mockConfigureRepository(programmingExercise, "student2", Set.of(student2), false);
-
-        mockConfigureRepository(programmingExercise2, "student1", Set.of(student1), false);
-        mockConfigureRepository(programmingExercise2, "student2", Set.of(student2), false);
+        mockConfigureRepository(programmingExercise, "student1", Set.of(student1), true);
+        mockConfigureRepository(programmingExercise, "student2", Set.of(student2), true);
+        mockConfigureRepository(programmingExercise2, "student1", Set.of(student1), true);
+        mockConfigureRepository(programmingExercise2, "student2", Set.of(student2), true);
 
         Integer numOfUnlockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/unlock-all-repositories",
                 Optional.empty(), Integer.class, HttpStatus.OK);
@@ -1463,11 +1488,22 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser("instructor1");
 
         // instructor exam checklist checks
-        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam);
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotEqualTo(null);
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(15L);
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(true);
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(0);
+
+        // check that an adapted version is computed for tutors
+        database.changeUser("tutor1");
+
+        examChecklistDTO = examService.getStatsForChecklist(exam, false);
+        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(null);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(0);
+
+        database.changeUser("instructor1");
 
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
@@ -1641,7 +1677,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser("instructor1");
 
         // check if stats are set correctly for the instructor
-        examChecklistDTO = examService.getStatsForChecklist(exam);
+        examChecklistDTO = examService.getStatsForChecklist(exam, true);
         assertThat(examChecklistDTO).isNotEqualTo(null);
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(15);
         assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(15);
@@ -1652,6 +1688,25 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound().length).isEqualTo(1);
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).containsAll((Collections.singletonList(90L)));
 
+        // change to a tutor
+        database.changeUser("tutor1");
+
+        // check that a modified version is returned
+        // check if stats are set correctly for the instructor
+        examChecklistDTO = examService.getStatsForChecklist(exam, false);
+        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(null);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(75);
+        assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(null);
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound().length).isEqualTo(1);
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).containsAll((Collections.singletonList(90L)));
+
+        // change back to instructor user
+        database.changeUser("instructor1");
+
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
@@ -1659,7 +1714,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamStatistics() throws Exception {
-        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1);
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, true);
         ExamChecklistDTO returnedStatistics = request.get("/api/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
                 ExamChecklistDTO.class);
         assertThat(returnedStatistics.isAllExamExercisesAllStudentsPrepared()).isEqualTo(actualStatistics.isAllExamExercisesAllStudentsPrepared());

@@ -80,6 +80,11 @@ public class ProgrammingExercisePlagiarismResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
+        if (plagiarismResult != null) {
+            for (var comparison : plagiarismResult.getComparisons()) {
+                comparison.setPlagiarismResult(null);
+            }
+        }
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }
 
@@ -112,6 +117,9 @@ public class ProgrammingExercisePlagiarismResource {
         log.info("Start programmingPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
         TextPlagiarismResult result = programmingPlagiarismDetectionService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
+        for (var comparison : result.getComparisons()) {
+            comparison.setPlagiarismResult(null);
+        }
         return ResponseEntity.ok(result);
     }
 

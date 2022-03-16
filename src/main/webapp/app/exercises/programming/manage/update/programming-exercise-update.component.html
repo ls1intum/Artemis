@@ -162,7 +162,14 @@
         </div>
 
         <div class="form-group" *ngIf="programmingExercise.programmingLanguage && projectTypes && projectTypes.length > 0">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
+                <jhi-help-icon
+                    *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA"
+                    placement="auto"
+                    text="artemisApp.programmingExercise.projectTypeTooltip"
+                ></jhi-help-icon>
+            </div>
             <select
                 #select
                 required
@@ -173,12 +180,30 @@
                 id="field_projectType"
                 [disabled]="isImport || !!programmingExercise.id"
             >
-                <option value="ECLIPSE" *ngIf="projectTypes.includes(ProjectType.ECLIPSE)">Eclipse</option>
-                <option value="MAVEN" *ngIf="projectTypes.includes(ProjectType.MAVEN)">Maven</option>
+                <option value="PLAIN_MAVEN" *ngIf="projectTypes.includes(ProjectType.PLAIN_MAVEN)">Plain Java</option>
+                <option value="MAVEN_MAVEN" *ngIf="projectTypes.includes(ProjectType.MAVEN_MAVEN)">Maven</option>
                 <option value="PLAIN" *ngIf="projectTypes.includes(ProjectType.PLAIN)">Plain</option>
                 <option value="XCODE" *ngIf="projectTypes.includes(ProjectType.XCODE)">Xcode</option>
                 <option value="GCC" *ngIf="projectTypes.includes(ProjectType.GCC)">GCC</option>
                 <option value="FACT" *ngIf="projectTypes.includes(ProjectType.FACT)">FACT</option>
+            </select>
+        </div>
+
+        <div class="form-group" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.testRepositoryProjectType" for="field_testProjectType">Test Repository Project Type</label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.testRepositoryProjectTypeTooltip"></jhi-help-icon>
+            <select
+                #selectTestRepoProject
+                required
+                class="form-select"
+                [ngModel]="selectedTestRepositoryProjectType"
+                (ngModelChange)="selectTestRepoProject.value = onTestRepositoryProjectTypeChange($event)"
+                name="testRepositoryProjectType"
+                id="field_testProjectType"
+                [disabled]="isImport || !!programmingExercise.id"
+            >
+                <!-- This ngIf is needed do differentiate when Gradle has been introduced, because Maven-Gradle and Gradle-Maven should not be possible -->
+                <option value="MAVEN" *ngIf="selectedProjectType === ProjectType.PLAIN_MAVEN || selectedProjectType === ProjectType.MAVEN_MAVEN">Maven</option>
             </select>
         </div>
 
@@ -294,10 +319,7 @@
                 </ngb-alert>
             </ng-container>
         </div>
-        <div
-            class="form-group mt-2"
-            *ngIf="programmingExercise.programmingLanguage && staticCodeAnalysisAllowed && ProjectType.XCODE !== selectedProjectType && ProjectType.FACT !== selectedProjectType"
-        >
+        <div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && staticCodeAnalysisAllowed">
             <div class="form-check custom-control custom-checkbox">
                 <input
                     type="checkbox"

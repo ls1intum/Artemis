@@ -11,7 +11,7 @@
         *ngFor="let singleFeedback of feedback"
         [class.positive-feedback]="singleFeedback?.credits && singleFeedback.credits! > 0"
         [class.negative-feedback]="singleFeedback?.credits && singleFeedback.credits! < 0"
-        [class.neutral-feedback]="(singleFeedback?.credits && singleFeedback.credits! === 0) || singleFeedback?.isSubsequent"
+        [class.neutral-feedback]="singleFeedback?.credits === 0 || singleFeedback?.isSubsequent"
     >
         <strong>
             <span> {{ roundScoreSpecifiedByCourseSettings(singleFeedback.credits, course) + ' Points: ' }} </span>

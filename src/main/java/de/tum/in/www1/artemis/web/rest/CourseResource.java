@@ -1025,17 +1025,15 @@ public class CourseResource {
      */
     @NotNull
     public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group, Role role) {
-        if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            Optional<User> userToRemoveFromGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
-            if (userToRemoveFromGroup.isEmpty()) {
-                throw new EntityNotFoundException("User", userLogin);
-            }
-            courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group, role);
-            return ResponseEntity.ok().body(null);
-        }
-        else {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             throw new AccessForbiddenException();
         }
+        Optional<User> userToRemoveFromGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
+        if (userToRemoveFromGroup.isEmpty()) {
+            throw new EntityNotFoundException("User", userLogin);
+        }
+        courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group, role);
+        return ResponseEntity.ok().body(null);
     }
 
     /**

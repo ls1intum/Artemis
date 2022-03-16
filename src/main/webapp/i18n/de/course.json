@@ -95,8 +95,8 @@
                     "searchButton": "Suchen",
                     "resetButton": "Zurücksetzen",
                     "toggleButton": {
-                        "true": "Zeige erweiterte Suche",
-                        "false": "Verstecke erweiterte Suche"
+                        "true": "Verstecke erweiterte Suche",
+                        "false": "Zeige erweiterte Suche"
                     },
                     "cardTitle": "Aufgaben durchsuchen",
                     "labelExerciseName": "Aufgaben nach Namen durchsuchen",
@@ -188,7 +188,12 @@
             "quiz": "Quiz",
             "modeling": "Modellierung",
             "text": "Text",
-            "file-upload": "Dateiupload"
+            "file-upload": "Dateiupload",
+            "chartLegend": {
+                "lowest": "Unteres Performance-Drittel",
+                "average": "Durchschnittliches Performance-Drittel",
+                "best": "Bestes Performance-Drittel"
+            }
         }
     }
 }

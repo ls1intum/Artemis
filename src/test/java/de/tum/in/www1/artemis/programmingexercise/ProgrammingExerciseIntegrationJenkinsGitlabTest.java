@@ -659,6 +659,30 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void testRecreateBuildPlansForbiddenStudent() throws Exception {
+        programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testRecreateBuildPlansForbiddenTutor() throws Exception {
+        programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testRecreateBuildPlansExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseNotFound();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void recreateBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseSuccess();
+    }
+
+    @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden();

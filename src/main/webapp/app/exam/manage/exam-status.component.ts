@@ -28,6 +28,9 @@ export class ExamStatusComponent implements OnChanges {
     @Input()
     public exam: Exam;
 
+    @Input()
+    public isAtLeastInstructor: boolean;
+
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
 
@@ -60,8 +63,10 @@ export class ExamStatusComponent implements OnChanges {
             this.examChecklist = examStats;
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
 
-            // Step 1:
-            this.setExamPreparation();
+            if (this.isAtLeastInstructor) {
+                // Step 1:
+                this.setExamPreparation();
+            }
 
             // Step 2: Exam conduction
             this.setConductionState();
@@ -100,7 +105,7 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private setConductionState(): void {
-        if (this.examAlreadyEnded() && this.examPreparationFinished) {
+        if (this.examAlreadyEnded() && (!this.isAtLeastInstructor || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
         } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState = ExamConductionState.RUNNING;

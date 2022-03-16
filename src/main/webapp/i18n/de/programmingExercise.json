@@ -77,7 +77,8 @@
             },
             "recreateBuildPlans": {
                 "title": "Build-Pläne neu erstellen",
-                "warning": "Die Build-Pläne werden neu erstellt. Alle bisherigen Veränderungen gehen verloren!",
+                "buttonText": "Build-Pläne",
+                "question": "Sollen die Build-Pläne des Templates und der Musterlösung für Programmieraufgabe <strong>{{ title }}</strong> wirklich neu erstellt werden? Alle vorherigen Änderungen werden überschrieben.<br>Build-Pläne der Studierenden werden <strong>nicht</strong> gelöscht. Diese können getrennt über die Aufräumen-Funktion entfernt werden. Zusammen können diese beiden Operationen dann wieder einen konsistenten Zustand zwischen den Systemen sicherstellen, etwa wenn der Muster-Build-Plan geändert wurde oder es zu einem Datenverlust im CI-System kam.",
                 "description": "Durch Aktivierung dieser Option werden die Build-Pläne neu erstellt und nicht von der importierten Aufgabe kopiert. Neu erstellte Build-Pläne unterstützen standardmäßig die neuesten Features der Artemis-Aufgabenvorlagen."
             },
             "updateTemplate": {
@@ -86,6 +87,7 @@
             },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
+            "testRepositoryProjectType": "Projekttyp des Test-Repository",
             "packageName": "Package-Name",
             "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
@@ -241,6 +243,8 @@
             "titleTooltip": "Der Titel der Aufgabe kann jederzeit geändert werden. Er ist u.a. Teil des Namens des Projekts, welches im Rahmen der Aufgabe auf dem VCS Server erstellt wird",
             "shortNameTooltip": "Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)",
             "categoriesTooltip": "Es können bis zu zwei Kategorien pro Aufgabe definiert werden, welche frei gewählt werden können (Kategorie eingeben und ENTER drücken). Allerdings wird empfohlen, die gewählten Bezeichnungen konsistent zu nutzen, da sie auch für Studierenden sichtbar sind",
+            "projectTypeTooltip": "Dieser Wert legt den Projekttypen von Vorlagen- und Lösungs-Repository fest.",
+            "testRepositoryProjectTypeTooltip": "Dieser Wert legt den Projekttypen des Test-Repository fest.",
             "timeline": {
                 "assessmentType": "Art der Bewertung",
                 "manualAssessment": "Manuelle Bewertung",
