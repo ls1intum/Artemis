@@ -47,6 +47,29 @@ public class FileService implements DisposableBean {
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
+    /**
+     * Filenames for which the template filename differs from the filename it should have in the repository.
+     */
+    // @formatter:off
+    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(
+        Map.entry("git.ignore.file", ".gitignore"),
+        Map.entry("git.attributes.file", ".gitattributes"),
+        Map.entry("Makefile.file", "Makefile"),
+        Map.entry("project.file", ".project"),
+        Map.entry("classpath.file", ".classpath"),
+        Map.entry("dune.file", "dune"),
+        Map.entry("Fast.file", "Fastfile"),
+        Map.entry("App.file", "Appfile"),
+        Map.entry("Scan.file", "Scanfile"),
+        Map.entry("gradlew.file", "gradlew")
+    );
+    // @formatter:on
+
+    /**
+     * These directories get falsely marked as files and should be ignored during copying.
+     */
+    private static final List<String> IGNORED_DIRECTORIES = List.of(".xcassets/", ".colorset/", ".appiconset/", ".xcworkspace/", ".xcodeproj/", ".swiftpm/");
+
     @Override
     public void destroy() {
         futures.values().forEach(future -> future.cancel(true));
@@ -326,50 +349,12 @@ public class FileService implements DisposableBean {
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
+
             String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
-            // special case for '.git.ignore.file' file which would not be included in build otherwise
-            if (targetFilePath.endsWith("git.ignore.file")) {
-                targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
-            }
-            // special case for '.gitattributes' file which would not be included in build otherwise
-            if (targetFilePath.endsWith("git.attributes.file")) {
-                targetFilePath = targetFilePath.replaceAll("git.attributes.file", ".gitattributes");
-            }
-            // special case for 'Makefile' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("Makefile.file")) {
-                targetFilePath = targetFilePath.replace("Makefile.file", "Makefile");
-            }
-            // special case for '.project' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("project.file")) {
-                targetFilePath = targetFilePath.replace("project.file", ".project");
-            }
-            // special case for '.classpath' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("classpath.file")) {
-                targetFilePath = targetFilePath.replace("classpath.file", ".classpath");
-            }
-            // special case for 'dune' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("dune.file")) {
-                targetFilePath = targetFilePath.replace("dune.file", "dune");
-            }
-            // special case for 'Fastfile' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("Fast.file")) {
-                targetFilePath = targetFilePath.replace("Fast.file", "Fastfile");
-            }
-            // special case for 'Appfile' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("App.file")) {
-                targetFilePath = targetFilePath.replace("App.file", "Appfile");
-            }
-            // special case for 'Scanfile' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("Scan.file")) {
-                targetFilePath = targetFilePath.replace("Scan.file", "Scanfile");
-            }
-            // special case for "gradlew" files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("gradlew.file")) {
-                targetFilePath = targetFilePath.replace("gradlew.file", "gradlew");
-            }
-            // special case for Xcode where directories get falsely scanned as files
-            if (targetFilePath.endsWith(".xcassets/") || targetFilePath.endsWith(".colorset/") || targetFilePath.endsWith(".appiconset/")
-                    || targetFilePath.endsWith(".xcworkspace/") || targetFilePath.endsWith(".xcodeproj/")) {
+
+            targetFilePath = applySpecialFilenameReplacements(targetFilePath);
+
+            if (isIgnoredDirectory(targetFilePath)) {
                 continue;
             }
 
@@ -385,6 +370,37 @@ public class FileService implements DisposableBean {
                 copyPath.toFile().setExecutable(true);
             }
         }
+    }
+
+    /**
+     * Replaces filenames where the template name differs from the name the file should have in the repository.
+     *
+     * @param filePath The path to a file.
+     * @return The path with replacements applied where necessary.
+     */
+    private String applySpecialFilenameReplacements(final String filePath) {
+        String resultFilePath = filePath;
+
+        for (final Map.Entry<String, String> replacementDirective : FILENAME_REPLACEMENTS.entrySet()) {
+            String oldName = replacementDirective.getKey();
+            String newName = replacementDirective.getValue();
+
+            if (resultFilePath.endsWith(replacementDirective.getKey())) {
+                resultFilePath = resultFilePath.replace(oldName, newName);
+            }
+        }
+
+        return resultFilePath;
+    }
+
+    /**
+     * Checks if the given path has been identified as a file but it actually points to a directory.
+     *
+     * @param filePath The path to a file/directory.
+     * @return True, if the path is assumed to be a file but actually points to a directory.
+     */
+    private boolean isIgnoredDirectory(final String filePath) {
+        return IGNORED_DIRECTORIES.stream().anyMatch(filePath::endsWith);
     }
 
     /**
