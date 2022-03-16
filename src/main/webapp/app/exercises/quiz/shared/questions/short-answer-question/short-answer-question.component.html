@@ -48,18 +48,22 @@
                         value="{{ getSubmittedTextForSpotAsString(element) }}"
                         size="{{ getSubmittedTextSizeForSpot(element) }}"
                     />
-                    <div
-                        *ngIf="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), shortAnswerQuestion).invalid"
-                        [ngbTooltip]="'artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate"
-                    >
-                        <input
-                            class="short-answer-question-container__input"
-                            style="background: grey"
-                            disabled
-                            value="{{ getSubmittedTextForSpotAsString(element) }}"
-                            size="{{ getSubmittedTextSizeForSpot(element) }}"
-                        />
-                    </div>
+                </div>
+                <div
+                    *ngIf="
+                        shortAnswerQuestionUtil.isInputField(element) &&
+                        !showingSampleSolution &&
+                        shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), shortAnswerQuestion).invalid
+                    "
+                    [ngbTooltip]="'artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate"
+                >
+                    <input
+                        class="short-answer-question-container__input"
+                        style="background: grey"
+                        disabled
+                        value="{{ getSubmittedTextForSpotAsString(element) }}"
+                        size="{{ getSubmittedTextSizeForSpot(element) }}"
+                    />
                 </div>
                 <div class="short-answer-question-container" id="sa-question-container-C" *ngIf="shortAnswerQuestionUtil.isInputField(element) && showingSampleSolution">
                     <input
