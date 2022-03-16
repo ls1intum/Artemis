@@ -382,10 +382,7 @@ public class FileService implements DisposableBean {
             Files.copy(resource.getInputStream(), copyPath, StandardCopyOption.REPLACE_EXISTING);
             // make gradlew executable
             if (targetFilePath.endsWith("gradlew")) {
-                boolean success = copyPath.toFile().setExecutable(true);
-                if (!success) {
-                    throw new RuntimeException("The permissions of " + targetFilePath + " could not be set to executable");
-                }
+                copyPath.toFile().setExecutable(true);
             }
         }
     }
@@ -565,7 +562,7 @@ public class FileService implements DisposableBean {
      * @param filesToIgnore the name of files for which no replacement should be done
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
-    public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements, @Nullable List<String> filesToIgnore) throws IOException {
+    public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements, List<String> filesToIgnore) throws IOException {
         log.debug("Replacing {} in files in directory {}", replacements, startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {

@@ -144,7 +144,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
 
-        fileService.replaceVariablesInFileRecursive(pomXml.getParent(), replacements, null);
+        fileService.replaceVariablesInFileRecursive(pomXml.getParent(), replacements, Collections.emptyList());
         fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).doesNotContain("${exerciseName}");
@@ -268,7 +268,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     public void testReplaceVariablesInFileRecursive_shouldThrowException() {
-        Exception exception = assertThrows(RuntimeException.class, () -> fileService.replaceVariablesInFileRecursive("some-path", new HashMap<>(), null));
+        Exception exception = assertThrows(RuntimeException.class, () -> fileService.replaceVariablesInFileRecursive("some-path", new HashMap<>(), Collections.emptyList()));
         assertThat(exception.getMessage()).endsWith("should be replaced but the directory does not exist.");
     }
 
