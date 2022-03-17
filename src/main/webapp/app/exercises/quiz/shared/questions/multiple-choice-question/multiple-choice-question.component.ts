@@ -112,6 +112,6 @@ export class MultipleChoiceQuestionComponent {
     }
 
     get isSingleChoice() {
-        return this.question.scoringType === ScoringType.SINGLE_CHOICE
+        return this.question.scoringType === ScoringType.SINGLE_CHOICE;
     }
 }

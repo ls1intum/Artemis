@@ -16,7 +16,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
