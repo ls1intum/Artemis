@@ -651,14 +651,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             }
         });
         List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
-        if (examMode) {
-            // In Exam-Mode, the Submissions are retrieved from the studentParticipationRepository, for which the Set<Submission> is appended
-            return removeExerciseAndSubmissionSet(programmingSubmissions, true);
-        }
-        else {
-            // In non-Exam Mode, the Submissions are retrieved from the submissionRepository, for which no Set<submission> is appended
-            return removeExerciseAndSubmissionSet(programmingSubmissions, false);
-        }
+        // In Exam-Mode, the Submissions are retrieved from the studentParticipationRepository, for which the Set<Submission> is appended
+        // In non-Exam Mode, the Submissions are retrieved from the submissionRepository, for which no Set<submission> is appended
+        return removeExerciseAndSubmissionSet(programmingSubmissions, examMode);
     }
 
     /**
@@ -689,7 +684,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Given a List of ProgrammingSubmissions, this method will remove the attribute participation.exercise.
      * If removeSubmissionSet = true, also the Set participation.submissions is removed. The number of submissions will be
-     * stored in the attribute participation.SubmissionCount instead of being determined by the size of the set of all submissions.
+     * stored in the attribute participation.submissionCount instead of being determined by the size of the set of all submissions.
      * This method is intended to reduce the amount of data transferred to the client.
      * @param programmingSubmissionList - a List with all ProgrammingSubmissions to be modified
      * @param removeSubmissionSet - option to also remove the SubmissionSet from the ProgrammingSubmssion
