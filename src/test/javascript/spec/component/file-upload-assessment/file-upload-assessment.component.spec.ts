@@ -613,6 +613,36 @@ describe('FileUploadAssessmentComponent', () => {
         comp.navigateBack();
         expect(navigateByUrlStub).toBeCalled();
     });
+
+    it('should call save assessment on control and s', () => {
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
+        const spyOnControlAndS = jest.spyOn(comp, 'saveOnControlAndS');
+        const saveStub = jest.spyOn(comp, 'onSaveAssessment').mockImplementation();
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
+        expect(saveStub).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call submit assessment on control and enter', () => {
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
+        const spyOnControlAndEnter = jest.spyOn(comp, 'submitOnControlAndEnter');
+        const submitStub = jest.spyOn(comp, 'onSubmitAssessment').mockImplementation();
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
+        expect(submitStub).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call assess next on control and n', () => {
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'n' });
+        const spyOnControlAndN = jest.spyOn(comp, 'nextSubmissionOnControlAndN');
+        const nextStub = jest.spyOn(comp, 'assessNext').mockImplementation();
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndN).toHaveBeenCalledTimes(1);
+        expect(nextStub).toHaveBeenCalledTimes(1);
+    });
 });
 
 const createSubmission = (exercise: FileUploadExercise) => {

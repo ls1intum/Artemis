@@ -448,6 +448,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
         expect(saveStub).toHaveBeenCalledTimes(1);
     });
+
     it('should call submit assessment on control and enter', () => {
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
         const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
@@ -456,5 +457,15 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
         expect(submitStub).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call assess next on control and n', () => {
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'n' });
+        const spyOnControlAndN = jest.spyOn(component, 'nextSubmissionOnControlAndN');
+        const nextStub = jest.spyOn(component, 'assessNext').mockImplementation();
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndN).toHaveBeenCalledTimes(1);
+        expect(nextStub).toHaveBeenCalledTimes(1);
     });
 });

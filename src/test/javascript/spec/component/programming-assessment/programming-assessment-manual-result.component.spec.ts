@@ -512,4 +512,34 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.manualResult!.score).toBe(100);
         flush();
     }));
+
+    it('should call save assessment on control and s', () => {
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
+        const spyOnControlAndS = jest.spyOn(comp, 'saveOnControlAndS');
+        const saveSpy = jest.spyOn(comp, 'save');
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
+        expect(saveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call submit assessment on control and enter', () => {
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
+        const spyOnControlAndEnter = jest.spyOn(comp, 'submitOnControlAndEnter');
+        const submitSpy = jest.spyOn(comp, 'submit');
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
+        expect(submitSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call next submission on control and n', () => {
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'n' });
+        const spyOnControlAndN = jest.spyOn(comp, 'nextSubmissionOnControlAndN');
+        const nextStub = jest.spyOn(comp, 'nextSubmission').mockImplementation();
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndN).toHaveBeenCalledTimes(1);
+        expect(nextStub).toHaveBeenCalledTimes(1);
+    });
 });

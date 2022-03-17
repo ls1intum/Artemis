@@ -114,13 +114,20 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.resetComponent();
     }
 
-    @HostListener('document:keydown.control.s')
-    saveOnControlAndS() {
+    @HostListener('document:keydown.control.s', ['$event'])
+    saveOnControlAndS(event: KeyboardEvent) {
+        event.preventDefault();
         this.save();
     }
-    @HostListener('document:keydown.control.enter')
-    submitOnControlAndEnter() {
+    @HostListener('document:keydown.control.enter', ['$event'])
+    submitOnControlAndEnter(event: KeyboardEvent) {
+        event.preventDefault();
         this.submit();
+    }
+    @HostListener('document:keydown.control.n', ['$event'])
+    async nextSubmissionOnControlAndN(event: KeyboardEvent) {
+        event.preventDefault();
+        await this.nextSubmission();
     }
 
     /**

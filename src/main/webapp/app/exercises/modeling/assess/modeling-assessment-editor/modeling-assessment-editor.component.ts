@@ -93,14 +93,20 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
-    @HostListener('document:keydown.control.s')
-    saveOnControlAndS() {
+    @HostListener('document:keydown.control.s', ['$event'])
+    saveOnControlAndS(event: KeyboardEvent) {
+        event.preventDefault();
         this.onSaveAssessment();
     }
-
-    @HostListener('document:keydown.control.enter')
-    submitOnControlAndEnter() {
+    @HostListener('document:keydown.control.enter', ['$event'])
+    submitOnControlAndEnter(event: KeyboardEvent) {
+        event.preventDefault();
         this.onSubmitAssessment();
+    }
+    @HostListener('document:keydown.control.n', ['$event'])
+    nextSubmissionOnControlAndN(event: KeyboardEvent) {
+        event.preventDefault();
+        this.assessNext();
     }
 
     private get feedback(): Feedback[] {
