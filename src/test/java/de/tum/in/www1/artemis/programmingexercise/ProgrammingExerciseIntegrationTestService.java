@@ -1067,7 +1067,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        programmingExercise.setProjectType(ProjectType.MAVEN);
+        programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1505,8 +1505,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     public void unlockAllRepositories() throws Exception {
-        mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), false);
-        mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), false);
+        mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), true);
+        mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), true);
         mockDelegate.mockDefaultBranch(programmingExercise);
 
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));

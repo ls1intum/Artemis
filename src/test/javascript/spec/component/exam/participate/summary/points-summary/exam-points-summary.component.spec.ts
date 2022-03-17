@@ -141,7 +141,7 @@ describe('ExamPointsSummaryComponent', () => {
 
                 fixture = TestBed.createComponent(ExamPointsSummaryComponent);
                 component = fixture.componentInstance;
-                component.course = course;
+                exam.course = course;
                 component.exam = exam;
                 component.exercises = exercises;
                 component.gradingScaleExists = false;

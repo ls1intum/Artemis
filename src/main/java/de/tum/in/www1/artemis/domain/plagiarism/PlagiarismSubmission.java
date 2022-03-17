@@ -45,7 +45,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     /**
      * List of elements the related submission consists of.
      */
-    @OneToMany(cascade = CascadeType.ALL, targetEntity = PlagiarismSubmissionElement.class, fetch = FetchType.EAGER)
+    @OneToMany(cascade = CascadeType.ALL, targetEntity = PlagiarismSubmissionElement.class, fetch = FetchType.LAZY)
     @JoinTable(name = "plagiarism_submission_elements", joinColumns = @JoinColumn(name = "plagiarism_submission_id"), inverseJoinColumns = @JoinColumn(name = "plagiarism_submission_element_id"))
     private List<E> elements;
 
