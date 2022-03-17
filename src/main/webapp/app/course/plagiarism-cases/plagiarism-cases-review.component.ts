@@ -9,6 +9,8 @@ import { ActivatedRoute } from '@angular/router';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { HttpResponse } from '@angular/common/http';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-plagiarism-cases-review',
@@ -22,6 +24,7 @@ export class PlagiarismCasesReviewComponent implements OnInit {
     comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     courseId: number;
     comparisonId: number;
+    studentLogin: string;
     isStudentA: boolean;
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
@@ -30,7 +33,7 @@ export class PlagiarismCasesReviewComponent implements OnInit {
     studentStatement: string;
     instructorStatement?: string;
 
-    constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
+    constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute, private accountService: AccountService) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
@@ -50,6 +53,9 @@ export class PlagiarismCasesReviewComponent implements OnInit {
                     this.studentStatement = this.comparison.studentStatementB ? this.comparison.studentStatementB : '';
                 }
                 this.loading = false;
+            });
+            this.accountService.identity().then((user: User) => {
+                this.studentLogin = user!.login!;
             });
         });
     }

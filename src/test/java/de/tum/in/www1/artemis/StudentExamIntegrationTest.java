@@ -122,6 +122,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addStudentExam(exam2);
         // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
     }
 
     @AfterEach
@@ -204,6 +206,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early) throws Exception {
+        for (int i = 1; i <= 22; i++) {
+            bitbucketRequestMockProvider.mockUserExists("student" + i);
+        }
+
         ZonedDateTime examVisibleDate;
         ZonedDateTime examStartDate;
         ZonedDateTime examEndDate;
@@ -219,9 +225,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         examVisibleDate = ZonedDateTime.now().minusMinutes(10 + Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS);
         // --> 2 min = 120s working time
-
-        bambooRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
@@ -273,6 +276,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             examRepository.save(exam2);
         }
 
+        bitbucketRequestMockProvider.reset();
         return studentExams;
     }
 
@@ -864,10 +868,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testSubmitStudentExam_early() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false);
 
-        // we have to reset the mock provider and enable it again so that we can mock additional requests below
-        bitbucketRequestMockProvider.reset();
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-
         database.changeUser(studentExams.get(0).getUser().getLogin());
         var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/conduction", HttpStatus.OK, StudentExam.class);
         final List<ProgrammingExercise> exercisesToBeLocked = new ArrayList<>();
@@ -903,7 +903,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSubmitStudentExam_realistic() throws Exception {
-
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false);
 
         List<StudentExam> studentExamsAfterStart = new ArrayList<>();
@@ -916,7 +915,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
                     bambooRequestMockProvider.reset();
-                    bambooRequestMockProvider.enableMockingOfRequests(true);
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
@@ -991,9 +989,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
         exam2 = examRepository.save(exam2);
 
-        // reset to exchange expectation for newCommitHash
         bambooRequestMockProvider.reset();
-        bambooRequestMockProvider.enableMockingOfRequests(true);
+
         final String newCommitHash = "2ec6050142b9c187909abede819c083c8745c19b";
         final ObjectId newCommitHashObjectId = ObjectId.fromString(newCommitHash);
 
@@ -1004,7 +1001,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     // do another programming submission to check if the StudentExam after submit contains the new commit hash
                     doReturn(newCommitHashObjectId).when(gitService).getLastCommitHash(any());
                     bambooRequestMockProvider.reset();
-                    bambooRequestMockProvider.enableMockingOfRequests(true);
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     database.changeUser(studentExam.getUser().getLogin());
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
@@ -1340,7 +1336,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             if (exercise instanceof ProgrammingExercise) {
                 doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
                 bambooRequestMockProvider.reset();
-                bambooRequestMockProvider.enableMockingOfRequests(true);
                 bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                 request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                 Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
@@ -1408,9 +1403,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 new HttpHeaders());
 
         bitbucketRequestMockProvider.reset();
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.reset();
-        bambooRequestMockProvider.enableMockingOfRequests(true);
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam2.getExerciseGroups().get(6).getExercises().iterator().next();
         final String projectKey = programmingExercise.getProjectKey();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);

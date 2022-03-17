@@ -403,6 +403,11 @@ public class ModelingExerciseResource {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
+        if (plagiarismResult != null) {
+            for (var comparison : plagiarismResult.getComparisons()) {
+                comparison.setPlagiarismResult(null);
+            }
+        }
         return ResponseEntity.ok((ModelingPlagiarismResult) plagiarismResult);
     }
 
@@ -436,6 +441,9 @@ public class ModelingExerciseResource {
         start = System.nanoTime();
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
+        for (var comparison : result.getComparisons()) {
+            comparison.setPlagiarismResult(null);
+        }
         return ResponseEntity.ok(result);
     }
 

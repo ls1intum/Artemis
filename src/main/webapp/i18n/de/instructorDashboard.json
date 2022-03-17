@@ -32,7 +32,7 @@
         },
         "cleanup": {
             "title": "Aufräumen",
-            "question": "Sollen wirklich ALLE Studierenden-Build-Pläne für die Programmieraufgabe <strong>{{ title }}</strong> dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+            "question": "Sollen wirklich ALLE Studierenden-Build-Pläne für die Programmieraufgabe <strong>{{ title }}</strong> dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!.<br>Individuelle Studierenden-Build-Pläne werden automatisch neu erstellt sobald Studierende die nächste Einreichung hochladen."
         },
         "archive": {
             "title": "Archivieren",
