@@ -757,9 +757,9 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
                 HttpStatus.OK, ProgrammingSubmission.class, paramsSecondCorrection);
 
         // verify that the submission is not new
-        assertThat(submissionWithoutSecondAssessment).isNotEqualTo(firstSubmission).isNotEqualTo(secondSubmission)
         // it should contain the latest automatic result, and the first manual result, and the lock for the second manual result
-        .isEqualTo(thirdSubmission).isEqualTo(submissionWithoutFirstAssessment);
+        assertThat(submissionWithoutSecondAssessment).isNotEqualTo(firstSubmission).isNotEqualTo(secondSubmission).isEqualTo(thirdSubmission)
+                .isEqualTo(submissionWithoutFirstAssessment);
         // verify that the lock has been set
         assertThat(submissionWithoutSecondAssessment.getLatestResult()).isNotNull();
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
@@ -773,8 +773,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
-        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst())
-                .contains(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst()).contains(submissionWithoutSecondAssessment.getLatestResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);

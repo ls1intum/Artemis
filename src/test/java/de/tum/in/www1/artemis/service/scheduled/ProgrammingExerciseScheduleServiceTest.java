@@ -356,8 +356,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         var studentParticipationsRegularDueDate = getParticipationsWithoutIndividualDueDate();
-        assertThat(studentParticipationsRegularDueDate).hasSize(2)
-            .allMatch(participation -> !participation.getStudent().get().getLogin().equals(login));
+        assertThat(studentParticipationsRegularDueDate).hasSize(2).allMatch(participation -> !participation.getStudent().get().getLogin().equals(login));
 
         var studentParticipationIndividualDueDate = getParticipation(login);
         assertThat(studentParticipationIndividualDueDate.getIndividualDueDate()).isNotNull();

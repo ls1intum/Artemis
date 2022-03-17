@@ -104,9 +104,8 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                 \tat org.hibernate.loader.plan.exec.process.internal.AbstractRowReader.readRow(AbstractRowReader.java:125)
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractRows(ResultSetProcessorImpl.java:157)
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractResults(ResultSetProcessorImpl.java:94)""";
-        assertThat(
-            feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText())
-                        .isEqualTo("org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups");
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText()).isEqualTo(
+                "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups");
     }
 
     @Test

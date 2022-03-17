@@ -148,7 +148,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         // Only one complaint is possible for exercise regardless of its type
         request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
-        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType()).as("more feedback request is not saved").isNotEqualTo(ComplaintType.MORE_FEEDBACK);
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType()).as("more feedback request is not saved")
+                .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
