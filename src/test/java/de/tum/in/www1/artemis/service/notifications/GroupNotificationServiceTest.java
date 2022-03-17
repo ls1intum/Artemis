@@ -165,8 +165,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification capturedNotification = capturedNotifications.get(0);
         assertThat(capturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
-        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities")
-                .hasSameSizeAs(numberOfGroupsAndCalls);
+        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities").hasSize(numberOfGroupsAndCalls);
     }
 
     /// Exercise Update / Release & Scheduling related Tests
