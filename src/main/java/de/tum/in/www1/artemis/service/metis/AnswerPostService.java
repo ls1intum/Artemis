@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.CrudAction;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class AnswerPostService extends PostingService {
@@ -157,7 +157,7 @@ public class AnswerPostService extends PostingService {
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedPost = answerPost.getPost();
         updatedPost.removeAnswerPost(answerPost);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        broadcastForPost(new PostDTO(updatedPost, CrudAction.UPDATE), course);
     }
 
     /**
@@ -201,7 +201,7 @@ public class AnswerPostService extends PostingService {
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        broadcastForPost(new PostDTO(updatedPost, CrudAction.UPDATE), course);
     }
 
     /**

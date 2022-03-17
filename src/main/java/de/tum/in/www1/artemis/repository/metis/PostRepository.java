@@ -24,7 +24,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE (lecture.course.id = :#{#courseId}
+            WHERE post.chatSession IS NULL
+                AND (lecture.course.id = :#{#courseId}
                 OR exercise.course.id = :#{#courseId}
                 OR post.course.id = :#{#courseId})
             AND (:#{#courseWideContext} IS NULL
@@ -54,7 +55,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("""
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE post.lecture.id = :#{#lectureId}
+            WHERE post.chatSession IS NULL
+            AND post.lecture.id = :#{#lectureId}
             AND (:#{#own} IS NULL
                 OR post.author.id = :#{#userId})
             AND (:#{#reactedOrReplied} IS NULL
@@ -71,7 +73,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("""
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE post.exercise.id = :#{#exerciseId}
+            WHERE post.chatSession IS NULL
+            AND post.exercise.id = :#{#exerciseId}
             AND (:#{#own} IS NULL
                 OR post.author.id = :#{#userId})
             AND (:#{#reactedOrReplied} IS NULL
@@ -84,6 +87,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             """)
     List<Post> findPostsByExerciseId(@Param("exerciseId") Long exerciseId, @Param("unresolved") Boolean unresolved, @Param("own") Boolean own,
             @Param("reactedOrReplied") Boolean reactedOrReplied, @Param("userId") Long userId);
+
+    @Query("""
+             SELECT DISTINCT post FROM Post post
+             LEFT JOIN post.chatSession chatSession
+             WHERE chatSession.id = :#{#sessionId}
+            """)
+    List<Post> findPostsBySessionId(@Param("sessionId") Long sessionId);
 
     default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));

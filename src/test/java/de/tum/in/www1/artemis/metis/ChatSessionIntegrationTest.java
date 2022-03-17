@@ -1,0 +1,139 @@
+package de.tum.in.www1.artemis.metis;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.metis.ChatSession;
+import de.tum.in.www1.artemis.domain.metis.UserChatSession;
+import de.tum.in.www1.artemis.repository.metis.ChatSessionRepository;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ChatSessionDTO;
+
+class ChatSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    private ChatSessionRepository chatSessionRepository;
+
+    private ChatSession existingChatSession;
+
+    private Course course;
+
+    @BeforeEach
+    public void initTestCase() {
+        database.addUsers(5, 5, 0, 1);
+
+        course = database.createCourse(1L);
+
+        existingChatSession = database.createChatSession(course);
+
+        SimpMessageSendingOperations messagingTemplate = mock(SimpMessageSendingOperations.class);
+        doNothing().when(messagingTemplate).convertAndSend(any());
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
+    }
+
+    // ChatSession
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testCreateChatSession() throws Exception {
+        ChatSession chatSessionToSave = createChatSession();
+
+        ChatSession createdChatSession = request.postWithResponseBody("/api/chatSessions/", chatSessionToSave, ChatSession.class, HttpStatus.CREATED);
+
+        checkCreatedUserChatSessions(createdChatSession.getUserChatSessions(), createdChatSession.getCreationDate());
+        checkCreatedChatSession(chatSessionToSave, createdChatSession);
+
+        assertThat(chatSessionRepository.findById(createdChatSession.getId())).isNotEmpty();
+
+        // checks if members of the created chat session were notified via broadcast
+        verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ChatSessionDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testCreateChatSession_BadRequest() throws Exception {
+        ChatSession chatSessionToSave = createChatSession();
+        chatSessionToSave.setId(1L);
+
+        ChatSession createdChatSession = request.postWithResponseBody("/api/chatSessions/", chatSessionToSave, ChatSession.class, HttpStatus.BAD_REQUEST);
+        assertThat(createdChatSession).isNull();
+
+        // checks if members of the created chat session were not notified via broadcast
+        verify(messagingTemplate, times(0)).convertAndSend(anyString(), any(ChatSessionDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetUserChatSessionsByUserId() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        List<ChatSession> chatSessionsOfUser;
+
+        chatSessionsOfUser = request.getList("/api/chatSessions/" + course.getId(), HttpStatus.OK, ChatSession.class, params);
+        assertThat(chatSessionsOfUser.get(0)).isEqualTo(existingChatSession);
+
+        database.changeUser("student2");
+        chatSessionsOfUser = request.getList("/api/chatSessions/" + course.getId(), HttpStatus.OK, ChatSession.class, params);
+        assertThat(chatSessionsOfUser.get(0)).isEqualTo(existingChatSession);
+
+        database.changeUser("student3");
+        chatSessionsOfUser = request.getList("/api/chatSessions/" + course.getId(), HttpStatus.OK, ChatSession.class, params);
+        assertThat(chatSessionsOfUser).isEmpty();
+    }
+
+    private ChatSession createChatSession() {
+        ChatSession chatSession = new ChatSession();
+
+        UserChatSession userChatSession1 = new UserChatSession();
+        userChatSession1.setUser(database.getUserByLogin("student1"));
+        userChatSession1.setLastRead(chatSession.getCreationDate());
+
+        UserChatSession userChatSession2 = new UserChatSession();
+        userChatSession2.setUser(database.getUserByLogin("student2"));
+        userChatSession2.setLastRead(chatSession.getCreationDate());
+
+        chatSession.getUserChatSessions().add(userChatSession1);
+        chatSession.getUserChatSessions().add(userChatSession2);
+        chatSession.setCourse(course);
+
+        return chatSession;
+    }
+
+    private void checkCreatedChatSession(ChatSession expectedChatSession, ChatSession createdChatSession) {
+        assertThat(createdChatSession).isNotNull();
+        assertThat(createdChatSession.getId()).isNotNull();
+        assertThat(createdChatSession.getCreationDate()).isNotNull();
+        assertThat(createdChatSession.getLastMessageDate()).isNotNull();
+
+        assertThat(createdChatSession.getCourse()).isEqualTo(expectedChatSession.getCourse());
+        assertThat(createdChatSession.getCreationDate()).isEqualTo(createdChatSession.getLastMessageDate());
+    }
+
+    private void checkCreatedUserChatSessions(Set<UserChatSession> userChatSessions, ZonedDateTime creationDate) {
+        // check each individual user chat session
+        userChatSessions.forEach(userChatSession -> {
+            assertThat(userChatSession.isArchived()).isFalse();
+            assertThat(userChatSession.isDeleted()).isFalse();
+            assertThat(userChatSession.getUser()).isNotNull();
+            assertThat(userChatSession.getLastRead()).isEqualTo(creationDate);
+        });
+    }
+}

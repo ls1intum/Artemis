@@ -20,6 +20,8 @@ public class PostContextFilter {
 
     private Long lectureId;
 
+    private Long chatSessionId;
+
     private String searchText;
 
     private Boolean filterToUnresolved;
@@ -62,6 +64,14 @@ public class PostContextFilter {
 
     public void setLectureId(Long lectureId) {
         this.lectureId = lectureId;
+    }
+
+    public Long getChatSessionId() {
+        return chatSessionId;
+    }
+
+    public void setChatSessionId(Long chatSessionId) {
+        this.chatSessionId = chatSessionId;
     }
 
     public String getSearchText() {

@@ -37,9 +37,9 @@ export enum PostSortCriterion {
 }
 
 export enum MetisPostAction {
-    CREATE_POST = 'CREATE_POST',
-    UPDATE_POST = 'UPDATE_POST',
-    DELETE_POST = 'DELETE_POST',
+    CREATE = 'CREATE',
+    UPDATE = 'UPDATE',
+    DELETE = 'DELETE',
 }
 
 export interface PostContextFilter {

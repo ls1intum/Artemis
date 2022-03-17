@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 public abstract class PostingService {
 
@@ -48,9 +48,10 @@ public abstract class PostingService {
      * @param postDTO object including the affected post as well as the action
      * @param course  course the posting belongs to
      */
-    void broadcastForPost(MetisPostDTO postDTO, Course course) {
+    void broadcastForPost(PostDTO postDTO, Course course) {
         String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
         String genericTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
+
         if (postDTO.getPost().getExercise() != null) {
             specificTopicName += "exercises/" + postDTO.getPost().getExercise().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
@@ -58,6 +59,10 @@ public abstract class PostingService {
         else if (postDTO.getPost().getLecture() != null) {
             specificTopicName += "lectures/" + postDTO.getPost().getLecture().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
+        }
+        else if (postDTO.getPost().getChatSession() != null) {
+            messagingTemplate.convertAndSend(genericTopicName + "/chatSession/" + postDTO.getPost().getChatSession().getId(), postDTO);
+            return;
         }
         messagingTemplate.convertAndSend(genericTopicName, postDTO);
     }

@@ -404,7 +404,7 @@ export class MetisService implements OnDestroy {
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
             postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
             switch (postDTO.action) {
-                case MetisPostAction.CREATE_POST:
+                case MetisPostAction.CREATE:
                     // determine if either the current post context filter is not set to a specific course-wide topic
                     // or the sent post has a different context,
                     // or the sent post has a course-wide context which matches the current filter
@@ -418,7 +418,7 @@ export class MetisService implements OnDestroy {
                     }
                     this.addTags(postDTO.post.tags);
                     break;
-                case MetisPostAction.UPDATE_POST:
+                case MetisPostAction.UPDATE:
                     const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                     if (indexToUpdate > -1) {
                         this.cachedPosts[indexToUpdate] = postDTO.post;
@@ -427,7 +427,7 @@ export class MetisService implements OnDestroy {
                     }
                     this.addTags(postDTO.post.tags);
                     break;
-                case MetisPostAction.DELETE_POST:
+                case MetisPostAction.DELETE:
                     const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                     if (indexToDelete > -1) {
                         this.cachedPosts.splice(indexToDelete, 1);

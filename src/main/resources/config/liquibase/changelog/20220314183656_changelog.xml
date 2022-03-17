@@ -1,0 +1,39 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="anar" id="20220314183656">
+
+        <addColumn tableName="post">
+            <column name="chat_session_id" type="bigint"/>
+        </addColumn>
+
+        <createTable tableName="chat_session">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="chat_sessionPK"/>
+            </column>
+            <column name="course_id" type="BIGINT"/>
+            <column name="creation_date" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_message_date" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="user_chat_session">
+            <column name="chat_session_id" type="bigint"/>
+            <column name="user_id" type="BIGINT"/>
+            <column name="last_read" type="datetime"/>
+            <column name="archived" type="Boolean" defaultValueBoolean="false">
+                <constraints nullable="false" />
+            </column>
+            <column name="deleted" type="Boolean" defaultValueBoolean="false">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="chat_session_id" baseTableName="post" constraintName="fk_post_chat_session_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="chat_session"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_chat_session" constraintName="fk_user_chat_session_user_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="chat_session_id" baseTableName="user_chat_session" constraintName="fk_user_chat_session_chat_session_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="chat_session"/>
+
+    </changeSet>
+</databaseChangeLog>

@@ -46,9 +46,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -59,7 +57,9 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ChatSessionRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.UserChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -194,6 +194,12 @@ public class DatabaseUtilService {
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
+
+    @Autowired
+    private ChatSessionRepository chatSessionRepository;
+
+    @Autowired
+    private UserChatSessionRepository userChatSessionRepository;
 
     @Autowired
     private ModelingSubmissionService modelSubmissionService;
@@ -755,12 +761,16 @@ public class DatabaseUtilService {
         // add posts to course with different course-wide contexts provided in input array
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
+        posts.addAll(createBasicPosts(createChatSession(course1)));
 
         return posts;
     }
 
     public List<Post> createPostsWithAnswerPostsWithinCourse() {
         List<Post> posts = createPostsWithinCourse();
+
+        // remove chats
+        posts = posts.stream().filter(post -> post.getChatSession() == null).collect(Collectors.toList());
 
         // add answer for one post in each context (lecture, exercise, course-wide)
         Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
@@ -830,6 +840,18 @@ public class DatabaseUtilService {
         return post;
     }
 
+    private List<Post> createBasicPosts(ChatSession chatSession) {
+        List<Post> posts = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Post postToAdd = createBasicPost(i);
+            postToAdd.setCourse(chatSession.getCourse());
+            postToAdd.setChatSession(chatSession);
+            postRepository.save(postToAdd);
+            posts.add(postToAdd);
+        }
+        return posts;
+    }
+
     private Set<AnswerPost> createBasicAnswers(Post post) {
         Set<AnswerPost> answerPosts = new HashSet<>();
         AnswerPost answerPost = new AnswerPost();
@@ -851,6 +873,28 @@ public class DatabaseUtilService {
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
         return answerPosts;
+    }
+
+    public ChatSession createChatSession(Course course) {
+        ChatSession chatSession = new ChatSession();
+        chatSession.setCourse(course);
+        chatSession = chatSessionRepository.save(chatSession);
+
+        List<UserChatSession> userChatSessions = new ArrayList<>();
+        userChatSessions.add(createUserChatSession(chatSession, "student1"));
+        userChatSessions.add(createUserChatSession(chatSession, "student2"));
+
+        chatSession.setUserChatSessions(new HashSet<>(userChatSessions));
+        return chatSessionRepository.save(chatSession);
+    }
+
+    private UserChatSession createUserChatSession(ChatSession chatSession, String userName) {
+        UserChatSession userChatSession = new UserChatSession();
+        userChatSession.setChatSession(chatSession);
+        userChatSession.setLastRead(chatSession.getLastMessageDate());
+        userChatSession.setUser(getUserByLogin(userName));
+
+        return userChatSessionRepository.save(userChatSession);
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {

@@ -29,18 +29,21 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ChatSessionDTO;
 
 public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private PostRepository postRepository;
 
+    private List<Post> existingPostsAndChats;
+
     private List<Post> existingPosts;
+
+    private List<Post> existingChatSessionPosts;
 
     private List<Post> existingExercisePosts;
 
@@ -68,9 +71,15 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         database.addUsers(5, 5, 0, 1);
 
-        // initialize test setup and get all existing posts (there are 4 posts with lecture context, 4 with exercise context, and 3 with course-wide context - initialized): 11
+        // initialize test setup and get all existing posts (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with chat session
+        // initialized): 14
         // posts in total
-        existingPosts = database.createPostsWithinCourse();
+        existingPostsAndChats = database.createPostsWithinCourse();
+
+        existingPosts = existingPostsAndChats.stream().filter(post -> post.getChatSession() == null).collect(Collectors.toList());
+
+        // filters existing posts with chat session
+        existingChatSessionPosts = existingPostsAndChats.stream().filter(post -> post.getChatSession() != null).toList();
 
         // filter existing posts with exercise context
         existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList());
@@ -127,7 +136,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(existingExercisePosts.size()).isEqualTo(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null).size());
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
-
     }
 
     @Test
@@ -160,6 +168,19 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateChatSessionPost() throws Exception {
+        Post postToSave = createPostWithChatSession();
+
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        checkCreatedPost(postToSave, createdPost);
+        assertThat(createdPost.getChatSession().getId()).isNotNull();
+        assertThat(postRepository.findPostsBySessionId(createdPost.getChatSession().getId()).size()).isEqualTo(1);
+        // checks if members of the created chat session were notified via broadcast
+        verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ChatSessionDTO.class));
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateAnnouncement() throws Exception {
         Post postToSave = createPostWithoutContext();
@@ -184,7 +205,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
-        assertThat(existingPosts.size()).isEqualTo(postRepository.count());
+        assertThat(existingPostsAndChats.size()).isEqualTo(postRepository.count());
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewAnnouncement(any(), any());
     }
 
@@ -194,7 +215,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post existingPostToSave = existingPosts.get(0);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingPosts.size()).isEqualTo(postRepository.count());
+        assertThat(existingPostsAndChats.size()).isEqualTo(postRepository.count());
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 
@@ -504,6 +525,18 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetChatSessionPost() throws Exception {
+        // chat session ID set will fetch all posts of chat session if the user is involved
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("chatSessionId", existingChatSessionPosts.get(0).getChatSession().getId().toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain
+        assertThat(returnedPosts.size()).isEqualTo(existingChatSessionPosts.size());
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "USER")
     public void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
         // request param courseWideContext will fetch all course posts that match this context filter
@@ -638,7 +671,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToDelete = existingPosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
-        assertThat(postRepository.count()).isEqualTo(existingPosts.size() - 1);
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size() - 1);
     }
 
     @Test
@@ -648,7 +681,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToNotDelete = existingPosts.get(1);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
-        assertThat(postRepository.count()).isEqualTo(existingPosts.size());
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size());
     }
 
     @Test
@@ -660,7 +693,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postRepository.save(postToNotDelete);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
-        assertThat(postRepository.count()).isEqualTo(existingPosts.size());
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size());
     }
 
     @Test
@@ -670,17 +703,17 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
         assertThat(postRepository.findById(postToDelete.getId())).isEmpty();
-        assertThat(postRepository.count()).isEqualTo(existingPosts.size() - 1);
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size() - 1);
 
         postToDelete = existingExercisePosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
-        assertThat(postRepository.count()).isEqualTo(existingPosts.size() - 2);
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size() - 2);
 
         postToDelete = existingCourseWidePosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
-        assertThat(postRepository.count()).isEqualTo(existingPosts.size() - 3);
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size() - 3);
     }
 
     @Test
@@ -700,6 +733,33 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         post.setDisplayPriority(DisplayPriority.NONE);
         post.addTag("Tag");
         return post;
+    }
+
+    private Post createPostWithChatSession() {
+        Post post = new Post();
+        post.setAuthor(database.getUserByLogin("student1"));
+        post.setCourse(course);
+        post.setDisplayPriority(DisplayPriority.NONE);
+        post.setChatSession(createChatSession());
+        return post;
+    }
+
+    private ChatSession createChatSession() {
+        ChatSession chatSession = new ChatSession();
+
+        UserChatSession userChatSession1 = new UserChatSession();
+        userChatSession1.setUser(database.getUserByLogin("student1"));
+        userChatSession1.setLastRead(chatSession.getCreationDate());
+
+        UserChatSession userChatSession2 = new UserChatSession();
+        userChatSession2.setUser(database.getUserByLogin("student2"));
+        userChatSession2.setLastRead(chatSession.getCreationDate());
+
+        chatSession.getUserChatSessions().add(userChatSession1);
+        chatSession.getUserChatSessions().add(userChatSession2);
+        chatSession.setCourse(course);
+
+        return chatSession;
     }
 
     private Post editExistingPost(Post postToUpdate) {

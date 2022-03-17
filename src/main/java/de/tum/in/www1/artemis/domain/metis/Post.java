@@ -61,6 +61,9 @@ public class Post extends Posting {
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
 
+    @ManyToOne
+    private ChatSession chatSession;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority")
     private DisplayPriority displayPriority;
@@ -159,6 +162,14 @@ public class Post extends Posting {
 
     public void setCourseWideContext(CourseWideContext courseWideContext) {
         this.courseWideContext = courseWideContext;
+    }
+
+    public ChatSession getChatSession() {
+        return chatSession;
+    }
+
+    public void setChatSession(ChatSession chatSession) {
+        this.chatSession = chatSession;
     }
 
     public DisplayPriority getDisplayPriority() {

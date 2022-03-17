@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ChatSessionRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -41,8 +42,8 @@ import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonS
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.CrudAction;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class PostService extends PostingService {
@@ -55,18 +56,25 @@ public class PostService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final ChatSessionRepository chatSessionRepository;
+
+    private final ChatService chatService;
+
     private final GroupNotificationService groupNotificationService;
 
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate) {
+            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, ChatSessionRepository chatSessionRepository,
+            ChatService chatService) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
+        this.chatSessionRepository = chatSessionRepository;
+        this.chatService = chatService;
     }
 
     /**
@@ -99,12 +107,18 @@ public class PostService extends PostingService {
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
             sendNotification(savedPost, course);
-            broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
+            broadcastForPost(new PostDTO(savedPost, CrudAction.CREATE), course);
             return savedPost;
         }
+
+        // create chat session for chat if session does not exist
+        if (post.getChatSession() != null && post.getChatSession().getId() == null) {
+            post.setChatSession(chatService.createChatSession(post.getChatSession()));
+        }
+
         Post savedPost = postRepository.save(post);
 
-        broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
+        broadcastForPost(new PostDTO(savedPost, CrudAction.CREATE), course);
         sendNotification(savedPost, course);
 
         return savedPost;
@@ -138,7 +152,7 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as deleted post in the old context
-            broadcastForPost(new MetisPostDTO(existingPost, MetisPostAction.DELETE_POST), course);
+            broadcastForPost(new PostDTO(existingPost, CrudAction.DELETE), course);
         }
 
         // update: allow overwriting of values only for depicted fields if user is at least student
@@ -168,11 +182,11 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as newly created post in the new context
-            broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.CREATE_POST), course);
+            broadcastForPost(new PostDTO(updatedPost, CrudAction.CREATE), course);
         }
         else {
             // in case the context did not change we emit with trigger a post update via websocket
-            broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+            broadcastForPost(new PostDTO(updatedPost, CrudAction.UPDATE), course);
         }
         return updatedPost;
     }
@@ -203,7 +217,7 @@ public class PostService extends PostingService {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        broadcastForPost(new PostDTO(updatedPost, CrudAction.UPDATE), course);
     }
 
     /**
@@ -216,7 +230,8 @@ public class PostService extends PostingService {
 
         List<Post> postsInCourse;
         // no filter -> get all posts in course
-        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
+        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+                && postContextFilter.getChatSessionId() == null) {
             postsInCourse = this.getAllCoursePosts(postContextFilter);
         }
         // filter by course-wide context
@@ -230,6 +245,9 @@ public class PostService extends PostingService {
         // filter by lecture
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null) {
             postsInCourse = this.getAllLecturePosts(postContextFilter);
+        }
+        else if (postContextFilter.getChatSessionId() != null) {
+            postsInCourse = this.getPostsByChatSession(postContextFilter.getChatSessionId());
         }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
@@ -409,7 +427,7 @@ public class PostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
-        broadcastForPost(new MetisPostDTO(post, MetisPostAction.DELETE_POST), course);
+        broadcastForPost(new PostDTO(post, CrudAction.DELETE), course);
     }
 
     /**
@@ -529,6 +547,16 @@ public class PostService extends PostingService {
         return postRepository.findByIdElseThrow(postId);
     }
 
+    public List<Post> getPostsByChatSession(Long sessionId) {
+        mayInteractWithChatSessionElseThrow(sessionId);
+
+        List<Post> chatSessionPosts = postRepository.findPostsBySessionId(sessionId);
+
+        // protect sample solution, grading instructions, etc.
+        chatSessionPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+        return chatSessionPosts;
+    }
+
     /**
      * Calculates k similar posts based on the underlying content comparison strategy
      *
@@ -555,6 +583,14 @@ public class PostService extends PostingService {
     private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        }
+    }
+
+    private void mayInteractWithChatSessionElseThrow(Long sessionId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        var chatSession = chatSessionRepository.findById(sessionId);
+        if (chatSession.isEmpty() || chatSession.get().getUserChatSessions().stream().noneMatch(userChatSession -> userChatSession.getUser().getId().equals(user.getId()))) {
+            throw new BadRequestAlertException("User not authorized to access this chat!", METIS_POST_ENTITY_NAME, "");
         }
     }
 
