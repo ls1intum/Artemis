@@ -567,7 +567,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
-        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isFalse();
+        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> "test3".equals(feedback.getText()))).isFalse();
     }
 
     @Test

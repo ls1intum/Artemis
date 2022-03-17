@@ -2213,15 +2213,17 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
                             .inTime())
                     .reduce(Long::sum).get();
-            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise))) {
                 assertThat(locksRound1).isZero();
+            }
 
             var locksRound2 = group.getExercises().stream().map(
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[1]
                             .inTime())
                     .reduce(Long::sum).get();
-            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise))) {
                 assertThat(locksRound2).isEqualTo(15L);
+            }
         });
 
         database.changeUser("instructor1");
