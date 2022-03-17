@@ -733,8 +733,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> {
             // SINGLE_CHOICE is only valid for multiple choice questions
-            if (scoringType != ScoringType.SINGLE_CHOICE || quizQuestion instanceof MultipleChoiceQuestion)
+            if (scoringType != ScoringType.SINGLE_CHOICE || quizQuestion instanceof MultipleChoiceQuestion) {
                 quizQuestion.setScoringType(scoringType);
+            }
         }).collect(Collectors.toList()));
         quizExercise = quizExerciseService.save(quizExercise);
 
