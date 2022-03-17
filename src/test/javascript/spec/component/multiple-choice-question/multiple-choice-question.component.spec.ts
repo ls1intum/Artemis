@@ -9,6 +9,7 @@ import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 
 describe('MultipleChoiceQuestionComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionComponent>;
@@ -131,7 +132,18 @@ describe('MultipleChoiceQuestionComponent', () => {
             { id: 2, invalid: false },
         ];
 
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions: answerOptions,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+        };
+
         component.selectedAnswerOptions = [];
+        component.question = question;
+
         component.toggleSelection(answerOptions[1]);
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBeTrue();
@@ -153,5 +165,46 @@ describe('MultipleChoiceQuestionComponent', () => {
         component.toggleSelection(answerOptions[1]);
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
+    });
+
+    it('should toggle answer options, but only allow one to be selected for SINGLE_CHOICE questions', () => {
+        const answerOptions: AnswerOption[] = [
+            { id: 1, invalid: false },
+            { id: 2, invalid: false },
+        ];
+
+        const question: MultipleChoiceQuestion = {
+            text: 'some-text',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions: answerOptions,
+            scoringType: ScoringType.SINGLE_CHOICE,
+        };
+
+        component.selectedAnswerOptions = [];
+        component.question = question;
+
+        component.toggleSelection(answerOptions[1]);
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeTrue();
+
+        // Re-toggle
+        component.toggleSelection(answerOptions[1]);
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
+
+        component.toggleSelection(answerOptions[1]);
+        component.toggleSelection(answerOptions[0]);
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeTrue();
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
+
+        component.toggleSelection(answerOptions[0]);
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
+
+        component.toggleSelection(answerOptions[1]);
+        expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
+        expect(component.isAnswerOptionSelected(answerOptions[1])).toBeTrue();
     });
 });
