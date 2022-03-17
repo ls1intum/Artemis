@@ -137,7 +137,7 @@ describe('MultipleChoiceQuestionComponent', () => {
             exportQuiz: false,
             randomizeOrder: true,
             invalid: false,
-            answerOptions: answerOptions,
+            answerOptions,
             scoringType: ScoringType.ALL_OR_NOTHING,
         };
 
@@ -178,7 +178,7 @@ describe('MultipleChoiceQuestionComponent', () => {
             exportQuiz: false,
             randomizeOrder: true,
             invalid: false,
-            answerOptions: answerOptions,
+            answerOptions,
             scoringType: ScoringType.SINGLE_CHOICE,
         };
 
