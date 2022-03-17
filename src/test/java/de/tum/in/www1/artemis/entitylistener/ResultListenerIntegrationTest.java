@@ -102,8 +102,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         database.changeUser("instructor1");
         request.put("/api/text-exercises", exercise, HttpStatus.OK);
         List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
-        assertThat(savedParticipantScores).isNotEmpty();
-        assertThat(savedParticipantScores).size().isEqualTo(1);
+        assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
         assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
         assertThat(savedParticipantScore.getLastRatedPoints()).isEqualTo(200.0);

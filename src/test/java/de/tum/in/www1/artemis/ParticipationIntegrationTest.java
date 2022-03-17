@@ -117,7 +117,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student1");
         Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(modelingExercise.getId(), "student1").get();
-        assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
+        assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
     }
 
@@ -131,7 +131,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student2");
         Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), "student2").get();
-        assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
+        assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
     }
 
@@ -208,10 +208,10 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         request.delete("/api/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
         // Participation should now be gone.
-        assertThat(participation.isPresent()).isFalse();
+        assertThat(participation).isEmpty();
         // Make sure that also the submission and result were deleted.
-        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(0);
-        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(0);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).isEmpty();
+        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
     }
 
     @Test
@@ -226,14 +226,14 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
         // There should be a submission and no result assigned to the participation.
         assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(1);
-        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(0);
+        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
 
         request.delete("/api/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
         // Participation should now be gone.
-        assertThat(participation.isPresent()).isFalse();
+        assertThat(participation).isEmpty();
         // Make sure that the submission is deleted.
-        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(0);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).isEmpty();
     }
 
     @Test
@@ -247,15 +247,15 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participationRepo.existsById(participationId)).isTrue();
 
         // There should be a submission and no result assigned to the participation.
-        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(0);
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).isEmpty();
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
         request.delete("/api/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
         // Participation should now be gone.
-        assertThat(participation.isPresent()).isFalse();
+        assertThat(participation).isEmpty();
         // Make sure that the result is deleted.
-        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(0);
+        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
     }
 
     @Test
@@ -323,7 +323,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         database.createAndSaveParticipationForExercise(textExercise, "student1");
         database.createAndSaveParticipationForExercise(textExercise, "student2");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
+        assertThat(participations).as("Exactly 2 participations are returned").hasSize(2);
         assertThat(participations.stream().allMatch(participation -> participation.getStudent().isPresent())).as("Only participation that has student are returned").isTrue();
         assertThat(participations.stream().allMatch(participation -> participation.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
     }
@@ -339,12 +339,12 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResult", "true");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-        assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
+        assertThat(participations).as("Exactly 2 participations are returned").hasSize(2);
         assertThat(participations.stream().allMatch(p -> p.getStudent().isPresent())).as("Only participation that has student are returned").isTrue();
         assertThat(participations.stream().allMatch(p -> p.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
         var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin("student2"))).findFirst().get();
-        assertThat(participationWithResult.getResults().size()).isEqualTo(1);
-        assertThat(participationWithResult.getResults().stream().findFirst().get()).isEqualTo(result);
+        assertThat(participationWithResult.getResults()).hasSize(1);
+        assertThat(participationWithResult.getResults().stream().findFirst()).contains(result);
     }
 
     @Test
@@ -364,7 +364,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         database.createAndSaveParticipationForExercise(quizEx, "student2");
 
         var participations = request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations.size()).isEqualTo(4);
+        assertThat(participations).hasSize(4);
         participations.forEach(participation -> {
             var exercise = participation.getExercise();
             assertThat(exercise.getCourseViaExerciseGroupOrCourseMember()).isNull();
@@ -417,7 +417,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
                 HttpStatus.OK);
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
-        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 0").isEqualTo(0);
+        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 0").isZero();
     }
 
     @Test
@@ -640,7 +640,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var actualParticipation = request.get("/api/participations/" + participation.getId() + "/withLatestResult", HttpStatus.OK, StudentParticipation.class);
 
         assertThat(actualParticipation).isNotNull();
-        assertThat(actualParticipation.getResults().size()).isEqualTo(1);
+        assertThat(actualParticipation.getResults()).hasSize(1);
         assertThat(actualParticipation.getResults().iterator().next()).as("Only latest result is returned").isEqualTo(result);
     }
 
@@ -719,7 +719,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(actualParticipation).isEqualTo(participation);
 
         var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
-        assertThat(participations.size()).isEqualTo(1);
+        assertThat(participations).hasSize(1);
         assertThat(participations.get(0).getId()).isEqualTo(participation.getId());
     }
 
@@ -736,7 +736,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(actualParticipation).isEqualTo(participation);
 
         var participations = participationService.findByExerciseAndStudentId(exercise, student.getId());
-        assertThat(participations.size()).isEqualTo(1);
+        assertThat(participations).hasSize(1);
         assertThat(participations.get(0).getId()).isEqualTo(participation.getId());
     }
 
@@ -837,7 +837,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         quizEx = exerciseRepo.save(quizEx);
         var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-        assertThat(participation.getResults().size()).as("New result was added to the participation").isEqualTo(1);
+        assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
         assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
     }
 

@@ -227,9 +227,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         var duplicateFeedbackEntries = result.getFeedbacks().stream()
                 .filter(feedback -> feedback.getDetailText() != null && feedback.getDetailText().contains("This is a duplicate test case.")).toList();
         assertThat(result.getScore()).isEqualTo(0D);
-        assertThat(duplicateFeedbackEntries.size()).isEqualTo(2);
+        assertThat(duplicateFeedbackEntries).hasSize(2);
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
-        assertThat(result.getFeedbacks().size()).isEqualTo(countOfNewFeedbacks);
+        assertThat(result.getFeedbacks()).hasSize(countOfNewFeedbacks);
         assertThat(result.getResultString()).isEqualTo("Error: Found duplicated tests!");
         String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test3, test1";
         verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
@@ -305,13 +305,12 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
                 .assessmentType(AssessmentType.AUTOMATIC);
 
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
-        assertThat(result.getScore()).isEqualTo(0);
-
+        assertThat(result.getScore()).isZero();
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(0.8000000000);
         testCaseRepository.saveAll(testCases.values());
 
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
-        assertThat(result.getScore()).isGreaterThan(0);
+        assertThat(result.getScore()).isPositive();
 
     }
 
@@ -414,7 +413,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         assertThat(resultBF.getResultString()).isEqualTo("Build Failed"); // Won't get touched by the service method
         assertThat(resultBF.getHasFeedback()).isFalse();
         assertThat(resultBF.isSuccessful()).isNull(); // Won't get touched by the service method
-        assertThat(resultBF.getFeedbacks()).hasSize(0);
+        assertThat(resultBF.getFeedbacks()).isEmpty();
 
         // Assertions resultMF - missing feedback will be created but is negative
         assertThat(resultMF.getScore()).isEqualTo(55D, Offset.offset(offsetByTenThousandth));
@@ -568,7 +567,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
-        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isEqualTo(false);
+        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> feedback.getText().equals("test3"))).isFalse();
     }
 
     @Test
@@ -723,8 +722,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         assertThat(updated).hasSize(6);
 
         final var updatedParticipationIds = updated.stream().map(result -> result.getParticipation().getId()).collect(Collectors.toSet());
-        assertThat(updatedParticipationIds).hasSize(5);
-        assertThat(updatedParticipationIds).allMatch(participationId -> !Objects.equals(participationId, participationWithIndividualDueDateId));
+        assertThat(updatedParticipationIds).hasSize(5).allMatch(participationId -> !Objects.equals(participationId, participationWithIndividualDueDateId));
     }
 
     @Test
@@ -811,7 +809,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
             testParticipationResult(manualResultOptional.get(), 86D, "1 of 3 passed, 86 of 100 points", true, 6, AssessmentType.SEMI_AUTOMATIC);
-            assertThat(manualResultOptional.get()).isEqualTo(participation.findLatestLegalResult());
+            assertThat(manualResultOptional).contains(participation.findLatestLegalResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
             assertThat(automaticResultOptional).isPresent();
@@ -1179,12 +1177,10 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         // check some additional methods to increase test coverage
         var test1 = testCaseStatsMap.get("test1");
         var test2 = testCaseStatsMap.get("test2");
-        assertThat(test1.getNumFailed()).isEqualTo(0);
+        assertThat(test1.getNumFailed()).isZero();
         assertThat(test1.getNumPassed()).isEqualTo(5);
         assertThat(test1.hashCode()).isNotEqualTo(test2.hashCode());
-        assertThat(test1).isNotEqualTo(test2);
-        assertThat(test1).isNotEqualTo(null);
-        assertThat(test1).isEqualTo(test1);
+        assertThat(test1).isNotEqualTo(test2).isNotNull();
 
         assertThat(statistics.getTestCaseStatsMap()).containsExactlyInAnyOrderEntriesOf(testCaseStatsMap);
 
@@ -1203,7 +1199,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
     public void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
-        assertThat(results.size()).isEqualTo(5);
+        assertThat(results).hasSize(5);
     }
 
     @Test
@@ -1213,8 +1209,8 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         // this method is tested. It should probably be improved as there is an inner query
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
         var allResults = resultRepository.findAllByExerciseId(programmingExerciseSCAEnabled.getId());
-        assertThat(results.size()).isEqualTo(5);
-        assertThat(allResults.size()).isEqualTo(6);
+        assertThat(results).hasSize(5);
+        assertThat(allResults).hasSize(6);
     }
 
     private void activateAllTestCases(boolean withBonus) {

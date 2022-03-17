@@ -198,7 +198,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", invalidReaction, Reaction.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Reaction>> constraintViolations = validator.validate(invalidReaction);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
     }
 
     // GET
@@ -291,7 +291,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // student 1 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
 
-        assertThat(postReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
+        assertThat(postReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(postReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
 
@@ -306,7 +306,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         // student 1 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
-        assertThat(answerPostReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPostId(answerPostReactedOn.getId()).size());
+        assertThat(answerPostReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(answerPostReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
 
@@ -330,7 +330,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
 
         request.delete("/api/courses/" + dummyCourse.getCourseIcon() + "/postings/reactions/" + reactionToSaveOnPost.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(postToReactOn.getReactions().size()).isEqualTo(postRepository.findById(postToReactOn.getId()).get().getReactions().size());
+        assertThat(postToReactOn.getReactions()).hasSameSizeAs(postRepository.findById(postToReactOn.getId()).get().getReactions());
     }
 
     @Test
@@ -344,7 +344,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         // student 2 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
-        assertThat(postReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
+        assertThat(postReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(postReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
 

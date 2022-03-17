@@ -63,10 +63,9 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
     public void testNewExercise() {
         assertThat(programmingExerciseTaskRepository.findAll()).hasSize(2);
         var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
-        assertThat(tasks).hasSize(2);
-
-        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"));
-        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
+        assertThat(tasks).hasSize(2)
+            .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"))
+            .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
     }
 
     @Test
@@ -81,11 +80,10 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
                 """);
         assertThat(programmingExerciseTaskRepository.findAll()).hasSize(3);
         var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
-        assertThat(tasks).hasSize(3);
-
-        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"));
-        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
-        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 3", "testMethods[Policy]"));
+        assertThat(tasks).hasSize(3)
+            .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"))
+            .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"))
+            .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 3", "testMethods[Policy]"));
 
         // Test that the other tasks were not removed and re-added.
         var newTaskIds = tasks.stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
@@ -133,8 +131,8 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
 
         assertThat(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId())).isEqualTo(tasks);
 
-        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1a", "testClass[BubbleSort]"));
-        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
+        assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1a", "testClass[BubbleSort]"))
+            .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
     }
 
     /**

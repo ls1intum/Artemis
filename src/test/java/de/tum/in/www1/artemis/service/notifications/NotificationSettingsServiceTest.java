@@ -100,12 +100,10 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
         // SettingA : exercise-open-for-practice -> [EXERCISE_PRACTICE] : webapp deactivated
         // SettingB : attachment-changes -> [ATTACHMENT_CHANGE] : webapp activated <- not part of set
         // SettingC : course-and-exam-archiving-started -> [EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED] : webapp deactivated
-        assertThat(resultingTypeSet).as("The resulting type set should contain all 3 corresponding types").hasSize(3);
-        assertThat(resultingTypeSet).as("The type for EXERCISE_PRACTICE should be returned").contains(EXERCISE_PRACTICE);
-        assertThat(resultingTypeSet).as("The type for EXAM_ARCHIVE_STARTED should be returned").contains(EXAM_ARCHIVE_STARTED);
-        assertThat(resultingTypeSet).as("The type for COURSE_ARCHIVE_STARTED should be returned").contains(COURSE_ARCHIVE_STARTED);
-        assertThat(resultingTypeSet).as("The type for COURSE_ARCHIVE_STARTED should be returned").contains(COURSE_ARCHIVE_STARTED);
-        assertThat(resultingTypeSet).as("The type for ATTACHMENT_CHANGE should be returned").doesNotContain(ATTACHMENT_CHANGE);
+        assertThat(resultingTypeSet).as("The resulting type set should contain all 3 corresponding types").hasSize(3).as("The type for EXERCISE_PRACTICE should be returned")
+                .contains(EXERCISE_PRACTICE).as("The type for EXAM_ARCHIVE_STARTED should be returned").contains(EXAM_ARCHIVE_STARTED)
+                .as("The type for COURSE_ARCHIVE_STARTED should be returned").contains(COURSE_ARCHIVE_STARTED).as("The type for ATTACHMENT_CHANGE should be returned")
+                .doesNotContain(ATTACHMENT_CHANGE);
     }
 
     /**
@@ -145,8 +143,8 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet.add(completeNotificationSettingA);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
-        assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings").isEqualTo(DEFAULT_NOTIFICATION_SETTINGS.size());
-        assertThat(testSet).as("The loaded settings should contain the set of test settings").contains(completeNotificationSettingA);
+        assertThat(testSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS)
+                .as("The loaded settings should contain the set of test settings").contains(completeNotificationSettingA);
     }
 
     /**
@@ -156,8 +154,8 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
     public void testCheckLoadedNotificationSettingsForCorrectness_correct() {
         Set<NotificationSetting> testSet = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
-        assertThat(testSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
-                .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(testSet).as("The number of loaded Settings should be equals to the number of default settings")
+                .hasSameSizeAs(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS);
     }
 
     /**
@@ -175,8 +173,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
 
         Set<NotificationSetting> resultingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(outdatedSet);
 
-        assertThat(resultingSet.size()).as("The number of loaded Settings should be equals to the number of default settings")
-                .isEqualTo(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS.size());
-        assertThat(resultingSet).as("The outdated setting should have been removed").doesNotContain(outdatedSetting);
+        assertThat(resultingSet).as("The number of loaded Settings should be equals to the number of default settings")
+                .hasSameSizeAs(NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS).as("The outdated setting should have been removed").doesNotContain(outdatedSetting);
     }
 }

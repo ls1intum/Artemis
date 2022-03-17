@@ -53,7 +53,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     public void testDoSomeCommits() {
         Collection<ReflogEntry> reflog = gitUtilService.getReflog(GitUtilService.REPOS.LOCAL);
-        assertThat(reflog.size()).isEqualTo(1);
+        assertThat(reflog).hasSize(1);
 
         gitUtilService.updateFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1, "lorem ipsum");
         gitUtilService.stashAndCommitAll(GitUtilService.REPOS.LOCAL);
@@ -62,7 +62,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         gitUtilService.stashAndCommitAll(GitUtilService.REPOS.LOCAL);
 
         reflog = gitUtilService.getReflog(GitUtilService.REPOS.LOCAL);
-        assertThat(reflog.size()).isEqualTo(3);
+        assertThat(reflog).hasSize(3);
     }
 
     @Test
@@ -203,11 +203,10 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
         var map = gitService.listFilesAndFolders(localRepo);
 
-        assertThat(map.size()).isEqualTo(4);
-        assertThat(map).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo), FileType.FILE);
-        assertThat(map).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE);
-        assertThat(map).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE);
-        assertThat(map).containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER);
+        assertThat(map).hasSize(4).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE)
+                .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER);
     }
 
     @Test
@@ -216,11 +215,10 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
         var fileList = gitService.listFiles(localRepo);
 
-        assertThat(fileList.size()).isEqualTo(3);
-        assertThat(fileList).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo));
-        assertThat(fileList).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo));
-        assertThat(fileList).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo));
-        assertThat(fileList).doesNotContain(new File(localRepo.getLocalPath().toFile(), localRepo));
+        assertThat(fileList).hasSize(3).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo))
+                .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo))
+                .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo))
+                .doesNotContain(new File(localRepo.getLocalPath().toFile(), localRepo));
     }
 
     @Test
@@ -228,8 +226,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
         var presentFile = gitService.getFileByName(localRepo, gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1).getName());
-        assertThat(presentFile).isPresent();
-        assertThat(presentFile).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo));
+        assertThat(presentFile).isPresent().contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo));
 
         var nonPresentFile = gitService.getFileByName(localRepo, "NameThatWillNeverBePResent");
         assertThat(nonPresentFile).isNotPresent();

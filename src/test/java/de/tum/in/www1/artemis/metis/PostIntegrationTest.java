@@ -125,7 +125,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setExercise(examExercise);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingExercisePosts.size()).isEqualTo(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null).size());
+        assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null));
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
 
     }
@@ -245,21 +245,21 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Post>> constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
 
         invalidPost = createPostWithoutContext();
         invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
 
         invalidPost = createPostWithoutContext();
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
     }
 
     @Test
@@ -374,9 +374,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.OK);
         // no effect on post context
-        assertThat(notUpdatedPost.getCourseWideContext()).isEqualTo(null);
-        assertThat(notUpdatedPost.getCourse()).isEqualTo(null);
-        assertThat(notUpdatedPost.getLecture()).isEqualTo(null);
+        assertThat(notUpdatedPost.getCourseWideContext()).isNull();
+        assertThat(notUpdatedPost.getCourse()).isNull();
+        assertThat(notUpdatedPost.getLecture()).isNull();
         assertThat(notUpdatedPost.getExercise()).isEqualTo(existingExercisePosts.get(2).getExercise());
     }
 
@@ -462,7 +462,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts.size()).isEqualTo(existingPosts.size());
+        assertThat(returnedPosts).hasSameSizeAs(existingPosts);
     }
 
     @Test
@@ -488,7 +488,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain course-wide context
-        assertThat(returnedPosts.size()).isEqualTo(existingExercisePosts.size());
+        assertThat(returnedPosts).hasSameSizeAs(existingExercisePosts);
     }
 
     @Test
@@ -500,7 +500,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain course-wide context
-        assertThat(returnedPosts.size()).isEqualTo(existingLecturePosts.size());
+        assertThat(returnedPosts).hasSameSizeAs(existingLecturePosts);
     }
 
     @Test
@@ -521,7 +521,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetPostTagsForCourse() throws Exception {
         List<String> returnedTags = request.getList("/api/courses/" + courseId + "/posts/tags", HttpStatus.OK, String.class);
         // 4 different tags were used for the posts
-        assertThat(returnedTags.size()).isEqualTo(postRepository.findPostTagsForCourse(courseId).size());
+        assertThat(returnedTags).hasSameSizeAs(postRepository.findPostTagsForCourse(courseId));
     }
 
     @Test

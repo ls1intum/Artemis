@@ -148,8 +148,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         // Only one complaint is possible for exercise regardless of its type
         request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
-        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType() == ComplaintType.MORE_FEEDBACK).as("more feedback request is not saved")
-                .isFalse();
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType()).as("more feedback request is not saved").isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
@@ -380,7 +379,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-test-run-dashboard", HttpStatus.OK, Complaint.class, params);
-        assertThat(complaints.size()).isEqualTo(1);
+        assertThat(complaints).hasSize(1);
         complaints.forEach(compl -> {
             assertThat(compl.getResult()).isEqualTo(complaint.getResult());
             assertThat(compl.getParticipant()).as("No student information").isNull();

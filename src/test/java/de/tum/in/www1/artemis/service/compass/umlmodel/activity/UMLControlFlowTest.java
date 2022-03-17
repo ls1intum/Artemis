@@ -43,14 +43,14 @@ public class UMLControlFlowTest {
     void similarity_null() {
         double similarity = umlControlFlow.similarity(null);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
     void similarity_differentElementType() {
         double similarity = umlControlFlow.similarity(mock(UMLRelationship.class));
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test

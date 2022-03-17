@@ -92,7 +92,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         result.setScore(totalPoints, 7.0);
         result.setResultString(totalPoints, 7.0);
 
-        assertThat(result.getScore()).isEqualTo(0);
+        assertThat(result.getScore()).isZero();
         assertThat(result.getResultString()).isEqualToIgnoringCase("0 of 7 points");
     }
 
