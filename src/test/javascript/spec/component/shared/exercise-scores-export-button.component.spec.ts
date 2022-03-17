@@ -156,7 +156,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
     });
 
     it('should export results for one exercise', () => {
-        testCsvExport(exercise1, [resultWithPoints1, resultWithPoints2], 'ex1-results-scores.csv', expectedColumnsWithCriteria, expectedRowsWithCriteria);
+        testCsvExport(exercise1, [resultWithPoints1, resultWithPoints2], 'ex1-results-scores', expectedColumnsWithCriteria, expectedRowsWithCriteria);
     });
 
     it('should export results for a team exercise', () => {
@@ -192,7 +192,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             Students: 'Student 1, Student 2, Student 3, Student 4',
         };
 
-        testCsvExport(exerciseTeam, [teamResultWithPoints], 'ex1-results-scores.csv', expectedTeamColumns, [expectedRow]);
+        testCsvExport(exerciseTeam, [teamResultWithPoints], 'ex1-results-scores', expectedTeamColumns, [expectedRow]);
     });
 
     it('should export results for multiple exercises', () => {
@@ -211,8 +211,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
         // THEN
         expect(getResultsStub).toHaveBeenCalledTimes(2);
         expect(exportAsCsvStub).toHaveBeenCalledTimes(2);
-        expect(exportAsCsvStub).toHaveBeenNthCalledWith(1, 'ex1-results-scores.csv', expectedColumnsWithCriteria, expectedRowsWithCriteria);
-        expect(exportAsCsvStub).toHaveBeenNthCalledWith(2, 'Exercise_title_with_spaces-results-scores.csv', expectedColumnsNoCriteria, expectedRowsNoCriteria);
+        expect(exportAsCsvStub).toHaveBeenNthCalledWith(1, 'ex1-results-scores', expectedColumnsWithCriteria, expectedRowsWithCriteria);
+        expect(exportAsCsvStub).toHaveBeenNthCalledWith(2, 'Exercise_title_with_spaces-results-scores', expectedColumnsNoCriteria, expectedRowsNoCriteria);
     });
 
     function testCsvExport(exercise: Exercise, results: ResultWithPointsPerGradingCriterion[], expectedCsvFilename: string, expectedCsvColumns: string[], expectedCsvRows: any[]) {

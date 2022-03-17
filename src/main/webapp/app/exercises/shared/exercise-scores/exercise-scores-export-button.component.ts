@@ -64,7 +64,7 @@ export class ExerciseScoresExportButtonComponent {
             });
 
             const fileNamePrefix = exercise.shortName ?? exercise.title?.split(/\s+/).join('_');
-            ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores.csv`, keys, rows);
+            ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows);
         });
     }
 
