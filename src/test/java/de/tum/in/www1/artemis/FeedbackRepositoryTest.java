@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 
 class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -46,7 +47,8 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                   expected:
                     []
                   to contain:
-                    ["Java"]""").isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, ProgrammingLanguage.JAVA).getDetailText());
+                    ["Java"]""").isEqualTo(
+                feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText());
 
     }
 
@@ -66,14 +68,15 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                     5
                 expected:
                     something else""")
-                .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, ProgrammingLanguage.KOTLIN).getDetailText());
+                .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, ProgrammingLanguage.KOTLIN, null).getDetailText());
 
     }
 
     @Test
     void createFeedbackFromTestCaseUnchanged() {
         String msgUnchanged = "Should not be changed";
-        assertThat(msgUnchanged).isEqualTo(feedbackRepository.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, ProgrammingLanguage.JAVA).getDetailText());
+        assertThat(msgUnchanged)
+                .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText());
 
     }
 
@@ -84,8 +87,8 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                 \tat test.MethodTest.checkMethods(MethodTest.java:129)
                 \tat test.MethodTest.testMethods(MethodTest.java:72)
                 \tat test.MethodTest.lambda$0(MethodTest.java:52)""";
-        assertThat("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.")
-                .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
+        assertThat("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.").isEqualTo(
+                feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText());
     }
 
     @Test
@@ -106,7 +109,8 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractResults(ResultSetProcessorImpl.java:94)""";
         assertThat(
                 "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups")
-                        .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
+                        .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                                .getDetailText());
     }
 
     @Test
@@ -149,17 +153,19 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                     5
                 expected:
                     something else">
-                but was not.""").isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
+                but was not.""").isEqualTo(
+                feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText());
     }
 
     @Test
     void createFeedbackFromTestCaseSuccessfulWithMessage() {
         String msg = "success\nmessage";
-        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg), true, ProgrammingLanguage.JAVA).getDetailText()).isEqualTo("success\nmessage");
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText())
+                .isEqualTo("success\nmessage");
     }
 
     @Test
     void createFeedbackFromTestCaseSuccessfulNoMessage() {
-        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA).getDetailText()).isEqualTo(null);
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText()).isEqualTo(null);
     }
 }
