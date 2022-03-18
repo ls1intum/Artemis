@@ -188,7 +188,7 @@ public class BambooBuildPlanService {
                 }
 
                 if (!sequentialBuildRuns) {
-                    return getNonSequentialTestTaskForJavaAndKotlinExercise(defaultStage, defaultJob, checkoutTask, isMavenProject);
+                    return getRegularTestTaskForJavaAndKotlinExercise(defaultStage, defaultJob, checkoutTask, isMavenProject);
                 }
                 else {
                     return getSequentialTestTaskForJavaAndKotlinExercise(defaultStage, defaultJob, checkoutTask, isMavenProject);
@@ -273,7 +273,7 @@ public class BambooBuildPlanService {
     }
 
     /**
-     * Adds the Bamboo final task for the static code analysis to the
+     * Adds the Bamboo final task for the static code analysis to the stage
      * @param defaultJob job to which the task should be added
      * @param isMavenProject whether the project is a Maven build (or implicitly a Gradle build)
      */
@@ -283,6 +283,7 @@ public class BambooBuildPlanService {
         String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
         Artifact[] artifacts = staticCodeAnalysisTools.stream()
                 .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+
         if (isMavenProject) {
             defaultJob.finalTasks(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
         }
@@ -300,7 +301,7 @@ public class BambooBuildPlanService {
      * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
      * @return the stage with the tasks for the non-sequential test run
      */
-    private Stage getNonSequentialTestTaskForJavaAndKotlinExercise(Stage defaultStage, Job defaultJob, VcsCheckoutTask checkoutTask, boolean isMavenProject) {
+    private Stage getRegularTestTaskForJavaAndKotlinExercise(Stage defaultStage, Job defaultJob, VcsCheckoutTask checkoutTask, boolean isMavenProject) {
         if (isMavenProject) {
             return defaultStage.jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
         }

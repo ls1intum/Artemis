@@ -88,7 +88,7 @@ export class OrionBuildAndTestService {
         return this.buildFinished;
     }
 
-    private forwardBuildLogs(participationId: number, programmingLanguage: ProgrammingLanguage | undefined, projectType: ProjectType | undefined) {
+    private forwardBuildLogs(participationId: number, programmingLanguage?: ProgrammingLanguage, projectType?: ProjectType) {
         this.buildLogSubscription = this.buildLogService
             .getBuildLogs(participationId)
             .pipe(

@@ -587,11 +587,9 @@ public class FileService implements DisposableBean {
 
         // Get all files in directory
         String[] files = directory.list((current, name) -> new File(current, name).isFile());
-        // filter out files that should be ignored
-        if (filesToIgnore != null) {
-            files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
-        }
         if (files != null) {
+            // filter out files that should be ignored
+            files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
             for (String file : files) {
                 replaceVariablesInFile(Paths.get(directory.getAbsolutePath(), file).toString(), replacements);
             }
