@@ -110,8 +110,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 assertThat(block.getAddedDistance()).isGreaterThan(1.65);
                 Segment segment = atheneResponse.getClusters(clusterIndex).getSegmentsList().get(blockIndex);
                 assertThat(block.getId()).isEqualTo(segment.getId());
-                var positionInCluster = ReflectionTestUtils.getField(block, "positionInCluster");
-                assertThat(positionInCluster).isEqualTo(blockIndex);
+                assertThat(block).hasFieldOrPropertyWithValue("positionInCluster", blockIndex);
             }
         }
 
