@@ -5,10 +5,10 @@ templates that are used to generate programming exercises for the supported
 programming languages and project types in Artemis.
 
 **Note**: The creation of this documentation is still in progress. Therefore,
-some parts may be missing will be extended in the future.
+some parts may be missing and will be extended in the future.
 
 ## Java
-### Updating to the newest Ares version
+### Updating to the Newest Ares Version
 In order to update to the newest version of Ares, you have to change
 the version number described in the respective pom.xml or build.gradle.
 This process is described in the [Ares documentation](https://github.com/ls1intum/Ares#what-you-need-to-do-outside-ares).
