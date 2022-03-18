@@ -1,4 +1,4 @@
-.repository-button {
+.open-repository-button {
     margin-bottom: 10px;
     padding-top: 10px;
     padding-bottom: 10px;
@@ -6,22 +6,13 @@
     border-bottom-left-radius: 0;
 }
 
-.remove-line-left {
+.url-box-remove-line-left {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-left: none;
 }
 
-.remove-line-right {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-right: none;
-}
-
-.remove-line-left-right {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-left: none;
+.url-box-remove-line-right {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     border-right: none;

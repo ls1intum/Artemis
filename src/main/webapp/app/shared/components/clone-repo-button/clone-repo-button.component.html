@@ -26,16 +26,19 @@
                     <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
                 </div>
             </div>
-            <!-- ngStyle: sshEnabled -> Remove round edges and edge on the left side || useSsh -> Remove round edges and edge on the right side -->
+            <!-- ngStyle: sshEnabled -> Remove round edges and edge on the left side (due to dropdown to select ssh or https)
+             || useSsh -> Remove round edges and edge on the right side (as ssh repo-links can't be open in the browser)-->
             <pre
                 style="flex: 1"
-                [ngClass]="sshEnabled && !useSsh ? 'remove-line-left-right' : sshEnabled && useSsh ? 'remove-line-left' : 'remove-line-right'"
+                [ngClass]="
+                    sshEnabled && !useSsh ? 'url-box-remove-line-left url-box-remove-line-right' : sshEnabled && useSsh ? 'url-box-remove-line-left' : 'url-box-remove-line-right'
+                "
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }} </pre
             >
             <div *ngIf="!useSsh" style="display: flex; align-items: center">
-                <a style="flex: 1" class="btn btn-secondary btn-sm me-2 repository-button" [href]="getHttpRepositoryUrl() | safeUrl" target="_blank" rel="noopener noreferrer">
+                <a style="flex: 1" class="btn btn-secondary btn-sm me-2 open-repository-button" [href]="getHttpRepositoryUrl() | safeUrl" target="_blank" rel="noopener noreferrer">
                     <fa-icon [icon]="faExternalLink"></fa-icon>
                 </a>
             </div>
