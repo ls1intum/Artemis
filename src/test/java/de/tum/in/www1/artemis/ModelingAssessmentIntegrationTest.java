@@ -1275,7 +1275,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission()).isPresent().contains(submissionWithoutFirstAssessment);
+        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutFirstAssessment);
         assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
@@ -1311,7 +1311,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission()).isPresent().contains(submissionWithoutSecondAssessment);
+        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
         assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst()).contains(submissionWithoutSecondAssessment.getLatestResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());

@@ -91,6 +91,6 @@ public class UMLControlFlowTest {
 
         double similarity = umlControlFlow.similarity(referenceControlFlow);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 }

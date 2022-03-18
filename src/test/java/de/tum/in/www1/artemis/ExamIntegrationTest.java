@@ -1348,10 +1348,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var participationEx2St1 = database.addStudentParticipationForProgrammingExercise(programmingExercise2, "student1");
         var participationEx2St2 = database.addStudentParticipationForProgrammingExercise(programmingExercise2, "student2");
 
-        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt1)).isPresent().contains(studentExam1);
-        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt2)).isPresent().contains(studentExam2);
-        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St1)).isPresent().contains(studentExam1);
-        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2)).isPresent().contains(studentExam2);
+        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt1)).contains(studentExam1);
+        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt2)).contains(studentExam2);
+        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St1)).contains(studentExam1);
+        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2)).contains(studentExam2);
 
         mockConfigureRepository(programmingExercise, "student1", Set.of(student1), true);
         mockConfigureRepository(programmingExercise, "student2", Set.of(student2), true);

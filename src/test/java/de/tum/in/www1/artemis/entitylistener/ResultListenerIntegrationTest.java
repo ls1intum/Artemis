@@ -174,7 +174,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
         resultRepository.deleteById(newResult.getId());
         List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).size().isEqualTo(1);
+        assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
     }
 
@@ -189,7 +189,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
         resultRepository.deleteById(newResult.getId());
         List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).size().isEqualTo(1);
+        assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
     }
 
@@ -204,7 +204,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
         resultRepository.deleteById(newResult.getId());
         List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).size().isEqualTo(1);
+        assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
     }
 
@@ -219,7 +219,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
         resultRepository.deleteById(newResult.getId());
         List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).size().isEqualTo(1);
+        assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
     }
 
@@ -312,7 +312,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
         resultRepository.deleteById(originalResult.getId());
         List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).size().isEqualTo(1);
+        assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
     }
 
@@ -327,7 +327,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
         resultRepository.deleteById(newResult.getId());
         List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).size().isEqualTo(1);
+        assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
     }
 
@@ -393,7 +393,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
         savedParticipantScores = participantScoreRepository.findAllEagerly();
         assertThat(savedParticipantScores).isNotEmpty();
-        assertThat(savedParticipantScores).size().isEqualTo(1);
+        assertThat(savedParticipantScores).hasSize(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
         Double pointsAchieved = round(persistedResult.getScore() * 0.01 * 10.0);
         if (isRatedResult) {
@@ -424,7 +424,7 @@ public class ResultListenerIntegrationTest extends AbstractSpringIntegrationBamb
         SecurityUtils.setAuthorizationObject();
         List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllEagerly();
         assertThat(savedParticipantScore).isNotEmpty();
-        assertThat(savedParticipantScore).size().isEqualTo(1);
+        assertThat(savedParticipantScore).hasSize(1);
         ParticipantScore updatedParticipantScore = savedParticipantScore.get(0);
         Double lastPoints = null;
         Double lastRatedPoints = null;

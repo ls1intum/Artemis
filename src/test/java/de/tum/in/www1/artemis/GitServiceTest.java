@@ -226,7 +226,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
         var presentFile = gitService.getFileByName(localRepo, gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1).getName());
-        assertThat(presentFile).isPresent().contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo));
+        assertThat(presentFile).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo));
 
         var nonPresentFile = gitService.getFileByName(localRepo, "NameThatWillNeverBePResent");
         assertThat(nonPresentFile).isNotPresent();

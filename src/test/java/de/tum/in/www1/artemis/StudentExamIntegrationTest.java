@@ -150,7 +150,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
         assertThat(studentExam).isEmpty();
         studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(users.get(0).getId(), exam1.getId());
-        assertThat(studentExam).isPresent().contains(studentExam1);
+        assertThat(studentExam).contains(studentExam1);
     }
 
     @Test

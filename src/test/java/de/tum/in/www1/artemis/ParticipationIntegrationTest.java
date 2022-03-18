@@ -323,9 +323,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         database.createAndSaveParticipationForExercise(textExercise, "student1");
         database.createAndSaveParticipationForExercise(textExercise, "student2");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations).as("Exactly 2 participations are returned").hasSize(2);
-        assertThat(participations.stream().allMatch(participation -> participation.getStudent().isPresent())).as("Only participation that has student are returned").isTrue();
-        assertThat(participations.stream().allMatch(participation -> participation.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
+        assertThat(participations).as("Exactly 2 participations are returned").hasSize(2).as("Only participation that has student are returned")
+                .allMatch(participation -> participation.getStudent().isPresent()).as("No submissions should exist for participations")
+                .allMatch(participation -> participation.getSubmissionCount() == 0);
     }
 
     @Test
@@ -339,12 +339,10 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResult", "true");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-        assertThat(participations).as("Exactly 2 participations are returned").hasSize(2);
-        assertThat(participations.stream().allMatch(p -> p.getStudent().isPresent())).as("Only participation that has student are returned").isTrue();
-        assertThat(participations.stream().allMatch(p -> p.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
+        assertThat(participations).as("Exactly 2 participations are returned").hasSize(2).as("Only participation that has student are returned")
+                .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations").allMatch(p -> p.getSubmissionCount() == 0);
         var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin("student2"))).findFirst().get();
-        assertThat(participationWithResult.getResults()).hasSize(1);
-        assertThat(participationWithResult.getResults().stream().findFirst()).contains(result);
+        assertThat(participationWithResult.getResults()).hasSize(1).contains(result);
     }
 
     @Test

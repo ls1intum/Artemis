@@ -471,12 +471,12 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         params.add("complaintType", ComplaintType.COMPLAINT.toString());
         List<ComplaintResponse> complaintResponsesByCourse = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
         List<ComplaintResponse> complaintResponsesByExercise = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
-        assertThat(complaintResponsesByExercise.size()).isEqualTo(complaintResponsesByCourse.size()).isEqualTo(1);
+        assertThat(complaintResponsesByExercise).hasSameSizeAs(complaintResponsesByCourse).hasSize(1);
 
         params.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
         complaintResponsesByCourse = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
         complaintResponsesByExercise = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
-        assertThat(complaintResponsesByCourse.size()).isEqualTo(complaintResponsesByExercise.size()).isEqualTo(2);
+        assertThat(complaintResponsesByCourse).hasSameSizeAs(complaintResponsesByExercise).hasSize(2);
     }
 
     @Test
