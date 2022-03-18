@@ -575,6 +575,19 @@ public class FileService implements DisposableBean {
      *
      * @param startPath     the path where the start directory is located
      * @param replacements  the replacements that should be applied
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
+     */
+    public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements) throws IOException {
+        replaceVariablesInFileRecursive(startPath, replacements, Collections.emptyList());
+    }
+
+    /**
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
+     * <p>
+     * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
+     *
+     * @param startPath     the path where the start directory is located
+     * @param replacements  the replacements that should be applied
      * @param filesToIgnore the name of files for which no replacement should be done
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
