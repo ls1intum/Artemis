@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.bitbucket;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +29,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -805,6 +813,37 @@ public class BitbucketService extends AbstractVersionControlService {
             log.error("Error when getting hash of last commit. Able to continue.", e);
         }
         return commit;
+    }
+
+    /**
+     * Retrieves the date at which the push event was received by the VCS intance.
+     *
+     * @param participation The participation we need the date for
+     * @param hash The hash we expect to find
+     * @return The build queue date
+     */
+    @Override
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String hash) {
+        final var url = bitbucketServerUrl + "/rest/api/latest/projects/" + participation.getProgrammingExercise().getProjectKey() + "/repos/"
+                + urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()) + "/ref-change-activities?start=0&limit=25";
+        final var response = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
+        if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+            throw new BambooException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
+        }
+        try {
+            JsonObject responseJson = (JsonObject) JsonParser.parseString(response.getBody());
+            JsonArray values = responseJson.getAsJsonArray("values");
+            for (JsonElement value : values) {
+                JsonObject object = (JsonObject) value;
+                if (object.getAsJsonObject("refChange").get("toHash").getAsString().equals(hash)) {
+                    return Instant.ofEpochMilli(object.get("createdDate").getAsLong()).atZone(ZoneOffset.UTC);
+                }
+            }
+        }
+        catch (NullPointerException | ClassCastException e) {
+            e.printStackTrace();
+        }
+        throw new BambooException("Unable to parse the push date result for participation " + participation.getId());
     }
 
     @Nullable

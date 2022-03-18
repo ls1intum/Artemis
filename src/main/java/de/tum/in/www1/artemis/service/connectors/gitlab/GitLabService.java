@@ -4,6 +4,8 @@ import static org.gitlab4j.api.models.AccessLevel.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -12,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import org.apache.http.HttpStatus;
+import org.gitlab4j.api.Constants;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.*;
@@ -329,6 +332,30 @@ public class GitLabService extends AbstractVersionControlService {
         commit.setCommitHash(gitLabCommit.getHash());
 
         return commit;
+    }
+
+    /**
+     * Retrieves the date at which the build server was notified about a new push.
+     *
+     * @param participation The participation we need the date for
+     * @param hash The hash we expect to find
+     * @return The build queue date
+     */
+    @Override
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String hash) {
+        try {
+            List<Event> events = gitlab.getEventsApi().getProjectEvents(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl()),
+                    Constants.ActionType.PUSHED, null, new Date(), Date.from(participation.getInitializationDate().toInstant()), null);
+            for (Event event : events) {
+                if (event.getPushData().getCommitTo().equals(hash)) {
+                    return event.getCreatedAt().toInstant().atZone(ZoneOffset.UTC);
+                }
+            }
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException(e);
+        }
+        throw new GitLabException("Could not find build queue date for participation " + participation.getId());
     }
 
     @Override

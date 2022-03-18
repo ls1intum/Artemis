@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -20,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -42,13 +45,16 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
     protected final RestTemplate shortTimeoutRestTemplate;
 
+    protected final Optional<VersionControlService> versionControlService;
+
     public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            BuildLogEntryService buildLogService, RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate) {
+            BuildLogEntryService buildLogService, RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, Optional<VersionControlService> versionControlService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.buildLogService = buildLogService;
+        this.versionControlService = versionControlService;
     }
 
     /**
@@ -93,11 +99,23 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     @NotNull
     protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, AbstractBuildResultNotificationDTO buildResult) {
         final var commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
+        if (commitHash.isEmpty()) {
+            log.error("Could not find commit hash for participation {}, build plan {}", participation.getId(), participation.getBuildPlanId());
+        }
         log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
-        // In this case we don't know the submission time, so we use the build result build run date as a fallback.
-        // TODO: we should actually ask the git service to retrieve the actual commit date in the git repository here and only use result.getCompletionDate() as fallback
-        var submission = createFallbackSubmission(participation, buildResult.getBuildRunDate(), commitHash.orElse(null));
+        // We always take the build run date as the fallback solution
+        // In general we try to get the actual date.
+        ZonedDateTime submissionDate = buildResult.getBuildRunDate();
+        if (commitHash.isPresent() && versionControlService.isPresent()) {
+            try {
+                submissionDate = versionControlService.get().getPushDate(participation, commitHash.get());
+            }
+            catch (VersionControlException e) {
+                log.error("Could not retrieve push date for participation " + participation.getId() + " and build plan " + participation.getBuildPlanId(), e);
+            }
+        }
+        var submission = createFallbackSubmission(participation, submissionDate, commitHash.orElse(null));
         // Save to avoid TransientPropertyValueException.
         return programmingSubmissionRepository.save(submission);
     }
@@ -155,7 +173,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     /**
      * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
      *
-     * @param buildLogEntries the original, unfiltered list
+     * @param buildLogEntries     the original, unfiltered list
      * @param programmingLanguage the programming language for filtering out language-specific logs
      * @return the filtered list
      */

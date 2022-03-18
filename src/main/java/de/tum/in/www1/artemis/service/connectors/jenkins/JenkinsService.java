@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
@@ -62,8 +63,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             FeedbackRepository feedbackRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
             JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            ExerciseDateService exerciseDateService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+            ExerciseDateService exerciseDateService, Optional<VersionControlService> versionControlService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate, versionControlService);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;

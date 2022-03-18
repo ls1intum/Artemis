@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -19,7 +23,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -58,8 +65,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final GitService gitService;
 
-    private final Optional<VersionControlService> versionControlService;
-
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
 
     private final BambooBuildPlanService bambooBuildPlanService;
@@ -74,9 +79,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
             UrlService urlService, BuildLogEntryService buildLogService, ExerciseDateService exerciseDateService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate, versionControlService);
         this.gitService = gitService;
-        this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
@@ -648,10 +652,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public QueriedBambooBuildResultDTO queryLatestBuildResultFromBambooServer(String planKey) {
         ResponseEntity<QueriedBambooBuildResultDTO> response = null;
         try {
-            response = restTemplate.exchange(
-                    serverUrl + "/rest/api/latest/result/" + planKey.toUpperCase()
-                            + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions",
-                    HttpMethod.GET, null, QueriedBambooBuildResultDTO.class);
+            response = restTemplate.exchange(serverUrl + "/rest/api/latest/result/" + planKey.toUpperCase()
+                    + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes," + "vcsRevisions", HttpMethod.GET, null,
+                    QueriedBambooBuildResultDTO.class);
         }
         catch (Exception e) {
             log.warn("HttpError while retrieving latest build results from Bamboo for planKey {}: {}", planKey, e.getMessage());

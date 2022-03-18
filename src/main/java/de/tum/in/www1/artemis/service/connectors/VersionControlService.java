@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.time.ZonedDateTime;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -74,6 +75,15 @@ public interface VersionControlService {
      * @throws VersionControlException if the Body could not be parsed
      */
     Commit getLastCommitDetails(Object requestBody) throws VersionControlException;
+
+    /**
+     * Retrieves the date at which the push event was received by the VCS intance.
+     *
+     * @param participation The participation we need the date for
+     * @param hash The hash we expect to find
+     * @return The build queue date
+     */
+    ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String hash);
 
     /**
      * Creates a project on the VCS.
