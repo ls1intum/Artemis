@@ -1,14 +1,21 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
+import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,13 +32,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -142,6 +152,80 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(results).isEmpty();
+    }
+
+    /**
+     * This test results from a bug where the first push event wasn't received by Artemis but all build events.
+     * This test ensures that in such a situation, the submission dates are set according to the commit dates and are therefore in the correct order.
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_REQUEST);
+        var changes = (JSONArray) pushJSON.get("changes");
+        var firstChange = (JSONObject) changes.get(0);
+        var firstCommitHash = (String) firstChange.get("fromHash");
+        var secondCommitHash = (String) firstChange.get("toHash");
+
+        // First commit is pushed but not recorded
+        var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
+        firstCommitDate.withNano((int) (Math.round(firstCommitDate.getNano() / 10000.0) * 10000.0)); // Some decimals will get lost through date conversions, we keep the first four
+        var firstCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
+        firstCommit.setId(firstCommitHash);
+        firstCommit.setComment("First commit");
+
+        // Second commit is pushed and recorded
+        var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
+        secondCommitDate.withNano((int) (Math.round(secondCommitDate.getNano() / 10000.0) * 10000.0)); // Some decimals will get lost through date conversions, we keep the first
+                                                                                                       // four
+        var secondCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
+        secondCommit.setId(secondCommitHash);
+        secondCommit.setComment("Second commit");
+        // postSubmission(participation.getId(), HttpStatus.OK);
+
+        // Build result for first commit is received
+        var firstBuildCompleteDate = ZonedDateTime.now();
+        var firstVcsDTO = new CommitDTO();
+        firstVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()));
+        firstVcsDTO.setHash(firstCommitHash);
+        var notificationDTOFirstCommit = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, JAVA, List.of());
+        notificationDTOFirstCommit.setRunDate(firstBuildCompleteDate);
+        notificationDTOFirstCommit.setCommits(List.of(firstVcsDTO));
+
+        postResult(notificationDTOFirstCommit, HttpStatus.OK);
+
+        // Build result for second commit is received
+        var secondBuildCompleteDate = ZonedDateTime.now();
+        var secondVcsDTO = new CommitDTO();
+        secondVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()));
+        secondVcsDTO.setHash(secondCommitHash);
+        var notificationDTOSecondCommit = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, JAVA, List.of());
+        notificationDTOSecondCommit.setRunDate(secondBuildCompleteDate);
+        notificationDTOSecondCommit.setCommits(List.of(secondVcsDTO));
+
+        postResult(notificationDTOSecondCommit, HttpStatus.OK);
+
+        var submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
+
+        // Ensure correct submission and result count
+        assertThat(submissions).hasSize(2);
+        assertThat(submissions.get(0).getResults()).hasSize(1);
+        assertThat(submissions.get(1).getResults()).hasSize(1);
+
+        Submission submissionOfFirstCommit = submissions.stream().filter(submission -> submission.getCommitHash().equals(firstCommitHash)).findFirst().orElseThrow();
+        Submission submissionOfSecondCommit = submissions.stream().filter(submission -> submission.getCommitHash().equals(secondCommitHash)).findFirst().orElseThrow();
+
+        // Ensure submission date is in correct order
+        assertThat(submissionOfFirstCommit.getSubmissionDate()).isBefore(submissionOfSecondCommit.getSubmissionDate());
+
+        // Ensure submission dates are precise, some decimals/nanos get lost through time conversions
+        assertThat(ChronoUnit.NANOS.between(submissionOfFirstCommit.getSubmissionDate(), firstCommitDate)).isLessThan(5000);
+        assertThat(ChronoUnit.NANOS.between(submissionOfSecondCommit.getSubmissionDate(), secondCommitDate)).isLessThan(5000);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,6 +10,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -16,6 +18,8 @@ import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -528,6 +532,83 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private static Stream<Arguments> shouldSavebuildLogsOnStudentParticipationArguments() {
         return Arrays.stream(ProgrammingLanguage.values())
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
+    }
+
+    /**
+     * This test results from a bug where the first push event wasn't received by Artemis but all build events.
+     * This test ensures that in such a situation, the submission dates are set according to the commit dates and are therefore in the correct order.
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_REQUEST);
+        var changes = (JSONArray) pushJSON.get("changes");
+        var firstChange = (JSONObject) changes.get(0);
+        var firstCommitHash = (String) firstChange.get("fromHash");
+        var secondCommitHash = (String) firstChange.get("toHash");
+
+        // First commit is pushed but not recorded
+        var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
+        firstCommitDate.withNano((int) (Math.round(firstCommitDate.getNano() / 10000.0) * 10000.0)); // Some decimals will get lost through date conversions, we keep the first four
+        var firstCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
+        firstCommit.setId(firstCommitHash);
+        firstCommit.setComment("First commit");
+
+        // Second commit is pushed and recorded
+        var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
+        secondCommitDate.withNano((int) (Math.round(secondCommitDate.getNano() / 10000.0) * 10000.0)); // Some decimals will get lost through date conversions, we keep the first
+                                                                                                       // four
+        var secondCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
+        secondCommit.setId(secondCommitHash);
+        secondCommit.setComment("Second commit");
+        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        postSubmission(participation.getId(), HttpStatus.OK);
+
+        // Build result for first commit is received
+        var firstBuildCompleteDate = ZonedDateTime.now();
+        var firstVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO();
+        firstVcsDTO.setId(firstCommit.getId());
+        firstVcsDTO.setRepositoryName(ASSIGNMENT_REPO_NAME);
+        firstVcsDTO.setCommits(List.of(firstCommit));
+        var notificationDTOFirstCommit = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
+        notificationDTOFirstCommit.getBuild().setBuildCompletedDate(firstBuildCompleteDate);
+        notificationDTOFirstCommit.getBuild().setVcs(List.of(firstVcsDTO));
+
+        postResult(participation.getBuildPlanId(), notificationDTOFirstCommit, HttpStatus.OK, false);
+
+        // Build result for second commit is received
+        var secondBuildCompleteDate = ZonedDateTime.now();
+        var secondVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO();
+        secondVcsDTO.setId(secondCommit.getId());
+        secondVcsDTO.setRepositoryName(ASSIGNMENT_REPO_NAME);
+        secondVcsDTO.setCommits(List.of(firstCommit, secondCommit));
+        var notificationDTOSecondCommit = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
+        notificationDTOSecondCommit.getBuild().setBuildCompletedDate(secondBuildCompleteDate);
+        notificationDTOSecondCommit.getBuild().setVcs(List.of(secondVcsDTO));
+
+        postResult(participation.getBuildPlanId(), notificationDTOSecondCommit, HttpStatus.OK, false);
+
+        var submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
+
+        // Ensure correct submission and result count
+        assertThat(submissions).hasSize(2);
+        assertThat(submissions.get(0).getResults()).hasSize(1);
+        assertThat(submissions.get(1).getResults()).hasSize(1);
+
+        Submission submissionOfFirstCommit = submissions.stream().filter(submission -> submission.getCommitHash().equals(firstCommitHash)).findFirst().orElseThrow();
+        Submission submissionOfSecondCommit = submissions.stream().filter(submission -> submission.getCommitHash().equals(secondCommitHash)).findFirst().orElseThrow();
+
+        // Ensure submission date is in correct order
+        assertThat(submissionOfFirstCommit.getSubmissionDate()).isBefore(submissionOfSecondCommit.getSubmissionDate());
+
+        // Ensure submission dates are precise, some decimals/nanos get lost through time conversions
+        assertThat(ChronoUnit.NANOS.between(submissionOfFirstCommit.getSubmissionDate(), firstCommitDate)).isLessThan(5000);
+        assertThat(ChronoUnit.NANOS.between(submissionOfSecondCommit.getSubmissionDate(), secondCommitDate)).isLessThan(5000);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
