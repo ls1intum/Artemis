@@ -282,7 +282,6 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-inline:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
