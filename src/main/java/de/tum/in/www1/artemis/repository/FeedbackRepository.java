@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -153,8 +152,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
         feedback.setText(testName);
 
         if (!successful) {
-            String errorMessageString = testMessages.stream().map(errorString -> processResultErrorMessage(programmingLanguage, projectType, errorString))
-                    .collect(Collectors.joining("\n\n"));
+            String errorMessageString = testMessages.stream().map(errorString -> processResultErrorMessage(programmingLanguage, projectType, errorString)).collect(joining("\n\n"));
             feedback.setDetailText(errorMessageString);
         }
         else if (!testMessages.isEmpty()) {
@@ -216,12 +214,12 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
         // Filter out unneeded Exception classnames
         if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
-            var messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
+            var messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(joining("\n")).trim();
 
             // the feedback from gradle test result is duplicated therefore it's cut in half
             if (projectType != null && projectType.isGradle()) {
                 long numberOfLines = messageWithoutStackTrace.lines().count();
-                messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
+                messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(joining("\n")).trim();
             }
             return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
         }
