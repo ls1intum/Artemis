@@ -627,7 +627,7 @@ public class ProgrammingExerciseService {
 
                     // staging project files are only required for maven
                     if (isMaven && stagePomXml != null) {
-                        Files.copy(stagePomXml.getInputStream(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
+                        Files.copy(stagePomXml.getInputStream(), buildStagePath.resolve("pom.xml"));
                     }
 
                     fileService.copyResources(buildStageResources, prefix, packagePath, false);

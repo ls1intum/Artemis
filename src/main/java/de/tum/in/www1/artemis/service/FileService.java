@@ -385,8 +385,9 @@ public class FileService implements DisposableBean {
             String oldName = replacementDirective.getKey();
             String newName = replacementDirective.getValue();
 
-            if (resultFilePath.endsWith(replacementDirective.getKey())) {
+            if (resultFilePath.endsWith(oldName)) {
                 resultFilePath = resultFilePath.replace(oldName, newName);
+                break;
             }
         }
 

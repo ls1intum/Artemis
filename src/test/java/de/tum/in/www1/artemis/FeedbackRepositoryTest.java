@@ -61,15 +61,14 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                     5
                 org.opentest4j.AssertionFailedError: expected:
                     something else""";
-        assertThat("""
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, ProgrammingLanguage.KOTLIN, null).getDetailText();
+        assertThat(actualFeedback).isEqualTo("""
                 expected:
                     4
                 but was:
                     5
                 expected:
-                    something else""")
-                .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false, ProgrammingLanguage.KOTLIN, null).getDetailText());
-
+                    something else""");
     }
 
     @Test
