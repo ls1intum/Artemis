@@ -34,7 +34,10 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                   to contain:
                     ["Java"]""";
 
-        assertThat("""
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+
+        assertThat(actualFeedback).isEqualTo("""
                 expected:
                     4
                 but was:
@@ -47,8 +50,7 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                   expected:
                     []
                   to contain:
-                    ["Java"]""").isEqualTo(
-                feedbackRepository.createFeedbackFromTestCase("test1", List.of(msg1, msg2, msg3), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText());
+                    ["Java"]""");
 
     }
 
@@ -74,8 +76,9 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     void createFeedbackFromTestCaseUnchanged() {
         String msgUnchanged = "Should not be changed";
-        assertThat(msgUnchanged)
-                .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText());
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test3", List.of(msgUnchanged), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+        assertThat(actualFeedback).isEqualTo(msgUnchanged);
 
     }
 
@@ -86,8 +89,9 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                 \tat test.MethodTest.checkMethods(MethodTest.java:129)
                 \tat test.MethodTest.testMethods(MethodTest.java:72)
                 \tat test.MethodTest.lambda$0(MethodTest.java:52)""";
-        assertThat("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.").isEqualTo(
-                feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText());
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+        assertThat(actualFeedback).isEqualTo("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.");
     }
 
     @Test
@@ -106,10 +110,10 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                 \tat org.hibernate.loader.plan.exec.process.internal.AbstractRowReader.readRow(AbstractRowReader.java:125)
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractRows(ResultSetProcessorImpl.java:157)
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractResults(ResultSetProcessorImpl.java:94)""";
-        assertThat(
-                "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups")
-                        .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
-                                .getDetailText());
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+        assertThat(actualFeedback).isEqualTo(
+                "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups");
     }
 
     @Test
@@ -137,7 +141,9 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                 \tat java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:500)
                 \tat de.tum.in.www1.artemis.FeedbackServiceTest.createFeedbackFromTestCaseMatchMultiple(FeedbackServiceTest.java:66)
                 """;
-        assertThat("""
+        String actualFeedback = feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)
+                .getDetailText();
+        assertThat(actualFeedback).isEqualTo("""
                 Expecting:
                  <"expected:
                     4
@@ -152,8 +158,7 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                     5
                 expected:
                     something else">
-                but was not.""").isEqualTo(
-                feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN).getDetailText());
+                but was not.""");
     }
 
     @Test
