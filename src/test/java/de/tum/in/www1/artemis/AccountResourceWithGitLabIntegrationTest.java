@@ -152,7 +152,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         assertThat(userRepo.findOneByLogin(user.getLogin())).isEmpty();
 
         // make another request
-        doReturn(new org.gitlab4j.api.models.User().withId(1)).when(mock(UserApi.class)).getUser(user.getLogin());
+        doReturn(new org.gitlab4j.api.models.User().withId(1L)).when(mock(UserApi.class)).getUser(user.getLogin());
         gitlabRequestMockProvider.mockCreateVcsUser(user, true);
         request.postWithoutLocation("/api/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
 
@@ -221,7 +221,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         gitlabRequestMockProvider.mockActivateUser(user.getLogin(), false);
         String activationKey = registeredUser.get().getActivationKey();
         request.get("/api/activate?key=" + activationKey, HttpStatus.OK, Void.class);
-        verify(gitlabRequestMockProvider.getMockedUserApi()).unblockUser(anyInt());
+        verify(gitlabRequestMockProvider.getMockedUserApi()).unblockUser(anyLong());
     }
 
     @Test
@@ -246,7 +246,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         gitlabRequestMockProvider.mockActivateUser(user.getLogin(), true);
         String activationKey = registeredUser.get().getActivationKey();
         request.get("/api/activate?key=" + activationKey, HttpStatus.INTERNAL_SERVER_ERROR, Void.class);
-        verify(gitlabRequestMockProvider.getMockedUserApi()).unblockUser(anyInt());
+        verify(gitlabRequestMockProvider.getMockedUserApi()).unblockUser(anyLong());
 
         assertThat(registeredUser.get().getActivationKey()).isNotNull();
     }
