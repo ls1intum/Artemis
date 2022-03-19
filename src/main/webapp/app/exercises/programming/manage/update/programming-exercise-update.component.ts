@@ -39,7 +39,7 @@ export enum JavaTestRepositoryProjectType {
     styleUrls: ['../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
-    IncludedInOverallScore = IncludedInOverallScore;
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     FeatureToggle = FeatureToggle;
     ProgrammingLanguage = ProgrammingLanguage;

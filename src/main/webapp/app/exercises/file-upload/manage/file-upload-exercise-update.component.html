@@ -68,7 +68,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"
-                    [excludeNotIncluded]="isExamMode"
+                    [allowNotIncluded]="!isExamMode"
                 ></jhi-included-in-overall-score-picker>
             </div>
         </div>

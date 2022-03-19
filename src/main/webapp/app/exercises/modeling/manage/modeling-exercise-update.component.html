@@ -72,7 +72,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="modelingExercise.includedInOverallScore"
-                    [excludeNotIncluded]="isExamMode"
+                    [allowNotIncluded]="!isExamMode"
                     id="modeling-includeInScore-picker"
                 ></jhi-included-in-overall-score-picker>
             </div>

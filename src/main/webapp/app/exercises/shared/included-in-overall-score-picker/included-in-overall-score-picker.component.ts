@@ -10,10 +10,10 @@ export class IncludedInOverallScorePickerComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     @Input()
-    includedInOverallScore: IncludedInOverallScore | undefined;
-    // Option to hide the NOT_INCLUDED option (used for exam exercises)
+    includedInOverallScore?: IncludedInOverallScore;
+    // Option to disallow the NOT_INCLUDED option (used for exam exercises)
     @Input()
-    excludeNotIncluded: boolean;
+    allowNotIncluded: boolean;
     @Output()
     includedInOverallScoreChange = new EventEmitter();
 

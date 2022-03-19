@@ -263,7 +263,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="programmingExercise.includedInOverallScore"
-                    [excludeNotIncluded]="isExamMode"
+                    [allowNotIncluded]="!isExamMode"
                 ></jhi-included-in-overall-score-picker>
             </div>
         </div>
