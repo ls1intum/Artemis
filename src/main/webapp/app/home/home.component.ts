@@ -32,8 +32,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     modalRef: NgbModalRef;
     password: string;
     rememberMe = true;
-    userAcceptTerms = false; // in case this is activated (see application-artemis.yml), users have to actively click into it
+    // in case this is activated (see application-artemis.yml), users have to actively click into it
     needsToAcceptTerms = false;
+    userAcceptedTerms = false;
     username: string;
     captchaRequired = false;
     credentials: Credentials;
@@ -75,23 +76,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.profileInfo = profileInfo;
-                if (profileInfo.activeProfiles.includes('jira')) {
-                    this.externalUserManagementUrl = profileInfo.externalUserManagementURL;
-                    this.externalUserManagementName = profileInfo.externalUserManagementName;
-                    if (profileInfo.allowedLdapUsernamePattern) {
-                        this.usernameRegexPattern = new RegExp(profileInfo.allowedLdapUsernamePattern);
-                    }
-                } else {
-                    // TODO: in the future we might also allow external user management for non jira profiles
-                    this.externalUserManagementActive = false;
-                }
-                this.accountName = profileInfo.accountName;
-                if (this.accountName === 'TUM') {
-                    this.errorMessageUsername = 'home.errors.tumWarning';
-                }
-                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-                this.needsToAcceptTerms = profileInfo.needsToAcceptTerms || false;
+                this.initializeWithProfileInfo(profileInfo);
             }
         });
         this.accountService.identity().then((user) => {
@@ -103,6 +88,34 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             }
         });
         this.registerAuthenticationSuccess();
+    }
+
+    /**
+     * Initializes the component with the required information received from the server.
+     * @param profileInfo The information from the server how logins should be handled.
+     * @private
+     */
+    private initializeWithProfileInfo(profileInfo: ProfileInfo) {
+        this.profileInfo = profileInfo;
+
+        if (profileInfo.activeProfiles.includes('jira')) {
+            this.externalUserManagementUrl = profileInfo.externalUserManagementURL;
+            this.externalUserManagementName = profileInfo.externalUserManagementName;
+            if (profileInfo.allowedLdapUsernamePattern) {
+                this.usernameRegexPattern = new RegExp(profileInfo.allowedLdapUsernamePattern);
+            }
+        } else {
+            // TODO: in the future we might also allow external user management for non jira profiles
+            this.externalUserManagementActive = false;
+        }
+
+        this.accountName = profileInfo.accountName;
+        if (this.accountName === 'TUM') {
+            this.errorMessageUsername = 'home.errors.tumWarning';
+        }
+
+        this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+        this.needsToAcceptTerms = profileInfo.needsToAcceptTerms || false;
     }
 
     registerAuthenticationSuccess() {
@@ -143,33 +156,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 password: this.password,
                 rememberMe: this.rememberMe,
             })
-            .then(() => {
-                this.authenticationError = false;
-                this.authenticationAttempts = 0;
-                this.captchaRequired = false;
-
-                if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
-                    this.router.navigate(['']);
-                }
-
-                this.eventManager.broadcast({
-                    name: 'authenticationSuccess',
-                    content: 'Sending Authentication Success',
-                });
-
-                // Log in to Orion
-                if (isOrion) {
-                    const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
-                    modalRef.componentInstance.text = 'login.ide.confirmation';
-                    modalRef.componentInstance.title = 'login.ide.title';
-                    modalRef.result.then(
-                        () => {
-                            this.orionConnectorService.login(this.username, this.password);
-                        },
-                        () => {},
-                    );
-                }
-            })
+            .then(() => this.handleLoginSuccess())
             .catch((error: HttpErrorResponse) => {
                 // TODO: if registration is enabled, handle the case "User was not activated"
                 this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
@@ -177,6 +164,45 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 this.authenticationAttempts++;
             })
             .finally(() => (this.isSubmittingLogin = false));
+    }
+
+    /**
+     * Handle a successful user login.
+     * @private
+     */
+    private handleLoginSuccess() {
+        this.authenticationError = false;
+        this.authenticationAttempts = 0;
+        this.captchaRequired = false;
+
+        if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
+            this.router.navigate(['']);
+        }
+
+        this.eventManager.broadcast({
+            name: 'authenticationSuccess',
+            content: 'Sending Authentication Success',
+        });
+
+        this.handleOrionLogin();
+    }
+
+    /**
+     * Handle special login procedures when inside the Orion plugin.
+     * @private
+     */
+    private handleOrionLogin() {
+        if (!isOrion) {
+            return;
+        }
+
+        const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.text = 'login.ide.confirmation';
+        modalRef.componentInstance.title = 'login.ide.title';
+        modalRef.result.then(
+            () => this.orionConnectorService.login(this.username, this.password),
+            () => {},
+        );
     }
 
     currentUserCallback(account: User) {
