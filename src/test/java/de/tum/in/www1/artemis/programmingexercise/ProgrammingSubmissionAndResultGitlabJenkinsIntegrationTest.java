@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,7 +8,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +31,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -62,6 +63,9 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     private ResultRepository resultRepository;
 
     private ProgrammingExercise exercise;
+
+    @Autowired
+    private ProgrammingSubmissionAndResultIntegrationTestService testService;
 
     @BeforeEach
     void setUp() {
@@ -160,11 +164,8 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
+        testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived();
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, JAVA);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-
         var pushJSON = (JSONObject) new JSONParser().parse(GITLAB_REQUEST);
         var firstCommitHash = (String) pushJSON.get("before");
         var secondCommitHash = (String) pushJSON.get("after");
@@ -172,20 +173,20 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
 
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-        gitlabRequestMockProvider.mockGetPushDate(participation, secondCommitHash, secondCommitDate);
-        gitlabRequestMockProvider.mockGetPushDate(participation, firstCommitHash, firstCommitDate);
+        gitlabRequestMockProvider.mockGetPushDate(testService.participation, secondCommitHash, secondCommitDate);
+        gitlabRequestMockProvider.mockGetPushDate(testService.participation, firstCommitHash, firstCommitDate);
 
         // First commit is pushed but not recorded
 
         // Second commit is pushed and recorded
-        postSubmission(participation.getId(), HttpStatus.OK);
+        postSubmission(testService.participation.getId(), HttpStatus.OK);
 
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
         var firstVcsDTO = new CommitDTO();
-        firstVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()));
+        firstVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
         firstVcsDTO.setHash(firstCommitHash);
-        var notificationDTOFirstCommit = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, JAVA, List.of());
+        var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
         notificationDTOFirstCommit.setRunDate(firstBuildCompleteDate);
         notificationDTOFirstCommit.setCommits(List.of(firstVcsDTO));
 
@@ -194,30 +195,15 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
         var secondVcsDTO = new CommitDTO();
-        secondVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()));
+        secondVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
         secondVcsDTO.setHash(secondCommitHash);
-        var notificationDTOSecondCommit = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, JAVA, List.of());
+        var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
         notificationDTOSecondCommit.setRunDate(secondBuildCompleteDate);
         notificationDTOSecondCommit.setCommits(List.of(secondVcsDTO));
 
         postResult(notificationDTOSecondCommit, HttpStatus.OK);
 
-        var submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
-
-        // Ensure correct submission and result count
-        assertThat(submissions).hasSize(2);
-        assertThat(submissions.get(0).getResults()).hasSize(1);
-        assertThat(submissions.get(1).getResults()).hasSize(1);
-
-        Submission submissionOfFirstCommit = submissions.stream().filter(submission -> submission.getCommitHash().equals(firstCommitHash)).findFirst().orElseThrow();
-        Submission submissionOfSecondCommit = submissions.stream().filter(submission -> submission.getCommitHash().equals(secondCommitHash)).findFirst().orElseThrow();
-
-        // Ensure submission date is in correct order
-        assertThat(submissionOfFirstCommit.getSubmissionDate()).isBefore(submissionOfSecondCommit.getSubmissionDate());
-
-        // Ensure submission dates are precise, some decimals/nanos get lost through time conversions
-        assertThat(ChronoUnit.MILLIS.between(submissionOfFirstCommit.getSubmissionDate(), firstCommitDate)).isLessThan(50);
-        assertThat(ChronoUnit.MILLIS.between(submissionOfSecondCommit.getSubmissionDate(), secondCommitDate)).isLessThan(50);
+        testService.shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -315,25 +301,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
     private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
-        return postSubmission(participationId, expectedStatus, GITLAB_REQUEST);
-    }
-
-    /**
-     * This is the simulated request from the VCS to Artemis on a new commit.
-     */
-    public ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus, String jsonRequest) throws Exception {
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(jsonRequest);
-
-        // Api should return ok.
-        request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participationId, obj, expectedStatus, new HttpHeaders());
-
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-
-        // Submission should have been created for the participation.
-        assertThat(submissions).hasSize(1);
-        // Make sure that both the submission and participation are correctly linked with each other.
-        return submissions.get(0);
+        return testService.postSubmission(participationId, expectedStatus, GITLAB_REQUEST);
     }
 
     private void assertNoNewSubmissions(ProgrammingSubmission existingSubmission) {

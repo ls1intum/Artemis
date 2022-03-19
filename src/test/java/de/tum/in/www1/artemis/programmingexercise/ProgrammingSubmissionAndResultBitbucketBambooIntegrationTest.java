@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.C;
-import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,7 +9,6 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -96,6 +94,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Autowired
     private ExamDateService examDateService;
 
+    @Autowired
+    private ProgrammingSubmissionAndResultIntegrationTestService testService;
+
     private Long exerciseId;
 
     private Long templateParticipationId;
@@ -164,7 +165,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), hash, ZonedDateTime.now());
         bitbucketRequestMockProvider.mockPutDefaultBranch(programmingExercise.getProjectKey());
-        return postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
+        return testService.postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
     }
 
     /**
@@ -557,10 +558,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = "student1", roles = "USER")
     public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, JAVA);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-
+        testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived();
         var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_REQUEST);
         var changes = (JSONArray) pushJSON.get("changes");
         var firstChange = (JSONObject) changes.get(0);
@@ -569,9 +567,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
         var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
 
-        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
-        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), secondCommitHash, secondCommitDate);
-        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), firstCommitHash, firstCommitDate);
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, testService.programmingExercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetPushDate(testService.programmingExercise.getProjectKey(), secondCommitHash, secondCommitDate);
+        bitbucketRequestMockProvider.mockGetPushDate(testService.programmingExercise.getProjectKey(), firstCommitHash, firstCommitDate);
 
         // First commit is pushed but not recorded
         var firstCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
@@ -582,7 +580,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var secondCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
         secondCommit.setId(secondCommitHash);
         secondCommit.setComment("Second commit");
-        postSubmission(participation.getId(), HttpStatus.OK);
+        postSubmission(testService.participation.getId(), HttpStatus.OK);
 
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
@@ -594,7 +592,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         notificationDTOFirstCommit.getBuild().setBuildCompletedDate(firstBuildCompleteDate);
         notificationDTOFirstCommit.getBuild().setVcs(List.of(firstVcsDTO));
 
-        postResult(participation.getBuildPlanId(), notificationDTOFirstCommit, HttpStatus.OK, false);
+        postResult(testService.participation.getBuildPlanId(), notificationDTOFirstCommit, HttpStatus.OK, false);
 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
@@ -606,24 +604,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         notificationDTOSecondCommit.getBuild().setBuildCompletedDate(secondBuildCompleteDate);
         notificationDTOSecondCommit.getBuild().setVcs(List.of(secondVcsDTO));
 
-        postResult(participation.getBuildPlanId(), notificationDTOSecondCommit, HttpStatus.OK, false);
+        postResult(testService.participation.getBuildPlanId(), notificationDTOSecondCommit, HttpStatus.OK, false);
 
-        var submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
-
-        // Ensure correct submission and result count
-        assertThat(submissions).hasSize(2);
-        assertThat(submissions.get(0).getResults()).hasSize(1);
-        assertThat(submissions.get(1).getResults()).hasSize(1);
-
-        Submission submissionOfFirstCommit = submissions.stream().filter(submission -> submission.getCommitHash().equals(firstCommitHash)).findFirst().orElseThrow();
-        Submission submissionOfSecondCommit = submissions.stream().filter(submission -> submission.getCommitHash().equals(secondCommitHash)).findFirst().orElseThrow();
-
-        // Ensure submission date is in correct order
-        assertThat(submissionOfFirstCommit.getSubmissionDate()).isBefore(submissionOfSecondCommit.getSubmissionDate());
-
-        // Ensure submission dates are precise, some decimals/nanos get lost through time conversions
-        assertThat(ChronoUnit.MILLIS.between(submissionOfFirstCommit.getSubmissionDate(), firstCommitDate)).isLessThan(50);
-        assertThat(ChronoUnit.MILLIS.between(submissionOfSecondCommit.getSubmissionDate(), secondCommitDate)).isLessThan(50);
+        testService.shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -823,23 +806,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
     private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
-        return postSubmission(participationId, expectedStatus, BITBUCKET_REQUEST);
-    }
-
-    /**
-     * This is the simulated request from the VCS to Artemis on a new commit.
-     */
-    private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus, String jsonRequest) throws Exception {
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(jsonRequest);
-
-        // Api should return ok.
-        request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participationId, obj, expectedStatus, new HttpHeaders());
-
-        // Submission should have been created for the participation.
-        assertThat(submissionRepository.findAll()).hasSize(1);
-        // Make sure that both the submission and participation are correctly linked with each other.
-        return submissionRepository.findAll().get(0);
+        return testService.postSubmission(participationId, expectedStatus, BITBUCKET_REQUEST);
     }
 
     /**
