@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZoneId;
@@ -289,10 +287,10 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         StudentParticipation participation = request.get("/api/text-editor/" + participationId, HttpStatus.OK, StudentParticipation.class);
 
-        assertThat(participation.getResults(), is(notNullValue()));
-        assertThat(participation.getResults(), hasSize(1));
+        assertThat(participation.getResults()).isNotNull();
+        assertThat(participation.getResults()).hasSize(1);
 
-        assertThat(participation.getSubmissions(), is(notNullValue()));
+        assertThat(participation.getSubmissions()).isNotNull();
     }
 
     @Test

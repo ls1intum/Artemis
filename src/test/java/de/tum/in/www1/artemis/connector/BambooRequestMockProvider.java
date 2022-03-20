@@ -152,12 +152,14 @@ public class BambooRequestMockProvider {
 
         final var instructorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName());
         mockServer.expect(requestTo(instructorURI)).andExpect(method(HttpMethod.PUT))
-                .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
+                .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "CREATEREPOSITORY", "ADMINISTRATION"))))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
 
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName() != null) {
             final var editorURI = buildGivePermissionsURIFor(projectKey, exercise.getCourseViaExerciseGroupOrCourseMember().getEditorGroupName());
             mockServer.expect(requestTo(editorURI)).andExpect(method(HttpMethod.PUT))
-                    .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "ADMINISTRATION")))).andRespond(withStatus(HttpStatus.NO_CONTENT));
+                    .andExpect(content().json(mapper.writeValueAsString(List.of("CREATE", "READ", "CREATEREPOSITORY", "ADMINISTRATION"))))
+                    .andRespond(withStatus(HttpStatus.NO_CONTENT));
         }
 
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
