@@ -1,7 +1,12 @@
 <div class="row justify-content-center">
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
-        <li [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)" (click)="navigate()" [ngbTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate">
+        <li
+            [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)"
+            (click)="navigate()"
+            [ngbTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"
+            container="body"
+        >
             <fa-icon [icon]="faBook"></fa-icon>
         </li>
         <li
@@ -9,6 +14,7 @@
             [ngClass]="calculateClasses(TRAINED)"
             (click)="navigate()"
             [ngbTooltip]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
+            container="body"
         >
             <fa-icon [icon]="faChalkboardTeacher"></fa-icon>
         </li>

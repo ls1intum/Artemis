@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 
 import java.util.*;
 
@@ -99,9 +98,9 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
 
         await().until(() -> feedbackConflictRepository.count() >= 0);
 
-        assertThat(feedbackConflictRepository.findAll(), hasSize(1));
-        assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), either(is(feedback1)).or(is(feedback2)));
-        assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback(), either(is(feedback1)).or(is(feedback2)));
+        assertThat(feedbackConflictRepository.findAll()).hasSize(1);
+        assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback()).isIn(feedback1, feedback2);
+        assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback()).isIn(feedback1, feedback2);
     }
 
     /**
@@ -137,10 +136,10 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
 
         await().until(() -> feedbackConflictRepository.count() >= 0);
 
-        assertThat(feedbackConflictRepository.findAll(), hasSize(1));
-        assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));
-        assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback(), is(feedback2));
-        assertThat(feedbackConflictRepository.findAll().get(0).getType(), is(FeedbackConflictType.INCONSISTENT_SCORE));
+        assertThat(feedbackConflictRepository.findAll()).hasSize(1);
+        assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback()).isEqualTo(feedback1);
+        assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback()).isEqualTo(feedback2);
+        assertThat(feedbackConflictRepository.findAll().get(0).getType()).isEqualTo(FeedbackConflictType.INCONSISTENT_SCORE);
     }
 
     /**
@@ -176,11 +175,11 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
 
         await().until(() -> feedbackConflictRepository.count() >= 0);
 
-        assertThat(feedbackConflictRepository.findAll(), hasSize(1));
-        assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback(), is(feedback1));
-        assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback(), is(feedback2));
-        assertThat(feedbackConflictRepository.findAll().get(0).getConflict(), is(Boolean.FALSE));
-        assertThat(feedbackConflictRepository.findAll().get(0).getSolvedAt(), is(notNullValue()));
+        assertThat(feedbackConflictRepository.findAll()).hasSize(1);
+        assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback()).isEqualTo(feedback1);
+        assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback()).isEqualTo(feedback2);
+        assertThat(feedbackConflictRepository.findAll().get(0).getConflict()).isFalse();
+        assertThat(feedbackConflictRepository.findAll().get(0).getSolvedAt()).isNotNull();
     }
 
     /**
@@ -191,7 +190,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     public void testSubmissionDelete() {
         TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         textSubmissionRepository.deleteById(textSubmission.getId());
-        assertThat(feedbackConflictRepository.findAll(), hasSize(0));
+        assertThat(feedbackConflictRepository.findAll()).isEmpty();
     }
 
     /**
@@ -202,7 +201,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     public void testResultDelete() {
         TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         resultRepository.deleteById(textSubmission.getLatestResult().getId());
-        assertThat(feedbackConflictRepository.findAll(), hasSize(0));
+        assertThat(feedbackConflictRepository.findAll()).isEmpty();
     }
 
     /**
@@ -213,7 +212,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     public void testFeedbackDelete() {
         this.createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackRepository.deleteAll();
-        assertThat(feedbackConflictRepository.findAll(), hasSize(0));
+        assertThat(feedbackConflictRepository.findAll()).isEmpty();
     }
 
     /**
@@ -224,7 +223,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     public void testFeedbackConflictDelete() {
         createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackConflictRepository.deleteAll();
-        assertThat(feedbackRepository.findAll(), hasSize(2));
+        assertThat(feedbackRepository.findAll()).hasSize(2);
     }
 
     private List<FeedbackConflictResponseDTO> createRemoteServiceResponse(Feedback firstFeedback, Feedback secondFeedback) {
