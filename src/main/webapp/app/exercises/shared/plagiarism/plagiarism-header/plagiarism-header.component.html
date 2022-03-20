@@ -7,11 +7,11 @@
     </div>
 
     <div class="plagiarism-header-right">
-        <button class="btn btn-success btn-sm" (click)="confirmPlagiarism()" data-qa="confirm-plagiarism-button">
+        <button [disabled]="comparison.status === plagiarismStatus.CONFIRMED" class="btn btn-success btn-sm" (click)="confirmPlagiarism()" data-qa="confirm-plagiarism-button">
             {{ 'artemisApp.plagiarism.confirm' | artemisTranslate }}
         </button>
 
-        <button class="btn btn-danger btn-sm" (click)="denyPlagiarism()" data-qa="deny-plagiarism-button">
+        <button [disabled]="comparison.status === plagiarismStatus.DENIED" class="btn btn-danger btn-sm" (click)="denyPlagiarism()" data-qa="deny-plagiarism-button">
             {{ 'artemisApp.plagiarism.deny' | artemisTranslate }}
         </button>
 
