@@ -114,8 +114,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.errorMessageUsername = 'home.errors.tumWarning';
         }
 
-        this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-        this.needsToAcceptTerms = profileInfo.needsToAcceptTerms || false;
+        this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
+        this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
     }
 
     registerAuthenticationSuccess() {
