@@ -6,6 +6,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { ChatSession } from 'app/entities/metis/chat.session/chat.session.model';
+import { UserChatSession } from 'app/entities/metis/chat.session/user.chat.session.model';
 
 export const metisLecture = { id: 1, title: 'Metis  Lecture' } as Lecture;
 export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture' } as Lecture;
@@ -151,3 +153,19 @@ export const metisPostToCreateUser1 = {
     content: 'metisAnswerToCreateUser1',
     creationDate: undefined,
 } as Post;
+
+export const metisUserChatSessionToCreateUser2 = {
+    user: metisUser2,
+    lastRead: undefined,
+    archived: false,
+    deleted: false,
+} as UserChatSession;
+
+export const metisChatSessionToCreateUser1 = {
+    course: metisCourse,
+    userChatSessions: [metisUserChatSessionToCreateUser2],
+    creationDate: undefined,
+    lastMessageDate: undefined,
+} as ChatSession;
+
+export const metisChatSessionsOfUser1 = [metisChatSessionToCreateUser1];

@@ -24,6 +24,8 @@ public class ChatService {
 
     private static final String METIS_CHAT_SESSION_ENTITY_NAME = "metis.chatSession";
 
+    private static final String METIS_USER_CHAT_SESSION_ENTITY_NAME = "metis.userChatSession";
+
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     private final UserRepository userRepository;
@@ -49,19 +51,29 @@ public class ChatService {
     }
 
     /**
-     * Persists given chat session
+     * Persists given chatSession
      *
-     * @return persisted chat session
+     * @param courseId      id of course the chatSessions belongs to
+     * @param chatSession   chatSession to be persisted
+     * @return              persisted chatSession
      */
-    public ChatSession createChatSession(ChatSession chatSession) {
+    public ChatSession createChatSession(Long courseId, ChatSession chatSession) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
         if (chatSession.getId() != null) {
             throw new BadRequestAlertException("A new chat session cannot already have an ID", METIS_CHAT_SESSION_ENTITY_NAME, "idexists");
         }
 
-        final Course course = preCheckUserAndCourse(user, chatSession.getCourse().getId());
+        if (chatSession.getUserChatSessions().isEmpty()) {
+            throw new BadRequestAlertException("A new chat session must have userChatSession", METIS_USER_CHAT_SESSION_ENTITY_NAME, "NotNull");
+        }
+
+        final Course course = preCheckUserAndCourse(user, courseId);
         chatSession.setCourse(course);
+
+        UserChatSession userChatSessionOfCurrentUser = new UserChatSession();
+        userChatSessionOfCurrentUser.setUser(user);
+        chatSession.getUserChatSessions().add(userChatSessionOfCurrentUser);
 
         chatSession.getUserChatSessions().forEach(userChatSession -> userChatSession = createUserChatSession(userChatSession, chatSession));
 
@@ -74,9 +86,9 @@ public class ChatService {
     }
 
     /**
-     * Retrieve chat sessions from database by userId
+     * Retrieve chat sessions from database by userId and courseId
      *
-     * @param courseId id of course the chat sessions belongs to
+     * @param courseId id of course the chatSessions belongs to
      * @return retrieved chat sessions
      */
     public List<ChatSession> getChatSessions(Long courseId) {
@@ -88,7 +100,7 @@ public class ChatService {
     /**
      * Broadcasts a session related event in a course under a specific topic via websockets
      *
-     * @param chatSessionDTO object including the affected post as well as the action
+     * @param chatSessionDTO object including the affected chatSession as well as the action
      */
     private void broadcastForChatSession(ChatSessionDTO chatSessionDTO) {
         String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + chatSessionDTO.getChatSession().getCourse().getId();
@@ -98,6 +110,12 @@ public class ChatService {
                 .forEach(userChatSession -> messagingTemplate.convertAndSend(userChatSessionTopicName + userChatSession.getUser().getId(), chatSessionDTO));
     }
 
+    /**
+     * Helper method that persists a userChatSession
+     * @param userChatSession   userChatSession to be persisted
+     * @param chatSession       chatSession in association with userChatSession
+     * @return                  persisted userChatSession
+     */
     private UserChatSession createUserChatSession(UserChatSession userChatSession, ChatSession chatSession) {
         userChatSession.setLastRead(chatSession.getLastMessageDate());
         return userChatSessionRepository.save(userChatSession);

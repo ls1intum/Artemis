@@ -46,7 +46,7 @@
             ></jhi-team-delete-button>
         </div>
     </div>
-    <jhi-data-table [isLoading]="isLoading" [isTransitioning]="isTransitioning" [showPageSizeDropdownAndSearchField]="false" [allEntities]="team?.students || []">
+    <jhi-data-table [isLoading]="isLoading" [isTransitioning]="isTransitioning" [showPageSizeDropdown]="false" [showSearchField]="false" [allEntities]="team?.students || []">
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
                 class="bootstrap"

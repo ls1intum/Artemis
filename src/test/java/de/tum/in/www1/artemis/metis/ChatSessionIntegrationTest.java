@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.metis.ChatSession;
 import de.tum.in.www1.artemis.domain.metis.UserChatSession;
 import de.tum.in.www1.artemis.repository.metis.ChatSessionRepository;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ChatSessionDTO;
 
 class ChatSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -55,9 +56,10 @@ class ChatSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateChatSession() throws Exception {
-        ChatSession chatSessionToSave = createChatSession();
+        ChatSession chatSessionToSave = createChatSession(course, database);
 
-        ChatSession createdChatSession = request.postWithResponseBody("/api/chatSessions/", chatSessionToSave, ChatSession.class, HttpStatus.CREATED);
+        ChatSession createdChatSession = request.postWithResponseBody("/api/courses/" + course.getId() + "/chatSessions/", chatSessionToSave, ChatSession.class,
+                HttpStatus.CREATED);
 
         checkCreatedUserChatSessions(createdChatSession.getUserChatSessions(), createdChatSession.getCreationDate());
         checkCreatedChatSession(chatSessionToSave, createdChatSession);
@@ -70,15 +72,17 @@ class ChatSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void testCreateChatSession_BadRequest() throws Exception {
-        ChatSession chatSessionToSave = createChatSession();
+    void testCreateChatSession_badRequest() throws Exception {
+        ChatSession chatSessionToSave = new ChatSession();
+
+        // chatSession without required userChatSession
+        createChatSessionBadRequest(chatSessionToSave);
+
+        chatSessionToSave = createChatSession(course, database);
         chatSessionToSave.setId(1L);
 
-        ChatSession createdChatSession = request.postWithResponseBody("/api/chatSessions/", chatSessionToSave, ChatSession.class, HttpStatus.BAD_REQUEST);
-        assertThat(createdChatSession).isNull();
-
-        // checks if members of the created chat session were not notified via broadcast
-        verify(messagingTemplate, times(0)).convertAndSend(anyString(), any(ChatSessionDTO.class));
+        // chatSession with existing ID
+        createChatSessionBadRequest(chatSessionToSave);
     }
 
     @Test
@@ -87,30 +91,34 @@ class ChatSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var params = new LinkedMultiValueMap<String, String>();
         List<ChatSession> chatSessionsOfUser;
 
-        chatSessionsOfUser = request.getList("/api/chatSessions/" + course.getId(), HttpStatus.OK, ChatSession.class, params);
+        chatSessionsOfUser = request.getList("/api/courses/" + course.getId() + "/chatSessions/", HttpStatus.OK, ChatSession.class, params);
         assertThat(chatSessionsOfUser.get(0)).isEqualTo(existingChatSession);
 
         database.changeUser("student2");
-        chatSessionsOfUser = request.getList("/api/chatSessions/" + course.getId(), HttpStatus.OK, ChatSession.class, params);
+        chatSessionsOfUser = request.getList("/api/courses/" + course.getId() + "/chatSessions/", HttpStatus.OK, ChatSession.class, params);
         assertThat(chatSessionsOfUser.get(0)).isEqualTo(existingChatSession);
 
         database.changeUser("student3");
-        chatSessionsOfUser = request.getList("/api/chatSessions/" + course.getId(), HttpStatus.OK, ChatSession.class, params);
+        chatSessionsOfUser = request.getList("/api/courses/" + course.getId() + "/chatSessions/", HttpStatus.OK, ChatSession.class, params);
         assertThat(chatSessionsOfUser).isEmpty();
     }
 
-    private ChatSession createChatSession() {
+    private void createChatSessionBadRequest(ChatSession chatSessionToSave) throws Exception {
+        ChatSession createdChatSession = request.postWithResponseBody("/api/courses/" + course.getId() + "/chatSessions/", chatSessionToSave, ChatSession.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(createdChatSession).isNull();
+
+        // checks if members of the created chat session were not notified via broadcast
+        verify(messagingTemplate, times(0)).convertAndSend(anyString(), any(ChatSessionDTO.class));
+    }
+
+    static ChatSession createChatSession(Course course, DatabaseUtilService databaseUtilService) {
         ChatSession chatSession = new ChatSession();
 
-        UserChatSession userChatSession1 = new UserChatSession();
-        userChatSession1.setUser(database.getUserByLogin("student1"));
-        userChatSession1.setLastRead(chatSession.getCreationDate());
-
         UserChatSession userChatSession2 = new UserChatSession();
-        userChatSession2.setUser(database.getUserByLogin("student2"));
+        userChatSession2.setUser(databaseUtilService.getUserByLogin("student2"));
         userChatSession2.setLastRead(chatSession.getCreationDate());
 
-        chatSession.getUserChatSessions().add(userChatSession1);
         chatSession.getUserChatSessions().add(userChatSession2);
         chatSession.setCourse(course);
 

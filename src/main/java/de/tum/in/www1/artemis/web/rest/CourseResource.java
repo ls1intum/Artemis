@@ -23,10 +23,12 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -851,6 +853,25 @@ public class CourseResource {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getInstructorGroupName());
+    }
+
+    /**
+     * GET /courses/:courseId/search-users : search users for a given course within all groups.
+     *
+     * @param courseId    the id of the course for which to search users
+     * @param loginOrName the login or name by which to search users
+     * @return the ResponseEntity with status 200 (OK) and with body all users
+     */
+    @GetMapping("/courses/{courseId}/search-other-users")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<User>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("loginOrName") String loginOrName) {
+        // restrict result size by only allowing reasonable searches
+        if (loginOrName.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
+        }
+        Course course = courseRepository.findByIdElseThrow(courseId);
+
+        return ResponseEntity.ok().body(courseService.searchOtherUsersByLoginOrNameInCourse(course, loginOrName));
     }
 
     /**

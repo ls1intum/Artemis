@@ -1,5 +1,5 @@
 <jhi-assessment-warning *ngIf="exercise && exercise.isAtLeastInstructor" [exercise]="exercise" [submissions]="submissions"></jhi-assessment-warning>
-<jhi-data-table [isLoading]="isLoading" [showPageSizeDropdownAndSearchField]="false" [allEntities]="exercises">
+<jhi-data-table [isLoading]="isLoading" [showPageSizeDropdown]="false" [showSearchField]="false" [allEntities]="exercises">
     <ng-template let-settings="settings" let-controls="controls">
         <ngx-datatable
             class="bootstrap"

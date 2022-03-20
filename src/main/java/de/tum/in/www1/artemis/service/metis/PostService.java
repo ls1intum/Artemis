@@ -113,7 +113,7 @@ public class PostService extends PostingService {
 
         // create chat session for chat if session does not exist
         if (post.getChatSession() != null && post.getChatSession().getId() == null) {
-            post.setChatSession(chatService.createChatSession(post.getChatSession()));
+            post.setChatSession(chatService.createChatSession(courseId, post.getChatSession()));
         }
 
         Post savedPost = postRepository.save(post);
@@ -547,6 +547,12 @@ public class PostService extends PostingService {
         return postRepository.findByIdElseThrow(postId);
     }
 
+    /**
+     * Retrieve post from database by chatSession
+     *
+     * @param sessionId id of chatSession to retrieve posts associated
+     * @return          retrieved posts
+     */
     public List<Post> getPostsByChatSession(Long sessionId) {
         mayInteractWithChatSessionElseThrow(sessionId);
 

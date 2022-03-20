@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
-import static tech.jhipster.config.JHipsterConstants.*;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.IsoFields;
 import java.util.*;
@@ -555,18 +558,32 @@ public class CourseService {
     public ResponseEntity<List<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllInGroup(groupName);
-        usersInGroup.forEach(user -> {
-            // remove some values which are not needed in the client
-            user.setLastNotificationRead(null);
-            user.setActivationKey(null);
-            user.setLangKey(null);
-            user.setLastNotificationRead(null);
-            user.setLastModifiedBy(null);
-            user.setLastModifiedDate(null);
-            user.setCreatedBy(null);
-            user.setCreatedDate(null);
-        });
+        removeUserVariables(usersInGroup);
         return ResponseEntity.ok().body(usersInGroup);
+    }
+
+    /**
+     * Search for users of all user groups by login or name in course
+     *
+     * @param course Course in which to search students
+     * @param loginOrName Login or name by which to search students
+     * @return users whose login matched
+     */
+    public List<User> searchOtherUsersByLoginOrNameInCourse(Course course, String loginOrName) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        List<User> searchResult = new ArrayList<>();
+        searchResult.addAll(userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName));
+        searchResult.addAll(userRepository.searchByLoginOrNameInGroup(course.getTeachingAssistantGroupName(), loginOrName));
+        searchResult.addAll(userRepository.searchByLoginOrNameInGroup(course.getEditorGroupName(), loginOrName));
+        searchResult.addAll(userRepository.searchByLoginOrNameInGroup(course.getInstructorGroupName(), loginOrName));
+        removeUserVariables(searchResult);
+
+        // users should not find themselves
+        User searchingUser = userRepository.getUser();
+        searchResult = searchResult.stream().distinct().filter(user -> user.getId() != searchingUser.getId()).toList();
+
+        return (searchResult);
     }
 
     public void addUserToGroup(User user, String group, Role role) {
@@ -673,5 +690,23 @@ public class CourseService {
             }
             courseRepository.save(course);
         }
+    }
+
+    /**
+     * helper method which removes some values from the user entity which are not needed in the client
+     *
+     * @param usersInGroup  user whose variables are removed
+     */
+    private void removeUserVariables(List<User> usersInGroup) {
+        usersInGroup.forEach(user -> {
+            user.setLastNotificationRead(null);
+            user.setActivationKey(null);
+            user.setLangKey(null);
+            user.setLastNotificationRead(null);
+            user.setLastModifiedBy(null);
+            user.setLastModifiedDate(null);
+            user.setCreatedBy(null);
+            user.setCreatedDate(null);
+        });
     }
 }

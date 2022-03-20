@@ -1,12 +1,12 @@
-import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
+import { Component, ContentChild, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
-import { get, isNumber, flatten } from 'lodash-es';
+import { flatten, get, isNumber } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
-import { faSort, faSortUp, faSortDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Enum for ascending and descending order.
@@ -64,7 +64,8 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property searchFailed Whether to show a badge that indicates that the search has failed
      * @property searchNoResults Whether to show a badge that indicates that the search did not return any results
      * @property isTransitioning Loading overlay on top of the table indicating that the content is changing
-     * @property showPageSizeDropdownAndSearchField Flag whether to show the "entities per page" dropdown and search input field
+     * @property showPageSizeDropdown Flag whether to show the "entities per page" dropdown
+     * @property showSearchField Flag whether to show the search input field
      * @property entityType Entity identifier (e.g. 'result' or 'participation') used as a key to differentiate from other tables
      * @property allEntities List of all entities that should be displayed in the table (one entity per row)
      * @property entitiesPerPageTranslation Translation string that has the variable {{ number }} in it (e.g. 'artemisApp.exercise.resultsPerPage')
@@ -85,7 +86,8 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchFailed = false;
     @Input() searchNoResults = false;
     @Input() isTransitioning = false;
-    @Input() showPageSizeDropdownAndSearchField = true;
+    @Input() showPageSizeDropdown = true;
+    @Input() showSearchField = true;
     @Input() entityType = 'entity';
     @Input() allEntities: BaseEntity[] = [];
     @Input() entitiesPerPageTranslation: string;

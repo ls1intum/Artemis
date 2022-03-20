@@ -1,0 +1,10 @@
+{
+    "artemisApp": {
+        "messages": {
+            "label": "Private Nachricht",
+            "chatSession": {
+                "notFound": "Kein Chat gefunden"
+            }
+        }
+    }
+}

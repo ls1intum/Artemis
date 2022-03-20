@@ -59,6 +59,10 @@ const routes: Routes = [
                 loadChildren: () => import('../overview/course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
             },
             {
+                path: 'messages',
+                loadChildren: () => import('./course-messages/course-messages.module').then((m) => m.CourseMessagesModule),
+            },
+            {
                 path: 'exams',
                 component: CourseExamsComponent,
                 data: {

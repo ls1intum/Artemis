@@ -362,6 +362,18 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('should search other users within course', fakeAsync(() => {
+        const users = [new User(1, 'user1')];
+        returnedFromService = [...users];
+        courseManagementService
+            .searchOtherUsersInCourse(course.id!, 'user1')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users` });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
     it('should find all users of course group', fakeAsync(() => {
         const expectedBlob = new Blob(['abc', 'cfe']);
         courseManagementService.downloadCourseArchive(course.id!).subscribe((resp) => {

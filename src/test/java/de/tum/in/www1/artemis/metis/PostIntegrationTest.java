@@ -29,7 +29,9 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ChatSessionDTO;
@@ -527,7 +529,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetChatSessionPost() throws Exception {
-        // chat session ID set will fetch all posts of chat session if the user is involved
+        // chatSessionId set will fetch all posts of chat session if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         params.add("chatSessionId", existingChatSessionPosts.get(0).getChatSession().getId().toString());
 
@@ -740,26 +742,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         post.setAuthor(database.getUserByLogin("student1"));
         post.setCourse(course);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setChatSession(createChatSession());
+        post.setChatSession(ChatSessionIntegrationTest.createChatSession(course, database));
         return post;
-    }
-
-    private ChatSession createChatSession() {
-        ChatSession chatSession = new ChatSession();
-
-        UserChatSession userChatSession1 = new UserChatSession();
-        userChatSession1.setUser(database.getUserByLogin("student1"));
-        userChatSession1.setLastRead(chatSession.getCreationDate());
-
-        UserChatSession userChatSession2 = new UserChatSession();
-        userChatSession2.setUser(database.getUserByLogin("student2"));
-        userChatSession2.setLastRead(chatSession.getCreationDate());
-
-        chatSession.getUserChatSessions().add(userChatSession1);
-        chatSession.getUserChatSessions().add(userChatSession2);
-        chatSession.setCourse(course);
-
-        return chatSession;
     }
 
     private Post editExistingPost(Post postToUpdate) {

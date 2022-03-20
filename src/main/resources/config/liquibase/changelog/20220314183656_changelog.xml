@@ -20,6 +20,9 @@
         </createTable>
 
         <createTable tableName="user_chat_session">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="user_chat_sessionPK"/>
+            </column>
             <column name="chat_session_id" type="bigint"/>
             <column name="user_id" type="BIGINT"/>
             <column name="last_read" type="datetime"/>

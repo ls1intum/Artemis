@@ -398,6 +398,18 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
+        courseTestService.testSearchStudentsAndTutorsAndInstructorsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSearchStudentsAndTutorsAndInstructorsInOtherCourse_forbidden() throws Exception {
+        courseTestService.testSearchStudentsAndTutorsAndInstructorsInOtherCourse_forbidden();
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testAddStudentOrTutorOrEditorOrInstructorToCourse() throws Exception {
         bitbucketRequestMockProvider.mockUpdateUserDetails("student1", "student1@test.de", "student1First student1Last");

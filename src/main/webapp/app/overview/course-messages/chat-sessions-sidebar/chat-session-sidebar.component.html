@@ -1,0 +1,49 @@
+<aside class="plagiarism-sidebar">
+    <div class="plagiarism-info-tab" [class.selected]="showRunDetails" (click)="displayRunDetails()">
+        <span>Run details</span>
+        <fa-icon [icon]="faChevronRight"></fa-icon>
+    </div>
+
+    <jhi-data-table
+        [showPageSizeDropdown]="false"
+        entityType="user"
+        [onSearchWrapper]="searchAllUsers"
+        [searchFields]="['name']"
+        [isLoading]="isLoading"
+        [isSearching]="isSearching"
+        [searchFailed]="searchFailed"
+        [searchNoResults]="searchNoResults"
+        [isTransitioning]="isTransitioning"
+        [searchResultFormatter]="searchResultFormatter"
+    >
+    </jhi-data-table>
+
+    <div class="filter-disclaimer" *ngIf="casesFiltered">
+        <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle"></fa-icon>
+        <span>{{ 'artemisApp.plagiarism.casesFiltered' | artemisTranslate }}</span>
+    </div>
+
+    <ul *ngIf="chatSessions && chatSessions.length">
+        <li *ngFor="let chatSession of chatSessions" class="plagiarism-list-item" (click)="selectIndex.emit(chatSession.id)">
+            <div class="plagiarism-list-item-info">
+                <span class="plagiarism-list-item-students">
+                    <span>{{ getNameOfChatSessionParticipant(chatSession) }}</span>
+                </span>
+            </div>
+        </li>
+    </ul>
+
+    <div class="plagiarism-empty" *ngIf="!chatSessions || chatSessions.length == 0">
+        {{ 'artemisApp.messages.chatSession.notFound' | artemisTranslate }}
+    </div>
+
+    <div class="plagiarism-paging">
+        <div class="plagiarism-paging-left" [class.disabled]="currentPage === 0" (click)="handlePageLeft()">
+            <fa-icon [icon]="faArrowLeft"></fa-icon>
+        </div>
+        <div class="plagiarism-paging-center">{{ currentPage + 1 }}/{{ numberOfPages + 1 }}</div>
+        <div class="plagiarism-paging-right" [class.disabled]="currentPage === numberOfPages" (click)="handlePageRight()">
+            <fa-icon [icon]="faArrowRight"></fa-icon>
+        </div>
+    </div>
+</aside>

@@ -1,0 +1,152 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+$card-body-padding: 1.25rem;
+$navbar-height: 57px;
+$breadcrumbs-height: 41px;
+$footer-height: 31px;
+
+.plagiarism-inspector {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 2 * #{$card-body-padding} - #{$navbar-height} - #{$footer-height} - #{$breadcrumbs-height});
+    // JHipster's .card-body has default padding of 1.25
+    margin: -1.25rem;
+
+    .plagiarism-header {
+        background-color: $artemis-dark;
+        color: white;
+        flex-shrink: 0;
+
+        &-top {
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
+            padding: 1.5rem;
+
+            &-left {
+                align-items: center;
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            &-right {
+                display: flex;
+
+                .check-plagiarism {
+                    margin-right: 1rem;
+                }
+            }
+        }
+
+        .plagiarism-page-title {
+            align-items: center;
+            display: flex;
+            margin: 0 1rem 0 0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+
+            &:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .plagiarism-options-toggle {
+                font-size: 1.1rem;
+                margin-right: 1rem;
+            }
+
+            &.active .plagiarism-options-toggle {
+                transform: rotate(90deg);
+            }
+        }
+
+        &-options {
+            align-items: center;
+            background-color: darken($artemis-dark, 4);
+            display: flex;
+            flex-wrap: wrap;
+            padding: 1rem 1.5rem;
+
+            & > :not(:last-child) {
+                margin-right: 1.5rem;
+            }
+
+            .plagiarism-option {
+                align-items: center;
+                display: flex;
+                flex-shrink: 0;
+
+                &.disabled .form-control {
+                    opacity: 0.4;
+                }
+
+                &-label {
+                    flex-shrink: 0;
+                    margin-right: 0.5rem;
+                }
+
+                &-checkbox {
+                    margin-right: 0.5rem;
+                }
+
+                #plagiarism-similarity-threshold,
+                #plagiarism-minimum-score,
+                #plagiarism-minimum-size {
+                    margin-left: 1rem;
+                }
+
+                .form-control {
+                    padding-right: 0;
+                }
+            }
+        }
+    }
+
+    .plagiarism-body {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        padding-left: 240px;
+        position: relative;
+        overflow: hidden;
+
+        .plagiarism-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+    }
+
+    .plagiarism-warning {
+        align-items: center;
+        display: flex;
+        color: darken($body-bg, 20);
+        padding-top: 1px;
+
+        #plagiarismCaution {
+            margin-right: 0.5rem;
+        }
+    }
+
+    .plagiarism-checkbox {
+        align-items: center;
+        display: flex;
+        margin: 0;
+        flex-shrink: 0;
+
+        #generateJPlagReport {
+            margin-right: 0.5rem;
+        }
+    }
+
+    .plagiarism-empty {
+        align-items: center;
+        display: flex;
+        flex-grow: 1;
+        justify-content: center;
+
+        &-label {
+            opacity: 0.5;
+        }
+    }
+}

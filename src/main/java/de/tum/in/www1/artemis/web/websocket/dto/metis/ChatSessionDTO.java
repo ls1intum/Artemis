@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.metis.ChatSession;
 
 /**
- * DTO that is included as payload for post related websocket messages
+ * DTO that is included as payload for chatSession related websocket messages
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ChatSessionDTO {

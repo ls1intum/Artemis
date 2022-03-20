@@ -316,6 +316,17 @@ export class CourseManagementService {
     }
 
     /**
+     * finds users of the course corresponding to the given unique identifier and loginOrName
+     * @param courseId - the id of the course
+     * @param loginOrName - the term to search users
+     */
+    searchOtherUsersInCourse(courseId: number, loginOrName: string): Observable<HttpResponse<User[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('loginOrName', loginOrName);
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/search-other-users`, { params: httpParams, observe: 'response' });
+    }
+
+    /**
      * Downloads the course archive of the specified courseId. Returns an error
      * if the archive does not exist.
      * @param courseId The id of the course
