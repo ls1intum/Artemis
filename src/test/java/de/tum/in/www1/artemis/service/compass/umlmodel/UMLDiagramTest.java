@@ -59,13 +59,13 @@ public class UMLDiagramTest {
     @Test
     void similarity_null() {
         double similarity = umlDiagram.similarity(null);
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
     void similarity_differentDiagramType() {
         double similarity = umlDiagram.similarity(spy(UMLActivityDiagram.class));
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test

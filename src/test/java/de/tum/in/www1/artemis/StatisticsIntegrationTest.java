@@ -115,7 +115,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
             int periodIndex = 0;
             var parameters = buildParameters(span, periodIndex, graph);
             Integer[] result = request.get("/api/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result.length).isEqualTo(expectedResultLength);
+            assertThat(result).hasSize(expectedResultLength);
         }
     }
 
@@ -141,7 +141,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         for (GraphType graph : courseGraphs) {
             var parameters = buildParameters(span, periodIndex, graph, view, courseId);
             Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result.length).isEqualTo(7);
+            assertThat(result).hasSize(7);
         }
     }
 
@@ -155,7 +155,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         for (GraphType graph : exerciseGraphs) {
             var parameters = buildParameters(span, periodIndex, graph, view, exerciseId);
             Integer[] result = request.get("/api/management/statistics/data-for-content", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result.length).isEqualTo(7);
+            assertThat(result).hasSize(7);
         }
     }
 
@@ -185,7 +185,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
         CourseManagementStatisticsDTO result = request.get("/api/management/statistics/course-statistics", HttpStatus.OK, CourseManagementStatisticsDTO.class, parameters);
 
         assertThat(result.getAverageScoreOfCourse()).isEqualTo(57.5);
-        assertThat(result.getAverageScoresOfExercises().size()).isEqualTo(2);
+        assertThat(result.getAverageScoresOfExercises()).hasSize(2);
 
         // take the second entry as the results are getting sorted for release dates
         var firstTextExerciseStatistics = result.getAverageScoresOfExercises().get(1);

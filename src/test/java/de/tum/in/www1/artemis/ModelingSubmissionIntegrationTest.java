@@ -466,7 +466,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission storedSubmission = request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmission.class, params);
 
         assertThat(storedSubmission.getResults()).isNotNull();
-        assertThat(storedSubmission.getResults().contains(storedResult)).isEqualTo(true);
+        assertThat(storedSubmission.getResults()).contains(storedResult);
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -518,7 +518,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         assertThat(storedSubmission).as("submission was found").isNotNull();
         assertThat(storedSubmission.getSimilarElements()).as("similarity count is set").isNotNull();
-        assertThat(storedSubmission.getSimilarElements().size()).as("similarity count is set").isEqualTo(10);
+        assertThat(storedSubmission.getSimilarElements()).as("similarity count is set").hasSize(10);
     }
 
     @Test

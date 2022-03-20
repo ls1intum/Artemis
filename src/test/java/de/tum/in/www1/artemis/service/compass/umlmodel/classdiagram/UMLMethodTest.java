@@ -42,14 +42,14 @@ public class UMLMethodTest {
     void similarity_null() {
         double similarity = method.similarity(null);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
     void similarity_differentElementType() {
         double similarity = method.similarity(mock(UMLAttribute.class));
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
@@ -85,7 +85,7 @@ public class UMLMethodTest {
 
         double similarity = method.similarity(referenceMethod);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
@@ -98,7 +98,7 @@ public class UMLMethodTest {
 
         double similarity = method.similarity(referenceMethod);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
@@ -143,6 +143,6 @@ public class UMLMethodTest {
 
         double similarity = method.similarity(referenceMethod);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 }

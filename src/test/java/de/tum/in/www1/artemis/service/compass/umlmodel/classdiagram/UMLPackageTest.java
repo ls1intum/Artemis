@@ -36,14 +36,14 @@ public class UMLPackageTest {
     void similarity_null() {
         double similarity = umlPackage.similarity(null);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
     void similarity_differentElementType() {
         double similarity = umlPackage.similarity(mock(UMLClass.class));
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test

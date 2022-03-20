@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -124,11 +124,11 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     @Test
     public void testSendNoNotificationOrEmailWhenSettingsAreDeactivated() {
         notificationSettingRepository.save(new NotificationSetting(user, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
-        assertThat(notificationRepository.findAll().size()).as("No notifications should be present prior to the method call").isEqualTo(0);
+        assertThat(notificationRepository.findAll()).as("No notifications should be present prior to the method call").isEmpty();
 
         singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
 
-        assertThat(notificationRepository.findAll().size()).as("The notification should have been saved to the DB").isEqualTo(1);
+        assertThat(notificationRepository.findAll()).as("The notification should have been saved to the DB").hasSize(1);
         // no web app notification or email should be sent
         verify(messagingTemplate, times(0)).convertAndSend(any());
     }
@@ -204,7 +204,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     public void testCheckNotificationForAssessmentExerciseSubmission_currentOrPastAssessmentDueDate() {
         exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now(), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
-        assertThat(notificationRepository.findAll().size()).as("One new notification should have been created").isEqualTo(1);
+        assertThat(notificationRepository.findAll()).as("One new notification should have been created").hasSize(1);
     }
 
     /**
@@ -214,7 +214,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     public void testCheckNotificationForAssessmentExerciseSubmission_futureAssessmentDueDate() {
         exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now().plusHours(1), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
-        assertThat(notificationRepository.findAll().size()).as("No new notification should have been created").isEqualTo(0);
+        assertThat(notificationRepository.findAll()).as("No new notification should have been created").isEmpty();
     }
 
     @Test
@@ -232,8 +232,8 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
 
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
 
-        assertThat(notificationRepository.findAll().size()).as("Only one notification should have been created (for the user with a valid paticipation, submission, and result)")
-                .isEqualTo(1);
+        assertThat(notificationRepository.findAll()).as("Only one notification should have been created (for the user with a valid paticipation, submission, and result)")
+                .hasSize(1);
     }
 
     // Plagiarism related

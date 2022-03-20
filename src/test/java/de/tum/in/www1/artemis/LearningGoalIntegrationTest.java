@@ -364,7 +364,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "student1", roles = "USER")
     public void getLearningGoalsOfCourse_asStudent1_shouldReturnLearningGoals() throws Exception {
         List<LearningGoal> learningGoalsOfCourse = request.getList("/api/courses/" + idOfCourse + "/goals", HttpStatus.OK, LearningGoal.class);
-        assertThat(learningGoalsOfCourse.size()).isEqualTo(1);
+        assertThat(learningGoalsOfCourse).hasSize(1);
         assertThat(learningGoalsOfCourse.get(0).getId()).isEqualTo(idOfLearningGoal);
     }
 
@@ -578,7 +578,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(updatedLearningGoal.getTitle()).isEqualTo("Updated");
         assertThat(updatedLearningGoal.getDescription()).isEqualTo("Updated Description");
-        assertThat(updatedLearningGoal.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toSet()).contains(textLectureUnit.getId())).isFalse();
+        assertThat(updatedLearningGoal.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toSet())).doesNotContain(textLectureUnit.getId());
     }
 
     @Test

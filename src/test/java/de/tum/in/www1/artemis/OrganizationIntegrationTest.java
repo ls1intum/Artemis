@@ -82,8 +82,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course2.getStudentGroupName()));
 
         List<Course> coursesToRegister = request.getList("/api/courses/for-registration", HttpStatus.OK, Course.class);
-        assertThat(coursesToRegister).contains(course1);
-        assertThat(coursesToRegister).contains(course2);
+        assertThat(coursesToRegister).contains(course1).contains(course2);
     }
 
     @Test
@@ -473,8 +472,7 @@ public class OrganizationIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(updatedOrganization.getUsers()).contains(users.get(0));
 
         var organizations = organizationRepo.getAllMatchingOrganizationsByUserEmail(users.get(0).getEmail());
-        assertThat(organizations).hasSize(1);
-        assertThat(organizations).contains(organization);
+        assertThat(organizations).containsExactly(organization);
     }
 
     @Test
