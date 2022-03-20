@@ -133,6 +133,9 @@ public class ProgrammingExerciseTestService {
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
     @Autowired
     private CourseExamExportService courseExamExportService;
 
@@ -161,25 +164,25 @@ public class ProgrammingExerciseTestService {
 
     public static final String PARTICIPATION_BASE_URL = "/api/participations/";
 
-    public LocalRepository exerciseRepo = new LocalRepository();
+    public LocalRepository exerciseRepo;
 
-    public LocalRepository testRepo = new LocalRepository();
+    public LocalRepository testRepo;
 
-    public LocalRepository solutionRepo = new LocalRepository();
+    public LocalRepository solutionRepo;
 
-    public LocalRepository auxRepo = new LocalRepository();
+    public LocalRepository auxRepo;
 
-    public LocalRepository sourceExerciseRepo = new LocalRepository();
+    public LocalRepository sourceExerciseRepo;
 
-    public LocalRepository sourceTestRepo = new LocalRepository();
+    public LocalRepository sourceTestRepo;
 
-    public LocalRepository sourceSolutionRepo = new LocalRepository();
+    public LocalRepository sourceSolutionRepo;
 
-    public LocalRepository sourceAuxRepo = new LocalRepository();
+    public LocalRepository sourceAuxRepo;
 
-    public LocalRepository studentRepo = new LocalRepository();
+    public LocalRepository studentRepo;
 
-    public LocalRepository studentTeamRepo = new LocalRepository();
+    public LocalRepository studentTeamRepo;
 
     private VersionControlService versionControlService;
 
@@ -190,6 +193,16 @@ public class ProgrammingExerciseTestService {
     }
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
+        exerciseRepo = new LocalRepository(defaultBranch);
+        testRepo = new LocalRepository(defaultBranch);
+        solutionRepo = new LocalRepository(defaultBranch);
+        auxRepo = new LocalRepository(defaultBranch);
+        sourceExerciseRepo = new LocalRepository(defaultBranch);
+        sourceTestRepo = new LocalRepository(defaultBranch);
+        sourceSolutionRepo = new LocalRepository(defaultBranch);
+        sourceAuxRepo = new LocalRepository(defaultBranch);
+        studentRepo = new LocalRepository(defaultBranch);
+        studentTeamRepo = new LocalRepository(defaultBranch);
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
 
@@ -238,14 +251,12 @@ public class ProgrammingExerciseTestService {
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
         final var auxRepoName = exercise.generateRepositoryName("auxrepo");
-        setupRepositoryMocks(exercise, projectKey, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository,
-                auxRepoName);
+        setupRepositoryMocks(projectKey, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository, auxRepoName);
     }
 
     /**
      * Mocks the access and interaction with repository mocks on the local file system.
      *
-     * @param exercise for which mock repositories should be created
      * @param projectKey the unique short identifier of the exercise in the CI system
      * @param exerciseRepository represents exercise template code repository
      * @param exerciseRepoName the name of the exercise repository
@@ -257,9 +268,8 @@ public class ProgrammingExerciseTestService {
      * @param auxRepoName the name of the auxiliary repository
      * @throws Exception in case any repository url is malformed or the GitService fails
      */
-    public void setupRepositoryMocks(ProgrammingExercise exercise, String projectKey, LocalRepository exerciseRepository, String exerciseRepoName,
-            LocalRepository solutionRepository, String solutionRepoName, LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName)
-            throws Exception {
+    public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
+            LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
         var exerciseRepoTestUrl = new MockFileRepositoryUrl(exerciseRepository.originRepoFile);
         var testRepoTestUrl = new MockFileRepositoryUrl(testRepository.originRepoFile);
         var solutionRepoTestUrl = new MockFileRepositoryUrl(solutionRepository.originRepoFile);
@@ -466,8 +476,8 @@ public class ProgrammingExerciseTestService {
         final var solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getSolutionParticipation().getRepositoryUrl()).toLowerCase();
         final var testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getTestRepositoryUrl()).toLowerCase();
         final var auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
-        setupRepositoryMocks(sourceExercise, sourceExercise.getProjectKey(), sourceExerciseRepo, exerciseRepoName, sourceSolutionRepo, solutionRepoName, sourceTestRepo,
-                testRepoName, sourceAuxRepo, auxRepoName);
+        setupRepositoryMocks(sourceExercise.getProjectKey(), sourceExerciseRepo, exerciseRepoName, sourceSolutionRepo, solutionRepoName, sourceTestRepo, testRepoName,
+                sourceAuxRepo, auxRepoName);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         // Create request parameters

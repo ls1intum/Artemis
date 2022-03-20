@@ -58,9 +58,9 @@
             stages {
             stage('Checkout') {
             steps {
-            checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '477444bc-083e-478c-90fd-ce3037063361', name: 'tests', url: 'http://172.18.0.1:80/CSAPE20/csape20-tests.git']]])
+            checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '477444bc-083e-478c-90fd-ce3037063361', name: 'tests', url: 'http://172.18.0.1:80/CSAPE20/csape20-tests.git']]])
             dir('assignment') {
-            checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '477444bc-083e-478c-90fd-ce3037063361', name: 'assignment', url: 'http://172.18.0.1:80/CSAPE20/csape20-exercise.git']]])
+            checkout([$class: 'GitSCM', branches: [[name: '*/main']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '477444bc-083e-478c-90fd-ce3037063361', name: 'assignment', url: 'http://172.18.0.1:80/CSAPE20/csape20-exercise.git']]])
             }
             }
             }

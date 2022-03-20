@@ -49,13 +49,13 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
     private ProgrammingExercise exercise;
 
-    private final LocalRepository exerciseRepo = new LocalRepository();
+    private final LocalRepository exerciseRepo = new LocalRepository(defaultBranch);
 
-    private final LocalRepository testRepo = new LocalRepository();
+    private final LocalRepository testRepo = new LocalRepository(defaultBranch);
 
-    private final LocalRepository solutionRepo = new LocalRepository();
+    private final LocalRepository solutionRepo = new LocalRepository(defaultBranch);
 
-    private final LocalRepository auxRepo = new LocalRepository();
+    private final LocalRepository auxRepo = new LocalRepository(defaultBranch);
 
     @BeforeAll
     public static void detectMavenHome() {

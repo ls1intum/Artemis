@@ -75,6 +75,9 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
 @Service
 public class ProgrammingExerciseIntegrationTestService {
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;
 
@@ -164,17 +167,17 @@ public class ProgrammingExerciseIntegrationTestService {
         database.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, "student2");
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
-        localGit = Git.init().setDirectory(localRepoFile).call();
+        localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
         File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit = Git.init().setDirectory(originRepoFile).call();
+        remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
         config.save();
 
         localRepoFile2 = Files.createTempDirectory("repo2").toFile();
-        localGit2 = Git.init().setDirectory(localRepoFile2).call();
+        localGit2 = LocalRepository.initialize(localRepoFile2, defaultBranch);
         File originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit2 = Git.init().setDirectory(originRepoFile2).call();
+        remoteGit2 = LocalRepository.initialize(originRepoFile2, defaultBranch);
         StoredConfig config2 = localGit2.getRepository().getConfig();
         config2.setString("remote", "origin", "url", originRepoFile2.getAbsolutePath());
         config2.save();
