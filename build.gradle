@@ -116,7 +116,8 @@ private excludedClassFilesForReport(classDirectories) {
         fileTree(dir: it,
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
-                "**/de/tum/in/www1/artemis/config/migration/entries/*_*"
+                "**/de/tum/in/www1/artemis/config/migration/entries/*_*",
+                '**/gradle-wrapper.jar/**'
             ]
         )
     }))
