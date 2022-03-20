@@ -47,6 +47,23 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
         gitlabRequestMockProvider.reset();
     }
 
+    @Test
+    public void registerAccount() throws Exception {
+        String login = "abd123cd";
+        String password = "this is a password";
+        // setup user
+        User user = ModelFactory.generateActivatedUser(login);
+        ManagedUserVM userVM = new ManagedUserVM(user);
+        userVM.setPassword(password);
+
+        gitlabRequestMockProvider.mockCreateVcsUser(user, false);
+        gitlabRequestMockProvider.mockGetUserId(login, true, false);
+        gitlabRequestMockProvider.mockDeactivateUser(login, false);
+
+        // make request
+        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+    }
+
     /**
      * Tests the registration of a user when an old unactivated User existed.
      * Also tries to verify that the inability to delete such user in GitLab does not hinder the operation.
