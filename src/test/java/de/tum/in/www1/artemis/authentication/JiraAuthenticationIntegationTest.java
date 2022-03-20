@@ -129,7 +129,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
 
         ltiLaunchRequest.setCustom_lookup_user_by_email(true);
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
-        final var user = userRepository.findAll().get(0);
+        final var user = userRepository.findOneByLogin(username).orElseThrow();
         final var ltiUser = ltiUserIdRepository.findAll().get(0);
         final var ltiOutcome = ltiOutcomeUrlRepository.findAll().get(0);
         assertThat(ltiUser.getUser()).isEqualTo(user);
@@ -146,7 +146,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         assertThat(mrrobotUser.getGroups()).contains(course.getStudentGroupName());
         assertThat(mrrobotUser.getAuthorities()).containsAll(authorityRepository.findAll());
 
-        final var auth = new TestingAuthenticationToken(username, mrrobotUser.getPassword());
+        final var auth = new TestingAuthenticationToken(username, "");
         final var responseAuth = jiraAuthenticationProvider.authenticate(auth);
 
         assertThat(responseAuth.getPrincipal()).isEqualTo(username);

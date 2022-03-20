@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -110,6 +109,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
         final var encodedPassword = passwordService.hashPassword(USER_PASSWORD);
         student.setPassword(encodedPassword);
+        student.setInternal(true);
         userRepository.save(student);
         ltiLaunchRequest.setLis_person_contact_email_primary(student.getEmail());
     }
@@ -277,7 +277,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
 
-        assertThat(BCrypt.checkpw(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();
+        assertThat(passwordService.checkPasswordMatch(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();
 
         // Skip passwords for comparison
         updatedUserIndDB.setPassword(null);

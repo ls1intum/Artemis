@@ -14,7 +14,6 @@ import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -334,7 +333,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         // check if update successful
         Optional<User> updatedUser = userRepository.findOneByLogin("authenticateduser");
         assertThat(updatedUser).isPresent();
-        assertThat(BCrypt.checkpw(updatedPassword, updatedUser.get().getPassword())).isTrue();
+        assertThat(passwordService.checkPasswordMatch(updatedPassword, updatedUser.get().getPassword())).isTrue();
     }
 
     @Test
@@ -434,7 +433,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         // get updated user
         Optional<User> userPasswordResetFinished = userRepository.findOneByLogin("authenticateduser");
         assertThat(userPasswordResetFinished).isPresent();
-        assertThat(BCrypt.checkpw(newPassword, userPasswordResetFinished.get().getPassword())).isTrue();
+        assertThat(passwordService.checkPasswordMatch(newPassword, userPasswordResetFinished.get().getPassword())).isTrue();
     }
 
     @Test

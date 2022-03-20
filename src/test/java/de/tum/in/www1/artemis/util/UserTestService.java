@@ -15,7 +15,6 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -90,6 +89,8 @@ public class UserTestService {
 
         List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
         student = users.get(0);
+        student.setInternal(true);
+        student = userRepository.save(student);
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
     }
 
@@ -174,7 +175,7 @@ public class UserTestService {
         final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
 
         assertThat(response).isNotNull();
-        assertThat(BCrypt.checkpw(newPassword, updatedUserIndDB.getPassword())).isTrue();
+        assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
 
         // set passwords to null to exclude them from the comparison
         student.setPassword(null);
@@ -260,7 +261,7 @@ public class UserTestService {
         var updatedUser = student;
         updatedUser.setGroups(Set.of("tutor"));
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), updatedUser, null, student.getGroups());
-        request.put("/api/users", new ManagedUserVM(updatedUser, updatedUser.getPassword()), HttpStatus.OK);
+        request.put("/api/users", new ManagedUserVM(updatedUser, "this is a password"), HttpStatus.OK);
 
         var updatedUserOrEmpty = userRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
         assertThat(updatedUserOrEmpty).isPresent();
@@ -283,7 +284,7 @@ public class UserTestService {
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student, password), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userRepository.findById(response.getId()).get();
-        assertThat(BCrypt.checkpw(password, userInDB.getPassword())).isTrue();
+        assertThat(passwordService.checkPasswordMatch(password, userInDB.getPassword())).isTrue();
         student.setId(response.getId());
 
         // Exclude passwords from comparison
@@ -617,8 +618,8 @@ public class UserTestService {
 
         User currentUser = userRepository.findOneByLogin("student1").get();
 
-        assertThat(BCrypt.checkpw(dto.getPassword(), currentUser.getPassword())).isTrue();
-        assertThat(BCrypt.checkpw(password, currentUser.getPassword())).isFalse();
+        assertThat(passwordService.checkPasswordMatch(dto.getPassword(), currentUser.getPassword())).isTrue();
+        assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
     }

@@ -35,13 +35,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @Profile("gitlab")
@@ -81,13 +81,13 @@ public class GitlabRequestMockProvider {
     private ProtectedBranchesApi protectedBranchesApi;
 
     @SpyBean
-    private PasswordService passwordService;
-
-    @SpyBean
     private GitLabUserManagementService gitLabUserManagementService;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private LtiUserIdRepository ltiUserIdRepository;
 
     @Autowired
     private UserRepository userRepository;

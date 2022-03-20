@@ -165,7 +165,8 @@ public class UserCreationService {
                     .collect(Collectors.toSet());
             user.setAuthorities(authorities);
         }
-        String encryptedPassword = passwordService.hashPassword(userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword());
+        String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
+        String encryptedPassword = passwordService.hashPassword(password);
         user.setPassword(encryptedPassword);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
@@ -185,8 +186,8 @@ public class UserCreationService {
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         saveUser(user);
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, userDTO.getPassword()));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, userDTO.getPassword()));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
@@ -228,7 +229,7 @@ public class UserCreationService {
      * @return updated user
      */
     @NotNull
-    public User updateUser(@NotNull User user, ManagedUserVM updatedUserDTO, boolean isInternal) {
+    public User updateUser(@NotNull User user, ManagedUserVM updatedUserDTO) {
         user.setLogin(updatedUserDTO.getLogin().toLowerCase());
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
@@ -238,7 +239,7 @@ public class UserCreationService {
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());
-        if (isInternal && updatedUserDTO.getPassword() != null) {
+        if (user.isInternal() && updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
         }
         user.setOrganizations(updatedUserDTO.getOrganizations());
