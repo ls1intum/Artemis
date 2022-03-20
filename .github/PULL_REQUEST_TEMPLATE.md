@@ -59,10 +59,13 @@ Prerequisites:
 
 ### Test Coverage
 <!-- Please add the test coverages for all changed files here. You can see this when executing the tests locally (see build.gradle and package.json) or when looking into the corresponding Bamboo build plan. -->
-<!-- Please use the schema "Branches % | Lines %" -->
 <!-- Lines are the main reference but a significantly lower branch percentage can indicate missing edge cases in the tests. -->
-<!-- - ExerciseService.java: 85% | 77% -->
-<!-- - programming-exercise.component.ts: 13% | 95% -->
+| Class/File | Branch | Line |
+|------------|-------:|-----:|
+<!--
+| ExerciseService.java | 85% | 77% |
+| programming-exercise.component.ts | 13% | 95% |
+-->
 
 ### Screenshots
 <!-- Add screenshots to demonstrate the changes in the UI. -->
