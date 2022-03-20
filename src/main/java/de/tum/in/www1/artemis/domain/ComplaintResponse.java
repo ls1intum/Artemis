@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES;
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -26,8 +27,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ComplaintResponse extends AbstractAuditingEntity {
-
-    public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = 5000;
 
     @Column(name = "response_text", length = COMPLAINT_RESPONSE_TEXT_LIMIT)
     @Size(max = COMPLAINT_RESPONSE_TEXT_LIMIT)

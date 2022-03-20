@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -24,8 +26,6 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Complaint extends DomainObject {
-
-    public static final int COMPLAINT_TEXT_LIMIT = 5000;
 
     @Column(name = "complaint_text", length = COMPLAINT_TEXT_LIMIT)
     @Size(max = COMPLAINT_TEXT_LIMIT)

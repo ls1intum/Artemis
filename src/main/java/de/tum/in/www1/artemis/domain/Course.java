@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
@@ -97,11 +99,11 @@ public class Course extends DomainObject {
 
     @Column(name = "max_complaints")
     @JsonView(QuizView.Before.class)
-    private int maxComplaints;
+    private Integer maxComplaints;
 
     @Column(name = "max_team_complaints")
     @JsonView(QuizView.Before.class)
-    private int maxTeamComplaints;
+    private Integer maxTeamComplaints;
 
     @Column(name = "max_complaint_time_days")
     @JsonView(QuizView.Before.class)
@@ -320,19 +322,19 @@ public class Course extends DomainObject {
         this.onlineCourse = onlineCourse;
     }
 
-    public int getMaxComplaints() {
+    public Integer getMaxComplaints() {
         return maxComplaints;
     }
 
-    public void setMaxComplaints(int maxComplaints) {
+    public void setMaxComplaints(Integer maxComplaints) {
         this.maxComplaints = maxComplaints;
     }
 
-    public int getMaxTeamComplaints() {
+    public Integer getMaxTeamComplaints() {
         return maxTeamComplaints;
     }
 
-    public void setMaxTeamComplaints(int maxTeamComplaints) {
+    public void setMaxTeamComplaints(Integer maxTeamComplaints) {
         this.maxTeamComplaints = maxTeamComplaints;
     }
 
@@ -662,6 +664,14 @@ public class Course extends DomainObject {
      * validates that the configuration for complaints and more feedback requests is correct
      */
     public void validateComplaintsAndRequestMoreFeedbackConfig() {
+        if (getMaxComplaints() == null) {
+            // set the default value to prevent null pointer exceptions
+            setMaxComplaints(3);
+        }
+        if (getMaxTeamComplaints() == null) {
+            // set the default value to prevent null pointer exceptions
+            setMaxTeamComplaints(3);
+        }
         if (getMaxComplaints() < 0) {
             throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
         }
@@ -674,15 +684,15 @@ public class Course extends DomainObject {
         if (getMaxComplaintTextLimit() < 0) {
             throw new BadRequestAlertException("Max Complaint text limit cannot be negative", ENTITY_NAME, "maxComplaintTextLimitInvalid", true);
         }
-        if (getMaxComplaintTextLimit() > Complaint.COMPLAINT_TEXT_LIMIT) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + Complaint.COMPLAINT_TEXT_LIMIT + " characters.", ENTITY_NAME,
+        if (getMaxComplaintTextLimit() > COMPLAINT_TEXT_LIMIT) {
+            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_TEXT_LIMIT + " characters.", ENTITY_NAME,
                     "maxComplaintResponseTextLimitInvalid", true);
         }
         if (getMaxComplaintResponseTextLimit() < 0) {
             throw new BadRequestAlertException("Max Complaint response text limit cannot be negative", ENTITY_NAME, "maxComplaintResponseTextLimitInvalid", true);
         }
-        if (getMaxComplaintResponseTextLimit() > ComplaintResponse.COMPLAINT_RESPONSE_TEXT_LIMIT) {
-            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + ComplaintResponse.COMPLAINT_RESPONSE_TEXT_LIMIT + " characters.", ENTITY_NAME,
+        if (getMaxComplaintResponseTextLimit() > COMPLAINT_RESPONSE_TEXT_LIMIT) {
+            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_RESPONSE_TEXT_LIMIT + " characters.", ENTITY_NAME,
                     "maxComplaintResponseTextLimitInvalid", true);
         }
         if (getMaxRequestMoreFeedbackTimeDays() < 0) {
