@@ -224,10 +224,11 @@ public class UserCreationService {
      *
      * @param user           The user that should get updated
      * @param updatedUserDTO The DTO containing the to be updated values
+     * @param isInternal     True if the updated user is an internal user
      * @return updated user
      */
     @NotNull
-    public User updateInternalUser(@NotNull User user, ManagedUserVM updatedUserDTO) {
+    public User updateUser(@NotNull User user, ManagedUserVM updatedUserDTO, boolean isInternal) {
         user.setLogin(updatedUserDTO.getLogin().toLowerCase());
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
@@ -237,7 +238,7 @@ public class UserCreationService {
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());
-        if (updatedUserDTO.getPassword() != null) {
+        if (isInternal && updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
         }
         user.setOrganizations(updatedUserDTO.getOrganizations());

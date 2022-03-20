@@ -199,7 +199,8 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     /**
-     * We only support updating the groups. See {@link #updateUserLogin(String, User, String)} for more information.
+     * We only support updating the groups if no password is provided. See {@link #updateUserLogin(String, User, String)} for more information.
+     * If no password is provided we expect the frontend to show an automatic warning.
      *
      * @param oldLogin       the old login if it was updated
      * @param user           the Artemis user
@@ -210,8 +211,15 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     @Override
     public void updateUserAndGroups(String oldLogin, User user, String password, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException {
-        removeUserFromGroups(oldLogin, groupsToRemove);
-        addUserToGroups(oldLogin, groupsToAdd);
+        if (password != null) {
+            updateUser(user, password);
+            removeUserFromGroups(user.getLogin(), groupsToRemove);
+            addUserToGroups(user.getLogin(), groupsToAdd);
+        }
+        else {
+            removeUserFromGroups(oldLogin, groupsToRemove);
+            addUserToGroups(oldLogin, groupsToAdd);
+        }
     }
 
     /**
