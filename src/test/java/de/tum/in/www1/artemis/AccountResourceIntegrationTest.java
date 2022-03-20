@@ -69,7 +69,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     private String getValidPassword() {
         // verify configuration is valid
         assertThat(Constants.PASSWORD_MIN_LENGTH).isLessThan(Constants.PASSWORD_MAX_LENGTH);
-        assertThat(Constants.PASSWORD_MIN_LENGTH).isGreaterThanOrEqualTo(0);
+        assertThat(Constants.PASSWORD_MIN_LENGTH).isNotNegative();
 
         // empty password will always get rejected
         return "a".repeat(Math.max(1, Constants.PASSWORD_MIN_LENGTH));
@@ -97,7 +97,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
-        assertThat(Constants.PASSWORD_MAX_LENGTH).isGreaterThan(0);
+        assertThat(Constants.PASSWORD_MAX_LENGTH).isPositive();
         userVM.setPassword("e".repeat(Constants.PASSWORD_MAX_LENGTH + 1));
 
         // make request
@@ -109,7 +109,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
-        assertThat(Constants.PASSWORD_MIN_LENGTH).isGreaterThanOrEqualTo(0);
+        assertThat(Constants.PASSWORD_MIN_LENGTH).isNotNegative();
         if (Constants.PASSWORD_MIN_LENGTH == 0) {
             // if all lengths are accepted it cannot be tested for too short passwords
             return;
@@ -231,8 +231,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser("authenticatedUser")
     public void isAuthenticated() throws Exception {
         String userLogin = request.get("/api/authenticate", HttpStatus.OK, String.class);
-        assertThat(userLogin).isNotNull();
-        assertThat(userLogin).isEqualTo("authenticatedUser");
+        assertThat(userLogin).isNotNull().isEqualTo("authenticatedUser");
     }
 
     @Test

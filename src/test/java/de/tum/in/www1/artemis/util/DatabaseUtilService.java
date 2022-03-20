@@ -322,7 +322,7 @@ public class DatabaseUtilService {
         usersToAdd.addAll(instructors);
         usersToAdd.add(admin);
         userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll().size()).as("all users are created").isGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
+        assertThat(userRepo.findAll()).as("all users are created").hasSizeGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
 
         final var users = new ArrayList<>(students);
@@ -1906,7 +1906,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(finishedExercise);
         Course storedCourse = courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
-        assertThat(exercises.size()).as("eleven exercises got stored").isEqualTo(11);
+        assertThat(exercises).as("eleven exercises got stored").hasSize(11);
         assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));
         return course;
     }
@@ -2227,7 +2227,7 @@ public class DatabaseUtilService {
         int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(courseSizeBefore + 1);
+        assertThat(courseRepoContent).as("a course got stored").hasSize(courseSizeBefore + 1);
 
         FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
@@ -2245,12 +2245,12 @@ public class DatabaseUtilService {
 
     public Course addCourseWithThreeFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
-        assertThat(fileUploadExercises.size()).as("created three exercises").isEqualTo(3);
+        assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
         exerciseRepo.saveAll(fileUploadExercises);
         long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
         Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
         List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
-        assertThat(exercises.size()).as("three exercises got stored").isEqualTo(3);
+        assertThat(exercises).as("three exercises got stored").hasSize(3);
         assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
         return course;
     }
@@ -2260,7 +2260,7 @@ public class DatabaseUtilService {
         int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(courseSizeBefore + 1);
+        assertThat(courseRepoContent).as("a course got stored").hasSize(courseSizeBefore + 1);
 
         FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
@@ -2281,12 +2281,12 @@ public class DatabaseUtilService {
 
     public Course addCourseWithFourFileUploadExercise() {
         var fileUploadExercises = createFourFileUploadExercisesWithCourse();
-        assertThat(fileUploadExercises.size()).as("created four exercises").isEqualTo(4);
+        assertThat(fileUploadExercises).as("created four exercises").hasSize(4);
         exerciseRepo.saveAll(fileUploadExercises);
         long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
         Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
         List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
-        assertThat(exercises.size()).as("four exercises got stored").isEqualTo(4);
+        assertThat(exercises).as("four exercises got stored").hasSize(4);
         assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
         return course;
     }
@@ -3510,7 +3510,7 @@ public class DatabaseUtilService {
     }
 
     public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
-        assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
+        assertThat(sentFeedback).as("contains the same amount of feedback").hasSize(storedFeedback.size());
         Result storedFeedbackResult = new Result();
         Result sentFeedbackResult = new Result();
         storedFeedbackResult.setFeedbacks(storedFeedback);

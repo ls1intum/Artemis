@@ -51,8 +51,7 @@ public class TitleJaccardSimilarityCompareStrategyTest {
 
         Double actualResult = compareStrategy.performSimilarityCheck(post1, post2);
 
-        assertThat(actualResult).isGreaterThan(0.5);
-        assertThat(actualResult).isLessThan(1);
+        assertThat(actualResult).isGreaterThan(0.5).isLessThan(1);
     }
 
     @Test

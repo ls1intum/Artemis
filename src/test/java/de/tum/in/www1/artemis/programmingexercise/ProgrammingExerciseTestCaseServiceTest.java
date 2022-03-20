@@ -115,7 +115,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         testCaseService.generateTestCasesFromFeedbacks(feedbackList, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(0);
+        assertThat(testCases).isEmpty();
     }
 
     @Test

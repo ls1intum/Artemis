@@ -96,7 +96,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
         // Assert that old user data was deleted and user was written to db
         Optional<User> updatedUser = userRepo.findOneByLogin(user.getLogin());
-        assertThat(updatedUser.isPresent()).isTrue();
+        assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getFirstName()).isEqualTo("New Firstname");
         assertThat(updatedUser.get().getActivated()).isFalse();
     }
@@ -127,7 +127,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
         // Assert that old user data is still there
         Optional<User> updatedUser = userRepo.findOneByLogin(user.getLogin());
-        assertThat(updatedUser.isPresent()).isTrue();
+        assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getFirstName()).isEqualTo("Old Firstname");
         assertThat(updatedUser.get().getActivated()).isTrue();
     }

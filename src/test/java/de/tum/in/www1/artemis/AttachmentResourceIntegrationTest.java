@@ -106,8 +106,8 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
     public void getAttachmentsForLecture() throws Exception {
         attachment = attachmentRepository.save(attachment);
         var actualAttachments = request.getList("/api/lectures/" + lecture.getId() + "/attachments", HttpStatus.OK, Attachment.class);
-        assertThat(actualAttachments.size()).isEqualTo(1);
-        assertThat(actualAttachments.stream().findFirst().get()).isEqualTo(attachment);
+        assertThat(actualAttachments).hasSize(1);
+        assertThat(actualAttachments.stream().findFirst()).contains(attachment);
     }
 
     @Test

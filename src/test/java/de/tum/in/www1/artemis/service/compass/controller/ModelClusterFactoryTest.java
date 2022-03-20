@@ -45,9 +45,9 @@ public class ModelClusterFactoryTest {
         ModelingExercise exercise = new ModelingExercise();
         List<ModelCluster> modelClusters = modelClusterFactory.buildClusters(List.of(submission1, submission2, submission3, submission4, submission5), exercise);
 
-        assertThat(modelClusters.size()).as("model clusters created").isEqualTo(10);
+        assertThat(modelClusters).as("model clusters created").hasSize(10);
         ModelCluster modelCluster = modelClusters.get(0);
-        assertThat(modelCluster.getModelElements().size()).as("all elements are created").isEqualTo(4);
+        assertThat(modelCluster.getModelElements()).as("all elements are created").hasSize(4);
         for (ModelElement element : modelCluster.getModelElements()) {
             assertThat(element.getCluster()).as("created elements keeps the cluster").isEqualTo(modelCluster);
         }
