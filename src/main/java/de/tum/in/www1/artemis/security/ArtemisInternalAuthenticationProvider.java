@@ -49,10 +49,8 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         }
         else {
             user = optionalUser.get();
-            if (!skipPasswordCheck) {
-                if (!passwordService.checkPasswordMatch(password, user.getPassword())) {
-                    throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
-                }
+            if (!skipPasswordCheck && !passwordService.checkPasswordMatch(password, user.getPassword())) {
+                throw new InternalAuthenticationServiceException("Authentication failed for user " + user.getLogin());
             }
         }
 

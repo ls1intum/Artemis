@@ -220,12 +220,11 @@ public class UserCreationService {
     }
 
     /**
-     * Update all information for a specific user (incl. its password), and return the modified user.
+     * Update all information for a specific user (including its password), and return the modified user.
      * This method is typically invoked by the admin user
      *
      * @param user           The user that should get updated
      * @param updatedUserDTO The DTO containing the to be updated values
-     * @param isInternal     True if the updated user is an internal user
      * @return updated user
      */
     @NotNull

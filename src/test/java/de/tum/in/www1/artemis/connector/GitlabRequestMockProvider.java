@@ -35,7 +35,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
@@ -85,9 +84,6 @@ public class GitlabRequestMockProvider {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private LtiUserIdRepository ltiUserIdRepository;
 
     @Autowired
     private UserRepository userRepository;

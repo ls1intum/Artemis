@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @Profile("jenkins")
@@ -72,10 +71,6 @@ public class JenkinsRequestMockProvider {
     @SpyBean
     @InjectMocks
     private JenkinsJobPermissionsService jenkinsJobPermissionsService;
-
-    @SpyBean
-    @InjectMocks
-    private PasswordService passwordService;
 
     @Autowired
     private ObjectMapper mapper;

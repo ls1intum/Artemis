@@ -29,8 +29,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabUserManagementService.class);
 
-    private final PasswordService passwordService;
-
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -45,7 +43,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitlabApi = gitlabApi;
         this.userRepository = userRepository;
-        this.passwordService = passwordService;
     }
 
     @Override

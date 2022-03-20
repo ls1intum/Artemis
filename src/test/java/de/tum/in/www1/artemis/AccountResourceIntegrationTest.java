@@ -324,7 +324,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         bitbucketRequestMockProvider.mockUserExists("authenticateduser");
         bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
         bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), updatedPassword, true, true);
-        User createdUser = userCreationService.createUser(new ManagedUserVM(user, ModelFactory.USER_PASSWORD));
+        userCreationService.createUser(new ManagedUserVM(user, ModelFactory.USER_PASSWORD));
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(ModelFactory.USER_PASSWORD, updatedPassword);
         // make request
@@ -362,7 +362,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void changePasswordInvalidPassword() throws Exception {
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         bitbucketRequestMockProvider.mockUserExists("authenticateduser");
-        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        userCreationService.createUser(new ManagedUserVM(user));
         String updatedPassword = "";
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(ModelFactory.USER_PASSWORD, updatedPassword);

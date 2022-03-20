@@ -41,7 +41,7 @@ public class MigrationEntry20220302_164200 extends MigrationEntry {
 
         // Set internal state again due to an issue with setting the correct status during registration (PR #4806)
         // As the passwords of all external users were set to the encrypted empty string in Migration Entry 20211214_184200
-        user.setInternal(!password.equals(""));
+        user.setInternal(!"".equals(password));
 
         if (user.isInternal()) {
             String hash = passwordService.hashPassword(password);

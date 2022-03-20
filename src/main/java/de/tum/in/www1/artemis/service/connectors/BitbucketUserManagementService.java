@@ -29,15 +29,12 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
 
     private final UserRepository userRepository;
 
-    private final PasswordService passwordService;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public BitbucketUserManagementService(BitbucketService bitbucketService, UserRepository userRepository, PasswordService passwordService,
             ProgrammingExerciseRepository programmingExerciseRepository) {
         this.bitbucketService = bitbucketService;
         this.userRepository = userRepository;
-        this.passwordService = passwordService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
 

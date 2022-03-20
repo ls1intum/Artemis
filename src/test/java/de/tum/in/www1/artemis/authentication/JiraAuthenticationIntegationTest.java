@@ -31,8 +31,6 @@ import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
-import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
@@ -59,12 +57,6 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
 
     @Autowired
     private TokenProvider tokenProvider;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private PasswordService passwordService;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
