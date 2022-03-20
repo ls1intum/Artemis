@@ -59,7 +59,7 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
         }
 
         log.debug("Bitbucket user {} does not exist yet", user.getLogin());
-        String displayName = user.getName().trim();
+        String displayName = user.getName() != null ? user.getName().trim() : user.getName();
         bitbucketService.createUser(user.getLogin(), password, user.getEmail(), displayName);
 
         try {
@@ -87,7 +87,7 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      * @param user                      The updated user in Artemis
      * @param removedGroups             groups that the user does not belong to any longer
      * @param addedGroups               The new groups the Artemis user got added to
-     * @param shouldSynchronizePassword whether the password should be synchronized between Artemis and the VcsUserManagementService
+     * @param newPassword               The new password, null otherwise
      */
     @Override
     public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, String newPassword) {

@@ -199,7 +199,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     }
 
     /**
-     * We only support updating the groups if no password is provided. See {@link #updateUserLogin(String, User, String)} for more information.
+     * We only support updating the groups if a password is provided. See {@link #updateUserLogin(String, User, String)} for more information.
      * If no password is provided we expect the frontend to show an automatic warning.
      *
      * @param oldLogin       the old login if it was updated
