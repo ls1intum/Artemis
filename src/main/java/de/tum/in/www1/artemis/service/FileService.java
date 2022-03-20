@@ -342,16 +342,13 @@ public class FileService implements DisposableBean {
      * @throws IOException if the copying operation fails.
      */
     public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath, Boolean keepParentFolder) throws IOException {
-
         for (Resource resource : resources) {
-
             // Replace windows separator with "/"
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
 
             String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
-
             targetFilePath = applySpecialFilenameReplacements(targetFilePath);
 
             if (isIgnoredDirectory(targetFilePath)) {
@@ -370,6 +367,38 @@ public class FileService implements DisposableBean {
                 copyPath.toFile().setExecutable(true);
             }
         }
+    }
+
+    /**
+     * Replaces filenames where the template name differs from the name the file should have in the repository.
+     *
+     * @param filePath The path to a file.
+     * @return The path with replacements applied where necessary.
+     */
+    private String applySpecialFilenameReplacements(final String filePath) {
+        String resultFilePath = filePath;
+
+        for (final Map.Entry<String, String> replacementDirective : FILENAME_REPLACEMENTS.entrySet()) {
+            String oldName = replacementDirective.getKey();
+            String newName = replacementDirective.getValue();
+
+            if (resultFilePath.endsWith(oldName)) {
+                resultFilePath = resultFilePath.replace(oldName, newName);
+                break;
+            }
+        }
+
+        return resultFilePath;
+    }
+
+    /**
+     * Checks if the given path has been identified as a file but it actually points to a directory.
+     *
+     * @param filePath The path to a file/directory.
+     * @return True, if the path is assumed to be a file but actually points to a directory.
+     */
+    private boolean isIgnoredDirectory(final String filePath) {
+        return IGNORED_DIRECTORIES.stream().anyMatch(filePath::endsWith);
     }
 
     /**
