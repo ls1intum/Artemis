@@ -68,7 +68,6 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
 
     ngOnInit(): void {
         this.setup();
-
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
@@ -110,11 +109,11 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
         this.assessments = [
             {
                 name: this.openedAssessmentsTitle,
-                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total,
+                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total / this.numberOfCorrectionRounds,
             },
             {
                 name: this.completedAssessmentsTitle,
-                value: this.totalNumberOfAssessments.total,
+                value: this.totalNumberOfAssessments.total / this.numberOfCorrectionRounds,
             },
         ];
     }
