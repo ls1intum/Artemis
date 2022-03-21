@@ -48,22 +48,18 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "student1")
     public void guidedTourSettingsIsInitiallyNull() throws Exception {
         User user = request.get("/api/account", HttpStatus.OK, User.class);
-        assertThat(user.getGuidedTourSettings().isEmpty()).isTrue();
+        assertThat(user.getGuidedTourSettings()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "student1")
     public void updateGuidedTourSettings() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
-        Set serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
-        assertThat(serverGuidedTourSettings).isNotNull();
-        assertThat(serverGuidedTourSettings.isEmpty()).isFalse();
-        assertThat(serverGuidedTourSettings.size()).isEqualTo(2);
+        Set<?> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
+        assertThat(serverGuidedTourSettings).hasSize(2);
 
         User user = request.get("/api/account", HttpStatus.OK, User.class);
-        assertThat(user.getGuidedTourSettings()).isNotNull();
-        assertThat(user.getGuidedTourSettings().isEmpty()).isFalse();
-        assertThat(user.getGuidedTourSettings().size()).isEqualTo(2);
+        assertThat(user.getGuidedTourSettings()).hasSize(2);
     }
 
     @Test
@@ -74,8 +70,6 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBamb
         request.delete("/api/guided-tour-settings/new_tour", HttpStatus.OK);
 
         User user = request.get("/api/account", HttpStatus.OK, User.class);
-        assertThat(user.getGuidedTourSettings()).isNotNull();
-        assertThat(user.getGuidedTourSettings().isEmpty()).isFalse();
-        assertThat(user.getGuidedTourSettings().size()).isEqualTo(1);
+        assertThat(user.getGuidedTourSettings()).hasSize(1);
     }
 }

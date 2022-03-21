@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -146,8 +145,8 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(studentExamRepository.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
-        assertThat(studentExamRepository.findByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(numberOfParticipants);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(numberOfParticipants);
         assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
@@ -193,8 +192,8 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(studentExamRepository.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
-        assertThat(studentExamRepository.findByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(numberOfParticipants);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(numberOfParticipants);
 
         // add participations with no submissions
         for (int i = 0; i < numberOfParticipants; i++) {
@@ -242,8 +241,8 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(studentExamRepository.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
-        assertThat(studentExamRepository.findByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(numberOfParticipants);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(numberOfParticipants);
         assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
@@ -296,8 +295,8 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
 
-        assertThat(studentExamRepository.generateStudentExams(exam).size()).isEqualTo(numberOfParticipants);
-        assertThat(studentExamRepository.findByExamId(exam.getId()).size()).isEqualTo(numberOfParticipants);
+        assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(numberOfParticipants);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(numberOfParticipants);
         assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
@@ -336,45 +335,45 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     private void checkStatistics(QuizExercise quizExercise) {
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
-        Assertions.assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        Assertions.assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
-                Assertions.assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
-                Assertions.assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
+                assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
-                Assertions.assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 6.0));
-                Assertions.assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 6.0));
+                assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
             else if (pointCounter.getPoints() == 7.0 || pointCounter.getPoints() == 9.0) {
-                Assertions.assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 12.0));
-                Assertions.assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 12.0));
+                assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
             else {
-                Assertions.assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                Assertions.assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isZero();
+                assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
         }
         // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion) {
-                Assertions.assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 2.0));
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 2.0));
             }
             else if (question instanceof DragAndDropQuestion) {
-                Assertions.assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
             }
             else {
-                Assertions.assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 4.0));
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 4.0));
             }
-            Assertions.assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
-            Assertions.assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
-            Assertions.assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
+            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
         }
     }
 }

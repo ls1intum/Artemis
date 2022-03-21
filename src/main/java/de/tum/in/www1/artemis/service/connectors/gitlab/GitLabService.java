@@ -78,14 +78,11 @@ public class GitLabService extends AbstractVersionControlService {
         for (User user : users) {
             String username = user.getLogin();
 
-            // TODO: does it really make sense to potentially create a user here? Should we not rather create this user when the user is created in the internal Artemis database?
-
-            // Automatically created users
-            if ((userPrefixEdx.isPresent() && username.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && username.startsWith((userPrefixU4I.get())))) {
-                if (!userExists(username)) {
-                    gitLabUserManagementService.createUser(user);
-                }
+            // This is a failsafe in case a user was not created in VCS on registration
+            if (!userExists(username)) {
+                throw new GitLabException("The user was not created in GitLab and has to be manually added.");
             }
+
             if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
                 // only add access to the repository if the offline IDE usage is NOT explicitly disallowed
                 // NOTE: null values are interpreted as offline IDE is allowed

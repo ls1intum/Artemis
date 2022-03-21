@@ -84,8 +84,8 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                 \tat test.MethodTest.checkMethods(MethodTest.java:129)
                 \tat test.MethodTest.testMethods(MethodTest.java:72)
                 \tat test.MethodTest.lambda$0(MethodTest.java:52)""";
-        assertThat("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.")
-                .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText())
+                .isEqualTo("the expected method 'getDates' of the class 'Context' with no parameters was not found or is named wrongly.");
     }
 
     @Test
@@ -104,9 +104,8 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
                 \tat org.hibernate.loader.plan.exec.process.internal.AbstractRowReader.readRow(AbstractRowReader.java:125)
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractRows(ResultSetProcessorImpl.java:157)
                 \tat org.hibernate.loader.plan.exec.process.internal.ResultSetProcessorImpl.extractResults(ResultSetProcessorImpl.java:94)""";
-        assertThat(
-                "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups")
-                        .isEqualTo(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText());
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false, ProgrammingLanguage.JAVA).getDetailText()).isEqualTo(
+                "org.springframework.orm.jpa.JpaSystemException: org.springframework.orm.jpa.JpaSystemException: null index column for collection: de.tum.in.www1.artemis.domain.exam.Exam.exerciseGroups");
     }
 
     @Test
@@ -160,6 +159,6 @@ class FeedbackRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     void createFeedbackFromTestCaseSuccessfulNoMessage() {
-        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA).getDetailText()).isEqualTo(null);
+        assertThat(feedbackRepository.createFeedbackFromTestCase("test1", List.of(), true, ProgrammingLanguage.JAVA).getDetailText()).isNull();
     }
 }

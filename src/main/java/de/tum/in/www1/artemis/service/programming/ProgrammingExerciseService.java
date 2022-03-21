@@ -936,7 +936,8 @@ public class ProgrammingExerciseService {
             adminGroups.add(editorGroup);
         }
 
-        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), adminGroups, List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.ADMIN));
+        continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), adminGroups,
+                List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.CREATEREPOSITORY, CIPermission.ADMIN));
         if (teachingAssistantGroup != null) {
             continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
         }

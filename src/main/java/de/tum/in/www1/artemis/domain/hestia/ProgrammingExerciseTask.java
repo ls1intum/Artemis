@@ -30,16 +30,16 @@ public class ProgrammingExerciseTask extends DomainObject {
 
     // No orphanRemoval here, as there should only be one parent-child relationship (which is ProgrammingExercise -> CodeHint)
     @OneToMany(mappedBy = "task", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("programmingExerciseTask")
+    @JsonIgnoreProperties("task")
     private Set<CodeHint> codeHints = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "programming_exercise_task_test_case", joinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "test_case_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties("tasks")
+    @JsonIgnoreProperties({ "tasks", "exercise" })
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
     @ManyToOne
-    @JsonIgnoreProperties("programmingExerciseTask")
+    @JsonIgnoreProperties("tasks")
     private ProgrammingExercise exercise;
 
     public String getTaskName() {

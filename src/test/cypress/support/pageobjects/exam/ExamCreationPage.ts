@@ -97,6 +97,8 @@ export class ExamCreationPage {
     }
 
     private enterDate(selector: string, date: dayjs.Dayjs) {
-        cy.get(selector).find('#date-input-field').clear().type(dayjsToString(date), { force: true });
+        const dateInputField = cy.get(selector).find('#date-input-field');
+        dateInputField.should('not.be.disabled');
+        dateInputField.clear().type(dayjsToString(date), { force: true });
     }
 }

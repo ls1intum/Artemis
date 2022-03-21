@@ -29,13 +29,13 @@ public class UMLActivityTest {
     @Test
     void similarity_null() {
         double similarity = activity.similarity(null);
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
     void similarity_differentElementType() {
         double similarity = activity.similarity(mock(UMLControlFlow.class));
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
@@ -57,7 +57,7 @@ public class UMLActivityTest {
     void similarity_nullReferenceName() {
         doReturn(null).when(referenceActivity).getName();
         double similarity = activity.similarity(referenceActivity);
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test

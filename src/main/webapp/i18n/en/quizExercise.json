@@ -25,7 +25,7 @@
                 "pendingChanges": "Unsaved Changes",
                 "saving": "Saving...",
                 "saved": "Saved!",
-                "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made, once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\", once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)",
+                "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\" once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)",
                 "testRunSubmissionsExist": "This quiz contains submissions in one of the test runs for this exam. Delete the test run to edit the answer options."
             },
             "saveError": "An error occurred while saving. Please review your input data and try again later.",

@@ -13,7 +13,7 @@ export class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
     /**
      * List of elements the related submission consists of.
      */
-    elements: E[];
+    elements?: E[];
 
     /**
      * ID of the related submission.

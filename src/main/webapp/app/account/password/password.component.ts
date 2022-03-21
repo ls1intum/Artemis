@@ -29,15 +29,9 @@ export class PasswordComponent implements OnInit {
     constructor(private passwordService: PasswordService, private accountService: AccountService, private profileService: ProfileService, private fb: FormBuilder) {}
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.passwordResetEnabled = profileInfo.registrationEnabled || false;
-                this.passwordResetEnabled ||= profileInfo.saml2?.enablePassword || false;
-            }
-        });
-
         this.accountService.identity().then((user) => {
             this.user = user;
+            this.passwordResetEnabled = user?.internal || false;
         });
     }
 
