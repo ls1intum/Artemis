@@ -37,7 +37,7 @@
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }} </pre
             >
-            <div *ngIf="!useSsh" style="display: flex; align-items: center">
+            <div *ngIf="!useSsh" class="d-flex align-items-center">
                 <a style="flex: 1" class="btn btn-secondary btn-sm me-2 open-repository-button" [href]="getHttpRepositoryUrl() | safeUrl" target="_blank" rel="noopener noreferrer">
                     <fa-icon [icon]="faExternalLink"></fa-icon>
                 </a>
