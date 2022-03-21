@@ -65,6 +65,15 @@ public class ComplaintService {
 
         Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
 
+        // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+
+        // Check whether the complaint text limit is exceeded
+        if (course.getMaxComplaintTextLimit() < complaint.getComplaintText().length()) {
+            throw new BadRequestAlertException("You cannot submit a complaint that exceeds the maximum number of " + course.getMaxComplaintTextLimit() + " characters", ENTITY_NAME,
+                    "exceededComplaintTextLimit");
+        }
+
         // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
             final Exam exam = examRepository.findByIdElseThrow(examId.getAsLong());
@@ -75,9 +84,6 @@ public class ComplaintService {
             }
         }
         else {
-            // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
-            final Course course = courseRepository.findByIdElseThrow(courseId);
-
             if (complaint.getComplaintType() == ComplaintType.COMPLAINT) {
                 long numberOfUnacceptedComplaints = countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
                 long numberOfAllowedComplaintsInCourse = getMaxComplaintsPerParticipant(course, participant);

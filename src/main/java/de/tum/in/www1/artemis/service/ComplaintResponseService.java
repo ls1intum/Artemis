@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.ComplaintResponseResource;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
 
 /**
@@ -21,9 +22,15 @@ import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
 @Service
 public class ComplaintResponseService {
 
+    private static final String ENTITY_NAME = "complaintResponse";
+
     private final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
 
     private final ComplaintRepository complaintRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final CourseRepository courseRepository;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
@@ -31,9 +38,11 @@ public class ComplaintResponseService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
+    public ComplaintResponseService(ComplaintRepository complaintRepository, ResultRepository resultRepository, CourseRepository courseRepository,
+            ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
         this.complaintRepository = complaintRepository;
+        this.resultRepository = resultRepository;
+        this.courseRepository = courseRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -184,6 +193,20 @@ public class ComplaintResponseService {
         }
         if (updatedComplaintResponse.getComplaint().isAccepted() == null) {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
+        }
+
+        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(originalComplaint.getResult().getId())
+                .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
+        StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
+        Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
+        // Retrieve course to get max complaint response limit
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+
+        // Check whether the complaint text limit is exceeded
+        if (course.getMaxComplaintResponseTextLimit() < updatedComplaintResponse.getResponseText().length()) {
+            throw new BadRequestAlertException(
+                    "You cannot submit a complaint response that exceeds the maximum number of " + course.getMaxComplaintResponseTextLimit() + " characters", ENTITY_NAME,
+                    "exceededComplaintResponseTextLimit");
         }
 
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
