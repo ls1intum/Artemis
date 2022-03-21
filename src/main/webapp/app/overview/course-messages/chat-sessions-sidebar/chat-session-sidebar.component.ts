@@ -7,19 +7,22 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
-import { ChatService } from 'app/shared/metis/chat.service';
+import { ChatSessionService } from 'app/shared/metis/chat-session.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { ChatSession } from 'app/entities/metis/chat.session/chat.session.model';
+import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { UserChatSession } from 'app/entities/metis/chat.session/user-chat-session.model';
+import { Course } from 'app/entities/course.model';
+import { ChatService } from 'app/shared/metis/chat.service';
 
 @Component({
     selector: 'jhi-chat-session-sidebar',
     styleUrls: ['./chat-session-sidebar.component.scss'],
     templateUrl: './chat-session-sidebar.component.html',
-    providers: [MetisService, ChatService],
+    providers: [MetisService, ChatSessionService],
 })
 export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges {
     @Input() activeID: number;
@@ -56,7 +59,8 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
      */
     public pageSize = 100;
 
-    private courseId: number;
+    course?: Course;
+    courseId: number;
 
     private chatSessionSubscription: Subscription;
     private paramSubscription: Subscription;
@@ -88,10 +92,14 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
         }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
             const { params } = routeParams;
             this.courseId = params.courseId;
-            this.chatService.getChatSessionsOfUser(this.courseId).subscribe((res: HttpResponse<ChatSession[]>) => {
+            this.courseManagementService.findOneForDashboard(this.courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
-                    this.chatSessions = res.body!;
+                    this.course = res.body!;
                 }
+            });
+            this.chatService.getChatSessionsOfUser(this.courseId);
+            this.chatSessionSubscription = this.chatService.chatSessions.pipe().subscribe((chatSessions: ChatSession[]) => {
+                this.chatSessions = chatSessions;
             });
         });
     }
@@ -105,7 +113,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
      * @param stream$ stream of searches of the format {text, entities} where entities are the results
      * @return stream of users for the autocomplete
      */
-    searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
+    searchUsersWithinCourse = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
         return stream$.pipe(
             switchMap(({ text: loginOrName }) => {
                 this.searchFailed = false;
@@ -135,8 +143,42 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
         );
     };
 
+    /**
+     * Receives the user that was selected in the autocomplete and the callback from DataTableComponent.
+     * The callback inserts the search term of the selected entity into the search field and updates the displayed users.
+     *
+     * @param user The selected user from the autocomplete suggestions
+     * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
+     */
+    onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
+        // If the user is not part of this course group yet, perform the server call to add them
+
+        // const index = this.findIndexOfChatSessionWithUser(user);
+        if (true) {
+            const newChatSession = this.prepareNewChatSessionWithUser(user);
+            this.isTransitioning = true;
+            this.chatService.createChatSession(this.courseId, newChatSession).subscribe({
+                next: (chatSession: ChatSession) => {
+                    this.isTransitioning = false;
+
+                    // Add newly added user to the list of all users in the course group
+                    this.chatSessions.push(chatSession);
+
+                    // Hand back over to the data table for updating
+                    callback(user);
+                },
+                error: () => {
+                    this.isTransitioning = false;
+                },
+            });
+        } else {
+            // Hand back over to the data table
+            callback(user);
+        }
+    };
+
     ngOnDestroy(): void {
-        throw new Error('Method not implemented.');
+        this.chatSessionSubscription?.unsubscribe();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -200,4 +242,26 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
         const { name } = user;
         return `${name}`;
     };
+
+    findIndexOfChatSessionWithUser(user: User) {
+        const chatSessionIndex = this.chatSessions.find((chatSession) => {
+            chatSession.userChatSessions.find((userChatSession) => userChatSession.user.id === user.id);
+        });
+
+        return chatSessionIndex;
+    }
+
+    prepareNewChatSessionWithUser(user: User) {
+        const chatSession = new ChatSession();
+        chatSession.course = this.course!;
+        chatSession.userChatSessions = [this.prepareUserChatSession(user)];
+
+        return chatSession;
+    }
+
+    prepareUserChatSession(user: User) {
+        const userChatSession = new UserChatSession();
+        userChatSession.user = user;
+        return userChatSession;
+    }
 }

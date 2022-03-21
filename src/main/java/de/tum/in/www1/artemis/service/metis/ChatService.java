@@ -71,13 +71,13 @@ public class ChatService {
         final Course course = preCheckUserAndCourse(user, courseId);
         chatSession.setCourse(course);
 
+        ChatSession savedChatSession = chatSessionRepository.save(chatSession);
+
         UserChatSession userChatSessionOfCurrentUser = new UserChatSession();
         userChatSessionOfCurrentUser.setUser(user);
         chatSession.getUserChatSessions().add(userChatSessionOfCurrentUser);
 
-        chatSession.getUserChatSessions().forEach(userChatSession -> userChatSession = createUserChatSession(userChatSession, chatSession));
-
-        ChatSession savedChatSession = chatSessionRepository.save(chatSession);
+        chatSession.getUserChatSessions().forEach(userChatSession -> userChatSession = createUserChatSession(userChatSession, savedChatSession));
 
         // informs involved users about a new chat session
         broadcastForChatSession(new ChatSessionDTO(savedChatSession, CrudAction.CREATE));
@@ -117,6 +117,7 @@ public class ChatService {
      * @return                  persisted userChatSession
      */
     private UserChatSession createUserChatSession(UserChatSession userChatSession, ChatSession chatSession) {
+        userChatSession.setChatSession(chatSession);
         userChatSession.setLastRead(chatSession.getLastMessageDate());
         return userChatSessionRepository.save(userChatSession);
     }

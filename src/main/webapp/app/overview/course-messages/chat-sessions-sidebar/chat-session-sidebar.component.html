@@ -7,7 +7,7 @@
     <jhi-data-table
         [showPageSizeDropdown]="false"
         entityType="user"
-        [onSearchWrapper]="searchAllUsers"
+        [onSearchWrapper]="searchUsersWithinCourse"
         [searchFields]="['name']"
         [isLoading]="isLoading"
         [isSearching]="isSearching"
@@ -15,6 +15,7 @@
         [searchNoResults]="searchNoResults"
         [isTransitioning]="isTransitioning"
         [searchResultFormatter]="searchResultFormatter"
+        [onAutocompleteSelectWrapper]="onAutocompleteSelect"
     >
     </jhi-data-table>
 

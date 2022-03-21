@@ -29,13 +29,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
-import { ChatSession } from 'app/entities/metis/chat.session/chat.session.model';
-import { ChatService } from 'app/shared/metis/chat.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
-    private chatSessions$: ReplaySubject<ChatSession[]> = new ReplaySubject<ChatSession[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalItems$: ReplaySubject<number> = new ReplaySubject<number>(1);
 
@@ -52,7 +49,6 @@ export class MetisService implements OnDestroy {
         protected postService: PostService,
         protected answerPostService: AnswerPostService,
         protected reactionService: ReactionService,
-        protected chatService: ChatService,
         protected accountService: AccountService,
         protected exerciseService: ExerciseService,
         private translateService: TranslateService,
@@ -65,10 +61,6 @@ export class MetisService implements OnDestroy {
 
     get posts(): Observable<Post[]> {
         return this.posts$.asObservable();
-    }
-
-    get chatSessions(): Observable<ChatSession[]> {
-        return this.chatSessions$.asObservable();
     }
 
     get tags(): Observable<string[]> {

@@ -2,9 +2,7 @@
     <div class="col-12 col-md-4">
         <jhi-chat-session-sidebar (selectIndex)="selectChatSessionWithID($event)"></jhi-chat-session-sidebar>
     </div>
-    <!--    <div class="col-12 col-md-8">-->
-    <!--        <jhi-chat-session-->
-    <!--                [chatSessionID]="selectedChatSessionId"-->
-    <!--        ></jhi-chat-session>-->
-    <!--    </div>-->
+    <div class="col-12 col-md-8">
+        <jhi-chat-session [chatSessionID]="selectedChatSessionId"></jhi-chat-session>
+    </div>
 </div>

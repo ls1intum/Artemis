@@ -1,81 +1,66 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { ChatSession } from 'app/entities/metis/chat.session/chat.session.model';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
-
-type EntityResponseType = HttpResponse<ChatSession>;
-type EntityArrayResponseType = HttpResponse<ChatSession[]>;
+import { Injectable, OnDestroy } from '@angular/core';
+import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
+import { map, Observable, ReplaySubject } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { ChatSessionService } from 'app/shared/metis/chat-session.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { ChatSessionDTO } from 'app/entities/metis/chat.session/chat-session-dto.model';
+import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
 
 @Injectable({ providedIn: 'root' })
-export class ChatService {
-    public resourceUrl = SERVER_API_URL + '/api/courses/';
+export class ChatService implements OnDestroy {
+    private chatSessions$: ReplaySubject<ChatSession[]> = new ReplaySubject<ChatSession[]>(1);
+    userId: number;
 
-    constructor(protected http: HttpClient) {}
+    constructor(protected chatSessionService: ChatSessionService, private jhiWebsocketService: JhiWebsocketService, protected accountService: AccountService) {
+        this.accountService.identity().then((user: User) => {
+            this.userId = user.id!;
+        });
+    }
 
-    /**
-     * creates a chatSession
-     * @param {number} courseId
-     * @param {ChatSession} chatSession
-     * @return {Observable<EntityResponseType>}
-     */
-    create(courseId: number, chatSession: ChatSession): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(chatSession);
-        return this.http.post<ChatSession>(`${this.resourceUrl}${courseId}/chatSessions`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+    ngOnDestroy(): void {
+        // this.jhiWebsocketService.unsubscribe(this.channelName());
     }
 
     /**
-     * gets all chatSessions for user within course by courseId
-     * @param {number} courseId
-     * @return {Observable<EntityArrayResponseType>}
+     * creates a new chatSession by invoking the chatSession service
+     * @param {number} courseId             course to associate the chatSession to
+     * @param {ChatSession} chatSession     to be created
+     * @return {Observable<ChatSession>}    created chatSession
      */
-    getChatSessionsOfUser(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<ChatSession[]>(`${this.resourceUrl}${courseId}/chatSessions`, {
-                observe: 'response',
-            })
-            .pipe(map(this.convertDateArrayFromServer));
+    createChatSession(courseId: number, chatSession: ChatSession): Observable<ChatSession> {
+        return this.chatSessionService.create(courseId, chatSession).pipe(map((res: HttpResponse<ChatSession>) => res.body!));
     }
 
-    /**
-     * takes a chatSession and converts the date from the client
-     * @param   {ChatSession} chatSession
-     * @return  {ChatSession}
-     */
-    private convertDateFromClient(chatSession: ChatSession) {
-        return {
-            ...chatSession,
-            creationDate: chatSession.creationDate && dayjs(chatSession.creationDate).isValid() ? dayjs(chatSession.creationDate).toJSON() : undefined,
-            lastMessageDate: chatSession.lastMessageDate && dayjs(chatSession.lastMessageDate).isValid() ? dayjs(chatSession.lastMessageDate).toJSON() : undefined,
-        };
+    get chatSessions(): Observable<ChatSession[]> {
+        return this.chatSessions$.asObservable();
     }
 
-    /**
-     * takes a chatSession and converts the date from the server
-     * @param   {HttpResponse<ChatSession>} res
-     * @return  {HttpResponse<ChatSession>}
-     */
-    private convertDateFromServer(res: HttpResponse<ChatSession>): HttpResponse<ChatSession> {
-        if (res.body) {
-            res.body.creationDate = res.body.creationDate ? dayjs(res.body.creationDate) : undefined;
-            res.body.lastMessageDate = res.body.lastMessageDate ? dayjs(res.body.lastMessageDate) : undefined;
-        }
-        return res;
+    getChatSessionsOfUser(courseId: number): void {
+        this.chatSessionService.getChatSessionsOfUser(courseId).subscribe((res) => {
+            this.chatSessions$.next(res.body!);
+            this.createSubscription(courseId, this.userId);
+        });
     }
 
-    /**
-     * takes an array of chatSessions and converts the date from the server
-     * @param   {HttpResponse<ChatSession[]>} res
-     * @return  {HttpResponse<ChatSession[]>}
-     */
-    protected convertDateArrayFromServer(res: HttpResponse<ChatSession[]>): HttpResponse<ChatSession[]> {
-        if (res.body) {
-            res.body.forEach((chatSession: ChatSession) => {
-                chatSession.creationDate = chatSession.creationDate ? dayjs(chatSession.creationDate) : undefined;
-                chatSession.lastMessageDate = chatSession.lastMessageDate ? dayjs(chatSession.lastMessageDate) : undefined;
-            });
-        }
-        return res;
+    private createSubscription(courseId: number, userId: number) {
+        const channel = this.channelName(courseId, userId);
+
+        this.jhiWebsocketService.unsubscribe(channel);
+        this.jhiWebsocketService.subscribe(channel);
+
+        this.jhiWebsocketService.receive(channel).subscribe((chatSessionDTO: ChatSessionDTO) => {
+            if (chatSessionDTO.crudAction === MetisPostAction.CREATE) {
+                this.getChatSessionsOfUser(courseId);
+            }
+        });
+    }
+
+    private channelName(courseId: number, userId: number) {
+        const courseTopicName = MetisWebsocketChannelPrefix + 'courses/' + courseId;
+        const channel = courseTopicName + '/chatSessions/user/' + userId;
+        return channel;
     }
 }

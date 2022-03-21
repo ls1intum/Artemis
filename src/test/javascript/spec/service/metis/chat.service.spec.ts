@@ -2,19 +2,20 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 
-import { ChatService } from 'app/shared/metis/chat.service';
+import { ChatSessionService } from 'app/shared/metis/chat-session.service';
+import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
+
 import { metisChatSessionsOfUser1, metisChatSessionToCreateUser1, metisCourse } from '../../helpers/sample/metis-sample-data';
-import { ChatSession } from 'app/entities/metis/chat.session/chat.session.model';
 
 describe('ChatSession Service', () => {
-    let chatService: ChatService;
+    let chatService: ChatSessionService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
         });
-        chatService = TestBed.inject(ChatService);
+        chatService = TestBed.inject(ChatSessionService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 

@@ -369,7 +369,7 @@ describe('Course Management Service', () => {
             .searchOtherUsersInCourse(course.id!, 'user1')
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(users));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?loginOrName=user1` });
         req.flush(returnedFromService);
         tick();
     }));

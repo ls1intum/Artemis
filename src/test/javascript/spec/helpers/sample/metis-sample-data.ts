@@ -6,8 +6,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { ChatSession } from 'app/entities/metis/chat.session/chat.session.model';
-import { UserChatSession } from 'app/entities/metis/chat.session/user.chat.session.model';
+import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
+import { UserChatSession } from 'app/entities/metis/chat.session/user-chat-session.model';
 
 export const metisLecture = { id: 1, title: 'Metis  Lecture' } as Lecture;
 export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture' } as Lecture;
