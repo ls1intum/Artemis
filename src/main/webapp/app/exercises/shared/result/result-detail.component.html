@@ -54,7 +54,7 @@
                     <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
                     <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
                 </div>
-                <div *ngFor="let feedback of filteredFeedbackList; last as isLast" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
+                <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
                     <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits"
                         >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise!)) }}P<fa-icon
