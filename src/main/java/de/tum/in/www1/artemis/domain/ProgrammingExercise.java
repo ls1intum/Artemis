@@ -121,9 +121,10 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
 
-    // FetchType.LAZY here, as only need the git-diff very rarely
+    // Should be lazily loaded, but Hibernate does not support lazy loading for OneToOne relations
+    // Therefore we need JsonIgnore here
     @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("programmingExercise")
+    @JsonIgnore
     private ProgrammingExerciseGitDiffReport gitDiffReport;
 
     /**

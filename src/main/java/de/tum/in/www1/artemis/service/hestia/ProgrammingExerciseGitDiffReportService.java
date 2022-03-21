@@ -178,7 +178,9 @@ public class ProgrammingExerciseGitDiffReportService {
             newReport.setSolutionRepositoryCommitHash(solutionHash);
             newReport.setProgrammingExercise(programmingExercise);
             // Delete the old report first
-            programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExercise.getId());
+            if (existingReport != null) {
+                programmingExerciseGitDiffReportRepository.delete(existingReport);
+            }
             newReport = programmingExerciseGitDiffReportRepository.save(newReport);
             programmingExercise.setGitDiffReport(newReport);
             programmingExerciseRepository.save(programmingExercise);
