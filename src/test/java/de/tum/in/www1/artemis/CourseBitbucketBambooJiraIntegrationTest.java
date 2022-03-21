@@ -406,7 +406,7 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testSearchStudentsAndTutorsAndInstructorsInOtherCourse_forbidden() throws Exception {
-        courseTestService.testSearchStudentsAndTutorsAndInstructorsInOtherCourse_forbidden();
+        courseTestService.testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden();
     }
 
     @Test

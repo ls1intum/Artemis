@@ -56,7 +56,7 @@ const routes: Routes = [
             },
             {
                 path: 'discussion',
-                loadChildren: () => import('../overview/course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
+                loadChildren: () => import('./course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
             },
             {
                 path: 'messages',

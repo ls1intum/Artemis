@@ -33,6 +33,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { PostOverviewComponent } from 'app/shared/metis/post-overview/post-overview.component';
 
 @NgModule({
     imports: [
@@ -71,6 +72,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
+        PostOverviewComponent,
         HtmlForPostingMarkdownPipe,
         ReactingUsersOnPostingPipe,
     ],
@@ -91,6 +93,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
+        PostOverviewComponent,
         HtmlForPostingMarkdownPipe,
     ],
 })

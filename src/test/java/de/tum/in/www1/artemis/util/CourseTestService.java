@@ -1052,6 +1052,7 @@ public class CourseTestService {
         assertThat(instructors).as("All instructors in course found").hasSize(numberOfInstructors);
     }
 
+    // Test
     public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
@@ -1079,7 +1080,8 @@ public class CourseTestService {
         assertThat(instructor).as("An instructors in course found").hasSize(1);
     }
 
-    public void testSearchStudentsAndTutorsAndInstructorsInOtherCourse_forbidden() throws Exception {
+    // Test
+    public void testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
         course = courseRepo.save(course);
 

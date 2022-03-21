@@ -1,7 +1,7 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { combineLatest, Observable, Subscription } from 'rxjs';
+import { combineLatest, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -15,15 +15,12 @@ import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTim
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 @Component({
-    selector: 'jhi-chat-session',
-    templateUrl: './course-messages.component.html',
-    styleUrls: ['./course-messages.component.scss'],
+    selector: 'jhi-post-overview',
+    templateUrl: './post-overview.component.html',
+    styleUrls: ['./post-overview.component.scss'],
     providers: [MetisService],
 })
-export class CourseMessagesComponent implements OnInit, OnDestroy {
-    @Input() chatSessionID: Observable<number>;
-    selectedChatSessionId: number;
-
+export class PostOverviewComponent implements OnInit, OnDestroy {
     entitiesPerPageTranslation = 'organizationManagement.userSearch.usersPerPage';
     showAllEntitiesTranslation = 'organizationManagement.userSearch.showAllUsers';
 
@@ -106,7 +103,6 @@ export class CourseMessagesComponent implements OnInit, OnDestroy {
                 }
             });
         });
-        // this.chatSessionID.pipe().subscribe((chatSessionID: number) => (this.selectedChatSessionId = chatSessionID));
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
             this.posts = posts;
             this.isLoading = false;
@@ -258,9 +254,5 @@ export class CourseMessagesComponent implements OnInit, OnDestroy {
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
         };
-    }
-
-    selectChatSessionWithID(id: number) {
-        this.selectedChatSessionId = id;
     }
 }

@@ -10,10 +10,10 @@ import { ReplaySubject } from 'rxjs';
 
 @Component({
     selector: 'jhi-messages',
-    styleUrls: ['./messages.component.scss'],
-    templateUrl: './messages.component.html',
+    styleUrls: ['./course-messages.component.scss'],
+    templateUrl: './course-messages.component.html',
 })
-export class MessagesComponent implements OnInit {
+export class CourseMessagesComponent implements OnInit {
     /**
      * True, if an automated plagiarism detection is running; false otherwise.
      */

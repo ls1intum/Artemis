@@ -3,9 +3,8 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { CourseMessagesComponent } from 'app/overview/course-messages/chat-session/course-messages.component';
 import { ChatSessionSidebarComponent } from 'app/overview/course-messages/chat-sessions-sidebar/chat-session-sidebar.component';
-import { MessagesComponent } from 'app/overview/course-messages/messages/messages.component';
+import { CourseMessagesComponent } from 'app/overview/course-messages/course-messages.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
 const routes: Routes = [
@@ -15,13 +14,13 @@ const routes: Routes = [
         data: {
             pageTitle: 'artemisApp.messages.label',
         },
-        component: MessagesComponent,
+        component: CourseMessagesComponent,
     },
 ];
 
 @NgModule({
     imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisDataTableModule],
-    declarations: [MessagesComponent, CourseMessagesComponent, ChatSessionSidebarComponent],
-    exports: [CourseMessagesComponent, ChatSessionSidebarComponent],
+    declarations: [CourseMessagesComponent, ChatSessionSidebarComponent],
+    exports: [ChatSessionSidebarComponent],
 })
 export class CourseMessagesModule {}

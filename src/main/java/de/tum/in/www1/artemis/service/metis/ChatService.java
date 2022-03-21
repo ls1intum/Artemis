@@ -136,6 +136,8 @@ public class ChatService {
 
     /**
      * Retrieve the entity name used in ResponseEntity
+     *
+     * @return chatSession entity name
      */
     public String getEntityName() {
         return METIS_CHAT_SESSION_ENTITY_NAME;

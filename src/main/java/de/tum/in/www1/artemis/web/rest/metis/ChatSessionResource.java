@@ -48,6 +48,7 @@ public class ChatSessionResource {
     /**
      * POST /courses/{courseId}/chatSessions : Create a new chat session
      *
+     * @param courseId        course to associate the new chatSession
      * @param chatSession     chat session to create
      * @return ResponseEntity with status 201 (Created) containing the created chatSession in the response body,
      * or with status 400 (Bad Request) if the checks on user or course validity fail

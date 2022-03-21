@@ -8,7 +8,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { getElement } from '../../../helpers/utils/general.utils';
+import { getElement } from '../../../../helpers/utils/general.utils';
 import { NgbPaginationModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
@@ -16,19 +16,19 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
+import { MockExerciseService } from '../../../../helpers/mocks/service/mock-exercise.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
-import { MockAnswerPostService } from '../../../helpers/mocks/service/mock-answer-post.service';
+import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
 import { PostService } from 'app/shared/metis/post.service';
-import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
-import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
+import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
+import { PostOverviewComponent } from 'app/shared/metis/post-overview/post-overview.component';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     metisCourse,
@@ -47,12 +47,12 @@ import {
     metisResolvingAnswerPostUser1,
     metisUpVoteReactionUser1,
     metisUser1,
-} from '../../../helpers/sample/metis-sample-data';
+} from '../../../../helpers/sample/metis-sample-data';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
-describe('CourseDiscussionComponent', () => {
-    let component: CourseDiscussionComponent;
-    let fixture: ComponentFixture<CourseDiscussionComponent>;
+describe('PostOverviewComponent', () => {
+    let component: PostOverviewComponent;
+    let fixture: ComponentFixture<PostOverviewComponent>;
     let courseManagementService: CourseManagementService;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
@@ -75,7 +75,7 @@ describe('CourseDiscussionComponent', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbPaginationModule)],
             declarations: [
-                CourseDiscussionComponent,
+                PostOverviewComponent,
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(FaIconComponent),
@@ -101,7 +101,7 @@ describe('CourseDiscussionComponent', () => {
             .then(() => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
-                fixture = TestBed.createComponent(CourseDiscussionComponent);
+                fixture = TestBed.createComponent(PostOverviewComponent);
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
