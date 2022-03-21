@@ -57,7 +57,7 @@ public class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpring
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createProgrammingExerciseWithoutConnectionToVCSandCI_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
-        assertThat(programmingExerciseRepository.count()).isEqualTo(0);
+        assertThat(programmingExerciseRepository.count()).isZero();
         database.addSubmissionPolicyToExercise(ModelFactory.generateLockRepositoryPolicy(1, true), exercise);
         final var generatedExercise = request.postWithResponseBody(
                 ProgrammingExerciseSimulationResource.Endpoints.ROOT + ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION, exercise, ProgrammingExercise.class,

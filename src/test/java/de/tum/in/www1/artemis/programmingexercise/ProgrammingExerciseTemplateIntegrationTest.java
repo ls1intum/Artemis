@@ -165,10 +165,10 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
         moveAssignmentSourcesOf(repository);
         int exitCode = invokeMaven();
         if (TestResult.SUCCESSFUL.equals(testResult)) {
-            assertThat(exitCode).isEqualTo(0);
+            assertThat(exitCode).isZero();
         }
         else {
-            assertThat(exitCode).isNotEqualTo(0);
+            assertThat(exitCode).isNotZero();
         }
 
         var testResults = readTestReports();

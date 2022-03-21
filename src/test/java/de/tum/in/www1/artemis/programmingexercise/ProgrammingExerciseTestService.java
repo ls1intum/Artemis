@@ -742,11 +742,11 @@ public class ProgrammingExerciseTestService {
         assertThat(response).startsWith("Successfully generated the structure oracle");
 
         List<RevCommit> testRepoCommits = testRepo.getAllLocalCommits();
-        assertThat(testRepoCommits.size()).isEqualTo(2);
+        assertThat(testRepoCommits).hasSize(2);
 
         assertThat(testRepoCommits.get(0).getFullMessage()).isEqualTo("Update the structure oracle file.");
         List<DiffEntry> changes = getChanges(testRepo.localGit.getRepository(), testRepoCommits.get(0));
-        assertThat(changes.size()).isEqualTo(1);
+        assertThat(changes).hasSize(1);
         assertThat(changes.get(0).getChangeType()).isEqualTo(DiffEntry.ChangeType.MODIFY);
         assertThat(changes.get(0).getOldPath()).endsWith("test.json");
 
@@ -886,7 +886,7 @@ public class ProgrammingExerciseTestService {
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         var submissions = submissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions).hasSize(1);
     }
 
     // TEST
@@ -922,7 +922,7 @@ public class ProgrammingExerciseTestService {
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         var submissions = submissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions).hasSize(1);
     }
 
     // TEST
@@ -953,7 +953,7 @@ public class ProgrammingExerciseTestService {
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         var submissions = submissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions).hasSize(1);
     }
 
     // Test
@@ -1301,7 +1301,7 @@ public class ProgrammingExerciseTestService {
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         // some build logs have been filtered out
-        assertThat(buildLogs.size()).as("Failed build log was created").isEqualTo(1);
+        assertThat(buildLogs).as("Failed build log was created").hasSize(1);
     }
 
     // TEST

@@ -507,8 +507,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isNotNull();
-        assertThat(returnedResult).isEqualTo(result);
+        assertThat(returnedResult).isNotNull().isEqualTo(result);
     }
 
     @Test
@@ -597,8 +596,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         database.addSampleFeedbackToResults(result);
         latestResult = database.addSampleFeedbackToResults(latestResult);
         Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isNotNull();
-        assertThat(returnedResult).isEqualTo(latestResult);
+        assertThat(returnedResult).isNotNull().isEqualTo(latestResult);
     }
 
     @Test

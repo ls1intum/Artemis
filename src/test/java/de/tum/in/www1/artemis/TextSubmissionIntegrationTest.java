@@ -150,7 +150,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.OK,
                 TextSubmission.class);
 
-        assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
+        assertThat(textSubmissions).as("one text submission was found").hasSize(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
@@ -162,7 +162,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
-        assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
+        assertThat(textSubmissions).as("one text submission was found").hasSize(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNotEmpty();
     }

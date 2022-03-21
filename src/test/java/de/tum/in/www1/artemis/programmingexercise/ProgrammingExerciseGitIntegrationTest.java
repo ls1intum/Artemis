@@ -113,14 +113,14 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
         config.save();
         localGit.push().call();
-        assertThat(getAllCommits(localGit).size()).isEqualTo(3);
-        assertThat(getAllCommits(remoteGit).size()).isEqualTo(3);
+        assertThat(getAllCommits(localGit)).hasSize(3);
+        assertThat(getAllCommits(remoteGit)).hasSize(3);
 
         final var path = ProgrammingExerciseResourceEndpoints.ROOT
                 + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.OK);
-        assertThat(getAllCommits(localGit).size()).isEqualTo(1);
-        assertThat(getAllCommits(remoteGit).size()).isEqualTo(1);
+        assertThat(getAllCommits(localGit)).hasSize(1);
+        assertThat(getAllCommits(remoteGit)).hasSize(1);
     }
 
     @Test

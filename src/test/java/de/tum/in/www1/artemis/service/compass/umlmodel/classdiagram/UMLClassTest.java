@@ -88,13 +88,13 @@ public class UMLClassTest {
     @Test
     void similarity_null() {
         double similarity = umlClass.similarity(null);
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
     void similarity_differentElementType() {
         double similarity = umlClass.similarity(mock(UMLRelationship.class));
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
@@ -128,13 +128,13 @@ public class UMLClassTest {
     @Test
     void overallSimilarity_null() {
         double similarity = umlClass.overallSimilarity(null);
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
     void overallSimilarity_differentElementType() {
         double similarity = umlClass.overallSimilarity(mock(UMLPackage.class));
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test

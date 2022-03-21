@@ -158,7 +158,6 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
         int numberOfTutorsInvolved = request.get("/api/analytics/text-assessment/courses/" + course.getId() + "/text-exercises/" + exercise.getId() + "/tutors-involved",
                 HttpStatus.OK, Integer.class);
 
-        assertThat(numberOfTutorsInvolved).isNotNull();
-        assertThat(numberOfTutorsInvolved).isEqualTo(2);
+        assertThat(numberOfTutorsInvolved).isNotNull().isEqualTo(2);
     }
 }

@@ -31,14 +31,14 @@ public class UMLActivityNodeTest {
     void similarity_null() {
         double similarity = activityNode.similarity(null);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
     void similarity_differentElementType() {
         double similarity = activityNode.similarity(mock(UMLControlFlow.class));
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
@@ -66,7 +66,7 @@ public class UMLActivityNodeTest {
 
         double similarity = activityNode.similarity(referenceNode);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
@@ -97,7 +97,7 @@ public class UMLActivityNodeTest {
 
         double similarity = activityNode.similarity(referenceNode);
 
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test

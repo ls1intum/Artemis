@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.notifications;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
@@ -165,8 +165,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification capturedNotification = capturedNotifications.get(0);
         assertThat(capturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
-        assertThat(capturedNotifications.size()).as("The number of created notification should be the same as the number of notified groups/authorities")
-                .isEqualTo(numberOfGroupsAndCalls);
+        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities").hasSize(numberOfGroupsAndCalls);
     }
 
     /// Exercise Update / Release & Scheduling related Tests
@@ -332,7 +331,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     public void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
         attachment.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        assertThat(notificationRepository.findAll().size()).as("No notification should be created/saved").isEqualTo(0);
+        assertThat(notificationRepository.findAll()).as("No notification should be created/saved").isEmpty();
     }
 
     /**
