@@ -1052,7 +1052,10 @@ public class CourseTestService {
         assertThat(instructors).as("All instructors in course found").hasSize(numberOfInstructors);
     }
 
-    // Test
+    /** Searches for others users of a course in multiple roles
+     *
+     * @throws Exception
+     */
     public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);

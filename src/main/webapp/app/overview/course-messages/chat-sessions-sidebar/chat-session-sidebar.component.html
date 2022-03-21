@@ -2,25 +2,20 @@
     <jhi-data-table
         [showPageSizeDropdown]="false"
         entityType="user"
-        [onSearchWrapper]="searchUsersWithinCourse"
         [searchFields]="['name']"
         [isLoading]="isLoading"
         [isSearching]="isSearching"
         [searchFailed]="searchFailed"
         [searchNoResults]="searchNoResults"
         [isTransitioning]="isTransitioning"
+        [onSearchWrapper]="searchUsersWithinCourse"
         [searchResultFormatter]="searchResultFormatter"
         [onAutocompleteSelectWrapper]="onAutocompleteSelect"
     >
     </jhi-data-table>
 
-    <div class="filter-disclaimer" *ngIf="casesFiltered">
-        <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle"></fa-icon>
-        <span>{{ 'artemisApp.plagiarism.casesFiltered' | artemisTranslate }}</span>
-    </div>
-
     <ul *ngIf="chatSessions && chatSessions.length">
-        <li *ngFor="let chatSession of chatSessions" class="plagiarism-list-item" (click)="selectIndex.emit(chatSession.id)">
+        <li *ngFor="let chatSession of chatSessions" class="plagiarism-list-item" [class.selected]="activeID === chatSession.id" (click)="selectIndex.emit(chatSession.id)">
             <div class="plagiarism-list-item-info">
                 <span class="plagiarism-list-item-students">
                     <span>{{ getNameOfChatSessionParticipant(chatSession) }}</span>

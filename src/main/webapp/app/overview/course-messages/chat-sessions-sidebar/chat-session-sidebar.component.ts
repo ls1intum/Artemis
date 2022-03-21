@@ -26,19 +26,15 @@ import { ChatService } from 'app/shared/metis/chat.service';
 })
 export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges {
     @Input() activeID: number;
-    @Input() comparisons?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[];
-    @Input() casesFiltered = false;
     @Input() offset = 0;
-
     @Input() showRunDetails: boolean;
-    @Output() showRunDetailsChange = new EventEmitter<boolean>();
 
+    @Output() showRunDetailsChange = new EventEmitter<boolean>();
     @Output() selectIndex = new EventEmitter<number>();
 
     faExclamationTriangle = faExclamationTriangle;
 
     chatSessions: ChatSession[];
-
     /**
      * Index of the currently selected result page.
      */
@@ -52,7 +48,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
     /**
      * Subset of currently paged comparisons.
      */
-    public pagedComparisons?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[];
+    public pagedComparisons?: ChatSession;
 
     /**
      * Number of comparisons per page.
@@ -100,6 +96,10 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
             this.chatService.getChatSessionsOfUser(this.courseId);
             this.chatSessionSubscription = this.chatService.chatSessions.pipe().subscribe((chatSessions: ChatSession[]) => {
                 this.chatSessions = chatSessions;
+                if (this.chatSessions.length > 0) {
+                    // emit the value to fetch chatSession posts on post overview tab
+                    this.selectIndex.emit(this.chatSessions.first()?.id!);
+                }
             });
         });
     }
@@ -151,20 +151,22 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
      * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
-        // If the user is not part of this course group yet, perform the server call to add them
-
-        // const index = this.findIndexOfChatSessionWithUser(user);
-        if (true) {
-            const newChatSession = this.prepareNewChatSessionWithUser(user);
+        const foundChatSession = this.findChatSessionWithUser(user);
+        // if a chatSession does not already exist with selected user
+        if (foundChatSession === undefined) {
+            const newChatSession = this.createNewChatSessionWithUser(user);
             this.isTransitioning = true;
             this.chatService.createChatSession(this.courseId, newChatSession).subscribe({
                 next: (chatSession: ChatSession) => {
                     this.isTransitioning = false;
 
-                    // Add newly added user to the list of all users in the course group
-                    this.chatSessions.push(chatSession);
+                    // add newly created chatSession to the beginning of current user's chatSessions
+                    this.chatSessions.unshift(chatSession);
 
-                    // Hand back over to the data table for updating
+                    // select the new chatSession
+                    this.selectIndex.emit(chatSession.id);
+
+                    // hand back over to the data table for updating
                     callback(user);
                 },
                 error: () => {
@@ -172,7 +174,9 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
                 },
             });
         } else {
-            // Hand back over to the data table
+            // chatSession with the searched user already exists, so we select it
+            this.selectIndex.emit(foundChatSession.id);
+            // hand back over to the data table
             callback(user);
         }
     };
@@ -187,7 +191,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
 
             this.currentPage = 0;
             this.numberOfPages = this.computeNumberOfPages(comparisons.length);
-            this.pagedComparisons = this.getPagedComparisons();
+            // this.pagedComparisons = this.getPagedComparisons();
         }
     }
 
@@ -202,7 +206,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
     getPagedComparisons() {
         const startIndex = this.currentPage * this.pageSize;
 
-        return this.comparisons?.slice(startIndex, startIndex + this.pageSize);
+        return this.chatSessions?.slice(startIndex, startIndex + this.pageSize);
     }
 
     getPagedIndex(idx: number) {
@@ -215,7 +219,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
         }
 
         this.currentPage--;
-        this.pagedComparisons = this.getPagedComparisons();
+        // this.pagedComparisons! = this.getPagedComparisons();
     }
 
     handlePageRight() {
@@ -224,7 +228,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
         }
 
         this.currentPage++;
-        this.pagedComparisons = this.getPagedComparisons();
+        // this.pagedComparisons = this.getPagedComparisons();
     }
 
     getNameOfChatSessionParticipant(chatSession: ChatSession): string {
@@ -243,23 +247,19 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
         return `${name}`;
     };
 
-    findIndexOfChatSessionWithUser(user: User) {
-        const chatSessionIndex = this.chatSessions.find((chatSession) => {
-            chatSession.userChatSessions.find((userChatSession) => userChatSession.user.id === user.id);
-        });
-
-        return chatSessionIndex;
+    findChatSessionWithUser(user: User) {
+        return this.chatSessions.find((chatSession) => chatSession.userChatSessions.some((userChatSession) => userChatSession.user.id === user.id));
     }
 
-    prepareNewChatSessionWithUser(user: User) {
+    createNewChatSessionWithUser(user: User) {
         const chatSession = new ChatSession();
         chatSession.course = this.course!;
-        chatSession.userChatSessions = [this.prepareUserChatSession(user)];
+        chatSession.userChatSessions = [this.createNewUserChatSession(user)];
 
         return chatSession;
     }
 
-    prepareUserChatSession(user: User) {
+    createNewUserChatSession(user: User) {
         const userChatSession = new UserChatSession();
         userChatSession.user = user;
         return userChatSession;
