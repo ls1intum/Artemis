@@ -101,13 +101,15 @@ public class UserCreationService {
             String imageUrl, String langKey, boolean isInternal) {
         User newUser = new User();
 
-        // Set random password for null passwords
-        if (password == null) {
-            password = RandomUtil.generatePassword();
+        if (isInternal) {
+            // Set random password for null passwords
+            if (password == null) {
+                password = RandomUtil.generatePassword();
+            }
+            String encryptedPassword = passwordService.hashPassword(password);
+            // new user gets initially a generated password
+            newUser.setPassword(encryptedPassword);
         }
-        String encryptedPassword = passwordService.hashPassword(password);
-        // new user gets initially a generated password
-        newUser.setPassword(encryptedPassword);
 
         newUser.setLogin(login);
         newUser.setFirstName(firstName);
