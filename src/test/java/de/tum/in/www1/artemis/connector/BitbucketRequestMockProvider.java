@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.connector;
 import static de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission.*;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,6 +12,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,13 +22,16 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.test.web.client.*;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -33,6 +39,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -115,10 +122,31 @@ public class BitbucketRequestMockProvider {
 
     public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, BitbucketPermission permission) throws URISyntaxException {
         final var projectKey = exercise.getProjectKey();
-        final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups/")
+        final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups")
                 .queryParam("name", groupName).queryParam("permission", permission);
 
         mockServer.expect(ExpectedCount.once(), requestTo(permissionPath.build().toUri())).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockGrantGroupPermissionToAnyProject(String groupName, BitbucketPermission permission) throws URISyntaxException {
+        mockServer
+                .expect(ExpectedCount.once(),
+                        requestTo(
+                                matchesPattern(bitbucketServerUrl.toURI() + "/rest/api/latest/projects/.*?/permissions/groups\\?name=" + groupName + "&permission=" + permission)))
+                .andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockRevokeGroupPermissionFromProject(ProgrammingExercise exercise, String groupName) throws URISyntaxException {
+        final var projectKey = exercise.getProjectKey();
+        final var permissionPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/permissions/groups")
+                .queryParam("name", groupName);
+
+        mockServer.expect(ExpectedCount.once(), requestTo(permissionPath.build().toUri())).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockRevokeGroupPermissionFromAnyProject(String groupName) throws URISyntaxException {
+        mockServer.expect(ExpectedCount.once(), requestTo(matchesPattern(bitbucketServerUrl.toURI() + "/rest/api/latest/projects/.*?/permissions/groups\\?name=" + groupName)))
+                .andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws URISyntaxException, IOException {
@@ -156,47 +184,128 @@ public class BitbucketRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(bitbucketRepository)));
     }
 
-    public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws URISyntaxException, IOException {
+    public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<User> users, boolean userExists) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
         for (User user : users) {
-            // add mock for userExists() check, if the username contains edx_ or u4i_
-            String loginName = user.getLogin();
-            if (userPrefixEdx.isPresent() && loginName.startsWith(userPrefixEdx.get()) || userPrefixU4I.isPresent() && loginName.startsWith(userPrefixU4I.get())) {
-                if (ltiUserExists) {
-                    mockUserExists(loginName);
-                }
-                else {
-                    mockUserDoesNotExist(loginName);
-                    String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                    mockCreateUser(loginName, passwordService.decryptPassword(user.getPassword()), user.getEmail(), displayName);
-                    mockAddUserToGroups();
-                }
+            if (userExists) {
+                mockUserExists(user.getLogin());
+                mockGiveWritePermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
             }
-            mockGiveWritePermission(exercise, repoName, user.getLogin(), HttpStatus.OK);
+            else {
+                mockUserDoesNotExist(user.getLogin());
+            }
         }
         mockProtectBranches(exercise, repoName);
     }
 
-    public void mockUserExists(String userName) throws URISyntaxException {
-        final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/users/").path(userName).build().toUri();
+    public void mockUserExists(String username) throws URISyntaxException {
+        final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/users/").path(username).build().toUri();
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockUserDoesNotExist(String userName) throws URISyntaxException {
-        final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/users/").path(userName).build().toUri();
+    public void mockUserDoesNotExist(String username) throws URISyntaxException {
+        final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/users/").path(username).build().toUri();
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
     }
 
-    public void mockCreateUser(String userName, String password, String emailAddress, String displayName) {
-        final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", userName).queryParam("email", emailAddress)
+    public void mockCreateUser(String username, String password, String emailAddress, String displayName) {
+        final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username).queryParam("email", emailAddress)
                 .queryParam("emailAddress", emailAddress).queryParam("password", password).queryParam("displayName", displayName).queryParam("addToDefaultGroup", "true")
                 .queryParam("notify", "false").build().toUri();
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
+    public void mockUpdateUserDetails(String username, String emailAddress, String displayName, boolean exists) throws JsonProcessingException {
+        final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").build().toUri();
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", username);
+        body.put("email", emailAddress);
+        body.put("displayName", displayName);
+        var responseActions = mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT)).andExpect(content().json(mapper.writeValueAsString(body)));
+
+        if (exists) {
+            responseActions.andRespond(withStatus(HttpStatus.OK));
+        }
+        else {
+            responseActions.andRespond(withStatus(HttpStatus.NOT_FOUND).body("404 : \"{\"errors:[{\"exceptionName\":\"com.atlassian.bitbucket.user.NoSuchUserException\"}]}\""));
+        }
+    }
+
+    public void mockUpdateUserDetails(String username, String emailAddress, String displayName) throws JsonProcessingException {
+        mockUpdateUserDetails(username, emailAddress, displayName, true);
+    }
+
+    public void mockUpdateUserPassword(String username, String password, boolean passwordShouldMatch, boolean userExists) {
+        final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials").build().toUri();
+
+        var responseActions = mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.PUT));
+        if (userExists) {
+            responseActions.andExpect(content().string(new BaseMatcher<>() {
+
+                @Override
+                public void describeTo(Description description) {
+                    description.appendText("Matcher for the password reset Bitbucket Mock Provider");
+                }
+
+                @Override
+                public boolean matches(Object actual) {
+                    if (actual instanceof String) {
+                        if (passwordShouldMatch) {
+                            Map<String, Object> body = new HashMap<>();
+                            body.put("name", username);
+                            body.put("password", password);
+                            body.put("passwordConfirm", password);
+                            try {
+                                return actual.equals(mapper.writeValueAsString(body));
+                            }
+                            catch (JsonProcessingException e) {
+                                e.printStackTrace();
+                                return false;
+                            }
+                        }
+                        else {
+                            JsonObject actualObject = JsonParser.parseString(actual.toString()).getAsJsonObject();
+                            return actualObject.get("name").getAsString().equals(username)
+                                    && Objects.equals(actualObject.get("password").getAsString(), actualObject.get("passwordConfirm").getAsString())
+                                    && actualObject.get("password").getAsString() != null && !actualObject.get("password").getAsString().equals(password);
+                        }
+                    }
+                    return false;
+                }
+            })).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        }
+        else {
+            responseActions.andRespond(withStatus(HttpStatus.NOT_FOUND).body("404 : \"{\"errors:[{\"exceptionName\":\"com.atlassian.bitbucket.user.NoSuchUserException\"}]}\""));
+        }
+    }
+
+    public void mockDeleteUser(String username, boolean fail) {
+        final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username).build().toUri();
+
+        if (fail) {
+            mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.DELETE))
+                    .andRespond(withStatus(HttpStatus.NOT_FOUND).body("404 : \"{\"errors:[{\"exceptionName\":\"com.atlassian.bitbucket.user.NoSuchUserException\"}]}\""));
+        }
+        else {
+            mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+        }
+    }
+
+    public void mockEraseDeletedUser(String username) {
+        final var path = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/erasure").queryParam("name", username).build().toUri();
+
+        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+    }
+
     public void mockAddUserToGroups() throws URISyntaxException {
         final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/admin/users/add-groups").build().toUri();
+        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockRemoveUserFromGroup(String username, String groupName) throws URISyntaxException {
+        final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/admin/users/remove-group").queryParam("context", username)
+                .queryParam("itemName", groupName).build().toUri();
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
@@ -250,9 +359,9 @@ public class BitbucketRequestMockProvider {
      * This method mocks that the programming exercise with the same project name already exists (depending on the boolean input exists), based on the programming exercise title
      *
      * @param exercise the programming exercise that might already exist
-     * @param exists whether the programming exercise with the same title exists
+     * @param exists   whether the programming exercise with the same title exists
      * @throws JsonProcessingException exception in the processing of json files
-     * @throws URISyntaxException exception in the processing of uris
+     * @throws URISyntaxException      exception in the processing of uris
      */
     public void mockCheckIfProjectExists(final ProgrammingExercise exercise, final boolean exists) throws JsonProcessingException, URISyntaxException {
         final var existsUri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
@@ -329,13 +438,14 @@ public class BitbucketRequestMockProvider {
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {
         for (User user : users) {
-            mockSetStudentRepositoryPermission(repositorySlug, projectKey, user.getLogin());
+            mockSetStudentRepositoryPermission(repositorySlug, projectKey, user.getLogin(), VersionControlRepositoryPermission.REPO_READ);
         }
     }
 
-    private void mockSetStudentRepositoryPermission(String repositorySlug, String projectKey, String username) throws URISyntaxException {
+    public void mockSetStudentRepositoryPermission(String repositorySlug, String projectKey, String username, VersionControlRepositoryPermission permission)
+            throws URISyntaxException {
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositorySlug)
-                .path("permissions/users").queryParam("name", username).queryParam("permission", "REPO_READ").build().toUri();
+                .path("permissions/users").queryParam("name", username).queryParam("permission", permission).build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }

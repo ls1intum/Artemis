@@ -14,7 +14,7 @@ export class Saml2LoginComponent implements OnInit {
     @Input()
     rememberMe = true;
     @Input()
-    acceptTerms = false;
+    acceptedTerms = false;
     @Input()
     saml2Profile: Saml2Config;
 

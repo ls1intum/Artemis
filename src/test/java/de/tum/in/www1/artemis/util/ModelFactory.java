@@ -218,10 +218,10 @@ public class ModelFactory {
         return exercise;
     }
 
-    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
+    public static List<User> generateActivatedUsers(String loginPrefix, String commonEncryptedPassword, String[] groups, Set<Authority> authorities, int amount) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
-            User user = ModelFactory.generateActivatedUser(loginPrefix + i);
+            User user = ModelFactory.generateActivatedUser(loginPrefix + i, commonEncryptedPassword);
             if (groups != null) {
                 user.setGroups(Set.of(groups));
                 user.setAuthorities(authorities);
@@ -229,6 +229,10 @@ public class ModelFactory {
             generatedUsers.add(user);
         }
         return generatedUsers;
+    }
+
+    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
+        return generateActivatedUsers(loginPrefix, USER_PASSWORD, groups, authorities, amount);
     }
 
     /**

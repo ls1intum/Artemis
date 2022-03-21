@@ -53,7 +53,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
         exercise.setReleaseDate(exerciseDate);
         exercise.setAssessmentDueDate(exerciseDate);
         exerciseRepository.save(exercise);
-        assertThat(notificationRepository.count()).isEqualTo(0);
+        assertThat(notificationRepository.count()).isZero();
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 

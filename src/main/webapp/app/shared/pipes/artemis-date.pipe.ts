@@ -5,8 +5,6 @@ import dayjs from 'dayjs/esm';
 
 export const defaultLongDateTimeFormat = 'YYYY-MM-DD HH:mm:ss';
 
-export const GERMAN_SHORT_DATE_FORMAT = 'DD. MMM. YYYY';
-
 /**
  * Format a given date time that must be convertible to a dayjs object to a localized date time
  * string based on the current language setting. Always returns the short format on mobile devices.
@@ -117,9 +115,6 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
             return '';
         }
         let format = 'll';
-        if (locale === 'de') {
-            format = GERMAN_SHORT_DATE_FORMAT; // fix missing 'll' in 'de' locale of dayjs
-        }
         if (!long) {
             switch (locale) {
                 case 'de':

@@ -75,7 +75,7 @@ public class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrati
         mockGetCrumb(responseBody, HttpStatus.OK);
         jenkinsAuthorizationInterceptor.intercept(request, new byte[] {}, mock(ClientHttpRequestExecution.class));
 
-        assertThat(request.getHeaders().keySet()).contains("some-header", "Jenkins-Crumb", "Cookie");
+        assertThat(request.getHeaders()).containsKeys("some-header", "Jenkins-Crumb", "Cookie");
         assertThat(request.getHeaders().get("some-header")).contains("true");
         assertThat(request.getHeaders().get("Jenkins-Crumb")).contains("some-crumb");
         assertThat(request.getHeaders().get("Cookie")).contains("some-session");
@@ -92,11 +92,10 @@ public class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrati
         jenkinsAuthorizationInterceptor.intercept(request, new byte[] {}, mock(ClientHttpRequestExecution.class));
         ReflectionTestUtils.setField(jenkinsAuthorizationInterceptor, "useCrumb", true);
 
-        assertThat(request.getHeaders().keySet()).contains("some-header");
+        assertThat(request.getHeaders()).containsKey("some-header");
         assertThat(request.getHeaders().get("some-header")).contains("true");
 
-        assertThat(request.getHeaders().containsKey("Jenkins-Crumb")).isFalse();
-        assertThat(request.getHeaders().containsKey("Cookie")).isFalse();
+        assertThat(request.getHeaders()).doesNotContainKeys("Jenkins-Crumb", "Cookie");
     }
 
     @Test
@@ -108,11 +107,10 @@ public class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrati
         mockGetCrumb("", HttpStatus.NOT_FOUND);
         jenkinsAuthorizationInterceptor.intercept(request, new byte[] {}, mock(ClientHttpRequestExecution.class));
 
-        assertThat(request.getHeaders().keySet()).contains("some-header");
+        assertThat(request.getHeaders()).containsKey("some-header");
         assertThat(request.getHeaders().get("some-header")).contains("true");
 
-        assertThat(request.getHeaders().containsKey("Jenkins-Crumb")).isFalse();
-        assertThat(request.getHeaders().containsKey("Cookie")).isFalse();
+        assertThat(request.getHeaders()).doesNotContainKeys("Jenkins-Crumb", "Cookie");
 
     }
 

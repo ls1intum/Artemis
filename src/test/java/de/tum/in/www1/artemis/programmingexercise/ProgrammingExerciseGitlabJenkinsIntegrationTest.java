@@ -170,7 +170,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "edx_student1", roles = "USER")
     public void startProgrammingExerciseEdxUser_correctInitializationState() throws Exception {
-        programmingExerciseTestService.startProgrammingExerciseAutomaticallyCreateEdxUser_correctInitializationState();
+        programmingExerciseTestService.startProgrammingExercise_correctInitializationState();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -262,8 +262,8 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
-        programmingExerciseTestService.configureRepository_createTeamUserWhenLtiUserIsNotExistent();
+    public void configureRepository_throwExceptionWhenLtiUserIsNotExistent() throws Exception {
+        programmingExerciseTestService.configureRepository_throwExceptionWhenLtiUserIsNotExistent();
     }
 
     @Test
