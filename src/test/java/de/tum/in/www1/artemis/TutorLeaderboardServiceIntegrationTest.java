@@ -59,14 +59,14 @@ public class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegr
     }
 
     private void assertLeaderboardData(List<TutorLeaderboardDTO> leaderboardData) {
-        assertThat(leaderboardData.size()).isEqualTo(TUTOR_COUNT);
+        assertThat(leaderboardData).hasSize(TUTOR_COUNT);
         assertThat(leaderboardData.get(0).getNumberOfAssessments()).isEqualTo(2);
-        assertThat(leaderboardData.get(0).getNumberOfAcceptedComplaints()).isEqualTo(0);
-        assertThat(leaderboardData.get(0).getNumberOfTutorComplaints()).isEqualTo(0);
-        assertThat(leaderboardData.get(0).getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(0);
-        assertThat(leaderboardData.get(0).getNumberOfComplaintResponses()).isEqualTo(0);
-        assertThat(leaderboardData.get(0).getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(0);
-        assertThat(leaderboardData.get(0).getNumberOfTutorMoreFeedbackRequests()).isEqualTo(0);
+        assertThat(leaderboardData.get(0).getNumberOfAcceptedComplaints()).isZero();
+        assertThat(leaderboardData.get(0).getNumberOfTutorComplaints()).isZero();
+        assertThat(leaderboardData.get(0).getNumberOfNotAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(leaderboardData.get(0).getNumberOfComplaintResponses()).isZero();
+        assertThat(leaderboardData.get(0).getNumberOfAnsweredMoreFeedbackRequests()).isZero();
+        assertThat(leaderboardData.get(0).getNumberOfTutorMoreFeedbackRequests()).isZero();
         assertThat(leaderboardData.get(0).getPoints()).isEqualTo(exercise.getMaxPoints() * ASSESSMENT_COUNT);
         assertThat(leaderboardData.get(0).getAverageScore()).isEqualTo(50);
         assertThat(leaderboardData.get(0).getAverageRating()).isEqualTo(3.5);

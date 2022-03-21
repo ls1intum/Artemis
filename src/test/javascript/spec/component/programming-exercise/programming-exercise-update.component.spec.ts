@@ -678,7 +678,7 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: true,
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
+                projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.HASKELL:
             return {

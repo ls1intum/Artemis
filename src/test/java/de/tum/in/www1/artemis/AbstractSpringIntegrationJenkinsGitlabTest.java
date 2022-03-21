@@ -182,7 +182,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         // Step 1a)
         gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         // Step 1b)
-        gitlabRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
+        gitlabRequestMockProvider.mockConfigureRepository(exercise, users, ltiUserExists);
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
@@ -301,7 +301,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws Exception {
+    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception {
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), oldGroups, true);
         gitlabRequestMockProvider.mockUpdateVcsUser(oldLogin, user, oldGroups, user.getGroups(), true);
     }
@@ -320,7 +320,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception {
-        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), failInVcs);
+        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), userExistsInUserManagement, failInVcs);
         jenkinsRequestMockProvider.mockDeleteUser(user, userExistsInUserManagement, failInCi);
     }
 
@@ -431,8 +431,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean ltiUserExists) throws Exception {
-        gitlabRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, ltiUserExists);
+    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
+        gitlabRequestMockProvider.mockConfigureRepository(exercise, students, userExists);
     }
 
     @Override

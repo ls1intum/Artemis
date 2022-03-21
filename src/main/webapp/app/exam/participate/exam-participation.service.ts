@@ -11,6 +11,7 @@ import dayjs from 'dayjs/esm';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -69,7 +70,7 @@ export class ExamParticipationService {
                 if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
                     this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
                 }
-                return this.convertStudentExamFromServer(studentExam);
+                return ExamParticipationService.convertStudentExamFromServer(studentExam);
             }),
             catchError(() => {
                 const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
@@ -119,7 +120,7 @@ export class ExamParticipationService {
 
         return this.httpClient.post<StudentExam>(url, studentExamCopy).pipe(
             map((submittedStudentExam: StudentExam) => {
-                return this.convertStudentExamFromServer(submittedStudentExam);
+                return ExamParticipationService.convertStudentExamFromServer(submittedStudentExam);
             }),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
@@ -200,9 +201,16 @@ export class ExamParticipationService {
         return this.localStorageService.retrieve(key);
     }
 
-    private convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
+    private static convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exercises = ExerciseService.convertExercisesDateFromServer(studentExam.exercises);
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
+        // Add a default exercise group to connect exercises with the exam.
+        studentExam.exercises = studentExam.exercises.map((exercise: Exercise) => {
+            if (!exercise.exerciseGroup) {
+                exercise.exerciseGroup = { exam: studentExam.exam } as ExerciseGroup;
+            }
+            return exercise;
+        });
         return studentExam;
     }
 

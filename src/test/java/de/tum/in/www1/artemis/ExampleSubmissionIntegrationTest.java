@@ -129,7 +129,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
         request.delete("/api/example-submissions/" + storedExampleSubmission.get().getId(), HttpStatus.OK);
-        assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).hasSize(0);
+        assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -148,7 +148,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationB
         assertThat(storedExampleSubmission.get().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
         request.delete("/api/example-submissions/" + storedExampleSubmission.get().getId(), HttpStatus.OK);
-        assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).hasSize(0);
+        assertThat(exampleSubmissionRepo.findAllByExerciseId(submissionId)).isEmpty();
     }
 
     @Test

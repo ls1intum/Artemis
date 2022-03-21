@@ -77,7 +77,8 @@
             },
             "recreateBuildPlans": {
                 "title": "Recreate Build Plans",
-                "warning": "Build plans will be recreated. All previous changes will be overwritten!",
+                "buttonText": "Build Plan",
+                "question": "Are you sure you want to recreate the template and solution build plans for the programming exercise <strong>{{ title }}</strong>? All previous changes to those build plans will be overwritten.<br>Student build plans will <strong>not</strong> be removed. They can be deleted separately using the Cleanup function. In combination, these two operations can be used to recreate a consistent state between systems, e.g., after the template for the build plans changed or a data-loss on the continuous integration system occurred.",
                 "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
             },
             "updateTemplate": {
@@ -86,6 +87,7 @@
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
+            "testRepositoryProjectType": "Test Repository Project Type",
             "packageName": "Package Name",
             "appName": "App Name",
             "templateResult": "Template Result",
@@ -244,6 +246,8 @@
             "titleTooltip": "The title of the exercise can always be changed after creating it. It will be part of the project name of the for the exercise created project on the VCS server",
             "shortNameTooltip": "The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)",
             "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students",
+            "projectTypeTooltip": "This value defines the project type of the template and solution repositories.",
+            "testRepositoryProjectTypeTooltip": "This value defines the project type of the test repository.",
             "timeline": {
                 "assessmentType": "Assessment Type",
                 "automaticAssessment": "Automatic Assessment",

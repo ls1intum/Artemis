@@ -30,21 +30,14 @@ $border-color: #979797;
 
 .grading-table-layout {
     display: flex;
-    flex-flow: row;
+    flex-wrap: wrap;
 
     & > div {
         padding: 20px;
-        flex-shrink: 0;
-        flex-grow: 1;
-    }
-
-    & > div:first-child {
-        flex-basis: 800px;
     }
 
     & > div:last-child {
         border-left: 1px solid #ddd;
-        flex-basis: 400px;
     }
 }
 
@@ -64,7 +57,12 @@ $border-color: #979797;
         flex-flow: column;
 
         & > div {
-            flex-basis: auto;
+            width: 100% !important;
+        }
+
+        & > div:last-child {
+            border-left: hidden;
+            border-top: 1px solid #ddd;
         }
     }
 }

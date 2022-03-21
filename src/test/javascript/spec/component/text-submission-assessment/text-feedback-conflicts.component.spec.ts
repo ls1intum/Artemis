@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TextFeedbackConflictsComponent } from 'app/exercises/text/assess/conflicts/text-feedback-conflicts.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
@@ -206,7 +206,7 @@ describe('TextFeedbackConflictsComponent', () => {
     });
 
     it('should solve conflict by overriding left submission', () => {
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
@@ -289,7 +289,7 @@ describe('TextFeedbackConflictsComponent', () => {
     });
 
     it('should discard conflict', () => {
-        textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
@@ -301,6 +301,21 @@ describe('TextFeedbackConflictsComponent', () => {
         jest.spyOn(textAssessmentService, 'solveFeedbackConflict').mockReturnValue(of(feedbackConflict));
         component.discardConflict();
         expect(textAssessmentService.solveFeedbackConflict).toHaveBeenCalledWith(exercise!.id!, feedbackConflict.id!);
+    });
+
+    it('should handle error when solving conflicts', () => {
+        textAssessmentService = TestBed.inject(TextAssessmentService);
+        component['setPropertiesFromServerResponse']([conflictingSubmission]);
+        fixture.detectChanges();
+
+        component.didSelectConflictingFeedback(conflictingSubmission.latestResult!.feedbacks![0].id!);
+        const errorResponse = new HttpErrorResponse({ status: 403 });
+        const solveConflictStub = jest.spyOn(textAssessmentService, 'solveFeedbackConflict').mockReturnValue(throwError(() => errorResponse));
+        component.discardConflict();
+
+        expect(solveConflictStub).toHaveBeenCalledTimes(1);
+        expect(component.isMarkingDisabled).toBe(true);
+        expect(component.markBusy).toBe(false);
     });
 
     it('should switch submissions when it changed in the header', () => {
@@ -319,5 +334,26 @@ describe('TextFeedbackConflictsComponent', () => {
         expect(component.rightSubmission).toBe(secondConflictingSubmission);
         textFeedbackConflictsHeaderComponent.onPrevConflict();
         expect(component.rightSubmission).toBe(conflictingSubmission);
+    });
+
+    it('should go back if there is no conflict', () => {
+        const clickSpy = jest.spyOn(component, 'didClickedButtonNoConflict');
+        fixture.detectChanges();
+        const button = fixture.debugElement.query(By.css('button'));
+        expect(button).not.toBe(null);
+        button.triggerEventHandler('click', null);
+
+        expect(clickSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle error correctly when submitting left submission', () => {
+        textAssessmentService = TestBed.inject(TextAssessmentService);
+        const errorResponse = new HttpErrorResponse({ status: 403 });
+        const errorStub = jest.spyOn(textAssessmentService, 'submit').mockReturnValue(throwError(() => errorResponse));
+
+        component.overrideLeftSubmission();
+
+        expect(errorStub).toHaveBeenCalledTimes(1);
+        expect(component.isOverrideDisabled).toBe(true);
     });
 });

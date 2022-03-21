@@ -80,7 +80,7 @@ export class CourseScoreCalculationService {
 
     updateCourse(course: Course) {
         // filter out the old course object with the same id
-        this.courses = this.courses.filter((existingCourses) => existingCourses.id !== existingCourses.id);
+        this.courses = this.courses.filter((existingCourse) => existingCourse.id !== course.id);
         this.courses.push(course);
     }
 
@@ -208,7 +208,7 @@ export class CourseScoreCalculationService {
         return (
             this.isAssessedAutomatically(exercise) &&
             (!(exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate ||
-                (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate!.isBefore(dayjs()))
+                dayjs().isAfter((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate))
         );
     }
 }
