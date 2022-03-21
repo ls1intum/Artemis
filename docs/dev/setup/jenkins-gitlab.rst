@@ -96,13 +96,7 @@ communication, you have to append it to the ``server.url`` value,
 e.g. \ ``127.0.0.1:8080``.
 
 When you start Artemis for the first time, it will automatically create
-an admin user based on the default encryption password specified in the
-yml file above. In case you want to use a different encryption password,
-you can insert users manually into the ``jhi_user`` table. You can use
-`Jasypt Online Encryption
-Tool <https://www.devglan.com/online-tools/jasypt-online-encryption-decryption>`__
-to generate encryption strings. Use Two Way Encryption (With Secret
-Text).
+an admin user.
 
 **Note:** Sometimes Artemis does not generate the admin user which may lead to a startup
 error. You will have to create the user manually in the MySQL database and in Gitlab. Make sure

@@ -106,9 +106,9 @@ public class UserCreationService {
             if (password == null) {
                 password = RandomUtil.generatePassword();
             }
-            String encryptedPassword = passwordService.hashPassword(password);
+            String passwordHash = passwordService.hashPassword(password);
             // new user gets initially a generated password
-            newUser.setPassword(encryptedPassword);
+            newUser.setPassword(passwordHash);
         }
 
         newUser.setLogin(login);
@@ -168,8 +168,8 @@ public class UserCreationService {
             user.setAuthorities(authorities);
         }
         String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
-        String encryptedPassword = passwordService.hashPassword(password);
-        user.setPassword(encryptedPassword);
+        String passwordHash = passwordService.hashPassword(password);
+        user.setPassword(passwordHash);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
         if (!useExternalUserManagement) {

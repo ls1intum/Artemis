@@ -229,10 +229,10 @@ public class UserService {
     public User registerUser(UserDTO userDTO, String password) {
         // Prepare the new user object.
         final var newUser = new User();
-        String encryptedPassword = passwordService.hashPassword(password);
+        String passwordHash = passwordService.hashPassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
         // new user gets initially a generated password
-        newUser.setPassword(encryptedPassword);
+        newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());
         newUser.setLastName(userDTO.getLastName());
         newUser.setEmail(userDTO.getEmail().toLowerCase());
@@ -445,12 +445,12 @@ public class UserService {
      */
     public void changePassword(String currentClearTextPassword, String newPassword) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
-            String currentEncryptedPassword = user.getPassword();
-            if (!passwordService.checkPasswordMatch(currentClearTextPassword, currentEncryptedPassword)) {
+            String currentPasswordHash = user.getPassword();
+            if (!passwordService.checkPasswordMatch(currentClearTextPassword, currentPasswordHash)) {
                 throw new InvalidPasswordException();
             }
-            String encryptedPassword = passwordService.hashPassword(newPassword);
-            user.setPassword(encryptedPassword);
+            String newPasswordHash = passwordService.hashPassword(newPassword);
+            user.setPassword(newPasswordHash);
             saveUser(user);
             optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, newPassword));
             optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, newPassword));
