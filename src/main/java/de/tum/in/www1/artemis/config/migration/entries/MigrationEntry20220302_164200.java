@@ -31,7 +31,7 @@ public class MigrationEntry20220302_164200 extends MigrationEntry {
     public void execute() {
         List<User> users = userRepository.findAll();
         Lists.partition(users, 100).forEach(list -> {
-            list = list.stream().peek(this::processUser).toList();
+            list.forEach(this::processUser);
             userRepository.saveAll(list);
         });
     }

@@ -196,10 +196,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      */
     @Override
     public void updateUserLogin(String oldLogin, User user, String password) throws ContinuousIntegrationException {
+        // Intentionally empty. See JavaDoc for details.
     }
 
     /**
-     * We only support updating the groups if a password is provided. See {@link #updateUserLogin(String, User, String)} for more information.
+     * We only support updating the user details if a password is provided. See {@link #updateUserLogin(String, User, String)} for more information.
      * If no password is provided we expect the frontend to show an automatic warning.
      *
      * @param oldLogin       the old login if it was updated

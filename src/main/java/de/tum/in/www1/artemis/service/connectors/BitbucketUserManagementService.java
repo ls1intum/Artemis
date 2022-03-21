@@ -56,7 +56,7 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
         }
 
         log.debug("Bitbucket user {} does not exist yet", user.getLogin());
-        String displayName = user.getName() != null ? user.getName().trim() : user.getName();
+        String displayName = user.getName() != null ? user.getName().trim() : null;
         bitbucketService.createUser(user.getLogin(), password, user.getEmail(), displayName);
 
         try {
