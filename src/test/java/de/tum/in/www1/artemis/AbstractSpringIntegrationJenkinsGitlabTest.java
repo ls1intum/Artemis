@@ -182,7 +182,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         // Step 1a)
         gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         // Step 1b)
-        gitlabRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
+        gitlabRequestMockProvider.mockConfigureRepository(exercise, users, ltiUserExists);
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
@@ -432,7 +432,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
-        gitlabRequestMockProvider.mockConfigureRepository(exercise, participantIdentifier, students, userExists);
+        gitlabRequestMockProvider.mockConfigureRepository(exercise, students, userExists);
     }
 
     @Override

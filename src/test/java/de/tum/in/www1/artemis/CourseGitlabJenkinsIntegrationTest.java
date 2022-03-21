@@ -515,7 +515,7 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         User tutor = optionalTutor.get();
 
         gitlabRequestMockProvider.mockUpdateBasicUserInformation(tutor.getLogin(), tutor, false);
-        gitlabRequestMockProvider.mockRemoveUserFromGroup(1, tutorGroup, Optional.of(new GitLabApiException("Forbidden", 403)));
+        gitlabRequestMockProvider.mockRemoveUserFromGroup(1L, tutorGroup, Optional.of(new GitLabApiException("Forbidden", 403)));
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

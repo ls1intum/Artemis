@@ -402,8 +402,8 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
-            assertThat(commit.getAuthorIdent().getName().equals("student")).isTrue();
-            assertThat(commit.getFullMessage().equals("All student changes in one commit")).isTrue();
+            assertThat(commit.getAuthorIdent().getName()).isEqualTo("student");
+            assertThat(commit.getFullMessage()).isEqualTo("All student changes in one commit");
         }
     }
 
@@ -593,11 +593,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(programmingExerciseServer);
 
-        assertThat(programmingExerciseServer.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
+        assertThat(programmingExerciseServer.getGradingCriteria().get(0).getTitle()).isNull();
         assertThat(programmingExerciseServer.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
 
-        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions()).hasSize(1);
+        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions()).hasSize(3);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
                 .isEqualTo("created first instruction with empty criteria for testing");
     }
@@ -1557,7 +1557,7 @@ public class ProgrammingExerciseIntegrationTestService {
         PlagiarismComparison<TextSubmissionElement> comparison = result.getComparisons().iterator().next();
         assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
-        assertThat(comparison.getMatches().size()).isEqualTo(1);
+        assertThat(comparison.getMatches()).hasSize(1);
     }
 
     private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, InterruptedException, GitAPIException {
@@ -1724,7 +1724,7 @@ public class ProgrammingExerciseIntegrationTestService {
     public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
-        assertThat(returnedAuxiliaryRepositories).hasSize(0);
+        assertThat(returnedAuxiliaryRepositories).isEmpty();
     }
 
     public void testGetAuxiliaryRepositoriesForbidden() throws Exception {

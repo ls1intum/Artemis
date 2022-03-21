@@ -249,7 +249,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         JsonNode response = request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
                 HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        assertThat(responsePath.contains("markdown")).isTrue();
+        assertThat(responsePath).contains("markdown");
     }
 
     @Test
@@ -278,7 +278,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        assertThat(responsePath.contains("temp")).isTrue();
+        assertThat(responsePath).contains("temp");
     }
 
     @Test

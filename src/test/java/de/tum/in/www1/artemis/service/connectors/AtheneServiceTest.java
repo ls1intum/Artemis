@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.connectors;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 
 import java.util.*;
 
@@ -118,7 +116,6 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      */
     @Test
     public void parseTextBlocks() {
-
         int size = 10;
         var textSubmissions = generateTextSubmissions(size);
 
@@ -130,7 +127,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
             assertThat(textBlock.getType()).isEqualTo(TextBlockType.AUTOMATIC);
             assertThat(textBlock.getSubmission()).isNotNull();
         }
-        assertThat(textBlocks, hasSize(size));
+        assertThat(textBlocks).hasSize(size);
     }
 
     /**
@@ -146,7 +143,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
             assertThat(textCluster.getBlocks()).isNotEmpty();
             assertThat(textCluster.getDistanceMatrix()).isNotNull();
         }
-        assertThat(textClusters, hasSize(clusters.size()));
+        assertThat(textClusters).hasSameSizeAs(clusters);
     }
 
     /**
@@ -171,8 +168,8 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     private List<Cluster> generateClusters() {
         int size = 10;
         List<Cluster> clusters = new ArrayList<>();
-        // Generate 10 clusters
-        for (int i = 0; i < 10; i++) {
+        // Generate clusters
+        for (int i = 0; i < size; i++) {
             List<Segment> segments = new ArrayList<>();
             // First generate 5 segments for each cluster
             for (int j = 0; j < 5; j++) {
