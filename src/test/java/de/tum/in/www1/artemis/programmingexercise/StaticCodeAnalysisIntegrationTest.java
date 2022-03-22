@@ -103,15 +103,15 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         // Swift has only one default category at the time of creation of this test
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(testExercise.getId());
         if (programmingLanguage == ProgrammingLanguage.SWIFT) {
-            assertThat(categories.size()).isEqualTo(6);
+            assertThat(categories).hasSize(6);
             assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(1);
         }
         else if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            assertThat(categories.size()).isEqualTo(11);
+            assertThat(categories).hasSize(11);
             assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(7);
         }
         else if (programmingLanguage == ProgrammingLanguage.C) {
-            assertThat(categories.size()).isEqualTo(5);
+            assertThat(categories).hasSize(5);
             assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(4);
         }
     }
@@ -299,8 +299,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var feedbackForInactiveCategory = ModelFactory.createSCAFeedbackWithInactiveCategory(result);
         result.addFeedback(feedbackForInactiveCategory);
         var filteredFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, List.of(feedbackForInactiveCategory), programmingExerciseSCAEnabled);
-        assertThat(filteredFeedback.size()).isEqualTo(0);
-        assertThat(result.getFeedbacks().size()).isEqualTo(0);
+        assertThat(filteredFeedback).isEmpty();
+        assertThat(result.getFeedbacks()).isEmpty();
     }
 
     @Test
@@ -310,7 +310,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
                 .type(FeedbackType.AUTOMATIC).positive(false);
         result.addFeedback(feedback);
         var filteredFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, List.of(feedback), programmingExerciseSCAEnabled);
-        assertThat(filteredFeedback.size()).isEqualTo(1);
+        assertThat(filteredFeedback).hasSize(1);
         assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(filteredFeedback);
         assertThat(result.getFeedbacks().iterator().next().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
         assertThat(new ObjectMapper().readValue(result.getFeedbacks().iterator().next().getDetailText(), StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue.class).getPenalty())

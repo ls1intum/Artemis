@@ -22,15 +22,13 @@ describe('TeamsImportButtonComponent', () => {
         comp.exercise = mockExercise;
     }
 
-    beforeEach(
-        waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule)],
-                declarations: [TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-                providers: [MockProvider(TeamService), MockProvider(NgbModal)],
-            }).compileComponents();
-        }),
-    );
+    beforeEach(waitForAsync(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule)],
+            declarations: [TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            providers: [MockProvider(TeamService), MockProvider(NgbModal)],
+        }).compileComponents();
+    }));
     beforeEach(() => {
         fixture = TestBed.createComponent(TeamsImportButtonComponent);
         comp = fixture.componentInstance;

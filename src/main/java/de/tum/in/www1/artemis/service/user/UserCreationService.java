@@ -245,10 +245,9 @@ public class UserCreationService {
         Set<Authority> managedAuthorities = user.getAuthorities();
         managedAuthorities.clear();
         updatedUserDTO.getAuthorities().stream().map(authorityRepository::findById).filter(Optional::isPresent).map(Optional::get).forEach(managedAuthorities::add);
-        user = saveUser(user);
-
         log.debug("Changed Information for User: {}", user);
-        return user;
+
+        return saveUser(user);
     }
 
     /**
