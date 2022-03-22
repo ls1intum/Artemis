@@ -12,6 +12,7 @@ import { lastValueFrom } from 'rxjs';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import {
+    faAngleRight,
     faBalanceScaleRight,
     faEdit,
     faExclamation,
@@ -23,6 +24,8 @@ import {
     faTimes,
     faTrash,
 } from '@fortawesome/free-solid-svg-icons';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -47,6 +50,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() isLeftConflictingFeedback: boolean;
     @Input() isSelectedConflict: boolean;
     @Input() highlightDifferences: boolean;
+    @Input() criteria?: GradingCriterion[];
     private textareaElement: HTMLTextAreaElement;
     listOfBlocksWithFeedback: any[];
 
@@ -83,6 +87,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     faBalanceScaleRight = faBalanceScaleRight;
     faTimes = faTimes;
     faTrash = faTrash;
+    faAngleRight = faAngleRight;
 
     constructor(
         public structuredGradingCriterionService: StructuredGradingCriterionService,
@@ -100,6 +105,22 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.textareaElement = this.textareaRef.nativeElement as HTMLTextAreaElement;
         setTimeout(() => this.textareaAutogrow());
+    }
+
+    /**
+     * Set the color of the draggable grading instruction based on the credits of the instruction
+     *  @param {GradingInstruction} instr - the instruction object we set its color based on its credits
+     */
+    setInstrColour(instr: GradingInstruction) {
+        let colour;
+        if (instr.credits === 0) {
+            colour = '#fff2cc';
+        } else if (instr.credits < 0) {
+            colour = '#fbe5d6';
+        } else {
+            colour = '#e3f0da';
+        }
+        return colour;
     }
 
     /**
@@ -175,6 +196,14 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         if (feedbackTypeBefore !== this.feedback.type) {
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, this.feedback.type, this.textBlock.type);
         }
+    }
+
+    updateAssessmentWithDropdown(instruction: GradingInstruction) {
+        this.feedback.gradingInstruction = instruction;
+        this.feedback.credits = instruction.credits;
+
+        this.feedback.correctionStatus = undefined;
+        this.didChange();
     }
 
     connectFeedbackWithInstruction(event: Event) {

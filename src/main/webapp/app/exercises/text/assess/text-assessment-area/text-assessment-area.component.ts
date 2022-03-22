@@ -3,6 +3,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { FeedbackConflict, FeedbackConflictType } from 'app/entities/feedback-conflict';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 @Component({
     selector: 'jhi-text-assessment-area',
@@ -25,6 +26,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Input() isLeftConflictingFeedback: boolean;
     @Input() feedbackConflicts: FeedbackConflict[];
     @Input() highlightDifferences: boolean;
+    @Input() criteria?: GradingCriterion[];
 
     // outputs
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();

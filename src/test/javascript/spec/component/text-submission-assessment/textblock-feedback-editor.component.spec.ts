@@ -272,4 +272,31 @@ describe('TextblockFeedbackEditorComponent', () => {
         // then
         expect(component.feedback.correctionStatus).toBeUndefined();
     });
+
+    it('should update assessment correctly when using dropdown-menu', () => {
+        const gradingInstruction = {
+            credits: 1,
+            gradingScale: 'Good',
+            instructionDescription: 'Apply if it is well done',
+            feedback: 'Well done!',
+        } as GradingInstruction;
+
+        const changeSpy = jest.spyOn(component, 'didChange');
+        component.updateAssessmentWithDropdown(gradingInstruction);
+
+        expect(changeSpy).toHaveBeenCalledTimes(1);
+        expect(component.feedback.gradingInstruction).toEqual(gradingInstruction);
+    });
+
+    it('should display correct background colors for dropdown elements', () => {
+        const gradingInstruction = { id: 1, feedback: 'feedback', credits: 1 } as GradingInstruction;
+
+        expect(component.setInstrColour(gradingInstruction)).toBe('#e3f0da');
+        gradingInstruction.credits = 0;
+        fixture.detectChanges();
+        expect(component.setInstrColour(gradingInstruction)).toBe('#fff2cc');
+        gradingInstruction.credits = -1;
+        fixture.detectChanges();
+        expect(component.setInstrColour(gradingInstruction)).toBe('#fbe5d6');
+    });
 });
