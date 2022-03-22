@@ -170,12 +170,4 @@ export class ComplaintsStudentViewComponent implements OnInit {
         }
         return false;
     }
-
-    /**
-     * Calculates and returns the length of the entered text.
-     */
-    complaintTextLength(): number {
-        const textArea: HTMLTextAreaElement = document.querySelector('#responseTextArea') as HTMLTextAreaElement;
-        return textArea.value.length;
-    }
 }
