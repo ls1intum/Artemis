@@ -109,7 +109,11 @@ describe('ComplaintsFormComponent', () => {
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: numberOfComplaints });
     });
 
-    it('should throw known error after complaint creation', () => {
+    it('should throw exceeded complaint text error after complaint creation', () => {
+        // Get course
+        component.exercise = courseExercise;
+        component.ngOnInit();
+
         const error = { error: { errorKey: 'exceededComplaintTextLimit' } } as HttpErrorResponse;
         const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => error));
         const submitSpy = jest.spyOn(component.submit, 'emit');
