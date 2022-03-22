@@ -408,9 +408,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
                 log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
             }
-            catch (InterruptedException e) {
-                log.error("Failed to schedule combining of template commits of exercise " + exercise.getId(), e);
-            }
             catch (GitAPIException e) {
                 log.error("Failed to communicate with GitAPI for combining template commits of exercise " + exercise.getId(), e);
             }

@@ -157,7 +157,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Export instructor repositories and optionally students' repositories in a zip file.
-    
+     *
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *
@@ -427,10 +427,9 @@ public class ProgrammingExerciseExportService {
      * @return The path to the zip file.
      * @throws IOException if the zip file couldn't be created
      * @throws GitAPIException if the repo couldn't get checked out
-     * @throws InterruptedException if the repo couldn't get checked out
      */
     private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir)
-            throws IOException, GitAPIException, GitException, InterruptedException, UncheckedIOException {
+            throws IOException, GitAPIException, GitException, UncheckedIOException {
         var repositoryDir = fileService.getUniquePathString(outputDir.toString());
         Repository repository;
 
@@ -527,7 +526,7 @@ public class ProgrammingExerciseExportService {
             log.debug("Create temporary zip file for repository {}", repository.getLocalPath().toString());
             return gitService.zipRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.isHideStudentNameInZippedFolder());
         }
-        catch (InterruptedException | GitAPIException | GitException ex) {
+        catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
                     participation.getProgrammingExercise().getId(), ex);
             return null;

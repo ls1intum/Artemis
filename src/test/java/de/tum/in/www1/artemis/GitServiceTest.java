@@ -66,7 +66,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testCheckoutRepositoryAlreadyOnServer() throws GitAPIException, InterruptedException {
+    public void testCheckoutRepositoryAlreadyOnServer() throws GitAPIException {
         gitUtilService.initRepo(defaultBranch);
         var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         String newFileContent = "const a = arr.reduce(sum)";
@@ -80,7 +80,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testCheckoutRepositoryNotOnServer() throws GitAPIException, InterruptedException, IOException {
+    public void testCheckoutRepositoryNotOnServer() throws GitAPIException, IOException {
         var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitUtilService.reinitializeLocalRepository();

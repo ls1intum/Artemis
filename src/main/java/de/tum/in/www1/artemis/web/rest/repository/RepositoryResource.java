@@ -82,11 +82,10 @@ public abstract class RepositoryResource {
      * @return the repository if available.
      * @throws IOException if the repository folder can't be accessed.
      * @throws IllegalAccessException if the user is not allowed to access the repository.
-     * @throws InterruptedException if the repository can't be checked out.
      * @throws GitAPIException if the repository can't be checked out.
      */
     abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout)
-            throws IOException, IllegalAccessException, IllegalArgumentException, InterruptedException, GitAPIException;
+            throws IOException, IllegalAccessException, IllegalArgumentException, GitAPIException;
 
     /**
      * Get the url for a repository.
@@ -264,10 +263,9 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @throws GitAPIException if the repository can't be checked out to retrieve the status.
-     * @throws InterruptedException if the repository can't be checked out to retrieve the status.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws GitAPIException {
         log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
 
         if (!canAccessRepository(domainId)) {
@@ -320,7 +318,7 @@ public abstract class RepositoryResource {
         catch (FileNotFoundException ex) {
             throw new EntityNotFoundException("File not found");
         }
-        catch (GitAPIException | IOException | InterruptedException ex) {
+        catch (GitAPIException | IOException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntitySuccess;
