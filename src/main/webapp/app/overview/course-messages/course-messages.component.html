@@ -1,8 +1,8 @@
 <div class="row">
     <div class="col-12 col-md-4">
-        <jhi-chat-session-sidebar (selectIndex)="selectChatSession($event)" [activeID]="selectedChatSessionId"></jhi-chat-session-sidebar>
+        <jhi-chat-session-sidebar (selectChatSession)="selectChatSession($event)" [activeChatSession]="selectedChatSession"></jhi-chat-session-sidebar>
     </div>
     <div class="col-12 col-md-8">
-        <jhi-post-overview></jhi-post-overview>
+        <jhi-post-overview [courseMessagesPageFlag]="true" [activeChatSession]="selectedChatSession"></jhi-post-overview>
     </div>
 </div>

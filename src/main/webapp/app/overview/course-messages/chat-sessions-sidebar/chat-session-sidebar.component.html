@@ -15,7 +15,12 @@
     </jhi-data-table>
 
     <ul *ngIf="chatSessions && chatSessions.length">
-        <li *ngFor="let chatSession of chatSessions" class="plagiarism-list-item" [class.selected]="activeID === chatSession.id" (click)="selectIndex.emit(chatSession.id)">
+        <li
+            *ngFor="let chatSession of chatSessions"
+            class="plagiarism-list-item"
+            [class.selected]="activeChatSession.id === chatSession.id"
+            (click)="selectChatSession.emit(chatSession)"
+        >
             <div class="plagiarism-list-item-info">
                 <span class="plagiarism-list-item-students">
                     <span>{{ getNameOfChatSessionParticipant(chatSession) }}</span>

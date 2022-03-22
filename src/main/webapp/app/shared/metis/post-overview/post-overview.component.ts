@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { combineLatest, Subscription } from 'rxjs';
@@ -13,6 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 
 @Component({
     selector: 'jhi-post-overview',
@@ -24,6 +25,14 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
     entitiesPerPageTranslation = 'organizationManagement.userSearch.usersPerPage';
     showAllEntitiesTranslation = 'organizationManagement.userSearch.showAllUsers';
 
+    @Input() courseMessagesPageFlag: boolean;
+
+    @Input() set activeChatSession(activeChatSession: ChatSession) {
+        this.chatSession = activeChatSession;
+        this.onSelectContext();
+        this.createEmptyPost();
+    }
+
     course?: Course;
     exercises?: Exercise[];
     lectures?: Lecture[];
@@ -31,6 +40,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
     currentSortCriterion = PostSortCriterion.CREATION_DATE;
     currentSortDirection = SortDirection.DESCENDING;
     searchText?: string;
+    chatSession?: ChatSession;
     formGroup: FormGroup;
     createdPost: Post;
     posts: Post[];
@@ -88,15 +98,21 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
                     }
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
-                    this.metisService.getFilteredPosts({
-                        courseId: this.course!.id,
-                        searchText: this.searchText ? this.searchText : undefined,
-                        postSortCriterion: this.currentSortCriterion,
-                        sortingOrder: this.currentSortDirection,
-                        pagingEnabled: this.pagingEnabled,
-                        page: this.page - 1,
-                        pageSize: this.itemsPerPage,
-                    });
+                    if (!(this.courseMessagesPageFlag && !this.chatSession)) {
+                        this.metisService.getFilteredPosts({
+                            courseId: this.course!.id,
+                            chatSessionId: this.chatSession?.id,
+                            searchText: this.searchText ? this.searchText : undefined,
+                            postSortCriterion: this.currentSortCriterion,
+                            sortingOrder: this.currentSortDirection,
+                            pagingEnabled: this.pagingEnabled,
+                            page: this.page - 1,
+                            pageSize: this.itemsPerPage,
+                        });
+                    } else {
+                        // if user has no chatSessions to load on messages page
+                        this.isLoading = false;
+                    }
                     this.resetCurrentFilter();
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -207,6 +223,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
             this.currentPostContextFilter.courseWideContext,
             this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
             this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
+            this.chatSession,
         );
     }
 
@@ -226,7 +243,8 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
             exerciseId: undefined,
             lectureId: undefined,
             ...this.formGroup.get('context')?.value,
-            searchText: this.searchText,
+            searchText: this.searchText ? this.searchText : undefined,
+            chatSessionId: this.chatSession?.id,
             pagingEnabled: this.pagingEnabled,
             page: this.page - 1,
             pageSize: this.itemsPerPage,
@@ -244,6 +262,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
     private resetCurrentFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course!.id,
+            chatSessionId: this.chatSession?.id,
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,

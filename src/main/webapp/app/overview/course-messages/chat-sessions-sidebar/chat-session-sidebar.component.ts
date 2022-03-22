@@ -25,12 +25,12 @@ import { ChatService } from 'app/shared/metis/chat.service';
     providers: [MetisService, ChatSessionService],
 })
 export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges {
-    @Input() activeID: number;
+    @Input() activeChatSession: ChatSession;
     @Input() offset = 0;
     @Input() showRunDetails: boolean;
 
     @Output() showRunDetailsChange = new EventEmitter<boolean>();
-    @Output() selectIndex = new EventEmitter<number>();
+    @Output() selectChatSession = new EventEmitter<ChatSession>();
 
     faExclamationTriangle = faExclamationTriangle;
 
@@ -98,7 +98,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
                 this.chatSessions = chatSessions;
                 if (this.chatSessions.length > 0) {
                     // emit the value to fetch chatSession posts on post overview tab
-                    this.selectIndex.emit(this.chatSessions.first()?.id!);
+                    this.selectChatSession.emit(this.chatSessions.first());
                 }
             });
         });
@@ -164,7 +164,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
                     this.chatSessions.unshift(chatSession);
 
                     // select the new chatSession
-                    this.selectIndex.emit(chatSession.id);
+                    this.selectChatSession.emit(chatSession);
 
                     // hand back over to the data table for updating
                     callback(user);
@@ -175,7 +175,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
             });
         } else {
             // chatSession with the searched user already exists, so we select it
-            this.selectIndex.emit(foundChatSession.id);
+            this.selectChatSession.emit(foundChatSession);
             // hand back over to the data table
             callback(user);
         }
@@ -232,7 +232,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
     }
 
     getNameOfChatSessionParticipant(chatSession: ChatSession): string {
-        const participant = chatSession.userChatSessions.find((userChatSession) => userChatSession.user.id !== this.metisService.getUser().id)!.user;
+        const participant = chatSession.userChatSessions!.find((userChatSession) => userChatSession.user.id !== this.metisService.getUser().id)!.user;
 
         return participant.firstName!;
     }
@@ -248,7 +248,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
     };
 
     findChatSessionWithUser(user: User) {
-        return this.chatSessions.find((chatSession) => chatSession.userChatSessions.some((userChatSession) => userChatSession.user.id === user.id));
+        return this.chatSessions.find((chatSession) => chatSession.userChatSessions!.some((userChatSession) => userChatSession.user.id === user.id));
     }
 
     createNewChatSessionWithUser(user: User) {

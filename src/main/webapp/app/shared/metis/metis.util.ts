@@ -48,6 +48,7 @@ export interface PostContextFilter {
     exerciseId?: number;
     lectureId?: number;
     searchText?: string;
+    chatSessionId?: number;
     filterToUnresolved?: boolean;
     filterToOwn?: boolean;
     filterToAnsweredOrReacted?: boolean;

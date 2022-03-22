@@ -18,7 +18,8 @@
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
             ></fa-icon>
             <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
-            <span *ngIf="pageType === PageType.OVERVIEW || previewMode" class="col-auto">
+            <!-- not shown in course messages page -->
+            <span *ngIf="!courseMessagesPageFlag && (pageType === PageType.OVERVIEW || previewMode)" class="col-auto">
                 <a
                     class="linked-context-information"
                     *ngIf="contextInformation.routerLinkComponents"

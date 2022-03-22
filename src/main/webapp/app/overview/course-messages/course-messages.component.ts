@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 
 @Component({
     selector: 'jhi-messages',
@@ -19,7 +20,7 @@ export class CourseMessagesComponent implements OnInit {
     /**
      * Index of the currently selected comparison.
      */
-    selectedChatSessionId: number;
+    selectedChatSession: ChatSession;
 
     readonly FeatureToggle = FeatureToggle;
 
@@ -32,8 +33,8 @@ export class CourseMessagesComponent implements OnInit {
 
     ngOnInit() {}
 
-    selectChatSession(id: number) {
-        this.selectedChatSessionId = id;
+    selectChatSession(chatSession: ChatSession) {
+        this.selectedChatSession = chatSession;
     }
     /**
      * Resets the filter applied by chart interaction

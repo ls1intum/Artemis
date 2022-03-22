@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
@@ -11,6 +11,7 @@ import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/m
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 
 const TITLE_MAX_LENGTH = 200;
 const DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK = 800;
@@ -19,6 +20,7 @@ export interface ContextSelectorOption {
     lecture?: Lecture;
     exercise?: Exercise;
     courseWideContext?: CourseWideContext;
+    chatSession?: ChatSession;
 }
 
 @Component({
@@ -27,6 +29,8 @@ export interface ContextSelectorOption {
     styleUrls: ['../../metis.component.scss'],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
+    @Input() courseMessagesPageFlag: boolean;
+
     exercises?: Exercise[];
     lectures?: Lecture[];
     tags: string[];
@@ -79,12 +83,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.similarPosts = [];
         this.posting.title = this.posting.title ?? '';
         this.resetCurrentContextSelectorOption();
-        this.formGroup = this.formBuilder.group({
-            // the pattern ensures that the title and content must include at least one non-whitespace character
-            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
-            context: [this.currentContextSelectorOption, [Validators.required]],
-        });
+        this.formGroup = this.formBuilder.group(this.postValidator());
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
             // announcements should no show similar posts
@@ -199,6 +198,9 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         if (currentContextSelectorOption.courseWideContext) {
             post.course = { id: this.course.id, title: this.course.title };
         }
+        if (currentContextSelectorOption.chatSession) {
+            post.chatSession = currentContextSelectorOption.chatSession;
+        }
         return post;
     }
 
@@ -209,4 +211,21 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
             courseWideContext: this.posting.courseWideContext,
         };
     }
+
+    private postValidator() {
+        return {
+            // the pattern ensures that the title and content must include at least one non-whitespace character
+            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+            context: [this.currentContextSelectorOption, [Validators.required]],
+        };
+    }
+
+    // private messageValidator() {
+    //     return {
+    //         // the pattern ensures that content must include at least one non-whitespace character
+    //         content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+    //         context: [this.currentContextSelectorOption, [Validators.required]],
+    //     };
+    // }
 }

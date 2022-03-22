@@ -19,7 +19,8 @@
                     <fa-icon [icon]="faPlus"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                 </button>
-                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
+                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" [courseMessagesPageFlag]="courseMessagesPageFlag" (onCreate)="createEmptyPost()">
+                </jhi-post-create-edit-modal>
             </div>
         </div>
         <form [formGroup]="formGroup">
@@ -29,10 +30,10 @@
                 <div class="col-auto">
                     <div class="row">
                         <!-- context filter -->
-                        <div class="col-auto p-0 selection-prefix">
+                        <div class="col-auto p-0 selection-prefix" *ngIf="!courseMessagesPageFlag">
                             <span>{{ 'artemisApp.metis.overview.postContextFilter' | artemisTranslate }}</span>
                         </div>
-                        <div class="col-auto p-0">
+                        <div class="col-auto p-0" *ngIf="!courseMessagesPageFlag">
                             <select formControlName="context" class="form-select" [compareWith]="compareContextFilterOptionFn" (change)="onSelectContext()" name="context">
                                 <option [ngValue]="{ courseId: course.id }">
                                     {{ course.title + ' ' + ('artemisApp.metis.overview.courseFilterExplanation' | artemisTranslate) }}
@@ -112,7 +113,12 @@
             {{ totalItems === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: totalItems }) }}
         </div>
         <!-- list of posts -->
-        <jhi-posting-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-posting-thread>
+        <jhi-posting-thread
+            *ngFor="let post of posts; trackBy: postsTrackByFn"
+            [post]="post"
+            [showAnswers]="posts.length === 1"
+            [courseMessagesPageFlag]="courseMessagesPageFlag"
+        ></jhi-posting-thread>
         <!-- paginator -->
         <div *ngIf="totalItems !== 0">
             <br />

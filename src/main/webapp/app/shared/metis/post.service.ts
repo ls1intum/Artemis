@@ -57,6 +57,9 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.searchText) {
             params = params.set('searchText', postContextFilter.searchText.toString());
         }
+        if (postContextFilter.chatSessionId) {
+            params = params.set('chatSessionId', postContextFilter.chatSessionId.toString());
+        }
         if (postContextFilter.filterToUnresolved) {
             params = params.set('filterToUnresolved', postContextFilter.filterToUnresolved);
         }
