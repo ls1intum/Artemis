@@ -53,29 +53,11 @@ function computeEventHash(event: Event): string {
     }
 
     // If event has stack trace, add filename and line of each frame
-    const frames = getFramesFromEvent(exception, event);
+    const frames = (exception && exception.stacktrace?.frames) || event.stacktrace?.frames;
     if (frames) {
         frames.forEach((frame) => (valueSequence += frame.filename ?? ''));
         frames.forEach((frame) => (valueSequence += frame.lineno ?? ''));
     }
 
     return sha1Hex(valueSequence);
-}
-
-/**
- * Return the stack trace frames of the event exception or the event itself
- * @param exception the previously extracted exception, if present
- * @param event the event to get frames from alternatively
- */
-function getFramesFromEvent(exception: Exception | false | undefined, event: Event): StackFrame[] | undefined {
-    if (exception) {
-        try {
-            return exception.stacktrace?.frames;
-        } catch (_oO) {
-            return undefined;
-        }
-    } else if (event.stacktrace) {
-        return event.stacktrace.frames;
-    }
-    return undefined;
 }
