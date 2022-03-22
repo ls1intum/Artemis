@@ -3,8 +3,6 @@ import { Event } from '@sentry/types';
 import dayjs from 'dayjs';
 import { fakeAsync, flush, tick } from '@angular/core/testing';
 
-// @ts-ignore
-
 describe('ArtemisDeduplicateSentryIntegration', () => {
     let dedup: ArtemisDeduplicate;
     let globalEventProcessor: (currentEvent: Event) => Event | null;
