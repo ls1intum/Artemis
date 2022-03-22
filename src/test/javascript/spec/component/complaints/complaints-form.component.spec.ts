@@ -147,6 +147,19 @@ describe('ComplaintsFormComponent', () => {
 
         expect(responseTextArea.maxLength).toBe(20);
         expect(complaintButton.disabled).toBe(false);
+    }));
+
+    it('submit complaint button should be disabled', fakeAsync(() => {
+        // Get course
+        component.exercise = courseExercise;
+        component.isCurrentUserSubmissionAuthor = true;
+        component.ngOnInit();
+
+        fixture.detectChanges();
+        tick(100);
+
+        const responseTextArea = fixture.debugElement.query(By.css('#complainTextArea')).nativeElement;
+        const complaintButton = fixture.debugElement.query(By.css('#submit-complaint')).nativeElement;
 
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
         component.complaintText = 'abcdefghijklmnopqrstuvwxyz';
