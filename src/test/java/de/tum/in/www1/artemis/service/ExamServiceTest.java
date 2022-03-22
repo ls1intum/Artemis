@@ -81,14 +81,14 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         examService.setExamProperties(exam1);
 
-        assertThat(exercise.getTestRunParticipationsExist()).isEqualTo(true);
+        assertThat(exercise.getTestRunParticipationsExist()).isTrue();
         exam1.getExerciseGroups().forEach(exerciseGroup -> {
             exerciseGroup.getExercises().forEach(exercise1 -> {
                 assertThat(exercise.getNumberOfParticipations()).isNotNull();
             });
         });
         assertThat(exam1.getNumberOfRegisteredUsers()).isNotNull();
-        assertThat(exam1.getNumberOfRegisteredUsers()).isEqualTo(0);
+        assertThat(exam1.getNumberOfRegisteredUsers()).isZero();
     }
 
     @Test
@@ -104,9 +104,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCanGetCurrentAndUpcomingExams() {
         List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams();
-        assertThat(exams.size()).isEqualTo(2);
-        assertThat(exams).contains(exam1, examInTheFuture);
-        assertThat(exams).doesNotContain(examInThePast);
+        assertThat(exams).hasSize(2).contains(exam1, examInTheFuture).doesNotContain(examInThePast);
     }
 
     @Test
@@ -193,15 +191,15 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getChecklistStatsEmpty() {
         // check if general method works. More sophisticated test are within the ExamIntegrationTests
-        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1);
-        assertThat(examChecklistDTO).isNotEqualTo(null);
-        assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(0);
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(0);
-        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(0);
-        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(0);
-        assertThat(examChecklistDTO.getNumberOfAllComplaints()).isEqualTo(0);
-        assertThat(examChecklistDTO.getNumberOfAllComplaintsDone()).isEqualTo(0);
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+        ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1, true);
+        assertThat(examChecklistDTO).isNotNull();
+        assertThat(examChecklistDTO.getNumberOfTestRuns()).isZero();
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isZero();
+        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isZero();
+        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isZero();
+        assertThat(examChecklistDTO.getNumberOfAllComplaints()).isZero();
+        assertThat(examChecklistDTO.getNumberOfAllComplaintsDone()).isZero();
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
     }
 
     private Exam createExam(int numberOfExercisesInExam, Long id, Integer maxPoints) {

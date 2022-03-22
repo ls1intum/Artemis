@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { of, Subject } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -17,19 +17,36 @@ import { Organization } from 'app/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { NgForm, NgModel } from '@angular/forms';
 import { MockDirective, MockModule } from 'ng-mocks';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
+import { TranslateService } from '@ngx-translate/core';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { Title } from '@angular/platform-browser';
+
+import { LANGUAGES } from 'app/core/language/language.constants';
 
 describe('User Management Update Component', () => {
     let comp: UserManagementUpdateComponent;
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let service: UserService;
+    let titleService: Title;
+
     const parentRoute = {
         data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], ['admin'], undefined, undefined, undefined) }),
     } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
+
+    const mockRouterState = {
+        routerState: {
+            snapshot: {
+                root: { firstChild: {}, data: {} },
+            },
+        } as RouterState,
+    };
+
     let modalService: NgbModal;
+    let translateService: TranslateService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -43,6 +60,7 @@ describe('User Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -51,7 +69,13 @@ describe('User Management Update Component', () => {
                 comp = fixture.componentInstance;
                 service = TestBed.inject(UserService);
                 modalService = TestBed.inject(NgbModal);
+                titleService = TestBed.inject(Title);
+                translateService = TestBed.inject(TranslateService);
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     describe('OnInit', () => {
@@ -69,6 +93,56 @@ describe('User Management Update Component', () => {
                 expect(service.authorities).toHaveBeenCalled();
                 expect(comp.authorities).toEqual(['USER']);
                 expect(getAllSpy).toHaveBeenCalled();
+            }),
+        ));
+
+        it('should load available languages', inject(
+            [JhiLanguageHelper],
+            fakeAsync((languageHelper: JhiLanguageHelper) => {
+                // GIVEN
+                const getAllSpy = jest.spyOn(languageHelper, 'getAll');
+
+                // WHEN
+                comp.ngOnInit();
+
+                // THEN
+                expect(getAllSpy).toHaveBeenCalledTimes(1);
+                expect(comp.languages).toEqual(LANGUAGES);
+            }),
+        ));
+
+        it('should return current language', inject(
+            [JhiLanguageHelper],
+            fakeAsync((languageHelper: JhiLanguageHelper) => {
+                // GIVEN
+                const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
+                routerMock.setRouterState(mockRouterState.routerState);
+
+                // WHEN
+                translateService.use('en');
+
+                // THEN
+                languageHelper.language.subscribe((res) => expect(res).toEqual(translateService.currentLang));
+            }),
+        ));
+
+        it('should set page title to default', inject(
+            [JhiLanguageHelper],
+            fakeAsync((languageHelper: JhiLanguageHelper) => {
+                // GIVEN
+                const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
+                routerMock.setRouterState(mockRouterState.routerState);
+
+                const updateTitleSpy = jest.spyOn(languageHelper, 'updateTitle');
+                const setTitleOnTitleServiceSpy = jest.spyOn(titleService, 'setTitle');
+
+                // WHEN
+                translateService.use('en');
+
+                // THEN
+                expect(updateTitleSpy).toHaveBeenCalledTimes(1);
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledTimes(1);
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledWith('artemisApp');
             }),
         ));
     });

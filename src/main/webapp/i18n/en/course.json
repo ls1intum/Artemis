@@ -188,7 +188,12 @@
             "quiz": "Quiz",
             "modeling": "Modeling",
             "text": "Text",
-            "file-upload": "File Upload"
+            "file-upload": "File Upload",
+            "chartLegend": {
+                "lowest": "Lowest performing third",
+                "average": "Average performing third",
+                "best": "Best performing third"
+            }
         }
     }
 }

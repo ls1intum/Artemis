@@ -113,8 +113,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         var exerciseList = new HashSet<Long>();
         exerciseList.add(exercise.getId());
         var activeStudents = courseService.getActiveStudents(exerciseList, 0, 4, date);
-        assertThat(activeStudents.size()).isEqualTo(4);
-        assertThat(activeStudents).containsExactly(0, 1, 1, 2);
+        assertThat(activeStudents).hasSize(4).containsExactly(0, 1, 1, 2);
     }
 
     @Test
@@ -146,8 +145,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         var exerciseList = new HashSet<Long>();
         exerciseList.add(exercise.getId());
         var activeStudents = courseService.getActiveStudents(exerciseList, 0, 4, ZonedDateTime.of(2022, 1, 25, 0, 0, 0, 0, ZoneId.systemDefault()));
-        assertThat(activeStudents.size()).isEqualTo(4);
-        assertThat(activeStudents).containsExactly(1, 0, 0, 0);
+        assertThat(activeStudents).hasSize(4).containsExactly(1, 0, 0, 0);
     }
 
     @Test
@@ -164,10 +162,10 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         database.addUsers(0, 0, 0, 0);
 
         var courses = courseService.getAllCoursesForManagementOverview(false);
-        assertThat(courses.size()).isEqualTo(2);
+        assertThat(courses).hasSize(2);
 
         courses = courseService.getAllCoursesForManagementOverview(true);
-        assertThat(courses.size()).isEqualTo(1);
+        assertThat(courses).hasSize(1);
     }
 
     @Test
@@ -192,10 +190,10 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         userRepository.save(instructor);
 
         var courses = courseService.getAllCoursesForManagementOverview(false);
-        assertThat(courses.size()).isEqualTo(2);
+        assertThat(courses).hasSize(2);
 
         courses = courseService.getAllCoursesForManagementOverview(true);
-        assertThat(courses.size()).isEqualTo(1);
+        assertThat(courses).hasSize(1);
     }
 
     @Test
@@ -220,9 +218,9 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         userRepository.save(student);
 
         var courses = courseService.getAllCoursesForManagementOverview(false);
-        assertThat(courses.size()).isEqualTo(0);
+        assertThat(courses).isEmpty();
 
         courses = courseService.getAllCoursesForManagementOverview(true);
-        assertThat(courses.size()).isEqualTo(0);
+        assertThat(courses).isEmpty();
     }
 }

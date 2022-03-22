@@ -9,7 +9,6 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { makeSubmissionAndVerifyResults } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
-import { Interception } from 'cypress/types/net-stubbing';
 
 // requests
 const courseManagementRequests = artemis.requests.courseManagement;

@@ -1,11 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
-import { Feedback, FeedbackType, FeedbackCorrectionErrorType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
@@ -19,16 +19,23 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { getLatestSubmissionResult, SubmissionExerciseType } from 'app/entities/submission.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { of } from 'rxjs';
+import dayjs from 'dayjs';
+import { Result } from 'app/entities/result.model';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
     let fixture: ComponentFixture<TextblockFeedbackEditorComponent>;
     let compiled: any;
 
-    const textBlock = { id: 'f6773c4b3c2d057fd3ac11f02df31c0a3e75f800' } as TextBlock;
+    const textBlock = { id: '1' } as TextBlock;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -169,6 +176,17 @@ describe('TextblockFeedbackEditorComponent', () => {
         expect(component.escKeyup).toHaveBeenCalled();
     });
 
+    it('should show confirmIcon if feedback dismission needs to be confirmed', () => {
+        component.confirmIconComponent = new ConfirmIconComponent();
+        component.feedback.credits = 1;
+        jest.spyOn(component, 'escKeyup');
+        const confirmSpy = jest.spyOn(component.confirmIconComponent, 'toggle');
+
+        component.escKeyup();
+        fixture.detectChanges();
+        expect(confirmSpy).toHaveBeenCalledTimes(1);
+    });
+
     it('should show feedback impact warning when numberOfAffectedSubmissions > 0', () => {
         // additionally component needs to have some credits, have no conflicts and be a Manual type feedback
         component.feedback.credits = 1;
@@ -208,6 +226,58 @@ describe('TextblockFeedbackEditorComponent', () => {
             expect(modalServiceSpy).toHaveBeenCalledTimes(1);
         });
     });
+
+    it('should connect automatic feedback origin blocks with current feedback', fakeAsync(() => {
+        component.feedback.suggestedFeedbackOriginSubmissionReference = 1;
+        component.feedback.suggestedFeedbackParticipationReference = 1;
+        const textAssessmentService = TestBed.inject(TextAssessmentService);
+
+        const participation: StudentParticipation = {
+            type: ParticipationType.STUDENT,
+        } as unknown as StudentParticipation;
+
+        const textSubmission = {
+            submissionExerciseType: SubmissionExerciseType.TEXT,
+            id: 1,
+            submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
+            text: 'First text. Second text.',
+            participation,
+        } as unknown as TextSubmission;
+
+        textSubmission.results = [
+            {
+                id: 2374,
+                completionDate: dayjs('2019-07-09T11:51:23.251Z'),
+                textSubmission,
+            } as unknown as Result,
+        ];
+        textSubmission.latestResult = getLatestSubmissionResult(textSubmission);
+        textSubmission.latestResult!.feedbacks = [
+            {
+                id: 1,
+                detailText: 'text',
+                reference: 'First text id',
+                credits: 1.5,
+            } as Feedback,
+        ];
+        textSubmission.blocks = [
+            {
+                id: 'First text id',
+                text: 'First text.',
+                textSubmission,
+                numberOfAffectedSubmissions: 3,
+            } as unknown as TextBlock,
+        ];
+        participation.submissions = [textSubmission];
+
+        const participationStub = jest.spyOn(textAssessmentService, 'getFeedbackDataForExerciseSubmission').mockReturnValue(of(participation));
+
+        component.connectAutomaticFeedbackOriginBlocksWithFeedback();
+        tick();
+
+        expect(participationStub).toHaveBeenCalledTimes(1);
+        expect(component.listOfBlocksWithFeedback).toEqual([{ text: 'First text.', feedback: 'text', credits: 1.5, reusedCount: 3, type: 'MANUAL' }]);
+    }));
 
     it('should show link icon when feedback is associated with grading instruction', () => {
         component.feedback.gradingInstruction = new GradingInstruction();
@@ -298,5 +368,12 @@ describe('TextblockFeedbackEditorComponent', () => {
         gradingInstruction.credits = -1;
         fixture.detectChanges();
         expect(component.setInstrColour(gradingInstruction)).toBe('#fbe5d6');
+    });
+  
+    it('should send assessment event if feedback type changed', () => {
+        component.feedback.type = FeedbackType.AUTOMATIC;
+        const typeSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        component.didChange();
+        expect(typeSpy).toHaveBeenCalledTimes(1);
     });
 });

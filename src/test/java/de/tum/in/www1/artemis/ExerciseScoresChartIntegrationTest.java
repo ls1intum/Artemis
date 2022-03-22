@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -107,7 +107,7 @@ public class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "student1", roles = "USER")
     public void getCourseExerciseScores_asStudent_shouldReturnCorrectIndividualAverageAndMaxScores() throws Exception {
         List<ExerciseScoresDTO> exerciseScores = request.getList(getEndpointUrl(idOfCourse), HttpStatus.OK, ExerciseScoresDTO.class);
-        assertThat(exerciseScores.size()).isEqualTo(3);
+        assertThat(exerciseScores).hasSize(3);
         ExerciseScoresDTO individualTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExercise)).findFirst()
                 .get();
         ExerciseScoresDTO teamTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfTeamTextExercise)).findFirst().get();
