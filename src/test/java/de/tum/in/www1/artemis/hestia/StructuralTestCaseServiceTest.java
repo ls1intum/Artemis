@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
 
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.service.hestia.structural.StructuralSolutionEntryGenerationException;
 import de.tum.in.www1.artemis.service.hestia.structural.StructuralTestCaseService;
 import de.tum.in.www1.artemis.util.HestiaUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -317,5 +319,15 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
         assertThat(solutionEntries).hasSize(1);
         assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
         assertThat(solutionEntries.get(0).getCode()).isEqualTo("public <T, E extends List<T>> E foo(T[] arr) {\n    \n}");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testForMissingTestJson() throws Exception {
+        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {}", exercise, solutionRepo);
+        exercise = hestiaUtilService.setupTests("src/test/TestTest.java", "package test; \npublic class TestTest {}", exercise, testRepo);
+        addTestCaseToExercise("testClass[Test]");
+
+        assertThatExceptionOfType(StructuralSolutionEntryGenerationException.class).isThrownBy(() -> structuralTestCaseService.generateStructuralSolutionEntries(exercise));
     }
 }
