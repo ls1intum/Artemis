@@ -22,7 +22,7 @@
         id="complainTextArea"
         class="col-12 px-1"
         rows="4"
-        [maxLength]="maxComplaintTextLength"
+        [maxLength]="maxComplaintTextLimit"
         [(ngModel)]="complaint.complaintText"
         [readOnly]="true"
         [disabled]="true"

@@ -13,6 +13,7 @@ import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -146,6 +147,12 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.alertService.error('artemisApp.complaintResponse.noText');
             return;
         }
+        if (this.complaintResponse.responseText.length > this.course?.maxComplaintResponseTextLimit!) {
+            this.alertService.error('artemisApp.complaint.exceededComplaintResponseTextLimit', {
+                maxComplaintRespondTextLimit: this.course?.maxComplaintResponseTextLimit,
+            });
+            return;
+        }
         if (!this.isAllowedToRespond) {
             return;
         }
@@ -191,7 +198,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.showRemoveLockButton = false;
                 },
                 error: (err: HttpErrorResponse) => {
-                    this.onError(err);
+                    onError(this.alertService, err);
                 },
             });
     }

@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 describe('ComplaintsFormComponent', () => {
     const teamComplaints = 42;
     const studentComplaints = 69;
-    const course: Course = { maxTeamComplaints: teamComplaints, maxComplaints: studentComplaints };
+    const course: Course = { maxTeamComplaints: teamComplaints, maxComplaints: studentComplaints, maxComplaintTextLimit: 20 };
     const exercise: Exercise = { id: 1, teamMode: false } as Exercise;
     const courseExercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
     const courseTeamExercise: Exercise = { id: 1, teamMode: true, course } as Exercise;
@@ -107,5 +107,19 @@ describe('ComplaintsFormComponent', () => {
         expect(submitSpy).not.toHaveBeenCalled();
         expect(errorSpy).toHaveBeenCalledTimes(1);
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: numberOfComplaints });
+    });
+
+    it('should throw known error after complaint creation', () => {
+        const error = { error: { errorKey: 'exceededComplaintTextLimit' } } as HttpErrorResponse;
+        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => error));
+        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const errorSpy = jest.spyOn(alertService, 'error');
+        // 26 characters
+        component.complaintText = 'abcdefghijklmnopqrstuvwxyz';
+        component.createComplaint();
+        expect(createMock).toHaveBeenCalledTimes(1);
+        expect(submitSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: 20 });
     });
 });
