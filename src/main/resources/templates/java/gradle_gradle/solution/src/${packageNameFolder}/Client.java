@@ -51,7 +51,7 @@ public final class Client {
      * {@link #RANDOM_FLOOR} and {@link #RANDOM_CEILING}.
      *
      * @return a List of random Date objects
-     * @throws ParserException if date string cannot be parsed
+     * @throws ParseException if date string cannot be parsed
      */
     private static List<Date> createRandomDatesList() throws ParseException {
         int listLength = RandomUtils.nextInt(RANDOM_FLOOR, RANDOM_CEILING);
