@@ -686,7 +686,7 @@ public class Course extends DomainObject {
         }
         if (getMaxComplaintTextLimit() > COMPLAINT_TEXT_LIMIT) {
             throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_TEXT_LIMIT + " characters.", ENTITY_NAME,
-                    "maxComplaintResponseTextLimitInvalid", true);
+                    "maxComplaintTextLimitInvalid", true);
         }
         if (getMaxComplaintResponseTextLimit() < 0) {
             throw new BadRequestAlertException("Max Complaint response text limit cannot be negative", ENTITY_NAME, "maxComplaintResponseTextLimitInvalid", true);
