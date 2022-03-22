@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.hestia.structural.StructuralSolutionEntryGenerationException;
 import de.tum.in.www1.artemis.service.hestia.structural.StructuralTestCaseService;
-import de.tum.in.www1.artemis.util.HestiaUtilService;
+import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -35,7 +35,7 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     private final LocalRepository testRepo = new LocalRepository();
 
     @Autowired
-    private HestiaUtilService hestiaUtilService;
+    private HestiaUtilTestService hestiaUtilTestService;
 
     @Autowired
     private StructuralTestCaseService structuralTestCaseService;
@@ -71,8 +71,8 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForSimpleClass() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {}", exercise, solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {}", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -92,9 +92,9 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForComplexClass() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \nprivate abstract class Test extends Test2 implements TestI1, TestI2 {}", exercise,
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \nprivate abstract class Test extends Test2 implements TestI1, TestI2 {}", exercise,
                 solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -116,8 +116,8 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForGenericClass() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test<T, E extends List<T>> {}", exercise, solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test<T, E extends List<T>> {}", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -137,8 +137,8 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForSimpleAttribute() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {private String attributeName;}", exercise, solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {private String attributeName;}", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -163,9 +163,9 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForComplexAttribute() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {private static final List<Date> attributeName;}", exercise,
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {private static final List<Date> attributeName;}", exercise,
                 solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -190,8 +190,8 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForSimpleConstructor() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {public Test() {}}", exercise, solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {public Test() {}}", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -215,9 +215,9 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForComplexConstructor() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {protected Test(String s1, List<Date> dates) {}}", exercise,
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {protected Test(String s1, List<Date> dates) {}}", exercise,
                 solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -241,8 +241,8 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForSimpleMethod() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {public void foo() {}}", exercise, solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {public void foo() {}}", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -268,9 +268,9 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForComplexMethod() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {protected static List<Date> foo(List<Object> list, String s) {}}",
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {protected static List<Date> foo(List<Object> list, String s) {}}",
                 exercise, solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -296,9 +296,9 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForGenericMethod() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {public <T, E extends List<T>> E foo(T[] arr) {}}", exercise,
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {public <T, E extends List<T>> E foo(T[] arr) {}}", exercise,
                 solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test.json", """
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
                         "name": "Test",
@@ -324,8 +324,8 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testForMissingTestJson() throws Exception {
-        exercise = hestiaUtilService.setupSolution("src/test/Test.java", "package test; \npublic class Test {}", exercise, solutionRepo);
-        exercise = hestiaUtilService.setupTests("src/test/TestTest.java", "package test; \npublic class TestTest {}", exercise, testRepo);
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {}", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test/TestTest.java", "package test; \npublic class TestTest {}", exercise, testRepo);
         addTestCaseToExercise("testClass[Test]");
 
         assertThatExceptionOfType(StructuralSolutionEntryGenerationException.class).isThrownBy(() -> structuralTestCaseService.generateStructuralSolutionEntries(exercise));

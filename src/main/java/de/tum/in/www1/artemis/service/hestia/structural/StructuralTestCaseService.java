@@ -94,7 +94,33 @@ public class StructuralTestCaseService {
         var solutionClasses = getClassesFromFiles(retrieveJavaSourceFiles(solutionRepository.getLocalPath()));
 
         // Create new solution entries
-        var newSolutionEntries = Arrays.stream(classElements).flatMap(classElement -> {
+        List<ProgrammingExerciseSolutionEntry> newSolutionEntries = generateStructuralSolutionEntries(testCases, solutionRepository, classElements, solutionClasses);
+
+        // Get all old solution entries
+        var oldSolutionEntries = newSolutionEntries.stream().map(ProgrammingExerciseSolutionEntry::getTestCase).flatMap(testCase -> testCase.getSolutionEntries().stream())
+                .distinct().toList();
+
+        // Save new solution entries
+        newSolutionEntries = solutionEntryRepository.saveAll(newSolutionEntries);
+
+        // Delete old solution entries
+        solutionEntryRepository.deleteAll(oldSolutionEntries);
+
+        return newSolutionEntries;
+    }
+
+    /**
+     * Private method that takes care of the actual generation of structural solution entries.
+     *
+     * @param testCases The test cases of the programming exercise
+     * @param solutionRepository The solution repository of the programming exercise
+     * @param classElements The entries from the test.json file
+     * @param solutionClasses The classes read with QDox
+     * @return The new structural solution entries
+     */
+    private List<ProgrammingExerciseSolutionEntry> generateStructuralSolutionEntries(Set<ProgrammingExerciseTestCase> testCases, Repository solutionRepository,
+            StructuralClassElements[] classElements, Map<String, JavaClass> solutionClasses) {
+        return Arrays.stream(classElements).flatMap(classElement -> {
             var packageName = classElement.getStructuralClass().getPackageName();
             var name = classElement.getStructuralClass().getName();
             var solutionClass = solutionClasses.get(packageName + "." + name);
@@ -115,18 +141,6 @@ public class StructuralTestCaseService {
                     createSolutionEntry(filePath, String.join("\n\n", constructorsSolutionCode), findStructuralTestCase("Constructors", name, testCases)),
                     createSolutionEntry(filePath, String.join("\n\n", methodsSolutionCode), findStructuralTestCase("Methods", name, testCases)));
         }).filter(Objects::nonNull).collect(Collectors.toList());
-
-        // Get all old solution entries
-        var oldSolutionEntries = newSolutionEntries.stream().map(ProgrammingExerciseSolutionEntry::getTestCase).flatMap(testCase -> testCase.getSolutionEntries().stream())
-                .distinct().toList();
-
-        // Save new solution entries
-        newSolutionEntries = solutionEntryRepository.saveAll(newSolutionEntries);
-
-        // Delete old solution entries
-        solutionEntryRepository.deleteAll(oldSolutionEntries);
-
-        return newSolutionEntries;
     }
 
     /**
@@ -209,14 +223,16 @@ public class StructuralTestCaseService {
      */
     private List<String> generateCodeForAttributes(StructuralAttribute[] attributes, JavaClass solutionClass) {
         List<String> attributesSolutionCode = new ArrayList<>();
-        if (attributes != null) {
-            for (StructuralAttribute attribute : attributes) {
-                JavaField solutionAttribute = getSolutionAttribute(solutionClass, attribute);
-                String concatenatedModifiers = formatModifiers(attribute.getModifiers());
-                String result = String.join(" ", concatenatedModifiers, solutionAttribute == null ? attribute.getType() : solutionAttribute.getType().getGenericValue(),
-                        attribute.getName()) + ";";
-                attributesSolutionCode.add(result);
-            }
+        if (attributes == null) {
+            return attributesSolutionCode;
+        }
+
+        for (StructuralAttribute attribute : attributes) {
+            JavaField solutionAttribute = getSolutionAttribute(solutionClass, attribute);
+            String concatenatedModifiers = formatModifiers(attribute.getModifiers());
+            String result = String.join(" ", concatenatedModifiers, solutionAttribute == null ? attribute.getType() : solutionAttribute.getType().getGenericValue(),
+                    attribute.getName()) + ";";
+            attributesSolutionCode.add(result);
         }
         return attributesSolutionCode;
     }
@@ -234,10 +250,11 @@ public class StructuralTestCaseService {
         if (constructors == null) {
             return constructorsSolutionCode;
         }
+
         for (StructuralConstructor constructor : constructors) {
             List<JavaParameter> solutionParameters = getSolutionParameters(solutionClass, constructor);
             String concatenatedModifiers = formatModifiers(constructor.getModifiers());
-            String concatenatedParameters = generateArgumentsString(constructor.getParameters(), solutionParameters);
+            String concatenatedParameters = generateParametersString(constructor.getParameters(), solutionParameters);
             String result = String.join(" ", concatenatedModifiers, className + concatenatedParameters, "{\n" + SINGLE_INDENTATION + "\n}").trim();
             constructorsSolutionCode.add(result);
         }
@@ -253,24 +270,26 @@ public class StructuralTestCaseService {
      */
     private List<String> generateCodeForMethods(StructuralMethod[] methods, JavaClass solutionClass) {
         List<String> methodsSolutionCode = new ArrayList<>();
-        if (methods != null) {
-            for (StructuralMethod method : methods) {
-                JavaMethod solutionMethod = getSolutionMethod(solutionClass, method);
-                List<JavaParameter> solutionParameters = solutionMethod == null ? Collections.emptyList() : solutionMethod.getParameters();
-                String genericTypes = "";
-                if (solutionMethod != null && !solutionMethod.getTypeParameters().isEmpty()) {
-                    genericTypes = " " + getGenericTypesString(solutionMethod.getTypeParameters());
-                }
-                String concatenatedModifiers = formatModifiers(method.getModifiers());
-                String concatenatedParameters = generateArgumentsString(method.getParameters(), solutionParameters);
-                String returnType = method.getReturnType();
-                if (solutionMethod != null) {
-                    returnType = solutionMethod.getReturnType().getGenericValue();
-                }
-                String result = String.join(" ", concatenatedModifiers + genericTypes, returnType, method.getName() + concatenatedParameters, "{\n" + SINGLE_INDENTATION + "\n}")
-                        .trim();
-                methodsSolutionCode.add(result);
+        if (methods == null) {
+            return methodsSolutionCode;
+        }
+
+        for (StructuralMethod method : methods) {
+            JavaMethod solutionMethod = getSolutionMethod(solutionClass, method);
+            List<JavaParameter> solutionParameters = solutionMethod == null ? Collections.emptyList() : solutionMethod.getParameters();
+            String genericTypes = "";
+            if (solutionMethod != null && !solutionMethod.getTypeParameters().isEmpty()) {
+                genericTypes = " " + getGenericTypesString(solutionMethod.getTypeParameters());
             }
+            String concatenatedModifiers = formatModifiers(method.getModifiers());
+            String concatenatedParameters = generateParametersString(method.getParameters(), solutionParameters);
+            String returnType = method.getReturnType();
+            if (solutionMethod != null) {
+                returnType = solutionMethod.getReturnType().getGenericValue();
+            }
+            String result = String.join(" ", concatenatedModifiers + genericTypes, returnType, method.getName() + concatenatedParameters, "{\n" + SINGLE_INDENTATION + "\n}")
+                    .trim();
+            methodsSolutionCode.add(result);
         }
 
         return methodsSolutionCode;
@@ -287,9 +306,15 @@ public class StructuralTestCaseService {
         if (modifiers == null) {
             return "";
         }
-        return Arrays.stream(modifiers).map(modifier -> modifier.replaceAll("optional: ", "")).collect(Collectors.joining(" "));
+        return Arrays.stream(modifiers).map(modifier -> modifier.replace("optional: ", "")).collect(Collectors.joining(" "));
     }
 
+    /**
+     * Creates the String representation of a generics declaration
+     *
+     * @param typeParameters The generic type parameters
+     * @return The String representation
+     */
     private String getGenericTypesString(List<JavaTypeVariable<JavaGenericDeclaration>> typeParameters) {
         return "<" + typeParameters.stream().map(JavaType::getGenericValue).map(type -> type.substring(1, type.length() - 1)).collect(Collectors.joining(", ")) + ">";
     }
@@ -298,16 +323,31 @@ public class StructuralTestCaseService {
         return solutionClass.getFields().stream().filter(field -> field.getName().equals(attribute.getName())).findFirst().orElse(null);
     }
 
+    /**
+     * Extracts the parameters from a constructor
+     *
+     * @param solutionClass The QDox class instance
+     * @param constructor The constructor specification from the test.json file
+     * @return The parameters of the constructor
+     */
     private List<JavaParameter> getSolutionParameters(JavaClass solutionClass, StructuralConstructor constructor) {
         List<JavaParameter> solutionParameters = Collections.emptyList();
-        if (solutionClass != null) {
-            solutionParameters = solutionClass.getConstructors().stream()
-                    .filter(javaConstructor -> doParametersMatch(constructor.getParameters(), javaConstructor.getParameters(), solutionClass.getTypeParameters())).findFirst()
-                    .map(JavaExecutable::getParameters).orElse(Collections.emptyList());
+        if (solutionClass == null) {
+            return solutionParameters;
         }
+        solutionParameters = solutionClass.getConstructors().stream()
+                .filter(javaConstructor -> doParametersMatch(constructor.getParameters(), javaConstructor.getParameters(), solutionClass.getTypeParameters())).findFirst()
+                .map(JavaExecutable::getParameters).orElse(Collections.emptyList());
         return solutionParameters;
     }
 
+    /**
+     * Finds the QDox method in a given class by its test.json specification
+     *
+     * @param solutionClass The QDox class instance
+     * @param method The method specification from the test.json file
+     * @return The QDox method instance or null if not found
+     */
     private JavaMethod getSolutionMethod(JavaClass solutionClass, StructuralMethod method) {
         if (solutionClass == null) {
             return null;
@@ -319,6 +359,16 @@ public class StructuralTestCaseService {
         }).findFirst().orElse(null);
     }
 
+    /**
+     * Checks if the parameters from the source files and those from the test.json match.
+     * This is used for methods and constructor parameters.
+     * Contains special handling for generics
+     *
+     * @param parameters The parameters from the test.json file
+     * @param solutionParameters The parameters from the source code
+     * @param genericDeclarations The current generic declarations
+     * @return false if any parameter does not match
+     */
     private boolean doParametersMatch(String[] parameters, List<JavaParameter> solutionParameters, List<JavaTypeVariable<JavaGenericDeclaration>> genericDeclarations) {
         if (parameters == null) {
             return solutionParameters.isEmpty();
@@ -342,7 +392,14 @@ public class StructuralTestCaseService {
         return true;
     }
 
-    private String generateArgumentsString(String[] parameterTypes, List<JavaParameter> solutionParameters) {
+    /**
+     * Generates the string representing the source code of a parameter list
+     *
+     * @param parameterTypes The parameters from the test.json file
+     * @param solutionParameters The parameters from the source code
+     * @return The parameter source code
+     */
+    private String generateParametersString(String[] parameterTypes, List<JavaParameter> solutionParameters) {
         String result = "(";
         if (parameterTypes != null) {
             for (int i = 0; i < parameterTypes.length; i++) {
@@ -361,9 +418,16 @@ public class StructuralTestCaseService {
         return result;
     }
 
+    /**
+     * Finds, reads and parses the test.json file from the test repository
+     *
+     * @param testRepoPath The base path of the test repository
+     * @return The parsed test.json file
+     * @throws StructuralSolutionEntryGenerationException If the test.json does not exist or could not be read
+     */
     private StructuralClassElements[] readStructureOracleFile(Path testRepoPath) throws StructuralSolutionEntryGenerationException {
-        try {
-            var testJsonFile = Files.walk(testRepoPath).filter(Files::isRegularFile).filter(path -> "test.json".equals(path.getFileName().toString())).findFirst();
+        try (Stream<Path> files = Files.walk(testRepoPath)) {
+            var testJsonFile = files.filter(Files::isRegularFile).filter(path -> "test.json".equals(path.getFileName().toString())).findFirst();
             if (testJsonFile.isEmpty()) {
                 throw new StructuralSolutionEntryGenerationException("Unable to locate test.json");
             }
@@ -378,10 +442,17 @@ public class StructuralTestCaseService {
         }
     }
 
+    /**
+     * Collects all java source files in a given path.
+     *
+     * @param start The base path
+     * @return The paths to all java source files
+     * @throws StructuralSolutionEntryGenerationException If there was an IOException
+     */
     private List<Path> retrieveJavaSourceFiles(Path start) throws StructuralSolutionEntryGenerationException {
         var matcher = FileSystems.getDefault().getPathMatcher("glob:**/*.java");
-        try {
-            return Files.walk(start).filter(Files::isRegularFile).filter(matcher::matches).toList();
+        try (Stream<Path> files = Files.walk(start)) {
+            return files.filter(Files::isRegularFile).filter(matcher::matches).toList();
         }
         catch (IOException e) {
             var error = "Could not retrieve the project files to generate the structural solution entries";
