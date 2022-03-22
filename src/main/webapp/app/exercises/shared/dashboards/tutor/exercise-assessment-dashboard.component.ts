@@ -47,6 +47,7 @@ import dayjs from 'dayjs/esm';
 import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -185,6 +186,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
+        private chartRoutingService: ChartRoutingService,
     ) {}
 
     /**
@@ -774,7 +776,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     navigateToExerciseSubmissionOverview(event: any): void {
         if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
+            this.chartRoutingService.routeInNewTab(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
     }
 

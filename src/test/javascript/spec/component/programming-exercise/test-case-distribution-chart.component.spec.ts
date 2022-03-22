@@ -3,21 +3,20 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { Router } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 describe('Test case distribution chart', () => {
     const programmingExercise = new ProgrammingExercise(undefined, undefined);
     let component: TestCaseDistributionChartComponent;
     let fixture: ComponentFixture<TestCaseDistributionChartComponent>;
 
-    let router: Router;
+    let routingStub: jest.SpyInstance;
 
     const configureComponent = (testCases: ProgrammingExerciseTestCase[]) => {
         configureProgrammingExercise();
@@ -73,16 +72,14 @@ describe('Test case distribution chart', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [TestCaseDistributionChartComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
-            ],
+            providers: [MockProvider(ChartRoutingService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestCaseDistributionChartComponent);
         component = fixture.componentInstance;
 
-        router = TestBed.inject(Router);
+        const routingService = TestBed.inject(ChartRoutingService);
+        routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
     });
 
     it('should handle no test cases appropriately', () => {
@@ -180,12 +177,11 @@ describe('Test case distribution chart', () => {
         programmingExercise.id = 4;
         programmingExercise.course = { id: 42 };
         component.exercise = programmingExercise;
-        const routerSpy = jest.spyOn(router, 'navigate');
         const expectedUrl = ['course-management', 42, 'programming-exercises', 4, 'exercise-statistics'];
 
         component.onSelectPoints();
 
-        expect(routerSpy).toHaveBeenCalledWith(expectedUrl);
+        expect(routingStub).toHaveBeenCalledWith(expectedUrl);
     });
 
     it('should emit the correct test case id if clicked on weight and bonus chart', () => {

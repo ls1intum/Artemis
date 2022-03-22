@@ -23,6 +23,7 @@ import { CourseScoresCsvRow, CourseScoresCsvRowBuilder } from 'app/course/course
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
+import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -124,6 +125,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         private localeConversionService: LocaleConversionService,
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
+        private chartRoutingService: ChartRoutingService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -910,5 +912,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 break;
         }
         this.changeDetector.detectChanges();
+    }
+
+    accessParticipantScores() {
+        this.chartRoutingService.routeInNewTab(['course-management', this.course.id, 'participant-scores']);
     }
 }

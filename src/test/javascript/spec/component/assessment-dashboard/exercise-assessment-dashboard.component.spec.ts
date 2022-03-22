@@ -66,6 +66,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -181,6 +182,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
 
     let navigateSpy: jest.SpyInstance;
+    let routingStub: jest.SpyInstance;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
 
     const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule)];
@@ -223,6 +225,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(GuidedTourService),
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
+        MockProvider(ChartRoutingService),
     ];
 
     beforeEach(() => {
@@ -289,6 +292,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 comp.submissionsWithComplaints = [submissionWithComplaintDTO];
 
                 accountService = TestBed.inject(AccountService);
+                const chartRoutingService = TestBed.inject(ChartRoutingService);
+
+                routingStub = jest.spyOn(chartRoutingService, 'routeInNewTab').mockImplementation();
             });
     });
 
@@ -589,7 +595,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             comp.navigateToExerciseSubmissionOverview(event);
 
-            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(routingStub).not.toHaveBeenCalled();
         });
 
         it('should not navigate if user is instructor but clicked the chart legend', () => {
@@ -598,7 +604,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             comp.navigateToExerciseSubmissionOverview(event);
 
-            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(routingStub).not.toHaveBeenCalled();
         });
 
         it('should navigate if user is instructor and clicked pie part', () => {
@@ -614,7 +620,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.navigateToExerciseSubmissionOverview(event);
 
-                expect(navigateSpy).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions']);
+                expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions']);
             });
         });
     });

@@ -3,6 +3,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
+import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisNavigationUtilService {
@@ -197,7 +198,7 @@ export const getExerciseSubmissionsLink = (exerciseType: ExerciseType, courseId:
  * @subPage the subpage of an exercise which we want to navigate into, e.g. scores
  */
 export const navigateToExamExercise = (
-    router: Router,
+    chartRoutingService: ChartRoutingService,
     courseId: number,
     examId: number,
     exerciseGroupId: number,
@@ -206,6 +207,6 @@ export const navigateToExamExercise = (
     subPage: string,
 ): void => {
     setTimeout(() => {
-        router.navigate(['course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, `${exerciseType}-exercises`, exerciseId, subPage]);
+        chartRoutingService.routeInNewTab(['course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, `${exerciseType}-exercises`, exerciseId, subPage]);
     }, 1000);
 };

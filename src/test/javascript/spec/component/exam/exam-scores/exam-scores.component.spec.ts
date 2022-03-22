@@ -38,6 +38,7 @@ import { Course } from 'app/entities/course.model';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -45,9 +46,8 @@ describe('ExamScoresComponent', () => {
     let examService: ExamManagementService;
     let gradingSystemService: GradingSystemService;
     let accountService: AccountService;
-    let router: Router;
 
-    let navigateSpy: jest.SpyInstance;
+    let routingStub: jest.SpyInstance;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -244,6 +244,7 @@ describe('ExamScoresComponent', () => {
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AccountService),
+                MockProvider(ChartRoutingService),
                 MockProvider(TranslateService),
                 MockProvider(ExamManagementService),
                 MockProvider(SortService),
@@ -289,9 +290,9 @@ describe('ExamScoresComponent', () => {
                     .spyOn(participationScoreService, 'findExamScores')
                     .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
                 accountService = TestBed.inject(AccountService);
-                router = TestBed.inject(Router);
+                const chartRoutingService = TestBed.inject(ChartRoutingService);
 
-                navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
+                routingStub = jest.spyOn(chartRoutingService, 'routeInNewTab').mockImplementation();
             });
     });
 
@@ -767,7 +768,7 @@ describe('ExamScoresComponent', () => {
 
         comp.onSelect();
 
-        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(routingStub).not.toHaveBeenCalled();
     });
 
     it('should delegate user if authorisation is sufficient', () => {
@@ -777,7 +778,7 @@ describe('ExamScoresComponent', () => {
 
         comp.onSelect();
 
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 42, 'exams', 1, 'participant-scores']);
+        expect(routingStub).toHaveBeenCalledWith(['course-management', 42, 'exams', 1, 'participant-scores']);
     });
 
     it('should toggle median correctly', () => {
