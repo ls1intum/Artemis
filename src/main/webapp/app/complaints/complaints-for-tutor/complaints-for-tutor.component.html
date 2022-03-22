@@ -73,7 +73,7 @@
                     type="button"
                     class="btn btn-success btn-block"
                     (click)="respondToComplaint(true)"
-                    [disabled]="isLockedForLoggedInUser"
+                    [disabled]="isLockedForLoggedInUser || complaintResponseTextLength() > this.course!.maxComplaintResponseTextLimit!"
                     title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | artemisTranslate }}"
                 >
                     {{ 'artemisApp.complaintResponse.updateAssessment' | artemisTranslate }}
@@ -83,7 +83,7 @@
                     type="button"
                     class="btn btn-danger btn-block"
                     (click)="respondToComplaint(false)"
-                    [disabled]="isLockedForLoggedInUser"
+                    [disabled]="isLockedForLoggedInUser || complaintResponseTextLength() > this.course!.maxComplaintResponseTextLimit!"
                     title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | artemisTranslate }}"
                 >
                     {{ 'artemisApp.complaintResponse.rejectComplaint' | artemisTranslate }}

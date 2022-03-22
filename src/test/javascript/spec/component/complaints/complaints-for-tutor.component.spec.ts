@@ -17,7 +17,11 @@ import { Course } from 'app/entities/course.model';
 
 // Mock getCourseFromExercise(exercise) to get a course even if there isn't a course.
 jest.mock('app/entities/exercise.model', () => ({
-    getCourseFromExercise: () => new Course(),
+    getCourseFromExercise: () => {
+        const course = new Course();
+        course.maxComplaintResponseTextLimit = 26;
+        return course;
+    },
 }));
 
 describe('ComplaintsForTutorComponent', () => {
@@ -225,4 +229,55 @@ describe('ComplaintsForTutorComponent', () => {
 
         expect(resolveStub).toHaveBeenCalled();
     });
+
+    it('should just display disabled submit complaint button', fakeAsync(() => {
+        const unhandledComplaint = new Complaint();
+        unhandledComplaint.id = 1;
+        unhandledComplaint.accepted = undefined;
+        unhandledComplaint.complaintText = 'please check again';
+        unhandledComplaint.complaintResponse = undefined;
+        unhandledComplaint.complaintResponse = new ComplaintResponse();
+        unhandledComplaint.complaintResponse.id = 1;
+        unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
+
+        const freshlyCreatedComplaintResponse = new ComplaintResponse();
+        freshlyCreatedComplaintResponse.id = 1;
+        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
+        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
+
+        jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: freshlyCreatedComplaintResponse,
+                    status: 201,
+                }),
+            ),
+        );
+
+        complaintsForTutorComponent.isAssessor = false;
+        complaintsForTutorComponent.complaint = unhandledComplaint;
+
+        complaintForTutorComponentFixture.detectChanges();
+        // We need the tick as `ngModel` writes data asynchronously into the DOM!
+        tick();
+
+        const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
+        responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
+        expect(responseTextArea.value.length).toEqual(26);
+
+        const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
+        const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
+        expect(rejectComplaintButton.disabled).toBe(false);
+        expect(acceptComplaintButton.disabled).toBe(false);
+
+        responseTextArea.value = responseTextArea.value + 'A';
+        expect(responseTextArea.value.length).toEqual(27);
+
+        complaintForTutorComponentFixture.detectChanges();
+        // We need the tick as `ngModel` writes data asynchronously into the DOM!
+        tick();
+
+        expect(rejectComplaintButton.disabled).toBe(true);
+        expect(acceptComplaintButton.disabled).toBe(true);
+    }));
 });

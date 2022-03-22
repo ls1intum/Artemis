@@ -215,4 +215,12 @@ export class ComplaintsForTutorComponent implements OnInit {
     get isAllowedToRespond(): boolean {
         return isAllowedToRespondToComplaintAction(this.exercise?.isAtLeastInstructor ?? false, this.isTestRun, this.isAssessor, this.complaint, this.exercise);
     }
+
+    /**
+     * Calculates and returns the length of the entered text.
+     */
+    complaintResponseTextLength(): number {
+        const textArea: HTMLTextAreaElement = document.querySelector('#responseTextArea') as HTMLTextAreaElement;
+        return textArea.value.length;
+    }
 }

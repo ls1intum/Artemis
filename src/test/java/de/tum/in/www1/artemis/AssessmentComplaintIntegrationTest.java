@@ -231,12 +231,12 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "tutor2", roles = "TA")
     public void submitComplaintResponseComplaintResponseTextLimitExceeded() throws Exception {
         complaint = complaintRepo.save(complaint);
-        course = database.updateCourseComplaintResponseTextLimit(course, 26);
+        course = database.updateCourseComplaintResponseTextLimit(course, 25);
         // creating the initial complaintResponse
         ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         // 27 characters
-        complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyzA");
+        complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
