@@ -2,6 +2,7 @@ import { ErrorHandler, Injectable } from '@angular/core';
 import { captureException, init } from '@sentry/browser';
 import { VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ArtemisDeduplicate } from 'app/core/sentry/deduplicate.sentry-integration';
 
 @Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {
@@ -30,7 +31,15 @@ export class SentryErrorHandler extends ErrorHandler {
             dsn: profileInfo.sentry.dsn,
             release: VERSION,
             environment: this.environment,
+            integrations: [new ArtemisDeduplicate()],
         });
+
+        setTimeout(() => {
+            setInterval(() => {
+                captureException(new Error('Test 123'));
+                captureException(new Error('Test 124'));
+            }, 100);
+        }, 5000);
     }
 
     constructor() {
