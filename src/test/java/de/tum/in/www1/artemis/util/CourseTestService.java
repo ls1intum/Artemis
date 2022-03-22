@@ -273,7 +273,7 @@ public class CourseTestService {
     // Test
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, postsEnabled = false
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, false, 0);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, 2000, 2000, false, 0);
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
