@@ -190,6 +190,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
         return searchByLoginOrNameWithGroups(searchTerm, sorted).map(user -> {
             user.setVisibleRegistrationNumber();
+            user.setVisibleEmail();
             return new UserDTO(user);
         });
     }

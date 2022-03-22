@@ -277,6 +277,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.visibleRegistrationNumberTransient = this.getRegistrationNumber();
     }
 
+    /**
+     * Used by API setters. Should be avoided. Use {@link #setRegistrationNumber(String)} and {@link #setVisibleRegistrationNumber()}
+     * @param visibleRegistrationNumber new registration number
+     */
+    public void setVisibleRegistrationNumber(String visibleRegistrationNumber) {
+        this.visibleRegistrationNumberTransient = visibleRegistrationNumber;
+    }
+
     public Set<String> getGroups() {
         return groups;
     }

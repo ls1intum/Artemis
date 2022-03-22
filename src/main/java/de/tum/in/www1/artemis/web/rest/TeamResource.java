@@ -331,7 +331,7 @@ public class TeamResource {
     }
 
     /**
-     * PUT /exercises/:destinationExerciseId/teams/import-from-file : add given teams into exercise
+     * PUT /exercises/:destinationExerciseId/teams/import-from-list : add given teams into exercise
      *
      * @param exerciseId         the exercise id of the exercise for which to import teams
      * @param teams              teams whose students have login or registration number as identifiers

@@ -261,6 +261,7 @@ public class ModelFactory {
         user.setFirstName(login + "First");
         user.setLastName(login + "Last");
         user.setEmail(login + "@test.de");
+        user.setVisibleEmail();
         user.setActivated(true);
         user.setLangKey("en");
         user.setGroups(new HashSet<>());

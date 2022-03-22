@@ -92,6 +92,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
         var student = userTestService.student;
         student.setInternal(true);
         student = userRepository.save(student);
+        student.setVisibleEmail();
         student.setFirstName("changed");
         jiraRequestMockProvider.mockIsGroupAvailable("testgroup");
         jiraRequestMockProvider.mockIsGroupAvailable("tumuser");

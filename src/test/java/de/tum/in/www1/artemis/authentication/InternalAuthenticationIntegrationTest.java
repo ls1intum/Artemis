@@ -269,6 +269,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         final var oldGroups = student.getGroups();
         final var newGroups = Set.of("foo", "bar");
         student.setGroups(newGroups);
+        student.setVisibleEmail();
         final var managedUserVM = new ManagedUserVM(student);
         managedUserVM.setPassword("12345678");
 
