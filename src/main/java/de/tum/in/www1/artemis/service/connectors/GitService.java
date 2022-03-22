@@ -864,7 +864,7 @@ public class GitService {
             return;
         }
 
-        try (final Git git = new Git(repository)) {
+        try (Git git = new Git(repository)) {
             String commitHash;
 
             if (lastValidSubmission.isPresent()) {
@@ -899,7 +899,7 @@ public class GitService {
      * @param overwriteMain       If false keeps main and creates squash commit in seperate branch, if true squashes main
      */
     public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise, boolean overwriteMain) {
-        try (final Git studentGit = new Git(repository)) {
+        try (Git studentGit = new Git(repository)) {
             setRemoteUrl(repository);
             // Get last commit hash from template repo
             ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUrl());
@@ -939,7 +939,7 @@ public class GitService {
      * @param programmingExercise ProgrammingExercise associated with this repo.
      */
     public void anonymizeStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
-        try (final Git studentGit = new Git(repository)) {
+        try (Git studentGit = new Git(repository)) {
             setRemoteUrl(repository);
             String copyBranchName = "copy";
             String headName = "HEAD";
