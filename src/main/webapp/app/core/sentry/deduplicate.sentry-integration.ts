@@ -1,5 +1,4 @@
-import { Exception } from '@sentry/browser';
-import { Event, EventProcessor, Hub, Integration, StackFrame } from '@sentry/types';
+import { Event, EventProcessor, Hub, Integration } from '@sentry/types';
 import { sha1Hex } from 'app/shared/util/crypto.utils';
 
 export class ArtemisDeduplicate implements Integration {
