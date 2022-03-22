@@ -31,38 +31,50 @@ describe('ArtemisDeduplicateSentryIntegration', () => {
                     values: [
                         {
                             type: 'Error',
-                            value: value,
-                            stacktrace: [
-                                {
-                                    filename: 'a.ts',
-                                    lineno: 5,
-                                },
-                                {
-                                    filename: 'b.ts',
-                                    lineno: 10,
-                                },
-                            ],
+                            value,
+                            stacktrace: {
+                                frames: [
+                                    {
+                                        filename: 'a.ts',
+                                        lineno: 5,
+                                    },
+                                    {
+                                        filename: 'b.ts',
+                                        lineno: 10,
+                                    },
+                                ],
+                            },
                         },
                     ],
                 },
             } as any as Event),
 
-        // Test messages (no exception)
+        // Test messages (no exception, but stacktrace)
         (value: string) =>
             ({
                 level: 'error',
                 timestamp: dayjs().valueOf(),
                 message: value,
-                stacktrace: [
-                    {
-                        filename: 'a.ts',
-                        lineno: 5,
-                    },
-                    {
-                        filename: 'b.ts',
-                        lineno: 10,
-                    },
-                ],
+                stacktrace: {
+                    frames: [
+                        {
+                            filename: 'a.ts',
+                            lineno: 5,
+                        },
+                        {
+                            filename: 'b.ts',
+                            lineno: 10,
+                        },
+                    ],
+                },
+            } as any as Event),
+
+        // Test messages (no exception, no stacktrace)
+        (value: string) =>
+            ({
+                level: 'error',
+                timestamp: dayjs().valueOf(),
+                message: value,
             } as any as Event),
     ])(
         'should ignore exceptions and error messages that happened already in the last 5 minutes',

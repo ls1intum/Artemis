@@ -1,3 +1,4 @@
+import { Exception } from '@sentry/browser';
 import { Event, EventProcessor, Hub, Integration, StackFrame } from '@sentry/types';
 import { sha1Hex } from 'app/shared/util/crypto.utils';
 
@@ -44,17 +45,18 @@ function computeEventHash(event: Event): string {
     // Add the message
     let valueSequence = event.message ?? '';
 
-    // If the event has an exception, add type, value and for each frame, filename and line
+    // If the event has an exception, add type, value
     const exception = event.exception?.values && event.exception!.values.length > 0 && event.exception!.values[0];
     if (exception) {
         valueSequence += exception.type ?? '';
         valueSequence += exception.value ?? '';
+    }
 
-        const frames = getFramesFromEvent(event);
-        if (frames) {
-            frames.forEach((frame) => (valueSequence += frame.filename ?? ''));
-            frames.forEach((frame) => (valueSequence += frame.lineno ?? ''));
-        }
+    // If event has stack trace, add filename and line of each frame
+    const frames = getFramesFromEvent(exception, event);
+    if (frames) {
+        frames.forEach((frame) => (valueSequence += frame.filename ?? ''));
+        frames.forEach((frame) => (valueSequence += frame.lineno ?? ''));
     }
 
     return sha1Hex(valueSequence);
@@ -62,15 +64,13 @@ function computeEventHash(event: Event): string {
 
 /**
  * Return the stack trace frames of the event exception or the event itself
- * @param event the event to get frames from
+ * @param exception the previously extracted exception, if present
+ * @param event the event to get frames from alternatively
  */
-function getFramesFromEvent(event: Event): StackFrame[] | undefined {
-    const exception = event.exception;
-
+function getFramesFromEvent(exception: Exception | false | undefined, event: Event): StackFrame[] | undefined {
     if (exception) {
         try {
-            // @ts-ignore Object is possibly undefined
-            return exception.values[0].stacktrace?.frames;
+            return exception.stacktrace?.frames;
         } catch (_oO) {
             return undefined;
         }
