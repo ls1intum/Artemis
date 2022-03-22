@@ -50,9 +50,11 @@ public class ComplaintResponseService {
 
     /**
      * Removes the empty complaint response and thus the lock for a given complaint
-     *
-     * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods remove the current empty complaint response thus removing the lock
+     * <p>
+     * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors
+     * can resolve the complaint as long as the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods
+     * remove the current empty complaint response thus removing the lock
      *
      * @param complaint the complaint for which to remove the empty response for
      */
@@ -89,15 +91,19 @@ public class ComplaintResponseService {
 
     /**
      * Refreshes the empty complaint response for a given complaint that acts a lock
-     *
-     * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors can resolve the complaint as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods exchange the current empty complaint response to a new one
+     * <p>
+     * The empty complaint response acts as a lock. Only the reviewer of the empty complaint response and instructors
+     * can resolve the complaint as long as the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods
+     * exchange the current empty complaint response to a new one
      * thus updating the lock.
-     *
+     * <p>
      * This is possible in two cases:
-     *
-     * Case A: Lock is currently active -> Only the initial reviewer or an instructor can refresh the empty complaint response
-     * Case B: Lock has run out --> Others teaching assistants can refresh the empty complaint response thus acquiring the lock
+     * <p>
+     * Case A: Lock is currently active -> Only the initial reviewer or an instructor can refresh the empty complaint
+     * response
+     * Case B: Lock has run out --> Others teaching assistants can refresh the empty complaint response thus
+     * acquiring the lock
      *
      * @param complaint the complaint for which to refresh the empty response for
      * @return refreshed empty complaint response
@@ -131,8 +137,9 @@ public class ComplaintResponseService {
 
     /**
      * Creates an empty complaint response for a given complaint that acts a lock
-     *
-     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve the complaint as long as the lock
+     * <p>
+     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors
+     * can resolve the complaint as long as the lock
      * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}
      *
      * @param complaint complaint for which to create an empty complaint response for
@@ -163,12 +170,15 @@ public class ComplaintResponseService {
 
     /**
      * Resolves a complaint by filling in the empty complaint response attached to it
-     *
-     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors can resolve empty complaint response as long as the lock
-     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods fill in the initial complaint response and either accepts
+     * <p>
+     * The empty complaint response acts as a lock. Only the creator of the empty complaint response and instructors
+     * can resolve empty complaint response as long as the lock
+     * is running. For lock duration calculation see: {@link ComplaintResponse#isCurrentlyLocked()}. These methods
+     * fill in the initial complaint response and either accepts
      * or denies the associated complaint, thus resolving the complaint
      *
-     * @param updatedComplaintResponse complaint response containing the information necessary for resolving the complaint
+     * @param updatedComplaintResponse complaint response containing the information necessary for resolving the
+     *                                 complaint
      * @return complaintResponse of resolved complaint
      */
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
@@ -195,18 +205,20 @@ public class ComplaintResponseService {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
-        Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(originalComplaint.getResult().getId())
-                .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
-        StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
-        Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
-        // Retrieve course to get max complaint response limit
-        final Course course = courseRepository.findByIdElseThrow(courseId);
+        if (updatedComplaintResponse.getResponseText() != null) {
+            Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(originalComplaint.getResult().getId())
+                    .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
+            StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
+            Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
+            // Retrieve course to get max complaint response limit
+            final Course course = courseRepository.findByIdElseThrow(courseId);
 
-        // Check whether the complaint text limit is exceeded
-        if (updatedComplaintResponse.getResponseText() != null && course.getMaxComplaintResponseTextLimit() < updatedComplaintResponse.getResponseText().length()) {
-            throw new BadRequestAlertException(
-                    "You cannot submit a complaint response that exceeds the maximum number of " + course.getMaxComplaintResponseTextLimit() + " characters", ENTITY_NAME,
-                    "exceededComplaintResponseTextLimit");
+            // Check whether the complaint text limit is exceeded
+            if (course.getMaxComplaintResponseTextLimit() < updatedComplaintResponse.getResponseText().length()) {
+                throw new BadRequestAlertException(
+                        "You cannot submit a complaint response that exceeds the maximum number of " + course.getMaxComplaintResponseTextLimit() + " characters", ENTITY_NAME,
+                        "exceededComplaintResponseTextLimit");
+            }
         }
 
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -230,8 +242,9 @@ public class ComplaintResponseService {
 
     /**
      * Checks if a user is blocked by a complaintResponse representing a lock
+     *
      * @param complaintResponseRepresentingLock the complaintResponse representing a lock
-     * @param user user to check
+     * @param user                              user to check
      * @return true if blocked by lock, false otherwise
      */
     public boolean blockedByLock(ComplaintResponse complaintResponseRepresentingLock, User user) {
@@ -248,18 +261,20 @@ public class ComplaintResponseService {
     }
 
     /**
-     * Checks whether the reviewer is authorized to respond to this complaint, note: instructors are always allowed to respond to complaints
-     *
+     * Checks whether the reviewer is authorized to respond to this complaint, note: instructors are always allowed
+     * to respond to complaints
+     * <p>
      * 1. Team Exercises
-     *    => The team tutor assesses the submissions and responds to complaints and more feedback requests
-     *
+     * => The team tutor assesses the submissions and responds to complaints and more feedback requests
+     * <p>
      * 2. Individual Exercises
-     *    => Complaints can only be handled by a tutor who is not the original assessor
-     *    => Complaints of exam test runs can be assessed by instructors. They are identified by the same user being the assessor and student
-     *    => More feedback requests are handled by the assessor himself
+     * => Complaints can only be handled by a tutor who is not the original assessor
+     * => Complaints of exam test runs can be assessed by instructors. They are identified by the same user being the
+     * assessor and student
+     * => More feedback requests are handled by the assessor himself
      *
      * @param complaint Complaint for which to check
-     * @param user user who is trying to create a response to the complaint
+     * @param user      user who is trying to create a response to the complaint
      * @return true if the tutor is allowed to respond to the complaint, false otherwise
      */
     public boolean isUserAuthorizedToRespondToComplaint(Complaint complaint, User user) {

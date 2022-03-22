@@ -235,7 +235,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         // creating the initial complaintResponse
         ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
-        // 27 characters
+        // 26 characters
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
