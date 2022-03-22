@@ -7,5 +7,6 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 })
 export class ComplaintResponseComponent {
     @Input() complaint: Complaint;
+    @Input() maxComplaintResponseTextLength: number;
     readonly ComplaintType = ComplaintType;
 }

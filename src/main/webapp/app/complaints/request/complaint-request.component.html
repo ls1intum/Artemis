@@ -18,5 +18,13 @@
         </span>
     </p>
 
-    <textarea id="complainTextArea" class="col-12 px-1" rows="4" maxLength="2000" [(ngModel)]="complaint.complaintText" [readOnly]="true" [disabled]="true"></textarea>
+    <textarea
+        id="complainTextArea"
+        class="col-12 px-1"
+        rows="4"
+        [maxLength]="maxComplaintTextLength"
+        [(ngModel)]="complaint.complaintText"
+        [readOnly]="true"
+        [disabled]="true"
+    ></textarea>
 </div>

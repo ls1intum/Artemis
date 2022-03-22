@@ -35,7 +35,12 @@
 
             <div class="row">
                 <div class="col-6">
-                    <button id="submit-complaint" class="btn btn-primary" [disabled]="!complaintText" (click)="createComplaint()">
+                    <button
+                        id="submit-complaint"
+                        class="btn btn-primary"
+                        [disabled]="!complaintText || complaintTextLength() > this.course!.maxComplaintTextLimit!"
+                        (click)="createComplaint()"
+                    >
                         {{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.submit' | artemisTranslate) : ('artemisApp.moreFeedback.button' | artemisTranslate) }}
                     </button>
                 </div>

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -58,7 +58,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Loads the number of allowed complaints and feedback requests
      */
     ngOnInit(): void {
-        this.course = this.exercise.course;
+        this.course = getCourseFromExercise(this.exercise);
         this.isExamMode = this.exam != undefined;
         if (this.participation && this.result?.completionDate) {
             // Make sure results and participation are connected
@@ -169,5 +169,13 @@ export class ComplaintsStudentViewComponent implements OnInit {
             return this.serverDateService.now().isBetween(dayjs(this.exam.examStudentReviewStart), dayjs(this.exam.examStudentReviewEnd));
         }
         return false;
+    }
+
+    /**
+     * Calculates and returns the length of the entered text.
+     */
+    complaintTextLength(): number {
+        const textArea: HTMLTextAreaElement = document.querySelector('#responseTextArea') as HTMLTextAreaElement;
+        return textArea.value.length;
     }
 }

@@ -50,7 +50,7 @@
         ></jhi-complaint-form>
     </div>
     <div class="row" *ngIf="complaint">
-        <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint"></jhi-complaint-request>
-        <jhi-complaint-response class="col-12 col-md-6" [complaint]="complaint"></jhi-complaint-response>
+        <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLength]="course?.maxComplaintTextLimit!"></jhi-complaint-request>
+        <jhi-complaint-response class="col-12 col-md-6" [complaint]="complaint" [maxComplaintResponseTextLength]="course?.maxComplaintResponseTextLimit!"></jhi-complaint-response>
     </div>
 </div>
