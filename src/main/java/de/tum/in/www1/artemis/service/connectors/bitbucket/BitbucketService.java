@@ -819,7 +819,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * Retrieves the date at which the push event was received by the VCS intance.
      *
      * @param participation The participation we need the date for
-     * @param hash The hash we expect to find
+     * @param hash          The hash we expect to find
      * @return The build queue date
      */
     @Override
@@ -841,9 +841,9 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
         catch (NullPointerException | ClassCastException e) {
-            e.printStackTrace();
+            throw new BambooException("Unable to parse the push date result for participation " + participation.getId() + " and hash " + hash, e);
         }
-        throw new BambooException("Unable to parse the push date result for participation " + participation.getId());
+        throw new BambooException("Unable to parse the push date result for participation " + participation.getId() + " and hash " + hash);
     }
 
     @Nullable

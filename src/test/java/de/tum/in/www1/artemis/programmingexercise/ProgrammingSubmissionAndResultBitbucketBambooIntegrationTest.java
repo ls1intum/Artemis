@@ -11,7 +11,10 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -158,7 +161,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) participationRepository.findById(participationId).orElseThrow().getExercise();
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), hash, ZonedDateTime.now());
+        bitbucketRequestMockProvider.mockPutDefaultBranch(programmingExercise.getProjectKey());
         return postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
     }
 
@@ -171,6 +176,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "student1", roles = "USER")
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
+        String commitHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         Long participationId = getParticipationIdByType(participationType, 0);
         // set the author name to "Artemis"
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participationId);
@@ -182,7 +188,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
 
         // Make sure the submission has the correct commit hash.
-        assertThat(submission.getCommitHash()).isEqualTo("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        assertThat(submission.getCommitHash()).isEqualTo(commitHash);
         // The submission should be manual and submitted.
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
@@ -201,7 +207,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
+        bitbucketRequestMockProvider.mockPutDefaultBranch(exercise.getProjectKey());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK);
         final long submissionId = submission.getId();
@@ -242,6 +250,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @MethodSource("participationTypeAndAdditionalCommitProvider")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
         Long participationId = getParticipationIdByType(participationType, 0);
@@ -284,6 +294,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
         Long participationId = getParticipationIdByType(participationType, 0);
@@ -325,6 +337,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
         Long participationId = getParticipationIdByType(participationType, 0);
@@ -359,6 +373,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionForManualBuildRun(IntegrationTestParticipationType participationType) throws Exception {
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         Long participationId = getParticipationIdByType(participationType, 0);
         postResult(participationType, 0, HttpStatus.OK, false);
 
@@ -551,22 +566,22 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var firstChange = (JSONObject) changes.get(0);
         var firstCommitHash = (String) firstChange.get("fromHash");
         var secondCommitHash = (String) firstChange.get("toHash");
+        var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
+        var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
+
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), secondCommitHash, secondCommitDate);
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), firstCommitHash, firstCommitDate);
 
         // First commit is pushed but not recorded
-        var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
-        firstCommitDate.withNano((int) (Math.round(firstCommitDate.getNano() / 10000.0) * 10000.0)); // Some decimals will get lost through date conversions, we keep the first four
         var firstCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
         firstCommit.setId(firstCommitHash);
         firstCommit.setComment("First commit");
 
         // Second commit is pushed and recorded
-        var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
-        secondCommitDate.withNano((int) (Math.round(secondCommitDate.getNano() / 10000.0) * 10000.0)); // Some decimals will get lost through date conversions, we keep the first
-                                                                                                       // four
         var secondCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
         secondCommit.setId(secondCommitHash);
         secondCommit.setComment("Second commit");
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
         postSubmission(participation.getId(), HttpStatus.OK);
 
         // Build result for first commit is received
@@ -607,8 +622,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submissionOfFirstCommit.getSubmissionDate()).isBefore(submissionOfSecondCommit.getSubmissionDate());
 
         // Ensure submission dates are precise, some decimals/nanos get lost through time conversions
-        assertThat(ChronoUnit.NANOS.between(submissionOfFirstCommit.getSubmissionDate(), firstCommitDate)).isLessThan(5000);
-        assertThat(ChronoUnit.NANOS.between(submissionOfSecondCommit.getSubmissionDate(), secondCommitDate)).isLessThan(5000);
+        assertThat(ChronoUnit.MILLIS.between(submissionOfFirstCommit.getSubmissionDate(), firstCommitDate)).isLessThan(50);
+        assertThat(ChronoUnit.MILLIS.between(submissionOfSecondCommit.getSubmissionDate(), secondCommitDate)).isLessThan(50);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -645,6 +660,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which includes build log entries
@@ -699,8 +715,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
-        // ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK, requestAsArtemisUser);
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
         // Mock result from bamboo

@@ -10,10 +10,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.hamcrest.Matchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +32,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -118,6 +121,27 @@ public class BitbucketRequestMockProvider {
         if (exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName() != null) {
             mockGrantGroupPermissionToProject(exercise, exercise.getCourseViaExerciseGroupOrCourseMember().getTeachingAssistantGroupName(), PROJECT_READ);
         }
+    }
+
+    public void mockGetPushDate(String projectKey, String commitHash, ZonedDateTime commitDate) {
+        JsonObject refChange = new JsonObject();
+        refChange.addProperty("refId", "refs/heads/main");
+        refChange.addProperty("fromHash", "7".repeat(40));
+        refChange.addProperty("toHash", commitHash);
+        JsonObject pushEvent = new JsonObject();
+        pushEvent.addProperty("id", 42);
+        pushEvent.addProperty("createdDate", commitDate.toInstant().toEpochMilli());
+        pushEvent.addProperty("trigger", "push");
+        pushEvent.add("refChange", refChange);
+
+        JsonArray array = new JsonArray();
+        array.add(pushEvent);
+        JsonObject object = new JsonObject();
+        object.add("values", array);
+        mockServer
+                .expect(ExpectedCount.once(),
+                        requestTo(Matchers.matchesPattern(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*?/ref-change-activities(\\?.*)?")))
+                .andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).body(object.toString()));
     }
 
     public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, BitbucketPermission permission) throws URISyntaxException {
@@ -422,7 +446,7 @@ public class BitbucketRequestMockProvider {
         mockPutDefaultBranch(projectKey);
     }
 
-    private void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
+    public void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
         var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch);
         mockResponse.setDisplayId(defaultBranch);
         var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/default-branch";
@@ -431,7 +455,7 @@ public class BitbucketRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(mockResponse)).contentType(MediaType.APPLICATION_JSON));
     }
 
-    private void mockPutDefaultBranch(String projectKey) throws BitbucketException {
+    public void mockPutDefaultBranch(String projectKey) throws BitbucketException {
         var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
 
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));

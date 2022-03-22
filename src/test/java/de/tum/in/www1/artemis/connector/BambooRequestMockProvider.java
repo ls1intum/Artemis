@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis.connector;
 
 import static de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources;
+import static org.mockito.ArgumentMatchers.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -100,8 +104,8 @@ public class BambooRequestMockProvider {
     /**
      * This method mocks that the programming exercise with the same project name already exists (depending on the boolean input exists), based on the programming exercise title
      *
-     * @param exercise the programming exercise that might already exist
-     * @param exists   whether the programming exercise with the same title exists
+     * @param exercise   the programming exercise that might already exist
+     * @param exists     whether the programming exercise with the same title exists
      * @param shouldFail if the request to get latest project should fail
      * @throws IOException        an IO exception when reading test files
      * @throws URISyntaxException exceptions related to URI handling in test REST calls

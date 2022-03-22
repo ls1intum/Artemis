@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
-import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
+import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -13,7 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
@@ -34,13 +35,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -166,27 +165,20 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
-        var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_REQUEST);
-        var changes = (JSONArray) pushJSON.get("changes");
-        var firstChange = (JSONObject) changes.get(0);
-        var firstCommitHash = (String) firstChange.get("fromHash");
-        var secondCommitHash = (String) firstChange.get("toHash");
+        var pushJSON = (JSONObject) new JSONParser().parse(GITLAB_REQUEST);
+        var firstCommitHash = (String) pushJSON.get("before");
+        var secondCommitHash = (String) pushJSON.get("after");
+        var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
+        var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
+
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
+        gitlabRequestMockProvider.mockGetPushDate(participation, secondCommitHash, secondCommitDate);
+        gitlabRequestMockProvider.mockGetPushDate(participation, firstCommitHash, firstCommitDate);
 
         // First commit is pushed but not recorded
-        var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
-        firstCommitDate.withNano((int) (Math.round(firstCommitDate.getNano() / 10000.0) * 10000.0)); // Some decimals will get lost through date conversions, we keep the first four
-        var firstCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
-        firstCommit.setId(firstCommitHash);
-        firstCommit.setComment("First commit");
 
         // Second commit is pushed and recorded
-        var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
-        secondCommitDate.withNano((int) (Math.round(secondCommitDate.getNano() / 10000.0) * 10000.0)); // Some decimals will get lost through date conversions, we keep the first
-                                                                                                       // four
-        var secondCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO();
-        secondCommit.setId(secondCommitHash);
-        secondCommit.setComment("Second commit");
-        // postSubmission(participation.getId(), HttpStatus.OK);
+        postSubmission(participation.getId(), HttpStatus.OK);
 
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
@@ -224,8 +216,8 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(submissionOfFirstCommit.getSubmissionDate()).isBefore(submissionOfSecondCommit.getSubmissionDate());
 
         // Ensure submission dates are precise, some decimals/nanos get lost through time conversions
-        assertThat(ChronoUnit.NANOS.between(submissionOfFirstCommit.getSubmissionDate(), firstCommitDate)).isLessThan(5000);
-        assertThat(ChronoUnit.NANOS.between(submissionOfSecondCommit.getSubmissionDate(), secondCommitDate)).isLessThan(5000);
+        assertThat(ChronoUnit.MILLIS.between(submissionOfFirstCommit.getSubmissionDate(), firstCommitDate)).isLessThan(50);
+        assertThat(ChronoUnit.MILLIS.between(submissionOfSecondCommit.getSubmissionDate(), secondCommitDate)).isLessThan(50);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -317,6 +309,31 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         }
 
         return result;
+    }
+
+    /**
+     * This is the simulated request from the VCS to Artemis on a new commit.
+     */
+    private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
+        return postSubmission(participationId, expectedStatus, GITLAB_REQUEST);
+    }
+
+    /**
+     * This is the simulated request from the VCS to Artemis on a new commit.
+     */
+    public ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus, String jsonRequest) throws Exception {
+        JSONParser jsonParser = new JSONParser();
+        Object obj = jsonParser.parse(jsonRequest);
+
+        // Api should return ok.
+        request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participationId, obj, expectedStatus, new HttpHeaders());
+
+        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+
+        // Submission should have been created for the participation.
+        assertThat(submissions).hasSize(1);
+        // Make sure that both the submission and participation are correctly linked with each other.
+        return submissions.get(0);
     }
 
     private void assertNoNewSubmissions(ProgrammingSubmission existingSubmission) {
