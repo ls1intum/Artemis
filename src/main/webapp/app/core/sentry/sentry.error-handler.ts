@@ -33,13 +33,6 @@ export class SentryErrorHandler extends ErrorHandler {
             environment: this.environment,
             integrations: [new ArtemisDeduplicate()],
         });
-
-        setTimeout(() => {
-            setInterval(() => {
-                captureException(new Error('Test 123'));
-                captureException(new Error('Test 124'));
-            }, 100);
-        }, 5000);
     }
 
     constructor() {
