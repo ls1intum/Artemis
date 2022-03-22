@@ -276,7 +276,15 @@ describe('TextblockFeedbackEditorComponent', () => {
         tick();
 
         expect(participationStub).toHaveBeenCalledTimes(1);
-        expect(component.listOfBlocksWithFeedback).toEqual([{ text: 'First text.', feedback: 'text', credits: 1.5, reusedCount: 3, type: 'MANUAL' }]);
+        expect(component.listOfBlocksWithFeedback).toEqual([
+            {
+                text: 'First text.',
+                feedback: 'text',
+                credits: 1.5,
+                reusedCount: 3,
+                type: 'MANUAL',
+            },
+        ]);
     }));
 
     it('should show link icon when feedback is associated with grading instruction', () => {
@@ -369,7 +377,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         fixture.detectChanges();
         expect(component.setInstrColour(gradingInstruction)).toBe('#fbe5d6');
     });
-  
+
     it('should send assessment event if feedback type changed', () => {
         component.feedback.type = FeedbackType.AUTOMATIC;
         const typeSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
