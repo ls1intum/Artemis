@@ -57,13 +57,13 @@ public class UMLRelationshipTest {
     @Test
     void similarity_null() {
         double similarity = relationship.similarity(null);
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
     void similarity_differentElementType() {
         double similarity = relationship.similarity(mock(UMLClass.class));
-        assertThat(similarity).isEqualTo(0);
+        assertThat(similarity).isZero();
     }
 
     @Test
@@ -90,8 +90,7 @@ public class UMLRelationshipTest {
         mockSimilarity(target1, target2, 0.0);
         mockSimilarity(target2, target1, 0.0);
         double similarity = relationship.similarity(referenceRelationship);
-        assertThat(similarity).isNotEqualTo(1);
-        assertThat(similarity).isEqualTo(RELATION_TYPE_WEIGHT, offset(0.01));
+        assertThat(similarity).isNotEqualTo(1).isEqualTo(RELATION_TYPE_WEIGHT, offset(0.01));
     }
 
     private void mockReferenceRelationship(String sourceRole, String targetRole, String sourceMultiplicity, String targetMultiplicity, UMLClass source, UMLClass target) {

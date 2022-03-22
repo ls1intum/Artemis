@@ -1,10 +1,10 @@
 /* define position style mixin */
 @mixin position-style($position, $top, $left, $bottom, $right, $z-index) {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
+    position: $position;
+    top: $top;
+    left: $left;
+    bottom: $bottom;
+    right: $right;
     z-index: $z-index;
 }
 
