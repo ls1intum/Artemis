@@ -138,8 +138,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         File pomXml = new File("./exportTest/pom.xml");
         String fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
-        assertThat(fileContent).contains("${exerciseName}");
-        assertThat(fileContent).doesNotContain("SomeCoolExerciseName");
+        assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
 
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
@@ -147,8 +146,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         fileService.replaceVariablesInFileRecursive(pomXml.getParent(), replacements);
         fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
-        assertThat(fileContent).doesNotContain("${exerciseName}");
-        assertThat(fileContent).contains("SomeCoolExerciseName");
+        assertThat(fileContent).doesNotContain("${exerciseName}").contains("SomeCoolExerciseName");
     }
 
     @Test
@@ -171,13 +169,13 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     public void testMergePdf_nullInput_shouldReturnEmptyOptional() {
         Optional<byte[]> result = fileService.mergePdfFiles(null);
-        assertThat(result.isEmpty()).isTrue();
+        assertThat(result).isEmpty();
     }
 
     @Test
     public void testMergePdf_emptyList_shouldReturnEmptyOptional() {
         Optional<byte[]> result = fileService.mergePdfFiles(new ArrayList<>());
-        assertThat(result.isEmpty()).isTrue();
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -205,7 +203,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         paths.add("./exportTest/testfile2.pdf");
 
         Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths);
-        assertThat(mergedFile.isPresent()).isTrue();
+        assertThat(mergedFile).isPresent();
         assertThat(mergedFile.get()).isNotEmpty();
         PDDocument mergedDoc = PDDocument.load(mergedFile.get());
         assertThat(mergedDoc.getNumberOfPages()).isEqualTo(5);

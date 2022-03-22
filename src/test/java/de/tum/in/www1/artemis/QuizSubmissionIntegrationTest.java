@@ -110,7 +110,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
 
         // before the quiz submissions are processed, none of them ends up in the database
-        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(0);
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
 
         // process first half of the submissions
         quizScheduleService.processCachedQuizSubmissions();
@@ -130,28 +130,28 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic).isNotNull();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 6.0));
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
             else if (pointCounter.getPoints() == 7.0 || pointCounter.getPoints() == 9.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 12.0));
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
             else {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isZero();
+                assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
         }
         // check statistic for each question
@@ -165,9 +165,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             else {
                 assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 4.0));
             }
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
-            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
         }
 
         // execute the scheduler again, this should remove the quiz exercise from the cache
@@ -248,7 +248,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizExerciseWithStatistic).isNotNull();
 
         for (var pointCounter : quizPointStatistic.getPointCounters()) {
-            assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isEqualTo(0);
+            assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isZero();
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 1 rated submission -> 0.33 points").isEqualTo(1);
             }
@@ -259,7 +259,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 6.0 contains 1 rated submission -> 6 points").isEqualTo(1);
             }
             else {
-                assertThat(pointCounter.getRatedCounter()).as("All other buckets contain 0 rated submissions").isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).as("All other buckets contain 0 rated submissions").isZero();
             }
 
         }
@@ -274,15 +274,15 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizExercise = quizExerciseService.save(quizExercise);
 
         // at the beginning there are no submissions and no participants
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
-        assertThat(participationRepository.findAll().size()).isEqualTo(0);
+        assertThat(quizSubmissionRepository.findAll()).isEmpty();
+        assertThat(participationRepository.findAll()).isEmpty();
 
         int numberOfParticipants = 10;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             database.changeUser("student" + i);
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
-            assertThat(quizSubmission.getSubmittedAnswers().size()).isEqualTo(3);
+            assertThat(quizSubmission.getSubmittedAnswers()).hasSize(3);
             assertThat(quizSubmission.isSubmitted()).isFalse();
             assertThat(quizSubmission.getSubmissionDate()).isNull();
             QuizSubmission updatedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class,
@@ -290,7 +290,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             // check whether submission flag was updated
             assertThat(updatedSubmission.isSubmitted()).isTrue();
             // check whether all answers were submitted properly
-            assertThat(updatedSubmission.getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());
+            assertThat(updatedSubmission.getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
             // check whether submission date was set
             assertThat(updatedSubmission.getSubmissionDate()).isNotNull();
         }
@@ -299,8 +299,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizScheduleService.processCachedQuizSubmissions();
 
         // check whether all submissions were saved to the database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
-        assertThat(participationRepository.findAll().size()).isEqualTo(numberOfParticipants);
+        assertThat(quizSubmissionRepository.findAll()).hasSize(numberOfParticipants);
+        assertThat(participationRepository.findAll()).hasSize(numberOfParticipants);
     }
 
     @Test
@@ -346,8 +346,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizExerciseService.save(quizExercise);
 
         // at the beginning there are no submissions and participants
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
-        assertThat(participationRepository.findAll().size()).isEqualTo(0);
+        assertThat(quizSubmissionRepository.findAll()).isEmpty();
+        assertThat(participationRepository.findAll()).isEmpty();
 
         var numberOfParticipants = 10;
 
@@ -356,12 +356,12 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
             database.changeUser("student" + i);
             Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
-            assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());
+            assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
         }
 
         // after the quiz has ended, all submission are saved to the database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
-        assertThat(participationRepository.findAll().size()).isEqualTo(numberOfParticipants);
+        assertThat(quizSubmissionRepository.findAll()).hasSize(numberOfParticipants);
+        assertThat(participationRepository.findAll()).hasSize(numberOfParticipants);
 
         // processing the quiz submissions will update the statistics
         quizScheduleService.processCachedQuizSubmissions();
@@ -369,28 +369,28 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic).isNotNull();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(numberOfParticipants);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isZero();
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(3);
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isZero();
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(2);
             }
             else if (pointCounter.getPoints() == 7.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isZero();
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(1);
             }
             else {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isZero();
+                assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
         }
         // check statistic for each question
@@ -404,9 +404,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             else {
                 assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(2);
             }
-            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isZero();
             assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(numberOfParticipants);
-            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isZero();
         }
     }
 
@@ -423,7 +423,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizExerciseServer.setIsOpenForPractice(false);
         quizExerciseService.save(quizExerciseServer);
 
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
+        assertThat(quizSubmissionRepository.findAll()).isEmpty();
 
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExerciseServer.getQuizQuestions()) {
@@ -450,7 +450,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizExercise quizExerciseServer = database.createQuizForExam(exerciseGroup);
         quizExerciseService.save(quizExerciseServer);
 
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
+        assertThat(quizSubmissionRepository.findAll()).isEmpty();
 
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExerciseServer, 1, true, null);
         // exam quiz not open for practice --> bad request expected
@@ -547,11 +547,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
                 quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(question, i % 2 == 0));
             }
             Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.OK);
-            assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());
+            assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
         }
 
         // in the preview the submission will not be saved to the database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
+        assertThat(quizSubmissionRepository.findAll()).isEmpty();
 
         quizScheduleService.processCachedQuizSubmissions();
 
@@ -559,22 +559,22 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic).isNotNull();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-            assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+            assertThat(pointCounter.getRatedCounter()).isZero();
+            assertThat(pointCounter.getUnRatedCounter()).isZero();
         }
         // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
-            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
-            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(0);
-            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
+            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
+            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isZero();
+            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
+            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isZero();
         }
     }
 
@@ -702,7 +702,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizSubmissionRepository.count()).isEqualTo(1);
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
-        assertThat(results.size()).isEqualTo(1);
+        assertThat(results).hasSize(1);
         var result = results.get(0);
 
         assertThat(result.getResultString()).isEqualTo("1 of 9 points");
@@ -754,7 +754,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(1);
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
-        assertThat(results.size()).isEqualTo(1);
+        assertThat(results).hasSize(1);
         var result = results.get(0);
 
         var resultString = switch (scoringType) {

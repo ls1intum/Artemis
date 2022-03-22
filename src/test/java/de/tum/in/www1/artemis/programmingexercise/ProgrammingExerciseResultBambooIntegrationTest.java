@@ -71,15 +71,15 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
         var scaReports = notification.getBuild().getJobs().get(0).getStaticCodeAnalysisReports();
         if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             // SwiftLint has only one category at the moment
-            assertThat(scaReports.size()).isEqualTo(1);
+            assertThat(scaReports).hasSize(1);
             assertThat(scaReports.get(0).getIssues().get(0).getCategory()).isEqualTo("swiftLint");
         }
         else if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            assertThat(scaReports.size()).isEqualTo(4);
+            assertThat(scaReports).hasSize(4);
             scaReports.get(0).getIssues().forEach(issue -> assertThat(issue.getCategory()).isNotNull());
         }
         else if (programmingLanguage == ProgrammingLanguage.C) {
-            assertThat(scaReports.size()).isEqualTo(5);
+            assertThat(scaReports).hasSize(5);
             scaReports.get(0).getIssues().forEach(issue -> assertThat(issue.getCategory()).isNotNull());
         }
         programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);

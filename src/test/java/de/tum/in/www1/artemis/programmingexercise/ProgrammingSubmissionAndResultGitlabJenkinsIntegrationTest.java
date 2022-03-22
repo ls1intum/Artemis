@@ -118,7 +118,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         jenkinsRequestMockProvider.mockGetLegacyBuildLogs(participation);
         database.changeUser(userLogin);
         var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
-        assertThat(receivedLogs.size()).isGreaterThan(0);
+        assertThat(receivedLogs).isNotEmpty();
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
@@ -141,7 +141,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         postResult(notification, HttpStatus.BAD_REQUEST);
 
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
-        assertThat(results.size()).isEqualTo(0);
+        assertThat(results).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -189,7 +189,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Assert that result is linked to the participation
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
-        assertThat(results.size()).isEqualTo(1);
+        assertThat(results).hasSize(1);
         var result = results.get(0);
         assertThat(result.getHasFeedback()).isFalse();
         assertThat(result.isSuccessful()).isFalse();
@@ -206,14 +206,13 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Assert that the submission does not contain build log entries yet
         var submissionWithLogs = submissionWithLogsOptional.get();
-        assertThat(submissionWithLogs.getBuildLogEntries()).hasSize(0);
+        assertThat(submissionWithLogs.getBuildLogEntries()).isEmpty();
 
         // Assert that the build logs can be retrieved from the REST API
         var buildWithDetails = jenkinsRequestMockProvider.mockGetLatestBuildLogs(studentParticipationRepository.findById(participationId).get(), useLegacyBuildLogs);
         database.changeUser(userLogin);
         var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
-        assertThat(receivedLogs).isNotNull();
-        assertThat(receivedLogs.size()).isGreaterThan(0);
+        assertThat(receivedLogs).isNotNull().isNotEmpty();
 
         if (useLegacyBuildLogs) {
             verify(buildWithDetails, times(1)).getConsoleOutputHtml();
@@ -224,8 +223,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
         // Call again and it should not call Jenkins::getLatestBuildLogs() since the logs are cached.
         receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
-        assertThat(receivedLogs).isNotNull();
-        assertThat(receivedLogs.size()).isGreaterThan(0);
+        assertThat(receivedLogs).isNotNull().isNotEmpty();
 
         if (useLegacyBuildLogs) {
             verify(buildWithDetails, times(1)).getConsoleOutputHtml();
@@ -239,7 +237,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
     private void assertNoNewSubmissions(ProgrammingSubmission existingSubmission) {
         var updatedSubmissions = submissionRepository.findAll();
-        assertThat(updatedSubmissions.size()).isEqualTo(1);
+        assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(existingSubmission.getId());
     }
 
