@@ -203,7 +203,7 @@ public class ComplaintResponseService {
         final Course course = courseRepository.findByIdElseThrow(courseId);
 
         // Check whether the complaint text limit is exceeded
-        if (course.getMaxComplaintResponseTextLimit() < updatedComplaintResponse.getResponseText().length()) {
+        if (updatedComplaintResponse.getResponseText() != null && course.getMaxComplaintResponseTextLimit() < updatedComplaintResponse.getResponseText().length()) {
             throw new BadRequestAlertException(
                     "You cannot submit a complaint response that exceeds the maximum number of " + course.getMaxComplaintResponseTextLimit() + " characters", ENTITY_NAME,
                     "exceededComplaintResponseTextLimit");

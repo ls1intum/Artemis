@@ -15,6 +15,7 @@ import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { By } from '@angular/platform-browser';
 
 describe('ComplaintsFormComponent', () => {
     const teamComplaints = 42;
@@ -126,4 +127,33 @@ describe('ComplaintsFormComponent', () => {
         expect(errorSpy).toHaveBeenCalledTimes(1);
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: 20 });
     });
+
+    it('text area should have the correct max length', fakeAsync(() => {
+        // Get course
+        component.exercise = courseExercise;
+        component.isCurrentUserSubmissionAuthor = true;
+        component.ngOnInit();
+
+        fixture.detectChanges();
+        tick(100);
+
+        const responseTextArea = fixture.debugElement.query(By.css('#complainTextArea')).nativeElement;
+        const complaintButton = fixture.debugElement.query(By.css('#submit-complaint')).nativeElement;
+        responseTextArea.value = 'a';
+        component.complaintText = 'a';
+
+        fixture.detectChanges();
+        tick(100);
+
+        expect(responseTextArea.maxLength).toBe(20);
+        expect(complaintButton.disabled).toBe(false);
+
+        responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
+        component.complaintText = 'abcdefghijklmnopqrstuvwxyz';
+
+        fixture.detectChanges();
+        tick(100);
+
+        expect(complaintButton.disabled).toBe(true);
+    }));
 });

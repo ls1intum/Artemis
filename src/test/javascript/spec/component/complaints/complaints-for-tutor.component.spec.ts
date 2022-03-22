@@ -230,7 +230,7 @@ describe('ComplaintsForTutorComponent', () => {
         expect(resolveStub).toHaveBeenCalled();
     });
 
-    it('should just display disabled submit complaint button', fakeAsync(() => {
+    it('should just display disabled accept and reject complaint button', fakeAsync(() => {
         const unhandledComplaint = new Complaint();
         unhandledComplaint.id = 1;
         unhandledComplaint.accepted = undefined;
@@ -263,7 +263,7 @@ describe('ComplaintsForTutorComponent', () => {
 
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
-        expect(responseTextArea.value.length).toEqual(26);
+        expect(responseTextArea.value.length).toBe(26);
 
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
@@ -271,7 +271,7 @@ describe('ComplaintsForTutorComponent', () => {
         expect(acceptComplaintButton.disabled).toBe(false);
 
         responseTextArea.value = responseTextArea.value + 'A';
-        expect(responseTextArea.value.length).toEqual(27);
+        expect(responseTextArea.value.length).toBe(27);
 
         complaintForTutorComponentFixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
@@ -279,5 +279,40 @@ describe('ComplaintsForTutorComponent', () => {
 
         expect(rejectComplaintButton.disabled).toBe(true);
         expect(acceptComplaintButton.disabled).toBe(true);
+    }));
+
+    it('text area should have the correct max length', fakeAsync(() => {
+        const unhandledComplaint = new Complaint();
+        unhandledComplaint.id = 1;
+        unhandledComplaint.accepted = undefined;
+        unhandledComplaint.complaintText = 'please check again';
+        unhandledComplaint.complaintResponse = undefined;
+        unhandledComplaint.complaintResponse = new ComplaintResponse();
+        unhandledComplaint.complaintResponse.id = 1;
+        unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
+
+        const freshlyCreatedComplaintResponse = new ComplaintResponse();
+        freshlyCreatedComplaintResponse.id = 1;
+        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
+        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
+
+        jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: freshlyCreatedComplaintResponse,
+                    status: 201,
+                }),
+            ),
+        );
+
+        complaintsForTutorComponent.isAssessor = false;
+        complaintsForTutorComponent.complaint = unhandledComplaint;
+
+        complaintForTutorComponentFixture.detectChanges();
+        // We need the tick as `ngModel` writes data asynchronously into the DOM!
+        tick();
+
+        const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
+        expect(responseTextArea.maxLength).toBe(26);
     }));
 });
