@@ -30,7 +30,7 @@ describe('TeamsImportDialogComponent', () => {
 
     const teams: Team[] = mockTeams;
     const logins = flatMap(mockTeams, (team) => team.students?.map((student) => student.login));
-    const registrationNumbers = flatMap(mockTeams, (team) => team.students?.map((student) => student.visibleRegistrationNumber));
+    const registrationNumbers = flatMap(mockTeams, (team) => team.students?.map((student) => student.registrationNumber));
     const exercise: Exercise = mockExercise;
 
     function resetComponent() {
@@ -228,24 +228,24 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         it('Import from exercise: returns true if one of the students registration number is in already existing students', () => {
-            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
+            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].registrationNumber!]);
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(true);
         });
 
         it('Import from file: returns false if one of the students registration number is in already existing students', () => {
-            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
+            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].registrationNumber!]);
             comp.showImportFromExercise = false;
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(false);
         });
 
         it('Import from exercise: returns true if one of the students registration number is in already other source teams', () => {
-            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
+            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].registrationNumber!]);
             comp.studentsAppearInMultipleTeams = true;
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(true);
         });
 
         it('Import from file: returns false if one of the students registration number is in already other source teams', () => {
-            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
+            comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].registrationNumber!]);
             comp.studentsAppearInMultipleTeams = true;
             comp.showImportFromExercise = false;
             expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(false);
@@ -617,7 +617,7 @@ describe('TeamsImportDialogComponent', () => {
 
         it('adds registration number if a student is in two or more teams', () => {
             comp.onTeamsChanged([...mockSourceTeams, ...mockSourceTeams]);
-            expect(comp.problematicRegistrationNumbers).toEqual([...mockSourceTeamStudents.map((student) => student.visibleRegistrationNumber), ...registrationNumbers]);
+            expect(comp.problematicRegistrationNumbers).toEqual([...mockSourceTeamStudents.map((student) => student.registrationNumber), ...registrationNumbers]);
         });
 
         it('adds login if a student is in two or more teams', () => {

@@ -14,9 +14,9 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import dayjs from 'dayjs/esm';
 
 export const mockTeamStudents = [
-    { id: 1, firstName: 'John', lastName: 'Doe', name: 'John Doe', login: 'ga12abc', email: 'john.doe@example.com', visibleRegistrationNumber: '01234567' },
-    { id: 2, firstName: 'Sidney', lastName: 'Humphrey', name: 'Sidney Humphrey', login: 'ga23bcd', email: 'sidney.humphrey@example.com', visibleRegistrationNumber: '01234568' },
-    { id: 3, firstName: 'Elane', lastName: 'Cravens', name: 'Elane Cravens', login: 'ga34cde', email: 'elane.cravens@example.com', visibleRegistrationNumber: '01234569' },
+    { id: 1, firstName: 'John', lastName: 'Doe', name: 'John Doe', login: 'ga12abc', email: 'john.doe@example.com', registrationNumber: '01234567' },
+    { id: 2, firstName: 'Sidney', lastName: 'Humphrey', name: 'Sidney Humphrey', login: 'ga23bcd', email: 'sidney.humphrey@example.com', registrationNumber: '01234568' },
+    { id: 3, firstName: 'Elane', lastName: 'Cravens', name: 'Elane Cravens', login: 'ga34cde', email: 'elane.cravens@example.com', registrationNumber: '01234569' },
 ] as User[];
 
 export const mockNonTeamStudents = [
@@ -26,9 +26,9 @@ export const mockNonTeamStudents = [
 ] as User[];
 
 export const mockSourceTeamStudents = [
-    { id: 7, firstName: 'Alice', lastName: 'McCarthy', name: 'Alice McCarthy', login: 'ga78abc', email: 'alice.mccarthy@example.com', visibleRegistrationNumber: '11234567' },
-    { id: 8, firstName: 'Lena', lastName: 'Dudley', name: 'Lena Dudley', login: 'ga89bcd', email: 'lena.dudley@example.com', visibleRegistrationNumber: '11234568' },
-    { id: 9, firstName: 'Thomas', lastName: 'Smith', name: 'Thomas Smith', login: 'ga90cde', email: 'thomas.smith@example.com', visibleRegistrationNumber: '11234569' },
+    { id: 7, firstName: 'Alice', lastName: 'McCarthy', name: 'Alice McCarthy', login: 'ga78abc', email: 'alice.mccarthy@example.com', registrationNumber: '11234567' },
+    { id: 8, firstName: 'Lena', lastName: 'Dudley', name: 'Lena Dudley', login: 'ga89bcd', email: 'lena.dudley@example.com', registrationNumber: '11234568' },
+    { id: 9, firstName: 'Thomas', lastName: 'Smith', name: 'Thomas Smith', login: 'ga90cde', email: 'thomas.smith@example.com', registrationNumber: '11234569' },
 ] as User[];
 
 const teamAssignmentConfig = { minTeamSize: 1, maxTeamSize: 5 } as TeamAssignmentConfig; // note: size of mockTeamStudents above should conform
@@ -104,8 +104,8 @@ export const mockFileTeamsConverted: Team[] = [
         name: 'File Team 1',
         shortName: 'fileteam1',
         students: [
-            { ...new User(), firstName: 'Jack', lastName: 'Doe', login: 'jack_doe', name: 'Jack Doe', visibleRegistrationNumber: undefined } as User,
-            { ...new User(), firstName: 'Jackie', lastName: 'Doen', login: 'jackie_doen', name: 'Jackie Doen', visibleRegistrationNumber: undefined } as User,
+            { ...new User(), firstName: 'Jack', lastName: 'Doe', login: 'jack_doe', name: 'Jack Doe', registrationNumber: undefined } as User,
+            { ...new User(), firstName: 'Jackie', lastName: 'Doen', login: 'jackie_doen', name: 'Jackie Doen', registrationNumber: undefined } as User,
         ],
     } as Team,
     {
@@ -113,8 +113,8 @@ export const mockFileTeamsConverted: Team[] = [
         name: 'File Team 2',
         shortName: 'fileteam2',
         students: [
-            { ...new User(), firstName: 'Alyson', lastName: 'Smithson', login: undefined, visibleRegistrationNumber: '23458', name: 'Alyson Smithson' } as User,
-            { ...new User(), firstName: 'Alysia', lastName: 'Smith', login: undefined, visibleRegistrationNumber: '23459', name: 'Alysia Smith' } as User,
+            { ...new User(), firstName: 'Alyson', lastName: 'Smithson', login: undefined, registrationNumber: '23458', name: 'Alyson Smithson' } as User,
+            { ...new User(), firstName: 'Alysia', lastName: 'Smith', login: undefined, registrationNumber: '23459', name: 'Alysia Smith' } as User,
         ],
     } as Team,
 ];

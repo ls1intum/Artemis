@@ -248,8 +248,8 @@ export class TeamService implements ITeamService {
                     if (student.lastName) {
                         exportStudent.lastName = student.lastName;
                     }
-                    if (student.visibleRegistrationNumber) {
-                        exportStudent.registrationNumber = student.visibleRegistrationNumber;
+                    if (student.registrationNumber) {
+                        exportStudent.registrationNumber = student.registrationNumber;
                     }
                     exportedTeams.push(exportStudent);
                 });

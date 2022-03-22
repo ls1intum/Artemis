@@ -185,7 +185,7 @@ public class UserCreationService {
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         user.setInternal(true);
-        user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
+        user.setRegistrationNumber(userDTO.getRegistrationNumber());
         saveUser(user);
 
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
@@ -235,7 +235,7 @@ public class UserCreationService {
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
         user.setEmail(updatedUserDTO.getEmail().toLowerCase());
-        user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
+        user.setRegistrationNumber(updatedUserDTO.getRegistrationNumber());
         user.setImageUrl(updatedUserDTO.getImageUrl());
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());

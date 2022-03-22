@@ -143,8 +143,8 @@ public class TeamService {
         List<String> logins = students.stream().map(User::getLogin).filter(Objects::nonNull).collect(Collectors.toList());
         // Put registration numbers of students which have no login information but have registration number into a list
         // Visible registration number is used because that is what available for the consumers of the API
-        List<String> registrationNumbers = students.stream().filter(student -> student.getLogin() == null && student.getVisibleRegistrationNumber() != null)
-                .map(User::getVisibleRegistrationNumber).collect(Collectors.toList());
+        List<String> registrationNumbers = students.stream().filter(student -> student.getLogin() == null && student.getRegistrationNumber() != null)
+                .map(User::getRegistrationNumber).collect(Collectors.toList());
         // If number of students is not same with number of logins and registration numbers combined throw BadRequestAlertException
         // In other words, if there is at least one student without any identifier throw an exception
         if (students.size() != logins.size() + registrationNumbers.size()) {
@@ -276,8 +276,8 @@ public class TeamService {
                 }
                 // If the student does not have login but has a registration number get the user from studentsWithRegistrationNumber
                 // Here visible registration number is used because that is what available for the consumers of the API
-                else if (student.getVisibleRegistrationNumber() != null) {
-                    User foundStudent = studentsWithRegistrationNumber.get(student.getVisibleRegistrationNumber());
+                else if (student.getRegistrationNumber() != null) {
+                    User foundStudent = studentsWithRegistrationNumber.get(student.getRegistrationNumber());
                     if (foundStudent != null) {
                         newStudents.add(foundStudent);
                     }

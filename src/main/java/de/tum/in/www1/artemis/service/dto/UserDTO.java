@@ -50,7 +50,8 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = 5, max = 100)
     private String email;
 
-    private String visibleRegistrationNumber;
+    @Size(max = 20)
+    private String registrationNumber;
 
     @Size(max = 256)
     private String imageUrl;
@@ -82,7 +83,7 @@ public class UserDTO extends AuditingEntityDTO {
                 user.getLastModifiedDate(), user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations());
     }
 
-    public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
+    public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String registrationNumber, boolean activated, String imageUrl,
             String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
             Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations) {
 
@@ -92,7 +93,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.visibleRegistrationNumber = visibleRegistrationNumber;
+        this.registrationNumber = registrationNumber;
         this.activated = activated;
         this.imageUrl = imageUrl;
         this.langKey = langKey;
@@ -158,12 +159,12 @@ public class UserDTO extends AuditingEntityDTO {
         this.email = email;
     }
 
-    public String getVisibleRegistrationNumber() {
-        return visibleRegistrationNumber;
+    public String getRegistrationNumber() {
+        return registrationNumber;
     }
 
-    public void setVisibleRegistrationNumber(String visibleRegistrationNumber) {
-        this.visibleRegistrationNumber = visibleRegistrationNumber;
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
     }
 
     public String getImageUrl() {
@@ -232,9 +233,9 @@ public class UserDTO extends AuditingEntityDTO {
 
     @Override
     public String toString() {
-        return "UserDTO{" + "login='" + login + "', firstName='" + firstName + "', lastName='" + lastName + "', imageUrl='" + imageUrl + "', activated="
-                + activated + ", langKey='" + langKey + "', createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate() + ", lastModifiedBy='" + getLastModifiedBy()
-                + "', lastModifiedDate=" + getLastModifiedDate() + ", lastNotificationRead=" + lastNotificationRead + ", authorities=" + authorities + "}";
+        return "UserDTO{" + "login='" + login + "', firstName='" + firstName + "', lastName='" + lastName + "', imageUrl='" + imageUrl + "', activated=" + activated + ", langKey='"
+                + langKey + "', createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate() + ", lastModifiedBy='" + getLastModifiedBy() + "', lastModifiedDate="
+                + getLastModifiedDate() + ", lastNotificationRead=" + lastNotificationRead + ", authorities=" + authorities + "}";
     }
 
     public boolean isInternal() {

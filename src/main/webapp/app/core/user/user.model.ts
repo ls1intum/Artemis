@@ -11,7 +11,7 @@ export class User extends Account {
     public lastModifiedBy?: string;
     public lastModifiedDate?: Date;
     public lastNotificationRead?: dayjs.Dayjs;
-    public visibleRegistrationNumber?: string;
+    public registrationNumber?: string;
     public password?: string;
 
     constructor(

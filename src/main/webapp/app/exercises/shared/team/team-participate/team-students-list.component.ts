@@ -16,7 +16,7 @@ export class TeamStudentsListComponent {
     hasError(student: User) {
         return (
             (student.login && this.errorStudentLogins.includes(student.login)) ||
-            (this.withRegistrationNumber && student.visibleRegistrationNumber && this.errorStudentRegistrationNumbers.includes(student.visibleRegistrationNumber))
+            (this.withRegistrationNumber && student.registrationNumber && this.errorStudentRegistrationNumbers.includes(student.registrationNumber))
         );
     }
 }

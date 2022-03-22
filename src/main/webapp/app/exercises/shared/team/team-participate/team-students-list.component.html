@@ -3,7 +3,7 @@
         <a *ngIf="renderLinks" [routerLink]="['/admin', 'user-management', student.login]">{{ student.name }} </a>
         <span *ngIf="!renderLinks"
             >{{ student.name }} <span *ngIf="student.login">({{ student.login }})</span>
-            <span *ngIf="withRegistrationNumber && student.visibleRegistrationNumber">({{ student.visibleRegistrationNumber }})</span></span
+            <span *ngIf="withRegistrationNumber && student.registrationNumber">({{ student.registrationNumber }})</span></span
         >
     </li>
 </ul>

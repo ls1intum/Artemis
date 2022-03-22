@@ -128,11 +128,11 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="150" [width]="250">
+                <ngx-datatable-column prop="registrationNumber" [minWidth]="150" [width]="250">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('registrationNumber')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber"> Email </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('registrationNumber')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">

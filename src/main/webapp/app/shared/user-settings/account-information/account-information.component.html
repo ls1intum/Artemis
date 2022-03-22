@@ -24,12 +24,12 @@
         </dt>
         <dd>{{ currentUser.email }}</dd>
     </div>
-    <div class="list-group-item" *ngIf="currentUser.visibleRegistrationNumber">
+    <div class="list-group-item" *ngIf="currentUser.registrationNumber">
         <dt>
             <!--Registration Number-->
             {{ 'artemisApp.userSettings.accountInformationPage.registrationNumber' | artemisTranslate }}
         </dt>
-        <dd>{{ currentUser.visibleRegistrationNumber }}</dd>
+        <dd>{{ currentUser.registrationNumber }}</dd>
     </div>
     <div class="list-group-item" *ngIf="currentUser.createdDate">
         <dt>

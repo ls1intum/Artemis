@@ -154,7 +154,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     this.isTransitioning = false;
 
                     // make sure the registration number is set in the user object
-                    user.visibleRegistrationNumber = student.body!.registrationNumber;
+                    user.registrationNumber = student.body!.registrationNumber;
 
                     // Add newly registered user to the list of all registered users for the exam
                     this.allRegisteredUsers.push(user);

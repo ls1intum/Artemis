@@ -163,7 +163,7 @@ export class TeamsImportFromFileFormComponent {
             const newStudent = new User();
             newStudent.firstName = student.firstName ?? '';
             newStudent.lastName = student.lastName ?? '';
-            newStudent.visibleRegistrationNumber = student.registrationNumber;
+            newStudent.registrationNumber = student.registrationNumber;
             newStudent.login = student.username;
             const entryNr = index + 1;
 

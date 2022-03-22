@@ -129,7 +129,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     computePotentialConflictsBasedOnExistingTeams() {
         this.teamShortNamesAlreadyExistingInExercise = this.teams.map((team) => team.shortName!);
         const studentLoginsAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.login!));
-        const studentRegistrationNumbersAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.visibleRegistrationNumber || ''));
+        const studentRegistrationNumbersAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students!.map((student) => student.registrationNumber || ''));
         this.conflictingRegistrationNumbersSet = this.addArrayToSet(this.conflictingRegistrationNumbersSet, studentRegistrationNumbersAlreadyExistingInExercise);
         this.conflictingLoginsSet = this.addArrayToSet(this.conflictingLoginsSet, studentLoginsAlreadyExistingInExercise);
     }
@@ -163,7 +163,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
         // One of the students of the source team is already part of a team in the destination exercise or of another imported team
         if (!this.showImportFromExercise) {
-            if (sourceTeam.students!.some((student) => student.visibleRegistrationNumber && this.conflictingRegistrationNumbersSet.has(student.visibleRegistrationNumber))) {
+            if (sourceTeam.students!.some((student) => student.registrationNumber && this.conflictingRegistrationNumbersSet.has(student.registrationNumber))) {
                 return false;
             }
         }
@@ -303,7 +303,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.resetConflictingSets();
         const students: User[] = flatMap(fileTeams, (fileTeam) => fileTeam.students ?? []);
         const studentLoginsAlreadyExistingInOtherTeams = this.findIdentifiersWhichAppearsMultipleTimes(students, 'login');
-        const studentRegistrationNumbersAlreadyExistingInOtherTeams = this.findIdentifiersWhichAppearsMultipleTimes(students, 'visibleRegistrationNumber');
+        const studentRegistrationNumbersAlreadyExistingInOtherTeams = this.findIdentifiersWhichAppearsMultipleTimes(students, 'registrationNumber');
         this.studentsAppearInMultipleTeams = studentLoginsAlreadyExistingInOtherTeams.length > 0 || studentRegistrationNumbersAlreadyExistingInOtherTeams.length > 0;
         this.conflictingRegistrationNumbersSet = this.addArrayToSet(this.conflictingRegistrationNumbersSet, studentRegistrationNumbersAlreadyExistingInOtherTeams);
         this.conflictingLoginsSet = this.addArrayToSet(this.conflictingLoginsSet, studentLoginsAlreadyExistingInOtherTeams);
@@ -316,7 +316,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * @param identifier Which identifier to use when searching for multiple occurrences
      * @returns Identifiers which appeared multiple times in user array
      */
-    private findIdentifiersWhichAppearsMultipleTimes(users: User[], identifier: 'login' | 'visibleRegistrationNumber') {
+    private findIdentifiersWhichAppearsMultipleTimes(users: User[], identifier: 'login' | 'registrationNumber') {
         const occurrenceMap = new Map();
         users.forEach((user) => {
             const identifierValue = user[identifier];

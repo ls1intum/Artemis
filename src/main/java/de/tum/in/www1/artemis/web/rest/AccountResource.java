@@ -179,8 +179,7 @@ public class AccountResource {
         if (user.isEmpty()) {
             throw new InternalServerErrorException("User could not be found");
         }
-        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(),
-                userDTO.getImageUrl());
+        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
     }
 
     /**
