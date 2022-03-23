@@ -124,20 +124,20 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
         registry.execute(applicationReadyEventMock);
 
-        assertThat(migrationChangeRepository.findAll()).hasSize(0);
+        assertThat(migrationChangeRepository.findAll()).isEmpty();
     }
 
     @Test
     public void testStopApplicationOnFailedIntegrityCheck() {
         assertThatThrownBy(() -> migrationService.execute(applicationReadyEventMock, createInvalidChangelog())).isInstanceOf(MigrationIntegrityException.class);
-        assertThat(migrationChangeRepository.findAll()).hasSize(0);
+        assertThat(migrationChangeRepository.findAll()).isEmpty();
     }
 
     @Test
     public void testExecutionSucceedsForEmptyMap() throws MigrationIntegrityException {
         migrationService.execute(applicationReadyEventMock, new TreeMap<>());
 
-        assertThat(migrationChangeRepository.findAll()).hasSize(0);
+        assertThat(migrationChangeRepository.findAll()).isEmpty();
     }
 
     @Test

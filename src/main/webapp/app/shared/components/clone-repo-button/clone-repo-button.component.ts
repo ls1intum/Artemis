@@ -7,11 +7,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-clone-repo-button',
     templateUrl: './clone-repo-button.component.html',
+    styleUrls: ['./clone-repo-button.component.scss'],
 })
 export class CloneRepoButtonComponent implements OnInit {
     @Input()
@@ -39,6 +40,7 @@ export class CloneRepoButtonComponent implements OnInit {
 
     // Icons
     faDownload = faDownload;
+    faExternalLink = faExternalLink;
 
     constructor(
         private translateService: TranslateService,
@@ -82,6 +84,18 @@ export class CloneRepoButtonComponent implements OnInit {
         }
 
         return this.repositoryUrl;
+    }
+
+    /**
+     * Used for the Button to open the repository in a separate browser-window
+     * @return HTTPS-Repository link of the student
+     */
+    getHttpRepositoryUrl(): string {
+        if (this.isTeamParticipation) {
+            return this.repositoryUrlForTeam(this.repositoryUrl);
+        } else {
+            return this.repositoryUrl;
+        }
     }
 
     /**

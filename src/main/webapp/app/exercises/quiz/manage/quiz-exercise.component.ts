@@ -169,15 +169,16 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     private handleNewQuizExercise(newQuizExercise: QuizExercise) {
         const index = this.quizExercises.findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
-        newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course!);
-        newQuizExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(newQuizExercise.course!);
-        newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course!);
+        newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course);
+        newQuizExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(newQuizExercise.course);
+        newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course);
         newQuizExercise.status = this.quizExerciseService.getStatus(newQuizExercise);
         if (index === -1) {
             this.quizExercises.push(newQuizExercise);
         } else {
             this.quizExercises[index] = newQuizExercise;
         }
+        this.applyFilter();
     }
 
     /**

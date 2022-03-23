@@ -206,7 +206,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?assessedByTutor=true",
                 HttpStatus.OK, FileUploadSubmission.class);
 
-        assertThat(submissions.size()).as("one file upload submission was found").isEqualTo(1);
+        assertThat(submissions).as("one file upload submission was found").hasSize(1);
         assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
         final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
         assertThat(participation1.getStudent()).as("contains no student details").isEmpty();
@@ -220,7 +220,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true",
                 HttpStatus.OK, FileUploadSubmission.class);
 
-        assertThat(submissions.size()).as("one file upload submission was found").isEqualTo(1);
+        assertThat(submissions).as("one file upload submission was found").hasSize(1);
         assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
         final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
         assertThat(participation1.getStudent()).as("contains student details").isNotEmpty();
@@ -368,7 +368,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getLatestResult().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
+        assertThat(submission.getLatestResult().getFeedbacks()).as("No feedback should be returned for editor").isEmpty();
     }
 
     @Test
@@ -384,7 +384,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getLatestResult().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
+        assertThat(submission.getLatestResult().getFeedbacks()).as("No feedback should be returned for editor").isEmpty();
         assertThat(submission.getLatestResult().getAssessor()).isNull();
     }
 

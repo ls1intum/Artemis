@@ -66,7 +66,10 @@
                 'artemisApp.exercise.includedInOverallScore' + (fileUploadExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
             }}</label>
             <div>
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+                <jhi-included-in-overall-score-picker
+                    [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"
+                    [allowNotIncluded]="!isExamMode"
+                ></jhi-included-in-overall-score-picker>
             </div>
         </div>
         <div class="row">
