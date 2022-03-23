@@ -650,7 +650,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 latestResult.setSubmission(null);
             }
         });
-        return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
+        List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
+        // In Exam-Mode, the Submissions are retrieved from the studentParticipationRepository, for which the Set<Submission> is appended
+        // In non-Exam Mode, the Submissions are retrieved from the submissionRepository, for which no Set<submission> is appended
+        return removeExerciseAndSubmissionSet(programmingSubmissions, examMode);
     }
 
     /**
@@ -670,12 +673,36 @@ public class ProgrammingSubmissionService extends SubmissionService {
         else {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
-        List<ProgrammingSubmission> submissions = new ArrayList<>();
+        List<ProgrammingSubmission> programmingSubmissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestLegalOrIllegalSubmission)
                 // filter out non submitted submissions if the flag is set to true
-                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
-                .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));
-        return submissions;
+                .filter(optionalSubmission -> optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted()))
+                .forEach(optionalSubmission -> programmingSubmissions.add((ProgrammingSubmission) optionalSubmission.get()));
+        return removeExerciseAndSubmissionSet(programmingSubmissions, true);
+    }
+
+    /**
+     * Given a List of ProgrammingSubmissions, this method will remove the attribute participation.exercise.
+     * If removeSubmissionSet = true, also the Set participation.submissions is removed. The number of submissions will be
+     * stored in the attribute participation.submissionCount instead of being determined by the size of the set of all submissions.
+     * This method is intended to reduce the amount of data transferred to the client.
+     * @param programmingSubmissionList - a List with all ProgrammingSubmissions to be modified
+     * @param removeSubmissionSet - option to also remove the SubmissionSet from the ProgrammingSubmssion
+     * @return a List with ProgrammingSubmissions and removed attributes
+     */
+    private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissionList, boolean removeSubmissionSet) {
+        programmingSubmissionList.forEach(programmingSubmission -> {
+            if (programmingSubmission.getParticipation() != null) {
+                Participation participation = programmingSubmission.getParticipation();
+                participation.setExercise(null);
+                if (removeSubmissionSet && participation.getSubmissions() != null) {
+                    // Only remove the Submissions and store them in submissionsCount, if the Set<Submissions> is present.
+                    participation.setSubmissionCount(participation.getSubmissions().size());
+                    participation.setSubmissions(null);
+                }
+            }
+        });
+        return programmingSubmissionList;
     }
 
     /**

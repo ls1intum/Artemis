@@ -70,7 +70,7 @@ public class ConsistencyCheckServiceTest {
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), true, false);
 
         var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
-        assertThat(consistencyErrors.size()).isEqualTo(0);
+        assertThat(consistencyErrors).isEmpty();
     }
 
     /**
@@ -87,7 +87,7 @@ public class ConsistencyCheckServiceTest {
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), true, false);
 
         var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
-        assertThat(consistencyErrors.size()).isEqualTo(1);
+        assertThat(consistencyErrors).hasSize(1);
         assertThat(consistencyErrors.get(0).getType()).isEqualTo(ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING);
     }
 
@@ -113,8 +113,7 @@ public class ConsistencyCheckServiceTest {
         expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
 
         var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
-        assertThat(consistencyErrors.size()).isEqualTo(3);
-        assertThat(consistencyErrors).containsAll(expectedErrors);
+        assertThat(consistencyErrors).hasSize(3).containsAll(expectedErrors);
     }
 
     /**
@@ -138,7 +137,7 @@ public class ConsistencyCheckServiceTest {
         expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
 
         var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
-        assertThat(consistencyErrors.size()).isEqualTo(2);
+        assertThat(consistencyErrors).hasSize(2);
         assertThat(consistencyErrors).containsAll(expectedErrors);
 
     }
@@ -154,7 +153,7 @@ public class ConsistencyCheckServiceTest {
         exercise = programmingExerciseRepository.save(exercise);
 
         var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
-        assertThat(consistencyErrors.size()).isEqualTo(1);
+        assertThat(consistencyErrors).hasSize(1);
         assertThat(consistencyErrors.get(0).getType()).isEqualTo(ConsistencyErrorDTO.ErrorType.IS_LOCAL_SIMULATION);
     }
 

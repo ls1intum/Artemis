@@ -211,6 +211,7 @@ public class ProgrammingExerciseExportImportResource {
         importedProgrammingExercise.setTemplateParticipation(null);
         importedProgrammingExercise.setSolutionParticipation(null);
         importedProgrammingExercise.setExerciseHints(null);
+        importedProgrammingExercise.setTasks(null);
 
         return ResponseEntity.ok().headers(responseHeaders).body(importedProgrammingExercise);
     }

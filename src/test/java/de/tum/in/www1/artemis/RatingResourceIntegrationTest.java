@@ -108,7 +108,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetRating_asUser_Null() throws Exception {
         Rating savedRating = request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Rating.class);
-        assertThat(savedRating).isEqualTo(null);
+        assertThat(savedRating).isNull();
     }
 
     @Test
@@ -147,7 +147,7 @@ public class RatingResourceIntegrationTest extends AbstractSpringIntegrationBamb
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         final var ratings = request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.OK, Rating.class);
 
-        assertThat(ratings.size()).isEqualTo(1);
+        assertThat(ratings).hasSize(1);
         assertThat(ratings.get(0).getId()).isEqualTo(savedRating.getId());
     }
 

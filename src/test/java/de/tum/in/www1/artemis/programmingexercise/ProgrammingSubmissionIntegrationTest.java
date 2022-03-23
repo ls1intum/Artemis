@@ -298,7 +298,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
         // Note: the participations above have no submissions, so the builds will not be triggered
-        assertThat(submissions).hasSize(0);
+        assertThat(submissions).isEmpty();
     }
 
     @Test
@@ -356,7 +356,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         // Perform the request again and make sure no new submission was created
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
         var updatedSubmissions = submissionRepository.findAll();
-        assertThat(updatedSubmissions.size()).isEqualTo(1);
+        assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
@@ -527,7 +527,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         final var responseSubmissions = request.getList(url, HttpStatus.OK, ProgrammingSubmission.class, paramMap);
 
         assertThat(responseSubmissions).containsExactly(assessedSubmission);
-        assertThat(responseSubmissions.get(0).getResults().size()).isEqualTo(1);
+        assertThat(responseSubmissions.get(0).getResults()).hasSize(1);
     }
 
     @Test
@@ -572,12 +572,12 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(latestSubmissions.size());
+        assertThat(submissions).hasSameSizeAs(latestSubmissions);
 
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
+        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
     }
 
     @Test
@@ -653,7 +653,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(latestSubmissions.size());
+        assertThat(submissions).hasSameSizeAs(latestSubmissions);
     }
 
     @Test
@@ -692,20 +692,20 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         var automaticResults = storedSubmission.getLatestResult().getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).toList();
-        assertThat(storedSubmission.getLatestResult().getFeedbacks().size()).isEqualTo(automaticResults.size());
+        assertThat(storedSubmission.getLatestResult().getFeedbacks()).hasSameSizeAs(automaticResults);
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(storedSubmission.getLatestResult().getResultString()).isEqualTo(submission.getLatestResult().getResultString());
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
-        assertThat(latestSubmissions.size()).isEqualTo(1);
+        assertThat(latestSubmissions).hasSize(1);
         assertThat(latestSubmissions.get(0).getId()).isEqualTo(submission.getId());
 
         // Check that grading instructions are loaded
         ProgrammingExercise exercise = (ProgrammingExercise) storedSubmission.getParticipation().getExercise();
-        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
+        assertThat(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
+        assertThat(exercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
     }
 
     @Test

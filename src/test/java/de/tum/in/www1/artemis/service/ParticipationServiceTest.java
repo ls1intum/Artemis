@@ -68,7 +68,7 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.get(), SubmissionType.EXTERNAL);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getStudent().get()).isEqualTo(student.get());
+        assertThat(participation.getStudent()).contains(student.get());
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().get();
         assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.EXTERNAL);
         assertThat(programmingSubmission.getResults()).isNullOrEmpty(); // results are not added in the invoked method above

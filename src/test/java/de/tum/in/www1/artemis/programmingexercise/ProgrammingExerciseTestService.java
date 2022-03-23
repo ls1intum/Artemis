@@ -57,6 +57,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
@@ -441,7 +442,7 @@ public class ProgrammingExerciseTestService {
     public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
         setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
-        exercise.setProjectType(ProjectType.MAVEN);
+        exercise.setProjectType(ProjectType.MAVEN_MAVEN);
         exercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         var sourceExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
@@ -741,11 +742,11 @@ public class ProgrammingExerciseTestService {
         assertThat(response).startsWith("Successfully generated the structure oracle");
 
         List<RevCommit> testRepoCommits = testRepo.getAllLocalCommits();
-        assertThat(testRepoCommits.size()).isEqualTo(2);
+        assertThat(testRepoCommits).hasSize(2);
 
         assertThat(testRepoCommits.get(0).getFullMessage()).isEqualTo("Update the structure oracle file.");
         List<DiffEntry> changes = getChanges(testRepo.localGit.getRepository(), testRepoCommits.get(0));
-        assertThat(changes.size()).isEqualTo(1);
+        assertThat(changes).hasSize(1);
         assertThat(changes.get(0).getChangeType()).isEqualTo(DiffEntry.ChangeType.MODIFY);
         assertThat(changes.get(0).getOldPath()).endsWith("test.json");
 
@@ -782,7 +783,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void startProgrammingExerciseAutomaticallyCreateEdxUser_correctInitializationState() throws Exception {
+    public void startProgrammingExercise_correctInitializationState() throws Exception {
         var user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         user.setLogin("edx_student1");
         user = userRepo.save(user);
@@ -790,7 +791,7 @@ public class ProgrammingExerciseTestService {
         final Course course = setupCourseWithProgrammingExercise(ExerciseMode.INDIVIDUAL);
         Participant participant = user;
 
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), false, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
 
         final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
                 .replace("{exerciseId}", String.valueOf(exercise.getId()));
@@ -885,7 +886,7 @@ public class ProgrammingExerciseTestService {
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         var submissions = submissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions).hasSize(1);
     }
 
     // TEST
@@ -921,7 +922,7 @@ public class ProgrammingExerciseTestService {
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         var submissions = submissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions).hasSize(1);
     }
 
     // TEST
@@ -952,7 +953,7 @@ public class ProgrammingExerciseTestService {
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         var submissions = submissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions).hasSize(1);
     }
 
     // Test
@@ -1300,7 +1301,7 @@ public class ProgrammingExerciseTestService {
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         // some build logs have been filtered out
-        assertThat(buildLogs.size()).as("Failed build log was created").isEqualTo(1);
+        assertThat(buildLogs).as("Failed build log was created").hasSize(1);
     }
 
     // TEST
@@ -1383,7 +1384,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void configureRepository_createTeamUserWhenLtiUserIsNotExistent() throws Exception {
+    public void configureRepository_throwExceptionWhenLtiUserIsNotExistent() throws Exception {
         setupTeamExercise();
 
         // create a team for the user (necessary condition before starting an exercise)
@@ -1398,7 +1399,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists, HttpStatus.CREATED);
 
         // Start participation with original team
-        participationService.startExercise(exercise, team, false);
+        assertThrows(GitLabException.class, () -> participationService.startExercise(exercise, team, false));
     }
 
     // TEST
