@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -417,7 +417,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         assertThat(userInDB).isPresent();
         assertThat(userInDB.get().getLogin()).isEqualTo(user.getLogin());
 
-        verify(gitlabRequestMockProvider.getMockedUserApi()).blockUser(anyInt());
+        verify(gitlabRequestMockProvider.getMockedUserApi()).blockUser(anyLong());
     }
 
     @Test

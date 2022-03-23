@@ -56,7 +56,7 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void shouldCreateSubmissionWithoutConnectionToVCSandCI() throws Exception {
-        assertThat(submissionRepository.findAll()).hasSize(0);
+        assertThat(submissionRepository.findAll()).isEmpty();
         final ProgrammingSubmission returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null,
                 ProgrammingSubmission.class, HttpStatus.CREATED);
         assertThat(submissionRepository.findAll()).hasSize(1);
@@ -83,7 +83,7 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
     void shouldCreateResultWithoutConnectionToVCSandCI() throws Exception {
         final ProgrammingSubmission returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null,
                 ProgrammingSubmission.class, HttpStatus.CREATED);
-        assertThat(resultRepository.findAll()).hasSize(0);
+        assertThat(resultRepository.findAll()).isEmpty();
         Result returnedResult = request.postWithResponseBody(ROOT + RESULTS_SIMULATION.replace("{exerciseId}", String.valueOf(exerciseId)), null, Result.class, HttpStatus.CREATED);
         ProgrammingSubmission submission = submissionRepository.findAll().get(0);
         assertThat(returnedSubmission).isEqualTo(submission);
