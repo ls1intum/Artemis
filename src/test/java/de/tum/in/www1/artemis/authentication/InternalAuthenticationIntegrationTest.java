@@ -145,7 +145,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         final var auth = new TestingAuthenticationToken(student.getLogin(), USER_PASSWORD);
         final var authResponse = artemisInternalAuthenticationProvider.authenticate(auth);
 
-        assertThat(authResponse.getCredentials().toString()).isEqualTo(student.getPassword());
+        assertThat(authResponse.getCredentials()).hasToString(student.getPassword());
         assertThat(authResponse.getPrincipal()).isEqualTo(student.getLogin());
     }
 
@@ -181,7 +181,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setAuthorities(authorities);
 
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(student.getGroups());
-        assertThat(exercises).hasSize(0);
+        assertThat(exercises).isEmpty();
         jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
 
         final var user = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);

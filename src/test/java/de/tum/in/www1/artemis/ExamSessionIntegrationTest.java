@@ -54,8 +54,7 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
         String newerSessionToken = examSessionService.startExamSession(studentExam1, null, null, null, null).getSessionToken();
         String currentSessionToken = examSessionService.startExamSession(studentExam1, null, null, null, null).getSessionToken();
 
-        assertThat(currentSessionToken).isNotEqualTo(newSessionToken);
-        assertThat(currentSessionToken).isNotEqualTo(newerSessionToken);
+        assertThat(currentSessionToken).isNotEqualTo(newSessionToken).isNotEqualTo(newerSessionToken);
     }
 
     @Test

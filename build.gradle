@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.6.0"
+    version = "5.6.1"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -142,7 +142,6 @@ dependencies {
     implementation "com.thoughtworks.qdox:qdox:${thoughtworks_qdox_version}"
 
     implementation "org.springdoc:springdoc-openapi-ui:${springdoc_openapi_ui_version}"
-
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:${hazelcast_hibernate53_version}"
@@ -183,7 +182,6 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
 
     implementation "de.tum.in.ase.athene:client:${athene_client_version}"
-
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"

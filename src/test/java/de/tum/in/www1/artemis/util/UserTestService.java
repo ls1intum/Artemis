@@ -263,8 +263,7 @@ public class UserTestService {
 
         updatedUser = updatedUserOrEmpty.get();
         assertThat(updatedUser.getId()).isEqualTo(student.getId());
-        assertThat(updatedUser.getGroups().size()).isEqualTo(1);
-        assertThat(updatedUser.getGroups()).contains("tutor");
+        assertThat(updatedUser.getGroups()).hasSize(1).contains("tutor");
     }
 
     // Test
@@ -478,8 +477,7 @@ public class UserTestService {
 
         var createdUser = createdUserOrEmpty.get();
         assertThat(createdUser.getId()).isNotNull();
-        assertThat(createdUser.getGroups().size()).isEqualTo(2);
-        assertThat(createdUser.getGroups()).isEqualTo(newUser.getGroups());
+        assertThat(createdUser.getGroups()).hasSize(2).isEqualTo(newUser.getGroups());
     }
 
     // Test
