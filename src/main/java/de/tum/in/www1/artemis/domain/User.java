@@ -62,13 +62,13 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Size(max = 20)
     @Column(name = "registration_number", length = 20)
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String registrationNumber;
 
     @Email
     @Size(max = 100)
     @Column(length = 100)
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String email;
 
     @NotNull
@@ -191,13 +191,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     // Retrieving this property is prohibited. Use the substitute property and the UserDTO to share it to the client
-    @JsonIgnore
     public String getEmail() {
         return email;
     }
 
     // Updating this property from the outside is allowed. The client uses only this property
-    @JsonProperty
     public void setEmail(String email) {
         this.email = email;
     }
@@ -267,13 +265,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     // Retrieving this property is prohibited. Use the substitute property and the UserDTO to share it to the client
-    @JsonIgnore
     public String getRegistrationNumber() {
         return registrationNumber;
     }
 
     // Updating this property from the outside is allowed. The client uses only this property
-    @JsonProperty
     public void setRegistrationNumber(String registrationNumber) {
         this.registrationNumber = registrationNumber;
     }
@@ -288,6 +284,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     /**
      * Used by API setters. Should be avoided. Use {@link #setRegistrationNumber(String)} and {@link #setVisibleRegistrationNumber()}
+     *
      * @param visibleRegistrationNumber new registration number
      */
     public void setVisibleRegistrationNumber(String visibleRegistrationNumber) {

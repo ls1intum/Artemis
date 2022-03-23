@@ -42,7 +42,10 @@ public class RequestUtilService {
 
     public RequestUtilService(MockMvc mvc, ObjectMapper mapper) {
         this.mvc = mvc;
+        // We want to disable certain Jackson annotations to prevent unwanted behaviour with tests
+        // See the description of the introspector for more information
         this.mapper = mapper;
+        this.mapper.setAnnotationIntrospectors(new TestAnnotationIntrospector(), this.mapper.getDeserializationConfig().getAnnotationIntrospector());
     }
 
     public MockMvc getMvc() {
