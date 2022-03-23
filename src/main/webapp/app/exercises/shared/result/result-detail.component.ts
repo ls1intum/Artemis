@@ -285,15 +285,7 @@ export class ResultDetailComponent implements OnInit {
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
             return this.createProgrammingExerciseGradingInstructionFeedbackItem(feedback, previewText);
         } else {
-            return {
-                type: FeedbackItemType.Feedback,
-                category: this.showTestDetails ? 'Tutor' : 'Feedback',
-                title: feedback.text,
-                text: feedback.detailText,
-                previewText,
-                positive: feedback.positive,
-                credits: feedback.credits,
-            };
+            return this.createProgrammingExerciseTutorFeedbackItem(feedback, previewText);
         }
     }
 
@@ -395,6 +387,24 @@ export class ResultDetailComponent implements OnInit {
             category: this.showTestDetails ? 'Tutor' : 'Feedback',
             title: feedback.text,
             text: gradingInstruction.feedback + (feedback.detailText ? '\n' + feedback.detailText : ''),
+            previewText,
+            positive: feedback.positive,
+            credits: feedback.credits,
+        };
+    }
+
+    /**
+     * Creates a feedback item for a regular tutor feedback not using a grading instruction.
+     * @param feedback The manual feedback from which the feedback item should be created.
+     * @param previewText The preview text for the feedback item.
+     * @private
+     */
+    private createProgrammingExerciseTutorFeedbackItem(feedback: Feedback, previewText?: string): FeedbackItem {
+        return {
+            type: FeedbackItemType.Feedback,
+            category: this.showTestDetails ? 'Tutor' : 'Feedback',
+            title: feedback.text,
+            text: feedback.detailText,
             previewText,
             positive: feedback.positive,
             credits: feedback.credits,
