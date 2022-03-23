@@ -109,6 +109,8 @@ public class GitService {
 
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
+    private static final String REMOTE_NAME = "origin";
+
     public GitService(FileService fileService, ZipFileService zipFileService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
@@ -567,7 +569,7 @@ public class GitService {
             StoredConfig gitRepoConfig = repository.getConfig();
             gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
             gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
-            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, "origin");
+            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
             gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
 
             // disable symlinks to avoid security issues such as remote code execution
@@ -595,9 +597,9 @@ public class GitService {
      * @throws GitAPIException if the commit failed.
      */
     public void commit(Repository repo, String message) throws GitAPIException {
-        Git git = new Git(repo);
-        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
-        git.close();
+        try (Git git = new Git(repo)) {
+            git.commit().setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
+        }
     }
 
     /**
@@ -609,14 +611,14 @@ public class GitService {
      * @throws GitAPIException if the commit failed.
      */
     public void commitAndPush(Repository repo, String message, @Nullable User user) throws GitAPIException {
-        var name = user != null ? user.getName() : artemisGitName;
-        var email = user != null ? user.getEmail() : artemisGitEmail;
-        Git git = new Git(repo);
-        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
-        log.debug("commitAndPush -> Push {}", repo.getLocalPath());
-        setRemoteUrl(repo);
-        pushCommand(git).call();
-        git.close();
+        String name = user != null ? user.getName() : artemisGitName;
+        String email = user != null ? user.getEmail() : artemisGitEmail;
+        try (Git git = new Git(repo)) {
+            git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
+            log.debug("commitAndPush -> Push {}", repo.getLocalPath());
+            setRemoteUrl(repo);
+            pushCommand(git).call();
+        }
     }
 
     /**
@@ -631,7 +633,7 @@ public class GitService {
     public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUrl targetRepoUrl) throws GitAPIException {
         try (Git git = new Git(targetRepo)) {
             // overwrite the old remote uri with the target uri
-            git.remoteSetUrl().setRemoteName("origin").setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
+            git.remoteSetUrl().setRemoteName(REMOTE_NAME).setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
             log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURL());
 
             String oldBranch = git.getRepository().getBranch();
@@ -660,7 +662,7 @@ public class GitService {
     public void pushSourceToTargetRepo(Repository targetRepo, VcsRepositoryUrl targetRepoUrl, String oldBranch) throws GitAPIException {
         try (Git git = new Git(targetRepo)) {
             // overwrite the old remote uri with the target uri
-            git.remoteSetUrl().setRemoteName("origin").setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
+            git.remoteSetUrl().setRemoteName(REMOTE_NAME).setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
             log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURL());
 
             if (!defaultBranch.equals(oldBranch)) {
@@ -683,12 +685,12 @@ public class GitService {
      * @throws GitAPIException if the staging failed.
      */
     public void stageAllChanges(Repository repo) throws GitAPIException {
-        Git git = new Git(repo);
-        // stage deleted files: http://stackoverflow.com/a/35601677/4013020
-        git.add().setUpdate(true).addFilepattern(".").call();
-        // stage new files
-        git.add().addFilepattern(".").call();
-        git.close();
+        try (Git git = new Git(repo)) {
+            // stage deleted files: http://stackoverflow.com/a/35601677/4013020
+            git.add().setUpdate(true).addFilepattern(".").call();
+            // stage new files
+            git.add().addFilepattern(".").call();
+        }
     }
 
     /**
@@ -731,12 +733,12 @@ public class GitService {
         }
         // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https
         try {
-            var existingRemoteUrl = repo.getConfig().getString("remote", "origin", "url");
+            var existingRemoteUrl = repo.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url");
             var newRemoteUrl = getGitUriAsString(repo.getRemoteRepositoryUrl());
             if (!Objects.equals(newRemoteUrl, existingRemoteUrl)) {
                 log.info("Replace existing remote url {} with new remote url {}", existingRemoteUrl, newRemoteUrl);
-                repo.getConfig().setString("remote", "origin", "url", newRemoteUrl);
-                log.info("New remote url: {}", repo.getConfig().getString("remote", "origin", "url"));
+                repo.getConfig().setString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url", newRemoteUrl);
+                log.info("New remote url: {}", repo.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url"));
             }
         }
         catch (Exception e) {
@@ -750,8 +752,7 @@ public class GitService {
      * @param repo Local Repository Object.
      */
     public void pullIgnoreConflicts(Repository repo) {
-        try {
-            Git git = new Git(repo);
+        try (Git git = new Git(repo)) {
             // flush cache of files
             repo.setContent(null);
             log.debug("Pull ignore conflicts {}", repo.getLocalPath());
@@ -772,12 +773,13 @@ public class GitService {
      * @throws GitAPIException if the pull failed.
      */
     public PullResult pull(Repository repo) throws GitAPIException {
-        Git git = new Git(repo);
-        // flush cache of files
-        repo.setContent(null);
-        log.debug("Pull {}", repo.getLocalPath());
-        setRemoteUrl(repo);
-        return pullCommand(git).call();
+        try (Git git = new Git(repo)) {
+            // flush cache of files
+            repo.setContent(null);
+            log.debug("Pull {}", repo.getLocalPath());
+            setRemoteUrl(repo);
+            return pullCommand(git).call();
+        }
     }
 
     /**
@@ -787,16 +789,17 @@ public class GitService {
      * @return name of the origin/HEAD branch, e.g. 'main' or null if there is no HEAD
      */
     public String getOriginHead(Repository repo) throws GitAPIException {
-        Git git = new Git(repo);
-        var originHeadRef = lsRemoteCommand(git).callAsMap().get(Constants.HEAD);
-        git.close();
+        Ref originHeadRef;
+        try (Git git = new Git(repo)) {
+            originHeadRef = lsRemoteCommand(git).callAsMap().get(Constants.HEAD);
+        }
 
         // Empty Git repos don't have HEAD
         if (originHeadRef == null) {
             return null;
         }
 
-        var fullName = originHeadRef.getTarget().getName();
+        String fullName = originHeadRef.getTarget().getName();
         return StringUtils.substringAfterLast(fullName, "/");
     }
 
@@ -889,6 +892,11 @@ public class GitService {
         catch (GitAPIException ex) {
             log.warn("Cannot filter the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
         }
+        finally {
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
+        }
     }
 
     /**
@@ -927,6 +935,11 @@ public class GitService {
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+        }
+        finally {
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
         }
     }
 
@@ -996,6 +1009,11 @@ public class GitService {
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
             log.warn("Cannot anonymize the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+        }
+        finally {
+            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
+            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
+            repository.close();
         }
     }
 
@@ -1074,7 +1092,6 @@ public class GitService {
      * @return The File object
      */
     public Optional<File> getFileByName(Repository repo, String filename) {
-
         // Makes sure the requested file is part of the scanned list of files.
         // Ensures that it is not possible to do bad things like filename="../../passwd"
 
@@ -1093,10 +1110,11 @@ public class GitService {
      * @return True if the status is clean
      * @throws GitAPIException if the state of the repository could not be retrieved.
      */
-    public Boolean isClean(Repository repo) throws GitAPIException {
-        Git git = new Git(repo);
-        Status status = git.status().call();
-        return status.isClean();
+    public boolean isClean(Repository repo) throws GitAPIException {
+        try (Git git = new Git(repo)) {
+            Status status = git.status().call();
+            return status.isClean();
+        }
     }
 
     /**
@@ -1107,8 +1125,7 @@ public class GitService {
      * @throws IllegalStateException if there is no commit in the git repository.
      */
     public void combineAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
-        Git git = new Git(repo);
-        try {
+        try (Git git = new Git(repo)) {
             resetToOriginHead(repo);
             List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).toList();
             RevCommit firstCommit = commits.get(commits.size() - 1);
@@ -1119,7 +1136,6 @@ public class GitService {
                 git.commit().setAmend(true).setMessage(firstCommit.getFullMessage()).call();
                 log.debug("combineAllCommitsIntoInitialCommit -> Push {}", repo.getLocalPath());
                 pushCommand(git).setForce(true).call();
-                git.close();
             }
             else {
                 // Normally there always has to be a commit, so we throw an error in case none can be found.
@@ -1270,9 +1286,9 @@ public class GitService {
      * @throws GitAPIException if the git operation does not work
      */
     public void stashChanges(Repository repo) throws GitAPIException {
-        Git git = new Git(repo);
-        git.stashCreate().call();
-        git.close();
+        try (Git git = new Git(repo)) {
+            git.stashCreate().call();
+        }
     }
 
     private PullCommand pullCommand(Git git) {
