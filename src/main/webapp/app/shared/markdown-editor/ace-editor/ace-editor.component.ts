@@ -21,16 +21,25 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     @Output() textChanged = new EventEmitter();
     @Output() textChange = new EventEmitter();
     @Input() style: any = {};
-    _options: any = {};
-    _readOnly = false;
-    _theme = 'monokai';
-    _mode = 'html';
-    _autoUpdateContent = true;
-    _editor: any; // TODO: use Editor (defined in brace) or Editor (defined in ace-builds) and make sure to use typings consistently
-    _durationBeforeCallback = 0;
-    _text = '';
+
+    @Input('tabSize')
+    public set tabSize(value: number) {
+        if (value > 0) {
+            this._editor.session.setTabSize(value);
+        }
+    }
+
     oldText: string;
     timeoutSaving: any;
+
+    private _options: any = {};
+    private _readOnly = false;
+    private _theme = 'monokai';
+    private _mode = 'html';
+    private _autoUpdateContent = true;
+    private _editor: any; // TODO: use Editor (defined in brace) or Editor (defined in ace-builds) and make sure to use typings consistently
+    private _durationBeforeCallback = 0;
+    private _text = '';
 
     constructor(elementRef: ElementRef, private zone: NgZone) {
         const el = elementRef.nativeElement;

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement, EventEmitter } from '@angular/core';
+import { NgModel } from '@angular/forms';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -12,7 +13,7 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
@@ -26,7 +27,7 @@ describe('CodeEditorAceComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule],
-            declarations: [CodeEditorAceComponent, TranslatePipeMock, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent)],
+            declarations: [CodeEditorAceComponent, TranslatePipeMock, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockDirective(NgModel)],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },

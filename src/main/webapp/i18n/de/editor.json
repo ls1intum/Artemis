@@ -42,6 +42,7 @@
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
             "fetchingParticipation": "Deine Teilnahme wird geladen, bitte warte einen Moment...",
+            "tabSize": "Tabulatorweite",
             "conflict": {
                 "resetRepository": "Setze Dein Repository zurück, um Deine Teilnahme fortzusetzen",
                 "resolveConflict": "Konflikt beheben",

@@ -94,6 +94,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
     editorSession: any;
     markerIds: number[] = [];
+    tabSize = 4;
 
     // Icons
     farFileAlt = faFileAlt;
