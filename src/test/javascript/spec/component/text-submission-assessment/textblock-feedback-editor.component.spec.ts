@@ -369,13 +369,13 @@ describe('TextblockFeedbackEditorComponent', () => {
     it('should display correct background colors for dropdown elements', () => {
         const gradingInstruction = { id: 1, feedback: 'feedback', credits: 1 } as GradingInstruction;
 
-        expect(component.setInstrColour(gradingInstruction)).toBe('#e3f0da');
+        expect(component.getInstrColour(gradingInstruction)).toBe('#e3f0da');
         gradingInstruction.credits = 0;
         fixture.detectChanges();
-        expect(component.setInstrColour(gradingInstruction)).toBe('#fff2cc');
+        expect(component.getInstrColour(gradingInstruction)).toBe('#fff2cc');
         gradingInstruction.credits = -1;
         fixture.detectChanges();
-        expect(component.setInstrColour(gradingInstruction)).toBe('#fbe5d6');
+        expect(component.getInstrColour(gradingInstruction)).toBe('#fbe5d6');
     });
 
     it('should send assessment event if feedback type changed', () => {
