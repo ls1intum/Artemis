@@ -1,6 +1,6 @@
 <div class="btn-group">
     <div
-        class="btn"
+        class="btn btn-default"
         [ngClass]="{
             'btn-primary': includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY,
             'btn-default': includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY
@@ -21,7 +21,7 @@
     </div>
     <div
         *ngIf="allowNotIncluded"
-        class="btn"
+        class="btn btn-default"
         [ngClass]="{
             'btn-primary': includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
             'btn-default': includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED
