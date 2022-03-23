@@ -453,14 +453,14 @@ public class GitService {
     /**
      * Waits until no clone operation is running for the given path.
      *
-     * Retries once a second for up to five seconds before giving up.
+     * Retries once a second for up to {@link #JGIT_TIMEOUT_IN_SECONDS} seconds before giving up.
      *
      * @param localPath The path in which a clone operation should be made.
      * @throws CanceledException If the waiting has been interrupted.
      * @throws GitException If the path is still busy after the maximum number of retries.
      */
     private void waitUntilPathNotBusy(final Path localPath) throws CanceledException, GitException {
-        int numberOfAttempts = 5;
+        int numberOfAttempts = JGIT_TIMEOUT_IN_SECONDS;
 
         while (cloneInProgressOperations.containsKey(localPath)) {
             log.warn("Clone is already in progress. This will lead to an error. Wait for a second");
