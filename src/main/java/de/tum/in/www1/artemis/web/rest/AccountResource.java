@@ -187,7 +187,7 @@ public class AccountResource {
      * {@code POST  /account/change-password} : changes the current user's password.
      *
      * @param passwordChangeDto current and new password.
-     * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the new password is incorrect.
+     * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the new password does not meet the requirements.
      */
     @PostMapping(path = "/account/change-password")
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
