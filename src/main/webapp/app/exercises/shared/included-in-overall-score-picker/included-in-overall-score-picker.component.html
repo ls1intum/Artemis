@@ -3,9 +3,9 @@
         <input ngbButton type="radio" [value]="IncludedInOverallScore.INCLUDED_COMPLETELY" /> {{ 'artemisApp.exercise.yes' | artemisTranslate }}
     </label>
     <label ngbButtonLabel class="btn-primary">
-        <input ngbButton type="radio" [value]="IncludedInOverallScore.INCLUDED_AS_BONUS" /> {{ 'artemisApp.exercise.bonus' | artemisTranslate }}
+        <input ngbButton type="radio" [value]="IncludedInOverallScore.INCLUDED_AS_BONUS" />{{ 'artemisApp.exercise.bonus' | artemisTranslate }}
     </label>
-    <label ngbButtonLabel class="btn-primary">
+    <label ngbButtonLabel class="btn-primary" *ngIf="allowNotIncluded">
         <input ngbButton type="radio" [value]="IncludedInOverallScore.NOT_INCLUDED" /> {{ 'artemisApp.exercise.no' | artemisTranslate }}
     </label>
 </div>
