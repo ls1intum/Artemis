@@ -28,6 +28,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -189,10 +190,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         }
     }
 
+    // Retrieving this property is prohibited. Use the substitute property and the UserDTO to share it to the client
+    @JsonIgnore
     public String getEmail() {
         return email;
     }
 
+    // Updating this property from the outside is allowed. The client uses only this property
+    @JsonProperty
     public void setEmail(String email) {
         this.email = email;
     }
@@ -261,10 +266,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.langKey = langKey;
     }
 
+    // Retrieving this property is prohibited. Use the substitute property and the UserDTO to share it to the client
+    @JsonIgnore
     public String getRegistrationNumber() {
         return registrationNumber;
     }
 
+    // Updating this property from the outside is allowed. The client uses only this property
+    @JsonProperty
     public void setRegistrationNumber(String registrationNumber) {
         this.registrationNumber = registrationNumber;
     }
