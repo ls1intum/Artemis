@@ -190,7 +190,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/courses/" + idOfCourse + "/course-scores", HttpStatus.OK, ScoreDTO.class);
-        assertThat(courseScores.size()).isEqualTo(25);
+        assertThat(courseScores).hasSize(25);
         ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
         assertThat(scoreOfStudent1.studentLogin).isEqualTo("student1");
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(10.0);
@@ -202,7 +202,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getExamScores_asInstructorOfCourse_shouldReturnExamScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/exams/" + idOfExam + "/exam-scores", HttpStatus.OK, ScoreDTO.class);
-        assertThat(courseScores.size()).isEqualTo(1);
+        assertThat(courseScores).hasSize(1);
         ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
         assertThat(scoreOfStudent1.studentLogin).isEqualTo("student1");
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(5.0);
@@ -214,7 +214,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getParticipantScoresOfCourse_asInstructorOfCourse_shouldReturnParticipantScores() throws Exception {
         List<ParticipantScoreDTO> participantScoresOfCourse = request.getList("/api/courses/" + idOfCourse + "/participant-scores", HttpStatus.OK, ParticipantScoreDTO.class);
-        assertThat(participantScoresOfCourse.size()).isEqualTo(2);
+        assertThat(participantScoresOfCourse).hasSize(2);
         ParticipantScoreDTO student1Result = participantScoresOfCourse.stream().filter(participantScoreDTO -> participantScoreDTO.userId != null).findFirst().get();
         ParticipantScoreDTO team1Result = participantScoresOfCourse.stream().filter(participantScoreDTO -> participantScoreDTO.teamId != null).findFirst().get();
         assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, idOfIndividualTextExercise, 50D, 50D, 5.0, 5.0);
@@ -226,7 +226,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     public void getAverageScoreOfParticipantInCourse_asInstructorOfCourse_shouldReturnAverageParticipantScores() throws Exception {
         List<ParticipantScoreAverageDTO> participantScoreAverageDTOS = request.getList("/api/courses/" + idOfCourse + "/participant-scores/average-participant", HttpStatus.OK,
                 ParticipantScoreAverageDTO.class);
-        assertThat(participantScoreAverageDTOS.size()).isEqualTo(2);
+        assertThat(participantScoreAverageDTOS).hasSize(2);
         ParticipantScoreAverageDTO student1Result = participantScoreAverageDTOS.stream().filter(participantScoreAverageDTO -> participantScoreAverageDTO.userName != null)
                 .findFirst().get();
         ParticipantScoreAverageDTO team1Result = participantScoreAverageDTOS.stream().filter(participantScoreAverageDTO -> participantScoreAverageDTO.teamName != null).findFirst()
@@ -248,7 +248,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getParticipantScoresOfExam_asInstructorOfCourse_shouldReturnParticipantScores() throws Exception {
         List<ParticipantScoreDTO> participantScoresOfExam = request.getList("/api/exams/" + idOfExam + "/participant-scores", HttpStatus.OK, ParticipantScoreDTO.class);
-        assertThat(participantScoresOfExam.size()).isEqualTo(1);
+        assertThat(participantScoresOfExam).hasSize(1);
         ParticipantScoreDTO student1Result = participantScoresOfExam.stream().filter(participantScoreDTO -> participantScoreDTO.userId != null).findFirst().get();
         assertParticipantScoreDTOStructure(student1Result, idOfStudent1, null, getIdOfIndividualTextExerciseOfExam, 50D, 50D, 5.0, 5.0);
     }
@@ -258,7 +258,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     public void getAverageScoreOfParticipantInExam_asInstructorOfCourse_shouldReturnAverageParticipantScores() throws Exception {
         List<ParticipantScoreAverageDTO> participantScoreAverageDTOS = request.getList("/api/exams/" + idOfExam + "/participant-scores/average-participant", HttpStatus.OK,
                 ParticipantScoreAverageDTO.class);
-        assertThat(participantScoreAverageDTOS.size()).isEqualTo(1);
+        assertThat(participantScoreAverageDTOS).hasSize(1);
         ParticipantScoreAverageDTO student1Result = participantScoreAverageDTOS.stream().filter(participantScoreAverageDTO -> participantScoreAverageDTO.userName != null)
                 .findFirst().get();
         assertAverageParticipantScoreDTOStructure(student1Result, "student1", null, 50.0, 50.0, 5.0, 5.0);

@@ -117,7 +117,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
                     HttpStatus.CREATED);
             persistedExerciseUnits.add(persistedExerciseUnit);
         }
-        assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
+        assertThat(persistedExerciseUnits).hasSameSizeAs(exercisesOfCourse);
 
         for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
             assertThat(exerciseUnit.getId()).isNotNull();
@@ -182,7 +182,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
                     HttpStatus.CREATED);
             persistedExerciseUnits.add(persistedExerciseUnit);
         }
-        assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
+        assertThat(persistedExerciseUnits).hasSameSizeAs(exercisesOfCourse);
 
         jmsMessageMockProvider.mockRemoveExerciseUnits();
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
@@ -209,7 +209,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
                     HttpStatus.CREATED);
             persistedExerciseUnits.add(persistedExerciseUnit);
         }
-        assertThat(persistedExerciseUnits.size()).isEqualTo(exercisesOfCourse.size());
+        assertThat(persistedExerciseUnits).hasSameSizeAs(exercisesOfCourse);
 
         for (ExerciseUnit exerciseUnit : persistedExerciseUnits) {
             request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + exerciseUnit.getId(), HttpStatus.OK);

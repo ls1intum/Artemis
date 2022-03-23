@@ -211,6 +211,8 @@ public final class Constants {
 
     public static final String EXTERNAL_PASSWORD_RESET_LINK_MAP = "externalPasswordResetLinkMap";
 
+    public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
+
     // Entity names
     public static final String TEAM_ENTITY_NAME = "team";
 

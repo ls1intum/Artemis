@@ -48,4 +48,12 @@ Cypress.on('window:before:load', (win) => {
 Cypress.on('window:before:load', (win) => {
     delete win.navigator.__proto__.serviceWorker;
 });
+
+/**
+ * On development environments (i.e. local environments) sentry is disabled and produces error messages in the console that cause cypress to fail.
+ * This call tells cypress to ignore errors related to sentry
+ */
+Cypress.on('uncaught:exception', (err, runnable) => {
+    return err.name === 'TypeError' && err?.stack?.includes('sentry');
+});
 /*eslint-enable */

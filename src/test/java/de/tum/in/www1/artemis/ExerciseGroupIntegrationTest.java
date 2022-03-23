@@ -119,8 +119,8 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     public void testGetExerciseGroupsForExam_asEditor() throws Exception {
         List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get(0).getExercises().size()).isEqualTo(1);
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getExercises()).hasSize(1);
         assertThat(result.get(0).getExercises()).contains(textExercise1);
         assertThat(result.get(0).getExam()).isEqualTo(exam1);
     }
@@ -130,7 +130,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     public void testDeleteExerciseGroup_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
-        assertThat(textExerciseRepository.findById(textExercise1.getId()).isEmpty()).isTrue();
+        assertThat(textExerciseRepository.findById(textExercise1.getId())).isEmpty();
     }
 
     @Test

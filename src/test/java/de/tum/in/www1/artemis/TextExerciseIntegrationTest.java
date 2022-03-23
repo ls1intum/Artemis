@@ -94,7 +94,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         textSubmission = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class);
 
         Optional<TextSubmission> result = textSubmissionRepository.findById(textSubmission.getId());
-        assertThat(result.isPresent()).isEqualTo(true);
+        assertThat(result).isPresent();
         result.ifPresent(submission -> assertThat(submission.getLanguage()).isEqualTo(Language.ENGLISH));
     }
 
@@ -216,7 +216,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
-        assertThat(!newTextExercise.isCourseExercise()).as("course was not set for exam exercise");
+        assertThat(newTextExercise.isCourseExercise()).as("course was not set for exam exercise").isFalse();
         assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(newTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
     }
@@ -417,7 +417,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(updateTitle);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(updateDifficulty);
-        assertThat(!updatedTextExercise.isCourseExercise()).as("course was not set for exam exercise");
+        assertThat(updatedTextExercise.isCourseExercise()).as("course was not set for exam exercise").isFalse();
         assertThat(updatedTextExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(updatedTextExercise.getExerciseGroup().getId()).as("exerciseGroupId was not updated").isEqualTo(exerciseGroup.getId());
     }
@@ -622,7 +622,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         List<TextExercise> textExercises = request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.OK, TextExercise.class);
 
-        assertThat(textExercises.size()).as("text exercises for course were retrieved").isEqualTo(1);
+        assertThat(textExercises).as("text exercises for course were retrieved").hasSize(1);
     }
 
     @Test
@@ -730,11 +730,11 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         final var searchText = database.configureSearch("Text");
         final var resultText = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchText));
-        assertThat(resultText.getResultsOnPage().size()).isEqualTo(1);
+        assertThat(resultText.getResultsOnPage()).hasSize(1);
 
         final var searchEssay = database.configureSearch("Essay");
         final var resultEssay = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchEssay));
-        assertThat(resultEssay.getResultsOnPage().size()).isEqualTo(2);
+        assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
         final var searchNon = database.configureSearch("Non");
         final var resultNon = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchNon));
@@ -749,7 +749,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         final var search = database.configureSearch("Text");
         final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
+        assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
     @Test
@@ -870,7 +870,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // TODO: Reduce the offset once this issue is fixed in JPlag
         assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
-        assertThat(comparison.getMatches().size()).isEqualTo(1);
+        assertThat(comparison.getMatches()).hasSize(1);
 
         var plagiarismStatusDto = new PlagiarismComparisonStatusDTO();
         plagiarismStatusDto.setStatus(PlagiarismStatus.CONFIRMED);
@@ -898,7 +898,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getPlagiarismOptions(50D, 0, 5));
-        assertThat(result.getComparisons()).hasSize(0);
+        assertThat(result.getComparisons()).isEmpty();
     }
 
     @Test
@@ -909,7 +909,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
-        assertThat(result.getComparisons()).hasSize(0);
+        assertThat(result.getComparisons()).isEmpty();
     }
 
     @Test
@@ -1027,8 +1027,8 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", textExercise,
                 TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
-        assertThat(updatedTextExercise.getGradingCriteria().size()).isEqualTo(1);
-        assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
+        assertThat(updatedTextExercise.getGradingCriteria()).hasSize(1);
+        assertThat(updatedResults.get(0).getScore()).isZero();
         assertThat(updatedResults.get(0).getFeedbacks()).isEmpty();
     }
 

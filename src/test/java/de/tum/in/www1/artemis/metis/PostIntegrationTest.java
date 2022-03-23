@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,9 +27,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 
@@ -54,6 +57,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private Long lectureId;
 
     private Validator validator;
+
+    private static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
     public void initTestCase() {
@@ -107,7 +112,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingExercisePosts.size() + 1).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
+        assertThat(existingExercisePosts).hasSize(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null).size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
     }
 
@@ -120,7 +125,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setExercise(examExercise);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingExercisePosts.size()).isEqualTo(postRepository.findPostsByExerciseId(exerciseId).size());
+        assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null));
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
 
     }
@@ -134,7 +139,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingLecturePosts.size() + 1).isEqualTo(postRepository.findPostsByLectureId(lectureId).size());
+        assertThat(existingLecturePosts).hasSize(postRepository.findPostsByLectureId(lectureId, null, null, null, null).size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
     }
 
@@ -148,8 +153,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).toList();
-        assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null).stream().filter(post -> post.getCourseWideContext() != null)
+                .toList();
+        assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewCoursePost(createdPost, course);
     }
 
@@ -164,8 +170,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setDisplayPriority(DisplayPriority.PINNED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId).stream().filter(post -> post.getCourseWideContext() != null).toList();
-        assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null).stream().filter(post -> post.getCourseWideContext() != null)
+                .toList();
+        assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
     }
 
@@ -238,21 +245,21 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Post>> constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
 
         invalidPost = createPostWithoutContext();
         invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
 
         invalidPost = createPostWithoutContext();
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
     }
 
     @Test
@@ -262,7 +269,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToCheck.setTitle("Title Post");
 
         List<Post> similarPosts = request.postWithResponseBody("/api/courses/" + courseId + "/posts/similarity-check", postToCheck, List.class, HttpStatus.OK);
-        assertThat(similarPosts).size().isEqualTo(TOP_K_SIMILARITY_RESULTS);
+        assertThat(similarPosts).hasSize(TOP_K_SIMILARITY_RESULTS);
     }
 
     // UPDATE
@@ -367,9 +374,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.OK);
         // no effect on post context
-        assertThat(notUpdatedPost.getCourseWideContext()).isEqualTo(null);
-        assertThat(notUpdatedPost.getCourse()).isEqualTo(null);
-        assertThat(notUpdatedPost.getLecture()).isEqualTo(null);
+        assertThat(notUpdatedPost.getCourseWideContext()).isNull();
+        assertThat(notUpdatedPost.getCourse()).isNull();
+        assertThat(notUpdatedPost.getLecture()).isNull();
         assertThat(notUpdatedPost.getExercise()).isEqualTo(existingExercisePosts.get(2).getExercise());
     }
 
@@ -455,7 +462,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts.size()).isEqualTo(existingPosts.size());
+        assertThat(returnedPosts).hasSameSizeAs(existingPosts);
     }
 
     @Test
@@ -481,7 +488,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain course-wide context
-        assertThat(returnedPosts.size()).isEqualTo(existingExercisePosts.size());
+        assertThat(returnedPosts).hasSameSizeAs(existingExercisePosts);
     }
 
     @Test
@@ -493,7 +500,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain course-wide context
-        assertThat(returnedPosts.size()).isEqualTo(existingLecturePosts.size());
+        assertThat(returnedPosts).hasSameSizeAs(existingLecturePosts);
     }
 
     @Test
@@ -514,7 +521,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetPostTagsForCourse() throws Exception {
         List<String> returnedTags = request.getList("/api/courses/" + courseId + "/posts/tags", HttpStatus.OK, String.class);
         // 4 different tags were used for the posts
-        assertThat(returnedTags.size()).isEqualTo(postRepository.findPostTagsForCourse(courseId).size());
+        assertThat(returnedTags).hasSameSizeAs(postRepository.findPostTagsForCourse(courseId));
     }
 
     @Test
@@ -522,6 +529,104 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetPostTagsForCourseWithNonExistentCourseId_notFound() throws Exception {
         List<String> returnedTags = request.getList("/api/courses/" + 9999L + "/posts/tags", HttpStatus.NOT_FOUND, String.class);
         assertThat(returnedTags).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_WithUsersOwnPosts() throws Exception {
+        // filterToOwn set; will fetch all course posts of current logged-in user
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToOwn", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        // get posts of current user and compare
+        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> "student1".equals(post.getAuthor().getLogin())).collect(Collectors.toList()));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_WithPostId() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("searchText", "#1");
+        params.add("pagingEnabled", "true"); // search by text, only available in course discussions page where paging is enabled
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+
+        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getId() == 1).collect(Collectors.toList()));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_OrderByCreationDateDESC() throws Exception {
+        PostSortCriterion sortCriterion = PostSortCriterion.CREATION_DATE;
+        SortingOrder sortingOrder = SortingOrder.DESCENDING;
+
+        var params = new LinkedMultiValueMap<String, String>();
+
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+
+        params.add("postSortCriterion", sortCriterion.toString());
+        params.add("sortingOrder", sortingOrder.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPosts.sort(Comparator.comparing(Post::getCreationDate).reversed());
+
+        assertThat(returnedPosts).isEqualTo(existingPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_OrderByCreationDateASC() throws Exception {
+        PostSortCriterion sortCriterion = PostSortCriterion.CREATION_DATE;
+        SortingOrder sortingOrder = SortingOrder.ASCENDING;
+
+        var params = new LinkedMultiValueMap<String, String>();
+
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+
+        params.add("postSortCriterion", sortCriterion.toString());
+        params.add("sortingOrder", sortingOrder.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        existingPosts.sort(Comparator.comparing(Post::getCreationDate));
+
+        assertThat(returnedPosts).isEqualTo(existingPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsPageForCourse() throws Exception {
+        // pagingEnabled set; will fetch a page of course posts
+        var params = new LinkedMultiValueMap<String, String>();
+
+        params.add("pagingEnabled", "true");
+        // Valid page request
+        params.add("page", "0");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        assertThat(returnedPosts.size()).isIn(returnedPosts.size(), MAX_POSTS_PER_PAGE);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsPageForCourse_badRequest() throws Exception {
+        // pagingEnabled set; will try to fetch a page of course posts
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("pagingEnabled", "true");
+        // invalid page request as there are not enough posts create such page
+        params.add("page", "4");
+        params.add("size", "10");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
+        assertThat(returnedPosts).isNull();
     }
 
     // DELETE

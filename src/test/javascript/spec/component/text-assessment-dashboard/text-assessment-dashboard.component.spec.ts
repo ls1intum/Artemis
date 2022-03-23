@@ -43,7 +43,7 @@ const textExerciseOfExam = {
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: true,
 };
-const textSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [] } }], participation: { id: 1 } };
+const textSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [], internal: true } }], participation: { id: 1 } };
 
 describe('TextAssessmentDashboardComponent', () => {
     let component: TextAssessmentDashboardComponent;

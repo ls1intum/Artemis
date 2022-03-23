@@ -198,7 +198,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
         GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
                 HttpStatus.CREATED);
 
-        assertThat(savedGradingScale.getGradeSteps().size()).isEqualTo(courseGradingScale.getGradeSteps().size());
+        assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
         assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
     }
@@ -235,7 +235,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
         GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
                 GradingScale.class, HttpStatus.CREATED);
 
-        assertThat(savedGradingScale.getGradeSteps().size()).isEqualTo(examGradingScale.getGradeSteps().size());
+        assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(examGradingScale.getGradeSteps());
         assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(examGradingScale.getGradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(examGradingScale);
     }
@@ -280,7 +280,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
 
         GradingScale savedGradingScale = request.putWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class, HttpStatus.OK);
 
-        assertThat(savedGradingScale.getGradeSteps().size()).isEqualTo(courseGradingScale.getGradeSteps().size());
+        assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
         assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
     }
@@ -330,7 +330,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
         GradingScale savedGradingScale = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
                 GradingScale.class, HttpStatus.OK);
 
-        assertThat(savedGradingScale.getGradeSteps().size()).isEqualTo(examGradingScale.getGradeSteps().size());
+        assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(examGradingScale.getGradeSteps());
         assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(examGradingScale.getGradeSteps(), gradeStep));
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(examGradingScale);
     }

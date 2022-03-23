@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.6.0"
+    version = "5.6.1"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -182,7 +182,6 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
 
     implementation "de.tum.in.ase.athene:client:${athene_client_version}"
-
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"
@@ -197,7 +196,7 @@ task executeTests (type: Exec) {
 
 allprojects {
     wrapper {
-        gradleVersion = "7.4"
+        gradleVersion = "7.4.1"
     }
 }
 
