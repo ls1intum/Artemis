@@ -1,0 +1,14 @@
+<form [formGroup]="formGroup" (ngSubmit)="confirm()">
+    <div class="col-12 message-inline-input-form__editor-wrapper">
+        <br />
+        <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength"></jhi-posting-markdown-editor>
+        <button
+            jhi-posting-button
+            [buttonLoading]="isLoading"
+            [disabled]="!formGroup.valid"
+            [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
+            class="btn btn-sm btn-outline-secondary"
+            type="submit"
+        ></button>
+    </div>
+</form>

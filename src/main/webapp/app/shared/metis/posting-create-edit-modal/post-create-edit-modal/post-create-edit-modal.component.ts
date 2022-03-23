@@ -83,7 +83,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.similarPosts = [];
         this.posting.title = this.posting.title ?? '';
         this.resetCurrentContextSelectorOption();
-        this.formGroup = this.formBuilder.group(this.postValidator());
+        this.formGroup = this.formBuilder.group(!this.courseMessagesPageFlag ? this.postValidator() : this.messageValidator());
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
             // announcements should no show similar posts
@@ -221,11 +221,11 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         };
     }
 
-    // private messageValidator() {
-    //     return {
-    //         // the pattern ensures that content must include at least one non-whitespace character
-    //         content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
-    //         context: [this.currentContextSelectorOption, [Validators.required]],
-    //     };
-    // }
+    private messageValidator() {
+        return {
+            // the pattern ensures that content must include at least one non-whitespace character
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+            context: [this.currentContextSelectorOption, [Validators.required]],
+        };
+    }
 }

@@ -8,6 +8,7 @@ import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.
 import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -22,6 +23,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked {
     @Input() maxContentLength: number;
+    @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];
     content?: string;
