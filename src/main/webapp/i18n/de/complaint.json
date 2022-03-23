@@ -27,8 +27,6 @@
             "rejected": "Abgelehnt",
             "rejectedLong": "Beschwerde wurde abgelehnt",
             "tooManyComplaints": "Maximale Anzahl an Beschwerden erreicht. Du kannst nicht mehr als {{ maxComplaintNumber }} offene oder abgelehnte Beschwerden gleichzeitig haben.",
-            "exceededComplaintTextLimit": "Maximale Anzahl an Zeichen erreicht. Du kannst nicht mehr als {{ maxComplaintTextLimit }} Zeichen verwenden.",
-            "exceededComplaintResponseTextLimit": "Maximale Anzahl an Zeichen erreicht. Du kannst nicht mehr als {{ maxComplaintRespondTextLimit }} Zeichen verwenden.",
             "complaintAlreadyHandled": "Die Beschwerde wurde bereits bearbeitet",
             "listOfComplaints": {
                 "exercise": "Übung",

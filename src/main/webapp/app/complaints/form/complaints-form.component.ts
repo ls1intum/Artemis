@@ -57,8 +57,6 @@ export class ComplaintsFormComponent implements OnInit {
             error: (err: HttpErrorResponse) => {
                 if (err?.error?.errorKey === 'tooManyComplaints') {
                     this.alertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
-                } else if (err?.error?.errorKey === 'exceededComplaintTextLimit') {
-                    this.alertService.error('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: this.course!.maxComplaintTextLimit! });
                 } else {
                     onError(this.alertService, err);
                 }

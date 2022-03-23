@@ -13,7 +13,6 @@ import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -198,7 +197,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.showRemoveLockButton = false;
                 },
                 error: (err: HttpErrorResponse) => {
-                    onError(this.alertService, err);
+                    this.onError(err);
                 },
             });
     }
