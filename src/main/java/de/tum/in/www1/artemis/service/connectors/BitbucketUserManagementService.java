@@ -80,7 +80,6 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      * </ul>
      *
      * @param vcsLogin                  The username of the user in the VCS
-     *
      * @param user                      The updated user in Artemis
      * @param removedGroups             groups that the user does not belong to any longer
      * @param addedGroups               The new groups the Artemis user got added to
