@@ -327,14 +327,14 @@ export class ResultDetailComponent implements OnInit {
         const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
         const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
         const text = this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
-        const scaPreviewText = ResultDetailComponent.computeFeedbackPreviewText(text);
+        const previewText = ResultDetailComponent.computeFeedbackPreviewText(text);
 
         return {
             type: FeedbackItemType.Issue,
             category: 'Code Issue',
             title: `${scaCategory} Issue in file ${ResultDetailComponent.getIssueLocation(scaIssue)}`.trim(),
             text,
-            previewText: scaPreviewText,
+            previewText,
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
             appliedCredits: feedback.credits,
@@ -394,7 +394,7 @@ export class ResultDetailComponent implements OnInit {
             type: feedback.isSubsequent ? FeedbackItemType.Subsequent : FeedbackItemType.Feedback,
             category: this.showTestDetails ? 'Tutor' : 'Feedback',
             title: feedback.text,
-            text: feedback.detailText ? gradingInstruction.feedback + '\n' + feedback.detailText : gradingInstruction.feedback,
+            text: gradingInstruction.feedback + (feedback.detailText ? '\n' + feedback.detailText : ''),
             previewText,
             positive: feedback.positive,
             credits: feedback.credits,
