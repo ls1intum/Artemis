@@ -299,10 +299,12 @@ public class JenkinsRequestMockProvider {
         else {
             File file = ResourceUtils.getFile("classpath:test-data/jenkins-response/failed-build-log.txt");
             StringBuilder builder = new StringBuilder();
-            Files.lines(file.toPath()).forEach(line -> {
-                builder.append(line);
-                builder.append("\n");
-            });
+            try (var lines = Files.lines(file.toPath())) {
+                lines.forEach(line -> {
+                    builder.append(line);
+                    builder.append("\n");
+                });
+            }
             doReturn(builder.toString()).when(buildWithDetails).getConsoleOutputText();
         }
         return buildWithDetails;

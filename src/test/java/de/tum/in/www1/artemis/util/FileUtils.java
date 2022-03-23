@@ -17,8 +17,11 @@ public class FileUtils {
     public static String loadFileFromResources(String path) throws IOException {
         java.io.File file = ResourceUtils.getFile("classpath:" + path);
         StringBuilder builder = new StringBuilder();
-        Files.lines(file.toPath()).forEach(builder::append);
-        assertThat(builder.toString()).as("file has been correctly read from file").isNotBlank();
-        return builder.toString();
+        try (var lines = Files.lines(file.toPath())) {
+            lines.forEach(builder::append);
+        }
+        String result = builder.toString();
+        assertThat(result).as("file has been correctly read from file").isNotBlank();
+        return result;
     }
 }
