@@ -102,6 +102,14 @@ label {
     overflow: auto;
 }
 
+.dropdown-submenu-single-criterion {
+    padding: 0 !important;
+
+    .dropdown-item {
+        padding: 0 !important;
+    }
+}
+
 .dropdown-menu {
     position: absolute;
     padding: 0.2rem 0;
@@ -117,6 +125,7 @@ label {
         &:hover {
             background-color: #e9ecef;
         }
+
         &:hover > .dropdown-submenu {
             display: flex;
             position: absolute;
@@ -130,13 +139,7 @@ label {
         }
     }
 }
-.dropdown-submenu-single {
-    padding: 0;
 
-    .dropdown-item {
-        padding: 0;
-    }
-}
 a:hover {
     text-decoration: none !important;
     color: black;
@@ -154,6 +157,7 @@ a:hover {
         width: 44px;
         padding-right: 0 !important;
     }
+
     .td-usage-count {
         width: 37px;
     }

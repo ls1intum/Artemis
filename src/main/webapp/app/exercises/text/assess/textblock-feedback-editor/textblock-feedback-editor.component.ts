@@ -108,19 +108,18 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     /**
-     * Set the color of the draggable grading instruction based on the credits of the instruction
-     *  @param {GradingInstruction} instr - the instruction object we set its color based on its credits
+     * Get the color for grading instruction based on the credits of the instruction
+     *  @param {GradingInstruction} instr - the instruction object we get its color based on its credits
      */
-    setInstrColour(instr: GradingInstruction) {
-        let colour;
+    getInstrColour(instr: GradingInstruction): string | undefined {
         if (instr.credits === 0) {
-            colour = '#fff2cc';
+            return '#fff2cc';
         } else if (instr.credits < 0) {
-            colour = '#fbe5d6';
-        } else {
-            colour = '#e3f0da';
+            return '#fbe5d6';
+        } else if (instr.credits > 0) {
+            return '#e3f0da';
         }
-        return colour;
+        return undefined;
     }
 
     /**
@@ -202,7 +201,9 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         this.feedback.gradingInstruction = instruction;
         this.feedback.credits = instruction.credits;
 
+        // Reset the feedback correction status upon setting grading instruction in order to hide it.
         this.feedback.correctionStatus = undefined;
+
         this.didChange();
     }
 

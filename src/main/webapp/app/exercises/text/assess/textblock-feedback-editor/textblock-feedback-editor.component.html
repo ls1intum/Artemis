@@ -65,9 +65,9 @@
                 <div *ngIf="criteria" class="dropdown" ngbDropdown>
                     <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
                     <!--if there is only one criterion, dropdown-menu contains its instructions-->
-                    <ul *ngIf="criteria.length == 1" class="dropdown-submenu-single" id="test" ngbDropdownMenu>
+                    <ul *ngIf="criteria.length === 1" class="dropdown-submenu-single-criterion" ngbDropdownMenu>
                         <li *ngFor="let instruction of criteria[0]!.structuredGradingInstructions">
-                            <a (click)="updateAssessmentWithDropdown(instruction)" class="dropdown-item" [style.background-color]="setInstrColour(instruction)">
+                            <a (click)="updateAssessmentWithDropdown(instruction)" class="dropdown-item" [style.background-color]="getInstrColour(instruction)">
                                 <table class="table layout-table">
                                     <tbody>
                                         <tr>
@@ -76,7 +76,8 @@
                                                 <span class="td-instruction">{{ instruction!.instructionDescription }}</span>
                                             </td>
                                             <td class="td-usage-count">
-                                                <span *ngIf="instruction!.usageCount && instruction!.usageCount !== 0; else usageCountInfinity">{{ instruction!.usageCount }}</span>
+                                                <span *ngIf="instruction!.usageCount; else usageCountInfinity">{{ instruction!.usageCount }}</span>
+                                                <!-- if the usage count is infinite, ng-template displays the infinity symbol (= &#8734) -->
                                                 <ng-template #usageCountInfinity>&#8734;</ng-template>
                                                 <jhi-help-icon placement="top" text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
                                             </td>
@@ -97,7 +98,7 @@
                             ></ng-template>
                             <ul class="dropdown-menu dropdown-submenu flex-column flex-wrap">
                                 <li *ngFor="let instruction of criterion!.structuredGradingInstructions">
-                                    <a (click)="updateAssessmentWithDropdown(instruction)" class="dropdown-item" id="item" [style.background-color]="setInstrColour(instruction)">
+                                    <a (click)="updateAssessmentWithDropdown(instruction)" class="dropdown-item" [style.background-color]="getInstrColour(instruction)">
                                         <table class="table layout-table">
                                             <tbody>
                                                 <tr>
@@ -106,9 +107,8 @@
                                                         <span class="td-instruction">{{ instruction!.instructionDescription }}</span>
                                                     </td>
                                                     <td class="td-usage-count">
-                                                        <span *ngIf="instruction!.usageCount && instruction!.usageCount !== 0; else usageCountInfinity">{{
-                                                            instruction!.usageCount
-                                                        }}</span>
+                                                        <span *ngIf="instruction!.usageCount; else usageCountInfinity">{{ instruction!.usageCount }}</span>
+                                                        <!-- if the usage count is infinite, ng-template displays the infinity symbol (= &#8734) -->
                                                         <ng-template #usageCountInfinity>&#8734;</ng-template>
                                                         <jhi-help-icon placement="top" text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
                                                     </td>
