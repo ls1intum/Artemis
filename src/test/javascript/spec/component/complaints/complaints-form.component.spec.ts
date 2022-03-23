@@ -110,6 +110,21 @@ describe('ComplaintsFormComponent', () => {
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: numberOfComplaints });
     });
 
+    it('should throw exceeded complaint text error after complaint creation', () => {
+        // Get course
+        component.exercise = courseExercise;
+        component.ngOnInit();
+
+        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const errorSpy = jest.spyOn(alertService, 'error');
+        // 26 characters
+        component.complaintText = 'abcdefghijklmnopqrstuvwxyz';
+        component.createComplaint();
+        expect(submitSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: 20 });
+    });
+
     it('text area should have the correct max length', fakeAsync(() => {
         // Get course
         component.exercise = courseExercise;

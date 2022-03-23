@@ -22,7 +22,6 @@ export class ErrorHandlerInterceptor implements HttpInterceptor {
                 error: (err: any) => {
                     if (err instanceof HttpErrorResponse) {
                         if (!(err.status === 401 && (err.message === '' || (err.url && err.url.includes('/api/account'))))) {
-                            console.log('Error');
                             this.eventManager.broadcast({ name: 'artemisApp.httpError', content: err });
                         }
                     }

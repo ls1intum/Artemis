@@ -50,6 +50,12 @@ export class ComplaintsFormComponent implements OnInit {
         complaint.result.id = this.resultId;
         complaint.complaintType = this.complaintType;
 
+        // TODO: Rethink global client error handling and adapt this line accordingly
+        if (complaint.complaintText !== undefined && this.course!.maxComplaintTextLimit! < complaint.complaintText!.length) {
+            this.alertService.error('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: this.course!.maxComplaintTextLimit! });
+            return;
+        }
+
         this.complaintService.create(complaint, this.examId).subscribe({
             next: () => {
                 this.submit.emit();
