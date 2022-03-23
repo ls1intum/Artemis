@@ -17,7 +17,11 @@ export class IncludedInOverallScorePickerComponent {
     @Output()
     includedInOverallScoreChange = new EventEmitter();
 
-    change(newValue: IncludedInOverallScore) {
+    /**
+     * Sets the Enum for the IncludedInOverallScore and emits the changes to the parent component to notice changes
+     * @param newValue chosen type of IncludedInOverallScore
+     */
+    setIncludedInOverallScore(newValue?: IncludedInOverallScore) {
         this.includedInOverallScore = newValue;
         this.includedInOverallScoreChange.emit(newValue);
     }
