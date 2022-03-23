@@ -178,10 +178,10 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Protects the branch but delays the execution.
      *
-     * @param repositoryPath  The id of the repository
-     * @param branch        The branch to protect
-     * @param delayTime     Time until the call is executed
-     * @param delayTimeUnit The unit of the time (e.g seconds, minutes)
+     * @param repositoryPath The id of the repository
+     * @param branch         The branch to protect
+     * @param delayTime      Time until the call is executed
+     * @param delayTimeUnit  The unit of the time (e.g seconds, minutes)
      */
     private void protectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
@@ -205,10 +205,10 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Unprotect the branch but delays the execution.
      *
-     * @param repositoryPath  The id of the repository
-     * @param branch        The branch to unprotect
-     * @param delayTime     Time until the call is executed
-     * @param delayTimeUnit The unit of the time (e.g seconds, minutes)
+     * @param repositoryPath The id of the repository
+     * @param branch         The branch to unprotect
+     * @param delayTime      Time until the call is executed
+     * @param delayTimeUnit  The unit of the time (e.g seconds, minutes)
      */
     private void unprotectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
@@ -338,14 +338,15 @@ public class GitLabService extends AbstractVersionControlService {
      * Retrieves the date at which the build server was notified about a new push.
      *
      * @param participation The participation we need the date for
-     * @param hash The hash we expect to find
+     * @param hash          The hash we expect to find
      * @return The build queue date
      */
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String hash) {
         try {
             List<Event> events = gitlab.getEventsApi().getProjectEvents(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl()),
-                    Constants.ActionType.PUSHED, null, new Date(), Date.from(participation.getInitializationDate().toInstant()), null);
+                    Constants.ActionType.PUSHED, null, new Date(),
+                    participation.getInitializationDate() == null ? null : Date.from(participation.getInitializationDate().toInstant()), null);
             for (Event event : events) {
                 if (event.getPushData().getCommitTo().equals(hash)) {
                     return event.getCreatedAt().toInstant().atZone(ZoneOffset.UTC);
@@ -406,8 +407,8 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Adds the users to the exercise's group with the specified access level.
      *
-     * @param users The users to add
-     * @param exercise the exercise
+     * @param users       The users to add
+     * @param exercise    the exercise
      * @param accessLevel the access level to give
      */
     private void addUsersToExerciseGroup(List<User> users, ProgrammingExercise exercise, AccessLevel accessLevel) {
@@ -458,9 +459,10 @@ public class GitLabService extends AbstractVersionControlService {
 
     /**
      * Updates the acess level of the user if it's a member of the repository.
+     *
      * @param repositoryUrl The url of the repository
-     * @param username the username of the gitlab user
-     * @param accessLevel the new access level for the user
+     * @param username      the username of the gitlab user
+     * @param accessLevel   the new access level for the user
      */
     private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, String username, AccessLevel accessLevel) {
         final var userId = gitLabUserManagementService.getUserId(username);

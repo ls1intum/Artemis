@@ -172,13 +172,21 @@ public class GitlabRequestMockProvider {
         doReturn(result).when(projectApi).getProjects(exercise.getProjectKey());
     }
 
-    public void mockGetPushDate(ProgrammingExerciseParticipation participation, String commitHash, ZonedDateTime commitDate) throws GitLabApiException {
+    /**
+     * Mocks the call on the events API to receive all qualifying push events to get the push date of a certain commit.
+     *
+     * @param participation Affected participation
+     * @param commitHash Expected commit hash
+     * @param pushDate Expected push date for the commit hash
+     * @throws GitLabApiException if events API fails
+     */
+    public void mockGetPushDate(ProgrammingExerciseParticipation participation, String commitHash, ZonedDateTime pushDate) throws GitLabApiException {
         PushData pushData = new PushData();
         pushData.setAction(Constants.ActionType.PUSHED);
         pushData.setCommitCount(1);
         pushData.setCommitFrom("7".repeat(40));
         pushData.setCommitTo(commitHash);
-        Event event = new Event().withCreatedAt(Date.from(commitDate.toInstant()));
+        Event event = new Event().withCreatedAt(Date.from(pushDate.toInstant()));
         event.setPushData(pushData);
         var path = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
         doReturn(List.of(event)).when(eventsApi).getProjectEvents(eq(path), eq(Constants.ActionType.PUSHED), eq(null), any(Date.class), any(Date.class), eq(null));

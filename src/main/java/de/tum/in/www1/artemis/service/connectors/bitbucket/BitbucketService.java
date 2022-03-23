@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -832,15 +833,21 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         try {
             JsonObject responseJson = (JsonObject) JsonParser.parseString(response.getBody());
+            Assert.notNull(responseJson, "No response");
             JsonArray values = responseJson.getAsJsonArray("values");
+            Assert.notNull(values, "Values not found");
             for (JsonElement value : values) {
                 JsonObject object = (JsonObject) value;
+                Assert.notNull(object, "Values element not found");
+                Assert.notNull(object.getAsJsonObject("refChange"), "Reference changes not found");
+                Assert.notNull(object.getAsJsonObject("refChange").get("toHash"), "New hash not found");
                 if (object.getAsJsonObject("refChange").get("toHash").getAsString().equals(hash)) {
+                    Assert.notNull(object.get("createdDate"), "Created date not found");
                     return Instant.ofEpochMilli(object.get("createdDate").getAsLong()).atZone(ZoneOffset.UTC);
                 }
             }
         }
-        catch (NullPointerException | ClassCastException e) {
+        catch (IllegalArgumentException | ClassCastException e) {
             throw new BambooException("Unable to parse the push date result for participation " + participation.getId() + " and hash " + hash, e);
         }
         throw new BambooException("Unable to parse the push date result for participation " + participation.getId() + " and hash " + hash);

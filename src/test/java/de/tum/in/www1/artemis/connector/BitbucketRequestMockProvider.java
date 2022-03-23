@@ -123,14 +123,20 @@ public class BitbucketRequestMockProvider {
         }
     }
 
-    public void mockGetPushDate(String projectKey, String commitHash, ZonedDateTime commitDate) {
+    /**
+     * Mocks the call to retrieve the push date of a certain commit
+     * @param projectKey Key of the affected project
+     * @param commitHash The expected commit hash
+     * @param pushDate The expected push date for the commit
+     */
+    public void mockGetPushDate(String projectKey, String commitHash, ZonedDateTime pushDate) {
         JsonObject refChange = new JsonObject();
         refChange.addProperty("refId", "refs/heads/main");
         refChange.addProperty("fromHash", "7".repeat(40));
         refChange.addProperty("toHash", commitHash);
         JsonObject pushEvent = new JsonObject();
         pushEvent.addProperty("id", 42);
-        pushEvent.addProperty("createdDate", commitDate.toInstant().toEpochMilli());
+        pushEvent.addProperty("createdDate", pushDate.toInstant().toEpochMilli());
         pushEvent.addProperty("trigger", "push");
         pushEvent.add("refChange", refChange);
 

@@ -20,8 +20,6 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -34,9 +32,6 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 public class ProgrammingSubmissionAndResultIntegrationTestService {
 
     @Autowired
-    private SubmissionRepository submissionRepository;
-
-    @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
@@ -44,9 +39,6 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
 
     @Autowired
     private RequestUtilService request;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private DatabaseUtilService database;
@@ -61,6 +53,14 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
         participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
     }
 
+    /**
+     * Verifies both Atlassian and Jenkins/Gitlab tests of the same name
+     *
+     * @param firstCommitHash Hash of the first commit made (second to be received)
+     * @param firstCommitDate Date of the first commit made (second to be received)
+     * @param secondCommitHash Hash of the second commit made (first to be received)
+     * @param secondCommitDate Date of the second commit made (first to be received)
+     */
     public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(String firstCommitHash, ZonedDateTime firstCommitDate, String secondCommitHash,
             ZonedDateTime secondCommitDate) {
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId());
@@ -83,6 +83,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
 
     /**
      * This is the simulated request from the VCS to Artemis on a new commit.
+     * @return The submission that was created
      */
     public ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus, String jsonRequest) throws Exception {
         JSONParser jsonParser = new JSONParser();

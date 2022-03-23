@@ -557,7 +557,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
-        String userLogin = "student1";
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived();
         var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_REQUEST);
         var changes = (JSONArray) pushJSON.get("changes");
