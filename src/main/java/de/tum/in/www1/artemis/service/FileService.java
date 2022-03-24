@@ -7,12 +7,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -63,7 +60,8 @@ public class FileService implements DisposableBean {
         Map.entry("dune.file", "dune"),
         Map.entry("Fast.file", "Fastfile"),
         Map.entry("App.file", "Appfile"),
-        Map.entry("Scan.file", "Scanfile")
+        Map.entry("Scan.file", "Scanfile"),
+        Map.entry("gradlew.file", "gradlew")
     );
     // @formatter:on
 
@@ -364,6 +362,10 @@ public class FileService implements DisposableBean {
             }
 
             Files.copy(resource.getInputStream(), copyPath, StandardCopyOption.REPLACE_EXISTING);
+            // make gradlew executable
+            if (targetFilePath.endsWith("gradlew")) {
+                copyPath.toFile().setExecutable(true);
+            }
         }
     }
 
@@ -569,11 +571,25 @@ public class FileService implements DisposableBean {
      * <p>
      * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
      *
-     * @param startPath    the path where the start directory is located
-     * @param replacements the replacements that should be applied
+     * @param startPath     the path where the start directory is located
+     * @param replacements  the replacements that should be applied
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements) throws IOException {
+        replaceVariablesInFileRecursive(startPath, replacements, Collections.emptyList());
+    }
+
+    /**
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
+     * <p>
+     * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
+     *
+     * @param startPath     the path where the start directory is located
+     * @param replacements  the replacements that should be applied
+     * @param filesToIgnore the name of files for which no replacement should be done
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
+     */
+    public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements, List<String> filesToIgnore) throws IOException {
         log.debug("Replacing {} in files in directory {}", replacements, startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
@@ -583,6 +599,8 @@ public class FileService implements DisposableBean {
         // Get all files in directory
         String[] files = directory.list((current, name) -> new File(current, name).isFile());
         if (files != null) {
+            // filter out files that should be ignored
+            files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
             for (String file : files) {
                 replaceVariablesInFile(Paths.get(directory.getAbsolutePath(), file).toString(), replacements);
             }
@@ -596,7 +614,7 @@ public class FileService implements DisposableBean {
                     // ignore files in the '.git' folder
                     continue;
                 }
-                replaceVariablesInFileRecursive(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), replacements);
+                replaceVariablesInFileRecursive(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), replacements, filesToIgnore);
             }
         }
     }
