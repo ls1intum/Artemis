@@ -1003,12 +1003,13 @@ public class ProgrammingExerciseTestService {
         String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
 
         // Check that the contents we created exist in the unzipped exported folder
-        var listOfIncludedFiles = Files.walk(Path.of(extractedZipDir)).filter(Files::isRegularFile).map(Path::getFileName).toList();
-        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))).isTrue();
-        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(".*-solution.zip"))).isTrue();
-        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))).isTrue();
-        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))).isTrue();
-        assertThat(listOfIncludedFiles.stream().anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))).isTrue();
+        try (var files = Files.walk(Path.of(extractedZipDir))) {
+            List<Path> listOfIncludedFiles = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+            assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
+                    .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
+        }
     }
 
     // Test
@@ -1132,11 +1133,10 @@ public class ProgrammingExerciseTestService {
         String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
 
         // Check that the dummy files we created exist in the archive
-        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
-        assertThat(filenames).contains(Path.of("Template.java"));
-        assertThat(filenames).contains(Path.of("Solution.java"));
-        assertThat(filenames).contains(Path.of("Tests.java"));
-        assertThat(filenames).contains(Path.of("HelloWorld.java"));
+        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+            var filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+            assertThat(filenames).contains(Path.of("Template.java"), Path.of("Solution.java"), Path.of("Tests.java"), Path.of("HelloWorld.java"));
+        }
     }
 
     private Course createCourseWithProgrammingExerciseAndParticipationWithFiles() throws GitAPIException, IOException, InterruptedException {
@@ -1227,11 +1227,10 @@ public class ProgrammingExerciseTestService {
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
         // Check that the dummy files we created exist in the archive
-        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
-        assertThat(filenames).contains(Path.of("HelloWorld.java"));
-        assertThat(filenames).contains(Path.of("Template.java"));
-        assertThat(filenames).contains(Path.of("Solution.java"));
-        assertThat(filenames).contains(Path.of("Tests.java"));
+        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+            var filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+            assertThat(filenames).contains(Path.of("HelloWorld.java"), Path.of("Template.java"), Path.of("Solution.java"), Path.of("Tests.java"));
+        }
     }
 
     private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) throws Exception {
