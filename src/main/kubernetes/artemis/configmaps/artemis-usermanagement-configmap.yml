@@ -4,7 +4,7 @@ data:
   JHIPSTER_SLEEP: "30"
   MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
   SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql/artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-  SPRING_PROFILES_ACTIVE: prod,artemis,scheduling
+  SPRING_PROFILES_ACTIVE: prod,artemis,scheduling,jira,bitbucket
   SPRING_ARTEMIS_HOST: activemq-artemis
 kind: ConfigMap
 metadata:

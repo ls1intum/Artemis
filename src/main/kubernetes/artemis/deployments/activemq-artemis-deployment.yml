@@ -29,6 +29,7 @@ spec:
         - configMapRef:
             name: activemq-artemis
             optional: false
+        # This image is deprecated. In the future we can build our own ActiveMQ Artemis image as described here: https://hub.docker.com/r/vromero/activemq-artemis
         image: vromero/activemq-artemis
         imagePullPolicy: Always
         name: activemq-artemis
