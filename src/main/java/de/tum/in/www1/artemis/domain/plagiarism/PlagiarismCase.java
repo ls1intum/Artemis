@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -119,25 +118,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
 
     @Override
     public String toString() {
-        return "PlagiarismCase{}";
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        PlagiarismCase plagiarismCase = (PlagiarismCase) o;
-
-        return Objects.equals(plagiarismCase, o);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash();
+        return "PlagiarismCase{" + "exercise=" + exercise + ", student=" + student + ", post=" + post + ", plagiarismSubmissions=" + plagiarismSubmissions + ", verdict=" + verdict
+                + ", verdictMessage=" + verdictMessage + ", verdictBy=" + verdictBy + ", verdictDate=" + verdictDate + ", verdictPointDeduction=" + verdictPointDeduction + "}";
     }
 }
