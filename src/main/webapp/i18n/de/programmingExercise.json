@@ -270,7 +270,8 @@
                 "allowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen",
                 "disallowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen keine Beschwerde nach einer automatischen Bewertung einlegen",
                 "complaintOnAutomaticAssessmentEnabled": "Beschwerden sind möglich",
-                "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich"
+                "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich",
+                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studenten zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen."
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",

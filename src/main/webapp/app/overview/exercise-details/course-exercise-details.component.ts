@@ -265,7 +265,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         } else if (newExercise.type === ExerciseType.PROGRAMMING) {
             const exercise = newExercise as ProgrammingExercise;
-            this.isProgrammingExerciseExampleSolutionPublished = exercise.isExampleSolutionPublished;
+            this.isProgrammingExerciseExampleSolutionPublished = exercise.exampleSolutionPublished;
         }
     }
 

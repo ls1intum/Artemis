@@ -31,6 +31,17 @@
                 tooltipText="artemisApp.programmingExercise.timeline.dueDateTooltip"
             >
             </jhi-programming-exercise-test-schedule-date-picker>
+            <jhi-programming-exercise-test-schedule-date-picker
+                *ngIf="!isExamMode"
+                [(ngModel)]="exercise.exampleSolutionPublicationDate"
+                [startAt]="exercise.dueDate"
+                [min]="exercise.dueDate"
+                [readOnly]="readOnly"
+                class="test-schedule-date me-2"
+                label="artemisApp.exercise.exampleSolutionPublicationDate"
+                tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"
+            >
+            </jhi-programming-exercise-test-schedule-date-picker>
             <div *ngIf="isExamMode || exercise.dueDate">
                 <jhi-programming-exercise-test-schedule-date-picker
                     class="test-schedule-date me-2"
