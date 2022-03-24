@@ -31,8 +31,8 @@ group = "de.tum.in.www1.artemis"
 version = "5.6.1"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=16
-targetCompatibility=16
+sourceCompatibility=17
+targetCompatibility=17
 
 apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
@@ -116,7 +116,8 @@ private excludedClassFilesForReport(classDirectories) {
         fileTree(dir: it,
             exclude: [
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
-                "**/de/tum/in/www1/artemis/config/migration/entries/*_*"
+                "**/de/tum/in/www1/artemis/config/migration/entries/*_*",
+                "**/gradle-wrapper.jar/**"
             ]
         )
     }))
@@ -162,6 +163,9 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url "https://repo.gradle.org/gradle/libs-releases/"
+    }
 }
 
 dependencies {
@@ -227,7 +231,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.3.6.RELEASE"
-    implementation "org.springframework.data:spring-data-ldap:2.6.2"
+    implementation "org.springframework.data:spring-data-ldap:2.6.3"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.1"
     implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.1"
@@ -256,7 +260,7 @@ dependencies {
 
     implementation "org.zalando:problem-spring-web:0.27.0"
     implementation "com.ibm.icu:icu4j:70.1"
-    implementation "com.github.seancfoley:ipaddress:5.3.3"
+    implementation "com.github.seancfoley:ipaddress:5.3.4"
     implementation "org.apache.maven:maven-model:3.8.5"
     implementation "org.apache.pdfbox:pdfbox:2.0.25"
     implementation "com.google.protobuf:protobuf-java:3.19.4"
@@ -285,11 +289,12 @@ dependencies {
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
+    testImplementation "org.gradle:gradle-tooling-api:7.3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M5"
     testImplementation "com.opencsv:opencsv:5.6"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20211205"
+    testImplementation "org.json:json:20220320"
 }
 
 task cleanResources(type: Delete) {
