@@ -1978,7 +1978,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
         // Check that the dummy files we created exist in the archive.
-        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        List<Path> filenames;
+        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+            filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+        }
 
         var submissions = submissionRepository.findAll();
 
