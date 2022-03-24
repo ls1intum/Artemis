@@ -1083,7 +1083,10 @@ public class CourseTestService {
         assertThat(instructor).as("An instructors in course found").hasSize(1);
     }
 
-    // Test
+    /** Tries to search for users of another course and expects to be forbidden
+     *
+     * @throws Exception
+     */
     public void testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
         course = courseRepo.save(course);

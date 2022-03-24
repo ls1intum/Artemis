@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -11,6 +11,7 @@ import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create
     selector: 'jhi-message-inline-input',
     templateUrl: './message-inline-input.component.html',
     styleUrls: ['./message-inline-input.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class MessageInlineInputComponent extends PostingCreateEditModalDirective<Post | AnswerPost> {
     editorHeight = MarkdownEditorHeight.INLINE;
