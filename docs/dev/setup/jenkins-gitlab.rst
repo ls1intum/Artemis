@@ -890,7 +890,7 @@ the following steps:
 
 12. In a local setup, you have to disable CSRF otherwise some API endpoints will return HTTP Status 403 Forbidden.
     This is done be executing the following command:
-    docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec -T jenkins dd of=/var/jenkins_home/init.groovy < src/main/docker/jenkins/jenkins-disable-csrf.groovy
+    ``docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec -T jenkins dd of=/var/jenkins_home/init.groovy < src/main/docker/jenkins/jenkins-disable-csrf.groovy``
 
     The last step is to disable the ``use-crumb`` option in ``application-local.yml``:
 
