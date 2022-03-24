@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.hestia;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -10,7 +11,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -149,46 +149,50 @@ public class ProgrammingExerciseGitDiffReportService {
      * @return The git-diff report for the given programming exercise
      */
     public ProgrammingExerciseGitDiffReport updateReport(ProgrammingExercise programmingExercise) {
-        var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
-        var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
-        if (templateParticipationOptional.isEmpty() || solutionParticipationOptional.isEmpty()) {
-            return null;
-        }
-        var templateParticipation = templateParticipationOptional.get();
-        var solutionParticipation = solutionParticipationOptional.get();
-
-        var templateSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(templateParticipation.getId());
-        var solutionSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(solutionParticipation.getId());
-        if (templateSubmissionOptional.isEmpty() || solutionSubmissionOptional.isEmpty()) {
-            return null;
-        }
-        var templateSubmission = templateSubmissionOptional.get();
-        var solutionSubmission = solutionSubmissionOptional.get();
-
-        var templateHash = templateSubmission.getCommitHash();
-        var solutionHash = solutionSubmission.getCommitHash();
-        var existingReport = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
-        if (existingReport != null && canUseExistingReport(existingReport, templateHash, solutionHash)) {
-            return existingReport;
-        }
-
-        try {
-            var newReport = generateReport(templateParticipation, solutionParticipation);
-            newReport.setTemplateRepositoryCommitHash(templateHash);
-            newReport.setSolutionRepositoryCommitHash(solutionHash);
-            newReport.setProgrammingExercise(programmingExercise);
-            // Delete the old report first
-            if (existingReport != null) {
-                programmingExerciseGitDiffReportRepository.delete(existingReport);
+        // Synchronized to prevent multiple git-diffs to be generated for the same exercise at the same time
+        // This happens e.g. when creating an exercise
+        synchronized (programmingExercise) {
+            var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
+            var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
+            if (templateParticipationOptional.isEmpty() || solutionParticipationOptional.isEmpty()) {
+                return null;
             }
-            newReport = programmingExerciseGitDiffReportRepository.save(newReport);
-            programmingExercise.setGitDiffReport(newReport);
-            programmingExerciseRepository.save(programmingExercise);
-            return newReport;
-        }
-        catch (InterruptedException | GitAPIException | IOException e) {
-            log.error("Exception while generating git diff report", e);
-            throw new InternalServerErrorException("Error while generating git-diff: " + e.getMessage());
+            var templateParticipation = templateParticipationOptional.get();
+            var solutionParticipation = solutionParticipationOptional.get();
+
+            var templateSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(templateParticipation.getId());
+            var solutionSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(solutionParticipation.getId());
+            if (templateSubmissionOptional.isEmpty() || solutionSubmissionOptional.isEmpty()) {
+                return null;
+            }
+            var templateSubmission = templateSubmissionOptional.get();
+            var solutionSubmission = solutionSubmissionOptional.get();
+
+            var templateHash = templateSubmission.getCommitHash();
+            var solutionHash = solutionSubmission.getCommitHash();
+            var existingReport = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
+            if (existingReport != null && canUseExistingReport(existingReport, templateHash, solutionHash)) {
+                return existingReport;
+            }
+
+            try {
+                var newReport = generateReport(templateParticipation, solutionParticipation);
+                newReport.setTemplateRepositoryCommitHash(templateHash);
+                newReport.setSolutionRepositoryCommitHash(solutionHash);
+                newReport.setProgrammingExercise(programmingExercise);
+                // Delete the old report first
+                if (existingReport != null) {
+                    programmingExerciseGitDiffReportRepository.delete(existingReport);
+                }
+                newReport = programmingExerciseGitDiffReportRepository.save(newReport);
+                programmingExercise.setGitDiffReport(newReport);
+                programmingExerciseRepository.save(programmingExercise);
+                return newReport;
+            }
+            catch (InterruptedException | GitAPIException | IOException e) {
+                log.error("Exception while generating git diff report", e);
+                throw new InternalServerErrorException("Error while generating git-diff: " + e.getMessage());
+            }
         }
     }
 
@@ -227,18 +231,11 @@ public class ProgrammingExerciseGitDiffReportService {
      * Extracts the ProgrammingExerciseGitDiffEntry from the raw git-diff output
      *
      * @param diff The raw git-diff output
-     * @return The extraced ProgrammingExerciseGitDiffEntries
+     * @return The extracted ProgrammingExerciseGitDiffEntries
      */
     private List<ProgrammingExerciseGitDiffEntry> extractDiffEntries(String diff) {
         var lines = diff.split("\n");
-        var entries = new ArrayList<ProgrammingExerciseGitDiffEntry>();
-        String currentFilePath = null;
-        String currentPreviousFilePath = null;
-        var currentEntry = new ProgrammingExerciseGitDiffEntry();
-        boolean deactivateCodeReading = true;
-        boolean lastLineRemoveOperation = false;
-        int currentLineCount = 0;
-        int currentPreviousLineCount = 0;
+        var parserState = new ParserState();
 
         for (int i = 0; i < lines.length; i++) {
             var line = lines[i];
@@ -248,93 +245,85 @@ public class ProgrammingExerciseGitDiffReportService {
             }
             var lineMatcher = gitDiffLinePattern.matcher(line);
             if (lineMatcher.matches()) {
-                if (!currentEntry.isEmpty()) {
-                    entries.add(currentEntry);
-                }
-                // Start of a new file
-                var newFilePath = getFilePath(lines, i);
-                var newPreviousFilePath = getPreviousFilePath(lines, i);
-                if (newFilePath != null || newPreviousFilePath != null) {
-                    currentFilePath = newFilePath;
-                    currentPreviousFilePath = newPreviousFilePath;
-                }
-                currentEntry = new ProgrammingExerciseGitDiffEntry();
-                currentEntry.setFilePath(currentFilePath);
-                currentEntry.setPreviousFilePath(currentPreviousFilePath);
-                currentLineCount = Integer.parseInt(lineMatcher.group("newLine"));
-                currentPreviousLineCount = Integer.parseInt(lineMatcher.group("previousLine"));
-                deactivateCodeReading = false;
+                handleNewDiffBlock(lines, i, parserState, lineMatcher);
             }
-            else if (!deactivateCodeReading) {
+            else if (!parserState.deactivateCodeReading) {
                 switch (line.charAt(0)) {
-                    case '+' -> {
-                        handleAddition(currentEntry, currentLineCount);
-
-                        lastLineRemoveOperation = false;
-                        currentLineCount++;
-                    }
-                    case '-' -> {
-                        currentEntry = handleRemoval(entries, currentFilePath, currentPreviousFilePath, currentEntry, lastLineRemoveOperation, currentPreviousLineCount);
-
-                        lastLineRemoveOperation = true;
-                        currentPreviousLineCount++;
-                    }
-                    case ' ' -> {
-                        currentEntry = handleUnchanged(entries, currentFilePath, currentPreviousFilePath, currentEntry);
-
-                        lastLineRemoveOperation = false;
-                        currentLineCount++;
-                        currentPreviousLineCount++;
-                    }
-                    default -> {
-                        deactivateCodeReading = true;
-                    }
+                    case '+' -> handleAddition(parserState);
+                    case '-' -> handleRemoval(parserState);
+                    case ' ' -> handleUnchanged(parserState);
+                    default -> parserState.deactivateCodeReading = true;
                 }
             }
         }
-        if (!currentEntry.isEmpty()) {
-            entries.add(currentEntry);
+        if (!parserState.currentEntry.isEmpty()) {
+            parserState.entries.add(parserState.currentEntry);
         }
-        return entries;
+        return parserState.entries;
     }
 
-    @NotNull
-    private ProgrammingExerciseGitDiffEntry handleUnchanged(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, String currentPreviousFilePath,
-            ProgrammingExerciseGitDiffEntry currentEntry) {
-        var entry = currentEntry;
+    private void handleNewDiffBlock(String[] lines, int currentLine, ParserState parserState, Matcher lineMatcher) {
+        if (!parserState.currentEntry.isEmpty()) {
+            parserState.entries.add(parserState.currentEntry);
+        }
+        // Start of a new file
+        var newFilePath = getFilePath(lines, currentLine);
+        var newPreviousFilePath = getPreviousFilePath(lines, currentLine);
+        if (newFilePath != null || newPreviousFilePath != null) {
+            parserState.currentFilePath = newFilePath;
+            parserState.currentPreviousFilePath = newPreviousFilePath;
+        }
+        parserState.currentEntry = new ProgrammingExerciseGitDiffEntry();
+        parserState.currentEntry.setFilePath(parserState.currentFilePath);
+        parserState.currentEntry.setPreviousFilePath(parserState.currentPreviousFilePath);
+        parserState.currentLineCount = Integer.parseInt(lineMatcher.group("newLine"));
+        parserState.currentPreviousLineCount = Integer.parseInt(lineMatcher.group("previousLine"));
+        parserState.deactivateCodeReading = false;
+    }
+
+    private void handleUnchanged(ParserState parserState) {
+        var entry = parserState.currentEntry;
         if (!entry.isEmpty()) {
-            entries.add(entry);
+            parserState.entries.add(entry);
         }
         entry = new ProgrammingExerciseGitDiffEntry();
-        entry.setFilePath(currentFilePath);
-        entry.setPreviousFilePath(currentPreviousFilePath);
-        return entry;
+        entry.setFilePath(parserState.currentFilePath);
+        entry.setPreviousFilePath(parserState.currentPreviousFilePath);
+
+        parserState.currentEntry = entry;
+        parserState.lastLineRemoveOperation = false;
+        parserState.currentLineCount++;
+        parserState.currentPreviousLineCount++;
     }
 
-    @NotNull
-    private ProgrammingExerciseGitDiffEntry handleRemoval(List<ProgrammingExerciseGitDiffEntry> entries, String currentFilePath, String currentPreviousFilePath,
-            ProgrammingExerciseGitDiffEntry currentEntry, boolean lastLineRemoveOperation, int currentPreviousLineCount) {
-        var entry = currentEntry;
-        if (!lastLineRemoveOperation && !entry.isEmpty()) {
-            entries.add(entry);
+    private void handleRemoval(ParserState parserState) {
+        var entry = parserState.currentEntry;
+        if (!parserState.lastLineRemoveOperation && !entry.isEmpty()) {
+            parserState.entries.add(entry);
             entry = new ProgrammingExerciseGitDiffEntry();
-            entry.setFilePath(currentFilePath);
-            entry.setPreviousFilePath(currentPreviousFilePath);
+            entry.setFilePath(parserState.currentFilePath);
+            entry.setPreviousFilePath(parserState.currentPreviousFilePath);
         }
         if (entry.getPreviousLineCount() == null) {
             entry.setPreviousLineCount(0);
-            entry.setPreviousStartLine(currentPreviousLineCount);
+            entry.setPreviousStartLine(parserState.currentPreviousLineCount);
         }
         entry.setPreviousLineCount(entry.getPreviousLineCount() + 1);
-        return entry;
+
+        parserState.currentEntry = entry;
+        parserState.lastLineRemoveOperation = true;
+        parserState.currentPreviousLineCount++;
     }
 
-    private void handleAddition(ProgrammingExerciseGitDiffEntry currentEntry, int currentLineCount) {
-        if (currentEntry.getLineCount() == null) {
-            currentEntry.setLineCount(0);
-            currentEntry.setStartLine(currentLineCount);
+    private void handleAddition(ParserState parserState) {
+        if (parserState.currentEntry.getLineCount() == null) {
+            parserState.currentEntry.setLineCount(0);
+            parserState.currentEntry.setStartLine(parserState.currentLineCount);
         }
-        currentEntry.setLineCount(currentEntry.getLineCount() + 1);
+        parserState.currentEntry.setLineCount(parserState.currentEntry.getLineCount() + 1);
+
+        parserState.lastLineRemoveOperation = false;
+        parserState.currentLineCount++;
     }
 
     /**
@@ -383,5 +372,38 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private boolean canUseExistingReport(ProgrammingExerciseGitDiffReport report, String templateHash, String solutionHash) {
         return report.getTemplateRepositoryCommitHash().equals(templateHash) && report.getSolutionRepositoryCommitHash().equals(solutionHash);
+    }
+
+    /**
+     * Helper class for parsing the raw git-diff
+     */
+    private static class ParserState {
+
+        private ArrayList<ProgrammingExerciseGitDiffEntry> entries;
+
+        private String currentFilePath;
+
+        private String currentPreviousFilePath;
+
+        private ProgrammingExerciseGitDiffEntry currentEntry;
+
+        private boolean deactivateCodeReading;
+
+        private boolean lastLineRemoveOperation;
+
+        private int currentLineCount;
+
+        private int currentPreviousLineCount;
+
+        public ParserState() {
+            entries = new ArrayList<>();
+            currentFilePath = null;
+            currentPreviousFilePath = null;
+            currentEntry = new ProgrammingExerciseGitDiffEntry();
+            deactivateCodeReading = true;
+            lastLineRemoveOperation = false;
+            currentLineCount = 0;
+            currentPreviousLineCount = 0;
+        }
     }
 }

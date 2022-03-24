@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto.hestia;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -70,6 +71,7 @@ public class ProgrammingExerciseFullGitDiffEntryDTO {
         this.code = code;
     }
 
+    @JsonIgnore
     public boolean isEmpty() {
         return code == null && previousCode == null;
     }

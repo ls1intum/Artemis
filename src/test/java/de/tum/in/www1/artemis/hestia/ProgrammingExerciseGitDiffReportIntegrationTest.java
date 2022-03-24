@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
-import de.tum.in.www1.artemis.util.HestiaUtilService;
+import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.hestia.ProgrammingExerciseFullGitDiffReportDTO;
@@ -33,7 +33,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     private ProgrammingExercise exercise;
 
     @Autowired
-    private HestiaUtilService hestiaUtilService;
+    private HestiaUtilTestService hestiaUtilTestService;
 
     @Autowired
     private ProgrammingExerciseGitDiffReportService reportService;
@@ -53,8 +53,8 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getGitDiffAsAStudent() throws Exception {
-        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.FORBIDDEN, ProgrammingExerciseGitDiffReport.class);
     }
@@ -62,8 +62,8 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getGitDiffAsATutor() throws Exception {
-        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.FORBIDDEN, ProgrammingExerciseGitDiffReport.class);
     }
@@ -71,8 +71,8 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void getGitDiffAsAnEditor() throws Exception {
-        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
     }
@@ -80,8 +80,8 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getGitDiffAsAnInstructor() throws Exception {
-        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
     }
@@ -89,8 +89,8 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getFullGitDiffAsAStudent() throws Exception {
-        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/full-diff-report", HttpStatus.FORBIDDEN, ProgrammingExerciseFullGitDiffReportDTO.class);
     }
@@ -98,8 +98,8 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getFullGitDiffAsATutor() throws Exception {
-        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/full-diff-report", HttpStatus.FORBIDDEN, ProgrammingExerciseFullGitDiffReportDTO.class);
     }
@@ -107,8 +107,8 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void getFullGitDiffAsAnEditor() throws Exception {
-        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/full-diff-report", HttpStatus.OK, ProgrammingExerciseFullGitDiffReportDTO.class);
     }
@@ -116,8 +116,8 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getFullGitDiffAsAnInstructor() throws Exception {
-        exercise = hestiaUtilService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
-        exercise = hestiaUtilService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/full-diff-report", HttpStatus.OK, ProgrammingExerciseFullGitDiffReportDTO.class);
     }

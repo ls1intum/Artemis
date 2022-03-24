@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * REST controller for managing ProgrammingExerciseGitDiffReports and its entries.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ProgrammingExerciseGitDiffReportResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGitDiffReportResource.class);

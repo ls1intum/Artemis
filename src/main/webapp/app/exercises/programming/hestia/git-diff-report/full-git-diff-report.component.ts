@@ -16,10 +16,12 @@ export class FullGitDiffReportComponent implements OnInit {
 
     ngOnInit(): void {
         this.entries = this.report.entries.sort((a, b) => {
-            if (a.filePath < b.filePath) {
+            const filePathA = a.filePath ?? a.previousFilePath;
+            const filePathB = b.filePath ?? b.previousFilePath;
+            if (filePathA < filePathB) {
                 return -1;
             }
-            if (a.filePath > b.filePath) {
+            if (filePathA > filePathB) {
                 return 1;
             }
             return (a.line ?? a.previousLine ?? 0) - (b.line ?? b.previousLine ?? 0);

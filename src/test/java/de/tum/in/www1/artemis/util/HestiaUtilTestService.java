@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
  * In the future this service will be extended to make testing of the code hint generation easier.
  */
 @Service
-public class HestiaUtilService {
+public class HestiaUtilTestService {
 
     @Autowired
     private GitService gitService;

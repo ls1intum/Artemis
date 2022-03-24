@@ -192,7 +192,18 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
 
-        // Update the git-diff of the programming exercise when the push was to a solution or template repository
+        updateGitDiffReport(programmingExerciseParticipation);
+
+        // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
+        return programmingSubmission;
+    }
+
+    /**
+     * Update the git-diff of the programming exercise when the push was to a solution or template repository
+     *
+     * @param programmingExerciseParticipation The participation
+     */
+    private void updateGitDiffReport(ProgrammingExerciseParticipation programmingExerciseParticipation) {
         if (programmingExerciseParticipation instanceof TemplateProgrammingExerciseParticipation
                 || programmingExerciseParticipation instanceof SolutionProgrammingExerciseParticipation) {
             try {
@@ -202,9 +213,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 log.error("Unable to update git-diff for programming exercise " + programmingExerciseParticipation.getProgrammingExercise().getId(), e);
             }
         }
-
-        // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
-        return programmingSubmission;
     }
 
     /**
