@@ -33,6 +33,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Value("${server.url}")
     protected String artemisServerUrl;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
+
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @SpyBean
     protected LtiService ltiService;
@@ -54,6 +57,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected JavaMailSender javaMailSender;
+
+    @SpyBean
+    protected MailService mailService;
 
     @SpyBean
     protected WebsocketMessagingService websocketMessagingService;
@@ -97,7 +103,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, programmingSubmissionService,
                 examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService,
-                scheduleService, javaMailSender);
+                scheduleService, javaMailSender, mailService);
     }
 
     @Override
