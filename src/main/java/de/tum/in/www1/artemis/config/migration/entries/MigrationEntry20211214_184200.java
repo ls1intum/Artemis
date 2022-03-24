@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.user.LegacyPasswordService;
 @Component
 public class MigrationEntry20211214_184200 extends MigrationEntry {
 
-    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20211214_184200.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MigrationEntry20211214_184200.class);
 
     private final UserRepository userRepository;
 
@@ -37,7 +37,7 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
         int listSize = 100;
         // false is the default value so if they were already set to true, this migration probably runs on a fresh system
         List<User> users = userRepository.findAllByInternal(false);
-        log.info("Found {} users to process with `User.isInternal=false`.", users.size());
+        LOGGER.info("Found {} users to process with `User.isInternal=false`.", users.size());
         int remainder = users.size() % listSize;
         int listCount = (int) Math.floor(users.size() / 100f);
         for (int i = 0; i < listCount; i++) {

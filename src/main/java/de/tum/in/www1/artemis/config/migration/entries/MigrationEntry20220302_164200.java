@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 @Component
 public class MigrationEntry20220302_164200 extends MigrationEntry {
 
-    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20220302_164200.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MigrationEntry20220302_164200.class);
 
     private final UserRepository userRepository;
 
@@ -34,7 +34,7 @@ public class MigrationEntry20220302_164200 extends MigrationEntry {
     @Override
     public void execute() {
         List<User> users = userRepository.findAll();
-        log.info("Found {} users to process.", users.size());
+        LOGGER.info("Found {} users to process.", users.size());
         Lists.partition(users, 100).forEach(list -> {
             list.forEach(this::processUser);
             userRepository.saveAll(list);
