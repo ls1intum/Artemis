@@ -367,13 +367,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditQuizExercise_SingleChoiceMC() throws Exception {
+    public void testEditQuizExercise_SingleChoiceMC_AllOrNothing() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        mc.setScoringType(ScoringType.SINGLE_CHOICE);
+        mc.setSingleChoice(true);
+        mc.setScoringType(ScoringType.ALL_OR_NOTHING);
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
-        assertThat(quizExercise.getQuizQuestions().get(0).getScoringType()).as("Scoring type was changed").isEqualTo(ScoringType.SINGLE_CHOICE);
+        assertThat(quizExercise.getQuizQuestions().get(0).getScoringType()).as("Scoring type was changed").isEqualTo(ScoringType.ALL_OR_NOTHING);
 
         // multiple correct answers are not allowed
         mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
@@ -383,21 +384,23 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditQuizExercise_SingleChoiceDD() throws Exception {
+    public void testEditQuizExercise_SingleChoiceMC_Proportional() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
-        DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
-        dnd.setScoringType(ScoringType.SINGLE_CHOICE);
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setSingleChoice(true);
+        mc.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditQuizExercise_SingleChoiceSA() throws Exception {
+    public void testEditQuizExercise_SingleChoiceMC_ProportionalPenalty() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
-        ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
-        sa.setScoringType(ScoringType.SINGLE_CHOICE);
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setSingleChoice(true);
+        mc.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 

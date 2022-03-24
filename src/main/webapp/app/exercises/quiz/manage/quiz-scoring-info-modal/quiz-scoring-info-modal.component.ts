@@ -11,9 +11,6 @@ export class QuizScoringInfoModalComponent implements OnInit {
     farQuestionCircle = faQuestionCircle;
     constructor(private modalService: NgbModal) {}
 
-    @Input()
-    hasSingleChoice = false;
-
     /**
      * Do nothing on init.
      */

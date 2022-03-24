@@ -731,12 +731,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizExercise.duration(60);
         quizExercise.setIsPlannedToStart(true);
         quizExercise.setIsVisibleBeforeStart(true);
-        quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> {
-            // SINGLE_CHOICE is only valid for multiple choice questions
-            if (scoringType != ScoringType.SINGLE_CHOICE || quizQuestion instanceof MultipleChoiceQuestion) {
-                quizQuestion.setScoringType(scoringType);
-            }
-        }).collect(Collectors.toList()));
+        quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> quizQuestion.setScoringType(scoringType)).collect(Collectors.toList()));
         quizExercise = quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = new QuizSubmission();
@@ -765,7 +760,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         var resultString = switch (scoringType) {
             case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> "0 of 9 points";
             case PROPORTIONAL_WITHOUT_PENALTY -> "4 of 9 points";
-            case SINGLE_CHOICE -> "1 of 9 points";
         };
         assertThat(result.getResultString()).isEqualTo(resultString);
     }

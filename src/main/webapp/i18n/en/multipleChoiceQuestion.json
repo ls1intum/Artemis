@@ -17,6 +17,7 @@
             },
             "answerOptions": "Answer Options",
             "randomizeOrder": "Present Answer Options in Random Order",
+            "singleChoice": "Single Choice Mode",
             "scoringType": "Type / Scoring",
             "answer": "Answer",
             "solution": "Solution",

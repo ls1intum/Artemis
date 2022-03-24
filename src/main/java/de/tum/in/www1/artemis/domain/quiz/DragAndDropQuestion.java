@@ -133,11 +133,6 @@ public class DragAndDropQuestion extends QuizQuestion {
             return false;
         }
 
-        // only MC questions can be SINGLE_CHOICE
-        if (getScoringType() == ScoringType.SINGLE_CHOICE) {
-            return false;
-        }
-
         // check if at least one correct mapping exists
         return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
 
@@ -428,7 +423,6 @@ public class DragAndDropQuestion extends QuizQuestion {
             case ALL_OR_NOTHING -> new ScoringStrategyDragAndDropAllOrNothing();
             case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyDragAndDropProportionalWithPenalty();
             case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyDragAndDropProportionalWithoutPenalty();
-            case SINGLE_CHOICE -> throw new IllegalStateException("A drag and drop question cannot have the ScoringType SINGLE_CHOICE");
         };
     }
 

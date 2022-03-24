@@ -85,7 +85,7 @@ export abstract class QuizExerciseValidationDirective {
                     const mcQuestion = question as MultipleChoiceQuestion;
                     const correctOptions = mcQuestion.answerOptions!.filter((answerOption) => answerOption.isCorrect).length;
                     return (
-                        (mcQuestion.scoringType === ScoringType.SINGLE_CHOICE ? correctOptions === 1 : correctOptions > 0) &&
+                        (mcQuestion.singleChoice ? correctOptions === 1 : correctOptions > 0) &&
                         question.title &&
                         question.title !== '' &&
                         question.title.length < this.maxLengthThreshold &&
@@ -95,7 +95,6 @@ export abstract class QuizExerciseValidationDirective {
                                 (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
                         )
                     );
-                    break;
                 }
                 case QuizQuestionType.DRAG_AND_DROP: {
                     const dndQuestion = question as DragAndDropQuestion;
@@ -237,7 +236,7 @@ export abstract class QuizExerciseValidationDirective {
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (mcQuestion.scoringType === ScoringType.SINGLE_CHOICE && correctOptions > 1) {
+                if (mcQuestion.singleChoice && correctOptions > 1) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.questionSingleChoiceCorrectAnswerOptions',
                         translateValues: { index: index + 1 },

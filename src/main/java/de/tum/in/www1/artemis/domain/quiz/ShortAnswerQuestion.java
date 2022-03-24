@@ -125,11 +125,6 @@ public class ShortAnswerQuestion extends QuizQuestion {
             return false;
         }
 
-        // only MC questions can be SINGLE_CHOICE
-        if (getScoringType() == ScoringType.SINGLE_CHOICE) {
-            return false;
-        }
-
         // check if at least one correct mapping exists and if similarity values are in the allowed range
         return getCorrectMappings() != null && !getCorrectMappings().isEmpty() && getSimilarityValue() >= 50 && getSimilarityValue() <= 100;
 
@@ -352,7 +347,6 @@ public class ShortAnswerQuestion extends QuizQuestion {
             case ALL_OR_NOTHING -> new ScoringStrategyShortAnswerAllOrNothing();
             case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyShortAnswerProportionalWithPenalty();
             case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyShortAnswerProportionalWithoutPenalty();
-            case SINGLE_CHOICE -> throw new IllegalStateException("A short answer question cannot have the ScoringType SINGLE_CHOICE");
         };
     }
 

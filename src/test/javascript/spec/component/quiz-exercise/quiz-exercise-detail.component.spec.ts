@@ -1003,7 +1003,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should be valid if MC question has scoring type single choice', () => {
                 const { question } = createValidMCQuestion();
-                question.scoringType = ScoringType.SINGLE_CHOICE;
+                question.singleChoice = true;
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(true);
@@ -1011,7 +1011,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if MC single choice question has multiple correct answers', () => {
                 const { question } = createValidMCQuestion();
-                question.scoringType = ScoringType.SINGLE_CHOICE;
+                question.singleChoice = true;
                 question.answerOptions![1]!.isCorrect = true;
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();

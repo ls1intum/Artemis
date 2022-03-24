@@ -167,7 +167,7 @@ describe('MultipleChoiceQuestionComponent', () => {
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
     });
 
-    it('should toggle answer options, but only allow one to be selected for SINGLE_CHOICE questions', () => {
+    it('should toggle answer options, but only allow one to be selected for single choice questions', () => {
         const answerOptions: AnswerOption[] = [
             { id: 1, invalid: false },
             { id: 2, invalid: false },
@@ -179,7 +179,8 @@ describe('MultipleChoiceQuestionComponent', () => {
             randomizeOrder: true,
             invalid: false,
             answerOptions,
-            scoringType: ScoringType.SINGLE_CHOICE,
+            scoringType: ScoringType.ALL_OR_NOTHING,
+            singleChoice: true
         };
 
         component.selectedAnswerOptions = [];

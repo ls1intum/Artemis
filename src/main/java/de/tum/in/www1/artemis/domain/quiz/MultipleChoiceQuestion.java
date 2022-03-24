@@ -31,12 +31,24 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
+    @Column(name = "single_choice")
+    @JsonView(QuizView.Before.class)
+    private boolean singleChoice = false;
+
     public List<AnswerOption> getAnswerOptions() {
         return answerOptions;
     }
 
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
         this.answerOptions = answerOptions;
+    }
+
+    public boolean isSingleChoice() {
+        return singleChoice;
+    }
+
+    public void setSingleChoice(boolean singleChoice) {
+        this.singleChoice = singleChoice;
     }
 
     /**
@@ -174,6 +186,11 @@ public class MultipleChoiceQuestion extends QuizQuestion {
             return false;
         }
 
+        // if there is only a single correct answer only ALL_OR_NOTHING scoring makes sense
+        if (isSingleChoice() && getScoringType() != ScoringType.ALL_OR_NOTHING) {
+            return false;
+        }
+
         int correctAnswerCount = 0;
 
         // check answer options
@@ -185,7 +202,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
             }
         }
 
-        return getScoringType() == ScoringType.SINGLE_CHOICE ? correctAnswerCount == 1 : correctAnswerCount > 0;
+        return isSingleChoice() ? correctAnswerCount == 1 : correctAnswerCount > 0;
     }
 
     /**
@@ -196,7 +213,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @Override
     public ScoringStrategy makeScoringStrategy() {
         return switch (getScoringType()) {
-            case ALL_OR_NOTHING, SINGLE_CHOICE -> new ScoringStrategyMultipleChoiceAllOrNothing();
+            case ALL_OR_NOTHING -> new ScoringStrategyMultipleChoiceAllOrNothing();
             case PROPORTIONAL_WITH_PENALTY -> new ScoringStrategyMultipleChoiceProportionalWithPenalty();
             case PROPORTIONAL_WITHOUT_PENALTY -> new ScoringStrategyMultipleChoiceProportionalWithoutPenalty();
         };
