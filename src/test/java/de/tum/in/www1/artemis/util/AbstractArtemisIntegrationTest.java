@@ -33,6 +33,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Value("${server.url}")
     protected String artemisServerUrl;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
+
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @SpyBean
     protected LtiService ltiService;
