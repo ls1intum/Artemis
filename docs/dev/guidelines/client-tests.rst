@@ -252,48 +252,46 @@ Some guidelines:
 
 8. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the codebase without the tests failing. For example :code:`toBe(5)` is better than :code:`not.toBeUndefined()`, which would also pass if the value wrongly changes to 6.
 
-9. When expecting results use :code:`expect` for client tests. That call **must** be followed by another assertion statement like :code:`toBe(true)`. It is best practice to use more specific expect statements rather than always expecting boolean values. It is also recommended to extract as much as possible from the `expect` statement.
+9. When expecting results use :code:`expect` for client tests. That call **must** be followed by another assertion statement like :code:`toBeTrue()`. It is best practice to use more specific expect statements rather than always expecting boolean values. It is also recommended to extract as much as possible from the `expect` statement.
 
     For example, instead of
 
     .. code:: ts
 
-        expect(course == undefined).toBe(true);
+        expect(course == undefined).toBeTrue();
         expect(courseList.length).toBe(4);
 
     extract as much as possible:
 
     .. code:: ts
 
-        expect(course).toBe(undefined);
+        expect(course).toBeUndefined();
         expect(courseList).toHaveLength(4);
 
-10. If you have minimized :code:`expect` and can choose between multiple verification functions providing the same functionality, choose the most generic one. This way we will use as few functions as possible. For example prefer :code:`toBe(true)` and :code:`toBe(false)` over :code:`toBeTrue()` and :code:`toBeFalse()`.
+10. If you have minimized :code:`expect`, use the verification function that provides the most meaningful error message in case the verification fails. You can use verification functions from core Jest <https://jestjs.io/docs/expect> or from Jest Extended <https://github.com/jest-community/jest-extended#api>.
 
-11. Use `Jest <https://jestjs.io/docs/expect>`__ whenever possible. Use `Jest Extended <https://github.com/jest-community/jest-extended#api>`_ only if it shortens the expect statements considerably and makes it more readable.
-
-12. For situations described below, only use the uniform solution to keep the codebase as consistent as possible.
+11. For situations described below, only use the uniform solution to keep the codebase as consistent as possible.
 
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | Situation                                              | Solution                                                        |
   +========================================================+=================================================================+
-  | Expecting a boolean value                              | :code:`expect(value).toBe(true);`                               |
-  |                                                        |                                                                 |
-  |                                                        | :code:`expect(value).toBe(false);`                              |
+  | Expecting a boolean value                              | :code:`expect(value).toBeTrue();`                               |
+  |                                                        | :code:`expect(value).toBeFalse();`                              |
+  |                                                        | :code:`expect(value).toBeBoolean();`                            |
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | Two objects should be the same reference               | :code:`expect(object).toBe(referenceObject);`                   |
   +--------------------------------------------------------+-----------------------------------------------------------------+
-  | A CSS element should exist                             | :code:`expect(element).not.toBe(null);`                         |
+  | A CSS element should exist                             | :code:`expect(element).not.toBeNull();`                         |
   |                                                        |                                                                 |
-  | A CSS element should not exists                        | :code:`expect(element).toBe(null);`                             |
+  | A CSS element should not exists                        | :code:`expect(element).toBeNull();`                             |
   +--------------------------------------------------------+-----------------------------------------------------------------+
-  | A value should be undefined                            | :code:`expect(value).toBe(undefined);`                          |
+  | A value should be undefined                            | :code:`expect(value).toBeUndefined();`                          |
   +--------------------------------------------------------+-----------------------------------------------------------------+
-  | A value should be either null or undefined             | Use :code:`expect(value).toBe(undefined);` for internal calls.  |
+  | A value should be either null or undefined             | Use :code:`expect(value).toBeUndefined();` for internal calls.  |
   |                                                        |                                                                 |
   |                                                        | If an external library uses null value, use                     |
-  |                                                        | :code:`expect(value).toBe(null);` and if not avoidable          |
-  |                                                        | :code:`expect(value).not.toBe(null);`.                          |
+  |                                                        | :code:`expect(value).toBeNull();` and if not avoidable          |
+  |                                                        | :code:`expect(value).not.toBeNull();`.                          |
   |                                                        |                                                                 |
   |                                                        | **Never use** :code:`expect(value).not.toBeDefined()`           |
   |                                                        | or :code:`expect(value).toBeNil()` as they might not catch all  |
@@ -313,4 +311,8 @@ Some guidelines:
   | A spy should not have been called                      | :code:`expect(spy).not.toHaveBeenCalled();`                     |
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | A spy should have been called once                     | :code:`expect(spy).toHaveBeenCalledTimes(1);`                   |
+  +--------------------------------------------------------+-----------------------------------------------------------------+
+  | A spy should have been called with a value             | Always test the number of calls as well:                        |
+  |                                                        | :code:`expect(spy).toHaveBeenCalledTimes(1);`                   |
+  |                                                        | :code:`expect(spy).toHaveBeenCalledWith(value);`                |
   +--------------------------------------------------------+-----------------------------------------------------------------+
