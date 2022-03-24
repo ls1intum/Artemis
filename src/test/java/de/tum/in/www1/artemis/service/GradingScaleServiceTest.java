@@ -104,13 +104,7 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMatchPercentageToGradeStepValidMappingExists() {
-        GradeStep expectedGradeStep = new GradeStep();
-        expectedGradeStep.setIsPassingGrade(true);
-        expectedGradeStep.setGradeName("Pass");
-        expectedGradeStep.setLowerBoundPercentage(60);
-        expectedGradeStep.setUpperBoundPercentage(90);
-        expectedGradeStep.setGradingScale(gradingScale);
-        gradingScale.setGradeSteps(Set.of(expectedGradeStep));
+        GradeStep expectedGradeStep = createCustomGradeStep("Pass", 60, 90);
         gradingScaleRepository.save(gradingScale);
         Long gradingScaleId = gradingScaleRepository.findAll().get(0).getId();
 
@@ -121,20 +115,26 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(gradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(expectedGradeStep);
     }
 
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(doubles = { 125, 160 })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testMatchPercentageToGradeStepWithBonusPoints(double bonusPercentage) {
+        GradeStep expectedGradeStep = createCustomGradeStep("🐧", 100, 150);
+        gradingScaleRepository.save(gradingScale);
+        Long gradingScaleId = gradingScaleRepository.findAll().get(0).getId();
+
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(bonusPercentage, gradingScaleId);
+
+        assertThat(gradeStep).usingRecursiveComparison().ignoringFields("gradingScale", "id").isEqualTo(expectedGradeStep);
+    }
+
     /**
      * Test saving of an invalid grading scale - missing grade names
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleInvalidGradeStepsNoGradeName() {
-        gradingScale.setCourse(course);
-        GradeStep gradeStep = new GradeStep();
-        gradeStep.setIsPassingGrade(true);
-        gradeStep.setGradeName("");
-        gradeStep.setLowerBoundPercentage(70);
-        gradeStep.setUpperBoundPercentage(95);
-        gradeStep.setGradingScale(gradingScale);
-        gradingScale.setGradeSteps(Set.of(gradeStep));
+        createCustomGradeStep("", 70, 95);
 
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> gradingScaleService.saveGradingScale(gradingScale));
 
@@ -149,20 +149,25 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveGradingScaleInvalidGradeStepsInvalidPercentageValues() {
-        GradeStep gradeStep = new GradeStep();
-        gradeStep.setIsPassingGrade(true);
-        gradeStep.setGradeName("Name");
-        gradeStep.setLowerBoundPercentage(90);
-        gradeStep.setUpperBoundPercentage(80);
-        gradeStep.setGradingScale(gradingScale);
-        gradingScale.setGradeSteps(Set.of(gradeStep));
-        gradingScale.setCourse(course);
+        createCustomGradeStep("Name", 90, 80);
 
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> gradingScaleService.saveGradingScale(gradingScale));
 
         assertThat(exception.getMessage()).isEqualTo("Not all grade steps are following the correct format.");
         assertThat(exception.getEntityName()).isEqualTo("gradeStep");
         assertThat(exception.getErrorKey()).isEqualTo("invalidGradeStepFormat");
+    }
+
+    private GradeStep createCustomGradeStep(String gradeName, double lowerBound, double upperBound) {
+        GradeStep gradeStep = new GradeStep();
+        gradeStep.setIsPassingGrade(true);
+        gradeStep.setGradeName(gradeName);
+        gradeStep.setLowerBoundPercentage(lowerBound);
+        gradeStep.setUpperBoundPercentage(upperBound);
+        gradeStep.setGradingScale(gradingScale);
+        gradingScale.setGradeSteps(Set.of(gradeStep));
+        gradingScale.setCourse(course);
+        return gradeStep;
     }
 
     /**
