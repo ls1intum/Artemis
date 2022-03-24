@@ -448,9 +448,9 @@ In a production setup, you have to at least change the user credentials (in the 
 
 2. You can now deploy Jenkins. A ``src/main/docker/gitlab-jenkins-mysql.yml`` file is provided which deploys the Jenkins, Gitlab, and Mysql containers bound to static ip addresses. You can deploy them by running:
 
-  ::
+    ::
 
-      JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
+        JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
 
     Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
