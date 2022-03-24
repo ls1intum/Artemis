@@ -63,7 +63,7 @@ export class GradingKeyOverviewComponent implements OnInit {
                 }
             });
         });
-        this.route.queryParams.subscribe((queryParams) => {
+        this.route.parent?.parent?.queryParams.subscribe((queryParams) => {
             this.studentGrade = queryParams['grade'];
         });
     }
