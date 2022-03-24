@@ -182,7 +182,7 @@ Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-se
 
    ::
 
-        docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_user, :read_api, :read_repository, :write_repository, :sudo], name: 'Artemis Admin Token'); token.set_token('artemis-gitlab-token'); token.save\!"
+        docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_user, :read_api, :read_repository, :write_repository, :sudo], name: 'Artemis Admin Token'); token.set_token('artemis-gitlab-token'); token.save!"
 
    | You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens`` and generate a token with all scopes.
    | Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
@@ -442,7 +442,7 @@ In a production setup, you have to at least change the user credentials (in the 
 
   ::
 
-      docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_repository], name: 'Jenkins'); token.set_token('jenkins-gitlab-token'); token.save\!"
+      docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_repository], name: 'Jenkins'); token.set_token('jenkins-gitlab-token'); token.save!"
 
 
 
@@ -452,7 +452,7 @@ In a production setup, you have to at least change the user credentials (in the 
 
        JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
 
- Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
+    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
 3. You need to generate the `ci-token` and `secret-push-token`.
    If you used the preset ``master.key`` within the file ``gitlab-jenkins-mysql.yml``, you can skip this step.
