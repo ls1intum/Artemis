@@ -194,7 +194,7 @@ Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-se
 
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
 
-    This script can also generate random access tokens, which should be used in a production setup. Change the variabe ``$GENERATE_ACCESS_TOKENS`` to ``true`` to generate the random tokens and insert them into the Artemis configuration file.
+   This script can also generate random access tokens, which should be used in a production setup. Change the variabe ``$GENERATE_ACCESS_TOKENS`` to ``true`` to generate the random tokens and insert them into the Artemis configuration file.
 
 6. You're done! Follow the `Automated Jenkins Server Setup <#automated-jenkins-server-setup>`__ section for configuring Jenkins.
 
