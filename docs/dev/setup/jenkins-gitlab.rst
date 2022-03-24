@@ -479,7 +479,7 @@ In a production setup, you have to at least change the user credentials (in the 
                 vcs-credentials: artemis_gitlab_admin_credentials
                 artemis-authentication-token-key: artemis_notification_plugin_token
                 artemis-authentication-token-value: artemis_admin
-                secret-push-token: # generated in step 8
+                secret-push-token: # generated in step 3
 
 5. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
     Again, if you are using a development setup, the template in the beginning of this page already contains the correct values.
