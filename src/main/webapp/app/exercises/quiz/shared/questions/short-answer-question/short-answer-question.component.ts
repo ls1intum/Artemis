@@ -174,7 +174,6 @@ export class ShortAnswerQuestionComponent {
         return sampleSolution !== '' ? sampleSolution.length + 2 : 5;
     }
 
-
     /**
      * Returns the text that should be shown for the given spot tag
      * @param spotTag Spot tag for which to get the text

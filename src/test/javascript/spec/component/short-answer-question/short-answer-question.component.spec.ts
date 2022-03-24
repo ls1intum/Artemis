@@ -177,7 +177,7 @@ describe('ShortAnswerQuestionComponent', () => {
 
         component.shortAnswerQuestion = alternativeQuestion;
         expect(component.classifyInputField(tag)).toStrictEqual('completely-correct');
-        submittedText.text += "!"
+        submittedText.text += '!';
         expect(component.classifyInputField(tag)).toStrictEqual('correct');
         component.shortAnswerQuestion.correctMappings = [];
         expect(component.classifyInputField(tag)).toStrictEqual('correct');

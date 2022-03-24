@@ -38,7 +38,7 @@
                     [ngbTooltip]="classifyInputField(element) === 'invalid' ? ('artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate) : undefined"
                 >
                     <input
-                        class="short-answer-question-container__input {{classifyInputField(element)}}"
+                        class="short-answer-question-container__input {{ classifyInputField(element) }}"
                         disabled
                         value="{{ getTextForSpotAsString(element) }}"
                         size="{{ getSizeForSpot(element) }}"
