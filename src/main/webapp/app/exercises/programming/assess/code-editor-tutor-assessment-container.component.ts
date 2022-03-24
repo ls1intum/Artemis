@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -120,22 +120,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private programmingExerciseService: ProgrammingExerciseService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
-    }
-
-    @HostListener('document:keydown.control.s', ['$event'])
-    saveOnControlAndS(event: KeyboardEvent) {
-        event.preventDefault();
-        this.save();
-    }
-    @HostListener('document:keydown.control.enter', ['$event'])
-    submitOnControlAndEnter(event: KeyboardEvent) {
-        event.preventDefault();
-        this.submit();
-    }
-    @HostListener('document:keydown.control.n', ['$event'])
-    nextSubmissionOnControlAndN(event: KeyboardEvent) {
-        event.preventDefault();
-        this.nextSubmission();
     }
 
     /**

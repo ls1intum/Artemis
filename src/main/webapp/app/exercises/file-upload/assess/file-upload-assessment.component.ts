@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -96,22 +96,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     ) {
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
-    }
-
-    @HostListener('document:keydown.control.s', ['$event'])
-    saveOnControlAndS(event: KeyboardEvent) {
-        event.preventDefault();
-        this.onSaveAssessment();
-    }
-    @HostListener('document:keydown.control.enter', ['$event'])
-    submitOnControlAndEnter(event: KeyboardEvent) {
-        event.preventDefault();
-        this.onSubmitAssessment();
-    }
-    @HostListener('document:keydown.control.n', ['$event'])
-    nextSubmissionOnControlAndN(event: KeyboardEvent) {
-        event.preventDefault();
-        this.assessNext();
     }
 
     get assessments(): Feedback[] {

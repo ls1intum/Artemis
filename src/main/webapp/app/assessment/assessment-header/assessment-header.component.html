@@ -145,10 +145,11 @@
         <div class="d-flex flex-wrap flex-lg-nowrap">
             <ng-container *ngIf="!result?.completionDate">
                 <button
+                    id="save"
                     class="btn m-1 btn-primary"
                     (click)="save.emit()"
                     [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
-                    [ngbTooltip]="'Ctrl S'"
+                    [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
                 >
                     <fa-icon *ngIf="saveBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                     <fa-icon [icon]="faSave"></fa-icon>
@@ -159,7 +160,7 @@
                     class="btn m-1 btn-success"
                     (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
                     [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
-                    [ngbTooltip]="'Ctrl Enter'"
+                    [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                 >
                     <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                     <span jhiTranslate="entity.action.submit">Submit</span>
@@ -175,11 +176,12 @@
                 </button>
             </ng-container>
             <button
+                id="override"
                 class="btn m-1 btn-danger"
                 *ngIf="result?.completionDate && canOverride"
                 (click)="submit.emit()"
                 [disabled]="!assessmentsAreValid || submitBusy"
-                [ngbTooltip]="'Ctrl Enter'"
+                [ngbTooltip]="'Ctrl + Enter'"
             >
                 <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
@@ -193,13 +195,14 @@
                 <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission">Use as Example Submission</span>
             </button>
+            <ng-template #nextSubmissionShortcut>{{ 'artemisApp.assessment.button.control' | artemisTranslate }} + Shift + <fa-icon [icon]="faArrowRight"></fa-icon></ng-template>
             <button
                 class="btn m-1 btn-success"
                 id="assessNextButton"
                 *ngIf="result?.completionDate && (isAssessor || exercise?.isAtLeastInstructor) && !hasComplaint && !isTeamMode && !isTestRun"
                 [disabled]="nextSubmissionBusy || submitBusy"
                 (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
-                [ngbTooltip]="'Ctrl N'"
+                [ngbTooltip]="nextSubmissionShortcut"
             >
                 <fa-icon *ngIf="nextSubmissionBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.nextSubmission">Next Submission</span>

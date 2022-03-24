@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -91,22 +91,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
     ) {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
-    }
-
-    @HostListener('document:keydown.control.s', ['$event'])
-    saveOnControlAndS(event: KeyboardEvent) {
-        event.preventDefault();
-        this.onSaveAssessment();
-    }
-    @HostListener('document:keydown.control.enter', ['$event'])
-    submitOnControlAndEnter(event: KeyboardEvent) {
-        event.preventDefault();
-        this.onSubmitAssessment();
-    }
-    @HostListener('document:keydown.control.n', ['$event'])
-    nextSubmissionOnControlAndN(event: KeyboardEvent) {
-        event.preventDefault();
-        this.assessNext();
     }
 
     private get feedback(): Feedback[] {

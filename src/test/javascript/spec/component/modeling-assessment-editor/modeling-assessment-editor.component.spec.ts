@@ -420,6 +420,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(serviceSpy).toHaveBeenCalledTimes(1);
         }));
     });
+
     it('should invoke import example submission', () => {
         const course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
@@ -437,35 +438,5 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         expect(importSpy).toHaveBeenCalledTimes(1);
         expect(importSpy).toHaveBeenCalledWith(component.submission.id, component.modelingExercise!.id);
-    });
-
-    it('should call save assessment on control and s', () => {
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
-        const spyOnControlAndS = jest.spyOn(component, 'saveOnControlAndS');
-        const saveStub = jest.spyOn(component, 'onSaveAssessment').mockImplementation();
-        document.dispatchEvent(eventMock);
-
-        expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
-        expect(saveStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should call submit assessment on control and enter', () => {
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
-        const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
-        const submitStub = jest.spyOn(component, 'onSubmitAssessment').mockImplementation();
-        document.dispatchEvent(eventMock);
-
-        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
-        expect(submitStub).toHaveBeenCalledTimes(1);
-    });
-
-    it('should call assess next on control and n', () => {
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'n' });
-        const spyOnControlAndN = jest.spyOn(component, 'nextSubmissionOnControlAndN');
-        const nextStub = jest.spyOn(component, 'assessNext').mockImplementation();
-        document.dispatchEvent(eventMock);
-
-        expect(spyOnControlAndN).toHaveBeenCalledTimes(1);
-        expect(nextStub).toHaveBeenCalledTimes(1);
     });
 });

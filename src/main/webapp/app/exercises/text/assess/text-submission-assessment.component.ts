@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
@@ -112,22 +112,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         this.correctionRound = 0;
         this.resetComponent();
-    }
-
-    @HostListener('document:keydown.control.s', ['$event'])
-    saveOnControlAndS(event: KeyboardEvent) {
-        event.preventDefault();
-        this.save();
-    }
-    @HostListener('document:keydown.control.enter', ['$event'])
-    submitOnControlAndEnter(event: KeyboardEvent) {
-        event.preventDefault();
-        this.submit();
-    }
-    @HostListener('document:keydown.control.n', ['$event'])
-    async nextSubmissionOnControlAndN(event: KeyboardEvent) {
-        event.preventDefault();
-        await this.nextSubmission();
     }
 
     /**

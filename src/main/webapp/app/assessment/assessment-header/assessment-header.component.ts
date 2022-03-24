@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
@@ -8,6 +8,7 @@ import { ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -60,6 +61,7 @@ export class AssessmentHeaderComponent {
     // Icons
     faSpinner = faSpinner;
     faSave = faSave;
+    faArrowRight = faSquareCaretRight;
 
     @Input() set highlightDifferences(highlightDifferences: boolean) {
         this._highlightDifferences = highlightDifferences;
@@ -72,6 +74,36 @@ export class AssessmentHeaderComponent {
 
     get highlightDifferences() {
         return this._highlightDifferences;
+    }
+
+    @HostListener('document:keydown.control.s', ['$event'])
+    saveOnControlAndS(event: KeyboardEvent) {
+        event.preventDefault();
+        const saveButton = document.getElementById('save') as HTMLButtonElement;
+        if (saveButton && !saveButton.disabled) {
+            saveButton.click();
+        }
+    }
+
+    @HostListener('document:keydown.control.enter', ['$event'])
+    submitOnControlAndEnter(event: KeyboardEvent) {
+        event.preventDefault();
+        const submitButton = document.getElementById('submit') as HTMLButtonElement;
+        const overrideButton = document.getElementById('override') as HTMLButtonElement;
+        if (submitButton && !submitButton.disabled) {
+            submitButton.click();
+        } else if (overrideButton && !overrideButton.disabled) {
+            overrideButton.click();
+        }
+    }
+
+    @HostListener('document:keydown.control.shift.arrowRight', ['$event'])
+    assessNextOnControlShiftAndArrowRight(event: KeyboardEvent) {
+        event.preventDefault();
+        const assessNextButton = document.getElementById('assessNextButton') as HTMLButtonElement;
+        if (assessNextButton && !assessNextButton.disabled) {
+            assessNextButton.click();
+        }
     }
 
     /**

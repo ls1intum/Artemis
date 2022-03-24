@@ -407,34 +407,4 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(routerSpy).toHaveBeenCalledTimes(1);
         expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission } });
     });
-
-    it('should call save assessment on control and s', () => {
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
-        const spyOnControlAndS = jest.spyOn(component, 'saveOnControlAndS');
-        const saveSpy = jest.spyOn(component, 'save');
-        document.dispatchEvent(eventMock);
-
-        expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
-        expect(saveSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should call submit assessment on control and enter', () => {
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
-        const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
-        const submitSpy = jest.spyOn(component, 'submit');
-        document.dispatchEvent(eventMock);
-
-        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
-        expect(submitSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should call next submission on control and n', () => {
-        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'n' });
-        const spyOnControlAndN = jest.spyOn(component, 'nextSubmissionOnControlAndN');
-        const nextStub = jest.spyOn(component, 'nextSubmission').mockImplementation();
-        document.dispatchEvent(eventMock);
-
-        expect(spyOnControlAndN).toHaveBeenCalledTimes(1);
-        expect(nextStub).toHaveBeenCalledTimes(1);
-    });
 });
