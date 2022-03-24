@@ -70,7 +70,7 @@
                         <jhi-result *ngIf="submission.participation" [participation]="submission.participation" [showTestDetails]="true"></jhi-result>
                     </td>
                     <td>
-                        <ng-container *ngIf="submission.participation?.submissions">
+                        <ng-container *ngIf="submission.participation?.submissionCount">
                             <a
                                 *ngIf="exercise.isAtLeastInstructor && !examId"
                                 [routerLink]="[
@@ -83,7 +83,7 @@
                                     'submissions'
                                 ]"
                             >
-                                {{ submission.participation?.submissions?.length || '--' }}
+                                {{ submission.participation?.submissionCount || '--' }}
                             </a>
                             <a
                                 *ngIf="exercise.isAtLeastInstructor && !!examId"
@@ -100,7 +100,7 @@
                                     submission.participation!.id
                                 ]"
                             >
-                                {{ submission.participation?.submissions?.length || '--' }}
+                                {{ submission.participation?.submissionCount || '--' }}
                             </a>
                         </ng-container>
                     </td>
