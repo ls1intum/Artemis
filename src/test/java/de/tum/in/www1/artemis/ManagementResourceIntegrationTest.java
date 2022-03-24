@@ -116,7 +116,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getAllAuditEvents() throws Exception {
         var auditEvents = request.getList("/management/audits", HttpStatus.OK, PersistentAuditEvent.class);
-        assertThat(auditEvents.size()).isEqualTo(2);
+        assertThat(auditEvents).hasSize(2);
     }
 
     @Test
@@ -125,7 +125,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         String pastDate = LocalDate.now().minusDays(1).toString();
         String currentDate = LocalDate.now().toString();
         var auditEvents = request.getList("/management/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
-        assertThat(auditEvents.size()).isEqualTo(1);
+        assertThat(auditEvents).hasSize(1);
         var auditEvent = auditEvents.get(0);
         var auditEventsInDb = persistenceAuditEventRepository.findAllByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
         assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);

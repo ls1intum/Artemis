@@ -80,7 +80,7 @@ public class GitService {
     @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
     private Optional<String> sshUrlTemplate;
 
-    @Value("${artemis.version-control.default-branch:master}")
+    @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
     @Value("${artemis.repo-clone-path}")
@@ -685,7 +685,7 @@ public class GitService {
      * Resets local repository to ref.
      *
      * @param repo Local Repository Object.
-     * @param ref  the ref to reset to, e.g. "origin/master"
+     * @param ref  the ref to reset to, e.g. "origin/main"
      * @throws GitAPIException if the reset failed.
      */
     public void reset(Repository repo, String ref) throws GitAPIException {
@@ -771,7 +771,7 @@ public class GitService {
     }
 
     /**
-     * Get branch that origin/HEAD points to, useful to handle default branches that are not master
+     * Get branch that origin/HEAD points to, useful to handle default branches that are not main
      *
      * @param repo Local Repository Object.
      * @return name of the origin/HEAD branch, e.g. 'main' or null if there is no HEAD

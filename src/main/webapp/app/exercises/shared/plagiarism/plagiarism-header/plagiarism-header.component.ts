@@ -21,6 +21,8 @@ export class PlagiarismHeaderComponent {
     @Input() course: Course;
     @Input() splitControlSubject: Subject<string>;
 
+    readonly plagiarismStatus = PlagiarismStatus;
+
     constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
     /**

@@ -57,7 +57,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     private ProgrammingExercise programmingExercise;
 
-    private final LocalRepository studentRepository = new LocalRepository();
+    private final LocalRepository studentRepository = new LocalRepository(defaultBranch);
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
@@ -356,8 +356,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         var studentParticipationsRegularDueDate = getParticipationsWithoutIndividualDueDate();
-        assertThat(studentParticipationsRegularDueDate).hasSize(2);
-        assertThat(studentParticipationsRegularDueDate).allMatch(participation -> !participation.getStudent().get().getLogin().equals(login));
+        assertThat(studentParticipationsRegularDueDate).hasSize(2).allMatch(participation -> !participation.getStudent().get().getLogin().equals(login));
 
         var studentParticipationIndividualDueDate = getParticipation(login);
         assertThat(studentParticipationIndividualDueDate.getIndividualDueDate()).isNotNull();

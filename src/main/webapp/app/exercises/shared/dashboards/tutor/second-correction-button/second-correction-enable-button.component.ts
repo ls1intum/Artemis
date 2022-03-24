@@ -8,7 +8,7 @@ import { faSpinner, faToggleOff, faToggleOn } from '@fortawesome/free-solid-svg-
 })
 export class SecondCorrectionEnableButtonComponent {
     @Input() secondCorrectionEnabled: boolean;
-    @Input() toggelingSecondCorrectionButton: boolean;
+    @Input() togglingSecondCorrectionButton: boolean;
 
     @Output() ngModelChange = new EventEmitter();
 

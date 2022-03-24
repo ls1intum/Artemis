@@ -57,7 +57,7 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
-    @Value("${artemis.version-control.default-branch:master}")
+    @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
     private final UserRepository userRepository;
@@ -505,7 +505,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
-        // Not implemented because it's not needed in Bitbucket for the current use case, because the master branch is not protected by default
+        // Not implemented because it's not needed in Bitbucket for the current use case, because the main branch is not protected by default
     }
 
     /**
@@ -771,7 +771,7 @@ public class BitbucketService extends AbstractVersionControlService {
     @NotNull
     public Commit getLastCommitDetails(Object requestBody) throws BitbucketException {
         // NOTE the requestBody should look like this:
-        // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/master",
+        // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/main",
         // "fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
         // we are interested in the toHash
         Commit commit = new Commit();
