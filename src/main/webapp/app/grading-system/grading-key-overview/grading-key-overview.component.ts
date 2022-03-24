@@ -38,6 +38,7 @@ export class GradingKeyOverviewComponent implements OnInit {
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
+            console.log(params);
             this.courseId = Number(params['courseId']);
             if (params['examId']) {
                 this.examId = Number(params['examId']);

@@ -75,15 +75,6 @@ const routes: Routes = [
         ],
     },
     {
-        path: 'courses/:courseId/statistics/grading-key',
-        component: GradingKeyOverviewComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'artemisApp.gradingSystem.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: 'courses/:courseId/plagiarism',
         loadChildren: () => import('app/course/plagiarism-cases/plagiarism-cases.module').then((m) => m.PlagiarismCasesModule),
     },
