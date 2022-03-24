@@ -53,5 +53,6 @@ import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exe
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
     ],
+    exports: [ProgrammingExerciseExampleSolutionRepoDownloadComponent],
 })
 export class ArtemisProgrammingExerciseManagementModule {}
