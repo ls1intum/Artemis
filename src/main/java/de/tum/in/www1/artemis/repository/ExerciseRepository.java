@@ -359,6 +359,25 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     List<Exercise> getPastExercisesForCourseManagementOverview(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     /**
+     * Finds all exercises that should be part of the summary email (e.g. weekly summary)
+     * Exercises should have been released, not yet ended, and the release should be in the time frame [daysAgo,now]
+     *
+     * @param now the current date time
+     * @param daysAgo the current date time minus the wanted number of days (the used interval) (e.g. for weeklySummaries -> daysAgo = 7)
+     * @return all exercises that should be part of the summary (email)
+     */
+    @Query("""
+            SELECT exercise
+            FROM Exercise exercise
+            WHERE exercise.releaseDate IS NOT NULL
+                AND exercise.releaseDate < :now
+                AND exercise.releaseDate > :daysAgo
+                AND ((exercise.dueDate IS NOT NULL AND exercise.dueDate > :now)
+                    OR exercise.dueDate IS NULL)
+            """)
+    Set<Exercise> findAllExercisesForSummary(@Param("now") ZonedDateTime now, @Param("daysAgo") ZonedDateTime daysAgo);
+
+    /**
      * Fetches the number of student participations in the given exercise
      *
      * @param exerciseId the id of the exercise to get the amount for

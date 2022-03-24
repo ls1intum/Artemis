@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
@@ -445,6 +446,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         return switch (permission) {
             case EDIT -> "WRITE";
             case CREATE -> "CREATE";
+            case CREATEREPOSITORY -> "CREATEREPOSITORY";
             case READ -> "READ";
             case ADMIN -> "ADMINISTRATION";
         };
@@ -606,16 +608,17 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
         final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        final ProjectType projectType = programmingExercise.getProjectType();
 
         for (final var job : jobs) {
             // 1) add feedback for failed test cases
             for (final var failedTest : job.getFailedTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage));
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage, projectType));
             }
 
             // 2) add feedback for passed test cases
             for (final var successfulTest : job.getSuccessfulTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage));
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage, projectType));
             }
 
             // 3) process static code analysis feedback

@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -102,17 +101,16 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         for (int clusterIndex = 0; clusterIndex < clusters.size(); clusterIndex++) {
             TextCluster cluster = clusters.get(clusterIndex);
-            assertThat(cluster.size(), equalTo(3));
-            assertThat(cluster.getBlocks(), hasSize(3));
+            assertThat(cluster.size()).isEqualTo(3);
+            assertThat(cluster.getBlocks()).hasSize(3);
 
             List<TextBlock> blocks = cluster.getBlocks();
             for (int blockIndex = 0; blockIndex < blocks.size(); blockIndex++) {
                 TextBlock block = blocks.get(blockIndex);
-                assertThat(block.getAddedDistance(), greaterThan(1.65));
+                assertThat(block.getAddedDistance()).isGreaterThan(1.65);
                 Segment segment = atheneResponse.getClusters(clusterIndex).getSegmentsList().get(blockIndex);
-                assertThat(block.getId(), is(equalTo(segment.getId())));
-                var positionInCluster = ReflectionTestUtils.getField(block, "positionInCluster");
-                assertThat(positionInCluster, is(equalTo(blockIndex)));
+                assertThat(block.getId()).isEqualTo(segment.getId());
+                assertThat(block).hasFieldOrPropertyWithValue("positionInCluster", blockIndex);
             }
         }
 

@@ -67,7 +67,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
 
         assertThat(notificationSettings).as("notificationSettings A with recipient equal to current user is returned").contains(settingA);
         assertThat(notificationSettings).as("notificationSettings B with recipient equal to current user is returned").contains(settingsB);
-        assertThat(notificationSettings.size()).isEqualTo(DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(notificationSettings).hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
     }
 
     /**
@@ -78,7 +78,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotificationSettingsForCurrentUserWith_DB_EMTPY() throws Exception {
         List<NotificationSetting> notificationSettings = request.getList("/api/notification-settings", HttpStatus.OK, NotificationSetting.class);
-        assertThat(notificationSettings.size()).isEqualTo(DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(notificationSettings).hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
     }
 
     /**

@@ -109,14 +109,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
         // General assertions
-        assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were saved").isEqualTo(3);
+        assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were saved").hasSize(3);
         assertThat(quizExercise.getDuration()).as("Quiz duration was correctly set").isEqualTo(3600);
         assertThat(quizExercise.getDifficulty()).as("Quiz difficulty was correctly set").isEqualTo(DifficultyLevel.MEDIUM);
 
         // Quiz type specific assertions
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                assertThat(multipleChoiceQuestion.getAnswerOptions().size()).as("Multiple choice question answer options were saved").isEqualTo(2);
+                assertThat(multipleChoiceQuestion.getAnswerOptions()).as("Multiple choice question answer options were saved").hasSize(2);
                 assertThat(multipleChoiceQuestion.getTitle()).as("Multiple choice question title is correct").isEqualTo("MC");
                 assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
                 assertThat(multipleChoiceQuestion.getPoints()).as("Multiple choice question score is correct").isEqualTo(4);
@@ -132,8 +132,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(3);
-                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(3);
+                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(3);
+                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(3);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
@@ -155,14 +155,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D2");
             }
             else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                assertThat(shortAnswerQuestion.getSpots().size()).as("Short answer question spots were saved").isEqualTo(2);
-                assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(2);
+                assertThat(shortAnswerQuestion.getSpots()).as("Short answer question spots were saved").hasSize(2);
+                assertThat(shortAnswerQuestion.getSolutions()).as("Short answer question solutions were saved").hasSize(2);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
                 assertThat(shortAnswerQuestion.getText()).as("Short answer question text is correct").isEqualTo("This is a long answer text");
                 assertThat(shortAnswerQuestion.getPoints()).as("Short answer question score is correct").isEqualTo(2);
 
                 List<ShortAnswerSpot> spots = shortAnswerQuestion.getSpots();
-                assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(0);
+                assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isZero();
                 assertThat(spots.get(0).getWidth()).as("Width for spot is correct").isEqualTo(1);
                 assertThat(spots.get(1).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
                 assertThat(spots.get(1).getWidth()).as("Width for spot is correct").isEqualTo(2);
@@ -180,14 +180,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise = createQuizOnServerForExam();
 
         // General assertions
-        assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were saved").isEqualTo(3);
+        assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were saved").hasSize(3);
         assertThat(quizExercise.getDuration()).as("Quiz duration was correctly set").isEqualTo(3600);
         assertThat(quizExercise.getDifficulty()).as("Quiz difficulty was correctly set").isEqualTo(DifficultyLevel.MEDIUM);
 
         // Quiz type specific assertions
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                assertThat(multipleChoiceQuestion.getAnswerOptions().size()).as("Multiple choice question answer options were saved").isEqualTo(2);
+                assertThat(multipleChoiceQuestion.getAnswerOptions()).as("Multiple choice question answer options were saved").hasSize(2);
                 assertThat(multipleChoiceQuestion.getTitle()).as("Multiple choice question title is correct").isEqualTo("MC");
                 assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
                 assertThat(multipleChoiceQuestion.getPoints()).as("Multiple choice question score is correct").isEqualTo(4);
@@ -204,8 +204,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 answerOptions.get(1).getQuestion();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(3);
-                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(3);
+                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(3);
+                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(3);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
@@ -225,14 +225,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(dragItems.get(1).getText()).as("Text for drag item is correct").isEqualTo("D2");
             }
             else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                assertThat(shortAnswerQuestion.getSpots().size()).as("Short answer question spots were saved").isEqualTo(2);
-                assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(2);
+                assertThat(shortAnswerQuestion.getSpots()).as("Short answer question spots were saved").hasSize(2);
+                assertThat(shortAnswerQuestion.getSolutions()).as("Short answer question solutions were saved").hasSize(2);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
                 assertThat(shortAnswerQuestion.getText()).as("Short answer question text is correct").isEqualTo("This is a long answer text");
                 assertThat(shortAnswerQuestion.getPoints()).as("Short answer question score is correct").isEqualTo(2);
 
                 List<ShortAnswerSpot> spots = shortAnswerQuestion.getSpots();
-                assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(0);
+                assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isZero();
                 assertThat(spots.get(0).getWidth()).as("Width for spot is correct").isEqualTo(1);
                 assertThat(spots.get(1).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
                 assertThat(spots.get(1).getWidth()).as("Width for spot is correct").isEqualTo(2);
@@ -313,7 +313,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // Quiz type specific assertions
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                assertThat(multipleChoiceQuestion.getAnswerOptions().size()).as("Multiple choice question answer options were saved").isEqualTo(3);
+                assertThat(multipleChoiceQuestion.getAnswerOptions()).as("Multiple choice question answer options were saved").hasSize(3);
                 assertThat(multipleChoiceQuestion.getTitle()).as("Multiple choice question title is correct").isEqualTo("MC");
                 assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
                 assertThat(multipleChoiceQuestion.getPoints()).as("Multiple choice question score is correct").isEqualTo(4);
@@ -333,8 +333,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(answerOptions.get(2).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(2);
-                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(2);
+                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(2);
+                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(2);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
@@ -349,8 +349,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D2");
             }
             else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                assertThat(shortAnswerQuestion.getSpots().size()).as("Short answer question spots were saved").isEqualTo(1);
-                assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(1);
+                assertThat(shortAnswerQuestion.getSpots()).as("Short answer question spots were saved").hasSize(1);
+                assertThat(shortAnswerQuestion.getSolutions()).as("Short answer question solutions were saved").hasSize(1);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
                 assertThat(shortAnswerQuestion.getText()).as("Short answer question text is correct").isEqualTo("This is a long answer text");
                 assertThat(shortAnswerQuestion.getPoints()).as("Short answer question score is correct").isEqualTo(2);
@@ -426,7 +426,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // Quiz type specific assertions
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                assertThat(multipleChoiceQuestion.getAnswerOptions().size()).as("Multiple choice question answer options were saved").isEqualTo(3);
+                assertThat(multipleChoiceQuestion.getAnswerOptions()).as("Multiple choice question answer options were saved").hasSize(3);
                 assertThat(multipleChoiceQuestion.getTitle()).as("Multiple choice question title is correct").isEqualTo("MC");
                 assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
                 assertThat(multipleChoiceQuestion.getPoints()).as("Multiple choice question score is correct").isEqualTo(4);
@@ -446,8 +446,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(answerOptions.get(2).isIsCorrect()).as("Is correct for answer option is correct").isTrue();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                assertThat(dragAndDropQuestion.getDropLocations().size()).as("Drag and drop question drop locations were saved").isEqualTo(2);
-                assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(2);
+                assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(2);
+                assertThat(dragAndDropQuestion.getDragItems()).as("Drag and drop question drag items were saved").hasSize(2);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
                 assertThat(dragAndDropQuestion.getPoints()).as("Drag and drop question score is correct").isEqualTo(3);
@@ -462,8 +462,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(dragItems.get(0).getText()).as("Text for drag item is correct").isEqualTo("D2");
             }
             else if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                assertThat(shortAnswerQuestion.getSpots().size()).as("Short answer question spots were saved").isEqualTo(1);
-                assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(1);
+                assertThat(shortAnswerQuestion.getSpots()).as("Short answer question spots were saved").hasSize(1);
+                assertThat(shortAnswerQuestion.getSolutions()).as("Short answer question solutions were saved").hasSize(1);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
                 assertThat(shortAnswerQuestion.getText()).as("Short answer question text is correct").isEqualTo("This is a long answer text");
                 assertThat(shortAnswerQuestion.getPoints()).as("Short answer question score is correct").isEqualTo(2);
@@ -610,12 +610,12 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Quiz submissions are not yet in database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
+        assertThat(quizSubmissionRepository.findAll()).isEmpty();
 
         quizScheduleService.processCachedQuizSubmissions();
 
         // Quiz submissions are now in database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(1);
+        assertThat(quizSubmissionRepository.findAll()).hasSize(1);
 
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
@@ -671,7 +671,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // get all exercises for a course
         List<QuizExercise> allQuizExercisesForCourse = request.getList("/api/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises",
                 HttpStatus.OK, QuizExercise.class);
-        assertThat(allQuizExercisesForCourse.size()).isEqualTo(1);
+        assertThat(allQuizExercisesForCourse).hasSize(1);
         assertThat(allQuizExercisesForCourse.get(0)).isEqualTo(quizExercise);
     }
 
@@ -715,8 +715,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise = createQuizOnServerForExam();
         var examId = quizExercise.getExerciseGroup().getExam().getId();
         List<QuizExercise> quizExercises = request.getList("/api/" + examId + "/quiz-exercises", HttpStatus.OK, QuizExercise.class);
-        assertThat(quizExercises).as("Quiz exercise was retrieved").isNotNull();
-        assertThat(quizExercises.size()).as("Quiz exercise was retrieved").isEqualTo(1L);
+        assertThat(quizExercises).as("Quiz exercise was retrieved").hasSize(1);
         assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExercises.get(0).getId());
     }
 
@@ -728,8 +727,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
         checkQuizExercises(quizExercise, quizExerciseGet);
 
-        assertThat(quizExerciseGet).isEqualTo(quizExercise);
-        assertThat(quizExerciseGet).as("Quiz exercise was retrieved").isNotNull();
+        assertThat(quizExerciseGet).as("Quiz exercise was retrieved").isEqualTo(quizExercise).isNotNull();
         assertThat(quizExerciseGet.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExerciseGet.getId());
     }
 
@@ -766,7 +764,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
                 QuizExercise.class);
 
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters().size()).isEqualTo(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
         for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
@@ -780,7 +778,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
             }
             else {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isZero();
             }
         }
 
@@ -794,7 +792,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // calculate statistics
         quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters().size()).isEqualTo(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants + 4);
 
         for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
@@ -814,7 +812,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
             }
             else {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).isZero();
             }
         }
     }
@@ -842,7 +840,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             }
         }
 
-        assertThat(submittedAnswerRepository.findAll().size()).isEqualTo((numberOfParticipants - 2) * 3);
+        assertThat(submittedAnswerRepository.findAll()).hasSize((numberOfParticipants - 2) * 3);
 
         // submission with everything selected
         QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), true);
@@ -854,10 +852,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addSubmission(quizExercise, quizSubmission, "student5");
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
-        assertThat(studentParticipationRepository.findAll().size()).isEqualTo(numberOfParticipants);
-        assertThat(resultRepository.findAll().size()).isEqualTo(numberOfParticipants);
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
-        assertThat(submittedAnswerRepository.findAll().size()).isEqualTo(numberOfParticipants * 3);
+        assertThat(studentParticipationRepository.findAll()).hasSize(numberOfParticipants);
+        assertThat(resultRepository.findAll()).hasSize(numberOfParticipants);
+        assertThat(quizSubmissionRepository.findAll()).hasSize(numberOfParticipants);
+        assertThat(submittedAnswerRepository.findAll()).hasSize(numberOfParticipants * 3);
 
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
@@ -889,8 +887,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
 
         // one student should get a higher score
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
-                .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
         System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc20, 3.0, pc20, 4.0, pc30, 6.0, pc20, 7.0, pc10));
@@ -907,8 +904,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(shortAnswerQuestionAfterReevaluation.isInvalid()).isTrue();
 
         // several students should get a higher score
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
-                .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
         System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc20, 5.0, pc20, 6.0, pc50, 9.0, pc10));
 
@@ -922,8 +918,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizQuestions()).hasSize(2);
 
         // max score should be less
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
-                .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
         System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc40, 6.0, pc60));
     }
@@ -967,8 +962,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addSubmission(quizExercise, quizSubmissionPractice, "student5");
         database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
-        assertThat(studentParticipationRepository.findAll().size()).isEqualTo(10);
-        assertThat(resultRepository.findAll().size()).isEqualTo(10);
+        assertThat(studentParticipationRepository.findAll()).hasSize(10);
+        assertThat(resultRepository.findAll()).hasSize(10);
 
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
@@ -990,8 +985,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
         // one student should get a higher score
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
-                .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
 
         System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
@@ -1004,8 +998,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
         // several students should get a higher score
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
-                .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size());
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
         System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc02, 5.0, pc02, 6.0, pc05, 9.0, pc01));
@@ -1018,8 +1011,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // max score should be less
         System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters().size())
-                .isEqualTo(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
+        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc04, 6.0, pc06));
     }
@@ -1041,8 +1033,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                         .isEqualTo(expectedPointCounter.getUnRatedCounter());
             }
             else {
-                assertThat(pointCounter.getRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isEqualTo(0);
+                assertThat(pointCounter.getRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isZero();
+                assertThat(pointCounter.getUnRatedCounter()).as(pointCounter.getPoints() + " should have a rated counter of 0").isZero();
             }
         }
     }
@@ -1055,8 +1047,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
             // demonstrate that the initial shortAnswerQuestion has 2 correct mappings and 2 solutions
-            assertThat(shortAnswerQuestion.getCorrectMappings().size()).isEqualTo(2);
-            assertThat(shortAnswerQuestion.getCorrectMappings().size()).isEqualTo(2);
+            assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
+            assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
 
             // add a solution with an mapping onto spot number 0
             ShortAnswerSolution newSolution = new ShortAnswerSolution();
@@ -1080,8 +1072,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // Check that the updatedQuizExercise is equal to the modified quizExercise with special focus on the newly added solution and mapping
         assertThat(updatedQuizExercise).isEqualTo(quizExercise);
         ShortAnswerQuestion receivedShortAnswerQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
-        assertThat(receivedShortAnswerQuestion.getSolutions().size()).isEqualTo(3);
-        assertThat(receivedShortAnswerQuestion.getCorrectMappings().size()).isEqualTo(3);
+        assertThat(receivedShortAnswerQuestion.getSolutions()).hasSize(3);
+        assertThat(receivedShortAnswerQuestion.getCorrectMappings()).hasSize(3);
     }
 
     @Test
@@ -1250,9 +1242,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
         quizExercise.setTitle("Titel");
         quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).isTrue().as("is not valid!");
-        assertThat(quizExercise.isExamExercise()).isFalse().as("Is an exam exercise!");
-        assertThat(quizExercise.isEnded()).isTrue().as("Is not ended!");
+        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
+        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
+        assertThat(quizExercise.isEnded()).as("Is not ended!").isTrue();
         course.addExercises(quizExercise);
 
         courseRepo.save(course);
@@ -1274,7 +1266,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise.setTitle("Titel");
         quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).isTrue().as("is not valid!");
+        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
         quizExerciseRepository.save(quizExercise);
         request.put("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, HttpStatus.BAD_REQUEST);
     }
@@ -1289,9 +1281,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
         quizExercise.setTitle("Titel");
         quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).isTrue().as("is not valid!");
-        assertThat(quizExercise.isExamExercise()).isFalse().as("Is an exam exercise!");
-        assertThat(quizExercise.isEnded()).isTrue().as("Is not ended!");
+        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
+        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
+        assertThat(quizExercise.isEnded()).as("Is not ended!").isTrue();
         course.addExercises(quizExercise);
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
@@ -1315,9 +1307,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
         quizExercise.setTitle("Titel");
         quizExercise.setDuration(200);
-        assertThat(quizExercise.isValid()).isTrue().as("is not valid!");
-        assertThat(quizExercise.isExamExercise()).isFalse().as("Is an exam exercise!");
-        assertThat(quizExercise.isEnded()).isTrue().as("Is not ended!");
+        assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
+        assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
+        assertThat(quizExercise.isEnded()).as("Is not ended!").isTrue();
         course.addExercises(quizExercise);
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
@@ -1475,7 +1467,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
      * Check that the general statistics of two exercises are equal.
      */
     private void checkStatistics(QuizExercise quizExercise, QuizExercise quizExercise2) {
-        assertThat(quizExercise.getQuizPointStatistic().getPointCounters().size()).isEqualTo(quizExercise2.getQuizPointStatistic().getPointCounters().size());
+        assertThat(quizExercise.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise2.getQuizPointStatistic().getPointCounters());
         assertThat(quizExercise.getQuizPointStatistic().getParticipantsRated()).isEqualTo(quizExercise2.getQuizPointStatistic().getParticipantsRated());
         assertThat(quizExercise.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(quizExercise2.getQuizPointStatistic().getParticipantsUnrated());
 
@@ -1529,7 +1521,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             }
         }
         else {
-            assertThat(quizExercise.getQuizQuestions()).hasSize(0);
+            assertThat(quizExercise.getQuizQuestions()).isEmpty();
         }
 
     }

@@ -32,6 +32,7 @@ import { faBan, faExclamationCircle, faQuestionCircle, faSave } from '@fortaweso
 // this will be extended with Gradle later on
 export enum JavaTestRepositoryProjectType {
     MAVEN = 'MAVEN',
+    GRADLE = 'GRADLE',
 }
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -259,9 +260,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         this.updateProjectTypeSettings(type);
 
-        // TODO: extend this for gradle
         if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
-            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
+            this.selectedTestRepositoryProjectType = JavaTestRepositoryProjectType.MAVEN;
+        } else if (type === ProjectType.PLAIN_GRADLE || type === ProjectType.GRADLE_GRADLE) {
+            this.selectedTestRepositoryProjectType = JavaTestRepositoryProjectType.GRADLE;
         }
 
         // Don't override the problem statement with the template in edit mode.
@@ -277,8 +279,22 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     onTestRepositoryProjectTypeChange(type: JavaTestRepositoryProjectType) {
-        this.selectedTestRepositoryProjectTypeValue = type;
+        this.selectedTestRepositoryProjectType = type;
         return type;
+    }
+
+    /**
+     * Updates the test repository project type. This only applies to Java exercises with project type 'Plain Java'
+     * @param type the type to update to
+     */
+    set selectedTestRepositoryProjectType(type: JavaTestRepositoryProjectType) {
+        // this has only effect for plain java which is represented by PLAIN_MAVEN (or PLAIN_GRADLE later)
+        if (type === JavaTestRepositoryProjectType.MAVEN) {
+            // only the underlying value should be changed, not the value which is displayed in the dropdown
+            this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+        } else {
+            this.programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
+        }
     }
 
     get selectedTestRepositoryProjectType() {
@@ -294,8 +310,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.disableStaticCodeAnalysis();
         } else if (ProjectType.PLAIN_MAVEN === type || ProjectType.MAVEN_MAVEN === type) {
             this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
+        } else if (ProjectType.PLAIN_GRADLE === type || ProjectType.GRADLE_GRADLE === type) {
+            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.GRADLE;
         }
-        // TODO: extend check for gradle project
     }
 
     private disableStaticCodeAnalysis() {
@@ -418,6 +435,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.title = undefined;
         if (this.programmingExercise.submissionPolicy) {
             this.programmingExercise.submissionPolicy.id = undefined;
+        }
+        if (this.isExamMode && this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+            // Exam exercises cannot be not included into the total score. NOT_INCLUDED exercises will be converted to INCLUDED ones
+            this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         }
     }
 
