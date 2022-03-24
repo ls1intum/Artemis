@@ -24,7 +24,7 @@ services:
             - artemis-jenkins-data:/var/jenkins_home
             - ./jenkins/jenkins-disable-csrf.groovy:/var/jenkins_home/init.groovy # Disable CSRF token
             - ./jenkins/master.key:/var/jenkins_home/master.key # Preset master key to use pre-generated secrets
-            - ./jenkins/jenkins-casc-config.yml:/usr/share/jenkins/ref/jenkins-casc-config.yml
+            - ./jenkins/jenkins-casc-config.yml:/usr/share/jenkins/ref/jenkins-casc-config.yml:ro
             - /var/run/docker.sock:/var/run/docker.sock
             - /usr/bin/docker:/usr/bin/docker:ro
             - /usr/bin/com.docker.cli:/usr/bin/com.docker.cli
