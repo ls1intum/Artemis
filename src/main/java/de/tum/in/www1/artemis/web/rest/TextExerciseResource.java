@@ -469,6 +469,11 @@ public class TextExerciseResource {
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        if (plagiarismResult != null) {
+            for (var comparison : plagiarismResult.getComparisons()) {
+                comparison.setPlagiarismResult(null);
+            }
+        }
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
     }
 
@@ -500,6 +505,9 @@ public class TextExerciseResource {
         start = System.nanoTime();
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
+        for (var comparison : result.getComparisons()) {
+            comparison.setPlagiarismResult(null);
+        }
         return ResponseEntity.ok(result);
     }
 

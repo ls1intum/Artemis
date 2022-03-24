@@ -121,7 +121,7 @@ public class ModelFactory {
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            programmingExercise.setProjectType(ProjectType.ECLIPSE);
+            programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setProjectType(ProjectType.PLAIN);
@@ -139,28 +139,28 @@ public class ModelFactory {
             Course course) {
         var modelingExercise = (ModelingExercise) populateExercise(new ModelingExercise(), releaseDate, dueDate, assessmentDueDate, course);
         modelingExercise.setDiagramType(diagramType);
-        modelingExercise.setSampleSolutionModel("This is my example solution model");
-        modelingExercise.setSampleSolutionExplanation("This is my example solution model");
+        modelingExercise.setExampleSolutionModel("This is my example solution model");
+        modelingExercise.setExampleSolutionExplanation("This is my example solution model");
         return modelingExercise;
     }
 
     public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup) {
         var modelingExercise = (ModelingExercise) populateExerciseForExam(new ModelingExercise(), exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
-        modelingExercise.setSampleSolutionModel("This is my example solution model");
-        modelingExercise.setSampleSolutionExplanation("This is my example solution model");
+        modelingExercise.setExampleSolutionModel("This is my example solution model");
+        modelingExercise.setExampleSolutionExplanation("This is my example solution model");
         return modelingExercise;
     }
 
     public static TextExercise generateTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         var textExercise = (TextExercise) populateExercise(new TextExercise(), releaseDate, dueDate, assessmentDueDate, course);
-        textExercise.setSampleSolution("This is my example solution");
+        textExercise.setExampleSolution("This is my example solution");
         return textExercise;
     }
 
     public static TextExercise generateTextExerciseForExam(ExerciseGroup exerciseGroup) {
         var textExercise = (TextExercise) populateExerciseForExam(new TextExercise(), exerciseGroup);
-        textExercise.setSampleSolution("This is my example solution");
+        textExercise.setExampleSolution("This is my example solution");
         return textExercise;
     }
 
@@ -168,7 +168,7 @@ public class ModelFactory {
             Course course) {
         var fileUploadExercise = (FileUploadExercise) populateExercise(new FileUploadExercise(), releaseDate, dueDate, assessmentDueDate, course);
         fileUploadExercise.setFilePattern(filePattern);
-        fileUploadExercise.setSampleSolution("This is my example solution");
+        fileUploadExercise.setExampleSolution("This is my example solution");
         return fileUploadExercise;
     }
 
@@ -218,10 +218,10 @@ public class ModelFactory {
         return exercise;
     }
 
-    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
+    public static List<User> generateActivatedUsers(String loginPrefix, String commonEncryptedPassword, String[] groups, Set<Authority> authorities, int amount) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
-            User user = ModelFactory.generateActivatedUser(loginPrefix + i);
+            User user = ModelFactory.generateActivatedUser(loginPrefix + i, commonEncryptedPassword);
             if (groups != null) {
                 user.setGroups(Set.of(groups));
                 user.setAuthorities(authorities);
@@ -229,6 +229,10 @@ public class ModelFactory {
             generatedUsers.add(user);
         }
         return generatedUsers;
+    }
+
+    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
+        return generateActivatedUsers(loginPrefix, USER_PASSWORD, groups, authorities, amount);
     }
 
     /**

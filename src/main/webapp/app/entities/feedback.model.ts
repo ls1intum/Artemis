@@ -100,12 +100,17 @@ export class Feedback implements BaseEntity {
         return that.detailText != undefined && that.detailText.length > 0;
     }
 
+    public static hasContent(that: Feedback): boolean {
+        // if the feedback is associated with the grading instruction, the detail text is optional
+        return Feedback.hasDetailText(that) || !!(that.gradingInstruction && that.gradingInstruction.feedback);
+    }
+
     /**
-     * Feedback is empty if it has 0 creits and the comment is empty.
+     * Feedback is empty if it has 0 credits and the comment is empty.
      * @param that
      */
     public static isEmpty(that: Feedback): boolean {
-        return (that.credits == undefined || that.credits === 0) && !Feedback.hasDetailText(that);
+        return !that.credits && !Feedback.hasContent(that);
     }
 
     /**
@@ -117,11 +122,7 @@ export class Feedback implements BaseEntity {
     }
 
     public static hasCreditsAndComment(that: Feedback): boolean {
-        // if the feedback is associated with the grading instruction, detail-text would be additional, do not need to validate the detail-text
-        if (that.gradingInstruction && that.gradingInstruction.feedback) {
-            return that.credits != undefined;
-        }
-        return that.credits != undefined && Feedback.hasDetailText(that);
+        return that.credits != undefined && Feedback.hasContent(that);
     }
 
     public static haveCredits(that: Feedback[]): boolean {
@@ -180,30 +181,30 @@ export class Feedback implements BaseEntity {
 /**
  * Helper method to build the feedback text for the review. When the feedback has a link with grading instruction
  * it merges the feedback of the grading instruction with the feedback text provided by the assessor. Otherwise,
- * it return detail_text or text property of the feedback depending on the submission element.
+ * it returns the detailed text and/or text properties of the feedback depending on the submission element.
  *
  * @param feedback that contains feedback text and grading instruction
- * @returns {string} formatted string representing the feedback text ready to display
+ * @param addFeedbackText if the text of the feedback should be part of the resulting text. Defaults to true.
+ *                        The detailText of the feedback is always added if present.
+ * @returns formatted string representing the feedback text ready to display
  */
-export const buildFeedbackTextForReview = (feedback: Feedback): string => {
+export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
     let feedbackText = '';
     if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
         feedbackText = feedback.gradingInstruction.feedback;
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;
         }
-        if (feedback.text) {
+        if (addFeedbackText && feedback.text) {
             feedbackText = feedbackText + '\n' + feedback.text;
         }
-        return convertToHtmlLinebreaks(feedbackText);
+    } else if (feedback.detailText) {
+        feedbackText = feedback.detailText;
+    } else if (addFeedbackText && feedback.text) {
+        feedbackText = feedback.text;
     }
-    if (feedback.detailText) {
-        return feedback.detailText;
-    }
-    if (feedback.text) {
-        return feedback.text;
-    }
-    return feedbackText;
+
+    return convertToHtmlLinebreaks(feedbackText);
 };
 
 /**

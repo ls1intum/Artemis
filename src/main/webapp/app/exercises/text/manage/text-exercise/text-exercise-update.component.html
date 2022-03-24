@@ -5,7 +5,6 @@
         <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.textExercise.home.importLabel"></h4>
     </div>
     <div>
-        <jhi-alert-error></jhi-alert-error>
         <div class="form-group" [hidden]="isImport || !textExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="textExercise.id" readonly />
@@ -69,7 +68,10 @@
         <div class="form-group">
             <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + (textExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate }}</label>
             <div>
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="textExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+                <jhi-included-in-overall-score-picker
+                    [(includedInOverallScore)]="textExercise.includedInOverallScore"
+                    [allowNotIncluded]="!isExamMode"
+                ></jhi-included-in-overall-score-picker>
             </div>
         </div>
         <div class="row">
@@ -138,21 +140,27 @@
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="textExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
-                [shouldDisplayAlert]="false"
                 [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <div class="form-group">
-            <label jhiTranslate="artemisApp.exercise.sampleSolution" for="sampleSolution">Sample Solution</label>
+            <label jhiTranslate="artemisApp.exercise.exampleSolution" for="exampleSolution">Example Solution</label>
             <jhi-markdown-editor
-                id="sampleSolution"
+                id="exampleSolution"
                 class="markdown-editor"
                 [domainCommands]="domainCommandsSampleSolution"
-                [(markdown)]="textExercise.sampleSolution"
+                [(markdown)]="textExercise.exampleSolution"
                 [editorMode]="EditorMode.LATEX"
-                [shouldDisplayAlert]="false"
                 [enableResize]="true"
             ></jhi-markdown-editor>
+        </div>
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-date-time-picker
+                class="form-element"
+                name="exampleSolutionPublicationDate"
+                labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
+                [(ngModel)]="textExercise.exampleSolutionPublicationDate"
+            ></jhi-date-time-picker>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
@@ -172,7 +180,6 @@
             <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
-    <jhi-alert></jhi-alert>
     <div>
         <button type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>

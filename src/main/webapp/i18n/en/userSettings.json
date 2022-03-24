@@ -9,6 +9,7 @@
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "accountInformationPage": {
+                "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
                 "login": "Login",
                 "email": "Email",
@@ -18,6 +19,7 @@
                 "NOTIFICATION_SETTINGS": "Notification Settings"
             },
             "settingGroupNames": {
+                "weeklySummary": "Weekly Summary",
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
                 "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
@@ -25,6 +27,7 @@
                 "instructorNotifications": "Instructor Notifications"
             },
             "settingNames": {
+                "basicWeeklySummary": "Basic Weekly Summary",
                 "exerciseReleased": "Exercise released",
                 "exerciseOpenForPractice": "Exercise Open for Practice",
                 "exerciseSubmissionAssessed": "Exercise Submission assessed",
@@ -41,6 +44,7 @@
                 "programmingTestCasesChanged": "Changed Test Cases for Programming Exercises"
             },
             "settingDescriptions": {
+                "basicWeeklySummaryDescription": "Receive a basic weekly summary every Friday at 5pm (e.g. what new exercises have been released this week and are still open)",
                 "exerciseReleasedDescription": "Get notified when a new exercise has been released",
                 "exerciseOpenForPracticeDescription": "Get notified when an exercise has been opened for practice (e.g. Quiz)",
                 "exerciseSubmissionAssessedDescription": "Get notified when your exercise submissions get assessed",

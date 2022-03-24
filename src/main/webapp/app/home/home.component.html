@@ -1,5 +1,4 @@
 <div [hidden]="loading || account">
-    <jhi-alert style="display: flex; justify-content: center"></jhi-alert>
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
             <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
@@ -67,7 +66,7 @@
                             </div>
                             <div class="form-check" *ngIf="needsToAcceptTerms">
                                 <label class="form-check-label" for="acceptTerms">
-                                    <input class="form-check-input" type="checkbox" name="acceptTerms" id="acceptTerms" [(ngModel)]="userAcceptTerms" checked />
+                                    <input class="form-check-input" type="checkbox" name="acceptTerms" id="acceptTerms" [(ngModel)]="userAcceptedTerms" checked />
                                     <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms">Accept terms</a>
                                 </label>
                             </div>
@@ -78,7 +77,7 @@
                                 id="login-button"
                                 [disabled]="
                                     isSubmittingLogin ||
-                                    (!userAcceptTerms && needsToAcceptTerms) ||
+                                    (!userAcceptedTerms && needsToAcceptTerms) ||
                                     !password ||
                                     password.length < PASSWORD_MIN_LENGTH ||
                                     !username ||
@@ -90,7 +89,8 @@
                                 <span jhiTranslate="login.form.button"> Sign in </span>
                             </button>
                             <div *ngIf="profileInfo && profileInfo.saml2">
-                                <jhi-saml2-login [acceptTerms]="userAcceptTerms" [rememberMe]="rememberMe" [saml2Profile]="profileInfo.saml2"> </jhi-saml2-login>
+                                <jhi-saml2-login [acceptedTerms]="!needsToAcceptTerms || userAcceptedTerms" [rememberMe]="rememberMe" [saml2Profile]="profileInfo.saml2">
+                                </jhi-saml2-login>
                             </div>
                         </div>
                     </form>

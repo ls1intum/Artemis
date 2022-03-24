@@ -7,11 +7,10 @@ import { NgModel } from '@angular/forms';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { mockTeams, MockTeamService } from '../../helpers/mocks/service/mock-team.service';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { Router, convertToParamMap } from '@angular/router';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
@@ -19,7 +18,6 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
 import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
@@ -52,7 +50,6 @@ describe('TeamsComponent', () => {
                 MockComponent(TeamsExportButtonComponent),
                 MockComponent(TeamsImportButtonComponent),
                 MockComponent(TeamUpdateButtonComponent),
-                MockComponent(AlertComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(TeamStudentsListComponent),
                 MockRouterLinkDirective,

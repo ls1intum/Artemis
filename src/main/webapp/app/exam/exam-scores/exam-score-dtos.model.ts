@@ -64,30 +64,48 @@ export class ExerciseResult {
 export class AggregatedExamResult {
     public meanPointsPassed?: number;
     public meanPointsRelativePassed?: number;
-    public meanPoints: number;
-    public meanPointsRelative: number;
+    public meanPointsSubmitted: number;
+    public meanPointsRelativeSubmitted: number;
     public meanPointsTotal: number;
     public meanPointsRelativeTotal: number;
+    public meanPointsNonEmpty: number;
+    public meanScoreNonEmpty: number;
+    public meanPointsSubmittedAndNonEmpty: number;
+    public meanScoreSubmittedAndNonEmpty: number;
     public meanGradePassed?: string;
-    public meanGrade?: string;
+    public meanGradeSubmitted?: string;
     public meanGradeTotal?: string;
+    public meanGradeNonEmpty?: string;
+    public meanGradeSubmittedAndNonEmpty?: string;
     public medianPassed?: number;
     public medianRelativePassed?: number;
-    public median: number;
-    public medianRelative: number;
+    public medianSubmitted: number;
+    public medianRelativeSubmitted: number;
     public medianTotal: number;
     public medianRelativeTotal: number;
+    public medianNonEmpty: number;
+    public medianScoreNonEmpty: number;
+    public medianSubmittedAndNonEmpty: number;
+    public medianScoreSubmittedAndNonEmpty: number;
     public medianGradePassed?: string;
-    public medianGrade?: string;
+    public medianGradeSubmitted?: string;
     public medianGradeTotal?: string;
+    public medianGradeNonEmpty?: string;
+    public medianGradeSubmittedAndNonEmpty?: string;
     public standardDeviationPassed?: number;
-    public standardDeviation: number;
+    public standardDeviationSubmitted: number;
     public standardDeviationTotal: number;
+    public standardDeviationNonEmpty: number;
+    public standardDeviationSubmittedAndNonEmpty: number;
     public standardGradeDeviationPassed?: number;
-    public standardGradeDeviation?: number;
+    public standardGradeDeviationSubmitted?: number;
     public standardGradeDeviationTotal?: number;
+    public standardGradeDeviationNonEmpty?: number;
+    public standardGradeDeviationSubmittedAndNonEmpty?: number;
     public noOfExamsFilteredForPassed = 0;
-    public noOfExamsFiltered = 0;
+    public noOfExamsSubmitted = 0;
+    public noOfExamsNonEmpty = 0;
+    public noOfExamsSubmittedAndNotEmpty = 0;
     public noOfRegisteredUsers = 0;
 
     // same for first correction round
@@ -97,24 +115,40 @@ export class AggregatedExamResult {
     public meanPointsRelativeInFirstCorrection: number;
     public meanPointsTotalInFirstCorrection: number;
     public meanPointsRelativeTotalInFirstCorrection: number;
+    public meanPointsNonEmptyInFirstCorrection: number;
+    public meanScoreNonEmptyInFirstCorrection: number;
+    public meanPointsSubmittedAndNonEmptyInFirstCorrection: number;
+    public meanScoreSubmittedAndNonEmptyInFirstCorrection: number;
     public meanGradePassedInFirstCorrection?: string;
     public meanGradeInFirstCorrection?: string;
     public meanGradeTotalInFirstCorrection?: string;
+    public meanGradeNonEmptyInFirstCorrection?: string;
+    public meanGradeSubmittedAndNonEmptyInFirstCorrection?: string;
     public medianPassedInFirstCorrection?: number;
     public medianRelativePassedInFirstCorrection?: number;
     public medianInFirstCorrection: number;
     public medianRelativeInFirstCorrection: number;
     public medianTotalInFirstCorrection: number;
     public medianRelativeTotalInFirstCorrection: number;
+    public medianNonEmptyInFirstCorrection: number;
+    public medianScoreNonEmptyInFirstCorrection: number;
+    public medianSubmittedAndNonEmptyInFirstCorrection: number;
+    public medianScoreSubmittedAndNonEmptyInFirstCorrection: number;
     public medianGradePassedInFirstCorrection?: string;
     public medianGradeInFirstCorrection?: string;
     public medianGradeTotalInFirstCorrection?: string;
+    public medianGradeNonEmptyInFirstCorrection?: string;
+    public medianGradeSubmittedAndNonEmptyInFirstCorrection?: string;
     public standardDeviationPassedInFirstCorrection?: number;
     public standardDeviationInFirstCorrection: number;
     public standardDeviationTotalInFirstCorrection: number;
+    public standardDeviationNonEmptyInFirstCorrection: number;
+    public standardDeviationSubmittedAndNonEmptyInFirstCorrection: number;
     public standardGradeDeviationPassedInFirstCorrection?: number;
     public standardGradeDeviationInFirstCorrection?: number;
     public standardGradeDeviationTotalInFirstCorrection?: number;
+    public standardGradeDeviationNonEmptyInFirstCorrection?: number;
+    public standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection?: number;
 
     constructor() {}
 }
@@ -157,4 +191,49 @@ export class AggregatedExerciseResult {
         this.totalParticipants = totalParticipants;
         this.exerciseType = exerciseType;
     }
+}
+
+export class TableState {
+    relativeAmountOfPassedExams: string;
+    relativeAmountOfSubmittedExams: string;
+    absoluteAmountOfSubmittedExams: number;
+    absoluteAmountOfTotalExams: number;
+
+    averageScoreSubmitted: string;
+    averageScoreTotal: string;
+    averageScoreSubmittedInFirstCorrection: string;
+    averageScoreTotalInFirstCorrection: string;
+    averagePointsSubmitted: string;
+    averagePointsTotal: string;
+    averagePointsSubmittedInFirstCorrection: string;
+    averagePointsTotalInFirstCorrection: string;
+
+    averageGradeSubmitted: string;
+    averageGradeTotal: string;
+    averageGradeSubmittedInFirstCorrection: string;
+    averageGradeTotalInFirstCorrection: string;
+
+    medianScoreSubmitted: string;
+    medianScoreTotal: string;
+    medianScoreSubmittedInFirstCorrection: string;
+    medianScoreTotalInFirstCorrection: string;
+    medianPointsSubmitted: string;
+    medianPointsTotal: string;
+    medianPointsSubmittedInFirstCorrection: string;
+    medianPointsTotalInFirstCorrection: string;
+
+    medianGradeSubmitted: string;
+    medianGradeTotal: string;
+    medianGradeSubmittedInFirstCorrection: string;
+    medianGradeTotalInFirstCorrection: string;
+
+    standardDeviationSubmitted: string;
+    standardDeviationTotal: string;
+    standardDeviationSubmittedInFirstCorrection: string;
+    standardDeviationTotalInFirstCorrection: string;
+
+    standardGradeDeviationSubmitted: string;
+    standardGradeDeviationTotal: string;
+    standardGradeDeviationSubmittedInFirstCorrection: string;
+    standardGradeDeviationTotalInFirstCorrection: string;
 }

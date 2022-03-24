@@ -77,7 +77,8 @@
             },
             "recreateBuildPlans": {
                 "title": "Recreate Build Plans",
-                "warning": "Build plans will be recreated. All previous changes will be overwritten!",
+                "buttonText": "Build Plan",
+                "question": "Are you sure you want to recreate the template and solution build plans for the programming exercise <strong>{{ title }}</strong>? All previous changes to those build plans will be overwritten.<br>Student build plans will <strong>not</strong> be removed. They can be deleted separately using the Cleanup function. In combination, these two operations can be used to recreate a consistent state between systems, e.g., after the template for the build plans changed or a data-loss on the continuous integration system occurred.",
                 "description": "Activate this option to create new build plans instead of copying them from the imported exercise. Newly created build plans support the latest features of the Artemis exercise templates by default."
             },
             "updateTemplate": {
@@ -86,6 +87,7 @@
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
+            "testRepositoryProjectType": "Test Repository Project Type",
             "packageName": "Package Name",
             "appName": "App Name",
             "templateResult": "Template Result",
@@ -98,6 +100,12 @@
             "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: All uncommitted changes from the online editor will be lost!",
             "combineTemplateCommitsError": "Template repository commits could not be combined.",
             "combineTemplateCommitsSuccess": "Template repository commits have been successfully combined.",
+            "extractTasksFromProblemStatementWarning": "Only for testing purpose: Extract all tasks and test cases from problems statement.",
+            "extractTasksFromProblemStatementSuccess": "Loaded {{numberTasks}} extracted tasks with {{numberTestCases}} tests from the problem statement:\n{{detailedResult}}",
+            "extractTasksFromProblemStatementTitle": "Get Extracted Tasks",
+            "deleteTasksAndSolutionEntriesWarning": "Only for testing purpose: Delete all tasks and solution entries.",
+            "deleteTasksAndSolutionEntriesSuccess": "Successfully deleted all tasks and solution entries.",
+            "deleteTasksAndSolutionEntriesTitle": "Delete Tasks",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
@@ -191,7 +199,8 @@
                     "weight": "The weighting of a test case determines the points a student receives for passing the test case. The number of points a test case awards is proportional to its weight and calculated as a fraction of the total exercise points.",
                     "bonusMultiplier": "This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
                     "bonusPoints": "Bonus points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
-                    "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score."
+                    "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
+                    "type": "The type of the test case determines if the test case has been generated from the test.json (STRUCTURAL), or has been written manually (BEHAVIORAL)."
                 },
                 "updatedGradingConfigShort": "Updated grading",
                 "updatedGradingConfig": "Warning: You have updated the exercise's grading configuration, but you have not triggered all student submissions with the new grading. Newly created results will be graded with the new configuration, existing results will not be changed. If you don't trigger all student submissions, the results across your students might be inconsistent. You can still trigger the student submissions at a later point. Do you really want to leave the area?",
@@ -234,6 +243,8 @@
             "titleTooltip": "The title of the exercise can always be changed after creating it. It will be part of the project name of the for the exercise created project on the VCS server",
             "shortNameTooltip": "The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)",
             "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students",
+            "projectTypeTooltip": "This value defines the project type of the template and solution repositories.",
+            "testRepositoryProjectTypeTooltip": "This value defines the project type of the test repository.",
             "timeline": {
                 "assessmentType": "Assessment Type",
                 "automaticAssessment": "Automatic Assessment",

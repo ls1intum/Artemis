@@ -6,7 +6,6 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { TestBed } from '@angular/core/testing';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
 import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
@@ -19,9 +18,9 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;
@@ -34,7 +33,6 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
             declarations: [
                 CodeEditorInstructorAndEditorOrionContainerComponent,
                 MockComponent(UpdatingResultComponent),
-                MockComponent(AlertComponent),
                 MockComponent(ProgrammingExerciseInstructorExerciseStatusComponent),
                 MockComponent(ExerciseHintStudentComponent),
                 MockComponent(ProgrammingExerciseEditableInstructionComponent),

@@ -22,7 +22,6 @@ import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mo
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-submission-state.component';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
@@ -50,7 +49,6 @@ describe('ParticipationComponent', () => {
             imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
             declarations: [
                 ParticipationComponent,
-                MockComponent(AlertComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(ProgrammingExerciseInstructorSubmissionStateComponent),
@@ -90,7 +88,7 @@ describe('ParticipationComponent', () => {
         const theExercise = { ...exercise, type: ExerciseType.FILE_UPLOAD };
         const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
         const participation: StudentParticipation = { id: 1, student };
         const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
 
@@ -113,7 +111,7 @@ describe('ParticipationComponent', () => {
         const theExercise = { ...exercise, type: ExerciseType.PROGRAMMING };
         const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
         const participation: StudentParticipation = { id: 1, student };
         const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
 
@@ -150,7 +148,7 @@ describe('ParticipationComponent', () => {
     });
 
     it('should format student login or team name from participation', () => {
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
         const participation: StudentParticipation = { id: 123, student };
         expect(component.searchResultFormatter(participation)).toBe(`${student.login} (${student.name})`);
 
@@ -166,7 +164,7 @@ describe('ParticipationComponent', () => {
     });
 
     it('should return student login, team short name, or empty from participation', () => {
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
         const team: Team = { name: 'Team', shortName: 'T', students: [student] };
         const participation: StudentParticipation = { id: 123, student, team };
 
@@ -180,7 +178,7 @@ describe('ParticipationComponent', () => {
     });
 
     it('should filter participation by prop', () => {
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max' };
+        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
         const team: Team = { name: 'Team', shortName: 'T', students: [student] };
         const participation: StudentParticipation = { id: 1, student, team };
 

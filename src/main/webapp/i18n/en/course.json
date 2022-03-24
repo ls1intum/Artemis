@@ -85,7 +85,7 @@
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
-            "modelingExercises": "Modelling Exercises",
+            "modelingExercises": "Modeling Exercises",
             "textExercises": "Text Exercises",
             "upload": "Upload",
             "uploading": "Uploading...",
@@ -109,7 +109,7 @@
                         "all": "All Exercises",
                         "programming": "Programming Exercises",
                         "quiz": "Quiz Exercises",
-                        "modeling": "Modelling Exercises",
+                        "modeling": "Modeling Exercises",
                         "text": "Text Exercises",
                         "file-upload": "File Upload Exercises"
                     }
@@ -188,7 +188,12 @@
             "quiz": "Quiz",
             "modeling": "Modeling",
             "text": "Text",
-            "file-upload": "File Upload"
+            "file-upload": "File Upload",
+            "chartLegend": {
+                "lowest": "Lowest performing third",
+                "average": "Average performing third",
+                "best": "Best performing third"
+            }
         }
     }
 }

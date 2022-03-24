@@ -1,4 +1,3 @@
-<jhi-alert></jhi-alert>
 <div>
     <div class="d-flex align-content-center mb-2">
         <h3 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.title">Configure Automated Grading</h3>
@@ -65,7 +64,7 @@
         <div class="grading-body-container mt-3">
             <div *ngIf="activeTab == 'test-cases'">
                 <div class="grading-table-layout">
-                    <div>
+                    <div class="col-7">
                         <div class="d-flex justify-content-between mb-3">
                             <div>
                                 <h2 class="mb-1 fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.title">Test Cases</h2>
@@ -205,6 +204,24 @@
                                     {{ value }}
                                 </ng-template>
                             </ngx-datatable-column>
+                            <ngx-datatable-column *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" name="Type" prop="type">
+                                <ng-template ngx-datatable-header-template let-sortFn="sortFn">
+                                    <span class="datatable-header-cell-wrapper" (click)="sortFn()">
+                                        <span class="datatable-header-cell-label bold sortable">Type</span>
+                                        <fa-icon [icon]="iconForSortPropField('testCases', 'programmingExerciseTestCaseType')"></fa-icon
+                                        ><fa-icon
+                                            [icon]="faQuestionCircle"
+                                            class="text-secondary ms-2"
+                                            placement="bottom"
+                                            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate"
+                                            container="body"
+                                        ></fa-icon>
+                                    </span>
+                                </ng-template>
+                                <ng-template ngx-datatable-cell-template let-value="value">
+                                    {{ value }}
+                                </ng-template>
+                            </ngx-datatable-column>
                             <ngx-datatable-column name="Passed %" prop="passedPercent" [comparator]="comparePassedPercent">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
@@ -222,7 +239,7 @@
                             </ngx-datatable-column>
                         </ngx-datatable>
                     </div>
-                    <div>
+                    <div class="col-5">
                         <h2 class="mb-5 fw-medium">
                             <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
                             <span *ngIf="!!changedTestCaseIds.length" class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
@@ -241,7 +258,7 @@
             </div>
             <div *ngIf="activeTab == 'code-analysis' && programmingExercise.staticCodeAnalysisEnabled">
                 <div class="grading-table-layout">
-                    <div>
+                    <div class="col-7">
                         <div class="d-flex align-items-center justify-content-between mb-4">
                             <h2 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.title">Code Analysis Categories</h2>
                             <!-- TODO currently the reset button is permanently disabled -->
@@ -380,7 +397,7 @@
                             </ngx-datatable-column>
                         </ngx-datatable>
                     </div>
-                    <div>
+                    <div class="col-5">
                         <h2 class="mb-5 fw-medium">
                             <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
                             <span *ngIf="!!changedCategoryIds.length" class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>

@@ -5,14 +5,14 @@ import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, exerciseTypes, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -21,6 +21,8 @@ import { HttpResponse } from '@angular/common/http';
 import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CourseScoresCsvRow, CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
+import { mean, median, standardDeviation } from 'simple-statistics';
+import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -34,34 +36,35 @@ export const SCORE_KEY = 'Score';
 export const GRADE_KEY = 'Grades';
 export const BONUS_KEY = 'Bonus Points';
 
+export enum HighlightType {
+    AVERAGE = 'average',
+    MEDIAN = 'median',
+    NONE = 'none',
+}
+
 @Component({
     selector: 'jhi-course-scores',
     templateUrl: './course-scores.component.html',
+    styleUrls: ['./course-scores.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
-    // supported exercise type
-
-    readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
-    private exerciseTypesWithExercises: ExerciseType[];
-
-    // Expose the functions to the template
-    readonly roundScorePercentSpecifiedByCourseSettings = roundScorePercentSpecifiedByCourseSettings;
+    private paramSub: Subscription;
+    private languageChangeSubscription?: Subscription;
 
     course: Course;
     allParticipationsOfCourse: StudentParticipation[] = [];
     exercisesOfCourseThatAreIncludedInScoreCalculation: Exercise[] = [];
     students: CourseScoresStudentStatistics[] = [];
 
-    exerciseSuccessfulPerType = new Map<ExerciseType, number[]>();
-    exerciseParticipationsPerType = new Map<ExerciseType, number[]>();
-    exerciseAveragePointsPerType = new Map<ExerciseType, number[]>();
-    exerciseMaxPointsPerType = new Map<ExerciseType, number[]>();
-    exerciseTitlesPerType = new Map<ExerciseType, string[]>();
-    exercisesPerType = new Map<ExerciseType, Exercise[]>();
+    private exerciseTypesWithExercises: ExerciseType[];
+    private exerciseSuccessfulPerType = new ExerciseTypeStatisticsMap();
+    private exerciseParticipationsPerType = new ExerciseTypeStatisticsMap();
+    private exerciseAveragePointsPerType = new ExerciseTypeStatisticsMap();
+    exerciseMaxPointsPerType = new ExerciseTypeStatisticsMap();
+    private exercisesPerType = new Map<ExerciseType, Exercise[]>();
 
     exportReady = false;
-    paramSub: Subscription;
     predicate: string;
     reverse: boolean;
 
@@ -77,15 +80,35 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     // note: these represent the course scores using the participation score table. We might switch to this new
     // calculation method completely if it is confirmed that it produces correct results
-    studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
+    private studentIdToCourseScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
 
     gradingScaleExists = false;
     gradingScale?: GradingScale;
     isBonus?: boolean;
     maxGrade?: string;
     averageGrade?: string;
+    scoresToDisplay: number[];
+    valueToHighlight: number | undefined;
+    highlightedType = HighlightType.NONE;
 
-    private languageChangeSubscription?: Subscription;
+    numberOfReleasedExercises: number;
+    averageScoreIncluded = 0;
+    medianScoreIncluded = 0;
+    medianPointsIncluded = 0;
+
+    averageScoreTotal = 0;
+    averagePointsTotal = 0;
+    medianScoreTotal = 0;
+    medianPointsTotal = 0;
+
+    standardDeviationPointsIncluded = 0;
+    standardDeviationPointsTotal = 0;
+
+    // Expose the imports to the template
+    readonly exerciseTypes = exerciseTypes;
+    readonly highlightType = HighlightType;
+    readonly roundScorePercentSpecifiedByCourseSettings = roundScorePercentSpecifiedByCourseSettings;
+    readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     // Icons
     faSort = faSort;
@@ -147,6 +170,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.course = course;
         this.initializeExerciseTitles();
         this.exercisesOfCourseThatAreIncludedInScoreCalculation = this.determineExercisesIncludedInScore(this.course);
+        this.numberOfReleasedExercises = this.determineReleasedExercises(this.course).length;
         this.calculateCourseStatistics(this.course.id!);
     }
 
@@ -199,7 +223,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     private filterExercisesTypesWithExercises(): Array<ExerciseType> {
         return this.exerciseTypes.filter((exerciseType) => {
-            const exercisesWithType = this.exerciseTitlesPerType.get(exerciseType)?.length ?? 0;
+            const exercisesWithType = this.exercisesPerType.get(exerciseType)?.length ?? 0;
             return exercisesWithType !== 0;
         });
     }
@@ -230,7 +254,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             // comparing with calculation from course scores (using new participation score table)
             const courseScoreDTOs = courseScoresResult.body!;
             this.compareNewCourseScoresCalculationWithOldCalculation(courseScoreDTOs);
-            this.changeDetector.detectChanges();
+            this.calculateAverageAndMedianScores();
+            this.scoresToDisplay = this.students.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course));
+            this.highlightBar(HighlightType.AVERAGE);
         });
     }
 
@@ -303,13 +329,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         for (const exerciseType of this.exerciseTypes) {
             const exercisesOfType = this.exercisesOfCourseThatAreIncludedInScoreCalculation.filter((exercise) => exercise.type === exerciseType);
             this.exercisesPerType.set(exerciseType, exercisesOfType);
-            this.exerciseTitlesPerType.set(
-                exerciseType,
-                exercisesOfType.map((exercise) => exercise.title!),
-            );
 
-            const maxPointsOfAllExercisesOfType = exercisesOfType.map((exercise) => exercise.maxPoints!);
-
+            const maxPointsOfAllExercisesOfType = new Map();
+            exercisesOfType.forEach((exercise) => maxPointsOfAllExercisesOfType.set(exercise.id!, exercise.maxPoints));
             this.exerciseMaxPointsPerType.set(exerciseType, maxPointsOfAllExercisesOfType);
 
             const maxPointsOfAllIncludedExercisesOfType = exercisesOfType
@@ -339,8 +361,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
         studentsMap.forEach((student) => {
             this.students.push(student);
-
-            for (const exercise of this.exercisesOfCourseThatAreIncludedInScoreCalculation) {
+            // We need the information of not included exercises as well in order to compute the total average and median
+            for (const exercise of this.determineReleasedExercises(this.course)) {
                 this.updateStudentStatisticsWithExerciseResults(student, exercise);
             }
 
@@ -356,26 +378,19 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
         for (const exerciseType of this.exerciseTypes) {
             // TODO: can we calculate this average only with students who participated in the exercise?
-            this.averageNumberOfPointsPerExerciseTypes.set(
-                exerciseType,
-                this.students.reduce((total, student) => total + student.sumPointsPerExerciseType.get(exerciseType)!, 0) / this.students.length,
-            );
+            this.averageNumberOfPointsPerExerciseTypes.set(exerciseType, average(this.students.map((student) => student.sumPointsPerExerciseType.get(exerciseType)!)));
         }
 
-        this.averageNumberOfOverallPoints = this.students.reduce((total, student) => total + student.overallPoints, 0) / this.students.length;
-        this.averageNumberOfSuccessfulExercises = this.students.reduce((total, student) => total + student.numberOfSuccessfulExercises, 0) / this.students.length;
-        this.averageNumberOfParticipatedExercises = this.students.reduce((total, student) => total + student.numberOfParticipatedExercises, 0) / this.students.length;
+        this.averageNumberOfOverallPoints = average(this.students.map((student) => student.overallPoints));
+        this.averageNumberOfSuccessfulExercises = average(this.students.map((student) => student.numberOfSuccessfulExercises));
+        this.averageNumberOfParticipatedExercises = average(this.students.map((student) => student.numberOfParticipatedExercises));
 
         for (const exerciseType of this.exerciseTypes) {
-            this.exerciseAveragePointsPerType.set(exerciseType, []); // initialize with empty array
-            this.exerciseParticipationsPerType.set(exerciseType, []); // initialize with empty array
-            this.exerciseSuccessfulPerType.set(exerciseType, []); // initialize with empty array
-
             for (const exercise of this.exercisesPerType.get(exerciseType)!) {
-                exercise.averagePoints = this.students.reduce((total, student) => total + student.pointsPerExercise.get(exercise.id!)!, 0) / this.students.length;
-                this.exerciseAveragePointsPerType.get(exerciseType)!.push(exercise.averagePoints);
-                this.exerciseParticipationsPerType.get(exerciseType)!.push(exercise.numberOfParticipationsWithRatedResult!);
-                this.exerciseSuccessfulPerType.get(exerciseType)!.push(exercise.numberOfSuccessfulParticipations!);
+                exercise.averagePoints = sum(this.students.map((student) => student.pointsPerExercise.get(exercise.id!))) / this.students.length;
+                this.exerciseAveragePointsPerType.setValue(exerciseType, exercise, exercise.averagePoints);
+                this.exerciseParticipationsPerType.setValue(exerciseType, exercise, exercise.numberOfParticipationsWithRatedResult!);
+                this.exerciseSuccessfulPerType.setValue(exerciseType, exercise, exercise.numberOfSuccessfulParticipations!);
             }
         }
 
@@ -407,7 +422,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-
         return studentsMap;
     }
 
@@ -434,21 +448,26 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             // If the student adds up the displayed points, he gets a total of 5.5 points.
             // In order to get the same total result as the student, we have to round before summing.
             const pointsAchievedByStudentInExercise = roundValueSpecifiedByCourseSettings((result.score! * relevantMaxPoints) / 100, this.course);
-            student.overallPoints += pointsAchievedByStudentInExercise;
             student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
-            student.sumPointsPerExerciseType.set(exercise.type!, student.sumPointsPerExerciseType.get(exercise.type!)! + pointsAchievedByStudentInExercise);
-            student.numberOfParticipatedExercises += 1;
-            exercise.numberOfParticipationsWithRatedResult! += 1;
-            if (result.score! >= 100) {
-                student.numberOfSuccessfulExercises += 1;
-                exercise.numberOfSuccessfulParticipations! += 1;
-            }
+            const includedIDs = this.exercisesOfCourseThatAreIncludedInScoreCalculation.map((includedExercise) => includedExercise.id);
+            // We only include this exercise if it is included in the exercise score
+            if (includedIDs.includes(exercise.id)) {
+                student.overallPoints += pointsAchievedByStudentInExercise;
+                const oldPointsSum = student.sumPointsPerExerciseType.get(exercise.type!)!;
+                student.sumPointsPerExerciseType.set(exercise.type!, oldPointsSum + pointsAchievedByStudentInExercise);
+                student.numberOfParticipatedExercises += 1;
+                exercise.numberOfParticipationsWithRatedResult! += 1;
+                if (result.score! >= 100) {
+                    student.numberOfSuccessfulExercises += 1;
+                    exercise.numberOfSuccessfulParticipations! += 1;
+                }
 
-            student.pointsPerExerciseType.get(exercise.type!)!.push(pointsAchievedByStudentInExercise);
+                student.pointsPerExerciseType.setValue(exercise.type!, exercise, pointsAchievedByStudentInExercise);
+            }
         } else {
             // there is no result, the student has not participated or submitted too late
             student.pointsPerExercise.set(exercise.id!, 0);
-            student.pointsPerExerciseType.get(exercise.type!)!.push(Number.NaN);
+            student.pointsPerExerciseType.setValue(exercise.type!, exercise, Number.NaN);
         }
     }
 
@@ -554,7 +573,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            keys.push(...this.exerciseTitlesPerType.get(exerciseType)!);
+            keys.push(...this.exercisesPerType.get(exerciseType)!.map((exercise) => exercise.title!));
             keys.push(CourseScoresCsvRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY));
             keys.push(CourseScoresCsvRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY));
         }
@@ -591,11 +610,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                     this.course,
                 );
             }
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exercisePointValues = student.pointsPerExerciseType.get(exerciseType)!;
-            exerciseTitleKeys.forEach((title, index) => {
-                const points = roundValueSpecifiedByCourseSettings(exercisePointValues[index], this.course);
-                rowData.setLocalized(title, points);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                const points = roundValueSpecifiedByCourseSettings(student.pointsPerExerciseType.getValue(exerciseType, exercise), this.course);
+                rowData.setLocalized(exercise.title!, points);
             });
 
             rowData.setExerciseTypePoints(exerciseType, exercisePointsPerType);
@@ -623,11 +641,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const rowData = this.prepareEmptyCsvRow('Max');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exerciseMaxPoints = this.exerciseMaxPointsPerType.get(exerciseType)!;
-
-            exerciseTitleKeys.forEach((title, index) => {
-                rowData.setLocalized(title, exerciseMaxPoints[index]);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                rowData.setLocalized(exercise.title!, this.exerciseMaxPointsPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
             rowData.setExerciseTypeScore(exerciseType, 100);
@@ -653,12 +669,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const rowData = this.prepareEmptyCsvRow('Average');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exerciseAveragePoints = this.exerciseAveragePointsPerType.get(exerciseType)!;
-
-            exerciseTitleKeys.forEach((title, index) => {
-                const points = roundValueSpecifiedByCourseSettings(exerciseAveragePoints[index], this.course);
-                rowData.setLocalized(title, points);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                const points = roundValueSpecifiedByCourseSettings(this.exerciseAveragePointsPerType.getValue(exerciseType, exercise), this.course);
+                rowData.setLocalized(exercise.title!, points);
             });
 
             const averageScore = roundScorePercentSpecifiedByCourseSettings(
@@ -691,11 +705,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const rowData = this.prepareEmptyCsvRow('Number of Participations');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exerciseParticipations = this.exerciseParticipationsPerType.get(exerciseType)!;
-
-            exerciseTitleKeys.forEach((title, index) => {
-                rowData.setLocalized(title, exerciseParticipations[index]);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                rowData.setLocalized(exercise.title!, this.exerciseParticipationsPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, '');
             rowData.setExerciseTypeScore(exerciseType, '');
@@ -713,11 +725,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const rowData = this.prepareEmptyCsvRow('Number of Successful Participations');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            const exerciseParticipationsSuccessful = this.exerciseSuccessfulPerType.get(exerciseType)!;
-
-            exerciseTitleKeys.forEach((title, index) => {
-                rowData.setLocalized(title, exerciseParticipationsSuccessful[index]);
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                rowData.setLocalized(exercise.title!, this.exerciseSuccessfulPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, '');
             rowData.setExerciseTypeScore(exerciseType, '');
@@ -743,9 +753,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         emptyLine.set(OVERALL_COURSE_SCORE_KEY, '');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
-            const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-            exerciseTitleKeys.forEach((title) => {
-                emptyLine.set(title, '');
+            const exercisesForType = this.exercisesPerType.get(exerciseType)!;
+            exercisesForType.forEach((exercise) => {
+                emptyLine.set(exercise.title!, '');
             });
             emptyLine.setExerciseTypePoints(exerciseType, '');
             emptyLine.setExerciseTypeScore(exerciseType, '');
@@ -797,5 +807,108 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             return -1;
         }
         return 0;
+    }
+
+    /**
+     * Filters the course exercises and returns the exercises that are already released or do not have a release date
+     * @param course the course whose exercises are filtered
+     * @private
+     */
+    private determineReleasedExercises(course: Course): Exercise[] {
+        return course.exercises!.filter((exercise) => !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs()));
+    }
+
+    /**
+     * Computes the average of given scores and returns it rounded based on course settings
+     * @param scores the scores the average should be computed of
+     * @private
+     */
+    private calculateAverageScore(scores: number[]): number {
+        return roundScorePercentSpecifiedByCourseSettings(mean(scores), this.course);
+    }
+
+    /**
+     * Computes the average of given points and returns it rounded based on course settings
+     * @param points the points the average should be computed of
+     * @private
+     */
+    private calculateAveragePoints(points: number[]): number {
+        return roundValueSpecifiedByCourseSettings(mean(points), this.course);
+    }
+
+    /**
+     * Computes the median of given scores and returns it rounded based on course settings
+     * @param scores the scores the median should be computed of
+     * @private
+     */
+    private calculateMedianScore(scores: number[]): number {
+        return roundScorePercentSpecifiedByCourseSettings(median(scores), this.course);
+    }
+
+    /**
+     * Computes the median of given points and returns it rounded based on course settings
+     * @param points the points the median should be computed of
+     * @private
+     */
+    private calculateMedianPoints(points: number[]): number {
+        return roundValueSpecifiedByCourseSettings(median(points), this.course);
+    }
+
+    /**
+     * Sets the statistical values displayed in the table next to the distribution chart
+     * @private
+     */
+    private calculateAverageAndMedianScores(): void {
+        const allCoursePoints = sum(this.course.exercises!.map((exercise) => exercise.maxPoints ?? 0));
+        const includedPointsPerStudent = this.students.map((student) => student.overallPoints);
+        // average points and score included
+        const scores = includedPointsPerStudent.map((point) => point / this.maxNumberOfOverallPoints);
+        this.averageScoreIncluded = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
+
+        // average points and score total
+        const achievedPointsTotal = this.students.map((student) => sum(Array.from(student.pointsPerExercise.values())));
+        const averageScores = achievedPointsTotal.map((totalPoints) => totalPoints / allCoursePoints);
+
+        this.averagePointsTotal = this.calculateAveragePoints(achievedPointsTotal);
+        this.averageScoreTotal = this.calculateAverageScore(averageScores);
+
+        // median points and score included
+        this.medianPointsIncluded = this.calculateMedianPoints(includedPointsPerStudent);
+        this.medianScoreIncluded = this.calculateMedianScore(scores);
+
+        // median points and score total
+        this.medianPointsTotal = this.calculateMedianPoints(achievedPointsTotal);
+        this.medianScoreTotal = this.calculateMedianScore(averageScores);
+
+        // Since these two values are only statistical details, there is no need to make the rounding dependent of the course settings
+        // standard deviation points included
+        this.standardDeviationPointsIncluded = round(standardDeviation(includedPointsPerStudent), 2);
+
+        // standard deviation points total
+        this.standardDeviationPointsTotal = round(standardDeviation(achievedPointsTotal), 2);
+    }
+
+    /**
+     * Handles the case if the user selects either the average or the median in the table next to the chart
+     * @param type the statistical type that is selected by the user
+     */
+    highlightBar(type: HighlightType) {
+        if (this.highlightedType === type) {
+            this.valueToHighlight = undefined;
+            this.highlightedType = HighlightType.NONE;
+            this.changeDetector.detectChanges();
+            return;
+        }
+        switch (type) {
+            case HighlightType.AVERAGE:
+                this.valueToHighlight = this.averageScoreIncluded;
+                this.highlightedType = HighlightType.AVERAGE;
+                break;
+            case HighlightType.MEDIAN:
+                this.valueToHighlight = this.medianScoreIncluded;
+                this.highlightedType = HighlightType.MEDIAN;
+                break;
+        }
+        this.changeDetector.detectChanges();
     }
 }

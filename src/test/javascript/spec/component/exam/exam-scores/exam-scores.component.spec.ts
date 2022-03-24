@@ -5,32 +5,39 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { AggregatedExerciseGroupResult, ExamScoreDTO, ExerciseGroup, ExerciseInfo, ExerciseResult, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import {
+    AggregatedExamResult,
+    AggregatedExerciseGroupResult,
+    ExamScoreDTO,
+    ExerciseGroup,
+    ExerciseInfo,
+    ExerciseResult,
+    StudentResult,
+} from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { BarChartModule } from '@swimlane/ngx-charts';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { GraphColors } from 'app/entities/statistics.model';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -220,11 +227,9 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(BarChartModule)],
             declarations: [
                 ExamScoresComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(AlertComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
                 MockDirective(TranslateDirective),
@@ -233,6 +238,7 @@ describe('ExamScoresComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ExamScoresAverageScoresGraphComponent),
                 MockRouterLinkDirective,
+                MockComponent(ParticipantScoresDistributionComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
@@ -263,6 +269,11 @@ describe('ExamScoresComponent', () => {
                 MockProvider(CourseManagementService, {
                     find: () => {
                         return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
+                    },
+                }),
+                MockProvider(LocaleConversionService, {
+                    toLocaleString: (value: number) => {
+                        return isNaN(value) ? '-' : value.toString();
                     },
                 }),
             ],
@@ -357,10 +368,8 @@ describe('ExamScoresComponent', () => {
 
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
 
-        // check histogram
-        expectCorrectHistogram(comp, examScoreDTO);
         // expect three distinct scores
-        expect(comp.histogramData.filter((hd) => hd === 1).length).toBe(3);
+        expect(comp.scores).toHaveLength(3);
         expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
 
         // expect correct calculated exercise group statistics
@@ -442,10 +451,8 @@ describe('ExamScoresComponent', () => {
 
         // it should skip the not submitted one
         const noOfSubmittedExercises = examScoreDTO.studentResults.length - 1;
-        // check histogram
-        expectCorrectHistogram(comp, examScoreDTO);
         // expect two distinct scores
-        expect(comp.histogramData.filter((hd) => hd === 1).length).toBe(noOfSubmittedExercises);
+        expect(comp.scores).toHaveLength(2);
         expect(comp.noOfExamsFiltered).toBe(noOfSubmittedExercises);
 
         // expect correct calculated exercise group statistics
@@ -581,14 +588,6 @@ describe('ExamScoresComponent', () => {
         comp.exportToCsv();
     });
 
-    it('should find grade step index correctly', () => {
-        jest.spyOn(gradingSystemService, 'matchGradePercentage');
-        comp.gradingScale = gradingScale;
-        comp.gradingScaleExists = true;
-
-        expect(comp.findGradeStepIndex(20)).toBe(0);
-    });
-
     it('should set grading scale properties', () => {
         const examScoreDTOWithGrades = examScoreDTO;
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
@@ -609,11 +608,158 @@ describe('ExamScoresComponent', () => {
         comp.gradingScaleExists = true;
         comp.exerciseGroups = examScoreDTO.exerciseGroups;
         comp.studentResults = examScoreDTO.studentResults;
+        comp.examScoreDTO = examScoreDTO;
+        comp.aggregatedExamResults = new AggregatedExamResult();
+        comp.course = { accuracyOfScores: 1 };
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
 
         comp.toggleFilterForNonEmptySubmission();
 
         expect(comp.filterForNonEmptySubmissions).toBe(true);
+    });
+
+    describe('test table filtering', () => {
+        const examScoreDTOOnePassing = examScoreDTO;
+        examScoreDTOOnePassing.studentResults[0].hasPassed = true;
+        it('should set table state correctly if non empty submissions filter is activated', () => {
+            jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
+            jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScale })));
+            comp.filterForNonEmptySubmissions = false;
+            comp.ngOnInit();
+
+            comp.toggleFilterForNonEmptySubmission();
+
+            expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+            expect(comp.tableState.relativeAmountOfSubmittedExams).toBe('66.7');
+            expect(comp.tableState.absoluteAmountOfTotalExams).toBe(3);
+            expect(comp.tableState.relativeAmountOfPassedExams).toBe('33.3');
+            expect(comp.tableState.averagePointsSubmitted).toBe('60');
+            expect(comp.tableState.averagePointsTotal).toBe('56.7');
+            expect(comp.tableState.averageScoreSubmitted).toBe('60');
+            expect(comp.tableState.averageScoreTotal).toBe('56.7');
+            expect(comp.tableState.medianPointsSubmitted).toBe('60');
+            expect(comp.tableState.medianPointsTotal).toBe('50');
+            expect(comp.tableState.medianScoreSubmitted).toBe('60');
+            expect(comp.tableState.medianScoreTotal).toBe('50');
+            expect(comp.tableState.standardDeviationSubmitted).toBe('40');
+            expect(comp.tableState.standardDeviationTotal).toBe('33');
+            expect(comp.tableState.averageGradeSubmitted).toBe('4');
+            expect(comp.tableState.averageGradeTotal).toBe('4');
+            expect(comp.tableState.medianGradeSubmitted).toBe('4');
+            expect(comp.tableState.medianGradeTotal).toBe('4');
+            expect(comp.tableState.averagePointsSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.averagePointsTotalInFirstCorrection).toBe('50');
+            expect(comp.tableState.averageScoreSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.averageScoreTotalInFirstCorrection).toBe('50');
+            expect(comp.tableState.medianPointsSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.medianPointsTotalInFirstCorrection).toBe('40');
+            expect(comp.tableState.medianScoreSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.medianScoreTotalInFirstCorrection).toBe('40');
+            expect(comp.tableState.averageGradeSubmitted).toBe('4');
+            expect(comp.tableState.averageGradeTotal).toBe('4');
+            expect(comp.tableState.standardDeviationSubmittedInFirstCorrection).toBe('35');
+            expect(comp.tableState.standardDeviationTotalInFirstCorrection).toBe('29.4');
+            expect(comp.tableState.standardGradeDeviationSubmittedInFirstCorrection).toBe('-');
+            expect(comp.tableState.standardGradeDeviationTotalInFirstCorrection).toBe('-');
+            expect(comp.tableState.averageGradeSubmittedInFirstCorrection).toBe('4');
+            expect(comp.tableState.averageGradeTotalInFirstCorrection).toBe('4');
+            expect(comp.tableState.medianGradeSubmittedInFirstCorrection).toBe('4');
+            expect(comp.tableState.medianGradeTotalInFirstCorrection).toBe('4');
+        });
+
+        it('should set table state correctly if only submitted exams filter is activated', () => {
+            jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
+            jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScale })));
+            comp.filterForSubmittedExams = false;
+            comp.ngOnInit();
+
+            comp.toggleFilterForSubmittedExam();
+
+            expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+            expect(comp.tableState.relativeAmountOfSubmittedExams).toBe('100');
+            expect(comp.tableState.absoluteAmountOfTotalExams).toBe(2);
+            expect(comp.tableState.relativeAmountOfPassedExams).toBe('50');
+            expect(comp.tableState.averagePointsSubmitted).toBe('60');
+            expect(comp.tableState.averagePointsTotal).toBe('60');
+            expect(comp.tableState.averageScoreSubmitted).toBe('60');
+            expect(comp.tableState.averageScoreTotal).toBe('60');
+            expect(comp.tableState.medianPointsSubmitted).toBe('60');
+            expect(comp.tableState.medianPointsTotal).toBe('60');
+            expect(comp.tableState.medianScoreSubmitted).toBe('60');
+            expect(comp.tableState.medianScoreTotal).toBe('60');
+            expect(comp.tableState.standardDeviationSubmitted).toBe('40');
+            expect(comp.tableState.standardDeviationTotal).toBe('40');
+            expect(comp.tableState.averageGradeSubmitted).toBe('4');
+            expect(comp.tableState.averageGradeTotal).toBe('4');
+            expect(comp.tableState.medianGradeSubmitted).toBe('4');
+            expect(comp.tableState.medianGradeTotal).toBe('4');
+            expect(comp.tableState.averagePointsSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.averagePointsTotalInFirstCorrection).toBe('55');
+            expect(comp.tableState.averageScoreSubmittedInFirstCorrection).toBe('60');
+            expect(comp.tableState.averageScoreTotalInFirstCorrection).toBe('60');
+            expect(comp.tableState.medianPointsSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.medianPointsTotalInFirstCorrection).toBe('55');
+            expect(comp.tableState.medianScoreSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.medianScoreTotalInFirstCorrection).toBe('55');
+            expect(comp.tableState.averageGradeSubmitted).toBe('4');
+            expect(comp.tableState.averageGradeTotal).toBe('4');
+            expect(comp.tableState.standardDeviationSubmittedInFirstCorrection).toBe('35');
+            expect(comp.tableState.standardDeviationTotalInFirstCorrection).toBe('35');
+            expect(comp.tableState.standardGradeDeviationSubmittedInFirstCorrection).toBe('-');
+            expect(comp.tableState.standardGradeDeviationTotalInFirstCorrection).toBe('-');
+            expect(comp.tableState.averageGradeSubmittedInFirstCorrection).toBe('4');
+            expect(comp.tableState.averageGradeTotalInFirstCorrection).toBe('4');
+            expect(comp.tableState.medianGradeSubmittedInFirstCorrection).toBe('4');
+            expect(comp.tableState.medianGradeTotalInFirstCorrection).toBe('4');
+        });
+
+        it('should set table state correctly if both exams are activated', () => {
+            jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
+            jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScale>({ body: gradingScale })));
+            comp.filterForNonEmptySubmissions = false;
+            comp.filterForSubmittedExams = false;
+            comp.ngOnInit();
+
+            comp.toggleFilterForSubmittedExam();
+            comp.toggleFilterForNonEmptySubmission();
+
+            expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+            expect(comp.tableState.relativeAmountOfSubmittedExams).toBe('100');
+            expect(comp.tableState.absoluteAmountOfTotalExams).toBe(2);
+            expect(comp.tableState.relativeAmountOfPassedExams).toBe('50');
+            expect(comp.tableState.averagePointsSubmitted).toBe('60');
+            expect(comp.tableState.averagePointsTotal).toBe('60');
+            expect(comp.tableState.averageScoreSubmitted).toBe('60');
+            expect(comp.tableState.averageScoreTotal).toBe('60');
+            expect(comp.tableState.medianPointsSubmitted).toBe('60');
+            expect(comp.tableState.medianPointsTotal).toBe('60');
+            expect(comp.tableState.medianScoreSubmitted).toBe('60');
+            expect(comp.tableState.medianScoreTotal).toBe('60');
+            expect(comp.tableState.standardDeviationSubmitted).toBe('40');
+            expect(comp.tableState.standardDeviationTotal).toBe('40');
+            expect(comp.tableState.averageGradeSubmitted).toBe('4');
+            expect(comp.tableState.averageGradeTotal).toBe('4');
+            expect(comp.tableState.medianGradeSubmitted).toBe('4');
+            expect(comp.tableState.medianGradeTotal).toBe('4');
+            expect(comp.tableState.averagePointsSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.averagePointsTotalInFirstCorrection).toBe('55');
+            expect(comp.tableState.averageScoreSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.averageScoreTotalInFirstCorrection).toBe('55');
+            expect(comp.tableState.medianPointsSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.medianPointsTotalInFirstCorrection).toBe('55');
+            expect(comp.tableState.medianScoreSubmittedInFirstCorrection).toBe('55');
+            expect(comp.tableState.medianScoreTotalInFirstCorrection).toBe('55');
+            expect(comp.tableState.averageGradeSubmitted).toBe('4');
+            expect(comp.tableState.averageGradeTotal).toBe('4');
+            expect(comp.tableState.standardDeviationSubmittedInFirstCorrection).toBe('35');
+            expect(comp.tableState.standardDeviationTotalInFirstCorrection).toBe('35');
+            expect(comp.tableState.standardGradeDeviationSubmittedInFirstCorrection).toBe('-');
+            expect(comp.tableState.standardGradeDeviationTotalInFirstCorrection).toBe('-');
+            expect(comp.tableState.averageGradeSubmittedInFirstCorrection).toBe('4');
+            expect(comp.tableState.averageGradeTotalInFirstCorrection).toBe('4');
+            expect(comp.tableState.medianGradeSubmittedInFirstCorrection).toBe('4');
+            expect(comp.tableState.medianGradeTotalInFirstCorrection).toBe('4');
+        });
     });
 
     it('should not delegate user if authorisation is not sufficient', () => {
@@ -639,60 +785,29 @@ describe('ExamScoresComponent', () => {
         comp.isBonus = false;
         fixture.detectChanges();
 
-        expect(comp.activeEntries).toHaveLength(3);
         expect(comp.showPassedMedian).toBe(true);
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.activeEntries).toEqual([]);
         expect(comp.showPassedMedian).toBe(false);
 
         comp.toggleMedian(MedianType.OVERALL);
 
         expect(comp.overallChartMedian).toBe(50);
-        expect(comp.activeEntries).toHaveLength(3);
         expect(comp.showOverallMedian).toBe(true);
 
         comp.toggleMedian(MedianType.PASSED);
 
         expect(comp.showPassedMedian).toBe(true);
         expect(comp.showOverallMedian).toBe(false);
-
-        expect(comp.activeEntries).toHaveLength(3);
     });
 
-    it('should setup coloring correctly if grading scale exists and it is bonus', () => {
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const expectedColoring = [GraphColors.RED, GraphColors.GREY, GraphColors.GREY, GraphColors.GREY];
-        fixture.detectChanges();
-        expect(comp.isBonus).toBe(false);
+    it('should return data label correctly if noOfExamsFiltered is 0', () => {
+        comp.noOfExamsFiltered = 0;
 
-        expect(comp.ngxColor.domain).toEqual(expectedColoring);
-    });
+        const dataLabel = comp.formatDataLabel(0);
 
-    it('should setup coloring correctly if grading scale exists and it is bonus', () => {
-        const adjustedGradingScale = gradingScale;
-        adjustedGradingScale.gradeSteps.forEach((gradingStep, index) => {
-            gradingStep.gradeName = index.toString();
-        });
-        adjustedGradingScale.gradeType = GradeType.BONUS;
-        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: adjustedGradingScale })));
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const expectedColoring = [GraphColors.YELLOW, GraphColors.GREY, GraphColors.GREY, GraphColors.GREY];
-        fixture.detectChanges();
-        expect(comp.isBonus).toBe(true);
-
-        expect(comp.ngxColor.domain).toEqual(expectedColoring);
-    });
-
-    it('should setup coloring correctly if no grading scale exists', () => {
-        jest.spyOn(gradingSystemService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: undefined as unknown as GradingScale })));
-        jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
-        const expectedColoring = [...Array(8).fill(GraphColors.YELLOW), ...Array(12).fill(GraphColors.GREY)];
-        fixture.detectChanges();
-
-        expect(comp.gradingScaleExists).toBe(false);
-        expect(comp.ngxColor.domain).toEqual(expectedColoring);
+        expect(dataLabel).toBe('0 (0%)');
     });
 });
 
@@ -700,22 +815,6 @@ function expectCorrectExamScoreDto(comp: ExamScoresComponent, examScoreDTO: Exam
     expect(comp.examScoreDTO).toEqual(examScoreDTO);
     expect(comp.studentResults).toEqual(examScoreDTO.studentResults);
     expect(comp.exerciseGroups).toEqual(examScoreDTO.exerciseGroups);
-}
-
-function expectCorrectHistogram(comp: ExamScoresComponent, examScoreDTO: ExamScoreDTO) {
-    examScoreDTO.studentResults.forEach((studentResult) => {
-        let histogramIndex = Math.floor(studentResult.overallScoreAchieved! / comp.binWidth);
-        if (histogramIndex >= comp.histogramData.length) {
-            histogramIndex = comp.histogramData.length - 1;
-        }
-        // expect one exercise with 20% and one with 100%
-        if (studentResult.submitted || !comp.filterForSubmittedExams) {
-            expect(comp.histogramData[histogramIndex]).toBe(1);
-        } else {
-            // the not submitted exercise counts not towards histogram
-            expect(comp.histogramData[histogramIndex]).toBe(0);
-        }
-    });
 }
 
 function validateUserRow(

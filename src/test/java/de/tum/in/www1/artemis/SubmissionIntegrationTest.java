@@ -62,7 +62,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission = submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
 
         assert submission.getResults() != null;
-        assertThat(submission.getResults().size()).isEqualTo(2);
+        assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
         assertThat(submission.getLatestResult()).isEqualTo(result2);
@@ -93,7 +93,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
         assert submission.getResults() != null;
-        assertThat(submission.getResults().size()).isEqualTo(2);
+        assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
         assertThat(submission.getLatestResult()).isEqualTo(result2);
@@ -130,7 +130,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
         assert submission.getResults() != null;
-        assertThat(submission.getResults().size()).isEqualTo(2);
+        assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
         assertThat(submission.getLatestResult()).isEqualTo(result2);
@@ -150,7 +150,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         var resultPage = request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SearchResultPageDTO.class,
                 database.exerciseSearchMapping(search));
-        assertThat(resultPage.getResultsOnPage().size()).isEqualTo(1);
+        assertThat(resultPage.getResultsOnPage()).hasSize(1);
     }
 
     @Test

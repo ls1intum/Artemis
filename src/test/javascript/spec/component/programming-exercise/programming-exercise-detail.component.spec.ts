@@ -12,13 +12,21 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { Exam } from 'app/entities/exam.model';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { MockProvider } from 'ng-mocks';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { HttpResponse } from '@angular/common/http';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
-
+    let programmingExerciseService: ProgrammingExerciseService;
     let statisticsServiceStub: jest.SpyInstance;
+    let alertService: AlertService;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -39,8 +47,10 @@ describe('ProgrammingExercise Management Detail Component', () => {
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [ProgrammingExerciseDetailComponent],
             providers: [
+                MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useValue: new MockProfileService() },
+                { provide: ProgrammingExerciseGradingService, useValue: MockProgrammingExerciseService },
             ],
         })
             .overrideTemplate(ProgrammingExerciseDetailComponent, '')
@@ -48,7 +58,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
+        alertService = fixture.debugElement.injector.get(AlertService);
     });
 
     afterEach(() => {
@@ -98,6 +110,65 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(statisticsServiceStub).toHaveBeenCalled();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeTrue();
+        });
+    });
+
+    it('should retrieve all tasks and tests extracted from the problem statement', () => {
+        const tasks: Task[] = [
+            {
+                id: 1,
+                taskName: 'Implement BubbleSort',
+                tests: ['testBubbleSort', 'testBubbleSortHidden'],
+                completeString: '',
+                hints: [],
+            },
+            {
+                id: 2,
+                taskName: 'Implement Context',
+                tests: ['testClass[Context]'],
+                completeString: '',
+                hints: [],
+            },
+        ];
+        const extractTaskMock = jest.spyOn(programmingExerciseService, 'getTasksAndTestsExtractedFromProblemStatement').mockReturnValue(of(tasks));
+        const expectedParams = {
+            numberTasks: 2,
+            numberTestCases: 3,
+            detailedResult: '"Implement BubbleSort": testBubbleSort,testBubbleSortHidden\n"Implement Context": testClass[Context]',
+        };
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        comp.getExtractedTasksAndTestsFromProblemStatement();
+
+        expect(addAlertSpy).toHaveBeenCalledTimes(1);
+        expect(addAlertSpy).toHaveBeenCalledWith({
+            message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
+            timeout: 0,
+            translationParams: expectedParams,
+            type: AlertType.SUCCESS,
+        });
+        expect(extractTaskMock).toHaveBeenCalledTimes(1);
+        expect(extractTaskMock).toHaveBeenCalledWith(programmingExercise.id);
+    });
+
+    it('should invoke deletion of tasks and solution entries', () => {
+        const deleteTasksAndSolutionEntriesSpy = jest.spyOn(programmingExerciseService, 'deleteTasksWithSolutionEntries').mockReturnValue(of(new HttpResponse<void>()));
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        comp.deleteTasksWithSolutionEntries();
+
+        expect(deleteTasksAndSolutionEntriesSpy).toHaveBeenCalledTimes(1);
+        expect(deleteTasksAndSolutionEntriesSpy).toHaveBeenCalledWith(programmingExercise.id);
+        expect(addAlertSpy).toHaveBeenCalledTimes(1);
+        expect(addAlertSpy).toHaveBeenCalledWith({
+            message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
+            type: AlertType.SUCCESS,
         });
     });
 });

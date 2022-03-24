@@ -11,7 +11,7 @@ import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-ac
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { AlertService } from 'app/core/util/alert.service';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -84,6 +84,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         fixture = TestBed.createComponent(CloneRepoButtonComponent);
         component = fixture.componentInstance;
         profileService = TestBed.inject(ProfileService);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         sourceTreeService = TestBed.inject(SourceTreeService);
         accountService = TestBed.inject(AccountService);
 
@@ -108,26 +109,8 @@ describe('JhiCloneRepoButtonComponent', () => {
         expect(component.sshKeysUrl).toEqual(info.sshKeysURL);
         expect(component.sshTemplateUrl).toEqual(info.sshCloneURLTemplate);
         expect(component.sshEnabled).toEqual(!!info.sshCloneURLTemplate);
-        expect(component.repositoryPassword).toEqual('repository_password');
         expect(component.versionControlUrl).toEqual(info.versionControlUrl);
     }));
-
-    it('should save repository password if SourceTree returns one', () => {
-        const fakeSourceTreeResponse = { password: 'repository_password' };
-        jest.spyOn(sourceTreeService, 'getRepositoryPassword').mockReturnValue(of(fakeSourceTreeResponse));
-
-        component.getRepositoryPassword();
-        expect(component.repositoryPassword).toEqual('repository_password');
-    });
-
-    it('should not save repository password if SourceTree doesnt return one', () => {
-        const fakeSourceTreeResponse = { error: 'Some password not found error' };
-        jest.spyOn(sourceTreeService, 'getRepositoryPassword').mockReturnValue(of(fakeSourceTreeResponse));
-
-        component.repositoryPassword = 'password';
-        component.getRepositoryPassword();
-        expect(component.repositoryPassword).toEqual('password');
-    });
 
     it('should get ssh url (same url for team and individual participation)', () => {
         component.repositoryUrl = 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git';
@@ -148,7 +131,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.sshTemplateUrl = 'ssh://git@bitbucket.ase.in.tum.de:7999/';
         component.useSsh = false;
 
-        component.user = { login: 'user1', guidedTourSettings: [] };
+        component.user = { login: 'user1', guidedTourSettings: [], internal: true };
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
         expect(url).toEqual(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -162,7 +145,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.repositoryUrl = info.versionControlUrl!;
         component.useSsh = false;
 
-        component.user = { login: 'user1', guidedTourSettings: [] };
+        component.user = { login: 'user1', guidedTourSettings: [], internal: true };
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
         expect(url).toEqual(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -207,10 +190,7 @@ describe('JhiCloneRepoButtonComponent', () => {
 
     function stubServices() {
         const identityStub = jest.spyOn(accountService, 'identity');
-        identityStub.mockReturnValue(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin' }));
-
-        const getRepositoryPasswordStub = jest.spyOn(sourceTreeService, 'getRepositoryPassword');
-        getRepositoryPasswordStub.mockReturnValue(of({ password: 'repository_password' }));
+        identityStub.mockReturnValue(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin', internal: true }));
 
         const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(new BehaviorSubject(info));

@@ -26,7 +26,7 @@ export abstract class UserSettingsDirective implements OnInit {
     protected constructor(protected userSettingsService: UserSettingsService, protected alertService: AlertService, protected changeDetector: ChangeDetectorRef) {}
 
     ngOnInit(): void {
-        this.alertService.clear();
+        this.alertService.closeAll();
         this.loadSetting();
     }
 
@@ -41,7 +41,7 @@ export abstract class UserSettingsDirective implements OnInit {
                 this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory);
                 this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
                 this.changeDetector.detectChanges();
-                this.alertService.clear();
+                this.alertService.closeAll();
             },
             error: (res: HttpErrorResponse) => this.onError(res),
         });
@@ -72,7 +72,7 @@ export abstract class UserSettingsDirective implements OnInit {
     protected finishSaving() {
         this.createApplyChangesEvent();
         this.settingsChanged = false;
-        this.alertService.clear();
+        this.alertService.closeAll();
         this.alertService.success('artemisApp.userSettings.saveSettingsSuccessAlert');
     }
 

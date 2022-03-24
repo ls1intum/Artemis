@@ -10,7 +10,6 @@ import { Rating } from 'app/entities/rating.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
@@ -28,7 +27,7 @@ describe('RatingListComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [RatingListComponent, TranslatePipeMock, MockComponent(AlertComponent), MockComponent(StarRatingComponent), MockDirective(SortDirective)],
+            declarations: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent), MockDirective(SortDirective)],
             providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(RatingService), MockProvider(SortService)],
         })
             .compileComponents()

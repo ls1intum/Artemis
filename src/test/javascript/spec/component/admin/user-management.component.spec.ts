@@ -7,8 +7,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { of, Subscription } from 'rxjs';
-import { AlertComponent } from 'app/shared/alert/alert.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { AbstractControl, ReactiveFormsModule } from '@angular/forms';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -40,8 +38,6 @@ describe('UserManagementComponent', () => {
             imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(NgbModule), HttpClientTestingModule],
             declarations: [
                 UserManagementComponent,
-                MockComponent(AlertErrorComponent),
-                MockComponent(AlertComponent),
                 MockRouterLinkDirective,
                 MockComponent(ItemCountComponent),
                 MockPipe(ArtemisDatePipe),

@@ -75,6 +75,9 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
 @Service
 public class ProgrammingExerciseIntegrationTestService {
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;
 
@@ -164,17 +167,17 @@ public class ProgrammingExerciseIntegrationTestService {
         database.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, "student2");
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
-        localGit = Git.init().setDirectory(localRepoFile).call();
+        localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
         File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit = Git.init().setDirectory(originRepoFile).call();
+        remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
         config.save();
 
         localRepoFile2 = Files.createTempDirectory("repo2").toFile();
-        localGit2 = Git.init().setDirectory(localRepoFile2).call();
+        localGit2 = LocalRepository.initialize(localRepoFile2, defaultBranch);
         File originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit2 = Git.init().setDirectory(originRepoFile2).call();
+        remoteGit2 = LocalRepository.initialize(originRepoFile2, defaultBranch);
         StoredConfig config2 = localGit2.getRepository().getConfig();
         config2.setString("remote", "origin", "url", originRepoFile2.getAbsolutePath());
         config2.save();
@@ -367,8 +370,8 @@ public class ProgrammingExerciseIntegrationTestService {
         List<Path> entries = unzipExportedFile();
 
         // Make sure both repositories are present
-        assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))).isTrue();
-        assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student2", ".git").toString()))).isTrue();
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))
+                .anyMatch(entry -> entry.toString().endsWith(Paths.get("student2", ".git").toString()));
     }
 
     public void testExportSubmissionAnonymizationCombining() throws Exception {
@@ -397,13 +400,13 @@ public class ProgrammingExerciseIntegrationTestService {
         List<Path> entries = unzipExportedFile();
 
         // Checks
-        assertThat(entries.stream().anyMatch(entry -> entry.endsWith("Test.java"))).isTrue();
+        assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
         Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
-            assertThat(commit.getAuthorIdent().getName().equals("student")).isTrue();
-            assertThat(commit.getFullMessage().equals("All student changes in one commit")).isTrue();
+            assertThat(commit.getAuthorIdent().getName()).isEqualTo("student");
+            assertThat(commit.getFullMessage()).isEqualTo("All student changes in one commit");
         }
     }
 
@@ -415,7 +418,9 @@ public class ProgrammingExerciseIntegrationTestService {
     private List<Path> unzipExportedFile() throws Exception {
         (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
         Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
-        return Files.walk(extractedZipDir).collect(Collectors.toList());
+        try (var files = Files.walk(extractedZipDir)) {
+            return files.toList();
+        }
     }
 
     public void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
@@ -593,11 +598,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(programmingExerciseServer);
 
-        assertThat(programmingExerciseServer.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
+        assertThat(programmingExerciseServer.getGradingCriteria().get(0).getTitle()).isNull();
         assertThat(programmingExerciseServer.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
 
-        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions()).hasSize(1);
+        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions()).hasSize(3);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
                 .isEqualTo("created first instruction with empty criteria for testing");
     }
@@ -1067,7 +1072,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        programmingExercise.setProjectType(ProjectType.MAVEN);
+        programmingExercise.setProjectType(ProjectType.MAVEN_MAVEN);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
@@ -1322,7 +1327,8 @@ public class ProgrammingExerciseIntegrationTestService {
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(testCasesInDB);
+        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise", "tasks", "solutionEntries")
+                .containsExactlyInAnyOrderElementsOf(testCasesInDB);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();
             assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
@@ -1504,8 +1510,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     public void unlockAllRepositories() throws Exception {
-        mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), false);
-        mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), false);
+        mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), true);
+        mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), true);
         mockDelegate.mockDefaultBranch(programmingExercise);
 
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
@@ -1541,12 +1547,13 @@ public class ProgrammingExerciseIntegrationTestService {
         var jplagZipArchive = request.getFile(path, HttpStatus.OK, database.getDefaultPlagiarismOptions());
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
-        ZipFile zipFile = new ZipFile(jplagZipArchive);
-        assertThat(zipFile.getEntry("index.html")).isNotNull();
-        assertThat(zipFile.getEntry("match0.html")).isNotNull();
-        assertThat(zipFile.getEntry("matches_avg.csv")).isNotNull();
-        // only one match exists
-        assertThat(zipFile.getEntry("match1.html")).isNull();
+        try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
+            assertThat(zipFile.getEntry("index.html")).isNotNull();
+            assertThat(zipFile.getEntry("match0.html")).isNotNull();
+            assertThat(zipFile.getEntry("matches_avg.csv")).isNotNull();
+            // only one match exists
+            assertThat(zipFile.getEntry("match1.html")).isNull();
+        }
     }
 
     private void assertPlagiarismResult(ProgrammingExercise programmingExercise, TextPlagiarismResult result, double expectedSimilarity) {
@@ -1556,7 +1563,7 @@ public class ProgrammingExerciseIntegrationTestService {
         PlagiarismComparison<TextSubmissionElement> comparison = result.getComparisons().iterator().next();
         assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
-        assertThat(comparison.getMatches().size()).isEqualTo(1);
+        assertThat(comparison.getMatches()).hasSize(1);
     }
 
     private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, InterruptedException, GitAPIException {
@@ -1723,7 +1730,7 @@ public class ProgrammingExerciseIntegrationTestService {
     public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
-        assertThat(returnedAuxiliaryRepositories).hasSize(0);
+        assertThat(returnedAuxiliaryRepositories).isEmpty();
     }
 
     public void testGetAuxiliaryRepositoriesForbidden() throws Exception {

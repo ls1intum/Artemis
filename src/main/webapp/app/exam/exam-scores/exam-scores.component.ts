@@ -12,6 +12,7 @@ import {
     ExamScoreDTO,
     ExerciseGroup,
     StudentResult,
+    TableState,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -25,16 +26,12 @@ import { captureException } from '@sentry/browser';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { declareExerciseType } from 'app/entities/exercise.model';
-import { mean, median, standardDeviation, sum } from 'simple-statistics';
+import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
-import { ScaleType, Color } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { GraphColors } from 'app/entities/statistics.model';
-import { GradeStep } from 'app/entities/grade-step.model';
 
 export enum MedianType {
     PASSED,
@@ -57,29 +54,20 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     // TODO: Cache already calculated filter dependent statistics
     public aggregatedExamResults: AggregatedExamResult;
     public aggregatedExerciseGroupResults: AggregatedExerciseGroupResult[];
-    readonly binWidth = 5;
-    public histogramData: number[] = Array(100 / this.binWidth).fill(0);
     public noOfExamsFiltered: number;
 
-    // ngx
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
-    yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-    xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
-    yScaleMax: number;
-    ngxColor = {
-        name: 'Exam statistics',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
-    activeEntries: NgxChartsSingleSeriesDataEntry[] = [];
     dataLabelFormatting = this.formatDataLabel.bind(this);
+    scores: number[];
+    lastCalculatedMedianType: MedianType;
+    highlightedValue: number | undefined;
+
     showOverallMedian: boolean; // Indicates whether the median of all exams is currently highlighted
-    showOverallMedianCheckbox = true; // Indicates whether the checkbox for toggling the highlighting of overallChartMedian is currently visible to the user
     overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
     overallChartMedianType: MedianType; // We need to distinguish the different overall medians for the toggling
     showPassedMedian: boolean; // Same as above for the median of all passed exams
-    showPassedMedianCheckbox: boolean; // Same as above for the checkbox corresponding to passedMedian
+
+    // table entries
+    tableState: TableState = new TableState();
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly medianType = MedianType;
@@ -125,7 +113,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.generateDefaultNgxChartsSetting();
         this.route.params.subscribe((params) => {
             const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
             // alternative exam scores calculation using participant scores table
@@ -182,7 +169,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         // if a grading scale exists and the scoring type is not bonus, per default the median of all passed exams is shown.
                         // We need to set the value for the overall median in order to show it next to the check box
                         if (medianType === MedianType.PASSED) {
-                            this.showPassedMedianCheckbox = true;
                             // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
                             this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
                             this.showOverallMedian = false;
@@ -190,9 +176,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.determineAndHighlightChartMedian(medianType);
                     }
                     this.isLoading = false;
-                    this.createChart();
-                    this.setupChartColoring();
-                    this.setupAxisLabels();
                     this.changeDetector.detectChanges();
                     this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
                 },
@@ -202,7 +185,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe(() => {
-            this.setupAxisLabels();
             this.changeDetector.detectChanges();
         });
     }
@@ -232,39 +214,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             this.showOverallMedian = true;
             this.determineAndHighlightChartMedian(overallMedianType);
         }
+        this.updateValuesAccordingToFilter();
         this.changeDetector.detectChanges();
     }
 
     toggleFilterForNonEmptySubmission() {
         this.filterForNonEmptySubmissions = !this.filterForNonEmptySubmissions;
         this.calculateFilterDependentStatistics();
+        this.updateValuesAccordingToFilter();
         this.changeDetector.detectChanges();
-    }
-
-    private calculateTickMax() {
-        const max = Math.max(...this.histogramData);
-        return Math.ceil((max + 1) / 10) * 10 + 20;
-    }
-
-    private createChart() {
-        if (this.gradingScaleExists) {
-            this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
-                let label = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
-                label += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
-                label += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
-                label += ` {${gradeStep.gradeName}}`;
-                this.ngxData[i].name = label;
-            });
-        } else {
-            for (let i = 0; i < this.histogramData.length; i++) {
-                let label = `[${i * this.binWidth},${(i + 1) * this.binWidth}`;
-                label += i === this.histogramData.length - 1 ? ']' : ')';
-
-                this.ngxData[i].name = label;
-            }
-        }
-
-        this.ngxData = [...this.ngxData];
     }
 
     /**
@@ -294,42 +252,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Find the grade step index for the corresponding grade step to the given percentage
-     * @param percentage the percentage which will be mapped to a grade step
-     */
-    findGradeStepIndex(percentage: number): number {
-        let index = 0;
-        if (this.gradingScaleExists) {
-            this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
-                if (this.gradingSystemService.matchGradePercentage(gradeStep, percentage)) {
-                    index = i;
-                }
-            });
-        } else {
-            index = Math.floor(percentage / this.binWidth);
-            if (index >= 100 / this.binWidth) {
-                // This happens, for 100%, if the exam total points were not set correctly or bonus points were given
-                index = 100 / this.binWidth - 1;
-            }
-        }
-        return index;
-    }
-
-    /**
      * Calculates filter dependent exam statistics. Must be triggered if filter settings change.
      * 1. The average points and number of participants for each exercise group and exercise
      * 2. Distribution of scores
      */
     private calculateFilterDependentStatistics() {
-        this.generateDefaultNgxChartsSetting();
-        if (this.gradingScaleExists) {
-            this.histogramData = Array(this.gradingScale!.gradeSteps.length);
-            this.ngxData = [];
-            for (let i = 0; i < this.gradingScale!.gradeSteps.length; i++) {
-                this.ngxData.push({ name: i.toString(), value: 0 });
-            }
-        }
-        this.histogramData.fill(0);
+        this.noOfExamsFiltered = 0;
+        const scoresToVisualize: number[] = [];
 
         // Create data structures holding the statistics for all exercise groups and exercises
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
@@ -350,10 +279,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             if (!studentResult.submitted && this.filterForSubmittedExams) {
                 continue;
             }
-            // Update histogram data structure
-            const histogramIndex = this.findGradeStepIndex(studentResult.overallScoreAchieved ?? 0);
-            this.ngxData[histogramIndex].value++;
-            this.histogramData[histogramIndex]++;
+            scoresToVisualize.push(studentResult.overallScoreAchieved ?? 0);
+            this.noOfExamsFiltered++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
                 continue;
             }
@@ -384,18 +311,19 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        this.noOfExamsFiltered = sum(this.histogramData);
         // Calculate exercise group and exercise statistics
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
-        this.createChart();
-        this.yScaleMax = this.calculateTickMax();
+        this.scores = [...scoresToVisualize];
     }
 
     /**
      * Calculates statistics on exam granularity for passed exams, submitted exams, and for all exams.
      */
     private calculateExamStatistics() {
+        let numberNonEmptySubmissions = 0;
+        let numberNonEmptySubmittedSubmissions = 0;
+
         const studentPointsPassed: number[] = [];
         const studentPointsSubmitted: number[] = [];
         const studentPointsTotal: number[] = [];
@@ -422,6 +350,15 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 if (studentResult.hasPassed) {
                     studentPointsPassed.push(studentResult.overallPointsAchieved!);
                     studentPointsPassedInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
+                }
+            }
+            if (studentResult.exerciseGroupIdToExerciseResult) {
+                const entries = Object.entries(studentResult.exerciseGroupIdToExerciseResult);
+                if (entries.some(([, exerciseResult]) => exerciseResult.hasNonEmptySubmission)) {
+                    numberNonEmptySubmissions += 1;
+                    if (studentResult.submitted) {
+                        numberNonEmptySubmittedSubmissions += 1;
+                    }
                 }
             }
 
@@ -464,6 +401,10 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             studentGradesTotal,
             studentGradesTotalInFirstCorrectionRound,
         );
+        this.aggregatedExamResults.noOfExamsNonEmpty = numberNonEmptySubmissions;
+        this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty = numberNonEmptySubmittedSubmissions;
+        this.updateValuesAccordingToFilter();
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -522,17 +463,23 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         studentGradesSubmittedInFirstCorrectionRound: number[],
     ): AggregatedExamResult {
         if (studentPointsSubmitted.length) {
-            examStatistics.meanPoints = mean(studentPointsSubmitted);
-            examStatistics.median = median(studentPointsSubmitted);
-            examStatistics.standardDeviation = standardDeviation(studentPointsSubmitted);
-            examStatistics.noOfExamsFiltered = studentPointsSubmitted.length;
+            examStatistics.meanPointsSubmitted = mean(studentPointsSubmitted);
+            examStatistics.medianSubmitted = median(studentPointsSubmitted);
+            examStatistics.standardDeviationSubmitted = standardDeviation(studentPointsSubmitted);
+            examStatistics.noOfExamsSubmitted = studentPointsSubmitted.length;
             if (this.examScoreDTO.maxPoints) {
-                examStatistics.meanPointsRelative = (examStatistics.meanPoints / this.examScoreDTO.maxPoints) * 100;
-                examStatistics.medianRelative = (examStatistics.median / this.examScoreDTO.maxPoints) * 100;
+                examStatistics.meanPointsRelativeSubmitted = (examStatistics.meanPointsSubmitted / this.examScoreDTO.maxPoints) * 100;
+                examStatistics.medianRelativeSubmitted = (examStatistics.medianSubmitted / this.examScoreDTO.maxPoints) * 100;
                 if (this.gradingScaleExists) {
-                    examStatistics.meanGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.meanPointsRelative)!.gradeName;
-                    examStatistics.medianGrade = this.gradingSystemService.findMatchingGradeStep(this.gradingScale!.gradeSteps, examStatistics.medianRelative)!.gradeName;
-                    examStatistics.standardGradeDeviation = this.hasNumericGrades ? standardDeviation(studentGradesSubmitted) : undefined;
+                    examStatistics.meanGradeSubmitted = this.gradingSystemService.findMatchingGradeStep(
+                        this.gradingScale!.gradeSteps,
+                        examStatistics.meanPointsRelativeSubmitted,
+                    )!.gradeName;
+                    examStatistics.medianGradeSubmitted = this.gradingSystemService.findMatchingGradeStep(
+                        this.gradingScale!.gradeSteps,
+                        examStatistics.medianRelativeSubmitted,
+                    )!.gradeName;
+                    examStatistics.standardGradeDeviationSubmitted = this.hasNumericGrades ? standardDeviation(studentGradesSubmitted) : undefined;
                 }
             }
             // Calculate statistics for the first assessments of submitted exams if second correction exists
@@ -783,63 +730,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * fill ngxData with a default configuration. The assignment of the names is only a placeholder,
-     * they will be set to default labels in createChart.
-     * If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
-     * If no grading key exists, this default configuration is presented to the user.
-     * @private
-     */
-    private generateDefaultNgxChartsSetting(): void {
-        this.ngxData = [];
-        for (let i = 0; i < 100 / this.binWidth; i++) {
-            this.ngxData.push({ name: i.toString(), value: 0 });
-        }
-    }
-
-    /**
-     * Sets up the bar coloring
-     * If no grading scale exists, all bars representing a score < 40% are colored yellow in order to visualize that this is a critical performance
-     * If a grading scale exists that is bonus, all bars with a lower bound < 40% are colored yellow as well
-     * If a grading scale exists that is not bonus, all bars representing a score that does not pass the exam are colored red
-     * In either case, all bars above the thresholds remain grey
-     * @private
-     */
-    private setupChartColoring(): void {
-        this.ngxColor.domain = [];
-        if (!this.gradingScaleExists) {
-            for (let i = 0; i < 100 / this.binWidth; i++) {
-                if (i < 40 / this.binWidth) {
-                    this.ngxColor.domain.push(GraphColors.YELLOW);
-                } else {
-                    this.ngxColor.domain.push(GraphColors.GREY);
-                }
-            }
-        } else {
-            this.gradingScale!.gradeSteps.forEach((gradeStep) => {
-                const color = this.getGradeStepColor(gradeStep);
-                this.ngxColor.domain.push(color);
-            });
-        }
-
-        this.ngxData = [...this.ngxData];
-    }
-
-    /**
-     * Auxiliary method in order to keep the chart translation sensitive
-     * @private
-     */
-    private setupAxisLabels(): void {
-        this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-        this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
-
-        if (this.gradingScaleExists && !this.isBonus) {
-            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixNoBonus');
-        } else if (this.gradingScaleExists && this.isBonus) {
-            this.xAxisLabel += this.translateService.instant('artemisApp.examScores.xAxesSuffixBonus');
-        }
-    }
-
-    /**
      * Handles the click event on a chart bar. The user is then delegated to the participant scores page of the exam
      */
     onSelect() {
@@ -876,7 +766,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if (this.showPassedMedian || this.showOverallMedian) {
             this.determineAndHighlightChartMedian(medianType);
         } else {
-            this.activeEntries = [];
+            this.highlightedValue = undefined;
         }
     }
 
@@ -889,6 +779,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     private determineAndHighlightChartMedian(medianType: MedianType): void {
         let chartMedian;
+        this.lastCalculatedMedianType = medianType;
         if (medianType === MedianType.PASSED) {
             const passedMedian = this.aggregatedExamResults.medianRelativePassed;
             chartMedian = passedMedian ? roundValueSpecifiedByCourseSettings(passedMedian, this.course) : 0;
@@ -898,29 +789,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             chartMedian = this.overallChartMedian;
             this.showOverallMedian = true;
         }
-        const index = this.findGradeStepIndex(chartMedian);
-        const medianChartBar = this.ngxData[index];
-
-        // Highlighting a bar only makes sense if this bar is representing a value > 0
-        if (medianChartBar.value === 0) {
-            // In addition, it would be confusing to give the user the opportunity to toggle a highlighting in this case so we hide the corresponding checkbox
-            if (medianType === MedianType.PASSED) {
-                this.showPassedMedianCheckbox = false;
-            } else {
-                this.showOverallMedianCheckbox = false;
-            }
-            this.activeEntries = [];
-        } else {
-            /*
-            The median value for passed exams does not change by any filter configuration, therefore the corresponding flag won't get updated after init.
-            The median value for all exams does change depending on if only submitted exams are included or not. Here we have to update the flag if the bar
-            represents a value > 0
-             */
-            if (medianType !== MedianType.PASSED) {
-                this.showOverallMedianCheckbox = true;
-            }
-            this.activeEntries = this.ngxData.filter((chartBar) => chartBar.name !== medianChartBar.name);
-        }
+        this.highlightedValue = chartMedian;
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -933,31 +803,662 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const overallMedian = this.aggregatedExamResults.medianRelativeTotal;
             this.overallChartMedian = overallMedian ? roundValueSpecifiedByCourseSettings(overallMedian, this.course) : 0;
         } else {
-            const submittedMedian = this.aggregatedExamResults.medianRelative;
+            const submittedMedian = this.aggregatedExamResults.medianRelativeSubmitted;
             this.overallChartMedian = submittedMedian ? roundValueSpecifiedByCourseSettings(submittedMedian, this.course) : 0;
         }
         this.overallChartMedianType = medianType;
     }
 
     /**
-     * Auxiliary method that returns the bar color of the grade step in the chart
-     * @param gradeStep the grade step that should be colored
-     * @returns string representation of the color
+     * Auxiliary method that updates the statistics table above the score distribution depending on the current filter state
+     * The filter of interest is determined by the two boolean flags {@link ExamScoresComponent#filterForSubmittedExams} and
+     * {@link ExamScoresComponent#filterForNonEmptySubmissions}
      * @private
      */
-    private getGradeStepColor(gradeStep: GradeStep): GraphColors {
-        if (this.isBonus) {
-            if (gradeStep.gradeName === '0') {
-                return GraphColors.YELLOW;
-            } else {
-                return GraphColors.GREY;
-            }
+    private updateValuesAccordingToFilter(): void {
+        this.tableState.absoluteAmountOfSubmittedExams = this.aggregatedExamResults.noOfExamsSubmitted;
+        this.tableState.absoluteAmountOfTotalExams = this.aggregatedExamResults.noOfRegisteredUsers;
+        let denominator: number;
+        if (this.filterForSubmittedExams && this.filterForNonEmptySubmissions) {
+            denominator = this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty;
+            this.tableState.absoluteAmountOfSubmittedExams = this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty;
+            this.tableState.absoluteAmountOfTotalExams = this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty;
+            this.determineSubmittedAndNonEmptyValues();
+            this.setValuesForSubmittedAndNonEmptyFilter(this.tableState);
+        } else if (this.filterForSubmittedExams && !this.filterForNonEmptySubmissions) {
+            denominator = this.aggregatedExamResults.noOfExamsSubmitted;
+            this.tableState.absoluteAmountOfTotalExams = this.aggregatedExamResults.noOfExamsSubmitted;
+            this.setValuesForSubmittedFilter(this.tableState);
+        } else if (!this.filterForSubmittedExams && this.filterForNonEmptySubmissions) {
+            denominator = this.aggregatedExamResults.noOfExamsNonEmpty;
+            this.tableState.absoluteAmountOfSubmittedExams = this.aggregatedExamResults.noOfExamsSubmittedAndNotEmpty;
+            this.tableState.absoluteAmountOfTotalExams = this.aggregatedExamResults.noOfExamsNonEmpty;
+            this.determineNonEmptyValues();
+            this.determineSubmittedAndNonEmptyValues();
+            this.setValuesForNonEmptyFilter(this.tableState);
         } else {
-            if (gradeStep.isPassingGrade) {
-                return GraphColors.GREY;
-            } else {
-                return GraphColors.RED;
+            denominator = this.aggregatedExamResults.noOfRegisteredUsers;
+            this.setValuesForNoFilter(this.tableState);
+        }
+
+        this.tableState.relativeAmountOfPassedExams =
+            denominator > 0 ? this.roundAndPerformLocalConversion((this.aggregatedExamResults.noOfExamsFilteredForPassed / denominator) * 100) : '-';
+        this.tableState.relativeAmountOfSubmittedExams =
+            denominator > 0 ? this.roundAndPerformLocalConversion((this.tableState.absoluteAmountOfSubmittedExams / denominator) * 100) : '-';
+    }
+
+    /**
+     * Auxiliary method that sets the variants including only submitted AND not empty exams for all affected statistical values
+     * @private
+     */
+    private determineSubmittedAndNonEmptyValues(): void {
+        // If one value is not undefined, all other values have been computed as well and we take the cached results instead of recalcuating every time
+        if (this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty) {
+            return;
+        }
+        const overallPointsSubmittedAndNonEmpty: number[] = [];
+        const pointsSubmittedAndNonEmptyInFirstCorrection: number[] = [];
+        let submittedAndNonEmptyGrades: number[] = [];
+        let submittedAndNonEmptyGradesInFirstCorrection: number[] = [];
+        this.studentResults.forEach((result) => {
+            if (result.exerciseGroupIdToExerciseResult) {
+                const hasAtLeastOneSubmission = Object.entries(result.exerciseGroupIdToExerciseResult).some(([, exerciseResult]) => exerciseResult.hasNonEmptySubmission);
+                if (result.submitted && hasAtLeastOneSubmission) {
+                    overallPointsSubmittedAndNonEmpty.push(result.overallPointsAchieved ?? 0);
+                    submittedAndNonEmptyGrades = this.collectOverallGrades(submittedAndNonEmptyGrades, result);
+                    if (this.hasSecondCorrectionAndStarted) {
+                        pointsSubmittedAndNonEmptyInFirstCorrection.push(result.overallPointsAchievedInFirstCorrection ?? 0);
+                        submittedAndNonEmptyGradesInFirstCorrection = this.collectOverallGradesInFirstCorrection(submittedAndNonEmptyGradesInFirstCorrection, result);
+                    }
+                }
+            }
+        });
+        this.determineMeanMedianAndStandardDeviationSubmittedAndNonEmpty(overallPointsSubmittedAndNonEmpty);
+        this.determineMeanMedianAndStandardDeviationSubmittedAndNonEmptyInFirstCorrection(pointsSubmittedAndNonEmptyInFirstCorrection);
+        if (this.gradingScaleExists && !this.isBonus) {
+            this.determineGradesSubmittedAndNonEmpty(overallPointsSubmittedAndNonEmpty.length > 0);
+            if (this.hasNumericGrades) {
+                this.aggregatedExamResults.standardGradeDeviationSubmittedAndNonEmpty =
+                    submittedAndNonEmptyGrades.length > 0 ? standardDeviation(submittedAndNonEmptyGrades) : undefined;
+                if (this.hasSecondCorrectionAndStarted) {
+                    this.aggregatedExamResults.standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection =
+                        submittedAndNonEmptyGradesInFirstCorrection.length > 0 ? standardDeviation(submittedAndNonEmptyGradesInFirstCorrection) : undefined;
+                }
             }
         }
+    }
+
+    /**
+     * Sets mean and median points and scores and the standard deviation in {@link ExamScoresComponent#aggregatedExamResults} if only submitted and non empty
+     * student exams are considered
+     * @param overallPointsSubmittedAndNonEmpty array containing the overall points of every submitted and non-empty student exam
+     * @private
+     */
+    private determineMeanMedianAndStandardDeviationSubmittedAndNonEmpty(overallPointsSubmittedAndNonEmpty: number[]): void {
+        if (overallPointsSubmittedAndNonEmpty.length > 0) {
+            this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty = mean(overallPointsSubmittedAndNonEmpty);
+            this.aggregatedExamResults.medianSubmittedAndNonEmpty = median(overallPointsSubmittedAndNonEmpty);
+            if (this.examScoreDTO.maxPoints) {
+                this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty = (this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty / this.examScoreDTO.maxPoints) * 100;
+                this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty = (this.aggregatedExamResults.medianSubmittedAndNonEmpty / this.examScoreDTO.maxPoints) * 100;
+            }
+            this.aggregatedExamResults.standardDeviationSubmittedAndNonEmpty = standardDeviation(overallPointsSubmittedAndNonEmpty);
+        }
+    }
+
+    /**
+     * Sets mean and median points and scores and the standard deviation in {@link ExamScoresComponent#aggregatedExamResults} after first correction
+     * if only submitted and non empty student exams are considered
+     * @param pointsSubmittedAndNonEmptyInFirstCorrection array containing the overall points of every submitted and non-empty student exam after the first correction round
+     * @private
+     */
+    private determineMeanMedianAndStandardDeviationSubmittedAndNonEmptyInFirstCorrection(pointsSubmittedAndNonEmptyInFirstCorrection: number[]): void {
+        if (this.hasSecondCorrectionAndStarted && pointsSubmittedAndNonEmptyInFirstCorrection.length > 0) {
+            this.aggregatedExamResults.meanPointsSubmittedAndNonEmptyInFirstCorrection = mean(pointsSubmittedAndNonEmptyInFirstCorrection);
+            this.aggregatedExamResults.medianSubmittedAndNonEmptyInFirstCorrection = median(pointsSubmittedAndNonEmptyInFirstCorrection);
+            if (this.examScoreDTO.maxPoints) {
+                this.aggregatedExamResults.meanScoreSubmittedAndNonEmptyInFirstCorrection =
+                    (this.aggregatedExamResults.meanPointsSubmittedAndNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                this.aggregatedExamResults.medianScoreSubmittedAndNonEmptyInFirstCorrection =
+                    (this.aggregatedExamResults.medianSubmittedAndNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+            }
+            this.aggregatedExamResults.standardDeviationSubmittedAndNonEmptyInFirstCorrection = standardDeviation(pointsSubmittedAndNonEmptyInFirstCorrection);
+        }
+    }
+
+    /**
+     * Sets mean and median grades in {@link ExamScoresComponent#aggregatedExamResults} if only submitted and non empty
+     * student exams are considered.
+     * This includes the corresponding grades after the first correction round if appropriate
+     * @param atLeastOneExam indicates whether at least one student exam has been submitted and is not empty
+     * @private
+     */
+    private determineGradesSubmittedAndNonEmpty(atLeastOneExam: boolean): void {
+        if (atLeastOneExam) {
+            this.aggregatedExamResults.meanGradeSubmittedAndNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+                this.gradingScale!.gradeSteps,
+                this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty,
+            )!.gradeName;
+
+            this.aggregatedExamResults.medianGradeSubmittedAndNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+                this.gradingScale!.gradeSteps,
+                this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty,
+            )!.gradeName;
+            if (this.hasSecondCorrectionAndStarted) {
+                this.aggregatedExamResults.meanGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                    this.gradingScale!.gradeSteps,
+                    this.aggregatedExamResults.meanScoreSubmittedAndNonEmptyInFirstCorrection,
+                )!.gradeName;
+
+                this.aggregatedExamResults.medianGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                    this.gradingScale!.gradeSteps,
+                    this.aggregatedExamResults.medianScoreSubmittedAndNonEmptyInFirstCorrection!,
+                )!.gradeName;
+            }
+        }
+    }
+
+    /**
+     * Auxiliary method that sets the variants including only not empty exams for all affected statistical values
+     * @private
+     */
+    private determineNonEmptyValues(): void {
+        if (this.aggregatedExamResults.meanPointsNonEmpty) {
+            return;
+        }
+        const overallPointsNonEmpty: number[] = [];
+        const pointsNonEmptyInFirstCorrection: number[] = [];
+        let nonEmptyGrades: number[] = [];
+        let nonEmptyGradesInFirstCorrection: number[] = [];
+        this.studentResults.forEach((result) => {
+            if (result.exerciseGroupIdToExerciseResult) {
+                const hasAtLeastOneSubmission = Object.entries(result.exerciseGroupIdToExerciseResult).some(([, exerciseResult]) => exerciseResult.hasNonEmptySubmission);
+                if (hasAtLeastOneSubmission) {
+                    overallPointsNonEmpty.push(result.overallPointsAchieved ?? 0);
+                    nonEmptyGrades = this.collectOverallGrades(nonEmptyGrades, result);
+                    if (this.hasSecondCorrectionAndStarted) {
+                        pointsNonEmptyInFirstCorrection.push(result.overallPointsAchievedInFirstCorrection ?? 0);
+                        nonEmptyGradesInFirstCorrection = this.collectOverallGradesInFirstCorrection(nonEmptyGradesInFirstCorrection, result);
+                    }
+                }
+            }
+        });
+        this.determineMeanMedianAndStandardDeviationNonEmpty(overallPointsNonEmpty);
+        this.determineMeanMedianAndStandardDeviationNonEmptyInFirstCorrection(pointsNonEmptyInFirstCorrection);
+        if (this.gradingScale && !this.isBonus) {
+            this.determineGradesNonEmpty(overallPointsNonEmpty.length > 0);
+            if (this.hasNumericGrades) {
+                this.aggregatedExamResults.standardGradeDeviationNonEmpty = nonEmptyGrades.length > 0 ? standardDeviation(nonEmptyGrades) : undefined;
+                if (this.hasSecondCorrectionAndStarted) {
+                    this.aggregatedExamResults.standardGradeDeviationNonEmptyInFirstCorrection =
+                        nonEmptyGradesInFirstCorrection.length > 0 ? standardDeviation(nonEmptyGradesInFirstCorrection) : undefined;
+                }
+            }
+        }
+    }
+
+    /**
+     * Sets mean and median points and scores and the standard deviation in {@link ExamScoresComponent#aggregatedExamResults} if only non empty
+     * student exams are considered
+     * @param overallPointsNonEmpty array containing the overall points of every non-empty student exam
+     * @private
+     */
+    private determineMeanMedianAndStandardDeviationNonEmpty(overallPointsNonEmpty: number[]): void {
+        if (overallPointsNonEmpty.length > 0) {
+            this.aggregatedExamResults.meanPointsNonEmpty = mean(overallPointsNonEmpty);
+            this.aggregatedExamResults.medianNonEmpty = median(overallPointsNonEmpty);
+            if (this.examScoreDTO.maxPoints) {
+                this.aggregatedExamResults.meanScoreNonEmpty = (this.aggregatedExamResults.meanPointsNonEmpty / this.examScoreDTO.maxPoints) * 100;
+                this.aggregatedExamResults.medianScoreNonEmpty = (this.aggregatedExamResults.medianNonEmpty / this.examScoreDTO.maxPoints) * 100;
+            }
+            this.aggregatedExamResults.standardDeviationNonEmpty = standardDeviation(overallPointsNonEmpty);
+        }
+    }
+
+    /**
+     * Sets mean and median points and scores and the standard deviation in {@link ExamScoresComponent#aggregatedExamResults} after first correction
+     * if only non empty student exams are considered
+     * @param pointsNonEmptyInFirstCorrection array containing the overall points of every non-empty student exam after the first correction round
+     * @private
+     */
+    private determineMeanMedianAndStandardDeviationNonEmptyInFirstCorrection(pointsNonEmptyInFirstCorrection: number[]): void {
+        if (this.hasSecondCorrectionAndStarted && pointsNonEmptyInFirstCorrection.length > 0) {
+            this.aggregatedExamResults.meanPointsNonEmptyInFirstCorrection = mean(pointsNonEmptyInFirstCorrection);
+            this.aggregatedExamResults.medianNonEmptyInFirstCorrection = median(pointsNonEmptyInFirstCorrection);
+            if (this.examScoreDTO.maxPoints) {
+                this.aggregatedExamResults.meanScoreNonEmptyInFirstCorrection =
+                    (this.aggregatedExamResults.meanPointsNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+                this.aggregatedExamResults.medianScoreNonEmptyInFirstCorrection = (this.aggregatedExamResults.medianNonEmptyInFirstCorrection / this.examScoreDTO.maxPoints) * 100;
+            }
+            this.aggregatedExamResults.standardDeviationNonEmptyInFirstCorrection = standardDeviation(pointsNonEmptyInFirstCorrection);
+        }
+    }
+
+    /**
+     * Sets mean and median grades in {@link ExamScoresComponent#aggregatedExamResults} if only non empty
+     * student exams are considered.
+     * This includes the corresponding grades after the first correction round if appropriate
+     * @param atLeastOneExam indicates whether at least one student exam is not empty
+     * @private
+     */
+    private determineGradesNonEmpty(atLeastOneExam: boolean): void {
+        if (atLeastOneExam) {
+            this.aggregatedExamResults.meanGradeNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+                this.gradingScale!.gradeSteps,
+                this.aggregatedExamResults.meanScoreNonEmpty,
+            )!.gradeName;
+
+            this.aggregatedExamResults.medianGradeNonEmpty = this.gradingSystemService.findMatchingGradeStep(
+                this.gradingScale!.gradeSteps,
+                this.aggregatedExamResults.medianScoreNonEmpty,
+            )!.gradeName;
+            if (this.hasSecondCorrectionAndStarted) {
+                this.aggregatedExamResults.meanGradeNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                    this.gradingScale!.gradeSteps,
+                    this.aggregatedExamResults.meanScoreNonEmptyInFirstCorrection,
+                )!.gradeName;
+
+                this.aggregatedExamResults.medianGradeNonEmptyInFirstCorrection = this.gradingSystemService.findMatchingGradeStep(
+                    this.gradingScale!.gradeSteps,
+                    this.aggregatedExamResults.medianScoreNonEmptyInFirstCorrection,
+                )!.gradeName;
+            }
+        }
+    }
+
+    /**
+     * Auxiliary method in order to collect all numeric overall grades for the exam
+     * @param grades the currently collected overall grades
+     * @param result the result containing a numeric or not numeric overall grade
+     * @private
+     * @returns updated array of collected grades
+     */
+    private collectOverallGrades(grades: number[], result: StudentResult): number[] {
+        if (this.gradingScaleExists && this.hasNumericGrades) {
+            grades.push(Number(result.overallGrade));
+        }
+        return grades;
+    }
+
+    /**
+     * Auxiliary method in order to collect all numeric grades after first correction round for the exam
+     * @param grades the currently collected grades after first correction round
+     * @param result the result containing a numeric or not numeric grade after first correction round
+     * @private
+     * @returns updated array of collected grades
+     */
+    private collectOverallGradesInFirstCorrection(grades: number[], result: StudentResult): number[] {
+        if (this.gradingScaleExists && this.hasNumericGrades) {
+            grades.push(Number(result.overallGradeInFirstCorrection));
+        }
+        return grades;
+    }
+
+    /**
+     * Sets the corresponding values of {@link ExamScoresComponent#aggregatedExamResults} to the table state if both filter options are activated
+     * @param tableState object containing the values currently displayed by the table
+     * @private
+     */
+    private setValuesForSubmittedAndNonEmptyFilter(tableState: TableState): void {
+        this.setAverageValuesForSubmittedAndNonEmptyFilter(tableState);
+        this.setMedianValuesForSubmittedAndNonEmptyFilter(tableState);
+        this.setStandardDeviationForSubmittedAndNonEmptyFilter(tableState);
+    }
+
+    /**
+     * Sets all average values to the table state if both filter options are activated
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setAverageValuesForSubmittedAndNonEmptyFilter(tableState: TableState): void {
+        const averagePointsSubmittedAndNonEmpty = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty);
+        const averagePointsSubmittedAndNonEmptyInFirstCorrection = this.roundAndLocalizeStatisticalValue(
+            this.aggregatedExamResults.meanPointsSubmittedAndNonEmptyInFirstCorrection,
+        );
+        const averageScoreSubmittedAndNonEmpty = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty);
+        const averageScoreSubmittedAndNonEmptyInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanScoreSubmittedAndNonEmptyInFirstCorrection);
+        const averageGradeSubmittedAndNonEmpty = this.aggregatedExamResults.meanGradeSubmittedAndNonEmpty ?? '-';
+        const averageGradeSubmittedAndNonEmptyInFirstCorrection = this.aggregatedExamResults.meanGradeSubmittedAndNonEmptyInFirstCorrection ?? '-';
+        tableState.averagePointsSubmitted = averagePointsSubmittedAndNonEmpty;
+        tableState.averagePointsTotal = averagePointsSubmittedAndNonEmpty;
+        tableState.averagePointsSubmittedInFirstCorrection = averagePointsSubmittedAndNonEmptyInFirstCorrection;
+        tableState.averagePointsTotalInFirstCorrection = averagePointsSubmittedAndNonEmptyInFirstCorrection;
+        tableState.averageScoreSubmitted = averageScoreSubmittedAndNonEmpty;
+        tableState.averageScoreTotal = averageScoreSubmittedAndNonEmpty;
+        tableState.averageScoreSubmittedInFirstCorrection = averageScoreSubmittedAndNonEmptyInFirstCorrection;
+        tableState.averageScoreTotalInFirstCorrection = averageScoreSubmittedAndNonEmptyInFirstCorrection;
+        tableState.averageGradeSubmitted = averageGradeSubmittedAndNonEmpty;
+        tableState.averageGradeTotal = averageGradeSubmittedAndNonEmpty;
+        tableState.averageGradeSubmittedInFirstCorrection = averageGradeSubmittedAndNonEmptyInFirstCorrection;
+        tableState.averageGradeTotalInFirstCorrection = averageGradeSubmittedAndNonEmptyInFirstCorrection;
+    }
+
+    /**
+     * Sets all median values to the table state if both filter options are activated
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setMedianValuesForSubmittedAndNonEmptyFilter(tableState: TableState): void {
+        const medianPointsSubmittedAndNonEmpty = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmittedAndNonEmpty);
+        const medianPointsSubmittedAndNonEmptyInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmittedAndNonEmptyInFirstCorrection);
+        const medianScoreSubmittedAndNonEmpty = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty);
+        const medianScoreSubmittedAndNonEmptyInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreSubmittedAndNonEmptyInFirstCorrection);
+        const medianGradeSubmittedAndNonEmpty = this.aggregatedExamResults.medianGradeSubmittedAndNonEmpty ?? '-';
+        const medianGradeSubmittedAndNonEmptyInFirstCorrection = this.aggregatedExamResults.medianGradeSubmittedAndNonEmptyInFirstCorrection ?? '-';
+        tableState.medianPointsSubmitted = medianPointsSubmittedAndNonEmpty;
+        tableState.medianPointsTotal = medianPointsSubmittedAndNonEmpty;
+        tableState.medianPointsSubmittedInFirstCorrection = medianPointsSubmittedAndNonEmptyInFirstCorrection;
+        tableState.medianPointsTotalInFirstCorrection = medianPointsSubmittedAndNonEmptyInFirstCorrection;
+        tableState.medianScoreSubmitted = medianScoreSubmittedAndNonEmpty;
+        tableState.medianScoreTotal = medianScoreSubmittedAndNonEmpty;
+        tableState.medianScoreSubmittedInFirstCorrection = medianScoreSubmittedAndNonEmptyInFirstCorrection;
+        tableState.medianScoreTotalInFirstCorrection = medianScoreSubmittedAndNonEmptyInFirstCorrection;
+        tableState.medianGradeSubmitted = medianGradeSubmittedAndNonEmpty;
+        tableState.medianGradeTotal = medianGradeSubmittedAndNonEmpty;
+        tableState.medianGradeSubmittedInFirstCorrection = medianGradeSubmittedAndNonEmptyInFirstCorrection;
+        tableState.medianGradeTotalInFirstCorrection = medianGradeSubmittedAndNonEmptyInFirstCorrection;
+    }
+
+    /**
+     * Sets all standard deviations to the table state if both filter options are activated
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setStandardDeviationForSubmittedAndNonEmptyFilter(tableState: TableState): void {
+        const standardDeviationSubmittedAndNonEmpty = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationSubmittedAndNonEmpty);
+        const standardDeviationSubmittedAndNonEmptyInFirstCorrection = this.roundAndLocalizeStatisticalValue(
+            this.aggregatedExamResults.standardDeviationSubmittedAndNonEmptyInFirstCorrection,
+        );
+        const standardGradeDeviationSubmittedAndNonEmpty = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationSubmittedAndNonEmpty);
+        const standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection = this.roundAndLocalizeStatisticalValue(
+            this.aggregatedExamResults.standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection,
+        );
+        tableState.standardDeviationSubmitted = standardDeviationSubmittedAndNonEmpty;
+        tableState.standardDeviationTotal = standardDeviationSubmittedAndNonEmpty;
+        tableState.standardDeviationSubmittedInFirstCorrection = standardDeviationSubmittedAndNonEmptyInFirstCorrection;
+        tableState.standardDeviationTotalInFirstCorrection = standardDeviationSubmittedAndNonEmptyInFirstCorrection;
+        tableState.standardGradeDeviationSubmitted = standardGradeDeviationSubmittedAndNonEmpty;
+        tableState.standardGradeDeviationTotal = standardGradeDeviationSubmittedAndNonEmpty;
+        tableState.standardGradeDeviationSubmittedInFirstCorrection = standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection;
+        tableState.standardGradeDeviationTotalInFirstCorrection = standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection;
+    }
+
+    /**
+     * Sets the corresponding values of {@link ExamScoresComponent#aggregatedExamResults} to the table state if only not empty exams should be included in calculation
+     * @param tableState object containing the values currently displayed by the table
+     * @private
+     */
+    private setValuesForNonEmptyFilter(tableState: TableState): void {
+        this.setAverageValuesForNonEmptyFilter(tableState);
+        this.setMedianValuesForNonEmptyFilter(tableState);
+        this.setStandardDeviationForNonEmptyFilter(tableState);
+    }
+
+    /**
+     * Sets all average values to the table state if only not empty exams should be included in calculation
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setAverageValuesForNonEmptyFilter(tableState: TableState): void {
+        tableState.averagePointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty);
+        tableState.averagePointsTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsNonEmpty);
+        tableState.averagePointsSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsSubmittedAndNonEmptyInFirstCorrection);
+        tableState.averageGradeTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsNonEmptyInFirstCorrection);
+        tableState.averageScoreSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanScoreSubmittedAndNonEmpty);
+        tableState.averageScoreTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanScoreNonEmpty);
+        tableState.averageScoreSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanScoreSubmittedAndNonEmptyInFirstCorrection);
+        tableState.averageScoreTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanScoreNonEmptyInFirstCorrection);
+        tableState.averageGradeSubmitted = this.aggregatedExamResults.meanGradeSubmittedAndNonEmpty ?? '-';
+        tableState.averageGradeTotal = this.aggregatedExamResults.meanGradeNonEmpty ?? '-';
+        tableState.averageGradeSubmittedInFirstCorrection = this.aggregatedExamResults.meanGradeSubmittedAndNonEmptyInFirstCorrection ?? '-';
+        tableState.averageGradeTotalInFirstCorrection = this.aggregatedExamResults.meanGradeNonEmptyInFirstCorrection ?? '-';
+    }
+
+    /**
+     * Sets all median values to the table state if only not empty exams should be included in calculation
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setMedianValuesForNonEmptyFilter(tableState: TableState): void {
+        tableState.medianPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmittedAndNonEmpty);
+        tableState.medianPointsTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianNonEmpty);
+        tableState.medianPointsSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmittedAndNonEmptyInFirstCorrection);
+        tableState.medianPointsTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianNonEmptyInFirstCorrection);
+        tableState.medianScoreSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreSubmittedAndNonEmpty);
+        tableState.medianScoreTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreNonEmpty);
+        tableState.medianScoreSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreSubmittedAndNonEmptyInFirstCorrection);
+        tableState.medianScoreTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianScoreNonEmptyInFirstCorrection);
+        tableState.medianGradeSubmitted = this.aggregatedExamResults.medianGradeSubmittedAndNonEmpty ?? '-';
+        tableState.medianGradeTotal = this.aggregatedExamResults.medianGradeNonEmpty ?? '-';
+        tableState.medianGradeSubmittedInFirstCorrection = this.aggregatedExamResults.medianGradeSubmittedAndNonEmptyInFirstCorrection ?? '-';
+        tableState.medianGradeTotalInFirstCorrection = this.aggregatedExamResults.medianGradeTotalInFirstCorrection ?? '-';
+    }
+
+    /**
+     * Sets all standard deviations to the table state if only not empty exams should be included in calculation
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setStandardDeviationForNonEmptyFilter(tableState: TableState): void {
+        tableState.standardDeviationSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationSubmittedAndNonEmpty);
+        tableState.standardDeviationTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationNonEmpty);
+        tableState.standardDeviationSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(
+            this.aggregatedExamResults.standardDeviationSubmittedAndNonEmptyInFirstCorrection,
+        );
+        tableState.standardDeviationTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationNonEmptyInFirstCorrection);
+        tableState.standardGradeDeviationSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationSubmittedAndNonEmpty);
+        tableState.standardGradeDeviationTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationNonEmpty);
+        tableState.standardGradeDeviationSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(
+            this.aggregatedExamResults.standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection,
+        );
+        tableState.standardGradeDeviationTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationNonEmptyInFirstCorrection);
+    }
+
+    /**
+     * Sets the corresponding values of {@link ExamScoresComponent#aggregatedExamResults} to the table state if only submitted exams should be included in calculation
+     * @param tableState object containing the values currently displayed by the table
+     * @private
+     */
+    private setValuesForSubmittedFilter(tableState: TableState): void {
+        this.setAverageValuesForSubmittedFilter(tableState);
+        this.setMedianValuesForSubmittedFilter(tableState);
+        this.setStandardDeviationForSubmittedFilter(tableState);
+    }
+
+    /**
+     * Sets all average values to the table state if only submitted exams should be included in calculation
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setAverageValuesForSubmittedFilter(tableState: TableState): void {
+        const averagePointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsSubmitted);
+        const averagePointsSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsInFirstCorrection);
+        const averageScoreSubmitted = this.roundAndPerformLocalConversion(this.aggregatedExamResults.meanPointsRelativeSubmitted);
+        const averageScoreSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsRelativeSubmitted);
+        const averageGradeSubmitted = this.aggregatedExamResults.meanGradeSubmitted ?? '-';
+        const averageGradeSubmittedInFirstCorrectionRound = this.aggregatedExamResults.meanGradeInFirstCorrection ?? '-';
+        tableState.averagePointsSubmitted = averagePointsSubmitted;
+        tableState.averagePointsTotal = averagePointsSubmitted;
+        tableState.averagePointsSubmittedInFirstCorrection = averagePointsSubmittedInFirstCorrection;
+        tableState.averagePointsTotalInFirstCorrection = averagePointsSubmittedInFirstCorrection;
+        tableState.averageScoreSubmitted = averageScoreSubmitted;
+        tableState.averageScoreTotal = averageScoreSubmitted;
+        tableState.averageScoreSubmittedInFirstCorrection = averageScoreSubmittedInFirstCorrection;
+        tableState.averageScoreTotalInFirstCorrection = averageScoreSubmittedInFirstCorrection;
+        tableState.averageGradeSubmitted = averageGradeSubmitted;
+        tableState.averageGradeTotal = averageGradeSubmitted;
+        tableState.averageGradeSubmittedInFirstCorrection = averageGradeSubmittedInFirstCorrectionRound;
+        tableState.averageGradeTotalInFirstCorrection = averageGradeSubmittedInFirstCorrectionRound;
+    }
+
+    /**
+     * Sets all median values to the table state if only submitted exams should be included in calculation
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setMedianValuesForSubmittedFilter(tableState: TableState): void {
+        const medianPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmitted);
+        const medianPointsSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianInFirstCorrection);
+        const medianScoreSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianRelativeSubmitted);
+        const medianScoreSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianRelativeInFirstCorrection);
+        const medianGradeSubmitted = this.aggregatedExamResults.medianGradeSubmitted ?? '-';
+        const medianGradeSubmittedInFirstCorrection = this.aggregatedExamResults.medianGradeInFirstCorrection ?? '-';
+        tableState.medianPointsSubmitted = medianPointsSubmitted;
+        tableState.medianPointsTotal = medianPointsSubmitted;
+        tableState.medianPointsSubmittedInFirstCorrection = medianPointsSubmittedInFirstCorrection;
+        tableState.medianPointsTotalInFirstCorrection = medianPointsSubmittedInFirstCorrection;
+        tableState.medianScoreSubmitted = medianScoreSubmitted;
+        tableState.medianScoreTotal = medianScoreSubmitted;
+        tableState.medianScoreSubmittedInFirstCorrection = medianScoreSubmittedInFirstCorrection;
+        tableState.medianScoreTotalInFirstCorrection = medianScoreSubmittedInFirstCorrection;
+        tableState.medianGradeSubmitted = medianGradeSubmitted;
+        tableState.medianGradeTotal = medianGradeSubmitted;
+        tableState.medianGradeSubmittedInFirstCorrection = medianGradeSubmittedInFirstCorrection;
+        tableState.medianGradeTotalInFirstCorrection = medianGradeSubmittedInFirstCorrection;
+    }
+
+    /**
+     * Sets all standard deviations to the table state if only submitted exams should be included in calculation
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setStandardDeviationForSubmittedFilter(tableState: TableState): void {
+        const standardDeviationPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationSubmitted);
+        const standardDeviationPointsSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationInFirstCorrection);
+        const standardGradeDeviationSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationSubmitted);
+        const standardGradeDeviationInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationInFirstCorrection);
+        tableState.standardDeviationSubmitted = standardDeviationPointsSubmitted;
+        tableState.standardDeviationTotal = standardDeviationPointsSubmitted;
+        tableState.standardDeviationSubmittedInFirstCorrection = standardDeviationPointsSubmittedInFirstCorrection;
+        tableState.standardDeviationTotalInFirstCorrection = standardDeviationPointsSubmittedInFirstCorrection;
+        tableState.standardGradeDeviationSubmitted = standardGradeDeviationSubmitted;
+        tableState.standardGradeDeviationTotal = standardGradeDeviationSubmitted;
+        tableState.standardGradeDeviationSubmittedInFirstCorrection = standardGradeDeviationInFirstCorrection;
+        tableState.standardGradeDeviationTotalInFirstCorrection = standardGradeDeviationInFirstCorrection;
+    }
+
+    /**
+     * Sets the corresponding values of {@link ExamScoresComponent#aggregatedExamResults} to the table state if no filter is selected
+     * @param tableState object containing the values currently displayed by the table
+     * @private
+     */
+    private setValuesForNoFilter(tableState: TableState): void {
+        this.setSubmittedValuesForNoFilter(tableState);
+        this.setTotalValuesForNoFilter(tableState);
+    }
+
+    /**
+     * Sets the values for the total row in the table if no filter is selected
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setTotalValuesForNoFilter(tableState: TableState): void {
+        this.setTotalAverageValuesForNoFilter(tableState);
+        this.setTotalMedianValuesForNoFilter(tableState);
+        this.setTotalStandardDeviationForNoFilter(tableState);
+    }
+
+    /**
+     * Sets the average values for the total row in the table if no filter is selected
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setTotalAverageValuesForNoFilter(tableState: TableState): void {
+        tableState.averagePointsTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsTotal);
+        tableState.averagePointsTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsTotalInFirstCorrection);
+        tableState.averageScoreTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsRelativeTotal);
+        tableState.averageScoreTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsRelativeTotalInFirstCorrection);
+        tableState.averageGradeTotal = this.aggregatedExamResults.meanGradeTotal ?? '-';
+        tableState.averageGradeTotalInFirstCorrection = this.aggregatedExamResults.meanGradeTotalInFirstCorrection ?? '-';
+    }
+
+    /**
+     * Sets the median values for the total row in the table if no filter is selected
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setTotalMedianValuesForNoFilter(tableState: TableState): void {
+        tableState.medianPointsTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianTotal);
+        tableState.medianPointsTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianTotalInFirstCorrection);
+        tableState.medianScoreTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianRelativeTotal);
+        tableState.medianScoreTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianRelativeTotalInFirstCorrection);
+        tableState.medianGradeTotal = this.aggregatedExamResults.medianGradeTotal ?? '-';
+        tableState.medianGradeTotalInFirstCorrection = this.aggregatedExamResults.medianGradeTotalInFirstCorrection ?? '-';
+    }
+
+    /**
+     * Sets the standard deviations for the total row in the table if no filter is selected
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setTotalStandardDeviationForNoFilter(tableState: TableState): void {
+        tableState.standardDeviationTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationTotal);
+        tableState.standardDeviationTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationTotalInFirstCorrection);
+        tableState.standardGradeDeviationTotal = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationTotal);
+        tableState.standardGradeDeviationTotalInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationTotalInFirstCorrection);
+    }
+
+    /**
+     * Sets the values for the submitted row in the table if no filter is selected
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setSubmittedValuesForNoFilter(tableState: TableState): void {
+        this.setSubmittedAverageValuesForNoFilter(tableState);
+        this.setSubmittedMedianValuesForNoFilter(tableState);
+        this.setSubmittedStandardDeviationsForNoFilter(tableState);
+    }
+
+    /**
+     * Sets the average values for the submitted row in the table if no filter is selected
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setSubmittedAverageValuesForNoFilter(tableState: TableState): void {
+        tableState.averagePointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsSubmitted);
+        tableState.averagePointsSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsInFirstCorrection);
+        tableState.averageScoreSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsRelativeSubmitted);
+        tableState.averageScoreSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.meanPointsRelativeInFirstCorrection);
+        tableState.averageGradeSubmitted = this.aggregatedExamResults.meanGradeSubmitted ?? '-';
+        tableState.averageGradeSubmittedInFirstCorrection = this.aggregatedExamResults.meanGradeInFirstCorrection ?? '-';
+    }
+
+    /**
+     * Sets the median for the submitted row in the table if no filter is selected
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setSubmittedMedianValuesForNoFilter(tableState: TableState): void {
+        tableState.medianPointsSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianSubmitted);
+        tableState.medianPointsSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianInFirstCorrection);
+        tableState.medianScoreSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianRelativeSubmitted);
+        tableState.medianScoreSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.medianRelativeInFirstCorrection);
+        tableState.medianGradeSubmitted = this.aggregatedExamResults.medianGradeSubmitted ?? '-';
+        tableState.medianGradeSubmittedInFirstCorrection = this.aggregatedExamResults.medianGradeInFirstCorrection ?? '-';
+    }
+
+    /**
+     * Sets the standard deviations for the submitted row in the table if no filter is selected
+     * @param tableState the table state that should be updated
+     * @private
+     */
+    private setSubmittedStandardDeviationsForNoFilter(tableState: TableState): void {
+        tableState.standardDeviationSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationSubmitted);
+        tableState.standardDeviationSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardDeviationInFirstCorrection);
+        tableState.standardGradeDeviationSubmitted = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationSubmitted);
+        tableState.standardGradeDeviationSubmittedInFirstCorrection = this.roundAndLocalizeStatisticalValue(this.aggregatedExamResults.standardGradeDeviationInFirstCorrection);
+    }
+
+    /**
+     * Wrapper method that handles null or undefined values for statistical numbers and replaces it with '-' string.
+     * If the passed value is not null or undefined, the rounded and localized string is returned
+     * @param value the value that should be rounded and localized
+     * @private
+     */
+    private roundAndLocalizeStatisticalValue(value: number | undefined): string {
+        if (value === null || value === undefined) {
+            return '-';
+        }
+        return this.roundAndPerformLocalConversion(value);
     }
 }

@@ -216,7 +216,7 @@ public class JenkinsBuildPlanService {
     }
 
     /**
-     * Copies a build plan to another. And replaces the old reference to the master branch by a reference to the default branch
+     * Copies a build plan to another and replaces the old reference to the master and main branch with a reference to the default branch
      *
      * @param sourceProjectKey the source project key
      * @param sourcePlanName the source plan name
@@ -305,6 +305,22 @@ public class JenkinsBuildPlanService {
         catch (NullPointerException | HttpClientErrorException e) {
             log.error("Error while trying to fetch build status from Jenkins for {}: {}", planKey, e.getMessage());
             return ContinuousIntegrationService.BuildStatus.INACTIVE;
+        }
+    }
+
+    /**
+     * Checks if a project folder exists.
+     *
+     * @param projectKey The name of the project folder.
+     * @return True, only if the folder exists.
+     */
+    public boolean projectFolderExists(String projectKey) {
+        try {
+            var project = jenkinsJobService.getFolderConfig(projectKey);
+            return project != null;
+        }
+        catch (IOException e) {
+            return false;
         }
     }
 

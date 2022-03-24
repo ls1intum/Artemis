@@ -16,6 +16,7 @@ import { GradeDTO } from 'app/entities/grade-step.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
+import { GraphColors } from 'app/entities/statistics.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -88,7 +89,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     overallPresentationScore = 0;
     presentationScoresPerExercise: ExerciseTypeMap;
 
-    doughnutChartColors: string[] = [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, 'red'];
+    doughnutChartColors: string[] = [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, GraphColors.RED];
 
     public exerciseTitles: object = {
         quiz: {
@@ -149,11 +150,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         name: 'Score per exercise group',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#e5e5e5', '#32cd32', '#e5e5e5', '#ffd700', '#87ceeb', '#fa8072'], // colors: green, grey, yellow, lightblue, red
+        domain: [GraphColors.LIGHT_GREY, GraphColors.GREEN, GraphColors.LIGHT_GREY, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.RED],
     } as Color;
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly barChartTitle = ChartBarTitle;
+    readonly chartHeight = 45;
+    readonly barPadding = 6;
+    readonly defaultSize = 50; // additional space for the x axis and its labels
 
     // array containing every non-empty exercise group
     ngxExerciseGroups: any[] = [];
@@ -637,8 +641,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     overallMaxPoints: this.overallMaxPointsPerExercise[types[index]],
                     presentationScore: this.presentationScoresPerExercise[types[index]],
                     presentationScoreEnabled: false,
-                    barPadding: this.setBarPadding(exerciseGroup.length),
                     xScaleMax: this.setXScaleMax(exerciseGroup),
+                    height: this.calculateChartHeight(exerciseGroup.length),
                 };
                 switch (types[index]) {
                     case ExerciseType.MODELING:
@@ -660,17 +664,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 this.ngxExerciseGroups.push(exerciseGroup);
             }
         });
-    }
-
-    /**
-     * Calculates the bar padding dependent of the amount of exercises in one exercise group
-     * ngx-charts only allows setting an absolute value for the bar padding in px, which leads to unpleasant
-     * proportions in the bar charts for sufficiently large exercise groups
-     * @param groupSize the amount of exercises in a specific group
-     * @returns bar padding in px
-     */
-    setBarPadding(groupSize: number): number {
-        return groupSize < 10 ? 8 : groupSize < 15 ? 4 : 2;
     }
 
     /**
@@ -841,5 +834,19 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     private calculateNumberOfAppliedFilters(): void {
         this.numberOfAppliedFilters = this.exerciseCategories.size + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0) + (this.includeExercisesWithNoCategory ? 1 : 0);
+    }
+
+    /**
+     * Determines and returns the height of the whole chart depending of the amount of its entries
+     * @param chartEntries the amount of chart entries
+     * @private
+     */
+    private calculateChartHeight(chartEntries: number): number {
+        /*
+        Each chart bar should have a height of 45px
+        Furthermore we have to take the bar padding between the bars into account
+        Finally, we need to add space for the x axis and its ticks
+         */
+        return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
     }
 }

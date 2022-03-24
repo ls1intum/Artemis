@@ -20,7 +20,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -51,6 +50,7 @@ import {
     faUserPlus,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -117,7 +117,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private exerciseService: ExerciseService,
-        private hintService: ExerciseHintService,
+        private exerciseHintService: ExerciseHintService,
         private apollonDiagramService: ApollonDiagramService,
         private lectureService: LectureService,
         private examService: ExamManagementService,
@@ -133,8 +133,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
                 this.openApiEnabled = profileInfo.openApiEnabled;
-                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-                this.passwordResetEnabled = this.isRegistrationEnabled || profileInfo.saml2?.enablePassword || false;
             }
         });
 
@@ -143,7 +141,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // The current user is needed to hide menu items for not logged in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
-            .pipe(tap((user: User) => (this.currAccount = user)))
+            .pipe(
+                tap((user: User) => {
+                    this.currAccount = user;
+                    this.passwordResetEnabled = user?.internal || false;
+                }),
+            )
             .subscribe();
 
         this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
@@ -200,7 +203,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
         lti_configuration: 'artemisApp.programmingExercise.home.title',
         teams: 'artemisApp.team.home.title',
-        hints: 'artemisApp.exerciseHint.home.title',
+        exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
@@ -317,8 +320,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'assessment-dashboard':
                 this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
                 break;
-            case 'hints':
-                this.addResolvedTitleAsCrumb(this.hintService.getTitle(Number(segment)), currentPath, segment);
+            case 'exercise-hints':
+                // obtain the exerciseId of the current path
+                // current path of form '/course-management/:courseId/exercises/:exerciseId/...
+                const exerciseId = currentPath.split('/')[4];
+                this.addResolvedTitleAsCrumb(this.exerciseHintService.getTitle(Number(exerciseId), Number(segment)), currentPath, segment);
                 break;
             case 'apollon-diagrams':
                 this.addResolvedTitleAsCrumb(this.apollonDiagramService.getTitle(Number(segment)), currentPath, segment);

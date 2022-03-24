@@ -1,7 +1,7 @@
 import { ActivatedRoute, Params } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
@@ -29,6 +29,11 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 
+// this will be extended with Gradle later on
+export enum JavaTestRepositoryProjectType {
+    MAVEN = 'MAVEN',
+    GRADLE = 'GRADLE',
+}
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
@@ -64,6 +69,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
+    // This is used to distinguish the project type between template & solution and test repository (only applies for Java exercises)
+    private selectedTestRepositoryProjectTypeValue: JavaTestRepositoryProjectType;
 
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
@@ -211,6 +218,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
         this.projectTypes = programmingLanguageFeature.projectTypes;
+        // set the test repository project type
+        if (language === ProgrammingLanguage.JAVA) {
+            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
+        }
 
         if (languageChanged) {
             // Reset project type when changing programming language as not all programming languages support (the same) project types
@@ -249,6 +260,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         this.updateProjectTypeSettings(type);
 
+        if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
+            this.selectedTestRepositoryProjectType = JavaTestRepositoryProjectType.MAVEN;
+        } else if (type === ProjectType.PLAIN_GRADLE || type === ProjectType.GRADLE_GRADLE) {
+            this.selectedTestRepositoryProjectType = JavaTestRepositoryProjectType.GRADLE;
+        }
+
         // Don't override the problem statement with the template in edit mode.
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, type);
@@ -261,15 +278,40 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return this.selectedProjectTypeValue;
     }
 
+    onTestRepositoryProjectTypeChange(type: JavaTestRepositoryProjectType) {
+        this.selectedTestRepositoryProjectType = type;
+        return type;
+    }
+
+    /**
+     * Updates the test repository project type. This only applies to Java exercises with project type 'Plain Java'
+     * @param type the type to update to
+     */
+    set selectedTestRepositoryProjectType(type: JavaTestRepositoryProjectType) {
+        // this has only effect for plain java which is represented by PLAIN_MAVEN (or PLAIN_GRADLE later)
+        if (type === JavaTestRepositoryProjectType.MAVEN) {
+            // only the underlying value should be changed, not the value which is displayed in the dropdown
+            this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+        } else {
+            this.programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
+        }
+    }
+
+    get selectedTestRepositoryProjectType() {
+        return this.selectedTestRepositoryProjectTypeValue;
+    }
+
     private updateProjectTypeSettings(type: ProjectType) {
         if (ProjectType.XCODE === type) {
-            // Disable SCA for Xcode
-            this.disableStaticCodeAnalysis();
             // Disable Online Editor
             this.programmingExercise.allowOnlineEditor = false;
         } else if (ProjectType.FACT === type) {
             // Disallow SCA for C (FACT)
             this.disableStaticCodeAnalysis();
+        } else if (ProjectType.PLAIN_MAVEN === type || ProjectType.MAVEN_MAVEN === type) {
+            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
+        } else if (ProjectType.PLAIN_GRADLE === type || ProjectType.GRADLE_GRADLE === type) {
+            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.GRADLE;
         }
     }
 
@@ -394,6 +436,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.submissionPolicy) {
             this.programmingExercise.submissionPolicy.id = undefined;
         }
+        if (this.isExamMode && this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+            // Exam exercises cannot be not included into the total score. NOT_INCLUDED exercises will be converted to INCLUDED ones
+            this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        }
     }
 
     /**
@@ -484,9 +530,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private onSaveError(error: HttpErrorResponse) {
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
-        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.alertService.error(errorMessage);
-        jhiAlert.message = errorMessage;
+        this.alertService.addAlert({
+            type: AlertType.DANGER,
+            message: errorMessage,
+            disableTranslation: true,
+        });
         this.isSaving = false;
         window.scrollTo(0, 0);
     }

@@ -100,8 +100,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         for (Exercise exercise : course.getExercises()) {
             StatsForDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-            assertThat(stats.getNumberOfComplaints()).isEqualTo(0);
-            assertThat(stats.getNumberOfMoreFeedbackRequests()).isEqualTo(0);
+            assertThat(stats.getNumberOfComplaints()).isZero();
+            assertThat(stats.getNumberOfMoreFeedbackRequests()).isZero();
         }
     }
 
@@ -114,14 +114,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         TextExercise textExercise = (TextExercise) exerciseRepository.findAll().stream().filter(e -> e instanceof TextExercise).findFirst().get();
         StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForDashboardDTO.class);
-        assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isEqualTo(0);
-        assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isEqualTo(0);
-        assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isEqualTo(0);
+        assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isZero();
+        assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isZero();
+        assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isZero();
 
         for (Exercise exercise : course.getExercises()) {
             StatsForDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-            assertThat(stats.getNumberOfComplaints()).isEqualTo(0);
-            assertThat(stats.getNumberOfMoreFeedbackRequests()).isEqualTo(0);
+            assertThat(stats.getNumberOfComplaints()).isZero();
+            assertThat(stats.getNumberOfMoreFeedbackRequests()).isZero();
         }
     }
 
@@ -132,7 +132,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         database.createCoursesWithExercisesAndLectures(false);
         var exercises = exerciseRepository.findAll();
         var student = userRepository.getUserWithGroupsAndAuthorities("student1");
-        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(Set.of(), student)).hasSize(0);
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(Set.of(), student)).isEmpty();
         exercises.get(0).setReleaseDate(ZonedDateTime.now().plusDays(1));
         exerciseRepository.save(exercises.get(0));
         exercises = exerciseRepository.findAll();
@@ -145,7 +145,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         onlineCourse.setOnlineCourse(true);
         courseRepository.save(onlineCourse);
         exercises = exerciseRepository.findAll();
-        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).hasSize(0);
+        assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).isEmpty();
 
         database.createCoursesWithExercisesAndLectures(false);
         var allExercises = new HashSet<>(exerciseRepository.findAll());
@@ -168,18 +168,18 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
                 // Test that certain properties were filtered out as the test user is a student
                 assertThat(exerciseServer.getGradingInstructions()).as("Grading instructions were filtered out").isNull();
-                assertThat(exerciseServer.getTutorParticipations().size()).as("Tutor participations not included").isZero();
-                assertThat(exerciseServer.getExampleSubmissions().size()).as("Example submissions not included").isZero();
+                assertThat(exerciseServer.getTutorParticipations()).as("Tutor participations not included").isEmpty();
+                assertThat(exerciseServer.getExampleSubmissions()).as("Example submissions not included").isEmpty();
 
                 // Test presence and absence of exercise type specific properties
                 if (exerciseServer instanceof FileUploadExercise fileUploadExercise) {
                     assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(fileUploadExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
                 }
                 else if (exerciseServer instanceof ModelingExercise modelingExercise) {
                     assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
-                    assertThat(modelingExercise.getSampleSolutionModel()).as("Sample solution model was filtered out").isNull();
-                    assertThat(modelingExercise.getSampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
+                    assertThat(modelingExercise.getExampleSolutionModel()).as("Sample solution model was filtered out").isNull();
+                    assertThat(modelingExercise.getExampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
                 }
                 else if (exerciseServer instanceof ProgrammingExercise programmingExerciseExercise) {
                     assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
@@ -193,20 +193,20 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
                     assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
                     assertThat(quizExercise.getQuizPointStatistic()).as("Quiz point statistic was filtered out").isNull();
-                    assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were filtered out").isZero();
+                    assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were filtered out").isEmpty();
                 }
                 else if (exerciseServer instanceof TextExercise textExercise) {
-                    assertThat(textExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
                 }
 
                 // Test that the exercise does not have more than one participation.
-                assertThat(exerciseServer.getStudentParticipations().size()).as("At most one participation for exercise").isLessThanOrEqualTo(1);
+                assertThat(exerciseServer.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
                 if (exerciseServer.getStudentParticipations().size() > 0) {
                     // Buffer participation so that null checking is easier.
                     Participation participation = exerciseServer.getStudentParticipations().iterator().next();
                     if (participation.getSubmissions().size() > 0) {
                         // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
-                        assertThat(participation.getSubmissions().size()).as("At most one submission for participation").isLessThanOrEqualTo(1);
+                        assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
                         Submission submission = participation.getSubmissions().iterator().next();
                         if (submission != null) {
                             // Test that the correct text submission was filtered.
@@ -247,13 +247,12 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetUpcomingExercises() throws Exception {
         List<Exercise> exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
-        assertThat(exercises.size()).isEqualTo(0);
+        assertThat(exercises).isEmpty();
 
         // Test for exercise with upcoming due date.
         Course course = database.addCourseWithOneProgrammingExercise();
         exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
-        assertThat(exercises.size()).isEqualTo(1);
-        assertThat(exercises).contains(course.getExercises().stream().findFirst().get());
+        assertThat(exercises).hasSize(1).contains(course.getExercises().stream().findFirst().get());
     }
 
     @Test
@@ -284,14 +283,14 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
                 if (exerciseWithDetails instanceof FileUploadExercise fileUploadExercise) {
                     assertThat(fileUploadExercise.getFilePattern()).as("File pattern was set correctly").isEqualTo("png");
-                    assertThat(fileUploadExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
-                    assertThat(fileUploadExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
+                    assertThat(fileUploadExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(fileUploadExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
                 }
                 else if (exerciseWithDetails instanceof ModelingExercise modelingExercise) {
                     assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
-                    assertThat(modelingExercise.getSampleSolutionModel()).as("Sample solution model was filtered out").isNull();
-                    assertThat(modelingExercise.getSampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
-                    assertThat(modelingExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(2);
+                    assertThat(modelingExercise.getExampleSolutionModel()).as("Sample solution model was filtered out").isNull();
+                    assertThat(modelingExercise.getExampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
+                    assertThat(modelingExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
                 }
                 else if (exerciseWithDetails instanceof ProgrammingExercise programmingExerciseExercise) {
                     assertThat(programmingExerciseExercise.getProjectKey()).as("Project key was set").isNotNull();
@@ -300,18 +299,18 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
+                    assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
                 }
                 else if (exerciseWithDetails instanceof QuizExercise quizExercise) {
                     assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
                     assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(1);
                     assertThat(quizExercise.getQuizPointStatistic()).as("Quiz point statistic was filtered out").isNull();
-                    assertThat(quizExercise.getQuizQuestions().size()).as("Quiz questions were filtered out").isZero();
-                    assertThat(quizExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(0);
+                    assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were filtered out").isEmpty();
+                    assertThat(quizExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
                 }
                 else if (exerciseWithDetails instanceof TextExercise textExercise) {
-                    assertThat(textExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
-                    assertThat(textExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(1);
+                    assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(textExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(1);
                 }
             }
         }
@@ -330,16 +329,16 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
                 // Programming exercises should only have one automatic result
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(participation.getResults().size()).isEqualTo(1);
+                    assertThat(participation.getResults()).hasSize(1);
                     assertThat(participation.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
                 }
                 // Quiz exercises should only have one automatic result
                 else if (exercise instanceof QuizExercise) {
-                    assertThat(participation.getResults().size()).isEqualTo(1);
+                    assertThat(participation.getResults()).hasSize(1);
                 }
                 else {
                     // All other exercises should not display a result at all
-                    assertThat(participation.getResults().size()).isEqualTo(0);
+                    assertThat(participation.getResults()).isEmpty();
                 }
             }
         }
@@ -358,13 +357,13 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             for (StudentParticipation participation : exerciseWithDetails.getStudentParticipations()) {
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(participation.getResults().size()).isEqualTo(2);
+                    assertThat(participation.getResults()).hasSize(2);
                     assertThat(participation.getResults().stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
                             .isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                 }
                 else {
                     // All other exercises have only one visible result now
-                    assertThat(participation.getResults().size()).isEqualTo(1);
+                    assertThat(participation.getResults()).hasSize(1);
                 }
             }
         }
@@ -383,15 +382,15 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
             // Programming exercises should only have one automatic result
             if (exercise instanceof ProgrammingExercise) {
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults().size()).isEqualTo(1);
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
                 assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
             }
             else if (exercise instanceof QuizExercise) {
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults().size()).isEqualTo(1);
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
             }
             else {
                 // All other exercises have only one visible result now
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults().size()).isEqualTo(0);
+                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
             }
         }
     }
@@ -411,7 +410,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             }
             exerciseService.filterForCourseDashboard(exercise, List.copyOf(exercise.getStudentParticipations()), "student1", true);
             // All exercises have one result
-            assertThat(exercise.getStudentParticipations().iterator().next().getResults().size()).isEqualTo(1);
+            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
             // Programming exercises should now have one manual result
             if (exercise instanceof ProgrammingExercise) {
                 assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
@@ -433,8 +432,8 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseForAssessmentDashboard = request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);
-                assertThat(exerciseForAssessmentDashboard.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
-                assertThat(exerciseForAssessmentDashboard.getExampleSubmissions().size()).as("Example submissions are not null").isZero();
+                assertThat(exerciseForAssessmentDashboard.getTutorParticipations()).as("Tutor participation was created").hasSize(1);
+                assertThat(exerciseForAssessmentDashboard.getExampleSubmissions()).as("Example submissions are not null").isEmpty();
 
                 // Test that certain properties were set correctly
                 assertThat(exerciseForAssessmentDashboard.getReleaseDate()).as("Release date is present").isNotNull();
@@ -517,31 +516,31 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             var tutors = findTutors(course);
             for (Exercise exercise : course.getExercises()) {
                 StatsForDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-                assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isEqualTo(0);
-                assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isEqualTo(0);
+                assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
+                assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isZero();
 
-                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(tutors.size());
+                assertThat(stats.getTutorLeaderboardEntries()).as("Number of tutor leaderboard entries is correct").hasSameSizeAs(tutors);
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints should be available to tutor").isNotNull();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests should be available to tutor").isNotNull();
                 assertThat(stats.getNumberOfAssessmentLocks()).as("Number of assessment locks are not available for exercises").isNull();
 
                 if (exercise instanceof FileUploadExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for file upload exercise is correct").isEqualTo(0);
+                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for file upload exercise is correct").isZero();
                 }
                 if (exercise instanceof ModelingExercise) {
                     assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for modeling exercise is correct").isEqualTo(2);
                 }
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for programming exercise is correct").isEqualTo(0);
+                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for programming exercise is correct").isZero();
                 }
                 if (exercise instanceof QuizExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for quiz exercise is correct").isEqualTo(0);
+                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for quiz exercise is correct").isZero();
                 }
                 if (exercise instanceof TextExercise) {
                     assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for text exercise is correct").isEqualTo(1);
                 }
 
-                assertThat(stats.getNumberOfSubmissions().late()).as("Number of late submissions for exercise is correct").isEqualTo(0);
+                assertThat(stats.getNumberOfSubmissions().late()).as("Number of late submissions for exercise is correct").isZero();
             }
         }
     }
@@ -560,11 +559,11 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
-                assertThat(exercise.getStudentParticipations().size()).as("Student participations have been deleted").isZero();
-                assertThat(exercise.getTutorParticipations().size()).as("Tutor participations have been deleted").isZero();
+                assertThat(exercise.getStudentParticipations()).as("Student participations have been deleted").isEmpty();
+                assertThat(exercise.getTutorParticipations()).as("Tutor participations have been deleted").isEmpty();
             }
         }
-        assertThat(participationRepository.findAll()).hasSize(0);
+        assertThat(participationRepository.findAll()).isEmpty();
     }
 
     @Test
@@ -613,7 +612,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
 
         Boolean bool = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
-        assertThat(bool).isEqualTo(true);
+        assertThat(bool).isTrue();
     }
 
     @Test
@@ -624,7 +623,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         exercise.setSecondCorrectionEnabled(true);
         exerciseRepository.save(exercise);
         Boolean bool = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/toggle-second-correction", null, Boolean.class, HttpStatus.OK);
-        assertThat(bool).isEqualTo(false);
+        assertThat(bool).isFalse();
     }
 
     @Test

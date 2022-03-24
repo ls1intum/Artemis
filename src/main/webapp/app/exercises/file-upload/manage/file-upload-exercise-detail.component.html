@@ -3,8 +3,6 @@
         <div *ngIf="fileUploadExercise">
             <h2><span jhiTranslate="artemisApp.fileUploadExercise.detail.title">File Upload Exercise</span> {{ fileUploadExercise.id }}</h2>
             <hr />
-            <jhi-alert></jhi-alert>
-            <jhi-alert-error></jhi-alert-error>
             <div class="text-start">
                 <jhi-non-programming-exercise-detail-common-actions
                     *ngIf="course"
@@ -31,8 +29,13 @@
                 <dd>
                     <span>{{ fileUploadExercise.filePattern }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.sampleSolution">Sample Solution</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution! | htmlForMarkdown"></dd>
+                <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>
+                <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.exampleSolution! | htmlForMarkdown"></dd>
+                <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>
+                <dd>
+                    <span *ngIf="fileUploadExercise.exampleSolutionPublicationDate">{{ fileUploadExercise.exampleSolutionPublicationDate | artemisDate }}</span>
+                    <span *ngIf="!fileUploadExercise.exampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                </dd>
             </dl>
         </div>
     </div>

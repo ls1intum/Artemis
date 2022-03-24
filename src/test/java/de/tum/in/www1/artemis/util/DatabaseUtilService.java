@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
@@ -56,10 +57,12 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 /**
@@ -93,6 +96,8 @@ public class DatabaseUtilService {
     private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority);
 
     private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
+
+    private static int dayCount = 1;
 
     @Autowired
     private CourseRepository courseRepo;
@@ -250,6 +255,9 @@ public class DatabaseUtilService {
     @Autowired
     private RatingRepository ratingRepo;
 
+    @Autowired
+    private PasswordService passwordService;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -296,11 +304,15 @@ public class DatabaseUtilService {
 
         authorityRepository.saveAll(adminAuthorities);
 
-        List<User> students = ModelFactory.generateActivatedUsers("student", new String[] { "tumuser", "testgroup" }, studentAuthorities, numberOfStudents);
-        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
-        List<User> editors = ModelFactory.generateActivatedUsers("editor", new String[] { "editor", "testgroup" }, editorAuthorities, numberOfEditors);
-        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
-        User admin = ModelFactory.generateActivatedUser("admin");
+        List<User> students = ModelFactory.generateActivatedUsers("student", passwordService.encryptPassword(ModelFactory.USER_PASSWORD), new String[] { "tumuser", "testgroup" },
+                studentAuthorities, numberOfStudents);
+        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", passwordService.encryptPassword(ModelFactory.USER_PASSWORD), new String[] { "tutor", "testgroup" },
+                tutorAuthorities, numberOfTutors);
+        List<User> editors = ModelFactory.generateActivatedUsers("editor", passwordService.encryptPassword(ModelFactory.USER_PASSWORD), new String[] { "editor", "testgroup" },
+                editorAuthorities, numberOfEditors);
+        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", passwordService.encryptPassword(ModelFactory.USER_PASSWORD),
+                new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
+        User admin = ModelFactory.generateActivatedUser("admin", passwordService.encryptPassword(ModelFactory.USER_PASSWORD));
         admin.setGroups(Set.of("admin"));
         admin.setAuthorities(adminAuthorities);
         List<User> usersToAdd = new ArrayList<>();
@@ -310,7 +322,7 @@ public class DatabaseUtilService {
         usersToAdd.addAll(instructors);
         usersToAdd.add(admin);
         userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll().size()).as("all users are created").isGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
+        assertThat(userRepo.findAll()).as("all users are created").hasSizeGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
 
         final var users = new ArrayList<>(students);
@@ -593,8 +605,8 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
-        modelingExercise.setSampleSolutionModel("Example solution model");
-        modelingExercise.setSampleSolutionExplanation("Example Solution");
+        modelingExercise.setExampleSolutionModel("Example solution model");
+        modelingExercise.setExampleSolutionExplanation("Example Solution");
         addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
@@ -602,7 +614,7 @@ public class DatabaseUtilService {
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
-        textExercise.setSampleSolution("Sample Solution");
+        textExercise.setExampleSolution("Example Solution");
         addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
@@ -610,7 +622,7 @@ public class DatabaseUtilService {
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
-        fileUploadExercise.setSampleSolution("Sample Solution");
+        fileUploadExercise.setExampleSolution("Example Solution");
         addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         course1.addExercises(fileUploadExercise);
@@ -759,8 +771,9 @@ public class DatabaseUtilService {
         exercisePost.setAnswers(createBasicAnswers(exercisePost));
         postRepository.save(exercisePost);
 
+        // resolved post
         Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).findFirst().orElseThrow();
-        courseWidePost.setAnswers(createBasicAnswers(courseWidePost));
+        courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost));
         postRepository.save(courseWidePost);
 
         return posts;
@@ -807,11 +820,13 @@ public class DatabaseUtilService {
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
-        post.setCreationDate(ZonedDateTime.of(2015, 11, 28, 23, 45, 59, 1234, ZoneId.of("UTC")));
+        post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
         Set<String> tags = new HashSet<>();
         tags.add(tag);
         post.setTags(tags);
+
+        dayCount = (dayCount % 25) + 1;
         return post;
     }
 
@@ -821,6 +836,18 @@ public class DatabaseUtilService {
         answerPost.setContent(post.getContent() + " Answer");
         answerPost.setAuthor(getUserByLoginWithoutAuthorities("student1"));
         answerPost.setPost(post);
+        answerPosts.add(answerPost);
+        answerPostRepository.save(answerPost);
+        return answerPosts;
+    }
+
+    private Set<AnswerPost> createBasicAnswersThatResolves(Post post) {
+        Set<AnswerPost> answerPosts = new HashSet<>();
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setContent(post.getContent() + " Answer");
+        answerPost.setAuthor(getUserByLoginWithoutAuthorities("student1"));
+        answerPost.setPost(post);
+        answerPost.setResolvesPost(true);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
         return answerPosts;
@@ -1879,7 +1906,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(finishedExercise);
         Course storedCourse = courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
-        assertThat(exercises.size()).as("eleven exercises got stored").isEqualTo(11);
+        assertThat(exercises).as("eleven exercises got stored").hasSize(11);
         assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));
         return course;
     }
@@ -1985,7 +2012,7 @@ public class DatabaseUtilService {
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            programmingExercise.setProjectType(ProjectType.ECLIPSE);
+            programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setProjectType(ProjectType.PLAIN);
@@ -2200,7 +2227,7 @@ public class DatabaseUtilService {
         int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(courseSizeBefore + 1);
+        assertThat(courseRepoContent).as("a course got stored").hasSize(courseSizeBefore + 1);
 
         FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
@@ -2218,12 +2245,12 @@ public class DatabaseUtilService {
 
     public Course addCourseWithThreeFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
-        assertThat(fileUploadExercises.size()).as("created three exercises").isEqualTo(3);
+        assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
         exerciseRepo.saveAll(fileUploadExercises);
         long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
         Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
         List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
-        assertThat(exercises.size()).as("three exercises got stored").isEqualTo(3);
+        assertThat(exercises).as("three exercises got stored").hasSize(3);
         assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
         return course;
     }
@@ -2233,7 +2260,7 @@ public class DatabaseUtilService {
         int courseSizeBefore = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).size();
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(courseSizeBefore + 1);
+        assertThat(courseRepoContent).as("a course got stored").hasSize(courseSizeBefore + 1);
 
         FileUploadExercise releasedFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         releasedFileUploadExercise.setTitle("released");
@@ -2254,12 +2281,12 @@ public class DatabaseUtilService {
 
     public Course addCourseWithFourFileUploadExercise() {
         var fileUploadExercises = createFourFileUploadExercisesWithCourse();
-        assertThat(fileUploadExercises.size()).as("created four exercises").isEqualTo(4);
+        assertThat(fileUploadExercises).as("created four exercises").hasSize(4);
         exerciseRepo.saveAll(fileUploadExercises);
         long courseId = fileUploadExercises.get(0).getCourseViaExerciseGroupOrCourseMember().getId();
         Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
         List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
-        assertThat(exercises.size()).as("four exercises got stored").isEqualTo(4);
+        assertThat(exercises).as("four exercises got stored").hasSize(4);
         assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
         return course;
     }
@@ -2389,16 +2416,20 @@ public class DatabaseUtilService {
     }
 
     /**
-     * With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text exercises in a cyclic manner.
+     * With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text
+     * exercises in a cyclic manner.
      *
-     * @param numberOfExercises             - number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated. (thats why there is the %3 check)
-     * @param numberOfSubmissionPerExercise - for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8 submissions will be created.
-     * @param numberOfAssessments           - generates the assessments for a submission of an exercise. Example from abobe, 2 exrecises, 4 submissions each. If you set numberOfAssessments to 2, for each exercise 2 assessmetns will be created.
-     *                                      In total there will be 4 assessments then. (by two different tutors, as each exercise is assesssed by an individual tutor. There are 4 tutors that create assessments)
-     * @param numberOfComplaints            - generates the complaints for assessments, in the same way as results are created.
-     * @param typeComplaint                 - true: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
-     * @param numberComplaintResponses      - generates responses for the complaint/feedback request (as above)
-     * @param validModel                    - model for the modeling submission
+     * @param numberOfExercises             number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
+     *                                      (thats why there is the %3 check)
+     * @param numberOfSubmissionPerExercise for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
+     *                                      submissions will be created.
+     * @param numberOfAssessments           generates the assessments for a submission of an exercise. Example from abobe, 2 exrecises, 4 submissions each. If you set
+     *                                      numberOfAssessments to 2, for each exercise 2 assessmetns will be created. In total there will be 4 assessments then. (by two
+     *                                      different tutors, as each exercise is assessed by an individual tutor. There are 4 tutors that create assessments)
+     * @param numberOfComplaints            generates the complaints for assessments, in the same way as results are created.
+     * @param typeComplaint                 true: complaintType==COMPLAINT | false: complaintType==MORE_FEEDBACK
+     * @param numberComplaintResponses      generates responses for the complaint/feedback request (as above)
+     * @param validModel                    model for the modeling submission
      * @return - the generated course
      */
     public Course addCourseWithExercisesAndSubmissions(int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints,
@@ -2556,7 +2587,8 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Add a submission with a result to the given programming exercise. The submission will be assigned to the corresponding participation of the given login (if exists or create a new participation).
+     * Add a submission with a result to the given programming exercise. The submission will be assigned to the corresponding participation of the given login (if exists or
+     * create a new participation).
      * The method will make sure that all necessary entities are connected.
      *
      * @param exercise   for which to create the submission/participation/result combination.
@@ -2969,9 +3001,9 @@ public class DatabaseUtilService {
     }
 
     public void addHintsToExercise(Exercise exercise) {
-        ExerciseHint exerciseHint1 = new ExerciseHint().exercise(exercise).title("title 1").content("content 1");
-        ExerciseHint exerciseHint2 = new ExerciseHint().exercise(exercise).title("title 2").content("content 2");
-        ExerciseHint exerciseHint3 = new ExerciseHint().exercise(exercise).title("title 3").content("content 3");
+        ExerciseHint exerciseHint1 = new ExerciseHint().content("content 1").exercise(exercise).title("title 1");
+        ExerciseHint exerciseHint2 = new ExerciseHint().content("content 2").exercise(exercise).title("title 2");
+        ExerciseHint exerciseHint3 = new ExerciseHint().content("content 3").exercise(exercise).title("title 3");
         Set<ExerciseHint> hints = new HashSet<>();
         hints.add(exerciseHint1);
         hints.add(exerciseHint2);
@@ -3478,7 +3510,7 @@ public class DatabaseUtilService {
     }
 
     public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
-        assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
+        assertThat(sentFeedback).as("contains the same amount of feedback").hasSize(storedFeedback.size());
         Result storedFeedbackResult = new Result();
         Result sentFeedbackResult = new Result();
         storedFeedbackResult.setFeedbacks(storedFeedback);

@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
@@ -65,7 +66,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         final var newlyImported = importExerciseBase();
 
         assertThat(newlyImported.getId()).isNotEqualTo(programmingExercise.getId());
-        assertThat(newlyImported != programmingExercise).isTrue();
+        assertThat(newlyImported).isNotSameAs(programmingExercise);
         assertThat(newlyImported.getTemplateParticipation().getId()).isNotEqualTo(programmingExercise.getTemplateParticipation().getId());
         assertThat(newlyImported.getSolutionParticipation().getId()).isNotEqualTo(programmingExercise.getSolutionParticipation().getId());
         assertThat(newlyImported.getProgrammingLanguage()).isEqualTo(programmingExercise.getProgrammingLanguage());
@@ -84,14 +85,15 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(newlyImported.getPosts()).isNull();
         assertThat(newlyImported.getStudentParticipations()).isNull();
         final var newTestCaseIDs = newlyImported.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
-        assertThat(newlyImported.getTestCases().size()).isEqualTo(programmingExercise.getTestCases().size());
+        assertThat(newlyImported.getTestCases()).hasSameSizeAs(programmingExercise.getTestCases());
         assertThat(programmingExercise.getTestCases()).noneMatch(testCase -> newTestCaseIDs.contains(testCase.getId()));
-        assertThat(programmingExercise.getTestCases()).usingElementComparatorIgnoringFields("id", "exercise").containsExactlyInAnyOrderElementsOf(newlyImported.getTestCases());
+        assertThat(programmingExercise.getTestCases()).usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries")
+                .containsExactlyInAnyOrderElementsOf(newlyImported.getTestCases());
         final var newHintIDs = newlyImported.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        assertThat(newlyImported.getExerciseHints().size()).isEqualTo(programmingExercise.getExerciseHints().size());
+        assertThat(newlyImported.getExerciseHints()).hasSameSizeAs(programmingExercise.getExerciseHints());
         assertThat(programmingExercise.getExerciseHints()).noneMatch(hint -> newHintIDs.contains(hint.getId()));
         final var newStaticCodeAnalysisCategoriesIDs = newlyImported.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toSet());
-        assertThat(newlyImported.getStaticCodeAnalysisCategories().size()).isEqualTo(programmingExercise.getStaticCodeAnalysisCategories().size());
+        assertThat(newlyImported.getStaticCodeAnalysisCategories()).hasSameSizeAs(programmingExercise.getStaticCodeAnalysisCategories());
         assertThat(programmingExercise.getStaticCodeAnalysisCategories()).noneMatch(category -> newStaticCodeAnalysisCategoriesIDs.contains(category.getId()));
     }
 
@@ -113,7 +115,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
         final var imported = importExerciseBase();
 
-        // All copied hints/tests have the same content are are referenced to the new exercise
+        // All copied hints/tests have the same content are referenced to the new exercise
         assertThat(imported.getExerciseHints()).allMatch(hint -> programmingExercise.getExerciseHints().stream().anyMatch(
                 oldHint -> oldHint.getContent().equals(hint.getContent()) && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(imported.getId())));
         assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
@@ -147,7 +149,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = database.configureSearch("Programming");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
+        assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
     @Test
@@ -158,11 +160,11 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
         final var searchPython = database.configureSearch("Python");
         final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchPython));
-        assertThat(resultPython.getResultsOnPage().size()).isEqualTo(1);
+        assertThat(resultPython.getResultsOnPage()).hasSize(1);
 
         final var searchJava = database.configureSearch("Java");
         final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchJava));
-        assertThat(resultJava.getResultsOnPage().size()).isEqualTo(2);
+        assertThat(resultJava.getResultsOnPage()).hasSize(2);
 
         final var searchSwift = database.configureSearch("Swift");
         final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchSwift));
@@ -175,7 +177,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         database.addCourseInOtherInstructionGroupAndExercise("Programming");
         final var search = database.configureSearch("Programming");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
+        assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
     private ProgrammingExercise importExerciseBase() {

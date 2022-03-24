@@ -93,8 +93,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
             this.modelingExercise = modelingExercise;
 
-            if (this.modelingExercise.sampleSolutionModel != undefined) {
-                this.exampleSolution = JSON.parse(this.modelingExercise.sampleSolutionModel);
+            if (this.modelingExercise.exampleSolutionModel != undefined) {
+                this.exampleSolution = JSON.parse(this.modelingExercise.exampleSolutionModel);
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);
@@ -131,6 +131,10 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                         this.modelingExercise.mode = ExerciseMode.INDIVIDUAL;
                         this.modelingExercise.teamAssignmentConfig = undefined;
                         this.modelingExercise.teamMode = false;
+                        // Exam exercises cannot be not included into the total score
+                        if (this.modelingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                            this.modelingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+                        }
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {
@@ -175,7 +179,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        this.modelingExercise.sampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
+        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType)

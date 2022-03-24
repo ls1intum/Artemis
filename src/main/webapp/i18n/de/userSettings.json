@@ -9,6 +9,7 @@
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
             "accountInformationPage": {
+                "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
                 "login": "Login",
                 "email": "Email",
@@ -18,6 +19,7 @@
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen"
             },
             "settingGroupNames": {
+                "weeklySummary": "Wöchentliche Zusammenfassung",
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
                 "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
@@ -25,6 +27,7 @@
                 "instructorNotifications": "Benachrichtigungen für Lehrende"
             },
             "settingNames": {
+                "basicWeeklySummary": "Einfache wöchentliche Zusammenfassung",
                 "exerciseReleased": "Neue Aufgabe veröffentlicht",
                 "exerciseOpenForPractice": "Aufgabe zum Üben freigegeben",
                 "exerciseSubmissionAssessed": "Aufgabeneinreichung korrigiert",
@@ -41,6 +44,7 @@
                 "programmingTestCasesChanged": "Veränderte Testfälle bei Programmieraufgaben"
             },
             "settingDescriptions": {
+                "basicWeeklySummaryDescription": "Erhalte jeden Freitag um 17:00 Uhr eine einfache wöchentliche Zusammenfassung (bsp. welche neuen Aufgaben diese Woche veröffentlicht wurden und noch bearbeitbar sind)",
                 "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine neue Aufgabe veröffentlicht wurde",
                 "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung, wenn eine Aufgabe zum Üben freigeschalten wurde (z.B. ein Quiz)",
                 "exerciseSubmissionAssessedDescription": "Erhalte eine Mitteilung, wenn deine eingereichten Aufgaben bewertet wurden",

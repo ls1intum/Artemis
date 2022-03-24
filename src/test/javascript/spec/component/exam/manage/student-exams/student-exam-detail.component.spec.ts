@@ -3,12 +3,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
@@ -48,7 +46,6 @@ describe('StudentExamDetailComponent', () => {
     let studentParticipation: StudentParticipation;
     let result: Result;
 
-    let courseManagementService: any;
     let studentExamService: any;
     let gradingSystemService: GradingSystemService;
 
@@ -56,6 +53,7 @@ describe('StudentExamDetailComponent', () => {
         course = { id: 1 };
 
         student = {
+            internal: true,
             guidedTourSettings: [],
             name: 'name',
             login: 'login',
@@ -109,7 +107,6 @@ describe('StudentExamDetailComponent', () => {
             ],
             declarations: [
                 StudentExamDetailComponent,
-                MockComponent(AlertComponent),
                 MockComponent(DataTableComponent),
                 MockComponent(StudentExamWorkingTimeComponent),
                 MockDirective(NgForm),
@@ -134,16 +131,6 @@ describe('StudentExamDetailComponent', () => {
                         return of(
                             new HttpResponse({
                                 body: studentExam2,
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-                MockProvider(CourseManagementService, {
-                    find: () => {
-                        return of(
-                            new HttpResponse({
-                                body: course,
                                 status: 200,
                             }),
                         );
@@ -181,7 +168,6 @@ describe('StudentExamDetailComponent', () => {
             .then(() => {
                 studentExamDetailComponentFixture = TestBed.createComponent(StudentExamDetailComponent);
                 studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
-                courseManagementService = TestBed.inject(CourseManagementService);
                 studentExamService = TestBed.inject(StudentExamService);
                 gradingSystemService = TestBed.inject(GradingSystemService);
             });
@@ -198,11 +184,9 @@ describe('StudentExamDetailComponent', () => {
     };
 
     it('initialize', () => {
-        const findCourseSpy = jest.spyOn(courseManagementService, 'find');
         const gradeSpy = jest.spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam');
         studentExamDetailComponentFixture.detectChanges();
 
-        expect(findCourseSpy).toHaveBeenCalledTimes(1);
         expect(gradeSpy).toHaveBeenCalledTimes(1);
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);

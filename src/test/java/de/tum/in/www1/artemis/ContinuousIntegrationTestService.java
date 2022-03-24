@@ -32,10 +32,13 @@ public class ContinuousIntegrationTestService {
     @Value("${artemis.continuous-integration.url}")
     private URL ciServerUrl;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final LocalRepository localRepo = new LocalRepository();
+    private final LocalRepository localRepo = new LocalRepository(defaultBranch);
 
     private ProgrammingExerciseStudentParticipation participation;
 
@@ -158,22 +161,22 @@ public class ContinuousIntegrationTestService {
     public void testHealthRunning() throws Exception {
         mockDelegate.mockHealthInCiService(true, HttpStatus.OK);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(ciServerUrl);
-        assertThat(health.isUp()).isEqualTo(true);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.isUp()).isTrue();
     }
 
     public void testHealthNotRunning() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.OK);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(ciServerUrl);
-        assertThat(health.isUp()).isEqualTo(false);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.isUp()).isFalse();
     }
 
     public void testHealthException() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.INTERNAL_SERVER_ERROR);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(ciServerUrl);
-        assertThat(health.isUp()).isEqualTo(false);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.isUp()).isFalse();
         assertThat(health.getException()).isNotNull();
     }
 }

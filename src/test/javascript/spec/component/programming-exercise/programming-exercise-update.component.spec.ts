@@ -23,9 +23,7 @@ import {
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
@@ -77,8 +75,6 @@ describe('ProgrammingExercise Management Update Component', () => {
                 DefaultValueAccessor,
                 SelectControlValueAccessor,
                 NumberValueAccessor,
-                MockComponent(AlertComponent),
-                MockComponent(AlertErrorComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(ProgrammingExercisePlansAndRepositoriesPreviewComponent),
                 MockComponent(TableEditableFieldComponent),
@@ -682,7 +678,7 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 plagiarismCheckSupported: true,
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [ProjectType.ECLIPSE, ProjectType.MAVEN],
+                projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.HASKELL:
             return {

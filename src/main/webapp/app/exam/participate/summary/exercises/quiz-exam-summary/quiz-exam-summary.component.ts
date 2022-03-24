@@ -14,7 +14,6 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -119,7 +118,7 @@ export class QuizExamSummaryComponent implements OnInit {
                 return answer && answer.quizQuestion ? answer.quizQuestion.id === quizQuestionId : false;
             });
             if (submittedAnswer && submittedAnswer.scoreInPoints !== undefined) {
-                return roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, getCourseFromExercise(this.exercise));
+                return roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, this.exam.course);
             }
         }
         return 0;

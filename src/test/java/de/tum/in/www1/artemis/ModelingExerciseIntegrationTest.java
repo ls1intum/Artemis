@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -91,11 +92,11 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     public void testGetModelingExercise_asTA() throws Exception {
         ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
         gradingCriteria = database.addGradingInstructionsToExercise(receivedModelingExercise);
-        assertThat(receivedModelingExercise.getGradingCriteria().get(0).getTitle()).isEqualTo(null);
+        assertThat(receivedModelingExercise.getGradingCriteria().get(0).getTitle()).isNull();
         assertThat(receivedModelingExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
 
-        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
+        assertThat(gradingCriteria.get(0).getStructuredGradingInstructions()).hasSize(1);
+        assertThat(gradingCriteria.get(1).getStructuredGradingInstructions()).hasSize(3);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
                 .isEqualTo("created first instruction with empty criteria for testing");
     }
@@ -139,8 +140,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
         ModelingExercise receivedModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(receivedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().size()).isEqualTo(1);
-        assertThat(receivedModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(3);
+        assertThat(receivedModelingExercise.getGradingCriteria().get(0).getStructuredGradingInstructions()).hasSize(1);
+        assertThat(receivedModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(3);
 
         modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
@@ -169,7 +170,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         params.add("notificationText", notificationText);
         ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises", createdModelingExercise, ModelingExercise.class, HttpStatus.OK,
                 params);
-        assertThat(returnedModelingExercise.getGradingCriteria().size()).isEqualTo(gradingCriteria.size());
+        assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
 
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
@@ -206,7 +207,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         newCriteria.setTitle("new");
         modelingExercise.addGradingCriteria(newCriteria);
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(createdModelingExercise.getGradingCriteria().size()).isEqualTo(currentCriteriaSize + 1);
+        assertThat(createdModelingExercise.getGradingCriteria()).hasSize(currentCriteriaSize + 1);
 
         modelingExercise.getGradingCriteria().get(1).setTitle("UPDATE");
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
@@ -215,7 +216,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         // If the grading criteria are deleted then their instructions should also be deleted
         modelingExercise.setGradingCriteria(null);
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(createdModelingExercise.getGradingCriteria().size()).isEqualTo(0);
+        assertThat(createdModelingExercise.getGradingCriteria()).isEmpty();
     }
 
     @Test
@@ -230,7 +231,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
         modelingExercise.getGradingCriteria().get(1).addStructuredGradingInstructions(newInstruction);
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(currentInstructionsSize + 1);
+        assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(currentInstructionsSize + 1);
 
         modelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0).setInstructionDescription("UPDATE");
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
@@ -238,7 +239,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
         modelingExercise.getGradingCriteria().get(1).setStructuredGradingInstructions(null);
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
-        assertThat(createdModelingExercise.getGradingCriteria().size()).isGreaterThan(0);
+        assertThat(createdModelingExercise.getGradingCriteria()).isNotEmpty();
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).isNullOrEmpty();
     }
 
@@ -436,6 +437,28 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importModelingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+
+        modelingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now());
+
+        modelingExerciseRepository.save(modelingExercise);
+        modelingExercise.setCourse(course2);
+
+        ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
+        assertThat(newModelingExercise.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the response").isNull();
+
+        ModelingExercise newModelingExerciseFromDatabase = modelingExerciseRepository.findById(newModelingExercise.getId()).get();
+        assertThat(newModelingExerciseFromDatabase.getExampleSolutionPublicationDate()).as("modeling example solution publication date was correctly set to null in the database")
+                .isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createModelingExerciseForExam() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
@@ -449,7 +472,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
         assertThat(newModelingExercise.getTitle()).as("modeling exercise title was correctly set").isEqualTo(title);
         assertThat(newModelingExercise.getDifficulty()).as("modeling exercise difficulty was correctly set").isEqualTo(difficulty);
-        assertThat(!newModelingExercise.isCourseExercise()).as("course was not set for exam exercise");
+        assertThat(newModelingExercise.isCourseExercise()).as("course was not set for exam exercise").isFalse();
         assertThat(newModelingExercise.getExerciseGroup()).as("exerciseGroup was set for exam exercise").isNotNull();
         assertThat(newModelingExercise.getExerciseGroup().getId()).as("exerciseGroupId was set correctly").isEqualTo(exerciseGroup.getId());
     }
@@ -523,11 +546,11 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         database.addCourseWithOneModelingExercise("Activity Diagram");
         final var searchClassDiagram = database.configureSearch("ClassDiagram");
         final var resultClassDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchClassDiagram));
-        assertThat(resultClassDiagram.getResultsOnPage().size()).isEqualTo(2);
+        assertThat(resultClassDiagram.getResultsOnPage()).hasSize(2);
 
         final var searchActivityDiagram = database.configureSearch("Activity Diagram");
         final var resultActivityDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(searchActivityDiagram));
-        assertThat(resultActivityDiagram.getResultsOnPage().size()).isEqualTo(1);
+        assertThat(resultActivityDiagram.getResultsOnPage()).hasSize(1);
 
     }
 
@@ -538,7 +561,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
         final var search = database.configureSearch("ClassDiagram");
         final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
-        assertThat(result.getResultsOnPage().size()).isEqualTo(2);
+        assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
     @Test
@@ -678,8 +701,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise updatedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=true",
                 classExercise, ModelingExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedModelingExercise);
-        assertThat(updatedModelingExercise.getGradingCriteria().size()).isEqualTo(1);
-        assertThat(updatedResults.get(0).getScore()).isEqualTo(0);
+        assertThat(updatedModelingExercise.getGradingCriteria()).hasSize(1);
+        assertThat(updatedResults.get(0).getScore()).isZero();
         assertThat(updatedResults.get(0).getFeedbacks()).isEmpty();
     }
 
@@ -715,5 +738,72 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         final Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         request.delete("/api/modeling-exercises/" + modelingExercise.getId() + "/clusters", HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetModelingExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        testGetModelingExercise_exampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetModelingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        testGetModelingExercise_exampleSolutionVisibility(false, "instructor1");
+    }
+
+    private void testGetModelingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+        // Utility function to avoid duplication
+        Function<Course, ModelingExercise> modelingExerciseGetter = c -> (ModelingExercise) c.getExercises().stream().filter(e -> e.getId().equals(classExercise.getId())).findAny()
+                .get();
+
+        classExercise.setExampleSolutionModel("<Sample solution model>");
+        classExercise.setExampleSolutionExplanation("<Sample solution explanation>");
+
+        if (isStudent) {
+            database.createAndSaveParticipationForExercise(classExercise, username);
+        }
+
+        // Test example solution publication date not set.
+        classExercise.setExampleSolutionPublicationDate(null);
+        modelingExerciseRepository.save(classExercise);
+
+        Course course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        ModelingExercise modelingExercise = modelingExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(modelingExercise.getExampleSolutionModel()).isNull();
+            assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
+        }
+        else {
+            assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
+            assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
+        }
+
+        // Test example solution publication date in the past.
+        classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        modelingExerciseRepository.save(classExercise);
+
+        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        modelingExercise = modelingExerciseGetter.apply(course);
+
+        assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
+        assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
+
+        // Test example solution publication date in the future.
+        classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        modelingExerciseRepository.save(classExercise);
+
+        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        modelingExercise = modelingExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(modelingExercise.getExampleSolutionModel()).isNull();
+            assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
+        }
+        else {
+            assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
+            assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
+        }
     }
 }

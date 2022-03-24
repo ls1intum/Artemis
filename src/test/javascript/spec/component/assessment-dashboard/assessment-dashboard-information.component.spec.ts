@@ -42,6 +42,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
         component.totalNumberOfAssessments = totalAssessments;
         component.numberOfSubmissions = submissions;
+        component.numberOfCorrectionRounds = 1;
         const setupSpy = jest.spyOn(component, 'setup');
         const setupLinksSpy = jest.spyOn(component, 'setupLinks');
         const setupGraphSpy = jest.spyOn(component, 'setupGraph');

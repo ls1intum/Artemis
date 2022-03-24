@@ -179,25 +179,19 @@ public class BambooBuildPlanService {
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
+                // the project type can be null for Kotlin exercises and exercises created before the project type was
+                // added to Artemis. The project type for these exercises is implicitly Maven (because Gradle did not
+                // exist in Artemis yet)
+                boolean isMavenProject = projectType == null || projectType.isMaven();
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
-                    // Create artifacts and a final task for the execution of static code analysis
-                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
-                    String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
-                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
-                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
-                    defaultJob.finalTasks(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
-                    defaultJob.artifacts(artifacts);
+                    setStaticCodeAnalysisJobsForJavaAndKotlinExercise(defaultJob, isMavenProject);
                 }
 
                 if (!sequentialBuildRuns) {
-                    return defaultStage
-                            .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
+                    return getRegularTestTaskForJavaAndKotlinExercise(defaultStage, defaultJob, checkoutTask, isMavenProject);
                 }
                 else {
-                    return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                            new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests")
-                                    .hasTests(true),
-                            new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+                    return getSequentialTestTaskForJavaAndKotlinExercise(defaultStage, defaultJob, checkoutTask, isMavenProject);
                 }
             }
             case PYTHON -> {
@@ -251,8 +245,7 @@ public class BambooBuildPlanService {
                 var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
-                // SCA for Xcode is not supported yet
-                if (!isXcodeProject && Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
+                if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
                     List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT);
                     Artifact[] artifacts = staticCodeAnalysisTools.stream()
@@ -276,6 +269,75 @@ public class BambooBuildPlanService {
             // this is needed, otherwise the compiler complaints with missing return
             // statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
+        }
+    }
+
+    /**
+     * Adds the Bamboo final task for the static code analysis to the stage
+     * @param defaultJob job to which the task should be added
+     * @param isMavenProject whether the project is a Maven build (or implicitly a Gradle build)
+     */
+    private void setStaticCodeAnalysisJobsForJavaAndKotlinExercise(Job defaultJob, boolean isMavenProject) {
+        // Create artifacts and a final task for the execution of static code analysis
+        List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
+        Artifact[] artifacts = staticCodeAnalysisTools.stream()
+                .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+
+        if (isMavenProject) {
+            defaultJob.finalTasks(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
+        }
+        else {
+            defaultJob.finalTasks(new ScriptTask().inlineBody("./gradlew check").description("Static Code Analysis"));
+        }
+        defaultJob.artifacts(artifacts);
+    }
+
+    /**
+     * Adds the tasks for executing a non-sequential test run to the stage and returns the stage for the Bamboo Build Plan for Java and Kotlin Exercises.
+     * @param defaultStage the stage to which the jobs are added
+     * @param defaultJob the job to which the tasks are added
+     * @param checkoutTask the vcs checkout task
+     * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
+     * @return the stage with the tasks for the non-sequential test run
+     */
+    private Stage getRegularTestTaskForJavaAndKotlinExercise(Stage defaultStage, Job defaultJob, VcsCheckoutTask checkoutTask, boolean isMavenProject) {
+        if (isMavenProject) {
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
+        }
+        else {
+            // setting the permission as a final task is required as a workaround because the docker container runs as a root user
+            // and creates files that cannot be deleted by Bamboo because it does not have these root permissions
+            defaultJob.finalTasks(new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/test/*.xml").description("JUnit Parser"),
+                    new ScriptTask().inlineBody("chmod -R 777 ${bamboo.working.directory}").description("Setup working directory for cleanup"));
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask, new ScriptTask().inlineBody("./gradlew clean test").description("Tests")));
+        }
+    }
+
+    /**
+     * Adds the tasks for executing a sequential test run to the stage and returns the stage for the Bamboo Build Plan for Java and Kotlin Exercises.
+     * @param defaultStage the stage to which the jobs are added
+     * @param defaultJob the job to which the tasks are added
+     * @param checkoutTask the vcs checkout task
+     * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
+     * @return the stage with the tasks for the sequential test run
+     */
+    private Stage getSequentialTestTaskForJavaAndKotlinExercise(Stage defaultStage, Job defaultJob, VcsCheckoutTask checkoutTask, boolean isMavenProject) {
+        if (isMavenProject) {
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+                    new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                    new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+        }
+        else {
+            // setting the permission as a final task is required as a workaround because the docker container runs as a root user
+            // and creates files that cannot be deleted by Bamboo because it does not have these root permissions
+            defaultJob.finalTasks(
+                    new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/structuralTests/*.xml,**/test-results/behaviorTests/*.xml")
+                            .description("JUnit Parser"),
+                    new ScriptTask().inlineBody("chmod -R 777 ${bamboo.working.directory}").description("Setup working directory for cleanup"));
+            // the script task for executing the behavior tests must not clean the build files because the test parser would not have parsed the tests for the structural tests yet
+            return defaultStage.jobs(defaultJob.tasks(checkoutTask, new ScriptTask().inlineBody("./gradlew clean structuralTests").description("Structural tests"),
+                    new ScriptTask().inlineBody("./gradlew behaviorTests").description("Behavior tests")));
         }
     }
 
