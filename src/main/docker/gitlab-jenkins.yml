@@ -14,7 +14,7 @@ services:
         hostname: gitlab
         networks:
             artemis:
-                ipv4_address: 172.19.0.2
+                ipv4_address: 172.20.0.4
     jenkins:
         build: jenkins
         volumes:
@@ -25,7 +25,7 @@ services:
         hostname: jenkins
         networks:
             artemis:
-                ipv4_address: 172.19.0.3
+                ipv4_address: 172.20.0.5
 
 networks:
     artemis:
@@ -33,7 +33,7 @@ networks:
         ipam:
             driver: default
             config:
-                - subnet: 172.19.0.0/24
+                - subnet: 172.20.0.0/24
 
 volumes:
     artemis-gitlab-data:
