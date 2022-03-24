@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  ARTEMIS_USERNAME: guest
+  ENABLE_JMX: "true"
+  ENABLE_JMX_EXPORTER: "true"
+  JMX_PORT: "1199"
+  JMX_RMI_PORT: "1198"
+kind: ConfigMap
+metadata:
+  name: activemq-artemis

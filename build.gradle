@@ -306,3 +306,4 @@ gradle.taskGraph.whenReady { graph ->
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
 // 10) Build server only in a war:                  ./gradlew -Pprod -Pwar clean bootWar -x webapp
 // 11) Detects uses of legacy code:                 ./gradlew modernizer -x webapp
+

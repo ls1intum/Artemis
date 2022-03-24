@@ -1,11 +1,8 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  annotations:
-    field.cattle.io/creatorId: user-nxxf9
   labels:
-    cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: statefulSet-artemis-artemis-mysql
+    app: artemis-artemis-mysql
   name: artemis-mysql
 spec:
   podManagementPolicy: OrderedReady
@@ -13,12 +10,12 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: statefulSet-artemis-artemis-mysql
+      app: artemis-artemis-mysql
   serviceName: artemis-mysql
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: statefulSet-artemis-artemis-mysql
+          app: artemis-artemis-mysql
     spec:
       containers:
       - args:
