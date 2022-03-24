@@ -176,8 +176,8 @@ export class ShortAnswerQuestionComponent {
 
 
     /**
-     * Returns the sample solution as text for a short answer for the given spot tag
-     * @param spotTag Spot tag for which to get the sample solution
+     * Returns the text that should be shown for the given spot tag
+     * @param spotTag Spot tag for which to get the text
      */
     getTextForSpotAsString(spotTag: string): string {
         if (this.showingSampleSolution) {
@@ -187,8 +187,8 @@ export class ShortAnswerQuestionComponent {
     }
 
     /**
-     * Returns the size for a sample solution for a short answer for the given spot tag
-     * @param spotTag Spot tag for which to get the submitted text
+     * Returns the size of the input for the given spot tag
+     * @param spotTag Spot tag for which to get the size
      */
     getSizeForSpot(spotTag: string): number {
         if (this.showingSampleSolution) {
