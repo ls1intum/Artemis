@@ -69,13 +69,13 @@ public class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitb
      * @param invalidPercentage the invalid percentage
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(doubles = { -60, -1.3, -0.0002, 100.2, 150 })
+    @ValueSource(doubles = { -60, -1.3, -0.0002 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testMatchPercentageToGradeStepInvalidPercentage(double invalidPercentage) {
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class,
                 () -> gradingScaleRepository.matchPercentageToGradeStep(invalidPercentage, gradingScale.getId()));
 
-        assertThat(exception.getMessage()).isEqualTo("Grade percentages must be between 0 and 100");
+        assertThat(exception.getMessage()).isEqualTo("Grade percentages must be greater than 0");
         assertThat(exception.getEntityName()).isEqualTo("gradeStep");
         assertThat(exception.getErrorKey()).isEqualTo("invalidGradePercentage");
     }
