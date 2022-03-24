@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.config.migration.entries;
 
 import java.util.List;
 
+import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
@@ -14,6 +17,8 @@ import de.tum.in.www1.artemis.service.user.LegacyPasswordService;
  */
 @Component
 public class MigrationEntry20211214_184200 extends MigrationEntry {
+
+    private static final Logger log = LoggerFactory.getLogger(MigrationEntry20211214_184200.class);
 
     private final UserRepository userRepository;
 
@@ -30,7 +35,9 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
     @Override
     public void execute() {
         int listSize = 100;
-        List<User> users = userRepository.findAll();
+        // false is the default value so if they were already set to true, this migration probably runs on a fresh system
+        List<User> users = userRepository.findAllByInternal(false);
+        log.info("Found {} users to process with `User.isInternal=false`.", users.size());
         int remainder = users.size() % listSize;
         int listCount = (int) Math.floor(users.size() / 100f);
         for (int i = 0; i < listCount; i++) {
@@ -51,14 +58,24 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
      */
     private void processUsers(List<User> userList) {
         userList = userList.stream().peek(user -> {
+            // This user is either already external or a user with a default `isInternal` value
             String encryptedPassword = user.getPassword();
+            // Users without a password or with a Bcrypt password that are set to isInternal=false have to be old users => Cleanup
+            // Keep in mind that we already don't have any proper internal users at this stage
             if (encryptedPassword == null || encryptedPassword.matches("^\\$2[abxy]\\$\\d{2}\\$.*$")) {
                 user.setInternal(false);
                 user.setPassword(passwordService.encryptPassword(""));
             }
             else {
-                String decryptedPassword = passwordService.decryptPassword(user);
-                user.setInternal(!decryptedPassword.isEmpty());
+                try {
+                    String decryptedPassword = passwordService.decryptPassword(user);
+                    user.setInternal(!decryptedPassword.isEmpty());
+                }
+                catch (EncryptionOperationNotPossibleException e) {
+                    // Broken encryption, fall back to cleanup (see above)
+                    user.setInternal(false);
+                    user.setPassword(passwordService.encryptPassword(""));
+                }
             }
             if (!user.isInternal()) {
                 user.setResetDate(null);
