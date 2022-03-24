@@ -38,7 +38,7 @@ describe('Team Owner Search Component', () => {
         expect(comp.owner).toEqual(owner);
         expect(comp.owner).not.toBe(owner); // Should be deep cloned
 
-        expect(comp.inputDisplayValue).toEqual(`${owner.name} (${owner.login})`);
+        expect(comp.inputDisplayValue).toBe(`${owner.name} (${owner.login})`);
     });
 
     it('should search on input change and find a matching result', () => {
