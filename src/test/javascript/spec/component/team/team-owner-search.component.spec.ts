@@ -56,8 +56,8 @@ describe('Team Owner Search Component', () => {
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
-        expect(searchFailedSpy).toBeCalledTimes(1);
-        expect(searchFailedSpy).toBeCalledWith(false);
+        expect(searchFailedSpy).toHaveBeenCalledTimes(1);
+        expect(searchFailedSpy).toHaveBeenCalledWith(false);
 
         expect(searchingSpy).toBeCalledTimes(2);
         expect(searchingSpy).toHaveBeenNthCalledWith(1, true);
