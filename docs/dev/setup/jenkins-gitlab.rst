@@ -440,9 +440,9 @@ In a production setup, you have to at least change the user credentials (in the 
 
 1. Create a new access token in Gitlab named ``Jenkins`` and give it **api** and **read_repository** rights. You can do either do it manually or using the following command:
 
-  ::
+    ::
 
-      docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_repository], name: 'Jenkins'); token.set_token('jenkins-gitlab-token'); token.save!"
+        docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_repository], name: 'Jenkins'); token.set_token('jenkins-gitlab-token'); token.save!"
 
 
 
