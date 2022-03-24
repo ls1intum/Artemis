@@ -384,7 +384,8 @@
                 "tooltip": "Shows the git-diff between the template and solution repositories.",
                 "title": "Git-Diff",
                 "template": "Template",
-                "solution": "Solution"
+                "solution": "Solution",
+                "404": "Git-Diff has not been generated yet. Please do a push to the template or solution repository to generate it."
             }
         },
         "error": {

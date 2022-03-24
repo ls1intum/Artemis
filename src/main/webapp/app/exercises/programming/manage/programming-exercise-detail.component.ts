@@ -257,7 +257,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
-                    translationParams: { numberTasks: res.length, numberTestCases: numberTests, detailedResult: this.buildTaskCreationMessage(res) },
+                    translationParams: {
+                        numberTasks: res.length,
+                        numberTestCases: numberTests,
+                        detailedResult: this.buildTaskCreationMessage(res),
+                    },
                     timeout: 0,
                 });
             },
@@ -417,12 +421,21 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * Gets the full git-diff from the server and displays it in a modal.
      */
     getAndShowFullDiff() {
-        this.programmingExerciseService.getFullDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
-            const modalRef = this.modalService.open(FullGitDiffReportModalComponent, {
-                size: 'xl',
-                backdrop: 'static',
-            });
-            modalRef.componentInstance.report = gitDiffReport;
+        this.programmingExerciseService.getFullDiffReport(this.programmingExercise.id!).subscribe({
+            next: (gitDiffReport) => {
+                const modalRef = this.modalService.open(FullGitDiffReportModalComponent, {
+                    size: 'xl',
+                    backdrop: 'static',
+                });
+                modalRef.componentInstance.report = gitDiffReport;
+            },
+            error: (err: HttpErrorResponse) => {
+                if (err.status === 404) {
+                    this.alertService.error('artemisApp.programmingExercise.diffReport.404');
+                } else {
+                    this.onError(err);
+                }
+            },
         });
     }
 }
