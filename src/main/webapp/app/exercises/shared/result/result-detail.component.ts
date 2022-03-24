@@ -13,7 +13,6 @@ import {
 } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { getExercise } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -71,6 +70,7 @@ export class ResultDetailComponent implements OnInit {
     readonly getCourseFromExercise = getCourseFromExercise;
     readonly FeedbackItemType = FeedbackItemType;
 
+    @Input() exercise: Exercise;
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
@@ -117,12 +117,6 @@ export class ResultDetailComponent implements OnInit {
     showOnlyNegativeFeedback = false;
 
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
-
-    get exercise(): Exercise | undefined {
-        if (this.result.participation) {
-            return getExercise(this.result.participation);
-        }
-    }
 
     // Icons
     faCircleNotch = faCircleNotch;

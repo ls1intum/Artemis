@@ -367,8 +367,8 @@ public class ProgrammingExerciseIntegrationTestService {
         List<Path> entries = unzipExportedFile();
 
         // Make sure both repositories are present
-        assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))).isTrue();
-        assertThat(entries.stream().anyMatch(entry -> entry.toString().endsWith(Paths.get("student2", ".git").toString()))).isTrue();
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))
+                .anyMatch(entry -> entry.toString().endsWith(Paths.get("student2", ".git").toString()));
     }
 
     public void testExportSubmissionAnonymizationCombining() throws Exception {
@@ -397,7 +397,7 @@ public class ProgrammingExerciseIntegrationTestService {
         List<Path> entries = unzipExportedFile();
 
         // Checks
-        assertThat(entries.stream().anyMatch(entry -> entry.endsWith("Test.java"))).isTrue();
+        assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
         Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
@@ -415,7 +415,9 @@ public class ProgrammingExerciseIntegrationTestService {
     private List<Path> unzipExportedFile() throws Exception {
         (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
         Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
-        return Files.walk(extractedZipDir).collect(Collectors.toList());
+        try (var files = Files.walk(extractedZipDir)) {
+            return files.toList();
+        }
     }
 
     public void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
@@ -1542,12 +1544,13 @@ public class ProgrammingExerciseIntegrationTestService {
         var jplagZipArchive = request.getFile(path, HttpStatus.OK, database.getDefaultPlagiarismOptions());
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
-        ZipFile zipFile = new ZipFile(jplagZipArchive);
-        assertThat(zipFile.getEntry("index.html")).isNotNull();
-        assertThat(zipFile.getEntry("match0.html")).isNotNull();
-        assertThat(zipFile.getEntry("matches_avg.csv")).isNotNull();
-        // only one match exists
-        assertThat(zipFile.getEntry("match1.html")).isNull();
+        try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
+            assertThat(zipFile.getEntry("index.html")).isNotNull();
+            assertThat(zipFile.getEntry("match0.html")).isNotNull();
+            assertThat(zipFile.getEntry("matches_avg.csv")).isNotNull();
+            // only one match exists
+            assertThat(zipFile.getEntry("match1.html")).isNull();
+        }
     }
 
     private void assertPlagiarismResult(ProgrammingExercise programmingExercise, TextPlagiarismResult result, double expectedSimilarity) {
