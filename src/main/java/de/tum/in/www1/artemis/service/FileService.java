@@ -552,18 +552,20 @@ public class FileService implements DisposableBean {
         log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
-            throw new RuntimeException("Files in the directory " + startPath + " should be replaced but it does not exist.");
+            throw new FileNotFoundException("Files in the directory " + startPath + " should be replaced but it does not exist.");
         }
 
         // rename all files in the file tree
-        Files.find(Paths.get(startPath), Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString)).forEach(filePath -> {
-            try {
-                Files.move(new File(filePath.toString()).toPath(), new File(filePath.toString().replace(targetString, replacementString)).toPath());
-            }
-            catch (IOException e) {
-                throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
-            }
-        });
+        try (var files = Files.find(Path.of(startPath), Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString))) {
+            files.forEach(filePath -> {
+                try {
+                    Files.move(filePath, Path.of(filePath.toString().replace(targetString, replacementString)));
+                }
+                catch (IOException e) {
+                    throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
+                }
+            });
+        }
     }
 
     /**
