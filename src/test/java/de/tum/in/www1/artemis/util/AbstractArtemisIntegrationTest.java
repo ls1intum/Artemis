@@ -59,6 +59,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected JavaMailSender javaMailSender;
 
     @SpyBean
+    protected MailService mailService;
+
+    @SpyBean
     protected WebsocketMessagingService websocketMessagingService;
 
     @SpyBean
@@ -100,7 +103,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, programmingSubmissionService,
                 examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService,
-                scheduleService, javaMailSender);
+                scheduleService, javaMailSender, mailService);
     }
 
     @Override
