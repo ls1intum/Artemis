@@ -181,7 +181,7 @@
                 *ngIf="result?.completionDate && canOverride"
                 (click)="submit.emit()"
                 [disabled]="!assessmentsAreValid || submitBusy"
-                [ngbTooltip]="'Ctrl + Enter'"
+                [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
             >
                 <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
