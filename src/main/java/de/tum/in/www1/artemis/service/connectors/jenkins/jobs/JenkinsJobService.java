@@ -86,7 +86,7 @@ public class JenkinsJobService {
     }
 
     /**
-     * Gets the xml config of the job that is inside a folder and replaces the old reference to the main branch by a reference to the default branch
+     * Gets the xml config of the job that is inside a folder and replaces the old reference to the master and main branch by a reference to the default branch
      * @param folderName the name of the folder
      * @param jobName the name of the job
      * @return the xml document

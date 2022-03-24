@@ -216,7 +216,7 @@ public class JenkinsBuildPlanService {
     }
 
     /**
-     * Copies a build plan to another. And replaces the old reference to the main branch by a reference to the default branch
+     * Copies a build plan to another and replaces the old reference to the master and main branch with a reference to the default branch
      *
      * @param sourceProjectKey the source project key
      * @param sourcePlanName the source plan name
