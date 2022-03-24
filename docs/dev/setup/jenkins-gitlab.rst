@@ -184,6 +184,7 @@ Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-se
 
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_user, :read_api, :read_repository, :write_repository, :sudo], name: 'Artemis Admin Token'); token.set_token('artemis-gitlab-token'); token.save\!"
 
+
    You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens`` and generate a token with all scopes.
    Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
    If you used the command to generate the token, you don't have to change the ``gitlab-local-setup.sh`` file.
