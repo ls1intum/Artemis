@@ -452,6 +452,7 @@ In a production setup, you have to at least change the user credentials (in the 
 
         JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
 
+
     Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
 3. You need to generate the `ci-token` and `secret-push-token`.
