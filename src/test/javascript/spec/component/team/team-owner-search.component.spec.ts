@@ -59,11 +59,11 @@ describe('Team Owner Search Component', () => {
         expect(searchFailedSpy).toHaveBeenCalledTimes(1);
         expect(searchFailedSpy).toHaveBeenCalledWith(false);
 
-        expect(searchingSpy).toBeCalledTimes(2);
+        expect(searchingSpy).toHaveBeenCalledTimes(2);
         expect(searchingSpy).toHaveBeenNthCalledWith(1, true);
         expect(searchingSpy).toHaveBeenNthCalledWith(2, false);
 
-        expect(searchNoResultsSpy).toBeCalledTimes(1);
+        expect(searchNoResultsSpy).toHaveBeenCalledTimes(1);
         expect(searchNoResultsSpy).toHaveBeenCalledWith(undefined);
 
         expect(onSearchResult).toEqual([owner]);
@@ -84,14 +84,14 @@ describe('Team Owner Search Component', () => {
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
-        expect(searchFailedSpy).toBeCalledTimes(1);
-        expect(searchFailedSpy).toBeCalledWith(false);
+        expect(searchFailedSpy).toHaveBeenCalledTimes(1);
+        expect(searchFailedSpy).toHaveBeenCalledWith(false);
 
-        expect(searchingSpy).toBeCalledTimes(2);
+        expect(searchingSpy).toHaveBeenCalledTimes(2);
         expect(searchingSpy).toHaveBeenNthCalledWith(1, true);
         expect(searchingSpy).toHaveBeenNthCalledWith(2, false);
 
-        expect(searchNoResultsSpy).toBeCalledTimes(2);
+        expect(searchNoResultsSpy).toHaveBeenCalledTimes(2);
         expect(searchNoResultsSpy).toHaveBeenNthCalledWith(1, undefined);
         expect(searchNoResultsSpy).toHaveBeenNthCalledWith(2, searchText);
 
@@ -109,8 +109,8 @@ describe('Team Owner Search Component', () => {
         let loadOwnerOptionsResult: User[] | undefined = [owner];
         comp.loadOwnerOptions().subscribe((result) => (loadOwnerOptionsResult = result));
 
-        expect(searchFailedSpy).toBeCalledTimes(1);
-        expect(searchFailedSpy).toBeCalledWith(true);
+        expect(searchFailedSpy).toHaveBeenCalledTimes(1);
+        expect(searchFailedSpy).toHaveBeenCalledWith(true);
 
         expect(comp.ownerOptionsLoaded).toBe(false);
         expect(loadOwnerOptionsResult).toBe(undefined);
