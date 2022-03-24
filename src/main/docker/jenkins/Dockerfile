@@ -12,7 +12,7 @@ RUN apt-get update && \
 
 ENV LANG C.UTF-8
 
-ARG TARGETARCH=arm64
+ARG TARGETARCH
 ARG GIT_LFS_VERSION=3.0.2
 
 # required for multi-arch support, revert to package cloud after:
@@ -126,8 +126,6 @@ LABEL \
     org.opencontainers.image.source="https://github.com/jenkinsci/docker" \
     org.opencontainers.image.licenses="MIT"
 
-
-
 LABEL description="Jenkins with maven, python3.6 and gcc libraries pre-installed for Artemis"
 
 USER root
@@ -145,9 +143,7 @@ RUN chown -R root:root /usr/lib/jvm/java-16-openjdk-amd64
 RUN JAVA_HOME="/usr/lib/jvm/java-16-openjdk-amd64" && export JAVA_HOME
 ENV JAVA_HOME /usr/lib/jvm/java-16-openjdk-amd64
 
-# Install C dependencies
-# RUN apt install -y gcc gdb make libubsan0 liblsan0 libtsan0
-# Install dependencies for C static analysis
+# Install C and Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc-10=10.3* \
     libc6-dev=2.31* \
