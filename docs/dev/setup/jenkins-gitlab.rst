@@ -71,12 +71,12 @@ below into your ``application-artemis.yml`` or ``application-local.yml`` file (t
         email: artemis.in@tum.de
    jenkins:
        internal-urls:
-         ci-url: http://jenkins:8080
-         vcs-url: http://gitlab:80
+           ci-url: http://jenkins:8080
+           vcs-url: http://gitlab:80
        use-crumb: false
-    server:
-      port: 8080
-      url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
+   server:
+        port: 8080
+        url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
 
 In addition, you have to start Artemis with the profiles ``gitlab`` and
 ``jenkins`` so that the correct adapters will be used, e.g.:
