@@ -379,7 +379,7 @@ public class ProgrammingExerciseGitDiffReportService {
      */
     private static class ParserState {
 
-        private ArrayList<ProgrammingExerciseGitDiffEntry> entries;
+        private final List<ProgrammingExerciseGitDiffEntry> entries;
 
         private String currentFilePath;
 
@@ -397,8 +397,6 @@ public class ProgrammingExerciseGitDiffReportService {
 
         public ParserState() {
             entries = new ArrayList<>();
-            currentFilePath = null;
-            currentPreviousFilePath = null;
             currentEntry = new ProgrammingExerciseGitDiffEntry();
             deactivateCodeReading = true;
             lastLineRemoveOperation = false;
