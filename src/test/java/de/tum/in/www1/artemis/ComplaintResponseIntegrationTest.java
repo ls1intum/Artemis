@@ -127,7 +127,7 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
     public void createLock_noFailureCondition_shouldCreateEmptyComplaintResponse() throws Exception {
         request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.CREATED, null);
         Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
-        assertThat(optionalComplaintResponse.isPresent()).isTrue();
+        assertThat(optionalComplaintResponse).isPresent();
         ComplaintResponse complaintResponse = optionalComplaintResponse.get();
         assertThat(complaintResponse.getComplaint().isAccepted()).isNull(); // not handled yet
         assertThat(complaintResponse.getReviewer().getLogin()).isEqualTo("tutor2"); // lock creator
@@ -197,7 +197,7 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
 
     public void assertThatLockWasReplaced(ComplaintResponse originalLock, String loginOfNewLockCreator) {
         Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
-        assertThat(optionalComplaintResponse.isPresent()).isTrue();
+        assertThat(optionalComplaintResponse).isPresent();
         ComplaintResponse complaintResponse = optionalComplaintResponse.get();
         assertThat(complaintResponse.getComplaint().isAccepted()).isNull(); // not handled yet
         assertThat(complaintResponse.getReviewer().getLogin()).isEqualTo(loginOfNewLockCreator); // lock creator
@@ -518,7 +518,7 @@ public class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationB
 
     public void validateThatComplaintIsResolved(String loginOfResolver) {
         Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
-        assertThat(optionalComplaintResponse.isPresent()).isTrue();
+        assertThat(optionalComplaintResponse).isPresent();
         ComplaintResponse complaintResponse = optionalComplaintResponse.get();
         assertThat(complaintResponse.getComplaint().isAccepted()).isTrue();
         assertThat(complaintResponse.getSubmittedTime()).isNotNull();

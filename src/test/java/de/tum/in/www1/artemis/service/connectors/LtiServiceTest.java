@@ -216,9 +216,7 @@ public class LtiServiceTest {
         String sessionId = "(123)";
         ltiService.handleLaunchRequest(launchRequest, exercise);
 
-        assertThat(ltiService.launchRequestForSession).containsKey(sessionId);
-        assertThat(ltiService.launchRequestForSession).containsValue(Pair.of(launchRequest, exercise));
-        assertThat(ltiService.launchRequestForSession.get(sessionId)).isEqualTo(Pair.of(launchRequest, exercise));
+        assertThat(ltiService.launchRequestForSession).containsEntry(sessionId, Pair.of(launchRequest, exercise));
     }
 
     @Test

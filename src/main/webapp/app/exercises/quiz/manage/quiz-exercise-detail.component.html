@@ -9,6 +9,12 @@
                 <span class="sr-only" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
             </span>
         </h4>
+        <div *ngIf="hasSavedQuizStarted">
+            <div class="quiz-is-active-background"></div>
+            <div class="quiz-is-active-overlay alert alert-warning">
+                <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
+            </div>
+        </div>
         <div class="edit-quiz">
             <div class="form-group">
                 <label for="quiz-title" jhiTranslate="artemisApp.exercise.title">Title</label>
@@ -122,6 +128,7 @@
                                 *ngIf="quizExercise.includedInOverallScore"
                                 [includedInOverallScore]="quizExercise.includedInOverallScore!"
                                 (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
+                                [allowNotIncluded]="!isExamMode"
                             ></jhi-included-in-overall-score-picker>
                         </div>
                     </div>
@@ -309,12 +316,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div *ngIf="hasSavedQuizStarted">
-            <div class="quiz-is-active-background"></div>
-            <div class="quiz-is-active-overlay alert alert-warning">
-                <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
             </div>
         </div>
         <ng-template #existingQuestionsTemplate>

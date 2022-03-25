@@ -170,11 +170,12 @@ describe('ResultDetailComponent', () => {
                     projectKey: 'somekey',
                 } as ProgrammingExercise;
 
+                comp.exercise = exercise;
+
                 comp.result = {
                     id: 89,
                     participation: {
                         id: 55,
-                        exercise,
                         type: ParticipationType.PROGRAMMING,
                         participantIdentifier: 'student42',
                         repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',

@@ -253,7 +253,6 @@ describe('AssessmentDashboardInformationComponent', () => {
         toggleSecondCorrectionStub.mockReturnValue(of(false));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
         expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
-        expect(comp.toggelingSecondCorrectionButton).toBe(false);
     });
 
     it('should update exercises when finished exercises are filtered', () => {

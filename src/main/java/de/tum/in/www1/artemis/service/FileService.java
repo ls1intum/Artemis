@@ -7,12 +7,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -49,6 +46,29 @@ public class FileService implements DisposableBean {
     private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+    /**
+     * Filenames for which the template filename differs from the filename it should have in the repository.
+     */
+    // @formatter:off
+    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(
+        Map.entry("git.ignore.file", ".gitignore"),
+        Map.entry("git.attributes.file", ".gitattributes"),
+        Map.entry("Makefile.file", "Makefile"),
+        Map.entry("project.file", ".project"),
+        Map.entry("classpath.file", ".classpath"),
+        Map.entry("dune.file", "dune"),
+        Map.entry("Fast.file", "Fastfile"),
+        Map.entry("App.file", "Appfile"),
+        Map.entry("Scan.file", "Scanfile"),
+        Map.entry("gradlew.file", "gradlew")
+    );
+    // @formatter:on
+
+    /**
+     * These directories get falsely marked as files and should be ignored during copying.
+     */
+    private static final List<String> IGNORED_DIRECTORIES = List.of(".xcassets/", ".colorset/", ".appiconset/", ".xcworkspace/", ".xcodeproj/", ".swiftpm/");
 
     @Override
     public void destroy() {
@@ -322,53 +342,16 @@ public class FileService implements DisposableBean {
      * @throws IOException if the copying operation fails.
      */
     public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath, Boolean keepParentFolder) throws IOException {
-
         for (Resource resource : resources) {
-
             // Replace windows separator with "/"
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
+
             String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
-            // special case for '.git.ignore.file' file which would not be included in build otherwise
-            if (targetFilePath.endsWith("git.ignore.file")) {
-                targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
-            }
-            // special case for '.gitattributes' file which would not be included in build otherwise
-            if (targetFilePath.endsWith("git.attributes.file")) {
-                targetFilePath = targetFilePath.replaceAll("git.attributes.file", ".gitattributes");
-            }
-            // special case for 'Makefile' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("Makefile.file")) {
-                targetFilePath = targetFilePath.replace("Makefile.file", "Makefile");
-            }
-            // special case for '.project' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("project.file")) {
-                targetFilePath = targetFilePath.replace("project.file", ".project");
-            }
-            // special case for '.classpath' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("classpath.file")) {
-                targetFilePath = targetFilePath.replace("classpath.file", ".classpath");
-            }
-            // special case for 'dune' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("dune.file")) {
-                targetFilePath = targetFilePath.replace("dune.file", "dune");
-            }
-            // special case for 'Fastfile' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("Fast.file")) {
-                targetFilePath = targetFilePath.replace("Fast.file", "Fastfile");
-            }
-            // special case for 'Appfile' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("App.file")) {
-                targetFilePath = targetFilePath.replace("App.file", "Appfile");
-            }
-            // special case for 'Scanfile' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("Scan.file")) {
-                targetFilePath = targetFilePath.replace("Scan.file", "Scanfile");
-            }
-            // special case for Xcode where directories get falsely scanned as files
-            if (targetFilePath.endsWith(".xcassets/") || targetFilePath.endsWith(".colorset/") || targetFilePath.endsWith(".appiconset/")
-                    || targetFilePath.endsWith(".xcworkspace/") || targetFilePath.endsWith(".xcodeproj/")) {
+            targetFilePath = applySpecialFilenameReplacements(targetFilePath);
+
+            if (isIgnoredDirectory(targetFilePath)) {
                 continue;
             }
 
@@ -379,7 +362,43 @@ public class FileService implements DisposableBean {
             }
 
             Files.copy(resource.getInputStream(), copyPath, StandardCopyOption.REPLACE_EXISTING);
+            // make gradlew executable
+            if (targetFilePath.endsWith("gradlew")) {
+                copyPath.toFile().setExecutable(true);
+            }
         }
+    }
+
+    /**
+     * Replaces filenames where the template name differs from the name the file should have in the repository.
+     *
+     * @param filePath The path to a file.
+     * @return The path with replacements applied where necessary.
+     */
+    private String applySpecialFilenameReplacements(final String filePath) {
+        String resultFilePath = filePath;
+
+        for (final Map.Entry<String, String> replacementDirective : FILENAME_REPLACEMENTS.entrySet()) {
+            String oldName = replacementDirective.getKey();
+            String newName = replacementDirective.getValue();
+
+            if (resultFilePath.endsWith(oldName)) {
+                resultFilePath = resultFilePath.replace(oldName, newName);
+                break;
+            }
+        }
+
+        return resultFilePath;
+    }
+
+    /**
+     * Checks if the given path has been identified as a file but it actually points to a directory.
+     *
+     * @param filePath The path to a file/directory.
+     * @return True, if the path is assumed to be a file but actually points to a directory.
+     */
+    private boolean isIgnoredDirectory(final String filePath) {
+        return IGNORED_DIRECTORIES.stream().anyMatch(filePath::endsWith);
     }
 
     /**
@@ -533,18 +552,20 @@ public class FileService implements DisposableBean {
         log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
-            throw new RuntimeException("Files in the directory " + startPath + " should be replaced but it does not exist.");
+            throw new FileNotFoundException("Files in the directory " + startPath + " should be replaced but it does not exist.");
         }
 
         // rename all files in the file tree
-        Files.find(Paths.get(startPath), Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString)).forEach(filePath -> {
-            try {
-                Files.move(new File(filePath.toString()).toPath(), new File(filePath.toString().replace(targetString, replacementString)).toPath());
-            }
-            catch (IOException e) {
-                throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
-            }
-        });
+        try (var files = Files.find(Path.of(startPath), Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.toString().contains(targetString))) {
+            files.forEach(filePath -> {
+                try {
+                    Files.move(filePath, Path.of(filePath.toString().replace(targetString, replacementString)));
+                }
+                catch (IOException e) {
+                    throw new RuntimeException("File " + filePath + " should be replaced but does not exist.");
+                }
+            });
+        }
     }
 
     /**
@@ -552,11 +573,25 @@ public class FileService implements DisposableBean {
      * <p>
      * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
      *
-     * @param startPath    the path where the start directory is located
-     * @param replacements the replacements that should be applied
+     * @param startPath     the path where the start directory is located
+     * @param replacements  the replacements that should be applied
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements) throws IOException {
+        replaceVariablesInFileRecursive(startPath, replacements, Collections.emptyList());
+    }
+
+    /**
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file
+     * <p>
+     * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
+     *
+     * @param startPath     the path where the start directory is located
+     * @param replacements  the replacements that should be applied
+     * @param filesToIgnore the name of files for which no replacement should be done
+     * @throws IOException if an issue occurs on file access for the replacement of the variables.
+     */
+    public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements, List<String> filesToIgnore) throws IOException {
         log.debug("Replacing {} in files in directory {}", replacements, startPath);
         File directory = new File(startPath);
         if (!directory.exists() || !directory.isDirectory()) {
@@ -566,6 +601,8 @@ public class FileService implements DisposableBean {
         // Get all files in directory
         String[] files = directory.list((current, name) -> new File(current, name).isFile());
         if (files != null) {
+            // filter out files that should be ignored
+            files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
             for (String file : files) {
                 replaceVariablesInFile(Paths.get(directory.getAbsolutePath(), file).toString(), replacements);
             }
@@ -579,7 +616,7 @@ public class FileService implements DisposableBean {
                     // ignore files in the '.git' folder
                     continue;
                 }
-                replaceVariablesInFileRecursive(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), replacements);
+                replaceVariablesInFileRecursive(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), replacements, filesToIgnore);
             }
         }
     }
