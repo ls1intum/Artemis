@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
@@ -107,6 +106,6 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
     }
 
     private void assertEqual(MutableBoolean testBoolean, boolean expected) {
-        assertThat(testBoolean.toBoolean(), is(equalTo(expected)));
+        assertThat(testBoolean.toBoolean()).isEqualTo(expected);
     }
 }

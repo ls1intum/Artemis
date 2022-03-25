@@ -48,15 +48,15 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "programming_exercise_task_test_case", joinColumns = @JoinColumn(name = "test_case_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties("testCases")
+    @JsonIgnoreProperties({ "testCases", "exercise" })
     private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
 
     @OneToMany(mappedBy = "testCase", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("programmingExerciseTestCase")
+    @JsonIgnoreProperties("testCase")
     private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("programmingExerciseTestCase")
+    @JsonIgnoreProperties("testCases")
     private ProgrammingExercise exercise;
 
     @Enumerated(EnumType.STRING)

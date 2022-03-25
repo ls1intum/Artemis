@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.bitbucket;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +33,10 @@ import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
@@ -53,10 +57,8 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
-    @Value("${artemis.version-control.default-branch:master}")
+    @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
-
-    private final PasswordService passwordService;
 
     private final UserRepository userRepository;
 
@@ -67,7 +69,6 @@ public class BitbucketService extends AbstractVersionControlService {
     public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext) {
         super(applicationContext, gitService, urlService);
-        this.passwordService = passwordService;
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
@@ -78,30 +79,9 @@ public class BitbucketService extends AbstractVersionControlService {
         for (User user : users) {
             String username = user.getLogin();
 
-            // TODO: does it really make sense to potentially create a user here? Should we not rather create this user when the user is created in the internal Artemis database?
-
-            if ((userPrefixEdx.isPresent() && username.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && username.startsWith((userPrefixU4I.get())))) {
-                // It is an automatically created user
-
-                if (!userExists(username)) {
-                    log.debug("Bitbucket user {} does not exist yet", username);
-                    String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                    createUser(username, passwordService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
-
-                    try {
-                        // NOTE: we need to fetch the user here again to make sure that the groups are not lazy loaded.
-                        user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
-                        addUserToGroups(username, user.getGroups());
-                    }
-                    catch (BitbucketException e) {
-                        /*
-                         * This might throw exceptions, for example if the group does not exist on Bitbucket. We can safely ignore them.
-                         */
-                    }
-                }
-                else {
-                    log.debug("Bitbucket user {} already exists", username);
-                }
+            // This is a failsafe in case a user was not created in VCS on registration
+            if (!userExists(username)) {
+                throw new BitbucketException("The user was not created in Bitbucket and has to be manually added.");
             }
 
             if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
@@ -127,7 +107,8 @@ public class BitbucketService extends AbstractVersionControlService {
     /**
      * This methods protects the repository on the Bitbucket server by using a REST-call to setup branch protection.
      * The branch protection is applied to all branches and prevents rewriting the history (force-pushes) and deletion of branches.
-     * @param projectKey The project key of the repository that should be protected
+     *
+     * @param projectKey     The project key of the repository that should be protected
      * @param repositorySlug The slug of the repository that should be protected
      */
     private void protectBranches(String projectKey, String repositorySlug) {
@@ -215,7 +196,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @return true if it exists
      * @throws BitbucketException any exception occurred on the Bitbucket server
      */
-    private Boolean userExists(String username) throws BitbucketException {
+    public Boolean userExists(String username) throws BitbucketException {
         try {
             restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/users/" + username, HttpMethod.GET, null, Void.class);
         }
@@ -239,7 +220,6 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException if the rest request to Bitbucket for creating the user failed.
      */
     public void createUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
-
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username)
                 .queryParam("email", emailAddress).queryParam("emailAddress", emailAddress).queryParam("password", password).queryParam("displayName", displayName)
                 .queryParam("addToDefaultGroup", "true").queryParam("notify", "false");
@@ -256,7 +236,92 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     /**
-     * Adds an Bitbucket user to (multiple) Bitbucket groups
+     * Updates a user on Bitbucket
+     *
+     * @param username     The username of the user
+     * @param emailAddress The new email address
+     * @param displayName  The new display name
+     * @throws BitbucketException
+     */
+    public void updateUserDetails(String username, String emailAddress, String displayName) throws BitbucketException {
+        UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users");
+        Map<String, Object> userDetailsBody = new HashMap<>();
+        userDetailsBody.put("name", username);
+        userDetailsBody.put("email", emailAddress);
+        userDetailsBody.put("displayName", displayName);
+        HttpEntity<Map<String, Object>> userDetailsEntity = new HttpEntity<>(userDetailsBody, null);
+
+        log.debug("Updating Bitbucket user {} ({})", username, emailAddress);
+
+        try {
+            restTemplate.exchange(userDetailsBuilder.build().encode().toUri(), HttpMethod.PUT, userDetailsEntity, Void.class);
+        }
+        catch (HttpClientErrorException e) {
+            if (isUserNotFoundException(e)) {
+                log.warn("Bitbucket user {} does not exist.", username);
+                return;
+            }
+            log.error("Could not update Bitbucket user " + username, e);
+            throw new BitbucketException("Error while updating user", e);
+        }
+    }
+
+    /**
+     * Updates the password of a user on Bitbucket
+     *
+     * @param username The username of the user to update
+     * @param password The new password
+     * @throws BitbucketException
+     */
+    public void updateUserPassword(String username, String password) throws BitbucketException {
+        UriComponentsBuilder passwordBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials");
+        Map<String, Object> passwordBody = new HashMap<>();
+        passwordBody.put("name", username);
+        passwordBody.put("password", password);
+        passwordBody.put("passwordConfirm", password);
+        HttpEntity<Map<String, Object>> passwordEntity = new HttpEntity<>(passwordBody, null);
+
+        log.debug("Updating Bitbucket user password for user {}", username);
+
+        try {
+            restTemplate.exchange(passwordBuilder.build().encode().toUri(), HttpMethod.PUT, passwordEntity, Void.class);
+        }
+        catch (HttpClientErrorException e) {
+            if (isUserNotFoundException(e)) {
+                log.warn("Bitbucket user {} does not exist.", username);
+                return;
+            }
+            log.error("Could not update Bitbucket user password for user " + username, e);
+            throw new BitbucketException("Error while updating user", e);
+        }
+    }
+
+    /**
+     * Deletes a user from Bitbucket. It also updates all previous occurrences of the username to a non-identifying username.
+     *
+     * @param username The user to delete
+     */
+    public void deleteAndEraseUser(String username) {
+        UriComponentsBuilder deleteBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username);
+        UriComponentsBuilder eraseBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/erasure").queryParam("name", username);
+
+        log.debug("Deleting Bitbucket user {}", username);
+        try {
+            restTemplate.exchange(deleteBuilder.build().encode().toUri(), HttpMethod.DELETE, null, Void.class);
+            restTemplate.exchange(eraseBuilder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
+        }
+        catch (HttpClientErrorException e) {
+            if (isUserNotFoundException(e)) {
+                log.warn("Bitbucket user {} has already been deleted.", username);
+                return;
+            }
+            log.error("Could not delete Bitbucket user " + username, e);
+            throw new BitbucketException("Error while updating user", e);
+        }
+    }
+
+    /**
+     * Adds a Bitbucket user to (multiple) Bitbucket groups
      *
      * @param username The Bitbucket username
      * @param groups   Names of Bitbucket groups
@@ -275,6 +340,50 @@ public class BitbucketService extends AbstractVersionControlService {
             log.error("Could not add Bitbucket user " + username + " to groups" + groups, e);
             throw new BitbucketException("Error while adding Bitbucket user to groups");
         }
+    }
+
+    /**
+     * Removes a Bitbucket user from (multiple) Bitbucket groups
+     *
+     * @param username The Bitbucket username
+     * @param groups   Names of Bitbucket groups
+     * @throws BitbucketException if the request to Bitbucket fails
+     */
+    public void removeUserFromGroups(String username, Set<String> groups) throws BitbucketException {
+        log.debug("Removing Bitbucket user {} from groups {}", username, groups);
+
+        try {
+            for (String group : groups) {
+                Map<String, Object> jsonObject = new HashMap<>();
+                jsonObject.put("context", username);
+                jsonObject.put("itemName", group);
+
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
+                UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/remove-group")
+                        .queryParam("context", username).queryParam("itemName", group);
+                restTemplate.exchange(userDetailsBuilder.build().toUri(), HttpMethod.POST, entity, Void.class);
+            }
+        }
+        catch (HttpClientErrorException e) {
+            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+                log.warn("Could not remove Bitbucket user {} from groups {}. Either the user or the groups were not found or the user is not assigned to a group.", username,
+                        groups);
+                return;
+            }
+            log.error("Could not remove Bitbucket user " + username + " from groups" + groups, e);
+            throw new BitbucketException("Error while removing Bitbucket user from groups");
+        }
+    }
+
+    /**
+     * Checks if a HTTP exception meets the requirements of a Bitbucket UserNotFoundException
+     *
+     * @param exception The exception thrown by the HTTP Client
+     * @return true if the exception meets the requirements
+     */
+    private boolean isUserNotFoundException(HttpClientErrorException exception) {
+        return HttpStatus.NOT_FOUND.equals(exception.getStatusCode()) && exception.getMessage() != null
+                && exception.getMessage().contains("com.atlassian.bitbucket.user.NoSuchUserException");
     }
 
     /**
@@ -341,7 +450,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws BitbucketException {
-        users.forEach(user -> setStudentRepositoryPermission(repositoryUrl, projectKey, user.getLogin(), VersionControlRepositoryPermission.READ_ONLY));
+        users.forEach(user -> setStudentRepositoryPermission(repositoryUrl, projectKey, user.getLogin(), VersionControlRepositoryPermission.REPO_READ));
     }
 
     /**
@@ -377,7 +486,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * Set the default branch of the repository
      *
      * @param repositoryUrl The repository url to set the default branch for.
-     * @param branchName The name of the branch to set as default, e.g. 'main'
+     * @param branchName    The name of the branch to set as default, e.g. 'main'
      */
     public void setDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl, String branchName) throws BitbucketException {
         var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
@@ -396,23 +505,22 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
-        // Not implemented because it's not needed in Bitbucket for the current use case, because the master branch is not protected by default
+        // Not implemented because it's not needed in Bitbucket for the current use case, because the main branch is not protected by default
     }
 
     /**
      * Set the permission of a student for a repository
      *
-     * @param repositoryUrl         The complete repository-url (including protocol, host and the complete path)
-     * @param projectKey            The project key of the repository's project.
-     * @param username              The username of the user whom to assign a permission level
-     * @param repositoryPermission  Repository permission to set for the user (e.g. READ_ONLY, WRITE)
+     * @param repositoryUrl        The complete repository-url (including protocol, host and the complete path)
+     * @param projectKey           The project key of the repository's project.
+     * @param username             The username of the user whom to assign a permission level
+     * @param repositoryPermission Repository permission to set for the user (e.g. READ_ONLY, WRITE)
      */
     private void setStudentRepositoryPermission(VcsRepositoryUrl repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
             throws BitbucketException {
-        String permissionString = repositoryPermission == VersionControlRepositoryPermission.READ_ONLY ? "READ" : "WRITE";
         String repositorySlug = getRepositoryName(repositoryUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
-        String url = baseUrl + username + "&permission=REPO_" + permissionString;
+        String url = baseUrl + username + "&permission=" + repositoryPermission;
         try {
             restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
         }
@@ -425,9 +533,9 @@ public class BitbucketService extends AbstractVersionControlService {
     /**
      * Remove all permissions of a student for a repository
      *
-     * @param repositoryUrl  The complete repository-url (including protocol, host and the complete path)
-     * @param projectKey     The project key of the repository's project.
-     * @param username       The username of the user whom to remove access
+     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
+     * @param projectKey    The project key of the repository's project.
+     * @param username      The username of the user whom to remove access
      */
     private void removeStudentRepositoryAccess(VcsRepositoryUrl repositoryUrl, String projectKey, String username) throws BitbucketException {
         String repositorySlug = getRepositoryName(repositoryUrl);
@@ -560,10 +668,22 @@ public class BitbucketService extends AbstractVersionControlService {
         }
     }
 
-    private void grantGroupPermissionToProject(String projectKey, String groupName, BitbucketPermission permission) {
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/permissions/groups/?name="; // GROUPNAME&PERMISSION
+    /**
+     * Grants a permission to a group for a given project
+     *
+     * @param projectKey The project requested
+     * @param groupName  The group
+     * @param permission Set to null if permissions are revoked
+     */
+    public void grantGroupPermissionToProject(String projectKey, String groupName, BitbucketPermission permission) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/permissions/groups").queryParam("name",
+                groupName);
+
+        if (permission != null) {
+            builder.queryParam("permission", permission);
+        }
         try {
-            restTemplate.exchange(baseUrl + groupName + "&permission=" + permission, HttpMethod.PUT, null, Void.class);
+            restTemplate.exchange(builder.build().toUri(), permission != null ? HttpMethod.PUT : HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
             log.error("Could not give project permission", e);
@@ -651,7 +771,8 @@ public class BitbucketService extends AbstractVersionControlService {
     @NotNull
     public Commit getLastCommitDetails(Object requestBody) throws BitbucketException {
         // NOTE the requestBody should look like this:
-        // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/master","fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
+        // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/main",
+        // "fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
         // we are interested in the toHash
         Commit commit = new Commit();
         try {

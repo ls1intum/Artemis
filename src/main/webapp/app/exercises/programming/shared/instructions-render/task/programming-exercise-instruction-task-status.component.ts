@@ -3,7 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
@@ -23,6 +23,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     get tests() {
         return this.testsValue;
     }
+    @Input() exercise: Exercise;
     @Input() exerciseHints: ExerciseHint[] = [];
     @Input() latestResult?: Result;
     @Input() showTestDetails: boolean;
@@ -80,6 +81,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as ResultDetailComponent;
+        componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
         componentInstance.feedbackFilter = this.tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;

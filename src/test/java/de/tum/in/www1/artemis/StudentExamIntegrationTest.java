@@ -122,6 +122,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addStudentExam(exam2);
         // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
     }
 
     @AfterEach
@@ -148,8 +150,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
         assertThat(studentExam).isEmpty();
         studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(users.get(0).getId(), exam1.getId());
-        assertThat(studentExam).isPresent();
-        assertThat(studentExam.get()).isEqualTo(studentExam1);
+        assertThat(studentExam).contains(studentExam1);
     }
 
     @Test
@@ -200,10 +201,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetStudentExamsForExam_asInstructor() throws Exception {
         List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams.size()).isEqualTo(2);
+        assertThat(studentExams).hasSize(2);
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early) throws Exception {
+        for (int i = 1; i <= 22; i++) {
+            bitbucketRequestMockProvider.mockUserExists("student" + i);
+        }
+
         ZonedDateTime examVisibleDate;
         ZonedDateTime examStartDate;
         ZonedDateTime examEndDate;
@@ -219,9 +224,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         examVisibleDate = ZonedDateTime.now().minusMinutes(10 + Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS);
         // --> 2 min = 120s working time
-
-        bambooRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
@@ -248,7 +250,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
             programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
             for (var user : exam2.getRegisteredUsers()) {
-                var repo = new LocalRepository();
+                var repo = new LocalRepository(defaultBranch);
                 repo.configureRepos("studentRepo", "studentOriginRepo");
                 programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
                 studentRepos.add(repo);
@@ -273,6 +275,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             examRepository.save(exam2);
         }
 
+        bitbucketRequestMockProvider.reset();
         return studentExams;
     }
 
@@ -291,14 +294,14 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/conduction", HttpStatus.OK, StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
-            assertThat(response.getExercises().size()).isEqualTo(exam2.getNumberOfExercisesInExam());
+            assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
             var textExercise = (TextExercise) response.getExercises().get(0);
             var quizExercise = (QuizExercise) response.getExercises().get(1);
-            assertThat(textExercise.getStudentParticipations().size()).isEqualTo(1);
+            assertThat(textExercise.getStudentParticipations()).hasSize(1);
             var participation1 = textExercise.getStudentParticipations().iterator().next();
             assertThat(participation1.getParticipant()).isEqualTo(user);
             assertThat(participation1.getSubmissions()).hasSize(1);
-            assertThat(quizExercise.getStudentParticipations().size()).isEqualTo(1);
+            assertThat(quizExercise.getStudentParticipations()).hasSize(1);
             var participation2 = quizExercise.getStudentParticipations().iterator().next();
             assertThat(participation2.getParticipant()).isEqualTo(user);
             assertThat(participation2.getSubmissions()).hasSize(1);
@@ -308,13 +311,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
             // Check that sensitive information has been removed
             assertThat(textExercise.getGradingCriteria()).isEmpty();
-            assertThat(textExercise.getGradingInstructions()).isEqualTo(null);
-            assertThat(textExercise.getExampleSolution()).isEqualTo(null);
+            assertThat(textExercise.getGradingInstructions()).isNull();
+            assertThat(textExercise.getExampleSolution()).isNull();
 
             // Check that sensitive information has been removed
             assertThat(quizExercise.getGradingCriteria()).isEmpty();
-            assertThat(quizExercise.getGradingInstructions()).isEqualTo(null);
-            assertThat(quizExercise.getQuizQuestions().size()).isEqualTo(3);
+            assertThat(quizExercise.getGradingInstructions()).isNull();
+            assertThat(quizExercise.getQuizQuestions()).hasSize(3);
 
             for (QuizQuestion question : quizExercise.getQuizQuestions()) {
                 if (question instanceof MultipleChoiceQuestion) {
@@ -325,10 +328,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     }
                 }
                 else if (question instanceof DragAndDropQuestion) {
-                    assertThat(((DragAndDropQuestion) question).getCorrectMappings()).hasSize(0);
+                    assertThat(((DragAndDropQuestion) question).getCorrectMappings()).isEmpty();
                 }
                 else if (question instanceof ShortAnswerQuestion) {
-                    assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).hasSize(0);
+                    assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
                 }
             }
 
@@ -369,7 +372,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(response).isEqualTo(testRun);
         assertThat(response.isStarted()).isTrue();
         assertThat(response.isTestRun()).isTrue();
-        assertThat(response.getExercises().size()).isEqualTo(exam.getNumberOfExercisesInExam());
+        assertThat(response.getExercises()).hasSize(exam.getNumberOfExercisesInExam());
         // Ensure that student exam was marked as started
         assertThat(studentExamRepository.findById(testRun.getId()).get().isStarted()).isTrue();
     }
@@ -391,7 +394,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
 
         List<StudentExam> response = request.getList("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/", HttpStatus.OK, StudentExam.class);
-        assertThat(response.size()).isEqualTo(2);
+        assertThat(response).hasSize(2);
     }
 
     @Test
@@ -651,7 +654,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 if (studentParticipation.findLatestSubmission().isPresent()) {
                     var result = studentParticipation.findLatestSubmission().get().getLatestResult();
                     assertThat(result).isNotNull();
-                    assertThat(result.getScore()).isEqualTo(0);
+                    assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
                     assertThat(result.getFeedbacks()).isNotEmpty();
@@ -683,10 +686,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
-                    assertThat(Objects.requireNonNull(studentParticipation.findLatestSubmission().get().getResults()).size()).isEqualTo(exam2.getNumberOfCorrectionRoundsInExam());
+                    assertThat(studentParticipation.findLatestSubmission().get().getResults()).isNotNull().hasSize(exam2.getNumberOfCorrectionRoundsInExam());
                     for (var result : Objects.requireNonNull(studentParticipation.findLatestSubmission().get().getResults())) {
                         assertThat(result).isNotNull();
-                        assertThat(result.getScore()).isEqualTo(0);
+                        assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
                         assertThat(result.getFeedbacks()).isNotEmpty();
@@ -726,7 +729,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 if (studentParticipation.findLatestSubmission().isPresent()) {
                     var result = studentParticipation.findLatestSubmission().get().getLatestResult();
                     assertThat(result).isNotNull();
-                    assertThat(result.getScore()).isEqualTo(0);
+                    assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                     result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
                     assertThat(result.getFeedbacks()).isNotEmpty();
@@ -764,10 +767,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
-                    assertThat(Objects.requireNonNull(studentParticipation.findLatestSubmission().get().getResults()).size()).isEqualTo(exam2.getNumberOfCorrectionRoundsInExam());
+                    assertThat(studentParticipation.findLatestSubmission().get().getResults()).isNotNull().hasSize(exam2.getNumberOfCorrectionRoundsInExam());
                     for (var result : Objects.requireNonNull(studentParticipation.findLatestSubmission().get().getResults())) {
                         assertThat(result).isNotNull();
-                        assertThat(result.getScore()).isEqualTo(0);
+                        assertThat(result.getScore()).isZero();
                         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                         result = resultRepository.findByIdWithEagerFeedbacks(result.getId()).get();
                         assertThat(result.getFeedbacks()).isNotEmpty();
@@ -864,10 +867,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     public void testSubmitStudentExam_early() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false);
 
-        // we have to reset the mock provider and enable it again so that we can mock additional requests below
-        bitbucketRequestMockProvider.reset();
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-
         database.changeUser(studentExams.get(0).getUser().getLogin());
         var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/conduction", HttpStatus.OK, StudentExam.class);
         final List<ProgrammingExercise> exercisesToBeLocked = new ArrayList<>();
@@ -903,7 +902,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSubmitStudentExam_realistic() throws Exception {
-
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false);
 
         List<StudentExam> studentExamsAfterStart = new ArrayList<>();
@@ -916,7 +914,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
                     bambooRequestMockProvider.reset();
-                    bambooRequestMockProvider.enableMockingOfRequests(true);
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                     Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
@@ -991,9 +988,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(1));
         exam2 = examRepository.save(exam2);
 
-        // reset to exchange expectation for newCommitHash
         bambooRequestMockProvider.reset();
-        bambooRequestMockProvider.enableMockingOfRequests(true);
+
         final String newCommitHash = "2ec6050142b9c187909abede819c083c8745c19b";
         final ObjectId newCommitHashObjectId = ObjectId.fromString(newCommitHash);
 
@@ -1004,7 +1000,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                     // do another programming submission to check if the StudentExam after submit contains the new commit hash
                     doReturn(newCommitHashObjectId).when(gitService).getLastCommitHash(any());
                     bambooRequestMockProvider.reset();
-                    bambooRequestMockProvider.enableMockingOfRequests(true);
                     bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                     database.changeUser(studentExam.getUser().getLogin());
                     request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
@@ -1110,26 +1105,22 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         QuizSubmission savedQuizSubmission = request.putWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
                 HttpStatus.OK);
         // check the submission
-        assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull();
-        assertThat(savedQuizSubmission.getSubmittedAnswers().size()).isGreaterThan(0);
+        assertThat(savedQuizSubmission.getSubmittedAnswers()).isNotNull().isNotEmpty();
         quizExercise.getQuizQuestions().forEach(quizQuestion -> {
             SubmittedAnswer submittedAnswer = savedQuizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
             if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer answer) {
-                assertThat(answer.getSelectedOptions()).isNotNull();
-                assertThat(answer.getSelectedOptions().size()).isGreaterThan(0);
+                assertThat(answer.getSelectedOptions()).isNotNull().isNotEmpty();
                 assertThat(answer.getSelectedOptions().iterator().next()).isNotNull();
                 assertThat(answer.getSelectedOptions().iterator().next()).isEqualTo(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions().get(mcSelectedOptionIndex));
             }
             else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer answer) {
-                assertThat(answer.getSubmittedTexts()).isNotNull();
-                assertThat(answer.getSubmittedTexts().size()).isGreaterThan(0);
+                assertThat(answer.getSubmittedTexts()).isNotNull().isNotEmpty();
                 assertThat(answer.getSubmittedTexts().iterator().next()).isNotNull();
                 assertThat(answer.getSubmittedTexts().iterator().next().getText()).isEqualTo(shortAnswerText);
                 assertThat(answer.getSubmittedTexts().iterator().next().getSpot()).isEqualTo(((ShortAnswerQuestion) quizQuestion).getSpots().get(saSpotIndex));
             }
             else if (submittedAnswer instanceof DragAndDropSubmittedAnswer answer) {
-                assertThat(answer.getMappings()).isNotNull();
-                assertThat(answer.getMappings().size()).isGreaterThan(0);
+                assertThat(answer.getMappings()).isNotNull().isNotEmpty();
                 assertThat(answer.getMappings().iterator().next()).isNotNull();
                 assertThat(answer.getMappings().iterator().next().getDragItem()).isEqualTo(((DragAndDropQuestion) quizQuestion).getDragItems().get(dndDragItemIndex));
                 assertThat(answer.getMappings().iterator().next().getDropLocation()).isEqualTo(((DragAndDropQuestion) quizQuestion).getDropLocations().get(dndLocationIndex));
@@ -1340,7 +1331,6 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
             if (exercise instanceof ProgrammingExercise) {
                 doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
                 bambooRequestMockProvider.reset();
-                bambooRequestMockProvider.enableMockingOfRequests(true);
                 bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
                 request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
                 Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
@@ -1408,9 +1398,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 new HttpHeaders());
 
         bitbucketRequestMockProvider.reset();
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.reset();
-        bambooRequestMockProvider.enableMockingOfRequests(true);
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam2.getExerciseGroups().get(6).getExercises().iterator().next();
         final String projectKey = programmingExercise.getProjectKey();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
@@ -1470,7 +1458,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         studentExamRepository.save(testRun2);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun1.getId(), HttpStatus.OK);
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
-        assertThat(testRunList.size()).isEqualTo(1);
+        assertThat(testRunList).hasSize(1);
         testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
     }
 
@@ -1490,7 +1478,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         studentExamRepository.save(testRun2);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun2.getId(), HttpStatus.OK);
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
-        assertThat(testRunList.size()).isEqualTo(1);
+        assertThat(testRunList).hasSize(1);
         testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
     }
 
@@ -1539,9 +1527,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-run", testRun, StudentExam.class, HttpStatus.OK);
         var testRunsInDb = studentExamRepository.findAllByExamId_AndTestRunIsTrue(testRunExam.getId());
-        assertThat(testRunsInDb.size()).isEqualTo(1);
+        assertThat(testRunsInDb).hasSize(1);
         var testRunInDb = testRunsInDb.get(0);
-        assertThat(testRunInDb.isTestRun()).isEqualTo(true);
+        assertThat(testRunInDb.isTestRun()).isTrue();
         assertThat(testRunInDb.getWorkingTime()).isEqualTo(6000);
         assertThat(testRunInDb.getUser()).isEqualTo(instructor);
         return testRunInDb;
@@ -1587,7 +1575,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(quizSubmissionRepository.count()).isEqualTo(1);
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExerciseId);
-        assertThat(results.size()).isEqualTo(1);
+        assertThat(results).hasSize(1);
         var result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);
 

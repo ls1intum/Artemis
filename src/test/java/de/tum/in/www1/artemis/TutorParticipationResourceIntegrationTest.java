@@ -47,7 +47,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testRemoveTutorParticipationForGuidedTour() throws Exception {
-        assertThat(tutorParticipationRepository.findAll().size()).isEqualTo(5);
+        assertThat(tutorParticipationRepository.findAll()).hasSize(5);
 
         User tutor = database.getUserByLogin("tutor1");
         TutorParticipation tutorParticipation = tutorParticipationRepository.findAll().get(0);
@@ -65,7 +65,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
             exerciseRepository.save(exercise);
         }
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
-        assertThat(tutorParticipationRepository.findAll().size()).as("Removed tutor participation").isEqualTo(4);
+        assertThat(tutorParticipationRepository.findAll()).as("Removed tutor participation").hasSize(4);
     }
 
     @Test
@@ -74,7 +74,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
-        assertThat(tutorParticipationRepository.findAll().size()).as("Does not remove tutor participation with wrong assessedExercise").isEqualTo(5);
+        assertThat(tutorParticipationRepository.findAll()).as("Does not remove tutor participation with wrong assessedExercise").hasSize(5);
     }
 
     @Test
@@ -85,6 +85,6 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
-        assertThat(tutorParticipationRepository.findAll().size()).as("Does not remove tutor participation with wrong assessedExercise").isEqualTo(5);
+        assertThat(tutorParticipationRepository.findAll()).as("Does not remove tutor participation with wrong assessedExercise").hasSize(5);
     }
 }
