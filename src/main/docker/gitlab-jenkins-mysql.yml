@@ -27,7 +27,6 @@ services:
             - ./jenkins/jenkins-casc-config.yml:/usr/share/jenkins/ref/jenkins-casc-config.yml:ro
             - /var/run/docker.sock:/var/run/docker.sock
             - /usr/bin/docker:/usr/bin/docker:ro
-            - /usr/bin/com.docker.cli:/usr/bin/com.docker.cli
         ports:
             - "8082:8080"
         hostname: jenkins

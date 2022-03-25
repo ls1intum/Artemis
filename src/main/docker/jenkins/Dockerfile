@@ -4,8 +4,6 @@ LABEL description="Jenkins with plugins pre-installed for Artemis"
 
 USER root
 
-RUN apt-get update
-
 # Install third-party plugins required by Artemis
 COPY plugins.yml /usr/share/jenkins/ref/plugins.yml
 RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.yml
