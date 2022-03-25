@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.stream.Collectors;
 
 import org.springframework.util.ResourceUtils;
 
@@ -16,9 +17,10 @@ public class FileUtils {
      */
     public static String loadFileFromResources(String path) throws IOException {
         java.io.File file = ResourceUtils.getFile("classpath:" + path);
-        StringBuilder builder = new StringBuilder();
-        Files.lines(file.toPath()).forEach(builder::append);
-        assertThat(builder.toString()).as("file has been correctly read from file").isNotBlank();
-        return builder.toString();
+        try (var lines = Files.lines(file.toPath())) {
+            String result = lines.collect(Collectors.joining());
+            assertThat(result).as("file has been correctly read from file").isNotBlank();
+            return result;
+        }
     }
 }

@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.http.client.HttpResponseException;
 import org.mockito.InjectMocks;
@@ -298,12 +299,10 @@ public class JenkinsRequestMockProvider {
         }
         else {
             File file = ResourceUtils.getFile("classpath:test-data/jenkins-response/failed-build-log.txt");
-            StringBuilder builder = new StringBuilder();
-            Files.lines(file.toPath()).forEach(line -> {
-                builder.append(line);
-                builder.append("\n");
-            });
-            doReturn(builder.toString()).when(buildWithDetails).getConsoleOutputText();
+            try (var lines = Files.lines(file.toPath())) {
+                String result = lines.collect(Collectors.joining("\n"));
+                doReturn(result).when(buildWithDetails).getConsoleOutputText();
+            }
         }
         return buildWithDetails;
 

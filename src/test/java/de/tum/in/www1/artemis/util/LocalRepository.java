@@ -9,6 +9,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.URIish;
 
@@ -22,13 +23,23 @@ public class LocalRepository {
 
     public Git originGit;
 
+    private final String defaultBranch;
+
+    public LocalRepository(String defaultBranch) {
+        this.defaultBranch = defaultBranch;
+    }
+
+    public static Git initialize(File filePath, String defaultBranch) throws GitAPIException {
+        return Git.init().setDirectory(filePath).setInitialBranch(defaultBranch).call();
+    }
+
     public void configureRepos(String localRepoFileName, String originRepoFileName) throws Exception {
 
         this.localRepoFile = Files.createTempDirectory(localRepoFileName).toFile();
-        this.localGit = Git.init().setDirectory(localRepoFile).call();
+        this.localGit = initialize(localRepoFile, defaultBranch);
 
         this.originRepoFile = Files.createTempDirectory(originRepoFileName).toFile();
-        this.originGit = Git.init().setDirectory(originRepoFile).call();
+        this.originGit = initialize(originRepoFile, defaultBranch);
 
         this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
     }

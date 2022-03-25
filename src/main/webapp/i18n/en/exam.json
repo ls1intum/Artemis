@@ -53,6 +53,7 @@
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated",
+            "deleted": "Deleted exam \"{{ param }}\"",
             "exercise": "Exercise {{nr}}",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",

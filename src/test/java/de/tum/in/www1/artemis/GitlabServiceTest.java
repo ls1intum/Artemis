@@ -80,7 +80,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @ValueSource(strings = { "master", "main", "someOtherName" })
     public void testGetDefaultBranch(String defaultBranch) throws IOException, GitLabApiException {
         VcsRepositoryUrl repoURL = new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch, repoURL);
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoURL);
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);
     }
