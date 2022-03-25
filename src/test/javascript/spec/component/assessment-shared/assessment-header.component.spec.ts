@@ -369,6 +369,8 @@ describe('AssessmentHeaderComponent', () => {
         component.result = new Result();
         component.result.completionDate = dayjs();
         component.canOverride = true;
+        component.assessmentsAreValid = true;
+        component.submitBusy = false;
         fixture.detectChanges();
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
