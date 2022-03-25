@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.programmingexercise;
+package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED;

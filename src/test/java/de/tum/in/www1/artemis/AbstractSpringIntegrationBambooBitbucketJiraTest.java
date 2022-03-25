@@ -12,7 +12,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -119,13 +118,13 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockAddWebHooks(exercise);
 
         // Mock Default Branch
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
     }
 
     @Override
     public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
             throws IOException, URISyntaxException {
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
         // Step 2a)
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
@@ -159,10 +158,10 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bambooRequestMockProvider.mockGetApplicationLinks(applicationLinksToBeReturned);
 
         if (ASSIGNMENT_REPO_NAME.equals(repoNameInCI)) {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, applicationLink);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, applicationLink, defaultBranch);
         }
         else {
-            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, bitbucketRepository, applicationLink);
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, bitbucketRepository, applicationLink, defaultBranch);
         }
 
         if (!triggeredBy.isEmpty()) {
@@ -191,7 +190,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exercise, exerciseRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, testRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
         for (var auxiliaryRepository : exercise.getAuxiliaryRepositories()) {
             final var auxiliaryRepoName = exercise.generateRepositoryName(auxiliaryRepository.getName());
             bitbucketRequestMockProvider.mockCreateRepository(exercise, auxiliaryRepoName);
@@ -256,7 +255,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, exerciseRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, solutionRepoName);
         bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, testRepoName);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exerciseToBeImported.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exerciseToBeImported.getProjectKey());
         for (AuxiliaryRepository repository : sourceExercise.getAuxiliaryRepositories()) {
             final var auxRepoName = exerciseToBeImported.generateRepositoryName(repository.getName());
             bitbucketRequestMockProvider.mockCreateRepository(exerciseToBeImported, auxRepoName);
@@ -348,8 +347,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         final var projectKey = buildPlanId.split("-")[0];
         final var planKey = participation.getBuildPlanId();
         final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        bambooRequestMockProvider.mockUpdatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */,
-                Optional.empty());
+        bambooRequestMockProvider.mockUpdatePlanRepository(planKey, ASSIGNMENT_REPO_NAME, repoProjectName, defaultBranch);
 
         // Isn't mockEnablePlan() written incorrectly since projectKey isn't even used by the bamboo service?
         var splitted = buildPlanId.split("-");
@@ -542,7 +540,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException {
-        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
     }
 
     @Override
