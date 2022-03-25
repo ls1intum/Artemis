@@ -17,7 +17,7 @@
             [icon]="faPencilAlt"
             (click)="editAnswerPostEditModal.open()"
         ></fa-icon>
-        <jhi-answer-post-create-edit-modal #editAnswerPostEditModal [posting]="posting"></jhi-answer-post-create-edit-modal>
+        <jhi-answer-post-create-edit-modal #editAnswerPostEditModal [posting]="posting" (isModalOpen)="isModalOpen.emit()"></jhi-answer-post-create-edit-modal>
         <jhi-confirm-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             iconSize="xs"

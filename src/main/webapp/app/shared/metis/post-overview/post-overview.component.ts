@@ -45,6 +45,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
     createdPost: Post;
     posts: Post[];
     isLoading = true;
+    inlineInputEnabled = true;
     totalItems = 0;
     pagingEnabled = true;
     itemsPerPage = ITEMS_PER_PAGE;
@@ -273,5 +274,9 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
         };
+    }
+
+    onModalStateChange(): void {
+        this.inlineInputEnabled = !this.inlineInputEnabled;
     }
 }

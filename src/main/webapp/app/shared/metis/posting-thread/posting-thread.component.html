@@ -1,10 +1,10 @@
 <div class="row mb-2">
     <div class="col-12">
-        <jhi-post [posting]="post" [courseMessagesPageFlag]="courseMessagesPageFlag"></jhi-post>
+        <jhi-post [posting]="post" [courseMessagesPageFlag]="courseMessagesPageFlag" (isModalOpen)="isModalOpen.emit()"></jhi-post>
         <div class="row">
             <div class="col-12">
                 <ng-container *ngIf="showAnswers">
-                    <jhi-answer-post *ngFor="let answerPost of sortedAnswerPosts" [posting]="answerPost"></jhi-answer-post>
+                    <jhi-answer-post *ngFor="let answerPost of sortedAnswerPosts" [posting]="answerPost" (isModalOpen)="isModalOpen.emit()"></jhi-answer-post>
                 </ng-container>
                 <!-- start discussion -->
                 <button *ngIf="sortedAnswerPosts.length === 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="createAnswerPostModal.open()">
@@ -35,6 +35,7 @@
                 <jhi-answer-post-create-edit-modal
                     #createAnswerPostModal
                     [posting]="createdAnswerPost"
+                    (isModalOpen)="isModalOpen.emit()"
                     (onCreate)="showAnswers = true; createdAnswerPost = createEmptyAnswerPost()"
                 ></jhi-answer-post-create-edit-modal>
             </div>

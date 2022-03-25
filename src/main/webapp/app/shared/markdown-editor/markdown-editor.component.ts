@@ -250,6 +250,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
+        // unregister previously set event listeners for class elements
+        interact('.markdown-editor').unset();
+
         this.interactResizable = interact('.markdown-editor')
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top

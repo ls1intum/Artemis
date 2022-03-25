@@ -12,6 +12,7 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
     @Input() posting: T;
     @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
     @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
+    @Output() isModalOpen = new EventEmitter<void>();
     modalRef?: NgbModalRef;
     modalTitle: string;
     isLoading = false;
@@ -56,6 +57,7 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
                 this.createPosting();
             }
         }
+        this.isModalOpen.emit();
     }
 
     /**
@@ -69,9 +71,11 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
                 // when cancelling the create/update action, we do not want to store the current values
                 // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
                 this.resetFormGroup();
+                this.isModalOpen.emit();
                 return true;
             },
         });
+        this.isModalOpen.emit();
     }
 
     abstract updateModalTitle(): void;

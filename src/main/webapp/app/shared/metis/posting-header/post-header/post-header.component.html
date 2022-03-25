@@ -17,7 +17,7 @@
             [icon]="faPencilAlt"
             (click)="createEditModal.open()"
         ></fa-icon>
-        <jhi-post-create-edit-modal #createEditModal [posting]="posting"></jhi-post-create-edit-modal>
+        <jhi-post-create-edit-modal #createEditModal [posting]="posting" (isModalOpen)="isModalOpen.emit()"></jhi-post-create-edit-modal>
         <jhi-confirm-icon
             *ngIf="!previewMode && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT) || isAuthorOfPosting)"
             iconSize="xs"

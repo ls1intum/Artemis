@@ -14,12 +14,18 @@
                 <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
             </div>
             <!-- new post button -->
-            <div class="col-2" *ngIf="createdPost">
+            <div class="col-2" *ngIf="createdPost && !courseMessagesPageFlag">
                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
                     <fa-icon [icon]="faPlus"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                 </button>
-                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" [courseMessagesPageFlag]="courseMessagesPageFlag" (onCreate)="createEmptyPost()">
+                <jhi-post-create-edit-modal
+                    #createEditModal
+                    [posting]="createdPost"
+                    [courseMessagesPageFlag]="courseMessagesPageFlag"
+                    (onCreate)="createEmptyPost()"
+                    (isModalOpen)="onModalStateChange()"
+                >
                 </jhi-post-create-edit-modal>
             </div>
         </div>
@@ -118,8 +124,9 @@
             [post]="post"
             [showAnswers]="posts.length === 1"
             [courseMessagesPageFlag]="courseMessagesPageFlag"
+            (isModalOpen)="onModalStateChange()"
         ></jhi-posting-thread>
-        <jhi-message-inline-input *ngIf="courseMessagesPageFlag" [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-message-inline-input>
+        <jhi-message-inline-input *ngIf="courseMessagesPageFlag && inlineInputEnabled" [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-message-inline-input>
         <!-- paginator -->
         <div *ngIf="totalItems !== 0">
             <br />
