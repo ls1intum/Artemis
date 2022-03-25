@@ -127,7 +127,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         Commit commit;
         try {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
-            // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
+            // if the branch is different than main, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
             commit = versionControlService.get().getLastCommitDetails(requestBody);
             log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.getCommitHash(), commit.getAuthorName(), commit.getAuthorEmail(),
                     commit.getBranch());

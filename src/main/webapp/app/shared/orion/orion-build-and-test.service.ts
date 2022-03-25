@@ -6,7 +6,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/build-log.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { Feedback } from 'app/entities/feedback.model';
@@ -72,7 +72,7 @@ export class OrionBuildAndTestService {
                     this.latestResult = result;
                     // If there was a compile error or we don't have an submission, we have to fetch the error output, otherwise we can forward the test results
                     if (!result.submission || (result.submission as ProgrammingSubmission).buildFailed) {
-                        this.forwardBuildLogs(participationId, exercise.programmingLanguage);
+                        this.forwardBuildLogs(participationId, exercise.programmingLanguage, exercise.projectType);
                     } else {
                         // TODO: Deal with static code analysis feedback in Orion
                         const testCaseFeedback = result.feedbacks!.filter((feedback) => !Feedback.isStaticCodeAnalysisFeedback(feedback));
@@ -88,13 +88,13 @@ export class OrionBuildAndTestService {
         return this.buildFinished;
     }
 
-    private forwardBuildLogs(participationId: number, programmingLanguage: ProgrammingLanguage | undefined) {
+    private forwardBuildLogs(participationId: number, programmingLanguage?: ProgrammingLanguage, projectType?: ProjectType) {
         this.buildLogSubscription = this.buildLogService
             .getBuildLogs(participationId)
             .pipe(
                 map((logs) => new BuildLogEntryArray(...logs)),
                 tap((logs: BuildLogEntryArray) => {
-                    const logErrors = logs.extractErrors(programmingLanguage);
+                    const logErrors = logs.extractErrors(programmingLanguage, projectType);
                     this.orionConnectorService.onBuildFailed(logErrors);
                     this.buildFinished.next();
                 }),

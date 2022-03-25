@@ -19,7 +19,7 @@ import { Result } from 'app/entities/result.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
@@ -130,7 +130,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true);
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(expectedBuildLogErrors);
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).toBe(null);
@@ -195,7 +195,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(expectedBuildLogErrors);
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).toBe(null);
@@ -222,7 +222,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
-        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toIncludeSameMembers(expectedBuildLogErrors);
+        expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
         expect(buildLogIsBuildingHtml).toBe(null);

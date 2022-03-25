@@ -52,6 +52,7 @@
             "nrOfStudents": "Anzahl registrierter Studierender",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
+            "deleted": "Klausur \"{{ param }}\" gelöscht",
             "exercise": "Aufgabe {{nr}}",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
             "endConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Klausur eigenständig und nur mithilfe der angegebenen Hilfsmittel bearbeitet habe.",

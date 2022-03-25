@@ -47,6 +47,9 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 @Profile("gitlab")
 public class GitlabRequestMockProvider {
 
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
@@ -212,8 +215,7 @@ public class GitlabRequestMockProvider {
                 mockAddMemberToRepository(repositoryUrl, user.getLogin());
             }
         }
-        var defaultBranch = "main";
-        mockGetDefaultBranch(defaultBranch, repositoryUrl);
+        mockGetDefaultBranch(defaultBranch);
         mockProtectBranch(defaultBranch, repositoryUrl);
     }
 
@@ -252,7 +254,7 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockGetDefaultBranch(String defaultBranch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
+    public void mockGetDefaultBranch(String defaultBranch) throws GitLabApiException {
         var mockProject = new Project();
         mockProject.setDefaultBranch(defaultBranch);
         doReturn(mockProject).when(projectApi).getProject(notNull());
