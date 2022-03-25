@@ -145,10 +145,9 @@
         <div class="d-flex flex-wrap flex-lg-nowrap">
             <ng-container *ngIf="!result?.completionDate">
                 <button
-                    id="save"
                     class="btn m-1 btn-primary"
                     (click)="save.emit()"
-                    [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
+                    [disabled]="saveDisabled"
                     [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
                 >
                     <fa-icon *ngIf="saveBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
@@ -159,7 +158,7 @@
                     id="submit"
                     class="btn m-1 btn-success"
                     (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
-                    [disabled]="!assessmentsAreValid || !isAssessor || saveBusy || submitBusy || cancelBusy"
+                    [disabled]="submitDisabled"
                     [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                 >
                     <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
@@ -176,11 +175,10 @@
                 </button>
             </ng-container>
             <button
-                id="override"
                 class="btn m-1 btn-danger"
-                *ngIf="result?.completionDate && canOverride"
+                *ngIf="overrideVisible"
                 (click)="submit.emit()"
-                [disabled]="!assessmentsAreValid || submitBusy"
+                [disabled]="overrideDisabled"
                 [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
             >
                 <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
@@ -199,8 +197,8 @@
             <button
                 class="btn m-1 btn-success"
                 id="assessNextButton"
-                *ngIf="result?.completionDate && (isAssessor || exercise?.isAtLeastInstructor) && !hasComplaint && !isTeamMode && !isTestRun"
-                [disabled]="nextSubmissionBusy || submitBusy"
+                *ngIf="assessNextVisible"
+                [disabled]="assessNextDisabled"
                 (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
                 [ngbTooltip]="nextSubmissionShortcut"
             >

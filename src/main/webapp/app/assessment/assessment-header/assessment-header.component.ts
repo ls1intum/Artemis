@@ -76,33 +76,68 @@ export class AssessmentHeaderComponent {
         return this._highlightDifferences;
     }
 
+    get overrideVisible() {
+        return this.result?.completionDate && this.canOverride;
+    }
+
+    get assessNextVisible() {
+        return this.result?.completionDate && (this.isAssessor || this.exercise?.isAtLeastInstructor) && !this.hasComplaint && !this.isTeamMode && !this.isTestRun;
+    }
+
+    get saveDisabled() {
+        // if there is no 'save' button
+        if (this.result?.completionDate) {
+            return true;
+        } else {
+            return !this.assessmentsAreValid || !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+        }
+    }
+
+    get submitDisabled() {
+        return !this.assessmentsAreValid || !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+    }
+
+    get overrideDisabled() {
+        if (this.overrideVisible) {
+            return !this.assessmentsAreValid || this.submitBusy;
+        } else {
+            return true;
+        }
+    }
+
+    get assessNextDisabled() {
+        if (this.assessNextVisible) {
+            return this.nextSubmissionBusy || this.submitBusy;
+        } else {
+            return true;
+        }
+    }
+
     @HostListener('document:keydown.control.s', ['$event'])
     saveOnControlAndS(event: KeyboardEvent) {
         event.preventDefault();
-        const saveButton = document.getElementById('save') as HTMLButtonElement;
-        if (saveButton && !saveButton.disabled) {
-            saveButton.click();
+        if (!this.saveDisabled) {
+            this.save.emit();
         }
     }
 
     @HostListener('document:keydown.control.enter', ['$event'])
     submitOnControlAndEnter(event: KeyboardEvent) {
         event.preventDefault();
-        const submitButton = document.getElementById('submit') as HTMLButtonElement;
-        const overrideButton = document.getElementById('override') as HTMLButtonElement;
-        if (submitButton && !submitButton.disabled) {
-            submitButton.click();
-        } else if (overrideButton && !overrideButton.disabled) {
-            overrideButton.click();
+        if (!this.overrideDisabled) {
+            this.submit.emit();
+        } else if (!this.submitDisabled) {
+            this.submit.emit();
+            this.sendSubmitAssessmentEventToAnalytics();
         }
     }
 
     @HostListener('document:keydown.control.shift.arrowRight', ['$event'])
     assessNextOnControlShiftAndArrowRight(event: KeyboardEvent) {
         event.preventDefault();
-        const assessNextButton = document.getElementById('assessNextButton') as HTMLButtonElement;
-        if (assessNextButton && !assessNextButton.disabled) {
-            assessNextButton.click();
+        if (!this.assessNextDisabled) {
+            this.nextSubmission.emit();
+            this.sendAssessNextEventToAnalytics();
         }
     }
 

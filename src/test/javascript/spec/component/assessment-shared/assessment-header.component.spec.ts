@@ -331,16 +331,16 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should save assessment on control and s', () => {
         component.isLoading = false;
+        component.assessmentsAreValid = true;
+        component.isAssessor = true;
+        component.saveBusy = false;
+        component.submitBusy = false;
+        component.cancelBusy = false;
         fixture.detectChanges();
+
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
-        const saveButton = fixture.debugElement.query(By.css('#save')).nativeElement;
         const spyOnControlAndS = jest.spyOn(component, 'saveOnControlAndS');
-        const saveSpy = jest.spyOn(saveButton, 'click');
-
-        expect(saveButton).toBeTruthy();
-
-        saveButton.disabled = false;
-        fixture.detectChanges();
+        const saveSpy = jest.spyOn(component.save, 'emit');
         document.dispatchEvent(eventMock);
 
         expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
@@ -349,16 +349,16 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should submit assessment on control and enter', () => {
         component.isLoading = false;
+        component.assessmentsAreValid = true;
+        component.isAssessor = true;
+        component.saveBusy = false;
+        component.submitBusy = false;
+        component.cancelBusy = false;
         fixture.detectChanges();
+
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
-        const submitButton = fixture.debugElement.query(By.css('#submit')).nativeElement;
         const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
-        const submitSpy = jest.spyOn(submitButton, 'click');
-
-        expect(submitButton).toBeTruthy();
-
-        submitButton.disabled = false;
-        fixture.detectChanges();
+        const submitSpy = jest.spyOn(component.submit, 'emit');
         document.dispatchEvent(eventMock);
 
         expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
@@ -372,14 +372,8 @@ describe('AssessmentHeaderComponent', () => {
         fixture.detectChanges();
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
-        const overrideButton = fixture.debugElement.query(By.css('#override')).nativeElement;
         const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
-        const submitSpy = jest.spyOn(overrideButton, 'click');
-
-        expect(overrideButton).toBeTruthy();
-
-        overrideButton.disabled = false;
-        fixture.detectChanges();
+        const submitSpy = jest.spyOn(component.submit, 'emit');
         document.dispatchEvent(eventMock);
 
         expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
@@ -395,12 +389,8 @@ describe('AssessmentHeaderComponent', () => {
         fixture.detectChanges();
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, shiftKey: true, key: 'ArrowRight' });
-        const nextSubmissionButton = fixture.debugElement.query(By.css('#assessNextButton')).nativeElement;
         const spyOnControlShiftAndArrowRight = jest.spyOn(component, 'assessNextOnControlShiftAndArrowRight');
-        const nextSpy = jest.spyOn(nextSubmissionButton, 'click');
-
-        expect(nextSubmissionButton).toBeTruthy();
-
+        const nextSpy = jest.spyOn(component.nextSubmission, 'emit');
         document.dispatchEvent(eventMock);
 
         expect(spyOnControlShiftAndArrowRight).toHaveBeenCalledTimes(1);
