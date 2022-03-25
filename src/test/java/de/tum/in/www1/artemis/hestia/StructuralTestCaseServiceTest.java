@@ -30,9 +30,9 @@ import de.tum.in.www1.artemis.util.ModelFactory;
  */
 public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final LocalRepository solutionRepo = new LocalRepository();
+    private final LocalRepository solutionRepo = new LocalRepository("main");
 
-    private final LocalRepository testRepo = new LocalRepository();
+    private final LocalRepository testRepo = new LocalRepository("main");
 
     @Autowired
     private HestiaUtilTestService hestiaUtilTestService;
