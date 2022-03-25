@@ -344,9 +344,8 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String hash) {
         try {
-            List<Event> events = gitlab.getEventsApi().getProjectEvents(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl()),
-                    Constants.ActionType.PUSHED, null, new Date(),
-                    participation.getInitializationDate() == null ? null : Date.from(participation.getInitializationDate().toInstant()), null);
+            String repositoryUrl = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+            List<Event> events = gitlab.getEventsApi().getProjectEvents(repositoryUrl, Constants.ActionType.PUSHED, null, null, null, Constants.SortOrder.DESC);
             for (Event event : events) {
                 if (event.getPushData().getCommitTo().equals(hash)) {
                     return event.getCreatedAt().toInstant().atZone(ZoneOffset.UTC);

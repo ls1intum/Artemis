@@ -832,6 +832,7 @@ public class BitbucketService extends AbstractVersionControlService {
             throw new BambooException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
         }
         try {
+            // TODO: use a DTO (e.g. something similar to CommitDTO)
             JsonObject responseJson = (JsonObject) JsonParser.parseString(response.getBody());
             Assert.notNull(responseJson, "No response");
             JsonArray values = responseJson.getAsJsonArray("values");
