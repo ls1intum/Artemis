@@ -37,12 +37,11 @@ public class LdapUserService {
     }
 
     public Optional<LdapUserDto> findByUsername(final String username) {
-        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).attributes("cn").where("cn").is(username));
+        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where("cn").is(username));
     }
 
     public Optional<LdapUserDto> findByRegistrationNumber(final String registrationNumber) {
-        return ldapUserRepository
-                .findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).attributes(TUM_LDAP_MATRIKEL_NUMBER).where(TUM_LDAP_MATRIKEL_NUMBER).is(registrationNumber));
+        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where(TUM_LDAP_MATRIKEL_NUMBER).is(registrationNumber));
     }
 
     /**
