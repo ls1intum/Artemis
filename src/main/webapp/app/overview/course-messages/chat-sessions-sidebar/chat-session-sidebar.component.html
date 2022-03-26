@@ -1,4 +1,4 @@
-<aside class="plagiarism-sidebar">
+<aside class="chat-session-sidebar">
     <jhi-data-table
         [showPageSizeDropdown]="false"
         entityType="user"
@@ -11,25 +11,26 @@
         [onSearchWrapper]="searchUsersWithinCourse"
         [searchResultFormatter]="searchResultFormatter"
         [onAutocompleteSelectWrapper]="onAutocompleteSelect"
-    >
-    </jhi-data-table>
+        [searchTextFromEntity]="clearUserSearchBar"
+        searchPlaceholderTranslation="artemisApp.messages.chatSession.searchForUsers"
+    ></jhi-data-table>
 
-    <ul *ngIf="chatSessions && chatSessions.length">
+    <ul class="chat-session-list" *ngIf="chatSessions && chatSessions.length">
         <li
             *ngFor="let chatSession of chatSessions"
-            class="plagiarism-list-item"
+            class="chat-session-list-item"
             [class.selected]="activeChatSession.id === chatSession.id"
             (click)="selectChatSession.emit(chatSession)"
         >
-            <div class="plagiarism-list-item-info">
-                <span class="plagiarism-list-item-students">
+            <div class="chat-session-list-item-info">
+                <span class="chat-session-list-item-students">
                     <span>{{ getNameOfChatSessionParticipant(chatSession) }}</span>
                 </span>
             </div>
         </li>
     </ul>
 
-    <div class="plagiarism-empty" *ngIf="!chatSessions || chatSessions.length == 0">
+    <div class="chat-session-empty" *ngIf="!chatSessions || chatSessions.length == 0">
         {{ 'artemisApp.messages.chatSession.notFound' | artemisTranslate }}
     </div>
 

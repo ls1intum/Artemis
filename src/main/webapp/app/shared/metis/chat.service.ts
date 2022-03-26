@@ -12,6 +12,7 @@ import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/m
 @Injectable({ providedIn: 'root' })
 export class ChatService implements OnDestroy {
     private chatSessions$: ReplaySubject<ChatSession[]> = new ReplaySubject<ChatSession[]>(1);
+    private subscribedChannel?: string;
     userId: number;
 
     constructor(protected chatSessionService: ChatSessionService, private jhiWebsocketService: JhiWebsocketService, protected accountService: AccountService) {
@@ -21,7 +22,10 @@ export class ChatService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        // this.jhiWebsocketService.unsubscribe(this.channelName());
+        // prevents subscription to a user's chatSessions from leaking
+        if (this.subscribedChannel) {
+            this.jhiWebsocketService.unsubscribe(this.subscribedChannel);
+        }
     }
 
     /**
@@ -49,6 +53,7 @@ export class ChatService implements OnDestroy {
         const channel = this.channelName(courseId, userId);
 
         this.jhiWebsocketService.unsubscribe(channel);
+        this.subscribedChannel = channel;
         this.jhiWebsocketService.subscribe(channel);
 
         this.jhiWebsocketService.receive(channel).subscribe((chatSessionDTO: ChatSessionDTO) => {

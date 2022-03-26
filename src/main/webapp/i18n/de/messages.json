@@ -3,7 +3,8 @@
         "messages": {
             "label": "Private Nachricht",
             "chatSession": {
-                "notFound": "Kein Chat gefunden"
+                "notFound": "Kein Chat gefunden",
+                "searchForUsers": "Search users within course"
             }
         }
     }

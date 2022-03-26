@@ -57,7 +57,7 @@
                 </div>
             </div>
             <!-- title -->
-            <div class="position-relative mb-3">
+            <div class="position-relative mb-3" *ngIf="!courseMessagesPageFlag">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
                     <jhi-help-icon placement="top auto" text="artemisApp.metis.post.titleTooltip"></jhi-help-icon>
@@ -67,7 +67,7 @@
                 </div>
             </div>
             <!-- tags -->
-            <div class="position-relative mb-3">
+            <div class="position-relative mb-3" *ngIf="!courseMessagesPageFlag">
                 <div>
                     <label jhiTranslate="artemisApp.metis.post.tags">Tags</label>
                     <jhi-help-icon placement="top auto" text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>

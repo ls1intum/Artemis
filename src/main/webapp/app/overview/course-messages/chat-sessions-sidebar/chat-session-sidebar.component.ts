@@ -29,7 +29,6 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
     @Input() offset = 0;
     @Input() showRunDetails: boolean;
 
-    @Output() showRunDetailsChange = new EventEmitter<boolean>();
     @Output() selectChatSession = new EventEmitter<ChatSession>();
 
     faExclamationTriangle = faExclamationTriangle;
@@ -150,7 +149,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
      * @param user The selected user from the autocomplete suggestions
      * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
      */
-    onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
+    onAutocompleteSelect = (user: User): void => {
         const foundChatSession = this.findChatSessionWithUser(user);
         // if a chatSession does not already exist with selected user
         if (foundChatSession === undefined) {
@@ -165,19 +164,14 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
 
                     // select the new chatSession
                     this.selectChatSession.emit(chatSession);
-
-                    // hand back over to the data table for updating
-                    callback(user);
                 },
                 error: () => {
                     this.isTransitioning = false;
                 },
             });
         } else {
-            // chatSession with the searched user already exists, so we select it
+            // chatSession with the found user already exists, so we select it
             this.selectChatSession.emit(foundChatSession);
-            // hand back over to the data table
-            callback(user);
         }
     };
 
@@ -193,10 +187,6 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
             this.numberOfPages = this.computeNumberOfPages(comparisons.length);
             // this.pagedComparisons = this.getPagedComparisons();
         }
-    }
-
-    displayRunDetails() {
-        this.showRunDetailsChange.emit(true);
     }
 
     computeNumberOfPages(totalComparisons: number) {
@@ -245,6 +235,10 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
     searchResultFormatter = (user: User) => {
         const { name } = user;
         return `${name}`;
+    };
+
+    clearUserSearchBar = () => {
+        return '';
     };
 
     findChatSessionWithUser(user: User) {

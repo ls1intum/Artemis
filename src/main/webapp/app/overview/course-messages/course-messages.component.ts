@@ -1,7 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Component } from '@angular/core';
 import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 
 @Component({
@@ -9,35 +6,15 @@ import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model'
     styleUrls: ['./course-messages.component.scss'],
     templateUrl: './course-messages.component.html',
 })
-export class CourseMessagesComponent implements OnInit {
+export class CourseMessagesComponent {
     /**
-     * True, if an automated plagiarism detection is running; false otherwise.
-     */
-    detectionInProgress = false;
-
-    detectionInProgressMessage = '';
-
-    /**
-     * Index of the currently selected comparison.
+     * Index of the currently selected chatSession.
      */
     selectedChatSession: ChatSession;
 
-    readonly FeatureToggle = FeatureToggle;
-
-    // Icons
-    faQuestionCircle = faQuestionCircle;
-    faExclamationTriangle = faExclamationTriangle;
-    faChevronRight = faChevronRight;
-
-    constructor(private activatedRoute: ActivatedRoute) {}
-
-    ngOnInit() {}
+    constructor() {}
 
     selectChatSession(chatSession: ChatSession) {
         this.selectedChatSession = chatSession;
     }
-    /**
-     * Resets the filter applied by chart interaction
-     */
-    resetFilter(): void {}
 }
