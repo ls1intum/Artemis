@@ -92,7 +92,7 @@ class AbstractTest(ABC):
                 except TimeoutError:
                     self._timeout()
                 except Exception as e:
-                    self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this on Zulip!")
+                    self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this to an instructor!")
                     print_exc()
                     self._onFailed()
         else:
@@ -102,7 +102,7 @@ class AbstractTest(ABC):
             except TestFailedError:
                 printTester(f"'{self.name}' failed.")
             except Exception as e:
-                self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this on Zulip!")
+                self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this to an instructor!")
                 print_exc()
                 self._onFailed()
 
