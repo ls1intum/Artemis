@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
@@ -17,6 +17,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -184,7 +185,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
-        private router: Router,
+        private chartRoutingService: ChartRoutingService,
     ) {}
 
     ngOnInit() {
@@ -705,11 +706,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Handles the event fired if the user clicks on an arbitrary bar in the vertical bar charts.
-     * Delegates the user to the corresponding exercise detail page
+     * Delegates the user to the corresponding exercise detail page in a new tab
      * @param event the event that is fired by ngx-charts
      */
     onSelect(event: any) {
-        this.router.navigate(['courses', this.course!.id!, 'exercises', event.exerciseId]);
+        this.chartRoutingService.routeInNewTab(['courses', this.course!.id!, 'exercises', event.exerciseId]);
     }
 
     /**
