@@ -189,7 +189,7 @@ public class GitlabRequestMockProvider {
         Event event = new Event().withCreatedAt(Date.from(pushDate.toInstant()));
         event.setPushData(pushData);
         var path = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
-        doReturn(List.of(event)).when(eventsApi).getProjectEvents(eq(path), eq(Constants.ActionType.PUSHED), eq(null), any(Date.class), any(Date.class), eq(null));
+        doReturn(List.of(event)).when(eventsApi).getProjectEvents(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null), eq(Constants.SortOrder.DESC));
     }
 
     public void mockAddAuthenticatedWebHook() throws GitLabApiException {
