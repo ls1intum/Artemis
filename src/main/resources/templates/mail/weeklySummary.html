@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Weekly Summary</title>
+    <th:block th:replace="mail/notification/fragments :: headMetaDataAndIconLink"/>
+    <th:block th:replace="mail/notification/fragments :: css"/>
+</head>
+<body>
+<th:block th:replace="mail/notification/fragments :: header"/>
+<!-- Message Body Start -->
+<div id="message-body">
+    <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
+    <div class="notification-content">
+        <span th:text="#{email.weekly.summary.text}">This is your Artemis summary of the last seven days.</span>
+        <hr/>
+        <th:block th:if="${weeklySummaryNewExercises.isEmpty()}">
+            <p class="bold-text" th:text="#{email.weekly.summary.no.new.exercises.information}">There are no new exercises that are still open:</p>
+        </th:block>
+        <th:block th:unless="${weeklySummaryNewExercises.isEmpty()}">
+            <p class="bold-text" th:text="#{email.weekly.summary.new.exercises.information}">All newly released exercises that are still open:</p>
+            <ul>
+                <tr th:each="exercise: ${weeklySummaryNewExercises}">
+                    <li>
+                        <p class="bold-text" th:text="${exercise.getTitle()}"/>
+                        <ul>
+                            <!-- TODO Replace with toReadableString when other PR is merged -->
+                            <li th:text="${exercise.getExerciseType()}"/>
+                            <th:block th:if="${exercise.getDifficulty()}">
+                                <li>
+                                    <th:block th:switch="${exercise.getDifficulty().toString()}">
+                                        <th:block th:case="'EASY'">
+                                            <span th:utext="#{email.notification.title.exercise.information.difficulty(#{email.notification.aux.difficulty.easy})} "/>
+                                        </th:block>
+                                        <th:block th:case="'MEDIUM'">
+                                            <span th:utext="#{email.notification.title.exercise.information.difficulty(#{email.notification.aux.difficulty.medium})} "/>
+                                        </th:block>
+                                        <th:block th:case="'HARD'">
+                                            <span th:utext="#{email.notification.title.exercise.information.difficulty(#{email.notification.aux.difficulty.hard})} "/>
+                                        </th:block>
+                                    </th:block>
+                                </li>
+                            </th:block>
+                            <th:block th:if="${exercise.getReleaseDate()}">
+                                <li th:text="#{email.notification.aux.information.release.date(${timeService.convertToHumanReadableDate(exercise.getReleaseDate())})}">Release Date</li>
+                            </th:block>
+                            <th:block th:if="${exercise.getDueDate()}">
+                                <li th:text="#{email.notification.aux.information.due.date(${timeService.convertToHumanReadableDate(exercise.getDueDate())})}">Due Date</li>
+                            </th:block>
+                            <li th:text="#{email.notification.title.exercise.information.max(${exercise.getMaxPoints()})}">Max Points</li>
+                            <th:block th:if="${exercise.getBonusPoints()}">
+                                <li th:text="#{email.notification.title.exercise.information.bonus(${exercise.getBonusPoints()})}">Bonus Points</li>
+                            </th:block>
+                        </ul>
+                    </li>
+                </tr>
+            </ul>
+        </th:block>
+    </div>
+    <th:block th:replace="mail/notification/fragments :: farewell"/>
+</div>
+<!-- Message Body End -->
+<th:block th:replace="mail/notification/fragments :: footer"/>
+</body>
+</html>

@@ -53,6 +53,8 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = 2, max = 6)
     private String langKey;
 
+    private boolean isInternal;
+
     private ZonedDateTime lastNotificationRead;
 
     private Set<String> authorities = new HashSet<>();
@@ -71,12 +73,12 @@ public class UserDTO extends AuditingEntityDTO {
 
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
-                user.getImageUrl(), user.getLangKey(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
+                user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
                 user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getVcsAccessToken());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
-            String langKey, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead, Set<Authority> authorities,
+            String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
             Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, String accessToken) {
 
         this.id = id;
@@ -89,6 +91,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.activated = activated;
         this.imageUrl = imageUrl;
         this.langKey = langKey;
+        this.isInternal = isInternal;
         this.setCreatedBy(createdBy);
         this.setCreatedDate(createdDate);
         this.setLastModifiedBy(lastModifiedBy);
@@ -237,5 +240,13 @@ public class UserDTO extends AuditingEntityDTO {
                 + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
                 + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", lastNotificationRead=" + lastNotificationRead
                 + ", authorities=" + authorities + "}";
+    }
+
+    public boolean isInternal() {
+        return isInternal;
+    }
+
+    public void setInternal(boolean internal) {
+        isInternal = internal;
     }
 }

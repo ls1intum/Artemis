@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,8 @@ import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 /**
- * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal structure will cause these tests to fail.
+ * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal
+ * structure will cause these tests to fail.
  */
 public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -49,8 +51,14 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Autowired
     private PasswordService passwordService;
 
+    @BeforeEach
+    public void setup() {
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+    }
+
     @AfterEach
     public void resetDatabase() {
+        bitbucketRequestMockProvider.reset();
         database.resetDatabase();
     }
 
@@ -61,7 +69,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     private String getValidPassword() {
         // verify configuration is valid
         assertThat(Constants.PASSWORD_MIN_LENGTH).isLessThan(Constants.PASSWORD_MAX_LENGTH);
-        assertThat(Constants.PASSWORD_MIN_LENGTH).isGreaterThanOrEqualTo(0);
+        assertThat(Constants.PASSWORD_MIN_LENGTH).isNotNegative();
 
         // empty password will always get rejected
         return "a".repeat(Math.max(1, Constants.PASSWORD_MIN_LENGTH));
@@ -69,10 +77,16 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     public void registerAccount() throws Exception {
+        String login = "abd123cd";
+        String password = getValidPassword();
         // setup user
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = ModelFactory.generateActivatedUser(login);
         ManagedUserVM userVM = new ManagedUserVM(user);
-        userVM.setPassword(getValidPassword());
+        userVM.setPassword(password);
+
+        bitbucketRequestMockProvider.mockUserDoesNotExist(login);
+        bitbucketRequestMockProvider.mockCreateUser(login, password, login + "@test.de", login + "First " + login + "Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
 
         // make request
         request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
@@ -83,7 +97,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
-        assertThat(Constants.PASSWORD_MAX_LENGTH).isGreaterThan(0);
+        assertThat(Constants.PASSWORD_MAX_LENGTH).isPositive();
         userVM.setPassword("e".repeat(Constants.PASSWORD_MAX_LENGTH + 1));
 
         // make request
@@ -95,7 +109,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
-        assertThat(Constants.PASSWORD_MIN_LENGTH).isGreaterThanOrEqualTo(0);
+        assertThat(Constants.PASSWORD_MIN_LENGTH).isNotNegative();
         if (Constants.PASSWORD_MIN_LENGTH == 0) {
             // if all lengths are accepted it cannot be tested for too short passwords
             return;
@@ -217,8 +231,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser("authenticatedUser")
     public void isAuthenticated() throws Exception {
         String userLogin = request.get("/api/authenticate", HttpStatus.OK, String.class);
-        assertThat(userLogin).isNotNull();
-        assertThat(userLogin).isEqualTo("authenticatedUser");
+        assertThat(userLogin).isNotNull().isEqualTo("authenticatedUser");
     }
 
     @Test
@@ -247,11 +260,15 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser(username = "authenticateduser")
     public void saveAccount() throws Exception {
+        String updatedFirstName = "UpdatedFirstName";
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), updatedFirstName + " " + user.getLastName());
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), ModelFactory.USER_PASSWORD, true, true);
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user, user.getPassword()));
+
         // update FirstName
-        String updatedFirstName = "UpdatedFirstName";
         createdUser.setFirstName(updatedFirstName);
 
         // make request
@@ -269,6 +286,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         testWithRegistrationDisabled(() -> {
             // create user in repo
             User user = ModelFactory.generateActivatedUser("authenticateduser");
+            bitbucketRequestMockProvider.mockUserExists("authenticateduser");
             User createdUser = userCreationService.createUser(new ManagedUserVM(user));
             // update FirstName
             String updatedFirstName = "UpdatedFirstName";
@@ -284,6 +302,8 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void saveAccountEmailInUse() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("sameemail");
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         User userSameEmail = ModelFactory.generateActivatedUser("sameemail");
         User createdUserSameEmail = userCreationService.createUser(new ManagedUserVM(userSameEmail));
@@ -297,11 +317,14 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser(username = "authenticateduser")
     public void changePassword() throws Exception {
-        // create user in repo
-        User user = ModelFactory.generateActivatedUser("authenticateduser");
-        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         // Password Data
         String updatedPassword = "12345678password-reset-init.component.spec.ts";
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), updatedPassword, true, true);
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
         // make request
@@ -315,60 +338,30 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void changePasswordRegistrationDisabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            // create user in repo
-            User user = ModelFactory.generateActivatedUser("authenticateduser");
-            User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-            // Password Data
-            String updatedPassword = "12345678password-reset-init.component.spec.ts";
+    public void changePasswordExternalUser() throws Throwable {
+        String newPassword = getValidPassword();
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), newPassword, true, true);
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        createdUser.setInternal(false);
+        userRepository.save(createdUser);
 
-            PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
-            // make request
-            request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
-        });
-    }
+        // Password Data
+        String updatedPassword = "12345678password-reset-init.component.spec.ts";
 
-    @Test
-    @WithMockUser(username = "authenticateduser")
-    public void changePasswordSaml2Disabled() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.of(Boolean.FALSE), () -> {
-                // create user in repo
-                User user = ModelFactory.generateActivatedUser("authenticateduser");
-                User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-                // Password Data
-                String updatedPassword = "12345678password-reset-init.component.spec.ts";
-
-                PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
-                // make request
-                request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
-            });
-        });
-    }
-
-    @Test
-    @WithMockUser(username = "authenticateduser")
-    public void changePasswordSaml2ConfigEmpty() throws Throwable {
-        testWithRegistrationDisabled(() -> {
-            ConfigUtil.testWithChangedConfig(accountResource, "saml2EnablePassword", Optional.empty(), () -> {
-                // create user in repo
-                User user = ModelFactory.generateActivatedUser("authenticateduser");
-                User createdUser = userCreationService.createUser(new ManagedUserVM(user));
-                // Password Data
-                String updatedPassword = "12345678password-reset-init.component.spec.ts";
-
-                PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
-                // make request
-                request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
-            });
-        });
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(passwordService.decryptPassword(createdUser.getPassword()), updatedPassword);
+        // make request
+        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
     @WithMockUser(username = "authenticateduser")
     public void changePasswordInvalidPassword() throws Exception {
         User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
         String updatedPassword = "";
 
@@ -379,18 +372,18 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     public void passwordResetByEmail() throws Exception {
+        String newPassword = getValidPassword();
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), newPassword, true, true);
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
 
         Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        // init password reset
-        // no helper method from request can be used since the String needs to be transferred unaltered; The helpers would add quotes around it
-        // previous, faulty call:
-        // request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
         var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getEmail());
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
@@ -400,18 +393,18 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     public void passwordResetByUsername() throws Exception {
+        String newPassword = getValidPassword();
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
+        bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), newPassword, true, true);
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
 
         Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        // init password reset
-        // no helper method from request can be used since the String needs to be transferred unaltered; The helpers would add quotes around it
-        // previous, faulty call:
-        // request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
         var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getLogin());
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
@@ -447,6 +440,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     public void passwordResetInvalidEmail() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
         User createdUser = userCreationService.createUser(new ManagedUserVM(user));
 
         Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());

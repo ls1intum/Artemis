@@ -140,7 +140,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin1", roles = "ADMIN")
     public void testGetAllSystemNotifications() throws Exception {
         List<SystemNotification> response = request.getList("/api/system-notifications", HttpStatus.OK, SystemNotification.class);
-        assertThat(response.isEmpty()).as("system notification are present").isFalse();
+        assertThat(response).as("system notification are present").isNotEmpty();
     }
 
     @Test

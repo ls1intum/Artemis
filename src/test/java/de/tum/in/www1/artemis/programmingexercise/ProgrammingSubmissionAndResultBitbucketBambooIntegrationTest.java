@@ -141,7 +141,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Api should return not found.
         request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
         // No submission should be created for the fake participation.
-        assertThat(submissionRepository.findAll()).hasSize(0);
+        assertThat(submissionRepository.findAll()).isEmpty();
     }
 
     private ProgrammingSubmission mockCommitInfoAndPostSubmission(long participationId) throws Exception {
@@ -154,7 +154,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) participationRepository.findById(participationId).orElseThrow().getExercise();
-        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
         return postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
     }
 
@@ -174,7 +174,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submission.getParticipation().getId()).isEqualTo(participationId);
         // Needs to be set for using a custom repository method, known spring bug.
         Participation updatedParticipation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
-        assertThat(updatedParticipation.getSubmissions().size()).isEqualTo(1);
+        assertThat(updatedParticipation.getSubmissions()).hasSize(1);
         assertThat(updatedParticipation.getSubmissions().stream().findFirst().get().getId()).isEqualTo(submission.getId());
 
         // Make sure the submission has the correct commit hash.
@@ -197,7 +197,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK);
         final long submissionId = submission.getId();
@@ -238,7 +238,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @MethodSource("participationTypeAndAdditionalCommitProvider")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
         Long participationId = getParticipationIdByType(participationType, 0);
         ProgrammingSubmission submission = postSubmission(participationId, HttpStatus.OK);
@@ -280,7 +280,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
         Long participationId = getParticipationIdByType(participationType, 0);
         // Create 1 submission.
@@ -321,7 +321,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @EnumSource(IntegrationTestParticipationType.class)
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
-        bitbucketRequestMockProvider.mockDefaultBranch("master", exercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
@@ -372,7 +372,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
-        assertThat(participation.getSubmissions().size()).isEqualTo(1);
+        assertThat(participation.getSubmissions()).hasSize(1);
 
         postResult(participationType, 0, HttpStatus.OK, false);
         assertNoNewSubmissionsAndIsSubmission(submission);
@@ -412,7 +412,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(results).hasSize(1);
         Result result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
-        assertThat(participation.getSubmissions().size()).isEqualTo(1);
+        assertThat(participation.getSubmissions()).hasSize(1);
 
         // Do another call to new-result again and assert that no new submission is created.
         postResult(participationType, 0, HttpStatus.OK, false);
@@ -456,7 +456,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(results).hasSize(1);
         Result result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
-        assertThat(participation.getSubmissions().size()).isEqualTo(1);
+        assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(result.isRated()).isTrue();
 
         // Do another call to new-result again and assert that no new submission is created.
@@ -578,7 +578,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     private void assertNoNewSubmissionsAndIsSubmission(ProgrammingSubmission submission) {
         var submissions = submissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions).hasSize(1);
         assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
@@ -618,7 +618,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getProjectKey());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
         // ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK, requestAsArtemisUser);
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
 
@@ -694,11 +694,11 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private Result assertBuildError(Long participationId, String userLogin, ProgrammingLanguage programmingLanguage) throws Exception {
         // Assert that result linked to the participation
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
-        assertThat(results.size()).isEqualTo(1);
+        assertThat(results).hasSize(1);
         var result = results.get(0);
         assertThat(result.getHasFeedback()).isFalse();
         assertThat(result.isSuccessful()).isFalse();
-        assertThat(result.getScore()).isEqualTo(0);
+        assertThat(result.getScore()).isZero();
         assertThat(result.getResultString()).isEqualTo("No tests found");
 
         // Assert that the submission linked to the participation
@@ -716,7 +716,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         database.changeUser(userLogin);
         var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();
-        assertThat(receivedLogs.size()).isEqualTo(submissionWithLogs.getBuildLogEntries().size());
+        assertThat(receivedLogs).hasSameSizeAs(submissionWithLogs.getBuildLogEntries());
 
         return result;
     }

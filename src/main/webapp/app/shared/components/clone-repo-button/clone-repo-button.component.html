@@ -26,13 +26,22 @@
                     <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
                 </div>
             </div>
+            <!-- ngStyle: sshEnabled -> Remove round edges and edge on the left side (due to dropdown to select ssh or https)
+             || useSsh -> Remove round edges and edge on the right side (as ssh repo-links can't be open in the browser)-->
             <pre
                 style="flex: 1"
-                [ngStyle]="sshEnabled ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' } : {}"
+                [ngClass]="
+                    sshEnabled && !useSsh ? 'url-box-remove-line-left url-box-remove-line-right' : sshEnabled && useSsh ? 'url-box-remove-line-left' : 'url-box-remove-line-right'
+                "
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl(false)"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
-                >{{ getHttpOrSshRepositoryUrl() }}</pre
+                >{{ getHttpOrSshRepositoryUrl() }} </pre
             >
+            <div *ngIf="!useSsh" class="d-flex align-items-center">
+                <a style="flex: 1" class="btn btn-secondary btn-sm me-2 open-repository-button" [href]="getHttpRepositoryUrl() | safeUrl" target="_blank" rel="noopener noreferrer">
+                    <fa-icon [icon]="faExternalLink"></fa-icon>
+                </a>
+            </div>
         </div>
         <p *ngIf="repositoryPassword">
             {{ 'artemisApp.exerciseActions.repositoryPassword' | artemisTranslate }} <code class="password">{{ repositoryPassword }}</code>

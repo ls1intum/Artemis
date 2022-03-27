@@ -86,7 +86,7 @@ public class JenkinsJobService {
     }
 
     /**
-     * Gets the xml config of the job that is inside a folder and replaces the old reference to the master branch by a reference to the default branch
+     * Gets the xml config of the job that is inside a folder and replaces the old reference to the master and main branch by a reference to the default branch
      * @param folderName the name of the folder
      * @param jobName the name of the job
      * @return the xml document
@@ -99,8 +99,9 @@ public class JenkinsJobService {
             }
 
             String xmlString = jenkinsServer.getJobXml(folder, jobName);
-            // Replace the old reference to the master branch by a reference to the default branch
+            // Replace the old reference to the master and main branch by a reference to the default branch
             xmlString = xmlString.replace("*/master", "**");
+            xmlString = xmlString.replace("*/main", "**");
 
             return XmlFileUtils.readFromString(xmlString);
         }
@@ -198,7 +199,7 @@ public class JenkinsJobService {
     }
 
     /**
-     * Updates the xml desription of the folder job.
+     * Updates the xml description of the folder job.
      *
      * @param folderName the name of the folder
      * @param folderConfig the xml document of the folder

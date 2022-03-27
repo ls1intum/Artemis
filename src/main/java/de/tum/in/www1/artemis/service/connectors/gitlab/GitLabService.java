@@ -78,14 +78,11 @@ public class GitLabService extends AbstractVersionControlService {
         for (User user : users) {
             String username = user.getLogin();
 
-            // TODO: does it really make sense to potentially create a user here? Should we not rather create this user when the user is created in the internal Artemis database?
-
-            // Automatically created users
-            if ((userPrefixEdx.isPresent() && username.startsWith(userPrefixEdx.get())) || (userPrefixU4I.isPresent() && username.startsWith((userPrefixU4I.get())))) {
-                if (!userExists(username)) {
-                    gitLabUserManagementService.createUser(user);
-                }
+            // This is a failsafe in case a user was not created in VCS on registration
+            if (!userExists(username)) {
+                throw new GitLabException("The user was not created in GitLab and has to be manually added.");
             }
+
             if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
                 // only add access to the repository if the offline IDE usage is NOT explicitly disallowed
                 // NOTE: null values are interpreted as offline IDE is allowed
@@ -163,12 +160,12 @@ public class GitLabService extends AbstractVersionControlService {
      * Protects a branch from the repository, so that developers cannot change the history
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
-     * @param branch            The name of the branch to protect (e.g "master")
+     * @param branch            The name of the branch to protect (e.g "main")
      * @throws VersionControlException      If the communication with the VCS fails.
      */
     private void protectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
-        // we have to first unprotect the branch in order to set the correct access level, this is the case, because the master branch is protected for maintainers by default
+        // we have to first unprotect the branch in order to set the correct access level, this is the case, because the main branch is protected for maintainers by default
         // Unprotect the branch in 8 seconds first and then protect the branch in 12 seconds.
         // We do this to wait on any async calls to Gitlab and make sure that the branch really exists before protecting it.
         unprotectBranch(repositoryPath, branch, 8L, TimeUnit.SECONDS);

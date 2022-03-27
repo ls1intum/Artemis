@@ -74,7 +74,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetTemplateFile() throws Exception {
-        String javaReadme = request.get("/api/files/templates/JAVA/ECLIPSE/readme", HttpStatus.OK, String.class);
+        String javaReadme = request.get("/api/files/templates/JAVA/PLAIN_MAVEN/readme", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
         String cReadme = request.get("/api/files/templates/C/GCC/readme", HttpStatus.OK, String.class);
         assertThat(cReadme).isNotEmpty();
@@ -249,7 +249,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         JsonNode response = request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
                 HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        assertThat(responsePath.contains("markdown")).isTrue();
+        assertThat(responsePath).contains("markdown");
     }
 
     @Test
@@ -278,7 +278,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        assertThat(responsePath.contains("temp")).isTrue();
+        assertThat(responsePath).contains("temp");
     }
 
     @Test
@@ -330,8 +330,9 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.OK, byte[].class);
 
         assertThat(receivedFile).isNotEmpty();
-        PDDocument mergedDoc = PDDocument.load(receivedFile);
-        assertEquals(5, mergedDoc.getNumberOfPages());
+        try (PDDocument mergedDoc = PDDocument.load(receivedFile)) {
+            assertEquals(5, mergedDoc.getNumberOfPages());
+        }
     }
 
     public Lecture createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {
