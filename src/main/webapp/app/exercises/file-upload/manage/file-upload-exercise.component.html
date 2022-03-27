@@ -2,7 +2,9 @@
     <h4 class="d-flex mb-3 flex-wrap justify-content-end">
         <span class="mb-1 me-auto">
             <span *ngIf="course && !showHeading">{{ course.title }} - </span>
-            <span *ngIf="fileUploadExercises && showHeading && !filter.isEmpty()">{{ getAmountOfExercisesString(filteredFileUploadExercises) }} / </span>
+            <span *ngIf="fileUploadExercises && showHeading && !filter.isEmpty() && fileUploadExercises.length"
+                >{{ getAmountOfExercisesString(filteredFileUploadExercises) }} /
+            </span>
             <span *ngIf="fileUploadExercises && showHeading">{{ getAmountOfExercisesString(fileUploadExercises) }} </span>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.title">File Upload Exercises</span>
         </span>
