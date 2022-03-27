@@ -85,7 +85,7 @@
             <div class="contributor text-center" *ngFor="let contributor of data.contributors">
                 <img class="img-fluid" [src]="SERVER_API_URL + contributor.photoDirectory" />
                 <div class="text-center">
-                    <small class="font-weight-bold">{{ contributor.fullName }}</small>
+                    <small id="contributorsName" class="font-weight-bold">{{ contributor.fullName }}</small>
                 </div>
             </div>
         </div>

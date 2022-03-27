@@ -1,6 +1,6 @@
 import { Observable, of } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { CourseWideContext, DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 import {
     metisCoursePosts,
@@ -32,21 +32,51 @@ export class MockPostService {
 
     getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<HttpResponse<Post[]>> {
         if (postContextFilter.courseWideContext === CourseWideContext.TECH_SUPPORT) {
-            return of({ body: [metisPostTechSupport] }) as Observable<HttpResponse<Post[]>>;
+            return of({
+                body: [metisPostTechSupport],
+                headers: new HttpHeaders({
+                    'X-Total-Count': '1',
+                }),
+            }) as Observable<HttpResponse<Post[]>>;
         }
         if (postContextFilter.courseWideContext === CourseWideContext.RANDOM) {
-            return of({ body: [metisPostRandom] }) as Observable<HttpResponse<Post[]>>;
+            return of({
+                body: [metisPostRandom],
+                headers: new HttpHeaders({
+                    'X-Total-Count': '1',
+                }),
+            }) as Observable<HttpResponse<Post[]>>;
         }
         if (postContextFilter.courseWideContext === CourseWideContext.ORGANIZATION) {
-            return of({ body: [metisPostOrganization] }) as Observable<HttpResponse<Post[]>>;
+            return of({
+                body: [metisPostOrganization],
+                headers: new HttpHeaders({
+                    'X-Total-Count': '1',
+                }),
+            }) as Observable<HttpResponse<Post[]>>;
         }
         if (postContextFilter.exerciseId) {
-            return of({ body: metisExercisePosts }) as Observable<HttpResponse<Post[]>>;
+            return of({
+                body: metisExercisePosts,
+                headers: new HttpHeaders({
+                    'X-Total-Count': metisExercisePosts.length.toString(),
+                }),
+            }) as Observable<HttpResponse<Post[]>>;
         }
         if (postContextFilter.lectureId) {
-            return of({ body: metisLecturePosts }) as Observable<HttpResponse<Post[]>>;
+            return of({
+                body: metisLecturePosts,
+                headers: new HttpHeaders({
+                    'X-Total-Count': metisLecturePosts.length.toString(),
+                }),
+            }) as Observable<HttpResponse<Post[]>>;
         } else {
-            return of({ body: metisCoursePosts }) as Observable<HttpResponse<Post[]>>;
+            return of({
+                body: metisCoursePosts,
+                headers: new HttpHeaders({
+                    'X-Total-Count': metisCoursePosts.length.toString(),
+                }),
+            }) as Observable<HttpResponse<Post[]>>;
         }
     }
 

@@ -308,9 +308,6 @@ public class StudentExamResource {
         // 3rd fetch participations, submissions and results and connect them to the studentExam
         fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user);
 
-        // not needed
-        studentExam.getExam().setCourse(null);
-
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(studentExam);
     }

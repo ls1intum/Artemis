@@ -23,7 +23,7 @@
                 <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
             </h4>
         </div>
-        <jhi-exam-assessment-buttons class="assessment-button-row"></jhi-exam-assessment-buttons>
+        <jhi-exam-assessment-buttons *ngIf="course?.isAtLeastInstructor" class="assessment-button-row"></jhi-exam-assessment-buttons>
     </div>
 </div>
 

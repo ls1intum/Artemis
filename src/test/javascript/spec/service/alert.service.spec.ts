@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { inject, TestBed } from '@angular/core/testing';
+import { fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { MissingTranslationHandler, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { missingTranslationHandler } from 'app/core/config/translation.config';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/core/util/alert.service';
@@ -102,9 +102,9 @@ describe('Alert Service Test', () => {
 
     it('should clear alerts', () => {
         const alerts = [
-            { type: AlertType.INFO, message: 'Hello Jhipster info', onClose: jest.fn() },
-            { type: AlertType.DANGER, message: 'Hello Jhipster info', onClose: jest.fn() },
-            { type: AlertType.SUCCESS, message: 'Hello Jhipster info', onClose: jest.fn() },
+            { type: AlertType.INFO, message: 'Hello Jhipster info1', onClose: jest.fn() },
+            { type: AlertType.DANGER, message: 'Hello Jhipster info2', onClose: jest.fn() },
+            { type: AlertType.SUCCESS, message: 'Hello Jhipster info3', onClose: jest.fn() },
         ] as AlertCreationProperties[];
         alerts.forEach((alert) => service.addAlert(alert));
         expect(service.get()).toHaveLength(3);
@@ -187,25 +187,14 @@ describe('Alert Service Test', () => {
         expect(service.get()[0].message).toBe('Server not reachable');
     });
 
-    it('Should display an alert on status 404', () => {
+    it('Should not display an alert on status 404', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
         // THEN
-        expect(service.get()).toHaveLength(1);
-        expect(service.get()[0].message).toBe('Not found');
+        expect(service.get()).toHaveLength(0);
     });
 
-    it('Should display an alert on generic error', () => {
-        // GIVEN
-        eventManager.broadcast({ name: 'artemisApp.httpError', content: { error: { message: 'Error Message' } } });
-        eventManager.broadcast({ name: 'artemisApp.httpError', content: { error: 'Second Error Message' } });
-        // THEN
-        expect(service.get()).toHaveLength(2);
-        expect(service.get()[1].message).toBe('Error Message');
-        expect(service.get()[0].message).toBe('Second Error Message');
-    });
-
-    it('Should display an alert on status 400 for generic error', () => {
+    it('Should display an alert on status 400 for generic error and use the error title', () => {
         // GIVEN
         const response = new HttpErrorResponse({
             url: 'http://localhost:8080/api/foos',
@@ -214,7 +203,7 @@ describe('Alert Service Test', () => {
             statusText: 'Bad Request',
             error: {
                 type: 'https://www.jhipster.tech/problem/constraint-violation',
-                title: 'Bad Request',
+                title: 'Bad Request: This is a default text from the server exception',
                 status: 400,
                 path: '/api/foos',
                 message: 'error.validation',
@@ -223,10 +212,10 @@ describe('Alert Service Test', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
         expect(service.get()).toHaveLength(1);
-        expect(service.get()[0].message).toBe('error.validation');
+        expect(service.get()[0].message).toBe('Bad Request: This is a default text from the server exception');
     });
 
-    it('Should display an alert on status 400 for generic error without message', () => {
+    it('Should not display an alert on status 400 for errors without message', () => {
         // GIVEN
         const response = new HttpErrorResponse({
             url: 'http://localhost:8080/api/foos',
@@ -236,8 +225,7 @@ describe('Alert Service Test', () => {
         });
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
-        expect(service.get()).toHaveLength(1);
-        expect(service.get()[0].message).toBe('Http failure response for http://localhost:8080/api/foos: 400 Bad request');
+        expect(service.get()).toHaveLength(0);
     });
 
     it('Should display an alert on status 400 for invalid parameters', () => {
@@ -279,4 +267,36 @@ describe('Alert Service Test', () => {
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Error Message');
     });
+
+    it('should not show two alerts with the same content if spawned within 50ms', fakeAsync(() => {
+        const initialAlert = service.addAlert({
+            type: AlertType.DANGER,
+            message: 'Test123',
+        });
+        expect(service.get()).toEqual([initialAlert]);
+
+        tick(25);
+
+        const secondAlert = service.addAlert({
+            type: AlertType.DANGER,
+            message: 'Test123',
+        });
+
+        // Check that it is actually the same object by reference
+        expect(secondAlert).toBe(initialAlert);
+        expect(service.get()).toEqual([initialAlert]);
+
+        // After at least 50ms, the new alert should actually be added again
+        tick(30);
+
+        const thirdAlert = service.addAlert({
+            type: AlertType.DANGER,
+            message: 'Test123',
+        });
+
+        expect(thirdAlert).not.toBe(initialAlert);
+        expect(service.get()).toEqual([thirdAlert, initialAlert]);
+
+        flush();
+    }));
 });
