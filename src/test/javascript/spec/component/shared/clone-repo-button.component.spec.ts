@@ -157,7 +157,7 @@ describe('JhiCloneRepoButtonComponent', () => {
     });
 
     it('should insert the correct token in the repository url', () => {
-        component.user = { login: 'user1', guidedTourSettings: [], vcsAccessToken: 'token' };
+        component.user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
         component.repositoryUrl = `https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.useSsh = false;
         component.isTeamParticipation = false;
