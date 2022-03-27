@@ -49,7 +49,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     @Value("${gitlab.use-pseudonyms:#{false}}")
     private boolean usePseudonyms;
 
-    @Value("${artemis.version-control.versionControlAccessToken:#{false}}")
+    @Value("${artemis.version-control.version-control-access-token:#{false}}")
     private Boolean versionControlAccessToken;
 
     public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlabApi, UserRepository userRepository,
@@ -489,15 +489,27 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user)).withCanCreateGroup(false)
                     .withCanCreateProject(false).withSkipConfirmation(true);
             gitlabUser = gitlabApi.getUserApi().createUser(gitlabUser, passwordService.decryptPassword(user), false);
-            if (versionControlAccessToken) {
-                String personalAccessToken = createPersonalAccessToken(gitlabUser.getId());
-                user.setVcsAccessToken(personalAccessToken);
-                userRepository.save(user);
-            }
+            generateVersionControlAccessTokenIfNecessary(gitlabUser, user);
             return gitlabUser;
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);
+        }
+    }
+
+    /**
+     * Generate a version control access token and store it in the user object, if it is needed.
+     * It is needed if
+     * 1. the config option is enabled, and
+     * 2. the user does not yet have an access token
+     * @param gitlabUser the Gitlab user (for which the token will be created)
+     * @param user the Artemis user (where the token will be stored)
+     */
+    private void generateVersionControlAccessTokenIfNecessary(org.gitlab4j.api.models.User gitlabUser, User user) {
+        if (versionControlAccessToken && user.getVcsAccessToken() == null) {
+            String personalAccessToken = createPersonalAccessToken(gitlabUser.getId());
+            user.setVcsAccessToken(personalAccessToken);
+            userRepository.save(user);
         }
     }
 
@@ -564,7 +576,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             return responseBody.getToken();
         }
         catch (HttpClientErrorException e) {
-            log.error("Could not create Gitlab personal access token for user with id " + userId, e);
+            log.error("Could not create Gitlab personal access token for user with id {}, response is null", userId);
             throw new GitLabException("Error while creating personal access token");
         }
     }
