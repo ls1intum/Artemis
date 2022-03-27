@@ -155,28 +155,25 @@ export class MetisService implements OnDestroy {
      * @param {PostContextFilter} postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
      * @param {boolean} forceUpdate if true, forces a re-fetch even if filter property did not change
      */
-    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {
+    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, infiniteScrollEnabled = false): void {
         // check if the post context did change
-        if (
-            forceUpdate ||
-            postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
-            postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
-            postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
-            postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId
-        ) {
-            // if the context changed, we need to fetch posts before doing the content filtering and sorting
-            this.currentPostContextFilter = postContextFilter;
-            this.postService.getPosts(this.courseId, this.currentPostContextFilter).subscribe((res) => {
-                // cache the fetched posts, that can be emitted on next call of this `getFilteredPosts`
-                // that does not require to send a request to actually fetch posts from the DB
-                this.cachedPosts = res.body!;
+        if (forceUpdate || this.isPostContextFilterChanged(postContextFilter)) {
+            this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
+                if (infiniteScrollEnabled && this.cachedPosts && !this.isPostContextFilterChanged(postContextFilter)) {
+                    // if infinite scroll enabled and cachedPosts is defined, add fetched posts to the end of cachedPosts
+                    this.cachedPosts.push.apply(this.cachedPosts, res.body!);
+                } else {
+                    // if the context changed, we need to fetch posts and dismiss cached posts
+                    this.cachedPosts = res.body!;
+                    this.currentPostContextFilter = postContextFilter;
+                }
                 this.cachedTotalItems = Number(res.headers.get('X-Total-Count'));
-                this.posts$.next(res.body!);
-                this.totalItems$.next(Number(res.headers.get('X-Total-Count')));
+                this.posts$.next(this.cachedPosts);
+                this.totalItems$.next(this.cachedTotalItems);
                 this.createSubscriptionFromPostContextFilter();
             });
         } else {
-            // if we do not require force update, e.g. because only the sorting criterion changed,
+            // if we do not require force update, e.g. because only the post title, tag or content changed,
             // we can emit the previously cached posts
             this.posts$.next(this.cachedPosts);
             this.totalItems$.next(this.cachedTotalItems);
@@ -322,6 +319,19 @@ export class MetisService implements OnDestroy {
         } else {
             return false;
         }
+    }
+
+    /**
+     * determines if  filter is chanced
+     * @param postContextFilter filter to compare against the current one
+     */
+    isPostContextFilterChanged(postContextFilter: PostContextFilter) {
+        return (
+            postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
+            postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
+            postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
+            postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId
+        );
     }
 
     /**
