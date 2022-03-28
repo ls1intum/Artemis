@@ -361,21 +361,39 @@ describe('CourseDiscussionComponent', () => {
         expectGetFilteredPostsToBeCalled();
     }));
 
-    function expectGetFilteredPostsToBeCalled() {
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
+    it('should fetch next page of posts if exists', fakeAsync(() => {
+        component.itemsPerPage = 5;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.fetchNextPage();
+        // next page does not exist, service method won't be called again
+        component.fetchNextPage();
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenNthCalledWith(
+            3,
             {
-                courseId: metisCourse.id,
-                courseWideContext: undefined,
-                exerciseId: undefined,
-                lectureId: undefined,
-                page: component.page - 1,
+                ...component.currentPostContextFilter,
+                page: 1,
                 pageSize: component.itemsPerPage,
                 pagingEnabled: true,
-                postSortCriterion: 'CREATION_DATE',
-                sortingOrder: 'DESCENDING',
             },
-            true,
+            false,
         );
+    }));
+
+    function expectGetFilteredPostsToBeCalled() {
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
+            courseId: metisCourse.id,
+            courseWideContext: undefined,
+            exerciseId: undefined,
+            lectureId: undefined,
+            page: component.page - 1,
+            pageSize: component.itemsPerPage,
+            pagingEnabled: true,
+            postSortCriterion: 'CREATION_DATE',
+            sortingOrder: 'DESCENDING',
+        });
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
     }
 

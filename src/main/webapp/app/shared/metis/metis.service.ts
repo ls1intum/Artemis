@@ -448,7 +448,7 @@ export class MetisService implements OnDestroy {
                     break;
             }
             // emit updated version of cachedPosts to subscribing components
-            if (this.currentPostContextFilter.pagingEnabled) {
+            if (PageType.OVERVIEW === this.pageType) {
                 // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. refetch currently displayed posts from server
                 this.currentPostContextFilter.pageSize = this.currentPostContextFilter.pageSize! * (this.currentPostContextFilter.page! + 1);
                 this.currentPostContextFilter.page = 0;

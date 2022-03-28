@@ -88,18 +88,15 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
                     }
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
-                    this.metisService.getFilteredPosts(
-                        {
-                            courseId: this.course!.id,
-                            searchText: this.searchText ? this.searchText : undefined,
-                            postSortCriterion: this.currentSortCriterion,
-                            sortingOrder: this.currentSortDirection,
-                            pagingEnabled: this.pagingEnabled,
-                            page: this.page - 1,
-                            pageSize: this.itemsPerPage,
-                        },
-                        true,
-                    );
+                    this.metisService.getFilteredPosts({
+                        courseId: this.course!.id,
+                        searchText: this.searchText ? this.searchText : undefined,
+                        postSortCriterion: this.currentSortCriterion,
+                        sortingOrder: this.currentSortDirection,
+                        pagingEnabled: this.pagingEnabled,
+                        page: this.page - 1,
+                        pageSize: this.itemsPerPage,
+                    });
                     this.resetCurrentFilter();
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -143,8 +140,8 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * on changing any filter, the metis service is invoked to deliver the first page of posts for the currently set context,
-     * filtered and sorted on the backend
+     * on changing any filter, the metis service is invoked to deliver the first page of posts for the
+     * currently set context, filtered and sorted on the backend
      */
     onSelectContext(): void {
         this.page = 1;
