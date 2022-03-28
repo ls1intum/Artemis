@@ -544,8 +544,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     exportAsCsv(keys: string[], rows: CourseScoresCsvRow[], customOptions: CsvExportOptions) {
         const generalExportOptions = {
-            fieldSeparator: ';',
-            quoteStrings: '"',
             decimalSeparator: 'locale',
             showLabels: true,
             showTitle: false,

@@ -59,18 +59,32 @@ export class CsvExportModalComponent implements OnInit {
         }
     }
 
+    /**
+     * Sets the field separator for the csv export options
+     * @param separator chosen separator which is used to separate the fields in the generated csv file
+     */
     setCsvFieldSeparator(separator: CsvFieldSeparator) {
         this.options.fieldSeparator = separator;
     }
 
+    /**
+     * Sets the quote string for the csv export options
+     * @param quoteString chosen quoteString option which is used to quote strings in the generated csv file
+     */
     setCsvQuoteString(quoteString: CsvQuoteStrings) {
         this.options.quoteStrings = quoteString;
     }
 
+    /**
+     * Dismisses the csv export options modal
+     */
     cancel() {
         this.activeModal.dismiss();
     }
 
+    /**
+     * Closes the csv export modal and passes the selected options back
+     */
     onFinish() {
         this.activeModal.close(this.options);
     }
