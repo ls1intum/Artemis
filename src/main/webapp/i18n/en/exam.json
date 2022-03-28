@@ -259,6 +259,13 @@
         "examManagement": {
             "reviewDatesInvalidWarning": "End of Student Review is set incorrect or missing",
             "reviewDatesInvalidExplanation": "If the Begin of Student Review is set, the End of Student Review has to be set as well. Furthermore, the End of Student Review has to be chronologically after its Begin.",
+            "sections": {
+                "modalities": "Exam Modalities",
+                "conduction": "Exam Conduction",
+                "correction": "Exam Assessment and Student Review",
+                "exercises": "Exam Exercises",
+                "text": "Exam Texts"
+            },
             "title": "Exam Management",
             "createExam": "Create a new exam",
             "editExam": "Edit an existing exam",
@@ -266,10 +273,16 @@
             "examId": "Exam ID",
             "examTitle": "Exam Title",
             "visibleDate": "Visible from",
+            "visibleDateTooltip": "Students can see, but not participate in the exam from this time onwards",
             "startDate": "Start of working time",
+            "startDateTooltip": "Students can participate in the exam from this time onwards",
             "endDate": "End of working time",
+            "endDateTooltip": "Students can participate in the exam until this time",
+            "workingTime": "Working Time (minutes)",
+            "workingTimeTooltip": "The working time is computed based on the start and end time",
             "publishResultsDate": "Release Date of Results",
             "gracePeriod": "Grace period (seconds)",
+            "gracePeriodTooltip": "The time given to students to hand in their exam after the working time. No new submissions are possible during the grace period",
             "examiner": "Examiner",
             "moduleNumber": "Module number",
             "courseName": "Course name",
@@ -292,6 +305,15 @@
             "studentExams": "Student Exams",
             "students": "Students",
             "gradingSystem": "Grading Key",
+            "testExam": {
+                "realExam": "Exam",
+                "testExam": "Test Exam",
+                "examMode": "Exam Mode",
+                "examModeTooltip": "Test Exams can be conducted multiple times within the working window. NOTE: This cannot be changed later on!",
+                "startDate": "Start of working window",
+                "endDate": "End of working window",
+                "workingTimeTooltip": "The working time allowed to the students per run"
+            },
             "testRun": {
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",

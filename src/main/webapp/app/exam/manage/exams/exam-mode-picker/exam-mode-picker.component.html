@@ -1,0 +1,10 @@
+<div class="d-flex align-items-start">
+    <div class="btn-group" [ngClass]="{ disabled: disabled }">
+        <div class="btn" [ngClass]="{ 'btn-primary': !isTestExam, 'btn-default': isTestExam, disabled: disabled }" (click)="setExamMode(false)">
+            {{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}
+        </div>
+        <div class="btn btn-default" [ngClass]="{ 'btn-info': isTestExam, 'btn-default': !isTestExam, disabled: disabled }" (click)="setExamMode(true)">
+            {{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}
+        </div>
+    </div>
+</div>

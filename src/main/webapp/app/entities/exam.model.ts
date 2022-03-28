@@ -34,6 +34,8 @@ export class Exam implements BaseEntity {
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];
     public registeredUsers?: User[];
+    public examWorkingTime?: number;
+    public isTestExam: boolean;
 
     public numberOfRegisteredUsers?: number; // transient
 
@@ -49,6 +51,7 @@ export class Exam implements BaseEntity {
         this.randomizeExerciseOrder = false; // default value (set by server)
         this.numberOfCorrectionRoundsInExam = 1; // default value
         this.maxPoints = 1; // default value
+        this.examWorkingTime = 0; // will be updated during creation
 
         // helper attributes (calculated by the server at the time of the last request)
         this.visible = false;

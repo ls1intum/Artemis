@@ -11,6 +11,7 @@ import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
@@ -52,6 +53,9 @@ export class ExamUpdateComponent implements OnInit {
         });
     }
 
+    changeExamMode(newValue: any) {
+        this.exam.isTestExam = newValue;
+    }
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
      * Returns to the detail page if there is no previous state and we edited an existing exam
@@ -92,7 +96,8 @@ export class ExamUpdateComponent implements OnInit {
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
-        return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid && examMaxPointsValid;
+        const examValidWorkingTime = this.validateWorkingTime;
+        return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid && examMaxPointsValid && examValidWorkingTime;
     }
 
     get isValidVisibleDate(): boolean {
@@ -108,11 +113,57 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidStartDate(): boolean {
-        return this.exam.startDate !== undefined && dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
+        if (this.exam.startDate !== undefined && dayjs(this.exam.startDate).isAfter(this.exam.visibleDate)) {
+            this.calculateWorkingTime();
+            return true;
+        }
+        return false;
     }
 
     get isValidEndDate(): boolean {
-        return this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
+        // A endDate is optional for TestExams
+        if (this.exam.isTestExam) {
+            return true;
+        }
+        if (this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate)) {
+            this.calculateWorkingTime();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Calculates the WorkingTime for Real Exams based on the start- and end-time.
+     * StartDate and EndDate are validated in their corresponding methods before calling this method.
+     */
+    private calculateWorkingTime() {
+        if (!this.exam.isTestExam && this.exam.startDate !== undefined && this.exam.endDate !== undefined) {
+            this.exam.examWorkingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 'm');
+        } else {
+            this.exam.examWorkingTime = 0;
+        }
+        return true;
+    }
+
+    /**
+     * Validates the WorkingTime for TestExams.
+     * For RealExams, the WorkingTime is calculated based on the startDate and EndDate.
+     */
+    private get validateWorkingTime(): boolean {
+        if (this.exam.isTestExam) {
+            if (this.exam.examWorkingTime === undefined) {
+                return false;
+            }
+            // For TestExams, an endDate is optional
+            if (this.isValidStartDate && !this.isValidEndDate) {
+                return true;
+            }
+            if (this.isValidStartDate && this.isValidEndDate) {
+                return this.exam.examWorkingTime >= dayjs(this.exam.endDate).diff(this.exam.startDate, 'm');
+            }
+            return false;
+        }
+        return true;
     }
 
     get isValidPublishResultsDate(): boolean {
