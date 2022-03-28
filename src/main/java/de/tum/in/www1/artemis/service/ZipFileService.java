@@ -68,11 +68,11 @@ public class ZipFileService {
 
     private void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths = paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path));
+            var filteredPaths = paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path));
             if (extraFilter != null) {
-                paths = paths.filter(extraFilter);
+                filteredPaths = paths.filter(extraFilter);
             }
-            paths.forEach(path -> {
+            filteredPaths.forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });
