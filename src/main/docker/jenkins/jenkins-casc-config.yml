@@ -19,7 +19,7 @@ credentials:
           - gitLabApiTokenImpl:
               id: artemis_gitlab_api_token
               scope: GLOBAL
-              apiToken: your.gitlab.api.token # Access token generated in Gitlab with the "api" and "read_repository" permissions.
+              apiToken: jenkins-gitlab-token # Access token generated in Gitlab with the "api" and "read_repository" permissions.
               description: 'Gitlab Api Token for Artemis'
           - string:
               id: artemis_notification_plugin_token # Value of the "artemis-authentication-token-key" defined key in application-artemis.yml
@@ -29,7 +29,7 @@ credentials:
           - usernamePassword:
               id: artemis_gitlab_admin_credentials
               scope: GLOBAL
-              username: "artemis_admin" # The Gitlab admin username.
+              username: "root" # The Gitlab admin username.
               password: "artemis_admin" # The Gitlab admin password.
               description: "Gitlab Admin credentials for Artemis"
 unclassified:

@@ -95,7 +95,9 @@ You can override the following configuration options in this file.
    artemis:
        repo-clone-path: ./repos/
        repo-download-clone-path: ./repos-download/
-       encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
+       encryption-password: <encrypt-password>      # LEGACY: arbitrary password for encrypting database values
+       bcrypt-salt-rounds: 11   # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+                                # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
        user-management:
            use-external: true
            password-reset:
