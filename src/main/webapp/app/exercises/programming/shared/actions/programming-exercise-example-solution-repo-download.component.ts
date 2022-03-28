@@ -8,7 +8,7 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent, template } from 'ap
 })
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
     exportRepository() {
-        if (this.exerciseId && this.repositoryType) {
+        if (this.exerciseId) {
             this.programmingExerciseService.exportSolutionRepository(this.exerciseId).subscribe((response) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
