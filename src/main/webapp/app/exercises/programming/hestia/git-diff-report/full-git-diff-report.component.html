@@ -1,6 +1,14 @@
 <div class="row border-bottom">
     <div class="col-6"><h4 jhiTranslate="artemisApp.programmingExercise.diffReport.template">Template</h4></div>
-    <div class="col-6"><h4 jhiTranslate="artemisApp.programmingExercise.diffReport.solution">Solution</h4></div>
+    <div class="col-3"><h4 jhiTranslate="artemisApp.programmingExercise.diffReport.solution">Solution</h4></div>
+    <div class="col-3 text-end fw-bold">
+        <span class="text-success">+{{ addedLineCount }}</span>
+        <span class="text-danger">-{{ removedLineCount }}</span>
+        <span class="diff-block-bar">
+            <span *ngFor="let i of [].constructor(addedSquareCount)" class="diff-block bg-success"></span>
+            <span *ngFor="let i of [].constructor(removedSquareCount)" class="diff-block bg-danger"></span>
+        </span>
+    </div>
 </div>
 <div *ngFor="let entry of entries" class="mt-2">
     <jhi-git-diff-entry [diffEntry]="entry"></jhi-git-diff-entry>
