@@ -14,7 +14,7 @@ public class GitLabPersonalAccessTokenRequestDTO {
     private String name;
 
     @JsonProperty("user_id")
-    private Integer userId;
+    private Long userId;
 
     @JsonProperty("scopes")
     private String[] scopes;
@@ -26,7 +26,7 @@ public class GitLabPersonalAccessTokenRequestDTO {
         // default constructor for Jackson
     }
 
-    public GitLabPersonalAccessTokenRequestDTO(String name, Integer userId, String[] scopes) {
+    public GitLabPersonalAccessTokenRequestDTO(String name, Long userId, String[] scopes) {
         this.name = name;
         this.userId = userId;
         this.scopes = scopes;
@@ -40,11 +40,11 @@ public class GitLabPersonalAccessTokenRequestDTO {
         this.name = name;
     }
 
-    public Integer getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(Integer userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 

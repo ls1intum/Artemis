@@ -559,7 +559,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param userId the id of the user in Gitlab
      * @return the personal access token created for that user
      */
-    private String createPersonalAccessToken(Integer userId) {
+    private String createPersonalAccessToken(Long userId) {
         // TODO: Change this to Gitlab4J api once it's supported: https://github.com/gitlab4j/gitlab4j-api/issues/653
         var body = new GitLabPersonalAccessTokenRequestDTO("Artemis-Automatic-Access-Token", userId, new String[] { "read_repository", "write_repository" });
 

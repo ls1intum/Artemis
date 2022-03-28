@@ -266,7 +266,7 @@ public class UserTestService {
     }
 
     // Test
-    public void createExternalUser_asAdmin_isSuccessful() throws Exception {
+    public User createExternalUser_asAdmin_isSuccessful() throws Exception {
         student.setId(null);
         student.setLogin("batman");
         student.setPassword("foobar");
