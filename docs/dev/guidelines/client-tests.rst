@@ -316,7 +316,7 @@ Some guidelines:
   |                                                        | :code:`expect(spy).toHaveBeenCalledWith(value);`                |
   |                                                        |                                                                 |
   |                                                        | If you have multiple calls, you can verify the parameters       |
-                                                           | of each call separately:                                        |
+  |                                                        | of each call separately:                                        |
   |                                                        | :code:`expect(spy).toHaveBeenCalledTimes(3);`                   |
   |                                                        | :code:`expect(spy).toHaveBeenNthCalledWith(0, value0);          |
   |                                                        | :code:`expect(spy).toHaveBeenNthCalledWith(1, value1);          |
