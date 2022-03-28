@@ -323,9 +323,14 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should fill & empty sample programming exercise solution', () => {
         comp.showIfExampleSolutionPresent({ ...programmingExercise });
-        expect(comp.exampleSolution).not.toBe(undefined);
+        expect(comp.exampleSolution).toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(true);
+
+        comp.showIfExampleSolutionPresent({ ...programmingExercise, exampleSolutionPublished: false });
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(false);
 
         comp.showIfExampleSolutionPresent({ ...exercise });
         expect(comp.exampleSolution).toBe(undefined);
