@@ -59,8 +59,10 @@ public class ZipFileService {
      * @throws IOException if an error occurred while zipping
      */
     public Path createZipFileWithFolderContent(Path zipFilePath, Path contentRootPath, @Nullable Predicate<Path> contentFilter) throws IOException {
-        createZipFileFromPathStream(zipFilePath, Files.walk(contentRootPath), contentRootPath, contentFilter);
-        return zipFilePath;
+        try (var files = Files.walk(contentRootPath)) {
+            createZipFileFromPathStream(zipFilePath, files, contentRootPath, contentFilter);
+            return zipFilePath;
+        }
     }
 
     private void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) throws IOException {

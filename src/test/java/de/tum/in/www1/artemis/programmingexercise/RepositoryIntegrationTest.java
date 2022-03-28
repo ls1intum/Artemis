@@ -78,7 +78,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     private final String currentLocalFolderName = "currentFolderName";
 
-    private final LocalRepository studentRepository = new LocalRepository();
+    private final LocalRepository studentRepository = new LocalRepository(defaultBranch);
 
     private final List<BuildLogEntry> logs = new ArrayList<>();
 
@@ -126,7 +126,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 
         // Create template repo
-        LocalRepository templateRepository = new LocalRepository();
+        LocalRepository templateRepository = new LocalRepository(defaultBranch);
         templateRepository.configureRepos("templateLocalRepo", "templateOriginRepo");
 
         // add file to the template repo folder
@@ -160,8 +160,8 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", participation.getVcsRepositoryUrl());
-        bitbucketRequestMockProvider.mockDefaultBranch("master", programmingExercise.getVcsTemplateRepositoryUrl());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, participation.getVcsRepositoryUrl());
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getVcsTemplateRepositoryUrl());
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
@@ -277,7 +277,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetFiles_solutionParticipation() throws Exception {
         // Create template repo
-        var solutionRepository = new LocalRepository();
+        var solutionRepository = new LocalRepository(defaultBranch);
         solutionRepository.configureRepos("solutionLocalRepo", "solutionOriginRepo");
 
         // add file to the template repo folder

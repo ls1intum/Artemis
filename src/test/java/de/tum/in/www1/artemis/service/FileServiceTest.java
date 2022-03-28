@@ -150,6 +150,23 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
+    public void replacePlaceHolderIgnoreNames() throws IOException {
+        copyFile("pom.xml", "pom.xml");
+        File pomXml = new File("./exportTest/pom.xml");
+        String fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
+
+        assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
+
+        Map<String, String> replacements = new HashMap<>();
+        replacements.put("${exerciseName}", "SomeCoolExerciseName");
+
+        fileService.replaceVariablesInFileRecursive(pomXml.getParent(), replacements, List.of("pom.xml"));
+        fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
+
+        assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
+    }
+
+    @Test
     public void testMergePdf_nullInput_shouldReturnEmptyOptional() {
         Optional<byte[]> result = fileService.mergePdfFiles(null);
         assertThat(result).isEmpty();

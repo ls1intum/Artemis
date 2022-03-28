@@ -160,12 +160,12 @@ public class GitLabService extends AbstractVersionControlService {
      * Protects a branch from the repository, so that developers cannot change the history
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
-     * @param branch            The name of the branch to protect (e.g "master")
+     * @param branch            The name of the branch to protect (e.g "main")
      * @throws VersionControlException      If the communication with the VCS fails.
      */
     private void protectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
-        // we have to first unprotect the branch in order to set the correct access level, this is the case, because the master branch is protected for maintainers by default
+        // we have to first unprotect the branch in order to set the correct access level, this is the case, because the main branch is protected for maintainers by default
         // Unprotect the branch in 8 seconds first and then protect the branch in 12 seconds.
         // We do this to wait on any async calls to Gitlab and make sure that the branch really exists before protecting it.
         unprotectBranch(repositoryPath, branch, 8L, TimeUnit.SECONDS);

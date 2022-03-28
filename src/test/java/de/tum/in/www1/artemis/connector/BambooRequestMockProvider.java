@@ -9,7 +9,6 @@ import java.net.*;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -248,7 +247,7 @@ public class BambooRequestMockProvider {
     }
 
     public void mockUpdateRepository(String buildPlanKey, BambooRepositoryDTO bambooRepository, BitbucketRepositoryDTO bitbucketRepository,
-            ApplicationLinksDTO.ApplicationLinkDTO applicationLink) throws URISyntaxException {
+            ApplicationLinksDTO.ApplicationLinkDTO applicationLink, String defaultBranch) throws URISyntaxException {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanKey);
         parameters.add("selectedRepository", "com.atlassian.bamboo.plugins.stash.atlassian-bamboo-plugin-stash:stash-rep");
@@ -257,7 +256,7 @@ public class BambooRequestMockProvider {
         parameters.add("confirm", "true");
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
-        parameters.add("repository.stash.branch", "master");
+        parameters.add("repository.stash.branch", defaultBranch);
         parameters.add("repository.stash.repositoryId", bitbucketRepository.getId());
         parameters.add("repository.stash.repositorySlug", bitbucketRepository.getSlug());
         parameters.add("repository.stash.projectKey", bitbucketRepository.getProject().getKey());
@@ -268,8 +267,7 @@ public class BambooRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockUpdatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            Optional<List<String>> optionalTriggeredByRepositories) throws URISyntaxException, IOException {
+    public void mockUpdatePlanRepository(String buildPlanKey, String ciRepoName, String repoProjectKey, String defaultBranch) throws URISyntaxException, IOException {
         mockGetBuildPlanRepositoryList(buildPlanKey);
 
         bitbucketRequestMockProvider.mockGetBitbucketRepository(repoProjectKey, buildPlanKey.toLowerCase());
@@ -281,7 +279,7 @@ public class BambooRequestMockProvider {
         mockGetApplicationLinks(applicationLinksToBeReturned);
         var applicationLink = applicationLinksToBeReturned.getApplicationLinks().get(0);
 
-        mockUpdateRepository(buildPlanKey, bambooRepository, bitbucketRepository, applicationLink);
+        mockUpdateRepository(buildPlanKey, bambooRepository, bitbucketRepository, applicationLink, defaultBranch);
     }
 
     public ApplicationLinksDTO createApplicationLink() {

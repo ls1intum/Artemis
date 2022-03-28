@@ -15,6 +15,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
@@ -22,6 +23,9 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 
 @Service
 public class GitUtilService {
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
     // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
     private final Path localPath = Paths.get("./repos/server-integration-test").resolve("test-repository").normalize();
@@ -51,7 +55,7 @@ public class GitUtilService {
      * Initializes the repository with three dummy files
      */
     public void initRepo() {
-        initRepo("main");
+        initRepo(defaultBranch);
     }
 
     /**
@@ -62,7 +66,7 @@ public class GitUtilService {
         try {
             deleteRepos();
 
-            remoteGit = Git.init().setInitialBranch(defaultBranch).setDirectory(remotePath.toFile()).call();
+            remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
