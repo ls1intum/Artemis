@@ -32,19 +32,16 @@ export class CsvExportModalComponent implements OnInit {
     readonly CsvQuoteStrings = CsvQuoteStrings;
 
     options: CsvExportOptions;
-    locale: string;
 
     // Icons
     faBan = faBan;
     faDownload = faDownload;
 
-    constructor(private activeModal: NgbActiveModal, private translateService: TranslateService) {
-        this.locale = translateService.getBrowserLang() ?? 'en';
-    }
+    constructor(private activeModal: NgbActiveModal, private translateService: TranslateService) {}
 
     ngOnInit(): void {
-        // set default csv export options not based on Artemis locale but on the user's system
-        switch (this.locale) {
+        // set default csv export options based on the current language
+        switch (this.translateService.currentLang) {
             case 'de':
                 this.options = {
                     fieldSeparator: CsvFieldSeparator.SEMICOLON,

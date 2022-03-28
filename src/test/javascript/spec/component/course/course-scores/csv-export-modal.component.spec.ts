@@ -11,6 +11,7 @@ describe('CsvExportModalComponent', () => {
     let component: CsvExportModalComponent;
     let fixture: ComponentFixture<CsvExportModalComponent>;
     let ngbActiveModal: NgbActiveModal;
+    let translateService: TranslateService;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -22,6 +23,7 @@ describe('CsvExportModalComponent', () => {
                 fixture = TestBed.createComponent(CsvExportModalComponent);
                 component = fixture.componentInstance;
                 ngbActiveModal = TestBed.inject(NgbActiveModal);
+                translateService = TestBed.inject(TranslateService);
                 fixture.detectChanges();
             });
     });
@@ -31,9 +33,24 @@ describe('CsvExportModalComponent', () => {
     });
 
     it('should init with default options', () => {
-        expect(component.locale).toBe('en');
+        jest.spyOn(translateService, 'currentLang', 'get').mockReturnValue('en');
+        component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.COMMA);
         expect(component.options.quoteStrings).toBe(CsvQuoteStrings.DOUBLE_QUOTES);
+    });
+
+    it('should init with german default options', () => {
+        jest.spyOn(translateService, 'currentLang', 'get').mockReturnValue('de');
+        component.ngOnInit();
+        expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SEMICOLON);
+        expect(component.options.quoteStrings).toBe(CsvQuoteStrings.DOUBLE_QUOTES);
+    });
+
+    it('should set csv options', () => {
+        component.setCsvFieldSeparator(CsvFieldSeparator.SPACE);
+        component.setCsvQuoteString(CsvQuoteStrings.NONE);
+        expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SPACE);
+        expect(component.options.quoteStrings).toBe(CsvQuoteStrings.NONE);
     });
 
     it('should return the export options on finish', () => {
