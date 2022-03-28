@@ -11,9 +11,12 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
@@ -260,7 +263,7 @@ public class ProgrammingExerciseExportService {
      */
     public Optional<File> exportSolutionRepositoryForExercise(long exerciseId, List<String> exportErrors) {
         Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
-        return exportInstructorRepositoryForExercise(exerciseId, RepositoryType.SOLUTION, outputDir, exportErrors);
+        return exportSolutionRepositoryForExercise(exerciseId, outputDir, exportErrors);
     }
 
     /**
@@ -295,7 +298,7 @@ public class ProgrammingExerciseExportService {
         var exercise = exerciseOrEmpty.get();
         String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
         var repositoryUrl = exercise.getRepositoryURL(repositoryType);
-        return exportRepository(repositoryUrl, repositoryType.getName(), zippedRepoName, exercise, outputDir, exportErrors);
+        return exportRepository(repositoryUrl, repositoryType.getName(), zippedRepoName, exercise, outputDir, null, exportErrors);
     }
 
     /**
@@ -315,7 +318,31 @@ public class ProgrammingExerciseExportService {
         var exercise = exerciseOrEmpty.get();
         String zippedRepoName = getZippedRepoName(exercise, auxiliaryRepository.getRepositoryName());
         var repositoryUrl = auxiliaryRepository.getVcsRepositoryUrl();
-        return exportRepository(repositoryUrl, auxiliaryRepository.getName(), zippedRepoName, exercise, outputDir, exportErrors);
+        return exportRepository(repositoryUrl, auxiliaryRepository.getName(), zippedRepoName, exercise, outputDir, null, exportErrors);
+    }
+
+    /**
+     * Exports the solution repository available for an instructor/tutor/student for a given programming exercise.
+     * Removes the ".git" directory from the resulting zip file to prevent leaking unintended information to students.
+     *
+     * @param exerciseId     The id of the programming exercise that has the repository
+     * @param outputDir The directory used for store the zip file
+     * @param exportErrors   List of failures that occurred during the export
+     * @return a zipped file
+     */
+    public Optional<File> exportSolutionRepositoryForExercise(long exerciseId, Path outputDir, List<String> exportErrors) {
+        RepositoryType repositoryType = RepositoryType.SOLUTION;
+        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, repositoryType.getName(), exportErrors);
+        if (exerciseOrEmpty.isEmpty()) {
+            return Optional.empty();
+        }
+        var exercise = exerciseOrEmpty.get();
+        String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
+        var repositoryUrl = exercise.getRepositoryURL(repositoryType);
+
+        Predicate<Path> gitDirFilter = path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> pathPart.toString().equalsIgnoreCase(".git"));
+
+        return exportRepository(repositoryUrl, repositoryType.getName(), zippedRepoName, exercise, outputDir, gitDirFilter, exportErrors);
     }
 
     private Optional<ProgrammingExercise> loadExerciseForRepoExport(long exerciseId, String repositoryName, List<String> exportErrors) {
@@ -339,7 +366,7 @@ public class ProgrammingExerciseExportService {
     }
 
     private Optional<File> exportRepository(VcsRepositoryUrl repositoryUrl, String repositoryName, String zippedRepoName, ProgrammingExercise exercise, Path outputDir,
-            List<String> exportErrors) {
+            @Nullable Predicate<Path> contentFilter, List<String> exportErrors) {
         try {
             // It's not guaranteed that the repository url is defined (old courses).
             if (repositoryUrl == null) {
@@ -349,7 +376,7 @@ public class ProgrammingExerciseExportService {
                 return Optional.empty();
             }
 
-            Path zippedRepo = createZipForRepository(repositoryUrl, zippedRepoName, outputDir);
+            Path zippedRepo = createZipForRepository(repositoryUrl, zippedRepoName, outputDir, contentFilter);
             if (zippedRepo != null) {
                 return Optional.of(new File(zippedRepo.toString()));
             }
@@ -437,12 +464,13 @@ public class ProgrammingExerciseExportService {
      * @param repositoryUrl The url of the repository to zip
      * @param zipFilename   The name of the zip file
      * @param outputDir The directory used for downloading and zipping the repository
+     * @param contentFilter The path filter to exclude some files, can be null to include everything
      * @return The path to the zip file.
      * @throws IOException if the zip file couldn't be created
      * @throws GitAPIException if the repo couldn't get checked out
      * @throws InterruptedException if the repo couldn't get checked out
      */
-    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir)
+    private Path createZipForRepository(VcsRepositoryUrl repositoryUrl, String zipFilename, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, InterruptedException, UncheckedIOException {
         var repositoryDir = fileService.getUniquePathString(outputDir.toString());
         Repository repository;
@@ -454,7 +482,7 @@ public class ProgrammingExerciseExportService {
         }
 
         // Zip it and return the path to the file
-        return gitService.zipRepository(repository, zipFilename, repositoryDir);
+        return gitService.zipRepository(repository, zipFilename, repositoryDir, contentFilter);
     }
 
     /**
@@ -600,7 +628,7 @@ public class ProgrammingExerciseExportService {
     public void addParticipantIdentifierToProjectName(Repository repository, ProgrammingExercise programmingExercise, StudentParticipation participation) {
         String participantIdentifier = participation.getParticipantIdentifier();
 
-        // Get all files in repository expect .git files
+        // Get all files in repository except .git files
         List<String> allRepoFiles = listAllFilesInPath(repository.getLocalPath());
 
         // is Java or Kotlin programming language

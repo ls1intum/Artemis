@@ -430,7 +430,7 @@ public class ProgrammingExerciseExportImportResource {
         Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
         long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), RepositoryType.SOLUTION, new ArrayList<>());
+        Optional<File> zipFile = programmingExerciseExportService.exportSolutionRepositoryForExercise(programmingExercise.getId(), new ArrayList<>());
 
         return returnZipFileForRepositoryExport(zipFile, RepositoryType.SOLUTION.getName(), programmingExercise, start);
     }

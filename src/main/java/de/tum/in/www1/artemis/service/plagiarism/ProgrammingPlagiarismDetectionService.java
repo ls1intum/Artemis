@@ -266,7 +266,7 @@ public class ProgrammingPlagiarismDetectionService {
         final var courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         final var filename = courseShortName + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip";
         final var zipFilePath = Paths.get(targetPath, filename);
-        zipFileService.createZipFileWithFolderContent(zipFilePath, outputFolderPath);
+        zipFileService.createZipFileWithFolderContent(zipFilePath, outputFolderPath, null);
         log.info("JPlag report zipped. Schedule deletion of zip file in 1 minute");
         fileService.scheduleForDeletion(zipFilePath, 1);
         return new File(zipFilePath.toString());

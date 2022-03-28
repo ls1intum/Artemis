@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -1222,7 +1223,7 @@ public class GitService {
         else {
             zipRepoName += "-" + studentTeamOrDefault + ".zip";
         }
-        return zipRepository(repo, zipRepoName, repositoryDir);
+        return zipRepository(repo, zipRepoName, repositoryDir, null);
     }
 
     /**
@@ -1231,11 +1232,11 @@ public class GitService {
      * @param repository    The repository
      * @param zipFilename   the name of the zipped file
      * @param repositoryDir path where the repo is located on disk
-     * @param excludeGitDir flag to determine to exclude ".git" directory from the resulting zip file
+     * @param contentFilter path filter to exclude some files, can be null to include everything
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
      */
-    public Path zipRepository(Repository repository, String zipFilename, String repositoryDir, boolean excludeGitDir) throws IOException, UncheckedIOException {
+    public Path zipRepository(Repository repository, String zipFilename, String repositoryDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
         // Strip slashes from name
         var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
 
@@ -1245,15 +1246,9 @@ public class GitService {
 
         Path zipFilePath = Paths.get(repositoryDir, zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(repositoryDir));
-        return zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath());
-    }
+        Path contentRootPath = repository.getLocalPath();
 
-    /**
-     * Zips the contents of a git repository with ".git" directory.
-     * @see #zipRepository(Repository, String, String, boolean)
-     */
-    public Path zipRepository(Repository repository, String zipFilename, String repositoryDir) throws IOException, UncheckedIOException {
-        return zipRepository(repository, zipFilename, repositoryDir, false);
+        return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
     }
 
     /**

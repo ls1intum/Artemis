@@ -4,9 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +47,7 @@ public class ZipFileService {
      * @throws IOException if an error occurred while zipping
      */
     public void createZipFile(Path zipFilePath, List<Path> paths, Path pathsRoot) throws IOException {
-        createZipFileFromPathStream(zipFilePath, paths.stream(), pathsRoot);
+        createZipFileFromPathStream(zipFilePath, paths.stream(), pathsRoot, null);
     }
 
     /**
@@ -55,14 +58,18 @@ public class ZipFileService {
      * @return the path of the newly created zip file for further processing
      * @throws IOException if an error occurred while zipping
      */
-    public Path createZipFileWithFolderContent(Path zipFilePath, Path contentRootPath) throws IOException {
-        createZipFileFromPathStream(zipFilePath, Files.walk(contentRootPath), contentRootPath);
+    public Path createZipFileWithFolderContent(Path zipFilePath, Path contentRootPath, @Nullable Predicate<Path> contentFilter) throws IOException {
+        createZipFileFromPathStream(zipFilePath, Files.walk(contentRootPath), contentRootPath, contentFilter);
         return zipFilePath;
     }
 
-    private void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot) throws IOException {
+    private void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) throws IOException {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
+            paths = paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path));
+            if (extraFilter != null) {
+                paths = paths.filter(extraFilter);
+            }
+            paths.forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });
