@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { combineLatest, Subscription } from 'rxjs';
@@ -20,10 +20,7 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
     styleUrls: ['./course-discussion.component.scss'],
     providers: [MetisService],
 })
-export class CourseDiscussionComponent implements OnInit, OnDestroy, AfterViewInit {
-    @ViewChildren('postingThread') messages: QueryList<any>;
-    @ViewChild('container') content: ElementRef;
-
+export class CourseDiscussionComponent implements OnInit, OnDestroy {
     entitiesPerPageTranslation = 'organizationManagement.userSearch.usersPerPage';
     showAllEntitiesTranslation = 'organizationManagement.userSearch.showAllUsers';
 
@@ -68,18 +65,6 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy, AfterViewIn
         private formBuilder: FormBuilder,
     ) {}
 
-    ngAfterViewInit() {
-        this.messages.changes.subscribe(this.scrollToBottom);
-    }
-
-    scrollToBottom = () => {
-        try {
-            if (this.itemsPerPage >= this.posts.length) {
-                this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
-            }
-        } catch (err) {}
-    };
-
     /**
      * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects the defaults,
      * creates the subscription to posts to stay updated on any changes of posts in this course
@@ -114,7 +99,6 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy, AfterViewIn
                             pageSize: this.itemsPerPage,
                         },
                         true,
-                        true,
                     );
                     this.resetCurrentFilter();
                     this.createEmptyPost();
@@ -123,7 +107,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy, AfterViewIn
             });
         });
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
-            this.posts = posts.slice().reverse();
+            this.posts = posts;
             this.isLoading = false;
         });
         this.totalItemsSubscription = this.metisService.totalItems.pipe().subscribe((totalItems: number) => {
@@ -153,9 +137,9 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy, AfterViewIn
     /**
      *  metis service is invoked to deliver another page of posts, filtered and sorted on the backend
      */
-    onSelectPage(): void {
+    private onSelectPage(): void {
         this.setFilterAndSort();
-        this.metisService.getFilteredPosts(this.currentPostContextFilter, true, true);
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
     /**
@@ -164,7 +148,8 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy, AfterViewIn
      */
     onSelectContext(): void {
         this.page = 1;
-        this.onSelectPage();
+        this.setFilterAndSort();
+        this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
 
     /**
@@ -275,15 +260,13 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy, AfterViewIn
         };
     }
 
-    onScrollUp(ev: any) {
-        console.log('scrolled up!', ev);
+    /**
+     * fetches next page of posts when user scrolls to the end of posts
+     */
+    fetchNextPage() {
         if (this.posts.length < this.totalItems) {
             this.page += 1;
             this.onSelectPage();
         }
-    }
-
-    onScrollDown(ev: any) {
-        console.log('scrolled down!', ev);
     }
 }

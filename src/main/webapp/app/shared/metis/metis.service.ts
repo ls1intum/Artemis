@@ -45,6 +45,8 @@ export class MetisService implements OnDestroy {
     private cachedTotalItems: number;
     private subscriptionChannel?: string;
 
+    private forceUpdate: boolean;
+
     constructor(
         protected postService: PostService,
         protected answerPostService: AnswerPostService,
@@ -155,17 +157,27 @@ export class MetisService implements OnDestroy {
      * @param {PostContextFilter} postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
      * @param {boolean} forceUpdate if true, forces a re-fetch even if filter property did not change
      */
-    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, infiniteScrollEnabled = false): void {
+    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {
+        // store value for promise
+        this.forceUpdate = forceUpdate;
+
         // check if the post context did change
-        if (forceUpdate || this.isPostContextFilterChanged(postContextFilter)) {
+        if (
+            forceUpdate ||
+            postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
+            postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
+            postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
+            postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId ||
+            postContextFilter?.page !== this.currentPostContextFilter?.page
+        ) {
+            this.currentPostContextFilter = postContextFilter;
             this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
-                if (infiniteScrollEnabled && this.cachedPosts && !this.isPostContextFilterChanged(postContextFilter)) {
-                    // if infinite scroll enabled and cachedPosts is defined, add fetched posts to the end of cachedPosts
+                if (!forceUpdate && PageType.OVERVIEW === this.pageType) {
+                    // if infinite scroll enabled, add fetched posts to the end of cachedPosts
                     this.cachedPosts.push.apply(this.cachedPosts, res.body!);
                 } else {
                     // if the context changed, we need to fetch posts and dismiss cached posts
                     this.cachedPosts = res.body!;
-                    this.currentPostContextFilter = postContextFilter;
                 }
                 this.cachedTotalItems = Number(res.headers.get('X-Total-Count'));
                 this.posts$.next(this.cachedPosts);
@@ -322,19 +334,6 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * determines if  filter is chanced
-     * @param postContextFilter filter to compare against the current one
-     */
-    isPostContextFilterChanged(postContextFilter: PostContextFilter) {
-        return (
-            postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
-            postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
-            postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
-            postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId
-        );
-    }
-
-    /**
      * determines the router link components required for navigating to the detail view of the given post
      * @param {Post} post to be navigated to
      * @return {RouteComponents} array of router link components
@@ -450,7 +449,9 @@ export class MetisService implements OnDestroy {
             }
             // emit updated version of cachedPosts to subscribing components
             if (this.currentPostContextFilter.pagingEnabled) {
-                // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. fetching a page of posts from the server
+                // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. refetch currently displayed posts from server
+                this.currentPostContextFilter.pageSize = this.currentPostContextFilter.pageSize! * (this.currentPostContextFilter.page! + 1);
+                this.currentPostContextFilter.page = 0;
                 this.getFilteredPosts(this.currentPostContextFilter);
             } else {
                 // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server

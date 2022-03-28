@@ -349,18 +349,7 @@ describe('CourseDiscussionComponent', () => {
         fixture.detectChanges();
         const sortByOptions = getElement(fixture.debugElement, 'select[name=sortBy]');
         sortByOptions.dispatchEvent(new Event('change'));
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
-            courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
-            page: component.page - 1,
-            pageSize: component.itemsPerPage,
-            pagingEnabled: true,
-            postSortCriterion: 'CREATION_DATE',
-            sortingOrder: 'DESCENDING',
-        });
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
+        expectGetFilteredPostsToBeCalled();
     }));
 
     it('should invoke metis service forcing a reload when sort direction changed', fakeAsync(() => {
@@ -369,19 +358,26 @@ describe('CourseDiscussionComponent', () => {
         fixture.detectChanges();
         const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
         selectedDirectionOption.dispatchEvent(new Event('click'));
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
-            courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
-            page: component.page - 1,
-            pageSize: component.itemsPerPage,
-            pagingEnabled: true,
-            postSortCriterion: 'CREATION_DATE',
-            sortingOrder: 'DESCENDING',
-        });
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
+        expectGetFilteredPostsToBeCalled();
     }));
+
+    function expectGetFilteredPostsToBeCalled() {
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
+            {
+                courseId: metisCourse.id,
+                courseWideContext: undefined,
+                exerciseId: undefined,
+                lectureId: undefined,
+                page: component.page - 1,
+                pageSize: component.itemsPerPage,
+                pagingEnabled: true,
+                postSortCriterion: 'CREATION_DATE',
+                sortingOrder: 'DESCENDING',
+            },
+            true,
+        );
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
+    }
 
     describe('sorting of posts', () => {
         beforeEach(() => {
