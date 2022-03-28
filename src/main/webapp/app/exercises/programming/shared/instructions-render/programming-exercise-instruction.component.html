@@ -1,5 +1,6 @@
 <div class="instructions__content border-0" *ngIf="!isLoading; else loadingInstructions">
     <jhi-programming-exercise-instructions-step-wizard
+        [exercise]="exercise"
         [latestResult]="latestResult"
         [tasks]="tasks"
         [showTestDetails]="exercise?.showTestNamesToStudents"

@@ -9,6 +9,7 @@ import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisExerciseScoresChartModule } from 'app/overview/visualizations/exercise-scores-chart.module';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 
 const routes: Routes = [
     {
@@ -17,6 +18,15 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.statistics',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'grading-key',
+        component: GradingKeyOverviewComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.gradingSystem.title',
         },
         canActivate: [UserRouteAccessService],
     },

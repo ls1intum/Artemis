@@ -1,0 +1,19 @@
+.open-repository-button {
+    margin-bottom: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+@mixin url-box-remove-line($direction) {
+    border-top-#{$direction}-radius: 0;
+    border-bottom-#{$direction}-radius: 0;
+    border-#{$direction}: none;
+}
+.url-box-remove-line-left {
+    @include url-box-remove-line(left);
+}
+.url-box-remove-line-right {
+    @include url-box-remove-line(right);
+}

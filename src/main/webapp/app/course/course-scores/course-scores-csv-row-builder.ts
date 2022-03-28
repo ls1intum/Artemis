@@ -67,10 +67,10 @@ export class CourseScoresCsvRowBuilder {
      * @param student A student of which the data should be saved.
      */
     setUserInformation(student: CourseScoresStudentStatistics) {
-        this.set(NAME_KEY, student.user.name!.trim());
-        this.set(USERNAME_KEY, student.user.login!.trim());
-        this.set(EMAIL_KEY, student.user.email!.trim());
-        this.set(REGISTRATION_NUMBER_KEY, student.user.visibleRegistrationNumber?.trim() ?? '');
+        this.set(NAME_KEY, student.user.name?.trim());
+        this.set(USERNAME_KEY, student.user.login?.trim());
+        this.set(EMAIL_KEY, student.user.email?.trim());
+        this.set(REGISTRATION_NUMBER_KEY, student.user.visibleRegistrationNumber?.trim());
     }
 
     /**

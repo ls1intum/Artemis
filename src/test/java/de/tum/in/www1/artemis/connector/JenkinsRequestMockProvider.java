@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.http.client.HttpResponseException;
 import org.mockito.InjectMocks;
@@ -44,7 +45,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @Profile("jenkins")
@@ -71,10 +71,6 @@ public class JenkinsRequestMockProvider {
     @SpyBean
     @InjectMocks
     private JenkinsJobPermissionsService jenkinsJobPermissionsService;
-
-    @SpyBean
-    @InjectMocks
-    private PasswordService passwordService;
 
     @Autowired
     private ObjectMapper mapper;
@@ -298,12 +294,10 @@ public class JenkinsRequestMockProvider {
         }
         else {
             File file = ResourceUtils.getFile("classpath:test-data/jenkins-response/failed-build-log.txt");
-            StringBuilder builder = new StringBuilder();
-            Files.lines(file.toPath()).forEach(line -> {
-                builder.append(line);
-                builder.append("\n");
-            });
-            doReturn(builder.toString()).when(buildWithDetails).getConsoleOutputText();
+            try (var lines = Files.lines(file.toPath())) {
+                String result = lines.collect(Collectors.joining("\n"));
+                doReturn(result).when(buildWithDetails).getConsoleOutputText();
+            }
         }
         return buildWithDetails;
 
@@ -341,10 +335,6 @@ public class JenkinsRequestMockProvider {
 
     private void mockUpdateUser(User user, boolean userExists) throws URISyntaxException, IOException {
         mockGetUser(user.getLogin(), userExists, false);
-
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
-
         mockDeleteUser(user, userExists, false);
         mockCreateUser(user, false, false, false);
     }
@@ -411,9 +401,6 @@ public class JenkinsRequestMockProvider {
 
     public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail, boolean shouldFailToGetUser) throws URISyntaxException, IOException {
         mockGetUser(user.getLogin(), userExistsInCi, shouldFailToGetUser);
-
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("securityRealm", "createAccountByAdmin").build().toUri();
         var status = shouldFail ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.FOUND;

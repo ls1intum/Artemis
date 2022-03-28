@@ -194,6 +194,7 @@ public class BitbucketRequestMockProvider {
             }
             else {
                 mockUserDoesNotExist(user.getLogin());
+                throw new BitbucketException("The user was not created in Bitbucket and has to be manually added.");
             }
         }
         mockProtectBranches(exercise, repoName);
@@ -469,7 +470,7 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException {
-        String json = "{ \"message\" : \"Merge branch 'develop' into master\", \"author\": { \"name\" : \"admin\", \"emailAddress\" : \"admin@bitbucket.de\" } } ";
+        String json = "{ \"message\" : \"Merge branch 'develop' into main\", \"author\": { \"name\" : \"admin\", \"emailAddress\" : \"admin@bitbucket.de\" } } ";
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode response = objectMapper.readTree(json);
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey, "repos", repositorySlug, "commits", hash)

@@ -32,10 +32,13 @@ public class ContinuousIntegrationTestService {
     @Value("${artemis.continuous-integration.url}")
     private URL ciServerUrl;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final LocalRepository localRepo = new LocalRepository();
+    private final LocalRepository localRepo = new LocalRepository(defaultBranch);
 
     private ProgrammingExerciseStudentParticipation participation;
 
