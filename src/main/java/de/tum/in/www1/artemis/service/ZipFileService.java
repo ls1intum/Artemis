@@ -55,6 +55,7 @@ public class ZipFileService {
      *
      * @param zipFilePath     path where the zip file should be saved
      * @param contentRootPath a path to a folder: all content in this folder (and in any subfolders) will be included in the zip file
+     * @param contentFilter a path filter to exclude some files, can be null to include everything
      * @return the path of the newly created zip file for further processing
      * @throws IOException if an error occurred while zipping
      */
