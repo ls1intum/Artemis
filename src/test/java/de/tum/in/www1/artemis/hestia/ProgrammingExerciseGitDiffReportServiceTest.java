@@ -29,9 +29,9 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     private final static String FILE_NAME = "test.java";
 
-    private final LocalRepository solutionRepo = new LocalRepository();
+    private final LocalRepository solutionRepo = new LocalRepository("main");
 
-    private final LocalRepository templateRepo = new LocalRepository();
+    private final LocalRepository templateRepo = new LocalRepository("main");
 
     private ProgrammingExercise exercise;
 
