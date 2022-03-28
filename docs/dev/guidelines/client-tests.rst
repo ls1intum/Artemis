@@ -277,7 +277,6 @@ Some guidelines:
   +========================================================+=================================================================+
   | Expecting a boolean value                              | :code:`expect(value).toBeTrue();`                               |
   |                                                        | :code:`expect(value).toBeFalse();`                              |
-  |                                                        | :code:`expect(value).toBeBoolean();`                            |
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | Two objects should be the same reference               | :code:`expect(object).toBe(referenceObject);`                   |
   +--------------------------------------------------------+-----------------------------------------------------------------+
@@ -315,4 +314,11 @@ Some guidelines:
   | A spy should have been called with a value             | Always test the number of calls as well:                        |
   |                                                        | :code:`expect(spy).toHaveBeenCalledTimes(1);`                   |
   |                                                        | :code:`expect(spy).toHaveBeenCalledWith(value);`                |
+  |                                                        |                                                                 |
+  |                                                        | If you have multiple calls, you can verify the parameters       |
+                                                           | of each call separately:                                        |
+  |                                                        | :code:`expect(spy).toHaveBeenCalledTimes(3);`                   |
+  |                                                        | :code:`expect(spy).toHaveBeenNthCalledWith(0, value0);          |
+  |                                                        | :code:`expect(spy).toHaveBeenNthCalledWith(1, value1);          |
+  |                                                        | :code:`expect(spy).toHaveBeenNthCalledWith(2, value2);          |
   +--------------------------------------------------------+-----------------------------------------------------------------+
