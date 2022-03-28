@@ -61,6 +61,7 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -76,6 +77,7 @@ describe('CourseExerciseDetailsComponent', () => {
     let subscribeForParticipationChangesMock: jest.SpyInstance;
     let complaintService: ComplaintService;
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
+
     const modelingExercise = {
         id: 23,
         type: ExerciseType.MODELING,
@@ -83,18 +85,29 @@ describe('CourseExerciseDetailsComponent', () => {
         exampleSolutionModel: '{ "key": "value" }',
         exampleSolutionExplanation: 'Solution<br>Explanation',
     } as unknown as ModelingExercise;
+
     const textExercise = {
         id: 24,
         type: ExerciseType.TEXT,
         studentParticipations: [],
         exampleSolution: 'Sample<br>Solution',
     } as unknown as TextExercise;
+
     const fileUploadExercise = {
         id: 25,
         type: ExerciseType.FILE_UPLOAD,
         studentParticipations: [],
         exampleSolution: 'Sample<br>Solution',
     } as unknown as FileUploadExercise;
+
+    const programmingExercise = {
+        id: 26,
+        type: ExerciseType.PROGRAMMING,
+        studentParticipations: [],
+        exam: 'Sample<br>Solution',
+        exampleSolutionPublished: true,
+    } as unknown as ProgrammingExercise;
+
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
     beforeEach(() => {
@@ -276,29 +289,47 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.showIfExampleSolutionPresent({ ...modelingExercise });
         expect(comp.exampleSolution).toBe(undefined);
         expect(comp.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(undefined);
 
         comp.showIfExampleSolutionPresent({ ...exercise });
         expect(comp.exampleSolution).toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(undefined);
     });
 
     it('should fill & empty sample text solution', () => {
         comp.showIfExampleSolutionPresent({ ...textExercise });
         expect(comp.exampleSolution).not.toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(undefined);
 
         comp.showIfExampleSolutionPresent({ ...exercise });
         expect(comp.exampleSolution).toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(undefined);
     });
 
     it('should fill & empty sample file upload solution', () => {
         comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
         expect(comp.exampleSolution).not.toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(undefined);
 
         comp.showIfExampleSolutionPresent({ ...exercise });
         expect(comp.exampleSolution).toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(undefined);
+    });
+
+    it('should fill & empty sample programming exercise solution', () => {
+        comp.showIfExampleSolutionPresent({ ...programmingExercise });
+        expect(comp.exampleSolution).not.toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(true);
+
+        comp.showIfExampleSolutionPresent({ ...exercise });
+        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(undefined);
     });
 });
