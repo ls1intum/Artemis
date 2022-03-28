@@ -21,7 +21,7 @@ following dependencies/tools on your machine:
 
 1. `Java
    JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__:
-   We use Java (JDK 16) to develop and run the Artemis application
+   We use Java (JDK 17) to develop and run the Artemis application
    server which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__:
