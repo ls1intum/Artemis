@@ -1,0 +1,94 @@
+<form id="csvExportOptionsForm" name="exportOptionForm" role="form" novalidate>
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span [jhiTranslate]="'export.csvFile.options.dialogTitle'"> Define Export Options </span>
+        </h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <p class="intro-text" jhiTranslate="export.csvFile.options.introText">Select the options used for generating the .csv file.</p>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="export.csvFile.fieldSeparator.label">Field Separator</label>
+            <div>
+                <div class="btn-group">
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': options.fieldSeparator === CsvFieldSeparator.COMMA, 'btn-default': options.fieldSeparator !== CsvFieldSeparator.COMMA }"
+                        (click)="setCsvFieldSeparator(CsvFieldSeparator.COMMA)"
+                    >
+                        {{ 'export.csvFile.fieldSeparator.comma' | artemisTranslate }}
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': options.fieldSeparator === CsvFieldSeparator.SEMICOLON, 'btn-default': options.fieldSeparator !== CsvFieldSeparator.SEMICOLON }"
+                        (click)="setCsvFieldSeparator(CsvFieldSeparator.SEMICOLON)"
+                    >
+                        {{ 'export.csvFile.fieldSeparator.semicolon' | artemisTranslate }}
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': options.fieldSeparator === CsvFieldSeparator.PERIOD, 'btn-default': options.fieldSeparator !== CsvFieldSeparator.PERIOD }"
+                        (click)="setCsvFieldSeparator(CsvFieldSeparator.PERIOD)"
+                    >
+                        {{ 'export.csvFile.fieldSeparator.period' | artemisTranslate }}
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': options.fieldSeparator === CsvFieldSeparator.SPACE, 'btn-default': options.fieldSeparator !== CsvFieldSeparator.SPACE }"
+                        (click)="setCsvFieldSeparator(CsvFieldSeparator.SPACE)"
+                    >
+                        {{ 'export.csvFile.fieldSeparator.space' | artemisTranslate }}
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': options.fieldSeparator === CsvFieldSeparator.TAB, 'btn-default': options.fieldSeparator !== CsvFieldSeparator.TAB }"
+                        (click)="setCsvFieldSeparator(CsvFieldSeparator.TAB)"
+                    >
+                        {{ 'export.csvFile.fieldSeparator.tab' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="export.csvFile.quoteStrings.label">Quote Strings</label>
+            <div>
+                <div class="btn-group">
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': options.quoteStrings === CsvQuoteStrings.SINGLE_QUOTES, 'btn-default': options.quoteStrings !== CsvQuoteStrings.SINGLE_QUOTES }"
+                        (click)="setCsvQuoteString(CsvQuoteStrings.SINGLE_QUOTES)"
+                    >
+                        {{ CsvQuoteStrings.SINGLE_QUOTES }}
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': options.quoteStrings === CsvQuoteStrings.DOUBLE_QUOTES, 'btn-default': options.quoteStrings !== CsvQuoteStrings.DOUBLE_QUOTES }"
+                        (click)="setCsvQuoteString(CsvQuoteStrings.DOUBLE_QUOTES)"
+                    >
+                        {{ CsvQuoteStrings.DOUBLE_QUOTES }}
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': options.quoteStrings === CsvQuoteStrings.NONE, 'btn-default': options.quoteStrings !== CsvQuoteStrings.NONE }"
+                        (click)="setCsvQuoteString(CsvQuoteStrings.NONE)"
+                    >
+                        {{ 'export.csvFile.quoteStrings.none' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer justify-content-between">
+        <div class="flex-grow-1 d-flex justify-content-end">
+            <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="cancel()">
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+            <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+                <fa-icon [icon]="faDownload" class="me-2"></fa-icon>
+                <span jhiTranslate="entity.action.export">Export</span>
+            </button>
+        </div>
+    </div>
+</form>
