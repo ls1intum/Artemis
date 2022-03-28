@@ -282,7 +282,7 @@ Some guidelines:
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | A CSS element should exist                             | :code:`expect(element).not.toBeNull();`                         |
   |                                                        |                                                                 |
-  | A CSS element should not exists                        | :code:`expect(element).toBeNull();`                             |
+  | A CSS element should not exist                         | :code:`expect(element).toBeNull();`                             |
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | A value should be undefined                            | :code:`expect(value).toBeUndefined();`                          |
   +--------------------------------------------------------+-----------------------------------------------------------------+
@@ -312,13 +312,19 @@ Some guidelines:
   | A spy should have been called once                     | :code:`expect(spy).toHaveBeenCalledTimes(1);`                   |
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | A spy should have been called with a value             | Always test the number of calls as well:                        |
-  |                                                        | :code:`expect(spy).toHaveBeenCalledTimes(1);`                   |
-  |                                                        | :code:`expect(spy).toHaveBeenCalledWith(value);`                |
+  |                                                        |                                                                 |
+  |                                                        | .. code:: ts                                                    |
+  |                                                        |                                                                 |
+  |                                                        |     expect(spy).toHaveBeenCalledTimes(1);                       |
+  |                                                        |     expect(spy).toHaveBeenCalledWith(value);                    |
   |                                                        |                                                                 |
   |                                                        | If you have multiple calls, you can verify the parameters       |
   |                                                        | of each call separately:                                        |
-  |                                                        | :code:`expect(spy).toHaveBeenCalledTimes(3);`                   |
-  |                                                        | :code:`expect(spy).toHaveBeenNthCalledWith(0, value0);          |
-  |                                                        | :code:`expect(spy).toHaveBeenNthCalledWith(1, value1);          |
-  |                                                        | :code:`expect(spy).toHaveBeenNthCalledWith(2, value2);          |
+  |                                                        |                                                                 |
+  |                                                        | .. code:: ts                                                    |
+  |                                                        |                                                                 |
+  |                                                        |     expect(spy).toHaveBeenCalledTimes(3);                       |
+  |                                                        |     expect(spy).toHaveBeenNthCalledWith(0, value0);             |
+  |                                                        |     expect(spy).toHaveBeenNthCalledWith(1, value1);             |
+  |                                                        |     expect(spy).toHaveBeenNthCalledWith(2, value2);             |
   +--------------------------------------------------------+-----------------------------------------------------------------+
