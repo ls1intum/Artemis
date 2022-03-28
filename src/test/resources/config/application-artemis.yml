@@ -36,7 +36,7 @@ artemis:
         ci-token: fake-Token
         ssh-template-clone-url: ssh://git@version-control.fake.fake:1111/
         ssh-keys-url-path: /plugins/servlet/ssh/account/keys
-        default-branch: master
+        default-branch: main
     continuous-integration:
         user: fake-username
         password: fake-password
