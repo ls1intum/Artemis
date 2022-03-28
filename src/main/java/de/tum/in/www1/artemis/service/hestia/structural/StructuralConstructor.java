@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -29,10 +27,5 @@ class StructuralConstructor {
 
     public void setParameters(String[] parameters) {
         this.parameters = parameters;
-    }
-
-    @Override
-    public String toString() {
-        return "Constructor{" + "modifiers=" + Arrays.toString(modifiers) + ", parameters=" + Arrays.toString(parameters) + '}';
     }
 }

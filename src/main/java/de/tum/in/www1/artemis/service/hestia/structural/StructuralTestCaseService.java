@@ -112,10 +112,10 @@ public class StructuralTestCaseService {
     /**
      * Private method that takes care of the actual generation of structural solution entries.
      *
-     * @param testCases The test cases of the programming exercise
+     * @param testCases          The test cases of the programming exercise
      * @param solutionRepository The solution repository of the programming exercise
-     * @param classElements The entries from the test.json file
-     * @param solutionClasses The classes read with QDox
+     * @param classElements      The entries from the test.json file
+     * @param solutionClasses    The classes read with QDox
      * @return The new structural solution entries
      */
     private List<ProgrammingExerciseSolutionEntry> generateStructuralSolutionEntries(Set<ProgrammingExerciseTestCase> testCases, Repository solutionRepository,
@@ -197,7 +197,7 @@ public class StructuralTestCaseService {
         if (structuralClass.getModifiers() != null) {
             classSolutionCode += String.join(" ", structuralClass.getModifiers()) + " ";
         }
-        classSolutionCode += structuralClass.isInterface() ? "interface" : (structuralClass.isEnum() ? "enum" : "class") + " ";
+        classSolutionCode += (structuralClass.isInterface() ? "interface" : (structuralClass.isEnum() ? "enum" : "class")) + " ";
         classSolutionCode += structuralClass.getName() + genericTypes + " ";
 
         if (structuralClass.getSuperclass() != null) {
@@ -320,14 +320,14 @@ public class StructuralTestCaseService {
     }
 
     private JavaField getSolutionAttribute(JavaClass solutionClass, StructuralAttribute attribute) {
-        return solutionClass.getFields().stream().filter(field -> field.getName().equals(attribute.getName())).findFirst().orElse(null);
+        return solutionClass == null ? null : solutionClass.getFields().stream().filter(field -> field.getName().equals(attribute.getName())).findFirst().orElse(null);
     }
 
     /**
      * Extracts the parameters from a constructor
      *
      * @param solutionClass The QDox class instance
-     * @param constructor The constructor specification from the test.json file
+     * @param constructor   The constructor specification from the test.json file
      * @return The parameters of the constructor
      */
     private List<JavaParameter> getSolutionParameters(JavaClass solutionClass, StructuralConstructor constructor) {
@@ -345,7 +345,7 @@ public class StructuralTestCaseService {
      * Finds the QDox method in a given class by its test.json specification
      *
      * @param solutionClass The QDox class instance
-     * @param method The method specification from the test.json file
+     * @param method        The method specification from the test.json file
      * @return The QDox method instance or null if not found
      */
     private JavaMethod getSolutionMethod(JavaClass solutionClass, StructuralMethod method) {
@@ -364,8 +364,8 @@ public class StructuralTestCaseService {
      * This is used for methods and constructor parameters.
      * Contains special handling for generics
      *
-     * @param parameters The parameters from the test.json file
-     * @param solutionParameters The parameters from the source code
+     * @param parameters          The parameters from the test.json file
+     * @param solutionParameters  The parameters from the source code
      * @param genericDeclarations The current generic declarations
      * @return false if any parameter does not match
      */
@@ -395,7 +395,7 @@ public class StructuralTestCaseService {
     /**
      * Generates the string representing the source code of a parameter list
      *
-     * @param parameterTypes The parameters from the test.json file
+     * @param parameterTypes     The parameters from the test.json file
      * @param solutionParameters The parameters from the source code
      * @return The parameter source code
      */

@@ -91,9 +91,53 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerationForSimpleClassWithoutSource() throws Exception {
+        exercise = hestiaUtilTestService.setupSolution("empty", "", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
+                [{
+                    "class": {
+                        "name": "Test",
+                        "modifiers": ["public"],
+                        "package": "test"
+                    }
+                }]
+                """, exercise, testRepo);
+        addTestCaseToExercise("testClass[Test]");
+
+        var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
+        assertThat(solutionEntries).hasSize(1);
+        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\npublic class Test {\n    \n}");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForComplexClass() throws Exception {
         exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \nprivate abstract class Test extends Test2 implements TestI1, TestI2 {}", exercise,
                 solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
+                [{
+                    "class": {
+                        "name": "Test",
+                        "modifiers": ["private", "abstract"],
+                        "package": "test",
+                        "superclass": "Test2",
+                        "interfaces": ["TestI1", "TestI2"]
+                    }
+                }]
+                """, exercise, testRepo);
+        addTestCaseToExercise("testClass[Test]");
+
+        var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
+        assertThat(solutionEntries).hasSize(1);
+        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\nprivate abstract class Test extends Test2 implements TestI1, TestI2 {\n    \n}");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerationForComplexClassWithoutSource() throws Exception {
+        exercise = hestiaUtilTestService.setupSolution("empty", "", exercise, solutionRepo);
         exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {
@@ -136,8 +180,82 @@ public class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerationForInterface() throws Exception {
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic interface Test {}", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
+                [{
+                    "class": {
+                        "name": "Test",
+                        "modifiers": ["public"],
+                        "package": "test",
+                        "isInterface": true
+                    }
+                }]
+                """, exercise, testRepo);
+        addTestCaseToExercise("testClass[Test]");
+
+        var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
+        assertThat(solutionEntries).hasSize(1);
+        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\npublic interface Test {\n    \n}");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerationForEnum() throws Exception {
+        exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic enum Test { CASE1, CASE2; }", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
+                [{
+                    "class": {
+                        "name": "Test",
+                        "modifiers": ["public"],
+                        "package": "test",
+                        "isEnum": true
+                    },
+                    "enumValues": [
+                        "CASE1",
+                        "CASE2"
+                    ]
+                }]
+                """, exercise, testRepo);
+        addTestCaseToExercise("testClass[Test]");
+
+        var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
+        assertThat(solutionEntries).hasSize(1);
+        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.get(0).getCode()).isEqualTo("package test;\npublic enum Test {\n    CASE1, CASE2\n}");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationForSimpleAttribute() throws Exception {
         exercise = hestiaUtilTestService.setupSolution("src/test/Test.java", "package test; \npublic class Test {private String attributeName;}", exercise, solutionRepo);
+        exercise = hestiaUtilTestService.setupTests("src/test.json", """
+                [{
+                    "class": {
+                        "name": "Test",
+                        "modifiers": ["public"],
+                        "package": "test"
+                    },
+                    "attributes" : [{
+                        "name": "attributeName",
+                        "modifiers": ["private"],
+                        "type": "String"
+                    }]
+                }]
+                """, exercise, testRepo);
+        addTestCaseToExercise("testAttributes[Test]");
+
+        var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
+        assertThat(solutionEntries).hasSize(1);
+        assertThat(solutionEntries.get(0).getFilePath()).isEqualTo("src/test/Test.java");
+        assertThat(solutionEntries.get(0).getCode()).isEqualTo("private String attributeName;");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerationForSimpleAttributeWithoutSource() throws Exception {
+        exercise = hestiaUtilTestService.setupSolution("empty", "", exercise, solutionRepo);
         exercise = hestiaUtilTestService.setupTests("src/test.json", """
                 [{
                     "class": {

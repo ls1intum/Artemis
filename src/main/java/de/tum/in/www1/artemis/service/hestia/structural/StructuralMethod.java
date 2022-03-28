@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -62,11 +60,5 @@ class StructuralMethod {
 
     public void setReturnType(String returnType) {
         this.returnType = returnType;
-    }
-
-    @Override
-    public String toString() {
-        return "Method{" + "name='" + name + '\'' + ", modifiers=" + Arrays.toString(modifiers) + ", parameters=" + Arrays.toString(parameters) + ", annotations="
-                + Arrays.toString(annotations) + ", returnType='" + returnType + '\'' + '}';
     }
 }

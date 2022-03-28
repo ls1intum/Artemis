@@ -12,10 +12,6 @@ public class StructuralSolutionEntryGenerationException extends Exception {
         super(MESSAGE_PREFIX + message);
     }
 
-    public StructuralSolutionEntryGenerationException(Throwable cause) {
-        super(MESSAGE_PREFIX, cause);
-    }
-
     public StructuralSolutionEntryGenerationException(String message, Throwable cause) {
         super(MESSAGE_PREFIX + message, cause);
     }

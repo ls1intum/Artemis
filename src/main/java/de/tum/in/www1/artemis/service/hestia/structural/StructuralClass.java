@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -58,7 +56,7 @@ class StructuralClass {
         return isInterface;
     }
 
-    public void setInterface(boolean anInterface) {
+    public void setIsInterface(boolean anInterface) {
         isInterface = anInterface;
     }
 
@@ -66,7 +64,7 @@ class StructuralClass {
         return isEnum;
     }
 
-    public void setEnum(boolean anEnum) {
+    public void setIsEnum(boolean anEnum) {
         isEnum = anEnum;
     }
 
@@ -76,12 +74,6 @@ class StructuralClass {
 
     public void setInterfaces(String[] interfaces) {
         this.interfaces = interfaces;
-    }
-
-    @Override
-    public String toString() {
-        return "Class{" + "name='" + name + '\'' + ", packageName='" + packageName + '\'' + ", superclass=" + superclass + ", isInterface=" + isInterface + ", isEnumeration="
-                + isEnum + ", interfaces=" + Arrays.toString(interfaces) + '}';
     }
 
     public String[] getModifiers() {

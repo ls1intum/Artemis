@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -42,10 +40,5 @@ class StructuralAttribute {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    @Override
-    public String toString() {
-        return "Attribute{" + "name='" + name + '\'' + ", modifiers=" + Arrays.toString(modifiers) + ", type='" + type + '\'' + '}';
     }
 }

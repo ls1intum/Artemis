@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
-import java.util.Arrays;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -61,11 +59,5 @@ class StructuralClassElements {
 
     public void setEnumValues(String[] enumValues) {
         this.enumValues = enumValues;
-    }
-
-    @Override
-    public String toString() {
-        return "ClassStructuralElements{" + "thisClass=" + structuralClass + ", methods=" + Arrays.toString(methods) + ", attributes=" + Arrays.toString(attributes)
-                + ", constructors=" + Arrays.toString(constructors) + ", enumValues=" + Arrays.toString(enumValues) + '}';
     }
 }
