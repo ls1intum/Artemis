@@ -324,7 +324,7 @@ Some guidelines:
   |                                                        | .. code:: ts                                                    |
   |                                                        |                                                                 |
   |                                                        |     expect(spy).toHaveBeenCalledTimes(3);                       |
-  |                                                        |     expect(spy).toHaveBeenNthCalledWith(0, value0);             |
-  |                                                        |     expect(spy).toHaveBeenNthCalledWith(1, value1);             |
-  |                                                        |     expect(spy).toHaveBeenNthCalledWith(2, value2);             |
+  |                                                        |     expect(spy).toHaveBeenNthCalledWith(1, value0);             |
+  |                                                        |     expect(spy).toHaveBeenNthCalledWith(2, value1);             |
+  |                                                        |     expect(spy).toHaveBeenNthCalledWith(3, value2);             |
   +--------------------------------------------------------+-----------------------------------------------------------------+
