@@ -9,7 +9,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 describe('System Notification Component', () => {
@@ -74,11 +74,10 @@ describe('System Notification Component', () => {
     });
 
     describe('Websocket', () => {
-        let bindSpy: jest.SpyInstance;
+        let connectionStateSubscribeSpy: jest.SpyInstance;
         beforeEach(() => {
-            bindSpy = jest.spyOn(jhiWebsocketService, 'bind').mockImplementation((event: string, callback: () => void) => {
-                callback();
-            });
+            jhiWebsocketService.connectionState.next(new ConnectionState(true, true));
+            connectionStateSubscribeSpy = jest.spyOn(jhiWebsocketService.connectionState, 'subscribe');
         });
 
         it('should subscribe to socket messages on init', fakeAsync(() => {
@@ -86,7 +85,7 @@ describe('System Notification Component', () => {
             const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive');
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(bindSpy).toHaveBeenCalledTimes(1);
+            expect(connectionStateSubscribeSpy).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.websocketChannel).toEqual('/topic/system-notification');
             expect(subscribeSpy).toHaveBeenCalledTimes(1);
             expect(receiveSpy).toHaveBeenCalledTimes(1);

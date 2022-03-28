@@ -80,6 +80,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     exerciseIndex = 0;
 
     errorSubscription: Subscription;
+    websocketSubscription: Subscription;
 
     isProgrammingExercise() {
         return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
@@ -115,7 +116,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     constructor(
         private courseCalculationService: CourseScoreCalculationService,
-        private jhiWebsocketService: JhiWebsocketService,
+        private websocketService: JhiWebsocketService,
         private route: ActivatedRoute,
         private examParticipationService: ExamParticipationService,
         private modelingSubmissionService: ModelingSubmissionService,
@@ -187,7 +188,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 });
             }
         });
-        this.initLiveMode();
+
+        // listen to connect / disconnect events
+        this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
+            this.disconnected = !status.connected;
+        });
     }
 
     canDeactivate() {
@@ -457,28 +462,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             subscription.unsubscribe();
         });
         this.errorSubscription.unsubscribe();
+        this.websocketSubscription.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 
     initIndividualEndDates(startDate: dayjs.Dayjs) {
         this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
         this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
-    }
-
-    initLiveMode() {
-        // listen to connect / disconnect events
-        this.onConnected = () => {
-            this.disconnected = false;
-        };
-        this.jhiWebsocketService.bind('connect', () => {
-            this.onConnected();
-        });
-        this.onDisconnected = () => {
-            this.disconnected = true;
-        };
-        this.jhiWebsocketService.bind('disconnect', () => {
-            this.onDisconnected();
-        });
     }
 
     /**

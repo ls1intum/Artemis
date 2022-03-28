@@ -16,9 +16,12 @@
                 <img class="logo-img col" [src]="SERVER_API_URL + 'public/images/logo.png'" />
                 <div jhiTranslate="global.title" class="navbar-title col">Artemis</div>
                 <div class="navbar-version col px-0 align-self-center">{{ version }}</div>
-                <jhi-loading-notification class="col align-self-center"></jhi-loading-notification>
             </div>
         </a>
+        <div class="indicators row">
+            <jhi-connection-warning class="col align-self-center"></jhi-connection-warning>
+            <jhi-loading-notification class="col align-self-center"></jhi-loading-notification>
+        </div>
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
         <ul class="navbar-nav ms-auto">

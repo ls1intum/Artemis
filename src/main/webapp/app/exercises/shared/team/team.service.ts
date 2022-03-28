@@ -5,14 +5,13 @@ import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { StudentWithTeam } from 'app/entities/team.model';
+import { StudentWithTeam, Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
-import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { createRequestOption } from 'app/shared/util/request.util';
 import dayjs from 'dayjs/esm';
 import { Observable, Subscription } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { filter, map, shareReplay } from 'rxjs/operators';
 import { EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';
 
 export type TeamResponse = HttpResponse<Team>;
@@ -106,6 +105,7 @@ export class TeamService implements ITeamService {
     private teamAssignmentUpdates$: Observable<TeamAssignmentPayload> | null;
     private teamAssignmentUpdatesResolver: () => void;
     private authenticationStateSubscriber: Subscription;
+    private websocketStatusSubscription?: Subscription;
 
     constructor(protected http: HttpClient, private websocketService: JhiWebsocketService, private accountService: AccountService) {}
 
@@ -276,10 +276,12 @@ export class TeamService implements ITeamService {
                 setTimeout(() => {
                     if (user) {
                         this.teamAssignmentUpdatesResolver = () => resolve(this.newTeamAssignmentUpdates$);
-                        this.websocketService.bind('connect', this.teamAssignmentUpdatesResolver);
+                        this.websocketStatusSubscription = this.websocketService.connectionState
+                            .pipe(filter((status) => status.connected))
+                            .subscribe(() => this.teamAssignmentUpdatesResolver());
                     } else {
                         this.websocketService.unsubscribe(teamAssignmentUpdatesWebsocketTopic);
-                        this.websocketService.unbind('connect', this.teamAssignmentUpdatesResolver);
+                        this.websocketStatusSubscription?.unsubscribe();
                         this.teamAssignmentUpdates$ = null;
                         this.authenticationStateSubscriber.unsubscribe();
                     }

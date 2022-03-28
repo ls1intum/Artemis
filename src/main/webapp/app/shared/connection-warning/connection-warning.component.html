@@ -1,0 +1,13 @@
+<div
+    *ngIf="display || true"
+    class="connection-warning"
+    [ngClass]="{ disconnected: disconnected }"
+    ngbTooltip="{{ 'artemisApp.connectionAlert.disconnected' | artemisTranslate }}"
+    triggers="manual"
+    autoClose="false"
+    tooltipClass="warning-tooltip"
+    #t="ngbTooltip"
+>
+    <fa-icon [icon]="faWifi"></fa-icon>
+    <fa-icon id="pulse-icon" *ngIf="disconnected" [icon]="faWifi"></fa-icon>
+</div>

@@ -1,0 +1,33 @@
+.connection-warning {
+    color: greenyellow;
+    position: relative;
+}
+
+.tooltip.warning-tooltip > .tooltip-inner {
+    max-width: 400px;
+}
+
+.connection-warning.disconnected {
+    color: red;
+}
+
+#pulse-icon {
+    position: absolute;
+    left: 0;
+    animation: pulse 1s infinite;
+    transform-origin: center;
+    pointer-events: none;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    70%,
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
