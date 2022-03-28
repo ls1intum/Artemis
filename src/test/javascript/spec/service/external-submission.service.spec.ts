@@ -47,7 +47,8 @@ describe('External Submission Service', () => {
         const result = service.generateInitialManualResult();
         expect(result).toBeInstanceOf(Result);
         expect(result.completionDate).not.toBe(undefined);
-        expect(Math.abs(dayjs().diff(result.completionDate, 'ms'))).toBeLessThan(10);
+        // a maximum delay of 1s between creation and assertion is unlikely but accurate enough for an assertion of ‘approximately now’ here
+        expect(dayjs().diff(result.completionDate, 'ms')).toBeLessThan(1000);
         expect(result.successful).toBe(true);
         expect(result.score).toBe(100);
         expect(result.rated).toBe(true);
