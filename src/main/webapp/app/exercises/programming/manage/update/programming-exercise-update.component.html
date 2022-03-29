@@ -181,7 +181,9 @@
                 [disabled]="isImport || !!programmingExercise.id"
             >
                 <option value="PLAIN_MAVEN" *ngIf="projectTypes.includes(ProjectType.PLAIN_MAVEN)">Plain Java</option>
+                <option value="PLAIN_GRADLE" *ngIf="!projectTypes.includes(ProjectType.PLAIN_MAVEN) && projectTypes.includes(ProjectType.PLAIN_GRADLE)">Plain Java</option>
                 <option value="MAVEN_MAVEN" *ngIf="projectTypes.includes(ProjectType.MAVEN_MAVEN)">Maven</option>
+                <option value="GRADLE_GRADLE" *ngIf="projectTypes.includes(ProjectType.GRADLE_GRADLE)">Gradle</option>
                 <option value="PLAIN" *ngIf="projectTypes.includes(ProjectType.PLAIN)">Plain</option>
                 <option value="XCODE" *ngIf="projectTypes.includes(ProjectType.XCODE)">Xcode</option>
                 <option value="GCC" *ngIf="projectTypes.includes(ProjectType.GCC)">GCC</option>
@@ -204,6 +206,12 @@
             >
                 <!-- This ngIf is needed do differentiate when Gradle has been introduced, because Maven-Gradle and Gradle-Maven should not be possible -->
                 <option value="MAVEN" *ngIf="selectedProjectType === ProjectType.PLAIN_MAVEN || selectedProjectType === ProjectType.MAVEN_MAVEN">Maven</option>
+                <option
+                    value="GRADLE"
+                    *ngIf="selectedProjectType === ProjectType.PLAIN_MAVEN || selectedProjectType === ProjectType.PLAIN_GRADLE || selectedProjectType === ProjectType.GRADLE_GRADLE"
+                >
+                    Gradle
+                </option>
             </select>
         </div>
 
@@ -261,7 +269,10 @@
                 'artemisApp.exercise.includedInOverallScore' + (programmingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
             }}</label>
             <div>
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore"></jhi-included-in-overall-score-picker>
+                <jhi-included-in-overall-score-picker
+                    [(includedInOverallScore)]="programmingExercise.includedInOverallScore"
+                    [allowNotIncluded]="!isExamMode"
+                ></jhi-included-in-overall-score-picker>
             </div>
         </div>
         <div class="row">
