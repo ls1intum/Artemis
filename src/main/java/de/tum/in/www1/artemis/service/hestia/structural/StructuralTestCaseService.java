@@ -134,7 +134,7 @@ public class StructuralTestCaseService {
 
             String classSolutionCode = generateCodeForClass(classElement.getStructuralClass(), classElement.getEnumValues(), solutionClass);
             List<String> constructorsSolutionCode = generateCodeForConstructor(classElement.getConstructors(), classElement.getStructuralClass().getName(), solutionClass);
-            List<String> methodsSolutionCode = generateCodeForMethods(classElement.getMethods(), solutionClass);
+            List<String> methodsSolutionCode = generateCodeForMethods(classElement.getMethods(), classElement.getStructuralClass(), solutionClass);
             List<String> attributesSolutionCode = generateCodeForAttributes(classElement.getAttributes(), solutionClass);
             return Stream.of(createSolutionEntry(filePath, classSolutionCode, findStructuralTestCase("Class", name, testCases)),
                     createSolutionEntry(filePath, String.join("\n\n", attributesSolutionCode), findStructuralTestCase("Attributes", name, testCases)),
@@ -264,11 +264,12 @@ public class StructuralTestCaseService {
     /**
      * Generates well formatted Java code for methods of a class.
      *
-     * @param methods       The method objects read from the test.json file
-     * @param solutionClass The class read by QDox that the methods are a part of
+     * @param methods         The method objects read from the test.json file
+     * @param structuralClass The class object read from the test.json file
+     * @param solutionClass   The class read by QDox that the methods are a part of
      * @return The code for each method
      */
-    private List<String> generateCodeForMethods(StructuralMethod[] methods, JavaClass solutionClass) {
+    private List<String> generateCodeForMethods(StructuralMethod[] methods, StructuralClass structuralClass, JavaClass solutionClass) {
         List<String> methodsSolutionCode = new ArrayList<>();
         if (methods == null) {
             return methodsSolutionCode;
@@ -287,8 +288,12 @@ public class StructuralTestCaseService {
             if (solutionMethod != null) {
                 returnType = solutionMethod.getReturnType().getGenericValue();
             }
-            String result = String.join(" ", concatenatedModifiers + genericTypes, returnType, method.getName() + concatenatedParameters, "{\n" + SINGLE_INDENTATION + "\n}")
-                    .trim();
+            String methodBody = " {\n" + SINGLE_INDENTATION + "\n}";
+            // Remove the method body if the method is abstract or a non-default interface method
+            if (structuralClass.isInterface() && !concatenatedModifiers.contains("default") || !structuralClass.isInterface() && concatenatedModifiers.contains("abstract")) {
+                methodBody = ";";
+            }
+            String result = String.join(" ", concatenatedModifiers + genericTypes, returnType, method.getName() + concatenatedParameters + methodBody).trim();
             methodsSolutionCode.add(result);
         }
 
