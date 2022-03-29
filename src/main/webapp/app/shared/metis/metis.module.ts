@@ -19,6 +19,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
@@ -48,6 +49,7 @@ import { MessageInlineInputComponent } from './posting-inline-input/message-inli
         ArtemisSharedComponentModule,
         PickerModule,
         EmojiModule,
+        InfiniteScrollModule,
         OverlayModule,
         CommonModule,
         FontAwesomeModule,

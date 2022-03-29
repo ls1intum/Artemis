@@ -33,6 +33,9 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
         this.createEmptyPost();
     }
 
+    readonly PageType = PageType;
+    readonly ButtonType = ButtonType;
+
     course?: Course;
     exercises?: Exercise[];
     lectures?: Lecture[];
@@ -53,8 +56,6 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
     readonly CourseWideContext = CourseWideContext;
     readonly SortBy = PostSortCriterion;
     readonly SortDirection = SortDirection;
-    readonly PageType = PageType;
-    readonly ButtonType = ButtonType;
     readonly pageType = PageType.OVERVIEW;
 
     private postsSubscription: Subscription;
@@ -153,16 +154,17 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
      */
     onSelectPage(): void {
         this.setFilterAndSort();
-        this.metisService.getFilteredPosts(this.currentPostContextFilter);
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
     /**
-     * on changing any filter, the metis service is invoked to deliver the first page of posts for the currently set context,
-     * filtered and sorted on the backend
+     * on changing any filter, the metis service is invoked to deliver the first page of posts for the
+     * currently set context, filtered and sorted on the backend
      */
     onSelectContext(): void {
         this.page = 1;
-        this.onSelectPage();
+        this.setFilterAndSort();
+        this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
 
     /**
@@ -274,6 +276,16 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
         };
+    }
+
+    /**
+     * fetches next page of posts when user scrolls to the end of posts
+     */
+    fetchNextPage() {
+        if (this.posts.length < this.totalItems) {
+            this.page += 1;
+            this.onSelectPage();
+        }
     }
 
     onModalStateChange(): void {

@@ -119,31 +119,16 @@
             {{ totalItems === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: totalItems }) }}
         </div>
         <!-- list of posts -->
-        <jhi-posting-thread
-            *ngFor="let post of posts; trackBy: postsTrackByFn"
-            [post]="post"
-            [showAnswers]="posts.length === 1"
-            [courseMessagesPageFlag]="courseMessagesPageFlag"
-            (isModalOpen)="onModalStateChange()"
-        ></jhi-posting-thread>
-        <jhi-message-inline-input *ngIf="courseMessagesPageFlag && inlineInputEnabled" [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-message-inline-input>
-        <!-- paginator -->
-        <div *ngIf="totalItems !== 0">
-            <br />
-            <div class="row justify-content-center">
-                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
-            </div>
-            <div class="row justify-content-center">
-                <ngb-pagination
-                    [collectionSize]="totalItems"
-                    [(page)]="page"
-                    [pageSize]="itemsPerPage"
-                    [maxSize]="5"
-                    [rotate]="true"
-                    [boundaryLinks]="true"
-                    (pageChange)="onSelectPage()"
-                ></ngb-pagination>
-            </div>
+        <div class="col-12" infinite-scroll (scrolled)="fetchNextPage()">
+            <jhi-posting-thread
+                *ngFor="let post of posts; trackBy: postsTrackByFn"
+                [post]="post"
+                [showAnswers]="posts.length === 1"
+                [courseMessagesPageFlag]="courseMessagesPageFlag"
+                (isModalOpen)="onModalStateChange()"
+            >
+            </jhi-posting-thread>
         </div>
+        <jhi-message-inline-input *ngIf="courseMessagesPageFlag && inlineInputEnabled" [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-message-inline-input>
     </div>
 </div>
