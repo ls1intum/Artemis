@@ -796,7 +796,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private validateExerciseSubmissionLimit(validationErrorReasons: ValidationReason[]): void {
         // verifying submission limit value
-        if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy !== SubmissionPolicyType.NONE) {
+        if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy.type !== SubmissionPolicyType.NONE) {
             const submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
             if (submissionLimit === undefined || typeof submissionLimit !== 'number') {
                 validationErrorReasons.push({
