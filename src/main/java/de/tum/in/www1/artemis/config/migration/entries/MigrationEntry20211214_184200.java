@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.LegacyPasswordService;
 
 /**
@@ -34,6 +35,7 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
      */
     @Override
     public void execute() {
+        SecurityUtils.setAuthorizationObject();
         int listSize = 100;
         // false is the default value so if they were already set to true, this migration probably runs on a fresh system
         List<User> users = userRepository.findAllByInternal(false);
