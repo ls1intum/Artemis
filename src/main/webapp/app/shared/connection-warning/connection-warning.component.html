@@ -3,6 +3,7 @@
     <div>
         {{ 'artemisApp.disconnectedAlert' | artemisTranslate }}
     </div>
+    <jhi-close-circle (click)="popover.close()"></jhi-close-circle>
 </ng-template>
 
 <div
@@ -14,6 +15,7 @@
     [triggers]="'manual'"
     [placement]="'auto'"
     [autoClose]="false"
+    (click)="popover?.toggle()"
 >
     <fa-icon [icon]="faWifi"></fa-icon>
     <fa-icon id="pulse-icon" *ngIf="disconnected" [icon]="faWifi"></fa-icon>
