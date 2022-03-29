@@ -1631,4 +1631,25 @@ public class ProgrammingExerciseTestService {
             }
         }
     }
+
+    public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course1);
+
+        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now());
+
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise.setCourse(course2);
+
+        ProgrammingExercise newProgrammingExercise = request.postWithResponseBody("/api/programming-exercises/import/" + programmingExercise.getId(), programmingExercise,
+                ProgrammingExercise.class, HttpStatus.CREATED);
+        assertThat(newProgrammingExercise.getExampleSolutionPublicationDate()).as("programming example solution publication date was correctly set to null in the response")
+                .isNull();
+
+        ProgrammingExercise newProgrammingExerciseFromDatabase = programmingExerciseRepository.findById(newProgrammingExercise.getId()).get();
+        assertThat(newProgrammingExerciseFromDatabase.getExampleSolutionPublicationDate())
+                .as("programming example solution publication date was correctly set to null in the database").isNull();
+    }
 }

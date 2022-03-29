@@ -376,4 +376,10 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void testAutomaticCleanupGitRepositories() {
         programmingExerciseTestService.automaticCleanupGitRepositories();
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        programmingExerciseTestService.importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate();
+    }
 }

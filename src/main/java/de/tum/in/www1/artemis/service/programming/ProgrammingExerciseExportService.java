@@ -340,7 +340,7 @@ public class ProgrammingExerciseExportService {
         String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
         var repositoryUrl = exercise.getRepositoryURL(repositoryType);
 
-        Predicate<Path> gitDirFilter = path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> pathPart.toString().equalsIgnoreCase(".git"));
+        Predicate<Path> gitDirFilter = path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString()));
 
         return exportRepository(repositoryUrl, repositoryType.getName(), zippedRepoName, exercise, outputDir, gitDirFilter, exportErrors);
     }
