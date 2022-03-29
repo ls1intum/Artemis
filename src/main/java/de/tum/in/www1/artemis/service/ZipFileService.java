@@ -70,7 +70,7 @@ public class ZipFileService {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             var filteredPaths = paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path));
             if (extraFilter != null) {
-                filteredPaths = paths.filter(extraFilter);
+                filteredPaths = filteredPaths.filter(extraFilter);
             }
             filteredPaths.forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
