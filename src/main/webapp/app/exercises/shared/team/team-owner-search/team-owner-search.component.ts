@@ -107,21 +107,17 @@ export class TeamOwnerSearchComponent implements OnInit {
      * Load options of team owner
      */
     loadOwnerOptions() {
-        return this.courseService
-            .getAllUsersInCourseGroup(this.course.id!, CourseGroup.TUTORS)
-            .pipe(map((usersResponse) => usersResponse.body!))
-            .pipe(
-                tap((ownerOptions) => {
-                    this.ownerOptions = ownerOptions;
-                    this.ownerOptionsLoaded = true;
-                }),
-            )
-            .pipe(
-                catchError(() => {
-                    this.ownerOptionsLoaded = false;
-                    this.searchFailed.emit(true);
-                    return of(undefined);
-                }),
-            );
+        return this.courseService.getAllUsersInCourseGroup(this.course.id!, CourseGroup.TUTORS).pipe(
+            map((usersResponse) => usersResponse.body!),
+            tap((ownerOptions) => {
+                this.ownerOptions = ownerOptions;
+                this.ownerOptionsLoaded = true;
+            }),
+            catchError(() => {
+                this.ownerOptionsLoaded = false;
+                this.searchFailed.emit(true);
+                return of(undefined);
+            }),
+        );
     }
 }

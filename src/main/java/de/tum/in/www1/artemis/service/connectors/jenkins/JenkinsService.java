@@ -23,6 +23,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -201,13 +202,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
         final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        final ProjectType projectType = programmingExercise.getProjectType();
         final var jobs = ((TestResultsDTO) buildResult).getResults();
 
         // Extract test case feedback
         for (final var job : jobs) {
             for (final var testCase : job.getTestCases()) {
                 var feedbackMessages = extractMessageFromTestCase(testCase).map(List::of).orElse(List.of());
-                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage);
+                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
                 result.addFeedback(feedback);
             }
         }

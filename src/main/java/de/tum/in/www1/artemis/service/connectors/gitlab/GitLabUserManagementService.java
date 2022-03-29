@@ -29,8 +29,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabUserManagementService.class);
 
-    private final PasswordService passwordService;
-
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -45,20 +43,19 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitlabApi = gitlabApi;
         this.userRepository = userRepository;
-        this.passwordService = passwordService;
     }
 
     @Override
-    public void createVcsUser(User user) throws VersionControlException {
-        final Long gitlabUserId = getUserIdCreateIfNotExists(user);
+    public void createVcsUser(User user, String password) throws VersionControlException {
+        final Long gitlabUserId = getUserIdCreateIfNotExists(user, password);
         // Add user to existing exercises
         addUserToGroups(gitlabUserId, user.getGroups());
     }
 
     @Override
-    public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldUpdatePassword) {
+    public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, String newPassword) {
         try {
-            var gitlabUser = updateBasicUserInformation(vcsLogin, user, shouldUpdatePassword);
+            var gitlabUser = updateBasicUserInformation(vcsLogin, user, newPassword);
             if (gitlabUser == null) {
                 return;
             }
@@ -67,7 +64,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
             addUserToGroups(gitlabUser.getId(), addedGroups);
 
-            // Remove the user from groups or update it's permissions if the user belongs to multiple
+            // Remove the user from groups or update its permissions if the user belongs to multiple
             // groups of the same course.
             removeOrUpdateUserFromGroups(gitlabUser.getId(), user.getGroups(), removedGroups);
         }
@@ -81,11 +78,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      *
      * @param userLogin the username of the user
      * @param user the Artemis user to update
-     * @param shouldUpdatePassword if the Gitlab password should be updated
+     * @param newPassword if provided the Gitlab password should be updated to the new value
      * @return the updated Gitlab user
      * @throws GitLabApiException if the user cannot be retrieved or cannot update the user
      */
-    private org.gitlab4j.api.models.User updateBasicUserInformation(String userLogin, User user, boolean shouldUpdatePassword) throws GitLabApiException {
+    private org.gitlab4j.api.models.User updateBasicUserInformation(String userLogin, User user, String newPassword) throws GitLabApiException {
         UserApi userApi = gitlabApi.getUserApi();
 
         final var gitlabUser = userApi.getUser(userLogin);
@@ -101,8 +98,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         // Skip confirmation is necessary in order to update the email without user re-confirmation
         gitlabUser.setSkipConfirmation(true);
 
-        String password = shouldUpdatePassword ? passwordService.decryptPassword(user) : null;
-        return userApi.updateUser(gitlabUser, password);
+        return userApi.updateUser(gitlabUser, newPassword);
     }
 
     /**
@@ -310,13 +306,14 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * generated id.
      *
      * @param user the Artemis user
+     * @param password the user's password
      * @return the Gitlab user id
      */
-    private Long getUserIdCreateIfNotExists(User user) {
+    private Long getUserIdCreateIfNotExists(User user, String password) {
         try {
             var gitlabUser = gitlabApi.getUserApi().getUser(user.getLogin());
             if (gitlabUser == null) {
-                gitlabUser = createUser(user);
+                gitlabUser = createUser(user, password);
             }
             return gitlabUser.getId();
         }
@@ -469,13 +466,14 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * user account with the same email, login, name and password
      *
      * @param user The artemis user
+     * @param password The user's password
      * @return a Gitlab user
      */
-    public org.gitlab4j.api.models.User createUser(User user) {
+    public org.gitlab4j.api.models.User createUser(User user, String password) {
         try {
             final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user))
                     .withCanCreateGroup(false).withCanCreateProject(false).withSkipConfirmation(true);
-            return gitlabApi.getUserApi().createUser(gitlabUser, passwordService.decryptPassword(user), false);
+            return gitlabApi.getUserApi().createUser(gitlabUser, password, false);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);

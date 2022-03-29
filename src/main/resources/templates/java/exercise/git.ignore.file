@@ -82,3 +82,7 @@ nbdist/
 *.iws
 *.iml
 out
+
+
+#################
+.gradle

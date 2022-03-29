@@ -171,7 +171,7 @@ public interface VersionControlService {
      * Unprotects a branch from the repository, so that the history can be changed (important for combine template commits).
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
-     * @param branch            The name of the branch to unprotect (e.g "master")
+     * @param branch            The name of the branch to unprotect (e.g "main")
      * @throws VersionControlException      If the communication with the VCS fails.
      */
     void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException;

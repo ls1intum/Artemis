@@ -21,6 +21,10 @@ public class NotificationSettingsService {
     private final NotificationSettingRepository notificationSettingRepository;
 
     // notification settings settingIds analogous to client side
+
+    // weekly summary
+    public final static String NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY = "notification.weekly-summary.basic-weekly-summary";
+
     // course wide discussion notification setting group
     public final static String NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST = "notification.course-wide-discussion.new-course-post";
 
@@ -57,6 +61,8 @@ public class NotificationSettingsService {
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public final static Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
+            // weekly summary
+            new NotificationSetting(false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY),
             // course wide discussion notification setting group
             new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST),
             new NotificationSetting(true, false, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST),
@@ -199,9 +205,7 @@ public class NotificationSettingsService {
      */
     private Set<String> extractSettingsIdsFromNotificationSettingsSet(Set<NotificationSetting> notificationSettings) {
         Set<String> settingsIds = new HashSet<>();
-        notificationSettings.forEach(setting -> {
-            settingsIds.add(setting.getSettingId());
-        });
+        notificationSettings.forEach(setting -> settingsIds.add(setting.getSettingId()));
         return settingsIds;
     }
 
