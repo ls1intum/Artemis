@@ -31,7 +31,7 @@ Updating can only be done with access to the account on Dockerhub. If you need a
    - Go to the "Builds" tab of that repository
 3. Wait for a successful build of "latest"
 4. | Click "Configure Automated Builds" and create a new build rule for a new tag, following the naming scheme:
-   | "<programming language><Version of programming language>-<Upwards counting number>", for example "java16-3"
+   | "<programming language><Version of programming language>-<Upwards counting number>", for example "java17-3"
 
    - The "Sourcetype" should be "Tag"
    - This tag should be used as "Source Tag" and "Docker Tag"
