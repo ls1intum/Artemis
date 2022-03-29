@@ -68,7 +68,7 @@
                 "invalidBonusPoints": "Die Bonuspunkte müssen mindestens 0 sein!",
                 "nonStrictlyIncreasingBonusPoints": "Aufeinanderfolgende Notenstufen müssen steigende Bonuspunktzahl haben!",
                 "invalidAdjacency": "Die Max % aller Notenstufen (außer der letzten), müssen gleich den Min % ihrer nachfolgenden Notenstufe sein!",
-                "invalidFirstAndLastStep": "Der Min % der ersten Notenstufe muss 0 sein und der Max % der letzten Notenstufe muss 100 sein!"
+                "invalidFirstAndLastStep": "Der Min % der ersten Notenstufe muss 0 sein und der Max % der letzten Notenstufe muss mindestens 100 sein!"
             },
             "overview": {
                 "info": "Der Notenschlüssel basiert auf der erreichbaren Punktzahl. Er kann sich bis zum Ende des Kurses ändern, wenn mehr Übungen bewertet wurden.",

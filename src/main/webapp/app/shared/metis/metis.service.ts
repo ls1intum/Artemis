@@ -46,6 +46,8 @@ export class MetisService implements OnDestroy {
     private cachedTotalItems: number;
     private subscriptionChannel?: string;
 
+    private forceUpdate: boolean;
+
     constructor(
         protected postService: PostService,
         protected answerPostService: AnswerPostService,
@@ -157,6 +159,9 @@ export class MetisService implements OnDestroy {
      * @param {boolean} forceUpdate if true, forces a re-fetch even if filter property did not change
      */
     getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true): void {
+        // store value for promise
+        this.forceUpdate = forceUpdate;
+
         // check if the post context did change
         if (
             forceUpdate ||
@@ -164,21 +169,25 @@ export class MetisService implements OnDestroy {
             postContextFilter?.chatSessionId !== this.currentPostContextFilter?.chatSessionId ||
             postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
             postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
-            postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId
+            postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId ||
+            postContextFilter?.page !== this.currentPostContextFilter?.page
         ) {
-            // if the context changed, we need to fetch posts before doing the content filtering and sorting
             this.currentPostContextFilter = postContextFilter;
-            this.postService.getPosts(this.courseId, this.currentPostContextFilter).subscribe((res) => {
-                // cache the fetched posts, that can be emitted on next call of this `getFilteredPosts`
-                // that does not require to send a request to actually fetch posts from the DB
-                this.cachedPosts = res.body!;
+            this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
+                if (!forceUpdate && PageType.OVERVIEW === this.pageType) {
+                    // if infinite scroll enabled, add fetched posts to the end of cachedPosts
+                    this.cachedPosts.push.apply(this.cachedPosts, res.body!);
+                } else {
+                    // if the context changed, we need to fetch posts and dismiss cached posts
+                    this.cachedPosts = res.body!;
+                }
                 this.cachedTotalItems = Number(res.headers.get('X-Total-Count'));
-                this.posts$.next(res.body!);
-                this.totalItems$.next(Number(res.headers.get('X-Total-Count')));
+                this.posts$.next(this.cachedPosts);
+                this.totalItems$.next(this.cachedTotalItems);
                 this.createSubscriptionFromPostContextFilter();
             });
         } else {
-            // if we do not require force update, e.g. because only the sorting criterion changed,
+            // if we do not require force update, e.g. because only the post title, tag or content changed,
             // we can emit the previously cached posts
             this.posts$.next(this.cachedPosts);
             this.totalItems$.next(this.cachedTotalItems);
@@ -444,8 +453,10 @@ export class MetisService implements OnDestroy {
                     break;
             }
             // emit updated version of cachedPosts to subscribing components
-            if (this.currentPostContextFilter.pagingEnabled) {
-                // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. fetching a page of posts from the server
+            if (PageType.OVERVIEW === this.pageType) {
+                // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. refetch currently displayed posts from server
+                this.currentPostContextFilter.pageSize = this.currentPostContextFilter.pageSize! * (this.currentPostContextFilter.page! + 1);
+                this.currentPostContextFilter.page = 0;
                 this.getFilteredPosts(this.currentPostContextFilter);
             } else {
                 // by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server

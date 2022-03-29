@@ -6,7 +6,6 @@ import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lec
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 
 const routes: Routes = [
@@ -77,15 +76,6 @@ const routes: Routes = [
                 pathMatch: 'full',
             },
         ],
-    },
-    {
-        path: 'courses/:courseId/statistics/grading-key',
-        component: GradingKeyOverviewComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'artemisApp.gradingSystem.title',
-        },
-        canActivate: [UserRouteAccessService],
     },
     {
         path: 'courses/:courseId/plagiarism',

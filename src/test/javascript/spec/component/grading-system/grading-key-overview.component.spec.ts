@@ -47,7 +47,7 @@ describe('GradeKeyOverviewComponent', () => {
             imports: [MockModule(NgbModule)],
             declarations: [GradingKeyOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
-                { provide: ActivatedRoute, useValue: { params: of({ courseId: 345, examId: 123 }), queryParams: of({ grade: '2.0' }) } },
+                { provide: ActivatedRoute, useValue: { parent: { parent: { params: of({ courseId: 345, examId: 123 }), queryParams: of({ grade: '2.0' }) } } } },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
                 MockProvider(ArtemisNavigationUtilService),
