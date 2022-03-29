@@ -113,11 +113,12 @@ public class UserService {
                 Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
                 if (existingInternalAdmin.isPresent()) {
                     log.info("Update internal admin user {}", artemisInternalAdminUsername.get());
-                    existingInternalAdmin.get().setPassword(passwordService.encodePassword(artemisInternalAdminPassword.get()));
+                    existingInternalAdmin.get().setPassword(passwordService.hashPassword(artemisInternalAdminPassword.get()));
                     // needs to be mutable --> new HashSet<>(Set.of(...))
                     existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
                     saveUser(existingInternalAdmin.get());
-                    updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getLogin(), existingInternalAdmin.get().getGroups());
+                    updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getLogin(), existingInternalAdmin.get().getGroups(),
+                            artemisInternalAdminPassword.get());
                 }
                 else {
                     log.info("Create internal admin user {}", artemisInternalAdminUsername.get());
@@ -180,12 +181,12 @@ public class UserService {
     public Optional<User> completePasswordReset(String newPassword, String key) {
         log.debug("Reset user password for reset key {}", key);
         return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
-            user.setPassword(passwordService.encodePassword(newPassword));
+            user.setPassword(passwordService.hashPassword(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, newPassword));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, newPassword));
             return user;
         });
     }
@@ -228,10 +229,10 @@ public class UserService {
     public User registerUser(UserDTO userDTO, String password) {
         // Prepare the new user object.
         final var newUser = new User();
-        String encryptedPassword = passwordService.encodePassword(password);
+        String passwordHash = passwordService.hashPassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
         // new user gets initially a generated password
-        newUser.setPassword(encryptedPassword);
+        newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());
         newUser.setLastName(userDTO.getLastName());
         newUser.setEmail(userDTO.getEmail().toLowerCase());
@@ -251,7 +252,7 @@ public class UserService {
         Optional<User> optionalExistingUser = userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
-            return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
+            return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser, password);
         }
 
         // Find user that has the same email
@@ -275,7 +276,7 @@ public class UserService {
         // Create an account on the VCS. If it fails, abort registration.
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
             try {
-                vcsUserManagementService.createVcsUser(savedNonActivatedUser);
+                vcsUserManagementService.createVcsUser(savedNonActivatedUser, password);
                 vcsUserManagementService.deactivateUser(savedNonActivatedUser.getLogin());
             }
             catch (VersionControlException e) {
@@ -298,9 +299,10 @@ public class UserService {
      *
      * @param newUser the new user
      * @param existingUser the existing user
+     * @param password the entered raw password
      * @return the existing non-activated user in Artemis.
      */
-    private User handleRegisterUserWithSameLoginAsExistingUser(User newUser, User existingUser) {
+    private User handleRegisterUserWithSameLoginAsExistingUser(User newUser, User existingUser, String password) {
         // An account with the same login is already activated.
         if (existingUser.getActivated()) {
             throw new UsernameAlreadyUsedException();
@@ -314,7 +316,7 @@ public class UserService {
             newUser.setId(existingUser.getId());
             User updatedExistingUser = userRepository.save(newUser);
             optionalVcsUserManagementService
-                    .ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(existingUser.getLogin(), updatedExistingUser, Set.of(), Set.of(), true));
+                    .ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(existingUser.getLogin(), updatedExistingUser, Set.of(), Set.of(), password));
 
             // Post-pone the cleaning up of the account
             instanceMessageSendService.sendRemoveNonActivatedUserSchedule(updatedExistingUser.getId());
@@ -376,13 +378,17 @@ public class UserService {
      * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
      * @param user         The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)
      * @param oldGroups    The old groups of the user before the update
+     * @param newPassword  If provided, the password gets updated
      */
-    public void updateUserInConnectorsAndAuthProvider(User user, String oldUserLogin, Set<String> oldGroups) {
+    // TODO: The password can be null but Jenkins requires it to be non null => How do we get the password on update?
+    // Or how do we get Jenkins to update the user without recreating it
+    public void updateUserInConnectorsAndAuthProvider(User user, String oldUserLogin, Set<String> oldGroups, String newPassword) {
         final var updatedGroups = user.getGroups();
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(oldUserLogin, user, removedGroups, addedGroups, true));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, addedGroups, removedGroups));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(oldUserLogin, user, removedGroups, addedGroups, newPassword));
+        optionalCIUserManagementService
+                .ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, newPassword, addedGroups, removedGroups));
 
         removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group)); // e.g. Jira
         try {
@@ -439,15 +445,15 @@ public class UserService {
      */
     public void changePassword(String currentClearTextPassword, String newPassword) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
-            String currentEncryptedPassword = user.getPassword();
-            if (!passwordService.checkPasswordMatch(currentClearTextPassword, currentEncryptedPassword)) {
+            String currentPasswordHash = user.getPassword();
+            if (!passwordService.checkPasswordMatch(currentClearTextPassword, currentPasswordHash)) {
                 throw new InvalidPasswordException();
             }
-            String encryptedPassword = passwordService.encodePassword(newPassword);
-            user.setPassword(encryptedPassword);
+            String newPasswordHash = passwordService.hashPassword(newPassword);
+            user.setPassword(newPasswordHash);
             saveUser(user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, newPassword));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, newPassword));
 
             log.debug("Changed password for User: {}", user);
         });
@@ -536,7 +542,7 @@ public class UserService {
             // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
         }
         // e.g. Gitlab: TODO: include the role to distinguish more cases
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group)));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
     }
 
@@ -566,7 +572,7 @@ public class UserService {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
         // e.g. Gitlab
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of()));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> {
             ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group));
             ciUserManagementService.addUserToGroups(user.getLogin(), user.getGroups());

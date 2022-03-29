@@ -131,9 +131,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         instructor = users.get(users.size() - 1);
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("student42", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("student42", passwordService.hashPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("tutor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("instructor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD)));
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
