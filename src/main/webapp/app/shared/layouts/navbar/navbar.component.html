@@ -1,7 +1,7 @@
-<nav class="navbar navbar-dark navbar-expand-md jh-navbar">
+<nav class="navbar navbar-dark navbar-expand-xl jh-navbar">
     <div class="jh-logo-container float-start">
         <a
-            class="jh-navbar-toggler d-lg-none float-end"
+            class="jh-navbar-toggler d-xl-none float-end"
             data-toggle="collapse"
             data-target="#navbarResponsive"
             aria-controls="navbarResponsive"
@@ -11,7 +11,7 @@
         >
             <fa-icon [icon]="faBars"></fa-icon>
         </a>
-        <a class="navbar-brand logo float-start" routerLink="/" (click)="collapseNavbar()">
+        <a class="navbar-brand logo" routerLink="/" (click)="collapseNavbar()">
             <div class="row">
                 <img class="logo-img col" [src]="SERVER_API_URL + 'public/images/logo.png'" />
                 <div jhiTranslate="global.title" class="navbar-title col">Artemis</div>

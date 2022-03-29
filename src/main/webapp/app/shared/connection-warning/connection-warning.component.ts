@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { faTriangleExclamation, faWifi } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faWifi } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-connection-warning',
@@ -10,27 +10,27 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     styleUrls: ['./connection-warning.component.scss'],
 })
 export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
-    @ViewChild('t') tooltip: NgbTooltip;
+    @ViewChild('popover') popover: NgbPopover;
 
-    display = false;
     disconnected = false;
     websocketStatusSubscription: Subscription;
+    openTimeout: any;
 
     // Icons
-    faTriangleExclamation = faTriangleExclamation;
+    faExclamationCircle = faExclamationCircle;
     faWifi = faWifi;
 
     constructor(private websocketService: JhiWebsocketService) {}
 
     ngOnInit() {
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
-            this.disconnected = !status.connected;
-            this.display = !status.intendedDisconnect && status.wasEverConnectedBefore;
+            this.disconnected = !status.connected && !status.intendedDisconnect && status.wasEverConnectedBefore;
 
-            if (this.display && this.disconnected) {
-                this.tooltip?.open();
+            if (this.disconnected) {
+                this.openTimeout = setTimeout(() => this.popover?.open(), 300);
             } else {
-                this.tooltip?.close();
+                clearTimeout(this.openTimeout);
+                this.popover?.close();
             }
         });
     }

@@ -15,6 +15,7 @@ a:not(.btn):hover {
 
 .jh-navbar {
     background-color: #353d47;
+    white-space: nowrap;
     padding: 0.2em 1em;
     .profile-image {
         margin: -10px 0px;
@@ -91,13 +92,13 @@ a:not(.btn):hover {
     }
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (min-width: 1200px) {
     .jh-navbar-toggler {
         display: none;
     }
 }
 
-@media screen and (max-width: 992px) {
+@media screen and (max-width: 1200px) {
     .jh-logo-container {
         width: 100%;
     }
@@ -118,12 +119,20 @@ Logo styles
             height: 30px;
             vertical-align: middle;
         }
+
+        .row {
+            flex-wrap: nowrap;
+        }
     }
 }
 
-.jh-logo-container .indicators {
+.jh-logo-container {
+    display: flex;
     flex-wrap: nowrap;
-    font-size: 18px;
-    height: 50px;
-    align-items: center;
+    .indicators {
+        flex-wrap: nowrap;
+        font-size: 18px;
+        height: 50px;
+        align-items: center;
+    }
 }

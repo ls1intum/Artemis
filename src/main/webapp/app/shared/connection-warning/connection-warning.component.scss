@@ -1,14 +1,25 @@
-.connection-warning {
-    color: greenyellow;
-    position: relative;
+:host {
+    padding: 0;
 }
 
-.tooltip.warning-tooltip > .tooltip-inner {
-    max-width: 400px;
+.connection-warning {
+    color: red;
+    position: relative;
+    max-width: 0;
+    transform: scale(0);
+    margin: 0;
+
+    transition: all 0.3s;
 }
 
 .connection-warning.disconnected {
-    color: red;
+    max-width: 50px;
+    transform: scale(1);
+    margin: 0 12px;
+
+    .ng-fa-icon:first-child {
+        transform: translateX(10px);
+    }
 }
 
 #pulse-icon {
