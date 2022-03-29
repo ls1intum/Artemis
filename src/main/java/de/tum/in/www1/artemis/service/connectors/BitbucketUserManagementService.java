@@ -29,15 +29,12 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
 
     private final UserRepository userRepository;
 
-    private final PasswordService passwordService;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public BitbucketUserManagementService(BitbucketService bitbucketService, UserRepository userRepository, PasswordService passwordService,
             ProgrammingExerciseRepository programmingExerciseRepository) {
         this.bitbucketService = bitbucketService;
         this.userRepository = userRepository;
-        this.passwordService = passwordService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
@@ -46,9 +43,10 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      * and management
      *
      * @param user The local Artemis user, which will be available in the VCS after invoking this method
+     * @param password the password of the user to be set
      */
     @Override
-    public void createVcsUser(User user) throws VersionControlException {
+    public void createVcsUser(User user, String password) throws VersionControlException {
         if (!user.isInternal()) {
             return;
         }
@@ -58,8 +56,8 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
         }
 
         log.debug("Bitbucket user {} does not exist yet", user.getLogin());
-        String displayName = user.getName().trim();
-        bitbucketService.createUser(user.getLogin(), passwordService.decryptPasswordByLogin(user.getLogin()).get(), user.getEmail(), displayName);
+        String displayName = user.getName() != null ? user.getName().trim() : null;
+        bitbucketService.createUser(user.getLogin(), password, user.getEmail(), displayName);
 
         try {
             // NOTE: we need to fetch the user here again to make sure that the groups are not lazy loaded.
@@ -85,16 +83,16 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
      * @param user                      The updated user in Artemis
      * @param removedGroups             groups that the user does not belong to any longer
      * @param addedGroups               The new groups the Artemis user got added to
-     * @param shouldSynchronizePassword whether the password should be synchronized between Artemis and the VcsUserManagementService
+     * @param newPassword               The new password, null otherwise
      */
     @Override
-    public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword) {
+    public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, String newPassword) {
         if (!user.isInternal()) {
             return;
         }
         bitbucketService.updateUserDetails(vcsLogin, user.getEmail(), user.getName());
-        if (shouldSynchronizePassword) {
-            bitbucketService.updateUserPassword(vcsLogin, passwordService.decryptPassword(user));
+        if (newPassword != null) {
+            bitbucketService.updateUserPassword(vcsLogin, newPassword);
         }
         if (addedGroups != null && !addedGroups.isEmpty()) {
             bitbucketService.addUserToGroups(user.getLogin(), addedGroups);
