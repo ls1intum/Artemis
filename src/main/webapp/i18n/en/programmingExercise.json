@@ -385,7 +385,7 @@
                 "title": "Template-Solution-Diff",
                 "template": "Template",
                 "solution": "Solution",
-                "404": "Git-Diff has not been generated yet. Please do a push to the template or solution repository to generate it."
+                "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it."
             }
         },
         "error": {
