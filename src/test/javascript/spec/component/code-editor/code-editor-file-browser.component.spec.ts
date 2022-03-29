@@ -458,6 +458,31 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(createFileStub).not.toHaveBeenCalled();
     });
 
+    it('should be able to create a folder with a name that contains dots', () => {
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+
+        const folderName = 'dot.in.folderName';
+        comp.creatingFile = ['', FileType.FOLDER];
+        comp.repositoryFiles = {};
+        comp.onCreateFile(folderName);
+        fixture.detectChanges();
+
+        expect(onErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([FileType.FILE, FileType.FOLDER])('should not be able to create a hidden %s', (fileType) => {
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+
+        const name = '.hidden_file_or_folder';
+        comp.creatingFile = ['', fileType];
+        comp.repositoryFiles = {};
+        comp.onCreateFile(name);
+        fixture.detectChanges();
+
+        expect(onErrorSpy).toHaveBeenCalledTimes(1);
+        expect(onErrorSpy).toHaveBeenCalledWith('unsupportedFile');
+    });
+
     it('should not be able to create node that already exists', () => {
         const fileName = 'file1';
         const repositoryFiles = { 'folder2/file1': FileType.FILE, folder2: FileType.FOLDER };
@@ -670,6 +695,33 @@ describe('CodeEditorFileBrowserComponent', () => {
         focusedElement = debugElement.query(By.css(':focus')).nativeElement;
         expect(renamingInput.nativeElement).toEqual(focusedElement);
     }));
+
+    it('should be able to rename a folder with a new  name that contains dots', () => {
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+
+        const newFolderName = 'dot.in.folderName';
+
+        comp.renamingFile = ['', 'oldFolderName', FileType.FOLDER];
+        comp.repositoryFiles = { oldFolderName: FileType.FOLDER };
+        comp.onRenameFile(newFolderName);
+        fixture.detectChanges();
+
+        expect(onErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([FileType.FILE, FileType.FOLDER])('should not be able to rename a %s so that is hidden', (fileType) => {
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+
+        const newName = '.hidden_file_or_folder';
+
+        comp.renamingFile = ['', 'oldName', fileType];
+        comp.repositoryFiles = { oldName: fileType };
+        comp.onRenameFile(newName);
+        fixture.detectChanges();
+
+        expect(onErrorSpy).toHaveBeenCalledTimes(1);
+        expect(onErrorSpy).toHaveBeenCalledWith('unsupportedFile');
+    });
 
     it('should leave rename state if renaming a file to the same file name', fakeAsync(() => {
         const fileName = 'file1';
