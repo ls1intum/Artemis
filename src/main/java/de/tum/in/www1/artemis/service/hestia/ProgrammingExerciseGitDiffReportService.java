@@ -53,7 +53,7 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private final Pattern gitDiffLinePattern = Pattern.compile("@@ -(?<previousLine>\\d+),(?<previousLineCount>\\d+) \\+(?<newLine>\\d+),(?<newLineCount>\\d+) @@");
+    private final Pattern gitDiffLinePattern = Pattern.compile("@@ -(?<previousLine>\\d+)(,(?<previousLineCount>\\d+))? \\+(?<newLine>\\d+)(,(?<newLineCount>\\d+))? @@");
 
     public ProgrammingExerciseGitDiffReportService(GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
@@ -90,6 +90,11 @@ public class ProgrammingExerciseGitDiffReportService {
             var solutionParticipation = solutionParticipationOptional.get();
             var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
             var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
+
+            gitService.resetToOriginHead(templateRepo);
+            gitService.pullIgnoreConflicts(templateRepo);
+            gitService.resetToOriginHead(solutionRepo);
+            gitService.pullIgnoreConflicts(solutionRepo);
 
             var fullReport = new ProgrammingExerciseFullGitDiffReportDTO();
             fullReport.setTemplateRepositoryCommitHash(report.getTemplateRepositoryCommitHash());
@@ -209,6 +214,11 @@ public class ProgrammingExerciseGitDiffReportService {
             SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, InterruptedException, IOException {
         var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
         var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
+
+        gitService.resetToOriginHead(templateRepo);
+        gitService.pullIgnoreConflicts(templateRepo);
+        gitService.resetToOriginHead(solutionRepo);
+        gitService.pullIgnoreConflicts(solutionRepo);
 
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(solutionRepo);
