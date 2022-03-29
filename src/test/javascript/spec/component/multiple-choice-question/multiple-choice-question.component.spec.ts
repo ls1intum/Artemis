@@ -180,7 +180,7 @@ describe('MultipleChoiceQuestionComponent', () => {
             invalid: false,
             answerOptions,
             scoringType: ScoringType.ALL_OR_NOTHING,
-            singleChoice: true
+            singleChoice: true,
         };
 
         component.selectedAnswerOptions = [];

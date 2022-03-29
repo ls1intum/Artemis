@@ -12,7 +12,7 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faTrash, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { ScoringType } from "app/entities/quiz/quiz-question.model";
+import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -82,7 +82,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
         return markdownText;
     }
 
-    onSingleChoiceChanged() : void {
+    onSingleChoiceChanged(): void {
         if (this.question.singleChoice) {
             this.question.scoringType = ScoringType.ALL_OR_NOTHING;
         }

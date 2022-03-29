@@ -31,7 +31,13 @@
         <div class="question-options" [hidden]="showPreview">
             <div class="form-group">
                 <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                <select class="form-select" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" [disabled]="question.singleChoice ?? false" title="scoring type">
+                <select
+                    class="form-select"
+                    [(ngModel)]="question.scoringType"
+                    (ngModelChange)="questionUpdated.emit()"
+                    [disabled]="question.singleChoice ?? false"
+                    title="scoring type"
+                >
                     <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
                     <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
                     <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
