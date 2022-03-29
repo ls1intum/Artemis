@@ -282,7 +282,18 @@ public class StructuralTestCaseService {
             if (solutionMethod != null && !solutionMethod.getTypeParameters().isEmpty()) {
                 genericTypes = " " + getGenericTypesString(solutionMethod.getTypeParameters());
             }
-            String concatenatedModifiers = formatModifiers(method.getModifiers());
+            var modifiers = Arrays.asList(method.getModifiers());
+            var isAbstract = modifiers.contains("abstract");
+            // Adjust modifiers for interfaces
+            if (structuralClass.isInterface()) {
+                if (isAbstract) {
+                    modifiers.remove("abstract");
+                }
+                else {
+                    modifiers.add(0, "default");
+                }
+            }
+            String concatenatedModifiers = formatModifiers(modifiers.toArray(new String[0]));
             String concatenatedParameters = generateParametersString(method.getParameters(), solutionParameters);
             String returnType = method.getReturnType();
             if (solutionMethod != null) {
@@ -290,7 +301,7 @@ public class StructuralTestCaseService {
             }
             String methodBody = " {\n" + SINGLE_INDENTATION + "\n}";
             // Remove the method body if the method is abstract
-            if (concatenatedModifiers.contains("abstract")) {
+            if (isAbstract) {
                 methodBody = ";";
             }
             String result = String.join(" ", concatenatedModifiers + genericTypes, returnType, method.getName() + concatenatedParameters + methodBody).trim();
