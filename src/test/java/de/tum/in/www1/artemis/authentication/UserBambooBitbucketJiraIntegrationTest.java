@@ -92,7 +92,7 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
         var student = userTestService.student;
         student.setInternal(true);
         student = userRepository.save(student);
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
         student.setFirstName("changed");
         jiraRequestMockProvider.mockIsGroupAvailable("testgroup");
         jiraRequestMockProvider.mockIsGroupAvailable("tumuser");

@@ -164,7 +164,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
             user.setEmail("-");
-            user.setVisibleEmail();
+            user.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
             ManagedUserVM userVM = new ManagedUserVM(user);
             userVM.setPassword(getValidPassword());
 
@@ -179,7 +179,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
             user.setEmail("-");
-            user.setVisibleEmail();
+            user.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
             ManagedUserVM userVM = new ManagedUserVM(user);
             userVM.setPassword(getValidPassword());
 

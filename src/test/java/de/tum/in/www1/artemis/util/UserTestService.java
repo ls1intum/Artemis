@@ -258,7 +258,7 @@ public class UserTestService {
         // First we create a new user with group
         student.setGroups(Set.of("instructor"));
         student = userRepository.save(student);
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         // We will then update the user by modifying the groups
         var updatedUser = student;
@@ -281,7 +281,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword(password);
         student.setEmail("batman@secret.invalid");
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
@@ -307,7 +307,7 @@ public class UserTestService {
         student.setPassword(password);
         student.setEmail("batman@secret.invalid");
         student.setInternal(true);
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
@@ -341,7 +341,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
@@ -376,7 +376,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockCreateUserInUserManagement(student, true);
 
@@ -390,7 +390,7 @@ public class UserTestService {
         student.setLogin("@someusername");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
@@ -404,7 +404,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, true, false);
 
@@ -418,7 +418,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, false, true);
 
@@ -432,7 +432,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockFailToCreateUserInExernalUserManagement(student, true, false, false);
 
@@ -446,7 +446,7 @@ public class UserTestService {
         student.setEmail("batman@invalid.tum");
         student.setLogin("batman");
         student.setPassword(null);
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
@@ -463,7 +463,7 @@ public class UserTestService {
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
-        student.setVisibleEmail();
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockCreateUserInUserManagement(newUser, false);
 
@@ -490,7 +490,7 @@ public class UserTestService {
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor2"));
-        newUser.setVisibleEmail();
+        newUser.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
 
         mockDelegate.mockCreateUserInUserManagement(newUser, false);
 

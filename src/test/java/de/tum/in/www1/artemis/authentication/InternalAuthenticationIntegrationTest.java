@@ -269,9 +269,8 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         final var oldGroups = student.getGroups();
         final var newGroups = Set.of("foo", "bar");
         student.setGroups(newGroups);
-        student.setVisibleEmail();
-        final var managedUserVM = new ManagedUserVM(student);
-        managedUserVM.setPassword("12345678");
+        student.setVisibleEmail(); // ManagedUserVM uses the UserDTO so we need to set the email visible
+        final var managedUserVM = new ManagedUserVM(student, "12345678");
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
 
