@@ -90,8 +90,8 @@ public class UserTestService {
         List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
         student = users.get(0);
         student.setInternal(true);
-        student.setVisibleEmail();
         student = userRepository.save(student);
+        student.setVisibleEmail();
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
     }
 
