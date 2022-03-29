@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
