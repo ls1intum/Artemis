@@ -187,13 +187,11 @@
             "scoringType": {
                 "all_or_nothing": "All or Nothing",
                 "proportional_with_penalty": "Proportional with Penalty",
-                "proportional_without_penalty": "Proportional without Penalty",
-                "single_choice": "Single Choice"
+                "proportional_without_penalty": "Proportional without Penalty"
             },
             "scoringTypeExplanation": {
                 "title": "Scoring Types",
                 "all_or_nothing": "All correct options must be selected and all incorrect options must not be selected to achieve the full score. If a mistake is made the participant achieves 0 points. There is no score in between.",
-                "single_choice": "Same as All or Nothing, but there is only one correct answer.",
                 "proportional_with_penalty": "Each correct answer is awarded with a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. Each wrong answer option subtracts 0.6 points. A student with 3 correct and 2 wrong answers would then receive 0.6 points.",
                 "proportional_without_penalty": "Each correct answer is awarded with a fraction of the total score. No points are deducted for mistakes. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. A student with 3 correct and 2 wrong answers would then receive 1.8 points."
             },

@@ -187,13 +187,11 @@
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",
                 "proportional_with_penalty": "Anteilig mit Abzügen",
-                "proportional_without_penalty": "Anteilig ohne Abzüge",
-                "single_choice": "Einfachauswahl"
+                "proportional_without_penalty": "Anteilig ohne Abzüge"
             },
             "scoringTypeExplanation": {
                 "title": "Bewertungstypen",
                 "all_or_nothing": "Alle richtigen Auswahlmöglichkeiten müssen ausgewählt werden und alle falschen Auswahlmöglichkeiten müssen leer bleiben, um die volle Punktzahl zu erreichen. Wird eine falsche Antwortmöglichkeit ausgewählt gibt es 0 Punkte. Es gibt keine Punktzahl dazwischen.",
-                "single_choice": "Wie Alles-oder-Nichts aber nur eine richtige Antwort ist richtig.",
                 "proportional_with_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Um Rätselraten zu vermeiden, wird für jeden Fehler der gleiche Anteil von den erreichten Punkten abgezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Jede falsche Antwortmöglichkeit zieht 0,6 Punkte ab. Studierende mit 3 richtigen und 2 falschen Antworten erhalten dann 0,6 Punkte.",
                 "proportional_without_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Bei falschen Antworten werden keine Punkte abgezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Studierende mit 3 richtigen und 2 falschen Antworten erhalten dann 1,8 Punkte."
             },
@@ -214,7 +212,7 @@
                 "scoringTypeProportional": "Verteilung Anteilig mit Abzügen: ",
                 "scoringTypeProportionalWithout": "Verteilung Anteilig ohne Abzügen: ",
                 "scoringTypeAllOrNothing": "Verteilung Alles-oder-Nichts: ",
-                "scoringTypeSingleChoiceNothing": "Verteilung Einfachauswahl: ",
+                "scoringTypeSingleChoice": "Verteilung Einfachauswahl: ",
                 "scoringTypeProportionalExplanation": "Jede richtige Antwort gibt positive Punkte, jeder Fehler gibt negative Punkte, um Rätselraten zu vermeiden. ",
                 "scoringTypeProportionalWithoutExplanation": "Jede richtige Antwort gibt positive Punkte. Für Fehler werden keine Punkte abgezogen. ",
                 "scoringTypeAllOrNothingExplanation": "Du erhältst entweder alle oder gar keine Punkte.",

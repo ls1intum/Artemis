@@ -18,7 +18,7 @@
             "answerOptions": "Answer Options",
             "randomizeOrder": "Present Answer Options in Random Order",
             "singleChoice": "Single Choice Mode",
-            "singleChoiceInfo": "For questions where students should select the single correct answer option.",
+            "singleChoiceInfo": "For questions where the single correct answer option should be selected.",
             "scoringType": "Type / Scoring",
             "answer": "Answer",
             "solution": "Solution",
