@@ -194,6 +194,7 @@ public class BitbucketRequestMockProvider {
             }
             else {
                 mockUserDoesNotExist(user.getLogin());
+                throw new BitbucketException("The user was not created in Bitbucket and has to be manually added.");
             }
         }
         mockProtectBranches(exercise, repoName);

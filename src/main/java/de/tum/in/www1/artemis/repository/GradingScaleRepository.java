@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -111,17 +112,20 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return grade step corresponding to the given percentage
      */
     default GradeStep matchPercentageToGradeStep(double percentage, Long gradingScaleId) {
-        if (percentage < 0 || percentage > 100) {
-            throw new BadRequestAlertException("Grade percentages must be between 0 and 100", "gradeStep", "invalidGradePercentage");
+        if (percentage < 0) {
+            throw new BadRequestAlertException("Grade percentages must be greater than 0", "gradeStep", "invalidGradePercentage");
         }
-        Set<GradeStep> gradeSteps = findById(gradingScaleId).get().getGradeSteps();
+        Set<GradeStep> gradeSteps = findById(gradingScaleId).orElseThrow().getGradeSteps();
         Optional<GradeStep> matchingGradeStep = gradeSteps.stream().filter(gradeStep -> gradeStep.matchingGradePercentage(percentage)).findFirst();
         if (matchingGradeStep.isPresent()) {
             return matchingGradeStep.get();
         }
-        else {
-            throw new EntityNotFoundException("No grade step in selected grading scale matches given percentage");
+        if (percentage > 100) {
+            // return the highest grade step for percentages > 100 (bonus points)
+            Optional<GradeStep> highestGradeStep = gradeSteps.stream().max(Comparator.comparing(GradeStep::getUpperBoundPercentage));
+            return highestGradeStep.orElseThrow(() -> new EntityNotFoundException("No grade steps available"));
         }
+        throw new EntityNotFoundException("No grade step in selected grading scale matches given percentage");
     }
 
     /**

@@ -39,7 +39,8 @@ artemis:
   repo-download-clone-path: repos-download
   file-upload-path: ./uploads
   submission-export-path: exports
-  encryption-password: cypressEncryptionPassword
+  encryption-password: cypressEncryptionPassword # LEGACY: arbitrary password for encrypting database values
+  bcrypt-salt-rounds: 4    # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest
   user-management:
     use-external: true
     external:
