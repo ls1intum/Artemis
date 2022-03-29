@@ -41,8 +41,8 @@ describe('ConnectionWarning', () => {
     it('should show the indicator and popover on dropped connection', fakeAsync(() => {
         fixture.detectChanges();
 
-        expect(component.disconnected).toBe(false);
-        expect(component.popover.isOpen()).toBe(false);
+        expect(component.disconnected).toBeFalse();
+        expect(component.popover.isOpen()).toBeFalse();
 
         const warningDiv = fixture.debugElement.query(By.css('.connection-warning'));
         expect(warningDiv).not.toBeNull();
@@ -51,18 +51,18 @@ describe('ConnectionWarning', () => {
         subject.next(new ConnectionState(false, true, false));
         fixture.detectChanges();
 
-        expect(component.disconnected).toBe(true);
+        expect(component.disconnected).toBeTrue();
         expect(warningDiv.classes).toContainEntry(['disconnected', true]);
 
         tick(500);
-        expect(component.popover.isOpen()).toBe(true);
+        expect(component.popover.isOpen()).toBeTrue();
 
         subject.next(new ConnectionState(true, true, false));
         fixture.detectChanges();
 
         tick(100);
-        expect(component.disconnected).toBe(false);
-        expect(component.popover.isOpen()).toBe(false);
+        expect(component.disconnected).toBeFalse();
+        expect(component.popover.isOpen()).toBeFalse();
         expect(warningDiv.classes).not.toContainEntry(['disconnected', true]);
     }));
 });
