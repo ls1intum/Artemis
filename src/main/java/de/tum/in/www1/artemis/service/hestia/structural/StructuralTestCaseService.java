@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.*;
 
@@ -282,7 +283,7 @@ public class StructuralTestCaseService {
             if (solutionMethod != null && !solutionMethod.getTypeParameters().isEmpty()) {
                 genericTypes = " " + getGenericTypesString(solutionMethod.getTypeParameters());
             }
-            var modifiers = Arrays.asList(method.getModifiers());
+            var modifiers = Lists.newArrayList(method.getModifiers());
             var isAbstract = modifiers.contains("abstract");
             // Adjust modifiers for interfaces
             if (structuralClass.isInterface()) {
