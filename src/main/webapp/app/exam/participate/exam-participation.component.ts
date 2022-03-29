@@ -96,12 +96,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     examStartConfirmed = false;
 
-    /**
-     * Websocket channels
-     */
-    onConnected: () => void;
-    onDisconnected: () => void;
-
     // autoTimerInterval in seconds
     autoSaveTimer = 0;
     autoSaveInterval: number;
