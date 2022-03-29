@@ -289,8 +289,8 @@ public class StructuralTestCaseService {
                 returnType = solutionMethod.getReturnType().getGenericValue();
             }
             String methodBody = " {\n" + SINGLE_INDENTATION + "\n}";
-            // Remove the method body if the method is abstract or a non-default interface method
-            if (structuralClass.isInterface() && !concatenatedModifiers.contains("default") || !structuralClass.isInterface() && concatenatedModifiers.contains("abstract")) {
+            // Remove the method body if the method is abstract
+            if (concatenatedModifiers.contains("abstract")) {
                 methodBody = ";";
             }
             String result = String.join(" ", concatenatedModifiers + genericTypes, returnType, method.getName() + concatenatedParameters + methodBody).trim();
