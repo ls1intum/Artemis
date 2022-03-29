@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.dto.StudentParticipationDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -361,7 +362,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         exerciseRepo.save(quizEx);
         database.createAndSaveParticipationForExercise(quizEx, "student2");
 
-        var participations = request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
+        var participations = request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.OK, StudentParticipationDTO.class);
         assertThat(participations).hasSize(4);
         participations.forEach(participation -> {
             var exercise = participation.getExercise();
