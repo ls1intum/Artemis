@@ -124,7 +124,7 @@ public class UserResource {
      */
     @PostMapping("users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
+    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
         log.debug("REST request to save User : {}", managedUserVM);
         checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
 
@@ -145,7 +145,7 @@ public class UserResource {
         createdUser.setVisibleEmail();
 
         return ResponseEntity.created(new URI("/api/users/" + createdUser.getLogin()))
-                .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", createdUser.getLogin())).body(createdUser);
+                .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", createdUser.getLogin())).body(new UserDTO(createdUser));
     }
 
     /**

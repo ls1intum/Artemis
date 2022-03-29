@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.TeamService;
+import de.tum.in.www1.artemis.service.dto.TeamDTO;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -218,7 +219,7 @@ public class TeamResource {
      */
     @GetMapping("/exercises/{exerciseId}/teams/{teamId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Team> getTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
+    public ResponseEntity<TeamDTO> getTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to get Team : {}", teamId);
         Optional<Team> optionalTeam = teamRepository.findOneWithEagerStudents(teamId);
         if (optionalTeam.isEmpty()) {
@@ -236,7 +237,7 @@ public class TeamResource {
         team.filterSensitiveInformation();
         // We want to show the email of the tutor to the team members so they can contact the tutor if they need help
         team.getOwner().setVisibleEmail();
-        return ResponseEntity.ok().body(team);
+        return ResponseEntity.ok().body(new TeamDTO(team));
     }
 
     /**

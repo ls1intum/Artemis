@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.dto.StudentExamDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -100,7 +101,7 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<StudentExam> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExamDTO> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
@@ -121,7 +122,7 @@ public class StudentExamResource {
         studentExam.getUser().setVisibleRegistrationNumber();
         studentExam.getUser().setVisibleEmail();
 
-        return ResponseEntity.ok(studentExam);
+        return ResponseEntity.ok(new StudentExamDTO(studentExam));
     }
 
     /**
@@ -151,7 +152,7 @@ public class StudentExamResource {
      */
     @PatchMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/working-time")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<StudentExam> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+    public ResponseEntity<StudentExamDTO> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody Integer workingTime) {
         log.debug("REST request to update the working time of student exam : {}", studentExamId);
 
@@ -175,8 +176,10 @@ public class StudentExamResource {
         }
 
         studentExam.setWorkingTime(workingTime);
+
+        var savedExam = studentExamRepository.save(studentExam);
         studentExam.getUser().setVisibleEmail();
-        return ResponseEntity.ok(studentExamRepository.save(studentExam));
+        return ResponseEntity.ok(new StudentExamDTO(savedExam));
     }
 
     /**

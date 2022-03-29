@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.dto.StudentParticipationDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
@@ -366,12 +367,13 @@ public class ParticipationResource {
      */
     @GetMapping("courses/{courseId}/participations")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<StudentParticipation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<StudentParticipationDTO>> getAllParticipationsForCourse(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Participations for Course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
+        List<StudentParticipationDTO> dtos = new ArrayList<>();
         int resultCount = 0;
         for (StudentParticipation participation : participations) {
             // make sure registration number and email are explicitly shown in the client
@@ -415,10 +417,11 @@ public class ParticipationResource {
                 modelingExercise.setExampleSolutionExplanation(null);
             }
             resultCount += participation.getResults().size();
+            dtos.add(new StudentParticipationDTO(participation));
         }
         long end = System.currentTimeMillis();
         log.info("Found {} particpations with {} results in {}ms", participations.size(), resultCount, end - start);
-        return ResponseEntity.ok().body(participations);
+        return ResponseEntity.ok().body(dtos);
     }
 
     /**
