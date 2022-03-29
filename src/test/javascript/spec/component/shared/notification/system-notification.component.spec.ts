@@ -9,8 +9,9 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
-import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 
 describe('System Notification Component', () => {
     let systemNotificationComponent: SystemNotificationComponent;
@@ -37,7 +38,7 @@ describe('System Notification Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: jhiWebsocketService, useClass: JhiWebsocketService },
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
         })
             .compileComponents()
@@ -76,7 +77,6 @@ describe('System Notification Component', () => {
     describe('Websocket', () => {
         let connectionStateSubscribeSpy: jest.SpyInstance;
         beforeEach(() => {
-            jhiWebsocketService.connectionState.next(new ConnectionState(true, true));
             connectionStateSubscribeSpy = jest.spyOn(jhiWebsocketService.connectionState, 'subscribe');
         });
 

@@ -27,6 +27,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ArtemisTestModule } from '../../test.module';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 
 class MockBreadcrumb {
     label: string;
@@ -78,6 +79,7 @@ describe('NavbarComponent', () => {
                 MockComponent(NotificationSidebarComponent),
                 MockComponent(GuidedTourComponent),
                 MockComponent(LoadingNotificationComponent),
+                MockComponent(JhiConnectionWarningComponent),
             ],
             providers: [
                 MockProvider(UrlSerializer),

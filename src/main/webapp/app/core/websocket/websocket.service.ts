@@ -28,6 +28,13 @@ export interface IWebsocketService {
     receive(channel: string): Observable<any>;
 
     /**
+     * Send data through the websocket connection
+     * @param path {string} the path for the websocket connection
+     * @param data {object} the data to send through the websocket connection
+     */
+    send(path: string, data: any): void;
+
+    /**
      * Subscribe to a channel.
      * @param channel
      */
@@ -48,6 +55,11 @@ export interface IWebsocketService {
      * Disable automatic reconnect
      */
     disableReconnect(): void;
+
+    /**
+     * Get updates on current connection status
+     */
+    get connectionState(): Observable<ConnectionState>;
 }
 
 export class ConnectionState {
@@ -73,7 +85,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     alreadyConnectedOnce = false;
     private subscription: Subscription | null;
     shouldReconnect = false;
-    public readonly connectionState: BehaviorSubject<ConnectionState> = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false, true));
+    private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     consecutiveFailedAttempts = 0;
     connecting = false;
 
@@ -81,7 +93,12 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     private subscriptionCounter = 0;
 
     constructor(private router: Router, private authServerProvider: AuthServerProvider) {
+        this.connectionStateInternal = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false, true));
         this.connection = this.createConnection();
+    }
+
+    get connectionState(): Observable<ConnectionState> {
+        return this.connectionStateInternal.asObservable();
     }
 
     /**
@@ -98,8 +115,8 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     stompFailureCallback() {
         this.connecting = false;
         this.consecutiveFailedAttempts++;
-        if (this.connectionState.getValue().connected) {
-            this.connectionState.next(new ConnectionState(false, this.alreadyConnectedOnce, false));
+        if (this.connectionStateInternal.getValue().connected) {
+            this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false));
         }
         if (this.shouldReconnect) {
             let waitUntilReconnectAttempt;
@@ -158,8 +175,8 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             () => {
                 this.connectedPromise('success');
                 this.connecting = false;
-                if (!this.connectionState.getValue().connected) {
-                    this.connectionState.next(new ConnectionState(true, this.alreadyConnectedOnce, false));
+                if (!this.connectionStateInternal.getValue().connected) {
+                    this.connectionStateInternal.next(new ConnectionState(true, this.alreadyConnectedOnce, false));
                 }
                 this.consecutiveFailedAttempts = 0;
                 if (this.alreadyConnectedOnce) {
@@ -203,8 +220,8 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         if (this.stompClient) {
             this.stompClient.disconnect();
             this.stompClient = null;
-            if (this.connectionState.getValue().connected || !this.connectionState.getValue().intendedDisconnect) {
-                this.connectionState.next(new ConnectionState(false, this.alreadyConnectedOnce, true));
+            if (this.connectionStateInternal.getValue().connected || !this.connectionStateInternal.getValue().intendedDisconnect) {
+                this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, true));
             }
         }
         if (this.subscription) {
@@ -230,7 +247,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * @param path {string} the path for the websocket connection
      * @param data {object} the data to send through the websocket connection
      */
-    send(path: string, data: any) {
+    send(path: string, data: any): void {
         if (this.isConnected()) {
             this.stompClient!.send(path, JSON.stringify(data), {});
         }

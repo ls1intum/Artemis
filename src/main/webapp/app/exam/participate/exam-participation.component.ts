@@ -80,7 +80,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     exerciseIndex = 0;
 
     errorSubscription: Subscription;
-    websocketSubscription: Subscription;
+    websocketSubscription?: Subscription;
 
     isProgrammingExercise() {
         return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
@@ -462,7 +462,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             subscription.unsubscribe();
         });
         this.errorSubscription.unsubscribe();
-        this.websocketSubscription.unsubscribe();
+        this.websocketSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 
