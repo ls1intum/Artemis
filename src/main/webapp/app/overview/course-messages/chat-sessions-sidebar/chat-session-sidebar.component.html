@@ -1,46 +1,67 @@
-<aside class="chat-session-sidebar">
-    <jhi-data-table
-        [showPageSizeDropdown]="false"
-        entityType="user"
-        [searchFields]="['name']"
-        [isLoading]="isLoading"
-        [isSearching]="isSearching"
-        [searchFailed]="searchFailed"
-        [searchNoResults]="searchNoResults"
-        [isTransitioning]="isTransitioning"
-        [onSearchWrapper]="searchUsersWithinCourse"
-        [searchResultFormatter]="searchResultFormatter"
-        [onAutocompleteSelectWrapper]="onAutocompleteSelect"
-        [searchTextFromEntity]="clearUserSearchBar"
-        searchPlaceholderTranslation="artemisApp.messages.chatSession.searchForUsers"
-    ></jhi-data-table>
-
-    <ul class="chat-session-list" *ngIf="chatSessions && chatSessions.length">
-        <li
-            *ngFor="let chatSession of chatSessions"
-            class="chat-session-list-item"
-            [class.selected]="activeChatSession.id === chatSession.id"
-            (click)="selectChatSession.emit(chatSession)"
-        >
-            <div class="chat-session-list-item-info">
-                <span class="chat-session-list-item-students">
-                    <span>{{ getNameOfChatSessionParticipant(chatSession) }}</span>
-                </span>
+<div *ngIf="course" class="h-100">
+    <div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-discussion">
+        <div class="card">
+            <!-- header -->
+            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.discussion.hide' | artemisTranslate" (click)="collapsed = true">
+                <div class="row flex-grow-1">
+                    <div class="col">
+                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.messages.header">Private messages</h5>
+                    </div>
+                    <div class="col-auto">
+                        <fa-icon [icon]="faChevronLeft"></fa-icon>
+                    </div>
+                </div>
             </div>
-        </li>
-    </ul>
-
-    <div class="chat-session-empty" *ngIf="!chatSessions || chatSessions.length == 0">
-        {{ 'artemisApp.messages.chatSession.notFound' | artemisTranslate }}
-    </div>
-
-    <div class="plagiarism-paging">
-        <div class="plagiarism-paging-left" [class.disabled]="currentPage === 0" (click)="handlePageLeft()">
-            <fa-icon [icon]="faArrowLeft"></fa-icon>
+            <!-- body -->
+            <div class="card-body pt-0 chat-session-sidebar">
+                <div class="my-2">
+                    <jhi-data-table
+                        [showPageSizeDropdown]="false"
+                        entityType="user"
+                        [searchFields]="['name']"
+                        [isLoading]="isLoading"
+                        [isSearching]="isSearching"
+                        [searchFailed]="searchFailed"
+                        [searchNoResults]="searchNoResults"
+                        [isTransitioning]="isTransitioning"
+                        [onSearchWrapper]="searchUsersWithinCourse"
+                        [searchResultFormatter]="searchResultFormatter"
+                        [onAutocompleteSelectWrapper]="onAutocompleteSelect"
+                        [searchTextFromEntity]="clearUserSearchBar"
+                        searchPlaceholderTranslation="artemisApp.messages.chatSession.searchForUsers"
+                    ></jhi-data-table>
+                </div>
+                <div class="my-2">
+                    <ul class="chat-session-list" *ngIf="chatSessions && chatSessions.length">
+                        <li
+                            *ngFor="let chatSession of chatSessions"
+                            class="chat-session-list-item"
+                            [class.selected]="activeChatSession.id === chatSession.id"
+                            (click)="selectChatSession.emit(chatSession)"
+                        >
+                            <div class="chat-session-list-item-info">
+                                <span class="chat-session-list-item-students">
+                                    <span>{{ getNameOfChatSessionParticipant(chatSession) }}</span>
+                                </span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <!-- no posts -->
+                <div class="post-result-information row mt-2" *ngIf="!chatSessions || chatSessions.length == 0">
+                    <div class="col-12">
+                        {{ 'artemisApp.messages.chatSession.notFound' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="plagiarism-paging-center">{{ currentPage + 1 }}/{{ numberOfPages + 1 }}</div>
-        <div class="plagiarism-paging-right" [class.disabled]="currentPage === numberOfPages" (click)="handlePageRight()">
-            <fa-icon [icon]="faArrowRight"></fa-icon>
-        </div>
     </div>
-</aside>
+    <!-- collapsed posts -->
+    <ng-template #collapsedPosts>
+        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.discussion.show' | artemisTranslate">
+            <fa-icon class="expand-postings-icon" [icon]="faChevronRight"></fa-icon>
+            <span class="h5" jhiTranslate="artemisApp.metis.messages.header"></span>
+            <fa-icon class="expand-postings-icon" [icon]="faChevronRight"></fa-icon>
+        </div>
+    </ng-template>
+</div>

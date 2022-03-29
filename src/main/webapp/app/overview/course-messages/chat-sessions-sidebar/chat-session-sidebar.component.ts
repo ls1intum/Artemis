@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import { ChatSessionService } from 'app/shared/metis/chat-session.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
@@ -20,7 +20,7 @@ import { ChatService } from 'app/shared/metis/chat.service';
 
 @Component({
     selector: 'jhi-chat-session-sidebar',
-    styleUrls: ['./chat-session-sidebar.component.scss'],
+    styleUrls: ['./chat-session-sidebar.component.scss', '../../discussion-section/discussion-section.component.scss'],
     templateUrl: './chat-session-sidebar.component.html',
     providers: [MetisService, ChatSessionService],
 })
@@ -31,30 +31,10 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
 
     @Output() selectChatSession = new EventEmitter<ChatSession>();
 
-    faExclamationTriangle = faExclamationTriangle;
-
     chatSessions: ChatSession[];
-    /**
-     * Index of the currently selected result page.
-     */
-    public currentPage = 0;
-
-    /**
-     * Total number of result pages.
-     */
-    public numberOfPages = 0;
-
-    /**
-     * Subset of currently paged comparisons.
-     */
-    public pagedComparisons?: ChatSession;
-
-    /**
-     * Number of comparisons per page.
-     */
-    public pageSize = 100;
 
     course?: Course;
+    collapsed: boolean;
     courseId: number;
 
     private chatSessionSubscription: Subscription;
@@ -69,9 +49,11 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
     rowClass: string | undefined = undefined;
 
     // Icons
+    faChevronLeft = faChevronLeft;
     faChevronRight = faChevronRight;
+    faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
-    faArrowRight = faArrowRight;
+    faPlus = faPlus;
 
     constructor(
         protected metisService: MetisService,
@@ -182,43 +164,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
     ngOnChanges(changes: SimpleChanges) {
         if (changes.comparisons) {
             const comparisons: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[] = changes.comparisons.currentValue;
-
-            this.currentPage = 0;
-            this.numberOfPages = this.computeNumberOfPages(comparisons.length);
-            // this.pagedComparisons = this.getPagedComparisons();
         }
-    }
-
-    computeNumberOfPages(totalComparisons: number) {
-        return Math.floor(totalComparisons / this.pageSize);
-    }
-
-    getPagedComparisons() {
-        const startIndex = this.currentPage * this.pageSize;
-
-        return this.chatSessions?.slice(startIndex, startIndex + this.pageSize);
-    }
-
-    getPagedIndex(idx: number) {
-        return idx + this.currentPage * this.pageSize;
-    }
-
-    handlePageLeft() {
-        if (this.currentPage === 0) {
-            return;
-        }
-
-        this.currentPage--;
-        // this.pagedComparisons! = this.getPagedComparisons();
-    }
-
-    handlePageRight() {
-        if (this.currentPage === this.numberOfPages) {
-            return;
-        }
-
-        this.currentPage++;
-        // this.pagedComparisons = this.getPagedComparisons();
     }
 
     getNameOfChatSessionParticipant(chatSession: ChatSession): string {
