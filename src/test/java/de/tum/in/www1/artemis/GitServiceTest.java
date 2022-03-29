@@ -25,7 +25,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.FileType;
@@ -36,9 +35,6 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Autowired
     private GitUtilService gitUtilService;
-
-    @Value("${artemis.version-control.default-branch:master}")
-    private String defaultBranch;
 
     @BeforeEach
     public void beforeEach() {

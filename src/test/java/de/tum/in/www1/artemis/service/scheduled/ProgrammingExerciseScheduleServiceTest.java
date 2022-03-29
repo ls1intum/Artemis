@@ -57,7 +57,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     private ProgrammingExercise programmingExercise;
 
-    private final LocalRepository studentRepository = new LocalRepository();
+    private final LocalRepository studentRepository = new LocalRepository(defaultBranch);
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
