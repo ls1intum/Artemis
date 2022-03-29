@@ -4,7 +4,7 @@ Setup Guide
 In this guide you learn how to setup the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
-development on the application server using Java 16, and TypeScript
+development on the application server using Java 17, and TypeScript
 development on the application client in the browser using
 `Angular <https://angular.io>`__ and Webpack. To get an overview of the
 used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
