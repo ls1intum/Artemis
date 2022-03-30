@@ -84,6 +84,11 @@ public class StructuralTestCaseService {
             }
             solutionRepository = gitService.getOrCheckoutRepository(solutionParticipation.get().getVcsRepositoryUrl(), true);
             testRepository = gitService.getOrCheckoutRepository(programmingExercise.getVcsTestRepositoryUrl(), true);
+
+            gitService.resetToOriginHead(solutionRepository);
+            gitService.pullIgnoreConflicts(solutionRepository);
+            gitService.resetToOriginHead(testRepository);
+            gitService.pullIgnoreConflicts(testRepository);
         }
         catch (InterruptedException | GitAPIException e) {
             var error = "Error while checking out repositories";
