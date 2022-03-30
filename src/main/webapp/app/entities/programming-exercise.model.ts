@@ -55,6 +55,8 @@ export class ProgrammingExercise extends Exercise {
 
     public projectType?: ProjectType;
 
+    public testwiseCoverageEnabled?: boolean;
+
     // helper attributes
 
     /**
@@ -79,5 +81,6 @@ export class ProgrammingExercise extends Exercise {
         this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.PLAIN_MAVEN; // default value
         this.showTestNamesToStudents = false; // default value
+        this.testwiseCoverageEnabled = false; // default value
     }
 }

@@ -530,8 +530,11 @@ public class ProgrammingExerciseService {
 
             Map<String, Boolean> sectionsMap = new HashMap<>();
 
-            // Keep or delete static code analysis configuration in pom.xml
+            // Keep or delete static code analysis configuration in the build file
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+
+            // Keep or delete testwise coverage configuration in the build file
+            sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles/**/*.*";

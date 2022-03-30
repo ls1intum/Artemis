@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTestwiseCoverageReportService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -74,13 +75,16 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseTestwiseCoverageReportService programmingExerciseTestwiseCoverageReportService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
-            SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseTestwiseCoverageReportService programmingExerciseTestwiseCoverageReportService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -97,6 +101,7 @@ public class ProgrammingExerciseGradingService {
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.exerciseDateService = exerciseDateService;
+        this.programmingExerciseTestwiseCoverageReportService = programmingExerciseTestwiseCoverageReportService;
     }
 
     /**
@@ -142,6 +147,10 @@ public class ProgrammingExerciseGradingService {
         // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
         if (isSolutionParticipation) {
             extractTestCasesFromResult(programmingExercise, newResult);
+            // the test cases have been saved to the database previously, therefore we can add the reference to the coverage reports
+            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
+                programmingExerciseTestwiseCoverageReportService.updateReportWithTestCases(newResult.getTestwiseCoverageReportByTestCaseName(), programmingExercise);
+            }
         }
 
         Result processedResult = calculateScoreForResult(newResult, programmingExercise, isStudentParticipation);
