@@ -476,14 +476,14 @@ public class BitbucketService extends AbstractVersionControlService {
 
         try {
             var response = restTemplate.exchange(getDefaultBranchUrl, HttpMethod.GET, null, BitbucketDefaultBranchDTO.class);
-            var body = response.getBody();
+            var defaultBranchDTO = response.getBody();
 
-            if (body == null) {
+            if (defaultBranchDTO == null) {
                 log.error("Unable to get default branch for repository " + repositorySlug);
                 throw new BitbucketException("Unable to get default branch for repository " + repositorySlug);
             }
 
-            return body.getDisplayId();
+            return defaultBranchDTO.getDisplayId();
         }
         catch (HttpClientErrorException e) {
             log.error("Unable to get default branch for repository " + repositorySlug, e);
