@@ -13,6 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 @Component({
     selector: 'jhi-post-overview',
@@ -63,7 +64,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     inlineInputEnabled = true;
     totalItems = 0;
     pagingEnabled = true;
-    itemsPerPage = 10; // ITEMS_PER_PAGE; todo
+    itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
     readonly CourseWideContext = CourseWideContext;
     readonly SortBy = PostSortCriterion;
