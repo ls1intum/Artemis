@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -120,6 +121,12 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
 
+    // Should be lazily loaded, but Hibernate does not support lazy loading for OneToOne relations
+    // Therefore we need JsonIgnore here
+    @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private ProgrammingExerciseGitDiffReport gitDiffReport;
+
     @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
     private Boolean testwiseCoverageEnabled;
 
@@ -166,7 +173,7 @@ public class ProgrammingExercise extends Exercise {
         return null;
     }
 
-    private void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
+    public void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
         }
@@ -745,5 +752,13 @@ public class ProgrammingExercise extends Exercise {
         if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
             throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
         }
+    }
+
+    public ProgrammingExerciseGitDiffReport getGitDiffReport() {
+        return gitDiffReport;
+    }
+
+    public void setGitDiffReport(ProgrammingExerciseGitDiffReport programmingExerciseGitDiffReport) {
+        this.gitDiffReport = programmingExerciseGitDiffReport;
     }
 }

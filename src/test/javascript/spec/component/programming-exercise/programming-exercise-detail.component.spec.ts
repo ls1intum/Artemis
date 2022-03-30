@@ -19,14 +19,24 @@ import { Task } from 'app/exercises/programming/shared/instructions-render/task/
 import { MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
+import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
-    let programmingExerciseService: ProgrammingExerciseService;
-    let statisticsServiceStub: jest.SpyInstance;
+    let exerciseService: ProgrammingExerciseService;
+    let modalService: NgbModal;
     let alertService: AlertService;
+    let statisticsServiceStub: jest.SpyInstance;
+    let gitDiffReportStub: jest.SpyInstance;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -42,29 +52,62 @@ describe('ProgrammingExercise Management Detail Component', () => {
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
+    const gitDiffReport = {
+        templateRepositoryCommitHash: 'x1',
+        solutionRepositoryCommitHash: 'x2',
+        entries: [
+            {
+                previousFilePath: '/src/test.java',
+                filePath: '/src/test.java',
+                previousLine: 1,
+                line: 1,
+                previousLineCount: 2,
+                lineCount: 2,
+            },
+        ],
+    } as ProgrammingExerciseGitDiffReport;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
             declarations: [ProgrammingExerciseDetailComponent],
             providers: [
                 MockProvider(AlertService),
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useValue: new MockProfileService() },
-                { provide: ProgrammingExerciseGradingService, useValue: MockProgrammingExerciseService },
+                { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
+                { provide: ProgrammingExerciseService, useValue: new MockProgrammingExerciseService() },
+                { provide: NgbModal, useValue: new MockNgbModalService() },
             ],
-        })
-            .overrideTemplate(ProgrammingExerciseDetailComponent, '')
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
-        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
         alertService = fixture.debugElement.injector.get(AlertService);
+        exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
+        modalService = fixture.debugElement.injector.get(NgbModal);
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('Should fetch and open git-diff', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        jest.spyOn(exerciseService, 'getFullDiffReport').mockReturnValue(of({} as ProgrammingExerciseFullGitDiffReport));
+        jest.spyOn(modalService, 'open');
+
+        comp.getAndShowFullDiff();
+
+        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledWith(FullGitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
     });
 
     describe('OnInit for course exercise', () => {
@@ -81,12 +124,15 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(statisticsServiceStub).toHaveBeenCalledTimes(1);
+            expect(gitDiffReportStub).toHaveBeenCalledTimes(1);
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toEqual(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
             expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+            expect(comp.programmingExercise.gitDiffReport).not.toBe(undefined);
+            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         });
     });
 
@@ -107,9 +153,12 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(statisticsServiceStub).toHaveBeenCalledTimes(1);
+            expect(gitDiffReportStub).toHaveBeenCalledTimes(1);
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeTrue();
+            expect(comp.programmingExercise.gitDiffReport).not.toBe(undefined);
+            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         });
     });
 
@@ -130,7 +179,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
                 hints: [],
             },
         ];
-        const extractTaskMock = jest.spyOn(programmingExerciseService, 'getTasksAndTestsExtractedFromProblemStatement').mockReturnValue(of(tasks));
+        const extractTaskMock = jest.spyOn(exerciseService, 'getTasksAndTestsExtractedFromProblemStatement').mockReturnValue(of(tasks));
         const expectedParams = {
             numberTasks: 2,
             numberTestCases: 3,
@@ -155,7 +204,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
     });
 
     it('should invoke deletion of tasks and solution entries', () => {
-        const deleteTasksAndSolutionEntriesSpy = jest.spyOn(programmingExerciseService, 'deleteTasksWithSolutionEntries').mockReturnValue(of(new HttpResponse<void>()));
+        const deleteTasksAndSolutionEntriesSpy = jest.spyOn(exerciseService, 'deleteTasksWithSolutionEntries').mockReturnValue(of(new HttpResponse<void>()));
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;

@@ -28,11 +28,13 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTestwiseCoverageService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -75,6 +77,10 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
+
+    private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
+
     private final ProgrammingExerciseTestwiseCoverageService programmingExerciseTestwiseCoverageService;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
@@ -84,6 +90,7 @@ public class ProgrammingExerciseGradingService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
             ProgrammingExerciseTestwiseCoverageService programmingExerciseTestwiseCoverageService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -101,6 +108,8 @@ public class ProgrammingExerciseGradingService {
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.exerciseDateService = exerciseDateService;
+        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
+        this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.programmingExerciseTestwiseCoverageService = programmingExerciseTestwiseCoverageService;
     }
 
@@ -195,6 +204,17 @@ public class ProgrammingExerciseGradingService {
         processedResult.setSubmission(programmingSubmission);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
+
+        // Update the git-diff of the programming exercise when the push was to the solution repository and
+        // no git-diff report exists yet. This will be the case when a new exercise is created or imported
+        if ((isSolutionParticipation || isTemplateParticipation) && programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId()) == null) {
+            try {
+                programmingExerciseGitDiffReportService.updateReport(programmingExercise);
+            }
+            catch (Exception e) {
+                log.error("Unable to update git-diff for programming exercise " + programmingExercise.getId(), e);
+            }
+        }
 
         return processedResult;
     }
