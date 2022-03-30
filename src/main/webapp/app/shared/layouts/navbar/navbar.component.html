@@ -163,7 +163,7 @@
                 ngbDropdown
                 class="nav-item dropdown pointer"
                 display="dynamic"
-                placement="bottom-right"
+                [placement]="isCollapsed ? 'bottom-left' : 'bottom-right'"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
                 [autoClose]="true"

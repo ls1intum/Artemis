@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription, of, Observable } from 'rxjs';
-import { tap, map, switchMap, filter } from 'rxjs/operators';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Observable, of, Subscription } from 'rxjs';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
@@ -11,7 +11,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
-import { Router, NavigationEnd, ActivatedRoute, RouterEvent } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -71,6 +71,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isRegistrationEnabled = false;
     passwordResetEnabled = false;
     breadcrumbs: Breadcrumb[];
+    isCollapsed: boolean;
+
     // Icons
     faBars = faBars;
     faThLarge = faThLarge;
@@ -126,6 +128,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
         this.getExamId();
+        this.onResize();
+    }
+
+    @HostListener('window:resize', ['$event'])
+    onResize() {
+        this.isCollapsed = window.innerWidth < 1200;
     }
 
     ngOnInit() {
