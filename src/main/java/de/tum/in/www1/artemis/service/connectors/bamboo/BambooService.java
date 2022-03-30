@@ -514,6 +514,13 @@ public class BambooService extends AbstractContinuousIntegrationService {
         return health;
     }
 
+    @Override
+    public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
+        // No webhooks needed between Bamboo and Bitbucket, so we return an empty Optional
+        // See https://confluence.atlassian.com/bamboo/integrating-bamboo-with-bitbucket-server-779302772.html
+        return Optional.empty();
+    }
+
     /**
      * Check if the build result received is the initial build of the plan.
      * Note: this is an edge case and means it was not created with a commit+push by the user

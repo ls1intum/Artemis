@@ -223,6 +223,16 @@ public interface ContinuousIntegrationService {
     void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException;
 
     /**
+     * Get the webhook URL to call if one wants to trigger the build plan or notify the plan about an event that should
+     * trigger. E.g. a new push to the repository
+     *
+     * @param projectKey The key of the project related to the build plan
+     * @param buildPlanId The ID of the build plan, that should get triggered/notified
+     * @return The URL as a String pointing to the to be triggered build plan in the CI system. If this is not needed/supported, an empty optional is returned.
+     */
+    Optional<String> getWebHookUrl(String projectKey, String buildPlanId);
+
+    /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out
      * to a subdirectory called "assignment" for the Python programming language.
      */

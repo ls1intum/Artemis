@@ -52,13 +52,16 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final JenkinsJobService jenkinsJobService;
 
+    private final JenkinsInternalUrlService jenkinsInternalUrlService;
+
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             FeedbackRepository feedbackRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService) {
+            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
+        this.jenkinsInternalUrlService = jenkinsInternalUrlService;
     }
 
     @Override
@@ -138,8 +141,15 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
     }
 
+    @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
         return TestResultsDTO.convert(requestBody);
+    }
+
+    @Override
+    public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
+        var urlString = serverUrl + "/project/" + projectKey + "/" + buildPlanId;
+        return Optional.of(jenkinsInternalUrlService.toInternalCiUrl(urlString));
     }
 
     @Override
