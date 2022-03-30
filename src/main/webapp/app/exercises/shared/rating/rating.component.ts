@@ -5,7 +5,6 @@ import { Result } from 'app/entities/result.model';
 import { Rating } from 'app/entities/rating.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 @Component({
     selector: 'jhi-rating',
@@ -39,25 +38,12 @@ export class RatingComponent implements OnInit {
      */
     onRate(event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
         // block rating to prevent double sending of post request
-        if (this.disableRating) {
+        if (this.disableRating || !this.rating.result) {
             return;
         }
 
         // update feedback locally
         this.rating.rating = event.newValue;
-        // Break circular dependency
-        if (this.rating.result) {
-            this.rating.result.participation = undefined;
-            const submission = this.rating.result.submission;
-            if (submission) {
-                submission.participation = undefined;
-                const latestResult = getLatestSubmissionResult(submission);
-                if (latestResult) {
-                    latestResult.participation = undefined;
-                    latestResult.submission = undefined;
-                }
-            }
-        }
 
         // set/update feedback on the server
         if (this.rating.id) {

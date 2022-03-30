@@ -67,9 +67,10 @@ export class AssessmentDashboardComponent implements OnInit {
 
     isExamMode = false;
     isTestRun = false;
-    toggelingSecondCorrectionButton = false;
 
     tutorIssues: TutorIssue[] = [];
+
+    isTogglingSecondCorrection: Map<number, boolean> = new Map<number, boolean>();
 
     // Icons
     faSort = faSort;
@@ -310,8 +311,19 @@ export class AssessmentDashboardComponent implements OnInit {
             // sort exercises by type to get a better overview in the dashboard
             this.sortService.sortByProperty(this.currentlyShownExercises, 'type', true);
             this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
+            this.initIsTogglingSecondCorrection();
             this.updateExercises();
         }
+    }
+
+    /**
+     * Initiates the map that contains the current toggling state (false) for each exercise.
+     * @private
+     */
+    private initIsTogglingSecondCorrection() {
+        this.allExercises.forEach((exercise) => {
+            this.isTogglingSecondCorrection.set(exercise.id!, false);
+        });
     }
 
     private getUnfinishedExercises(exercises?: Exercise[]) {
@@ -371,14 +383,14 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     toggleSecondCorrection(exerciseId: number) {
-        this.toggelingSecondCorrectionButton = true;
         const currentExercise = this.currentlyShownExercises.find((exercise) => exercise.id === exerciseId)!;
+        this.isTogglingSecondCorrection.set(currentExercise.id!, true);
         const index = this.currentlyShownExercises.indexOf(currentExercise);
         this.exerciseService.toggleSecondCorrection(exerciseId).subscribe({
             next: (res: Boolean) => {
                 this.currentlyShownExercises[index].secondCorrectionEnabled = !this.currentlyShownExercises[index].secondCorrectionEnabled;
                 currentExercise!.secondCorrectionEnabled = res as boolean;
-                this.toggelingSecondCorrectionButton = false;
+                this.isTogglingSecondCorrection.set(currentExercise.id!, false);
             },
             error: (err: string) => {
                 this.onError(err);

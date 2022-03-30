@@ -330,8 +330,9 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.OK, byte[].class);
 
         assertThat(receivedFile).isNotEmpty();
-        PDDocument mergedDoc = PDDocument.load(receivedFile);
-        assertEquals(5, mergedDoc.getNumberOfPages());
+        try (PDDocument mergedDoc = PDDocument.load(receivedFile)) {
+            assertEquals(5, mergedDoc.getNumberOfPages());
+        }
     }
 
     public Lecture createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {

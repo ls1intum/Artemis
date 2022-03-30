@@ -118,7 +118,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      */
     private extractAnnotations() {
         const exercise: ProgrammingExercise | undefined = getExercise(this.participation!);
-        const buildLogErrors = this.rawBuildLogs.extractErrors(exercise?.programmingLanguage);
+        const buildLogErrors = this.rawBuildLogs.extractErrors(exercise?.programmingLanguage, exercise?.projectType);
         const codeAnalysisIssues = (this.result!.feedbacks || [])
             .filter(Feedback.isStaticCodeAnalysisFeedback)
             .map<StaticCodeAnalysisIssue>((feedback) => JSON.parse(feedback.detailText!));
