@@ -24,6 +24,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { Course } from 'app/entities/course.model';
 
 describe('ResultDetailComponent', () => {
     let comp: ResultDetailComponent;
@@ -172,6 +173,11 @@ describe('ResultDetailComponent', () => {
                     projectKey: 'somekey',
                 } as ProgrammingExercise;
 
+                const course = new Course();
+                course.id = 3;
+                course.title = 'Testcourse';
+                exercise.course = course;
+
                 comp.exercise = exercise;
 
                 comp.result = {
@@ -202,6 +208,36 @@ describe('ResultDetailComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should set the exercise from the participation if available', () => {
+        comp.exercise = undefined;
+        comp.result.participation!.exercise = exercise;
+
+        comp.ngOnInit();
+
+        expect(comp.exercise).toEqual(exercise);
+        expect(comp.course).toEqual(exercise.course);
+    });
+
+    it('should set the exercise type from the exercise if not available otherwise', () => {
+        comp.exerciseType = undefined as any;
+        exercise.type = ExerciseType.MODELING;
+        comp.exercise = exercise;
+
+        comp.ngOnInit();
+
+        expect(comp.exerciseType).toBe(ExerciseType.MODELING);
+    });
+
+    it('should set the exercise type from a programming participation if not available otherwise', () => {
+        comp.exerciseType = undefined as any;
+        comp.exercise = undefined;
+        comp.result.participation!.type = ParticipationType.PROGRAMMING;
+
+        comp.ngOnInit();
+
+        expect(comp.exerciseType).toBe(ExerciseType.PROGRAMMING);
     });
 
     it('should generate commit link for programming exercise result with submission, participation and exercise', () => {

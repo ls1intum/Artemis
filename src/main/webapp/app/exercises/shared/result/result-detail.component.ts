@@ -166,7 +166,7 @@ export class ResultDetailComponent implements OnInit {
         }
 
         if (!this.exerciseType && this.exercise?.type) {
-            this.exerciseType = this.exercise?.type;
+            this.exerciseType = this.exercise.type;
         }
 
         // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
