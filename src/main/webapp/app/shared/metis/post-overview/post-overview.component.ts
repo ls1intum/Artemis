@@ -42,6 +42,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
             this.chatSession = activeChatSession;
             if (this.course) {
                 this.onSelectContext();
+                this.createEmptyPost();
             }
         }
     }

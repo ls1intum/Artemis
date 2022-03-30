@@ -139,6 +139,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
                     this.chatSessions.unshift(chatSession);
 
                     // select the new chatSession
+                    this.activeChatSession = chatSession;
                     this.selectChatSession.emit(chatSession);
                 },
                 error: () => {
@@ -147,6 +148,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
             });
         } else {
             // chatSession with the found user already exists, so we select it
+            this.activeChatSession = foundChatSession;
             this.selectChatSession.emit(foundChatSession);
         }
     };
@@ -157,7 +159,6 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
 
     getNameOfChatSessionParticipant(chatSession: ChatSession): string {
         const participant = chatSession.userChatSessions!.find((userChatSession) => userChatSession.user.id !== this.metisService.getUser().id)!.user;
-
         return participant.firstName!;
     }
 
