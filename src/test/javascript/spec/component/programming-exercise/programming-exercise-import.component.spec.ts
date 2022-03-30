@@ -46,7 +46,7 @@ describe('ProgrammingExerciseImportComponent', () => {
                 MockDirective(SortDirective),
                 MockComponent(FaIconComponent),
                 MockDirective(SortByDirective),
-                MockDirective(NgbHighlight),
+                MockComponent(NgbHighlight),
                 NgbPagination, // do not mock this directive as we need it for the test
                 MockPipe(ExerciseCourseTitlePipe),
                 MockDirective(NgbTooltip),

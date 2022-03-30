@@ -26,6 +26,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import {
     faBook,
     faChartBar,
@@ -40,6 +41,7 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -98,6 +100,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
         private sortService: SortService,
+        private programmingExerciseGradingService: ProgrammingExerciseGradingService,
         private router: Router,
     ) {}
 
@@ -171,6 +174,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
                 }
             });
+
+            this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => (this.programmingExercise.gitDiffReport = gitDiffReport));
         });
     }
 
@@ -252,7 +257,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
-                    translationParams: { numberTasks: res.length, numberTestCases: numberTests, detailedResult: this.buildTaskCreationMessage(res) },
+                    translationParams: {
+                        numberTasks: res.length,
+                        numberTestCases: numberTests,
+                        detailedResult: this.buildTaskCreationMessage(res),
+                    },
                     timeout: 0,
                 });
             },
@@ -406,5 +415,27 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             link.push('submissions');
         }
         return link;
+    }
+
+    /**
+     * Gets the full git-diff from the server and displays it in a modal.
+     */
+    getAndShowFullDiff() {
+        this.programmingExerciseService.getFullDiffReport(this.programmingExercise.id!).subscribe({
+            next: (gitDiffReport) => {
+                const modalRef = this.modalService.open(FullGitDiffReportModalComponent, {
+                    size: 'xl',
+                    backdrop: 'static',
+                });
+                modalRef.componentInstance.report = gitDiffReport;
+            },
+            error: (err: HttpErrorResponse) => {
+                if (err.status === 404) {
+                    this.alertService.error('artemisApp.programmingExercise.diffReport.404');
+                } else {
+                    this.onError(err);
+                }
+            },
+        });
     }
 }

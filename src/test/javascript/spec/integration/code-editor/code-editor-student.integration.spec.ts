@@ -36,7 +36,7 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -101,7 +101,7 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(NgbTooltip),
+                MockDirective(NgbTooltip),
                 MockComponent(CodeEditorGridComponent),
                 MockComponent(CodeEditorActionsComponent),
                 MockComponent(CodeEditorBuildOutputComponent),
