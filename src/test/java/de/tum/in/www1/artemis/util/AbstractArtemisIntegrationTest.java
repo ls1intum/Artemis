@@ -108,7 +108,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Override
     public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl) {
+        // mock both versions to be independent
         doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrlString(repositoryUrl.toString());
     }
 
     @Override
