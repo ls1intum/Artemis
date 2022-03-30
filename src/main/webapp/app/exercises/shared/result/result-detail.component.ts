@@ -142,6 +142,44 @@ export class ResultDetailComponent implements OnInit {
      */
     ngOnInit(): void {
         this.isLoading = true;
+
+        this.initializeExerciseInformation();
+        this.fetchAdditionalInformation();
+
+        this.commitHash = this.getCommitHash().slice(0, 11);
+
+        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
+            this.commitHashURLTemplate = info?.commitHashURLTemplate;
+            this.commitUrl = this.getCommitUrl();
+        });
+    }
+
+    /**
+     * Sets up the information related to the exercise.
+     * @private
+     */
+    private initializeExerciseInformation() {
+        this.exercise ??= this.result.participation?.exercise;
+        if (this.exercise) {
+            this.course = getCourseFromExercise(this.exercise);
+        }
+
+        if (!this.exerciseType && this.exercise?.type) {
+            this.exerciseType = this.exercise?.type;
+        }
+
+        // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
+        if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
+            this.exerciseType = ExerciseType.PROGRAMMING;
+        }
+    }
+
+    /**
+     * Fetches additional information about feedbacks and build logs if required.
+     * @private
+     */
+    private fetchAdditionalInformation() {
         of(this.result.feedbacks)
             .pipe(
                 // If the result already has feedbacks assigned to it, don't query the server.
@@ -149,11 +187,6 @@ export class ResultDetailComponent implements OnInit {
                     feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.participation!.id!, this.result.id!),
                 ),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
-                    // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
-                    if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
-                        this.exerciseType = ExerciseType.PROGRAMMING;
-                    }
-
                     /*
                      * If we have feedback, filter it if needed, distinguish between test case and static code analysis
                      * feedback and assign the lists to the component
@@ -165,10 +198,12 @@ export class ResultDetailComponent implements OnInit {
                         this.feedbackList = this.createFeedbackItems(filteredFeedback);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
+
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);
                         }
                     }
+
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
                     if (
                         this.exerciseType === ExerciseType.PROGRAMMING &&
@@ -176,11 +211,6 @@ export class ResultDetailComponent implements OnInit {
                         (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)
                     ) {
                         return this.fetchAndSetBuildLogs(this.result.participation.id!, this.result.id);
-                    }
-
-                    this.exercise ??= this.result.participation?.exercise;
-                    if (this.exercise) {
-                        this.course = getCourseFromExercise(this.exercise);
                     }
 
                     return of(null);
@@ -193,14 +223,6 @@ export class ResultDetailComponent implements OnInit {
             .subscribe(() => {
                 this.isLoading = false;
             });
-
-        this.commitHash = this.getCommitHash().slice(0, 11);
-
-        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
-        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
-            this.commitHashURLTemplate = info?.commitHashURLTemplate;
-            this.commitUrl = this.getCommitUrl();
-        });
     }
 
     /**
