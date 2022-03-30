@@ -212,7 +212,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Close the connection to the websocket and unsubscribe als listeners.
+     * Close the connection to the websocket, unsubscribe all listeners and distribute "intended disconnect" state.
      */
     disconnect() {
         this.connection = this.createConnection();
