@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -12,7 +12,7 @@ describe('IncludedInScoreBadge', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [IncludedInScoreBadgeComponent, MockComponent(NgbTooltip)],
+            declarations: [IncludedInScoreBadgeComponent, MockDirective(NgbTooltip)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
