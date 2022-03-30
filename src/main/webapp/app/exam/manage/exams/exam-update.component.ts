@@ -150,15 +150,20 @@ export class ExamUpdateComponent implements OnInit {
             if (this.exam.workingTime === undefined) {
                 return false;
             }
-            if (this.isValidStartDate && this.exam.endDate === undefined) {
+            if (this.exam.startDate !== undefined && this.exam.endDate === undefined) {
                 return true;
             }
-            if (this.isValidStartDate) {
+            if (this.exam.startDate !== undefined) {
                 return this.exam.workingTime <= dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
             }
             return false;
         } else {
-            return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+            this.calculateWorkingTime;
+            if (this.exam.workingTime !== undefined && this.exam.startDate !== undefined && this.exam.endDate !== undefined) {
+                return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+            } else {
+                return false;
+            }
         }
     }
 

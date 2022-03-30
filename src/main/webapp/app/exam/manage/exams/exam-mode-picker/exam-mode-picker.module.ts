@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ExamModePickerComponent } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
     imports: [ArtemisSharedModule],
