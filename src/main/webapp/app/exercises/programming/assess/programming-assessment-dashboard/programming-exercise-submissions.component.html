@@ -67,7 +67,7 @@
                     </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
-                        <jhi-result *ngIf="submission.participation" [participation]="submission.participation" [showTestDetails]="true"></jhi-result>
+                        <jhi-result *ngIf="submission.participation" [exercise]="exercise" [participation]="submission.participation" [showTestDetails]="true"></jhi-result>
                     </td>
                     <td>
                         <ng-container *ngIf="submission.participation?.submissionCount">

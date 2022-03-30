@@ -16,13 +16,13 @@
             <div class="d-flex justify-content-end m-1">
                 <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
             </div>
-            <p *ngIf="result.participation!.exercise!.assessmentType !== AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
-            <p *ngIf="result.participation!.exercise!.assessmentType == AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
+            <p *ngIf="exercise?.assessmentType !== AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
+            <p *ngIf="exercise?.assessmentType === AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
         </div>
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <span class="result-score-chart-title">
-                    <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%
+                    <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundScoreSpecifiedByCourseSettings(result.score, course) }}%
                 </span>
                 <div id="feedback-chart" #containerRef class="chart-space">
                     <ngx-charts-bar-horizontal-stacked
@@ -57,7 +57,7 @@
                 <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
                     <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits"
-                        >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, getCourseFromExercise(exercise)) }}P<fa-icon
+                        >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) }}P<fa-icon
                             *ngIf="feedback.type === FeedbackItemType.Subsequent"
                             [icon]="faExclamationTriangle"
                             [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"

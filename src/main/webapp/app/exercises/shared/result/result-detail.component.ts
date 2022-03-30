@@ -34,6 +34,7 @@ import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-sv
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
+import { Course } from 'app/entities/course.model';
 
 export enum FeedbackItemType {
     Issue,
@@ -67,10 +68,9 @@ export class ResultDetailComponent implements OnInit {
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    readonly getCourseFromExercise = getCourseFromExercise;
     readonly FeedbackItemType = FeedbackItemType;
 
-    @Input() exercise: Exercise;
+    @Input() exercise?: Exercise;
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
@@ -96,6 +96,7 @@ export class ResultDetailComponent implements OnInit {
     filteredFeedbackList: FeedbackItem[];
     backupFilteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
+    course?: Course;
 
     showScoreChartTooltip = false;
 
@@ -176,6 +177,12 @@ export class ResultDetailComponent implements OnInit {
                     ) {
                         return this.fetchAndSetBuildLogs(this.result.participation.id!, this.result.id);
                     }
+
+                    this.exercise ??= this.result.participation?.exercise;
+                    if (this.exercise) {
+                        this.course = getCourseFromExercise(this.exercise);
+                    }
+
                     return of(null);
                 }),
                 catchError(() => {
