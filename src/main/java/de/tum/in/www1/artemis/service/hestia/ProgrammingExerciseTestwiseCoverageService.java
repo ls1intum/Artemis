@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExercseTestwiseCovera
  * and ProgrammingExerciseTestwiseCoverageReport
  */
 @Service
-public class ProgrammingExerciseTestwiseCoverageReportService {
+public class ProgrammingExerciseTestwiseCoverageService {
 
     private ProgrammingExerciseTestwiseCoverageReportRepository programmingExerciseTestwiseCoverageReportRepository;
 
@@ -24,7 +24,7 @@ public class ProgrammingExerciseTestwiseCoverageReportService {
 
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
-    public ProgrammingExerciseTestwiseCoverageReportService(ProgrammingExerciseTestwiseCoverageReportRepository programmingExerciseTestwiseCoverageReportRepository,
+    public ProgrammingExerciseTestwiseCoverageService(ProgrammingExerciseTestwiseCoverageReportRepository programmingExerciseTestwiseCoverageReportRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExercseTestwiseCoverageEntryRepository programmingExercseTestwiseCoverageEntryRepository) {
         this.programmingExerciseTestwiseCoverageReportRepository = programmingExerciseTestwiseCoverageReportRepository;

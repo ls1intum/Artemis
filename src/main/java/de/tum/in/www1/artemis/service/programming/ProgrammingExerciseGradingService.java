@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTestwiseCoverageReportService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTestwiseCoverageService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -75,7 +75,7 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseTestwiseCoverageReportService programmingExerciseTestwiseCoverageReportService;
+    private final ProgrammingExerciseTestwiseCoverageService programmingExerciseTestwiseCoverageService;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
@@ -84,7 +84,7 @@ public class ProgrammingExerciseGradingService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTestwiseCoverageReportService programmingExerciseTestwiseCoverageReportService) {
+            ProgrammingExerciseTestwiseCoverageService programmingExerciseTestwiseCoverageService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -101,7 +101,7 @@ public class ProgrammingExerciseGradingService {
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.exerciseDateService = exerciseDateService;
-        this.programmingExerciseTestwiseCoverageReportService = programmingExerciseTestwiseCoverageReportService;
+        this.programmingExerciseTestwiseCoverageService = programmingExerciseTestwiseCoverageService;
     }
 
     /**
@@ -149,7 +149,7 @@ public class ProgrammingExerciseGradingService {
             extractTestCasesFromResult(programmingExercise, newResult);
             // the test cases have been saved to the database previously, therefore we can add the reference to the coverage reports
             if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
-                programmingExerciseTestwiseCoverageReportService.updateReportWithTestCases(newResult.getTestwiseCoverageReportByTestCaseName(), programmingExercise);
+                programmingExerciseTestwiseCoverageService.updateReportWithTestCases(newResult.getTestwiseCoverageReportByTestCaseName(), programmingExercise);
             }
         }
 
