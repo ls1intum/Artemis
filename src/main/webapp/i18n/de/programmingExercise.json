@@ -380,11 +380,11 @@
             },
             "diffReport": {
                 "button": "Zeige den Unterschied zwischen Template und Lösung",
-                "tooltip": "Zeigt den Git-Diff zwischen den Template und Lösung Repositories.",
-                "title": "Git-Diff",
+                "tooltip": "Zeigt den Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "title": "Template-Lösungs-Diff",
                 "template": "Template",
                 "solution": "Lösung",
-                "404": "Git-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template oder Solution Repositories um ihn zu erstellen."
+                "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories um ihn zu erstellen."
             }
         },
         "error": {
