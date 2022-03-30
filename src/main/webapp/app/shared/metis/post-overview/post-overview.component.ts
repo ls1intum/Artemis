@@ -30,7 +30,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
 
     @Input() courseMessagesPageFlag: boolean;
     private previousScrollDistanceFromTop: number;
-    // as set in the css class '.posting-infinite-scroll-container'
+    // as set for the css class '.posting-infinite-scroll-container'
     private messagesContainerHeight = 350;
 
     /**

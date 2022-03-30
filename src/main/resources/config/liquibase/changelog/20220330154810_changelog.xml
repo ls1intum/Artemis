@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
-    <changeSet author="anar" id="20220314183656">
+    <changeSet author="anar" id="20220330154810">
 
         <addColumn tableName="post">
             <column name="chat_session_id" type="bigint"/>
@@ -26,10 +26,7 @@
             <column name="chat_session_id" type="bigint"/>
             <column name="user_id" type="BIGINT"/>
             <column name="last_read" type="datetime"/>
-            <column name="archived" type="Boolean" defaultValueBoolean="false">
-                <constraints nullable="false" />
-            </column>
-            <column name="deleted" type="Boolean" defaultValueBoolean="false">
+            <column name="closed" type="Boolean" defaultValueBoolean="false">
                 <constraints nullable="false" />
             </column>
         </createTable>
