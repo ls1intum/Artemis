@@ -384,7 +384,11 @@
                 "title": "Template-Lösungs-Diff",
                 "template": "Template",
                 "solution": "Lösung",
-                "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories um ihn zu erstellen."
+                "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories um ihn zu erstellen.",
+                "lineStatLabel": "Zeilen die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
+                "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
+                "lineStatTooltipFullReport": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungs-Repositories hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
+                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
             }
         },
         "error": {

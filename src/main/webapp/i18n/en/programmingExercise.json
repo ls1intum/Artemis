@@ -385,7 +385,11 @@
                 "title": "Template-Solution-Diff",
                 "template": "Template",
                 "solution": "Solution",
-                "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it."
+                "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
+                "lineStatLabel": "Lines added/removed between template and solution",
+                "lineStatTooltipDetailPage": "Unfiltered lines that were added and removed when comparing the template and solution repositories",
+                "lineStatTooltipFullReport": "Filtered lines that were added and removed when comparing the template and solution repositories. This excludes empty lines.",
+                "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file. This excludes empty lines."
             }
         },
         "error": {
