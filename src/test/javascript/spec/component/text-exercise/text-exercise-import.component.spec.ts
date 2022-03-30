@@ -3,7 +3,7 @@ import { of, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
@@ -23,7 +23,7 @@ describe('TextExercise Import Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(FormsModule)],
-            declarations: [TextExerciseImportComponent, MockDirective(NgbPagination), MockPipe(ArtemisTranslatePipe), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            declarations: [TextExerciseImportComponent, MockComponent(NgbPagination), MockPipe(ArtemisTranslatePipe), MockDirective(SortByDirective), MockDirective(SortDirective)],
             providers: [MockProvider(SortService), MockProvider(TextExercisePagingService), MockProvider(NgbActiveModal)],
         })
             .compileComponents()

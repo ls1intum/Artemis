@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -119,6 +120,12 @@ public class ProgrammingExercise extends Exercise {
     @Nullable
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
+
+    // Should be lazily loaded, but Hibernate does not support lazy loading for OneToOne relations
+    // Therefore we need JsonIgnore here
+    @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private ProgrammingExerciseGitDiffReport gitDiffReport;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -734,5 +741,13 @@ public class ProgrammingExercise extends Exercise {
         if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
             throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
         }
+    }
+
+    public ProgrammingExerciseGitDiffReport getGitDiffReport() {
+        return gitDiffReport;
+    }
+
+    public void setGitDiffReport(ProgrammingExerciseGitDiffReport programmingExerciseGitDiffReport) {
+        this.gitDiffReport = programmingExerciseGitDiffReport;
     }
 }

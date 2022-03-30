@@ -176,6 +176,19 @@
                         </button>
                     </span>
                 </div>
+                <div *ngIf="programmingExercise.isAtLeastEditor">
+                    <span class="mr-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="getAndShowFullDiff()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.tooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
+                        </button>
+                    </span>
+                </div>
                 <div>
                     <button
                         id="unlockAllRepositoriesButton"
