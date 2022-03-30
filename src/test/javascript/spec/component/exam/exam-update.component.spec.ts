@@ -147,7 +147,7 @@ describe('Exam Update Component', () => {
         expect(component.exam.course).toEqual(course);
         expect(component.exam.gracePeriod).toEqual(180);
         expect(component.exam.numberOfCorrectionRoundsInExam).toEqual(1);
-        expect(component.exam.testExam).toBe(false);
+        expect(component.exam.testExam).toBeFalse();
         expect(component.exam.workingTime).toEqual(0);
     });
 
@@ -156,19 +156,19 @@ describe('Exam Update Component', () => {
         exam.startDate = dayjs().add(2, 'hours');
         exam.endDate = dayjs().add(3, 'hours');
         fixture.detectChanges();
-        expect(component.isValidConfiguration).toBe(true);
+        expect(component.isValidConfiguration).toBeTrue();
 
         exam.publishResultsDate = dayjs().add(4, 'hours');
         exam.examStudentReviewStart = dayjs().add(5, 'hours');
         exam.examStudentReviewEnd = dayjs().add(6, 'hours');
         fixture.detectChanges();
-        expect(component.isValidConfiguration).toBe(true);
+        expect(component.isValidConfiguration).toBeTrue();
 
         exam.visibleDate = undefined;
         exam.startDate = undefined;
         exam.endDate = undefined;
         fixture.detectChanges();
-        expect(component.isValidConfiguration).toBe(false);
+        expect(component.isValidConfiguration).toBeFalse();
 
         exam.visibleDate = dayjs().add(1, 'hours');
         exam.startDate = dayjs().add(2, 'hours');
@@ -176,16 +176,16 @@ describe('Exam Update Component', () => {
         exam.examStudentReviewEnd = undefined;
         component.calculateWorkingTime;
         fixture.detectChanges();
-        expect(component.isValidConfiguration).toBe(false);
+        expect(component.isValidConfiguration).toBeFalse();
 
         exam.examStudentReviewStart = dayjs().add(6, 'hours');
         exam.examStudentReviewEnd = dayjs().add(5, 'hours');
         fixture.detectChanges();
-        expect(component.isValidConfiguration).toBe(false);
+        expect(component.isValidConfiguration).toBeFalse();
 
         exam.examStudentReviewStart = undefined;
         fixture.detectChanges();
-        expect(component.isValidConfiguration).toBe(false);
+        expect(component.isValidConfiguration).toBeFalse();
     });
 
     it('should update', fakeAsync(() => {
@@ -197,7 +197,7 @@ describe('Exam Update Component', () => {
         component.save();
         tick();
         expect(updateSpy).toHaveBeenCalledTimes(1);
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving).toBeFalse();
     }));
 
     it('should calculate the working time for real exams correctly', () => {
@@ -240,27 +240,27 @@ describe('Exam Update Component', () => {
         exam.testExam = true;
         exam.workingTime = undefined;
         fixture.detectChanges();
-        expect(component.validateWorkingTime).toBe(false);
+        expect(component.validateWorkingTime).toBeFalse();
 
         exam.startDate = undefined;
         exam.endDate = undefined;
-        expect(component.validateWorkingTime).toBe(false);
+        expect(component.validateWorkingTime).toBeFalse();
 
         exam.startDate = dayjs().add(0, 'hours');
         exam.workingTime = 3600;
-        expect(component.validateWorkingTime).toBe(true);
+        expect(component.validateWorkingTime).toBeTrue();
 
         exam.endDate = dayjs().subtract(2, 'hours');
-        expect(component.validateWorkingTime).toBe(false);
+        expect(component.validateWorkingTime).toBeFalse();
 
         exam.endDate = dayjs().add(2, 'hours');
-        expect(component.validateWorkingTime).toBe(true);
+        expect(component.validateWorkingTime).toBeTrue();
 
         exam.workingTime = 7200;
-        expect(component.validateWorkingTime).toBe(true);
+        expect(component.validateWorkingTime).toBeTrue();
 
         exam.workingTime = 10800;
-        expect(component.validateWorkingTime).toBe(false);
+        expect(component.validateWorkingTime).toBeFalse();
     });
 
     it('validates the working time for real exams correctly', () => {
@@ -270,16 +270,16 @@ describe('Exam Update Component', () => {
         exam.startDate = undefined;
         exam.endDate = undefined;
         fixture.detectChanges();
-        expect(component.validateWorkingTime).toBe(false);
+        expect(component.validateWorkingTime).toBeFalse();
 
         exam.workingTime = 3600;
-        expect(component.validateWorkingTime).toBe(false);
+        expect(component.validateWorkingTime).toBeFalse();
 
         exam.startDate = dayjs().add(0, 'hours');
-        expect(component.validateWorkingTime).toBe(false);
+        expect(component.validateWorkingTime).toBeFalse();
 
         exam.endDate = dayjs().add(1, 'hours');
-        expect(component.validateWorkingTime).toBe(true);
+        expect(component.validateWorkingTime).toBeTrue();
     });
 
     it('should correctly catch HTTPError when updating the exam', fakeAsync(() => {
@@ -294,7 +294,7 @@ describe('Exam Update Component', () => {
         component.save();
         tick();
         expect(alertServiceSpy).toHaveBeenCalledTimes(1);
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving).toBeFalse();
 
         updateStub.mockRestore();
     }));
@@ -309,7 +309,7 @@ describe('Exam Update Component', () => {
         component.save();
         tick();
         expect(createSpy).toHaveBeenCalledTimes(1);
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving).toBeFalse();
     }));
 
     it('should correctly catch HTTPError when creating the exam', fakeAsync(() => {
@@ -324,7 +324,7 @@ describe('Exam Update Component', () => {
         component.save();
         tick();
         expect(alertServiceSpy).toHaveBeenCalledTimes(1);
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving).toBeFalse();
 
         createStub.mockRestore();
     }));
