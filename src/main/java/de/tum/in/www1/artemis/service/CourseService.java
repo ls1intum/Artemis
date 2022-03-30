@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -702,11 +703,13 @@ public class CourseService {
     public int determineTimeSpanSizeForActiveStudents(Course course, ZonedDateTime endDate, int maximalSize) {
         var spanTime = maximalSize;
         if (course.getStartDate() != null) {
-            var startDateIsoWeek = statisticsRepository.getWeekOfDate(course.getStartDate());
-            var endDateIsoWeek = statisticsRepository.getWeekOfDate(endDate);
-            int weeksInYear = Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(course.getStartDate()).getMaximum());
-            int amountOfWeeksBetween = (endDateIsoWeek - startDateIsoWeek + weeksInYear) % weeksInYear;
-            spanTime = Math.min(maximalSize, amountOfWeeksBetween + 1);
+            /*
+             * var startDateIsoWeek = statisticsRepository.getWeekOfDate(course.getStartDate()); var endDateIsoWeek = statisticsRepository.getWeekOfDate(endDate); int weeksInYear =
+             * Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(course.getStartDate()).getMaximum()); int amountOfWeeksBetween = (endDateIsoWeek - startDateIsoWeek
+             * + weeksInYear) % weeksInYear;
+             */
+            var amountOfWeeksBetween = course.getStartDate().until(endDate.plusWeeks(1), ChronoUnit.WEEKS);
+            spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
         }
         return spanTime;
     }

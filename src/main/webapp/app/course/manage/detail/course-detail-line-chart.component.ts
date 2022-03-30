@@ -129,10 +129,18 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChartDirective
         this.dataCopy[0].series = [{}];
         this.absoluteSeries = [{}];
         const prefix = this.translateService.instant('calendar_week');
-        const endDate = dayjs().subtract(this.currentOffsetToEndDate + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
+        /*
+        This variable contains the number of weeks between the last displayed week in the chart and the current date.
+        If the end date is already passed, currentOffsetToEndDate represents the number of weeks between the course end date and the current date.
+        displayedNumberOfWeeks determines the normal scope of the chart (usually 17 weeks).
+        currentPeriod indicates how many times the observer shifted the scope in the past (by pressing the arrow)
+         */
+        const diffToLastChartWeek = this.currentOffsetToEndDate + this.displayedNumberOfWeeks * -this.currentPeriod;
+        const endDate = dayjs().subtract(diffToLastChartWeek, 'weeks');
         const remainingWeeksTillStartDate = this.course.startDate ? this.determineDifferenceBetweenIsoWeeks(this.course.startDate, endDate) + 1 : this.displayedNumberOfWeeks;
         this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks);
-        const startDate = dayjs().subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
+        // for the start date, we subtract the currently possible span size - 1 from the end date in addition
+        const startDate = dayjs().subtract(diffToLastChartWeek + this.currentSpanSize - 1, 'weeks');
         this.startDateDisplayed = this.course.startDate ? remainingWeeksTillStartDate <= this.displayedNumberOfWeeks : false;
         let currentWeek;
         for (let i = 0; i < this.currentSpanSize; i++) {
