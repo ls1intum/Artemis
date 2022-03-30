@@ -449,7 +449,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 });
                 console.log(this.buildStructuralSolutionEntriesMessage(res));
             },
-            error: this.onError,
+            error: (err) => {
+                this.onError(err);
+            },
         });
     }
 
