@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { combineLatest, Subscription } from 'rxjs';
@@ -12,7 +12,6 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 
 @Component({
@@ -21,16 +20,29 @@ import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model'
     styleUrls: ['./post-overview.component.scss'],
     providers: [MetisService],
 })
-export class PostOverviewComponent implements OnInit, OnDestroy {
+export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     entitiesPerPageTranslation = 'organizationManagement.userSearch.usersPerPage';
     showAllEntitiesTranslation = 'organizationManagement.userSearch.showAllUsers';
 
-    @Input() courseMessagesPageFlag: boolean;
+    @ViewChildren('postingThread') messages: QueryList<any>;
+    @ViewChild('container') content: ElementRef;
 
+    @Input() courseMessagesPageFlag: boolean;
+    private previousScrollDistanceFromTop: number;
+    // as set in the css class '.posting-infinite-scroll-container'
+    private messagesContainerHeight = 350;
+
+    /**
+     * receives and updates the selected chatSession, fetching its posts
+     * @param activeChatSession selectedChatSessiob
+     */
     @Input() set activeChatSession(activeChatSession: ChatSession) {
-        this.chatSession = activeChatSession;
-        this.onSelectContext();
-        this.createEmptyPost();
+        if (this.courseMessagesPageFlag && activeChatSession) {
+            this.chatSession = activeChatSession;
+            if (this.course) {
+                this.onSelectContext();
+            }
+        }
     }
 
     readonly PageType = PageType;
@@ -51,7 +63,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
     inlineInputEnabled = true;
     totalItems = 0;
     pagingEnabled = true;
-    itemsPerPage = ITEMS_PER_PAGE;
+    itemsPerPage = 10; // ITEMS_PER_PAGE; todo
     page = 1;
     readonly CourseWideContext = CourseWideContext;
     readonly SortBy = PostSortCriterion;
@@ -61,6 +73,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
     private postsSubscription: Subscription;
     private paramSubscription: Subscription;
     private totalItemsSubscription: Subscription;
+    private scrollBottomSubscription: Subscription;
 
     // Icons
     faPlus = faPlus;
@@ -89,6 +102,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
             const { params, queryParams } = routeParams;
             const courseId = params.courseId;
             this.searchText = queryParams.searchText;
+            this.page = 1;
             this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
@@ -122,12 +136,26 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
             });
         });
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
-            this.posts = posts;
+            if (!this.courseMessagesPageFlag) {
+                this.posts = posts;
+            } else {
+                this.posts = posts.slice().reverse();
+                this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
+            }
             this.isLoading = false;
         });
         this.totalItemsSubscription = this.metisService.totalItems.pipe().subscribe((totalItems: number) => {
             this.totalItems = totalItems;
         });
+    }
+
+    /**
+     * subscribes to changes in the message container, in order display the bottom of the list at the messages page
+     */
+    ngAfterViewInit() {
+        if (this.courseMessagesPageFlag) {
+            this.scrollBottomSubscription = this.messages.changes.subscribe(this.scrollToBottom);
+        }
     }
 
     /**
@@ -147,6 +175,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
         this.paramSubscription?.unsubscribe();
         this.postsSubscription?.unsubscribe();
         this.totalItemsSubscription?.unsubscribe();
+        this.scrollBottomSubscription?.unsubscribe();
     }
 
     /**
@@ -176,6 +205,22 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
         this.currentSortDirection = this.currentSortDirection === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
         this.onSelectContext();
     }
+
+    /**
+     * scrolls to the bottom of the message container if in messages page and posts exist for the selected chatSession and
+     * only the first page is fetched or user is scrolled to the last post of the chatSession
+     */
+    scrollToBottom = () => {
+        try {
+            if (
+                this.courseMessagesPageFlag &&
+                this.posts.length > 0 &&
+                ((this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight)
+            ) {
+                this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+            }
+        } catch (err) {}
+    };
 
     /**
      * required for distinguishing different select options for the context selector,
@@ -245,7 +290,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
-            ...this.formGroup.get('context')?.value,
+            ...this.formGroup?.get('context')?.value,
             searchText: this.searchText ? this.searchText : undefined,
             chatSessionId: this.chatSession?.id,
             pagingEnabled: this.pagingEnabled,
@@ -279,16 +324,12 @@ export class PostOverviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * fetches next page of posts when user scrolls to the end of posts
+     * fetches next page of posts on user scroll event
      */
     fetchNextPage() {
         if (this.posts.length < this.totalItems) {
             this.page += 1;
             this.onSelectPage();
         }
-    }
-
-    onModalStateChange(): void {
-        this.inlineInputEnabled = !this.inlineInputEnabled;
     }
 }

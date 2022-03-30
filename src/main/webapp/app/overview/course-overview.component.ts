@@ -16,6 +16,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -60,6 +61,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Using a list query to be able to listen for changes (late mount); need both as this only returns native nodes
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
+    // for testing purpose
+    public inProductionEnvironment: boolean;
+
     // Icons
     faSync = faSync;
     faCircleNotch = faCircleNotch;
@@ -74,9 +78,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private serverDateService: ArtemisServerDateService,
         private alertService: AlertService,
         private changeDetectorRef: ChangeDetectorRef,
+        private profileService: ProfileService,
     ) {}
 
     async ngOnInit() {
+        // Checks if the current environment is production
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.inProductionEnvironment = profileInfo.inProduction;
+            }
+        });
+
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });

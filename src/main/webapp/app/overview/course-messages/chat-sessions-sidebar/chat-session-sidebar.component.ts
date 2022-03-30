@@ -1,10 +1,6 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-
-import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import { ChatSessionService } from 'app/shared/metis/chat-session.service';
@@ -24,14 +20,11 @@ import { ChatService } from 'app/shared/metis/chat.service';
     templateUrl: './chat-session-sidebar.component.html',
     providers: [MetisService, ChatSessionService],
 })
-export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges {
-    @Input() activeChatSession: ChatSession;
-    @Input() offset = 0;
-    @Input() showRunDetails: boolean;
-
+export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
     @Output() selectChatSession = new EventEmitter<ChatSession>();
 
     chatSessions: ChatSession[];
+    activeChatSession: ChatSession;
 
     course?: Course;
     collapsed: boolean;
@@ -79,7 +72,8 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
                 this.chatSessions = chatSessions;
                 if (this.chatSessions.length > 0) {
                     // emit the value to fetch chatSession posts on post overview tab
-                    this.selectChatSession.emit(this.chatSessions.first());
+                    this.activeChatSession = this.chatSessions.first()!;
+                    this.selectChatSession.emit(this.activeChatSession);
                 }
             });
         });
@@ -159,12 +153,6 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy, OnChanges
 
     ngOnDestroy(): void {
         this.chatSessionSubscription?.unsubscribe();
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.comparisons) {
-            const comparisons: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[] = changes.comparisons.currentValue;
-        }
     }
 
     getNameOfChatSessionParticipant(chatSession: ChatSession): string {

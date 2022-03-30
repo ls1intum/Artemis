@@ -21,10 +21,6 @@
 
             &.selected {
                 background-color: transparentize(lightskyblue, 0.5);
-
-                .plagiarism-name {
-                    font-weight: bold;
-                }
             }
 
             &:hover {

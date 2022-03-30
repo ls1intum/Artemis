@@ -50,7 +50,14 @@
                     <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="discussion" routerLinkActive="active">
                         <b jhiTranslate="artemisApp.courseOverview.menu.discussion">Discussion</b>
                     </div>
-                    <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="messages" routerLinkActive="active">
+                    <div
+                        *ngIf="course.postsEnabled && !inProductionEnvironment"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        class="tab-item discussion"
+                        routerLink="messages"
+                        routerLinkActive="active"
+                    >
                         <b jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</b>
                     </div>
                 </div>

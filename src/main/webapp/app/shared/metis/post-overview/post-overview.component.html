@@ -24,7 +24,7 @@
                     [posting]="createdPost"
                     [courseMessagesPageFlag]="courseMessagesPageFlag"
                     (onCreate)="createEmptyPost()"
-                    (isModalOpen)="onModalStateChange()"
+                    (isModalOpen)="inlineInputEnabled = !inlineInputEnabled"
                 >
                 </jhi-post-create-edit-modal>
             </div>
@@ -119,15 +119,25 @@
             {{ totalItems === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: totalItems }) }}
         </div>
         <!-- list of posts -->
-        <div class="col-12" infinite-scroll (scrolled)="fetchNextPage()">
-            <jhi-posting-thread
-                *ngFor="let post of posts; trackBy: postsTrackByFn"
-                [post]="post"
-                [showAnswers]="posts.length === 1"
-                [courseMessagesPageFlag]="courseMessagesPageFlag"
-                (isModalOpen)="onModalStateChange()"
+        <div class="col-12">
+            <div
+                #container
+                class="{{ courseMessagesPageFlag ? 'posting-infinite-scroll-container' : 'col-12' }}"
+                infinite-scroll
+                [scrollWindow]="!courseMessagesPageFlag"
+                (scrolled)="!courseMessagesPageFlag ? fetchNextPage() : null"
+                (scrolledUp)="courseMessagesPageFlag ? fetchNextPage() : null"
             >
-            </jhi-posting-thread>
+                <jhi-posting-thread
+                    #postingThread
+                    *ngFor="let post of posts; trackBy: postsTrackByFn"
+                    [post]="post"
+                    [showAnswers]="posts.length === 1"
+                    [courseMessagesPageFlag]="courseMessagesPageFlag"
+                    (isModalOpen)="inlineInputEnabled = !inlineInputEnabled"
+                >
+                </jhi-posting-thread>
+            </div>
         </div>
         <jhi-message-inline-input *ngIf="courseMessagesPageFlag && inlineInputEnabled" [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-message-inline-input>
     </div>

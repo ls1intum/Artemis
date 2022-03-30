@@ -1,11 +1,11 @@
 <div *ngIf="course" class="h-100">
-    <div *ngIf="!collapsed; else collapsedPosts" class="postings-container expanded-discussion">
+    <div *ngIf="!collapsed; else collapsedChatSessions" class="postings-container expanded-discussion">
         <div class="card">
             <!-- header -->
-            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.discussion.hide' | artemisTranslate" (click)="collapsed = true">
+            <div class="card-header text-white" [ngbTooltip]="'artemisApp.messages.chatSession.hide' | artemisTranslate" (click)="collapsed = true">
                 <div class="row flex-grow-1">
                     <div class="col">
-                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.messages.header">Private messages</h5>
+                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.messages.chatSession.header">Private messages</h5>
                     </div>
                     <div class="col-auto">
                         <fa-icon [icon]="faChevronLeft"></fa-icon>
@@ -37,7 +37,7 @@
                             *ngFor="let chatSession of chatSessions"
                             class="chat-session-list-item"
                             [class.selected]="activeChatSession.id === chatSession.id"
-                            (click)="selectChatSession.emit(chatSession)"
+                            (click)="activeChatSession = chatSession; selectChatSession.emit(chatSession)"
                         >
                             <div class="chat-session-list-item-info">
                                 <span class="chat-session-list-item-students">
@@ -47,7 +47,7 @@
                         </li>
                     </ul>
                 </div>
-                <!-- no posts -->
+                <!-- no chatSessions -->
                 <div class="post-result-information row mt-2" *ngIf="!chatSessions || chatSessions.length == 0">
                     <div class="col-12">
                         {{ 'artemisApp.messages.chatSession.notFound' | artemisTranslate }}
@@ -56,11 +56,11 @@
             </div>
         </div>
     </div>
-    <!-- collapsed posts -->
-    <ng-template #collapsedPosts>
-        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.discussion.show' | artemisTranslate">
+    <!-- collapsed chatSessions -->
+    <ng-template #collapsedChatSessions>
+        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.messages.chatSession.show' | artemisTranslate">
             <fa-icon class="expand-postings-icon" [icon]="faChevronRight"></fa-icon>
-            <span class="h5" jhiTranslate="artemisApp.metis.messages.header"></span>
+            <span class="h5" jhiTranslate="artemisApp.messages.chatSession.header"></span>
             <fa-icon class="expand-postings-icon" [icon]="faChevronRight"></fa-icon>
         </div>
     </ng-template>

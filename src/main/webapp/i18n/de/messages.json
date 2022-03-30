@@ -1,11 +1,13 @@
 {
     "artemisApp": {
         "messages": {
-            "label": "Private Nachricht",
+            "label": "Direktnachrichten",
             "chatSession": {
                 "header": "Direktnachrichten",
+                "show": "Nachrichten anzeigen",
+                "hide": "Nachrichten ausblenden",
                 "notFound": "Kein Chat gefunden",
-                "searchForUsers": "Search users within course"
+                "searchForUsers": "Suchen Sie Benutzer innerhalb des Kurses"
             }
         }
     }
