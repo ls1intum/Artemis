@@ -30,7 +30,7 @@
                     <label class="label-narrow" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
                     <jhi-help-icon placement="top" text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
                 </div>
-                <jhi-exam-mode-picker [isTestExam]="exam.isTestExam" (ngModelChange)="changeExamMode($event)" [disabled]="exam.id !== undefined"> </jhi-exam-mode-picker>
+                <jhi-exam-mode-picker [exam]="exam" [disabled]="exam.id !== undefined"> </jhi-exam-mode-picker>
             </div>
             <div class="row mb-3">
                 <div class="col-sm-4 form-group">
@@ -62,7 +62,7 @@
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement' + (exam.isTestExam ? '.testExam' : '') + '.startDate' | artemisTranslate }}"
+                        labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.startDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
                         [error]="!isValidStartDate"
@@ -72,7 +72,7 @@
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement' + (exam.isTestExam ? '.testExam' : '') + '.endDate' | artemisTranslate }}"
+                        labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.endDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
                         [error]="!isValidEndDate"
@@ -83,13 +83,22 @@
             </div>
             <div class="row mb-3">
                 <div class="col-sm-6">
-                    <label class="form-check-label" for="workingTime" jhiTranslate="artemisApp.examManagement.workingTime">Working Time</label>
+                    <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime">Working Time</label>
                     <jhi-help-icon-without-translation
                         placement="top"
-                        text="{{ 'artemisApp.examManagement' + (exam.isTestExam ? '.testExam' : '') + '.workingTimeTooltip' | artemisTranslate }}"
+                        text="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip' | artemisTranslate }}"
                     ></jhi-help-icon-without-translation>
-                    <input *ngIf="!exam.isTestExam" readonly type="text" class="form-control" [value]="exam.examWorkingTime" />
-                    <input *ngIf="exam.isTestExam" id="workingTime" name="workingTime" type="number" min="0" class="form-control" [(ngModel)]="exam.examWorkingTime" />
+                    <input *ngIf="!exam.testExam" readonly type="text" class="form-control" [value]="calculateWorkingTime" />
+                    <input
+                        *ngIf="exam.testExam"
+                        id="workingTimeInMinutes"
+                        name="workingTimeInMinutes"
+                        type="number"
+                        min="0"
+                        class="form-control"
+                        [value]="workingTimeInMinutes"
+                        (change)="convertWorkingTimeFromMinutesToSeconds($event)"
+                    />
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</label>
@@ -124,10 +133,10 @@
             </div>
             <!-- Section exam correction and student review
             Deactivated for testExams, as results are provided right after a test exam run and complaints are not possible  -->
-            <div *ngIf="!exam.isTestExam">
+            <div *ngIf="!exam.testExam">
                 <hr />
                 <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.correction' | artemisTranslate }}</h5>
-                <div class="row mb-3" *ngIf="!exam.isTestExam">
+                <div class="row mb-3" *ngIf="!exam.testExam">
                     <div class="col-sm-6">
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"

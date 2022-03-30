@@ -8,9 +8,12 @@ import { User } from 'app/core/user/user.model';
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
+    public testExam?: boolean;
     public visibleDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;
+    // Default exam working time in Minutes
+    public workingTime?: number;
     public publishResultsDate?: dayjs.Dayjs;
     public examStudentReviewStart?: dayjs.Dayjs;
     public examStudentReviewEnd?: dayjs.Dayjs;
@@ -34,8 +37,6 @@ export class Exam implements BaseEntity {
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];
     public registeredUsers?: User[];
-    public examWorkingTime?: number;
-    public isTestExam: boolean;
 
     public numberOfRegisteredUsers?: number; // transient
 
@@ -51,7 +52,8 @@ export class Exam implements BaseEntity {
         this.randomizeExerciseOrder = false; // default value (set by server)
         this.numberOfCorrectionRoundsInExam = 1; // default value
         this.maxPoints = 1; // default value
-        this.examWorkingTime = 0; // will be updated during creation
+        this.workingTime = 0; // will be updated during creation
+        this.testExam = false; // default value
 
         // helper attributes (calculated by the server at the time of the last request)
         this.visible = false;

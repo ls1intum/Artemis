@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-exam-mode-picker',
@@ -6,7 +7,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
     styles: ['.btn.disabled { pointer-events: none }', '.btn-group.disabled { cursor: not-allowed; }'],
 })
 export class ExamModePickerComponent {
-    @Input() isTestExam: Boolean;
+    @Input() exam: Exam;
     @Input() disabled: boolean;
 
     @Output() ngModelChange = new EventEmitter();
@@ -15,10 +16,10 @@ export class ExamModePickerComponent {
      * Set the mode and emit the changes to the parent component to notice changes
      * @param newValue
      */
-    setExamMode(newValue: any) {
-        if (!this.disabled) {
-            this.isTestExam = newValue;
-            this.ngModelChange.emit(newValue);
+    setExamMode(newValue: boolean) {
+        if (!this.disabled && this.exam.testExam !== newValue) {
+            this.exam.testExam = newValue;
+            this.ngModelChange.emit();
         }
     }
 }

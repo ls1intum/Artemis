@@ -20,6 +20,8 @@ export class ExamUpdateComponent implements OnInit {
     exam: Exam;
     course: Course;
     isSaving: boolean;
+    // The exam.workingTime is stored in seconds, but the working time should be displayed in minutes to the user
+    workingTimeInMinutes: number;
 
     // Icons
     faSave = faSave;
@@ -51,11 +53,9 @@ export class ExamUpdateComponent implements OnInit {
                 this.exam.numberOfCorrectionRoundsInExam = 1;
             }
         });
+        this.workingTimeInMinutes = this.exam.workingTime! / 60;
     }
 
-    changeExamMode(newValue: any) {
-        this.exam.isTestExam = newValue;
-    }
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
      * Returns to the detail page if there is no previous state and we edited an existing exam
@@ -113,57 +113,63 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidStartDate(): boolean {
-        if (this.exam.startDate !== undefined && dayjs(this.exam.startDate).isAfter(this.exam.visibleDate)) {
-            this.calculateWorkingTime();
-            return true;
-        }
-        return false;
+        return this.exam.startDate !== undefined && dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
     }
 
     get isValidEndDate(): boolean {
-        // A endDate is optional for TestExams
-        if (this.exam.isTestExam) {
+        // For TestExams, an endDate is optional
+        if (this.exam.testExam && this.exam.endDate === undefined) {
             return true;
         }
-        if (this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate)) {
-            this.calculateWorkingTime();
-            return true;
-        }
-        return false;
+        return this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
     }
 
     /**
      * Calculates the WorkingTime for Real Exams based on the start- and end-time.
-     * StartDate and EndDate are validated in their corresponding methods before calling this method.
+     * StartDate and EndDate are validated in their corresponding methods.
      */
-    private calculateWorkingTime() {
-        if (!this.exam.isTestExam && this.exam.startDate !== undefined && this.exam.endDate !== undefined) {
-            this.exam.examWorkingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 'm');
-        } else {
-            this.exam.examWorkingTime = 0;
+    get calculateWorkingTime(): number {
+        if (!this.exam.testExam) {
+            if (this.exam.startDate !== undefined && this.exam.endDate !== undefined) {
+                this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+            } else {
+                this.exam.workingTime = 0;
+            }
+            this.workingTimeInMinutes = this.exam.workingTime / 60;
         }
-        return true;
+        return this.workingTimeInMinutes;
     }
 
     /**
      * Validates the WorkingTime for TestExams.
      * For RealExams, the WorkingTime is calculated based on the startDate and EndDate.
      */
-    private get validateWorkingTime(): boolean {
-        if (this.exam.isTestExam) {
-            if (this.exam.examWorkingTime === undefined) {
+    get validateWorkingTime(): boolean {
+        if (this.exam.testExam) {
+            // For TestExams, an endDate is optional
+            if (this.exam.workingTime === undefined) {
                 return false;
             }
-            // For TestExams, an endDate is optional
-            if (this.isValidStartDate && !this.isValidEndDate) {
+            if (this.isValidStartDate && this.exam.endDate === undefined) {
                 return true;
             }
-            if (this.isValidStartDate && this.isValidEndDate) {
-                return this.exam.examWorkingTime >= dayjs(this.exam.endDate).diff(this.exam.startDate, 'm');
+            if (this.isValidStartDate) {
+                return this.exam.workingTime <= dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
             }
             return false;
+        } else {
+            return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
         }
-        return true;
+    }
+
+    /**
+     * Used to convert workingTimeInMinutes into exam.workingTime (in seconds) every time, the user inputs a new
+     * working time for a test exam
+     * @param event when the user inputs a new working time
+     */
+    convertWorkingTimeFromMinutesToSeconds(event: any) {
+        this.workingTimeInMinutes = event.target.value;
+        this.exam.workingTime = this.workingTimeInMinutes * 60;
     }
 
     get isValidPublishResultsDate(): boolean {
