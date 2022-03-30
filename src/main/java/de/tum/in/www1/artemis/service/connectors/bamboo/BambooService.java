@@ -473,7 +473,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         try {
-            final var vcsRepoName = versionControlService.get().getRepositoryName(new VcsRepositoryUrl(newRepoUrl));
+            final var vcsRepoName = urlService.getRepositorySlugFromRepositoryUrlString(newRepoUrl);
             String defaultBranchName = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newRepoUrl));
             continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, defaultBranchName,
                     optionalTriggeredByRepositories);

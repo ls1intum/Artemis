@@ -104,14 +104,6 @@ public interface VersionControlService {
     void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException;
 
     /**
-     * Gets the repository name of a given repository url
-     *
-     * @param repositoryUrl The repository url
-     * @return The repository name
-     */
-    String getRepositoryName(VcsRepositoryUrl repositoryUrl);
-
-    /**
      * Checks if the project with the given projectKey already exists
      *
      * @param projectKey to check if a project with this unique key already exists

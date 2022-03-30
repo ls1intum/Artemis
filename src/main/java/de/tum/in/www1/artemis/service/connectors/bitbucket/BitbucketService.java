@@ -527,7 +527,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     private void setStudentRepositoryPermission(VcsRepositoryUrl repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
             throws BitbucketException {
-        String repositorySlug = getRepositoryName(repositoryUrl);
+        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
         String url = baseUrl + username + "&permission=" + repositoryPermission;
         try {
@@ -547,7 +547,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param username      The username of the user whom to remove access
      */
     private void removeStudentRepositoryAccess(VcsRepositoryUrl repositoryUrl, String projectKey, String username) throws BitbucketException {
-        String repositorySlug = getRepositoryName(repositoryUrl);
+        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
         String url = baseUrl + username;
         try {
