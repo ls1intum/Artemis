@@ -4,14 +4,54 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \
     JAVA_OPTS=""
 
-# Add an artemis user to run our application so that it doesn't need to run as root
-RUN adduser artemis
-WORKDIR /home/artemis
-USER artemis
+# Specify profiles
+ENV PROFILES ""
 
+# See https://github.com/ls1intum/Artemis/issues/4439
+RUN echo "Fixing locales" \
+  && apt-get update && apt-get install -y --no-install-recommends locales \
+  && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
+  && locale-gen
+
+ENV LC_ALL en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
+
+ARG GOSU_VERSION=1.12
+
+RUN echo "Installing prerequisites" \
+  && apt-get update && apt-get install -y --no-install-recommends \
+  graphviz \
+  wget \
+  unzip \
+  && dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
+  && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch" \
+  && chmod +x /usr/local/bin/gosu \
+  && gosu nobody true
+
+
+WORKDIR /opt/Artemis
 ARG WAR_PATH=build/libs
 COPY $WAR_PATH/*.war Artemis.war
 
-ENTRYPOINT ["java","-jar","Artemis.war"]
+# Create directories for volumes
+RUN mkdir -p /opt/Artemis/config /opt/Artemis/data /opt/Artemis/public/content
+
+# Copy default configuration to /defaults/Artemis
+RUN mkdir -p /defaults/Artemis && unzip /opt/Artemis/Artemis.war "WEB-INF/classes/config*" -d /defaults/Artemis && mv /defaults/Artemis/WEB-INF/classes/config/* /defaults/Artemis/ \
+    && rm -r /defaults/Artemis/WEB-INF \
+    && rm -r /defaults/Artemis/liquibase \
+    && rm -r /defaults/Artemis/tls
+
+COPY bootstrap.sh /bootstrap.sh
+
+RUN chmod +x /bootstrap.sh \
+  && useradd -ms /bin/bash artemis
+
+VOLUME ["/opt/Artemis/config"]
+VOLUME ["/opt/Artemis/data"]
+VOLUME ["/opt/Artemis/public/content"]
 
 EXPOSE 8080
+
+CMD exec /bootstrap.sh

@@ -83,10 +83,10 @@ jobs:
       with:
         name: Artemis.war
     - name: Download Dockerfile
-      run: curl -O ${{ env.RAW_URL }}/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/src/main/docker/entrypoint.sh
+      run: curl -O ${{ env.RAW_URL }}/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/src/main/docker/bootstrap.sh
     - name: Build Docker Image
       run: docker build --build-arg WAR_PATH=. -t artemis .
-    
+
     - name: Compute Tag
       uses: actions/github-script@v6
       id: compute-tag
@@ -98,7 +98,7 @@ jobs:
           }
           if (context.eventName === "push") {
             if (context.ref.startsWith("refs/tags/")) {
-              return context.ref.slice(10); 
+              return context.ref.slice(10);
             }
             if (context.ref === "refs/heads/develop") {
               return "latest";
