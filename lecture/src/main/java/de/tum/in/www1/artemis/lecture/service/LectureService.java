@@ -91,14 +91,12 @@ public class LectureService {
         List<LectureUnit> lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).toList();
         // update associated learning goals
         for (LectureUnit lectureUnit : lectureUnits) {
-            Optional<LectureUnit> lectureUnitFromDbOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId());
-            if (lectureUnitFromDbOptional.isPresent()) {
-                LectureUnit lectureUnitFromDb = lectureUnitFromDbOptional.get();
+            lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId()).ifPresent(lectureUnitFromDb -> {
                 Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnitFromDb.getLearningGoals());
                 for (LearningGoal learningGoal : associatedLearningGoals) {
                     lectureUnitService.disconnectLectureUnitAndLearningGoal(lectureUnit, learningGoal);
                 }
-            }
+            });
         }
         lectureRepository.deleteById(lectureToDelete.getId());
     }

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.lecture;
 
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-    public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
+public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
     private LectureRepository lectureRepository;
@@ -166,18 +165,18 @@ import static org.assertj.core.api.Assertions.assertThat;
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLectureForCourse_withOutLectureUnits_shouldGetLecturesWithOutLectureUnits() throws Exception {
         List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures", HttpStatus.OK, Lecture.class);
-        assertThat(returnedLectures.size()).isEqualTo(2);
+        assertThat(returnedLectures).hasSize(2);
         Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().get();
-        assertThat(lecture.getLectureUnits().size()).isEqualTo(0);
+        assertThat(lecture.getLectureUnits()).hasSize(0);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getLectureForCourse_withLectureUnits_shouldGetLecturesWithLectureUnits() throws Exception {
         List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures?withLectureUnits=true", HttpStatus.OK, Lecture.class);
-        assertThat(returnedLectures.size()).isEqualTo(2);
+        assertThat(returnedLectures).hasSize(2);
         Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().get();
-        assertThat(lecture.getLectureUnits().size()).isEqualTo(4);
+        assertThat(lecture.getLectureUnits()).hasSize(4);
     }
 
     @Test
@@ -194,8 +193,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         jmsMessageMockProvider.mockSendAndReceiveGetLectureExercises(exercises);
         Lecture receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(4);
-        assertThat(receivedLectureWithDetails.getAttachments().size()).isEqualTo(2);
+        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(4);
+        assertThat(receivedLectureWithDetails.getAttachments()).hasSize(2);
 
         testGetLecture(lecture1.getId());
     }
@@ -220,15 +219,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
         Lecture receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(3);
-        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList())).isEmpty();
+        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(3);
+        List<LectureUnit> exerciseUnits = receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList());
+        assertThat(exerciseUnits).isEmpty();
 
         // now we test that it is included when the user is at least a teaching assistant
         database.changeUser("tutor1");
-        receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
-        assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(4);
-        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList())).isNotEmpty();
+        Lecture receivedLectureWithDetailsForTA = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
+        assertThat(receivedLectureWithDetailsForTA.getId()).isEqualTo(lecture1.getId());
+        assertThat(receivedLectureWithDetailsForTA.getLectureUnits()).hasSize(4);
+        List<LectureUnit> exerciseUnitsForTA = receivedLectureWithDetailsForTA.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList());
+        assertThat(exerciseUnitsForTA).isNotEmpty();
 
         testGetLecture(lecture1.getId());
     }
@@ -247,17 +248,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 
         Lecture receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.getAttachments().stream().filter(attachment -> attachment.getId().equals(lectureAttachment.getId())).findFirst().isEmpty()).isTrue();
-        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(3);
-        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList())).isEmpty();
+        Optional attachmentOptional = receivedLectureWithDetails.getAttachments().stream().filter(attachment -> attachment.getId().equals(lectureAttachment.getId())).findFirst();
+        assertThat(attachmentOptional).isEmpty();
+        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(3);
+        List<LectureUnit> attachmentUnits = receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList());
+        assertThat(attachmentUnits).isEmpty();
 
         // now we test that it is included when the user is at least a teaching assistant
         database.changeUser("tutor1");
-        receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
-        assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.getAttachments().stream().anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()))).isTrue();
-        assertThat(receivedLectureWithDetails.getLectureUnits().size()).isEqualTo(4);
-        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList())).isNotEmpty();
+        Lecture receivedLectureWithDetailsForTA = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
+        assertThat(receivedLectureWithDetailsForTA.getId()).isEqualTo(lecture1.getId());
+        boolean attachmentFound = receivedLectureWithDetailsForTA.getAttachments().stream().anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()));
+        assertThat(attachmentFound).isTrue();
+        assertThat(receivedLectureWithDetailsForTA.getLectureUnits()).hasSize(4);
+        List<LectureUnit> attachmentUnitsForTA = receivedLectureWithDetailsForTA.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList());
+        assertThat(attachmentUnitsForTA).isNotEmpty();
 
         testGetLecture(lecture1.getId());
     }
@@ -267,7 +272,7 @@ import static org.assertj.core.api.Assertions.assertThat;
     public void deleteLecture_lectureExists_shouldDeleteLecture() throws Exception {
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
         Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
-        assertThat(lectureOptional.isEmpty()).isTrue();
+        assertThat(lectureOptional).isEmpty();
     }
 
     /**
@@ -291,10 +296,10 @@ import static org.assertj.core.api.Assertions.assertThat;
         lectureRepository.saveAndFlush(lecture);
         lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
         lectureUnits = lecture.getLectureUnits();
-        assertThat(lectureUnits.size()).isEqualTo(8);
+        assertThat(lectureUnits).hasSize(8);
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
         Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
-        assertThat(lectureOptional.isEmpty()).isTrue();
+        assertThat(lectureOptional).isEmpty();
     }
 
     /**
@@ -305,11 +310,11 @@ import static org.assertj.core.api.Assertions.assertThat;
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
         Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits().size()).isEqualTo(4);
+        assertThat(lecture.getLectureUnits()).hasSize(4);
         LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().get();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
         lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits().size()).isEqualTo(3);
+        assertThat(lecture.getLectureUnits()).hasSize(3);
         boolean nullFound = false;
         for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
             if (Objects.isNull(lectureUnit)) {

@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * REST controller for managing Lecture.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class LectureResource {
 
     private final Logger log = LoggerFactory.getLogger(LectureResource.class);
@@ -68,13 +68,13 @@ public class LectureResource {
     }
 
     /**
-     * POST /lectures : Create a new lecture.
+     * POST lectures : Create a new lecture.
      *
      * @param lecture the lecture to create
      * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/lectures")
+    @PostMapping("lectures")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
@@ -89,13 +89,13 @@ public class LectureResource {
     }
 
     /**
-     * PUT /lectures : Updates an existing lecture.
+     * PUT lectures : Updates an existing lecture.
      *
      * @param lecture the lecture to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
      *         Server Error) if the lecture couldn't be updated
      */
-    @PutMapping("/lectures")
+    @PutMapping("lectures")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) {
         log.debug("REST request to update Lecture : {}", lecture);
@@ -111,17 +111,17 @@ public class LectureResource {
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
         Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, lecture.getId().toString())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * GET /courses/:courseId/lectures : get all the lectures of a course for the course administration page
+     * GET courses/:courseId/lectures : get all the lectures of a course for the course administration page
      *
      * @param withLectureUnits if set associated lecture units will also be loaded
      * @param courseId         the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
-    @GetMapping("/courses/{courseId}/lectures")
+    @GetMapping("courses/{courseId}/lectures")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
@@ -141,12 +141,12 @@ public class LectureResource {
     }
 
     /**
-     * GET /lectures/:lectureId : get the "lectureId" lecture.
+     * GET lectures/:lectureId : get the "lectureId" lecture.
      *
      * @param lectureId the lectureId of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
-    @GetMapping("/lectures/{lectureId}")
+    @GetMapping("lectures/{lectureId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
@@ -156,12 +156,12 @@ public class LectureResource {
     }
 
     /**
-     * GET /lectures/:lectureId/details : get the "lectureId" lecture.
+     * GET lectures/:lectureId/details : get the "lectureId" lecture.
      *
      * @param lectureId the lectureId of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and learning goals, or with status 404 (Not Found)
      */
-    @GetMapping("/lectures/{lectureId}/details")
+    @GetMapping("lectures/{lectureId}/details")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
@@ -178,12 +178,12 @@ public class LectureResource {
     }
 
     /**
-     * GET /lectures/:lectureId/title : Returns the title of the lecture with the given id
+     * GET lectures/:lectureId/title : Returns the title of the lecture with the given id
      *
      * @param lectureId the id of the lecture
      * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
      */
-    @GetMapping("/lectures/{lectureId}/title")
+    @GetMapping("lectures/{lectureId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
@@ -226,12 +226,12 @@ public class LectureResource {
     }
 
     /**
-     * DELETE /lectures/:id : delete the "id" lecture.
+     * DELETE lectures/:id : delete the "id" lecture.
      *
      * @param lectureId the id of the lecture to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/lectures/{lectureId}")
+    @DeleteMapping("lectures/{lectureId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
         Optional<Lecture> optionalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
@@ -240,10 +240,6 @@ public class LectureResource {
         }
         Lecture lecture = optionalLecture.get();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lecture.getCourse(), null);
-        Course course = lecture.getCourse();
-        if (course == null) {
-            return ResponseEntity.badRequest().build();
-        }
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
