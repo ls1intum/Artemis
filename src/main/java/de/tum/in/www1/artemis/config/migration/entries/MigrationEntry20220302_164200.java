@@ -14,6 +14,11 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.user.LegacyPasswordService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
+/**
+ * This migration does the following for all internal users:
+ * 1) Decrypt the password in the database using the legacy password service (which will not be used any more in the future)
+ * 2) Hashes the password with the new BCryptPasswordEncoder
+ */
 @Component
 public class MigrationEntry20220302_164200 extends MigrationEntry {
 
@@ -34,10 +39,12 @@ public class MigrationEntry20220302_164200 extends MigrationEntry {
     @Override
     public void execute() {
         List<User> users = userRepository.findAll();
-        LOGGER.info("Found {} users to process.", users.size());
-        Lists.partition(users, 100).forEach(list -> {
-            list.forEach(this::processUser);
-            userRepository.saveAll(list);
+        LOGGER.info("Found {} users in total.", users.size());
+        LOGGER.info("Found {} internal users in total for the password migration (which are likely to be processed).", users.stream().filter(User::isInternal).count());
+        Lists.partition(users, 100).forEach(userList -> {
+            LOGGER.info("Process (next) 100 users for the migration in one batch...");
+            userList.forEach(this::processUser);
+            userRepository.saveAll(userList);
         });
     }
 
@@ -56,6 +63,7 @@ public class MigrationEntry20220302_164200 extends MigrationEntry {
             return;
         }
 
+        LOGGER.info("Process internal user " + user.getLogin() + " for password migration");
         // In a previous migration we encrypted all relevant password so we don't need a fallback here
         String password = legacyPasswordService.decryptPassword(user);
 

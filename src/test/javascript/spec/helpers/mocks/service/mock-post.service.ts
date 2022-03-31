@@ -72,7 +72,7 @@ export class MockPostService {
             }) as Observable<HttpResponse<Post[]>>;
         } else {
             return of({
-                body: metisCoursePosts,
+                body: !postContextFilter.pageSize ? metisCoursePosts : metisCoursePosts.slice(0, postContextFilter.pageSize),
                 headers: new HttpHeaders({
                     'X-Total-Count': metisCoursePosts.length.toString(),
                 }),

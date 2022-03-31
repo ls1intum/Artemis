@@ -225,34 +225,32 @@ public class NotificationSettingsService {
      * Checks the personal notificationSettings retrieved from the DB.
      * If the loaded set is empty substitute it with the default settings
      * If the loaded set has different notification setting ids than the default settings both sets have to be merged
-     * @param loadedNotificationSettingSet are the notification settings retrieved from the DB for the current user
+     * @param userNotificationSettings are the notification settings retrieved from the DB for the current user
      * @return the updated and correct notification settings
      */
-    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> loadedNotificationSettingSet) {
-        if (loadedNotificationSettingSet.isEmpty()) {
+    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> userNotificationSettings) {
+        if (userNotificationSettings.isEmpty()) {
             return DEFAULT_NOTIFICATION_SETTINGS;
         }
         // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
 
-        if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(loadedNotificationSettingSet, DEFAULT_NOTIFICATION_SETTINGS)) {
-            Set<NotificationSetting> updatedNotificationSettingSet = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
+        if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(userNotificationSettings, DEFAULT_NOTIFICATION_SETTINGS)) {
+            Set<NotificationSetting> updatedDefaultNotificationSettings = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
 
-            loadedNotificationSettingSet.forEach(loadedSetting -> {
-                DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {
-                    if (defaultSetting.getSettingId().equals(loadedSetting.getSettingId())) {
-                        updatedNotificationSettingSet.remove(defaultSetting);
-                        updatedNotificationSettingSet.add(loadedSetting);
-                    }
-                });
-            });
+            userNotificationSettings.forEach(userNotificationSetting -> DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {
+                if (defaultSetting.getSettingId().equals(userNotificationSetting.getSettingId())) {
+                    updatedDefaultNotificationSettings.remove(defaultSetting);
+                    updatedDefaultNotificationSettings.add(userNotificationSetting);
+                }
+            }));
             // update DB to fix inconsistencies and avoid redundant future merges
             // first remove all settings of the current user in the DB
-            notificationSettingRepository.deleteAll(loadedNotificationSettingSet);
+            notificationSettingRepository.deleteAll(userNotificationSettings);
             // save correct merge to DB
-            notificationSettingRepository.saveAll(updatedNotificationSettingSet);
-            return updatedNotificationSettingSet;
+            notificationSettingRepository.saveAll(updatedDefaultNotificationSettings);
+            return updatedDefaultNotificationSettings;
         }
-        return loadedNotificationSettingSet;
+        return userNotificationSettings;
     }
 
     /**
