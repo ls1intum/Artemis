@@ -38,7 +38,7 @@ public class LectureService {
     }
 
     /**
-     * For tutors, admins and instructors returns  lecture with all attachments, for students lecture with only active attachments
+     * For tutors, admins and instructors returns lecture with all attachments, for students lecture with only active attachments
      *
      * @param lectureWithAttachments lecture that has attachments
      * @param user the user for which this call should filter
@@ -80,7 +80,7 @@ public class LectureService {
      * Attachments and Lecture Units are not explicitly deleted, as the delete operation is cascaded by the database.
      * @param lecture the lecture to be deleted
      */
-    @Transactional // ok
+    @Transactional
     public void delete(Lecture lecture) {
         Optional<Lecture> lectureToDeleteOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId());
         if (lectureToDeleteOptional.isEmpty()) {
@@ -102,5 +102,4 @@ public class LectureService {
         }
         lectureRepository.deleteById(lectureToDelete.getId());
     }
-
 }

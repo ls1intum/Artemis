@@ -170,8 +170,8 @@ public class LectureResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         lecture = filterLectureContentForUser(lecture, user);
 
         return ResponseEntity.ok(lecture);
