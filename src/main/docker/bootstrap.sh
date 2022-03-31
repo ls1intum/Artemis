@@ -9,12 +9,8 @@ else
    echo "Config is not empty .. not copying default configs .."
 fi
 
-# Create sync file that indicates waiting for services
-mkdir -p sync
-touch sync/waiting-backend
-
 # Ensure at least the directories are owned by artemis. "-R" takes too long
-chown artemis:artemis config data sync
+chown artemis:artemis config data
 
 # Allow waiting for other services
 if [ -n "${WAIT_FOR}" ]; then
@@ -28,9 +24,6 @@ if [ -n "${WAIT_FOR}" ]; then
     done
   done
 fi
-
-# Release indicator of startup after 90 seconds (may be used by nginx proxy to determine startup)
-bash -c "sleep 90 && rm -f sync/waiting-backend" &
 
 echo "Starting application..."
 exec gosu artemis java \
