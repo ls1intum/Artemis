@@ -3,6 +3,8 @@ import { FullGitDiffReportComponent } from 'app/exercises/programming/hestia/git
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('ProgrammingExerciseFullGitDiffReport Component', () => {
     let comp: FullGitDiffReportComponent;
@@ -12,7 +14,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [FullGitDiffReportComponent],
-            providers: [],
+            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
         }).compileComponents();
         fixture = TestBed.createComponent(FullGitDiffReportComponent);
         comp = fixture.componentInstance;
@@ -47,68 +49,80 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
     });
 
     it('Should show 5-0 boxes', () => {
-        const entries = [{ filePath: 'src/a.java', code: 'Test' }] as ProgrammingExerciseGitDiffEntry[];
+        const entries = [{ filePath: 'src/a.java', code: 'Test' }] as ProgrammingExerciseFullGitDiffEntry[];
 
-        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;
         comp.ngOnInit();
         expect(comp.addedLineCount).toBe(1);
         expect(comp.removedLineCount).toBe(0);
-        expect(comp.addedSquareCount).toBe(5);
-        expect(comp.removedSquareCount).toBe(0);
     });
 
     it('Should show 4-1 boxes', () => {
-        const entries = [{ filePath: 'src/a.java', code: '1\n2\n3\n4', previousCode: '1' }] as ProgrammingExerciseGitDiffEntry[];
+        const entries = [
+            {
+                filePath: 'src/a.java',
+                code: '1\n2\n3\n4',
+                previousCode: '1',
+            },
+        ] as ProgrammingExerciseFullGitDiffEntry[];
 
-        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;
         comp.ngOnInit();
         expect(comp.addedLineCount).toBe(4);
         expect(comp.removedLineCount).toBe(1);
-        expect(comp.addedSquareCount).toBe(4);
-        expect(comp.removedSquareCount).toBe(1);
     });
 
     it('Should show 3-2 boxes', () => {
-        const entries = [{ filePath: 'src/a.java', code: '1\n2\n3', previousCode: '1\n2' }] as ProgrammingExerciseGitDiffEntry[];
+        const entries = [
+            {
+                filePath: 'src/a.java',
+                code: '1\n2\n3',
+                previousCode: '1\n2',
+            },
+        ] as ProgrammingExerciseFullGitDiffEntry[];
 
-        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;
         comp.ngOnInit();
         expect(comp.addedLineCount).toBe(3);
         expect(comp.removedLineCount).toBe(2);
-        expect(comp.addedSquareCount).toBe(3);
-        expect(comp.removedSquareCount).toBe(2);
     });
 
     it('Should show 2-3 boxes', () => {
-        const entries = [{ filePath: 'src/a.java', code: '1\n2', previousCode: '1\n2\n3' }] as ProgrammingExerciseGitDiffEntry[];
+        const entries = [
+            {
+                filePath: 'src/a.java',
+                code: '1\n2',
+                previousCode: '1\n2\n3',
+            },
+        ] as ProgrammingExerciseFullGitDiffEntry[];
 
-        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;
         comp.ngOnInit();
         expect(comp.addedLineCount).toBe(2);
         expect(comp.removedLineCount).toBe(3);
-        expect(comp.addedSquareCount).toBe(2);
-        expect(comp.removedSquareCount).toBe(3);
     });
 
     it('Should show 1-4 boxes', () => {
-        const entries = [{ filePath: 'src/a.java', code: '1', previousCode: '1\n2\n3\n4' }] as ProgrammingExerciseGitDiffEntry[];
+        const entries = [
+            {
+                filePath: 'src/a.java',
+                code: '1',
+                previousCode: '1\n2\n3\n4',
+            },
+        ] as ProgrammingExerciseFullGitDiffEntry[];
 
-        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;
         comp.ngOnInit();
         expect(comp.addedLineCount).toBe(1);
         expect(comp.removedLineCount).toBe(4);
-        expect(comp.addedSquareCount).toBe(1);
-        expect(comp.removedSquareCount).toBe(4);
     });
 
     it('Should show 0-5 boxes', () => {
-        const entries = [{ filePath: 'src/a.java', previousCode: '1' }] as ProgrammingExerciseGitDiffEntry[];
+        const entries = [{ filePath: 'src/a.java', previousCode: '1' }] as ProgrammingExerciseFullGitDiffEntry[];
 
-        comp.report = { entries } as ProgrammingExerciseGitDiffReport;
+        comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;
         comp.ngOnInit();
         expect(comp.addedLineCount).toBe(0);
         expect(comp.removedLineCount).toBe(1);
-        expect(comp.addedSquareCount).toBe(0);
-        expect(comp.removedSquareCount).toBe(5);
     });
 });

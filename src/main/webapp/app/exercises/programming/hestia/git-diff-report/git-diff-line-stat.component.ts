@@ -1,6 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
-import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
 
 @Component({
     selector: 'jhi-git-diff-line-stat',
