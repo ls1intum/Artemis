@@ -1003,6 +1003,19 @@ public class ProgrammingExerciseTestService {
         return request.get(url, expectedStatus, String.class);
     }
 
+    private String exportSolutionRepository(LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
+        generateProgrammingExerciseForExport();
+
+        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf("SOLUTION"));
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
+        disableAutoGC(repository);
+        createAndCommitDummyFileInLocalRepository(localRepository, "some-file.java");
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-solution-repository/";
+        return request.get(url, expectedStatus, String.class);
+    }
+
     // Test
     public void exportProgrammingExerciseInstructorMaterial_shouldReturnFile() throws Exception {
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK);
@@ -1697,6 +1710,30 @@ public class ProgrammingExerciseTestService {
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
+
+    }
+
+    // TEST
+    public void exportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+
+        // Test example solution publication date not set.
+        exercise.setExampleSolutionPublicationDate(null);
+        programmingExerciseRepository.save(exercise);
+
+        exportSolutionRepository(exerciseRepo, HttpStatus.FORBIDDEN);
+
+        // Test example solution publication date in the past.
+        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(exercise);
+
+        String zip = exportSolutionRepository(exerciseRepo, HttpStatus.OK);
+        assertThat(zip).isNotNull();
+
+        // Test example solution publication date in the future.
+        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(exercise);
+
+        exportSolutionRepository(exerciseRepo, HttpStatus.FORBIDDEN);
 
     }
 }

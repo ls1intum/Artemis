@@ -394,4 +394,11 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void testGetProgrammingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
         programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(false, "instructor1");
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+        programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
+    }
+
 }
