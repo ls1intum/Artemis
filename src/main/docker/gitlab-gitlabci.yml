@@ -1,0 +1,31 @@
+version: "3.6"
+services:
+    gitlab:
+        build: gitlab
+        volumes:
+            - artemis-gitlab-data:/var/opt/gitlab
+            - artemis-gitlab-logs:/var/log/gitlab
+            - artemis-gitlab-config:/etc/gitlab
+        environment:
+            GITLAB_OMNIBUS_CONFIG: |
+                prometheus_monitoring['enable'] = false
+                gitlab_rails['gitlab_shell_ssh_port'] = 2222
+                gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
+        ports:
+            - '2222:22'
+            - '8081:80'
+        hostname: 'gitlab'
+        shm_size: '256m'
+    gitlab-runner:
+        image: gitlab/gitlab-runner:latest
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /usr/local/bin/docker:/usr/bin/docker
+            - artemis-gitlabci-runner-config:/etc/gitlab-runner
+        hostname: 'gitlab-runner'
+
+volumes:
+    artemis-gitlab-data:
+    artemis-gitlab-logs:
+    artemis-gitlab-config:
+    artemis-gitlabci-runner-config:
