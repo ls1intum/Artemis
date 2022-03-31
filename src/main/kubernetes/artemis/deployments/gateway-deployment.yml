@@ -1,11 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    field.cattle.io/creatorId: user-gpcv5
   labels:
-    cattle.io/creator: norman
-    workload.user.cattle.io/workloadselector: deployment-artemis-gateway
+    app: deployment-artemis-gateway
   name: gateway
 spec:
   progressDeadlineSeconds: 600
@@ -13,7 +10,7 @@ spec:
   revisionHistoryLimit: 10
   selector:
     matchLabels:
-      workload.user.cattle.io/workloadselector: deployment-artemis-gateway
+        app: deployment-artemis-gateway
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -22,33 +19,35 @@ spec:
   template:
     metadata:
       labels:
-        workload.user.cattle.io/workloadselector: deployment-artemis-gateway
+          app: deployment-artemis-gateway
     spec:
       containers:
-      - envFrom:
+      - env:
+        - name: jhipster.registry.password
+          valueFrom:
+            secretKeyRef:
+              key: jhipster.registry.password
+              name: artemis-secrets
+        envFrom:
         - configMapRef:
             name: gateway
             optional: false
-        image: <DockerId>/artemis-gateway
+        - configMapRef:
+            name: jhipster-registry-config
+            optional: false
+        image: ghcr.io/ls1intum/artemis-gateway
         imagePullPolicy: Always
         name: gateway
         ports:
-        - containerPort: 8080
-          name: 8080tcp02
+        - containerPort: 8089
+          name: 8089tcp2
           protocol: TCP
         resources: {}
         securityContext:
           allowPrivilegeEscalation: false
-          capabilities: {}
           privileged: false
           readOnlyRootFilesystem: false
           runAsNonRoot: false
-        stdin: true
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-        tty: true
-      dnsPolicy: ClusterFirst
       restartPolicy: Always
-      schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30

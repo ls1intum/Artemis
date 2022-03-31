@@ -28,8 +28,8 @@ plugins {
 
 group = "de.tum.in.www1.artemis"
 
-sourceCompatibility = 16
-targetCompatibility = 16
+sourceCompatibility = 17
+targetCompatibility = 17
 
 apply from: "gradle/docker.gradle"
 apply from: "../gradle/liquibase.gradle"

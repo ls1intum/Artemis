@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.GitUtilService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -54,7 +55,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
-        localGit = Git.init().setDirectory(localRepoFile).call();
+        localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
 
         // create commits
         // the following 2 lines prepare the generation of the structural test oracle
@@ -108,7 +109,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits() throws Exception {
         File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        Git remoteGit = Git.init().setDirectory(originRepoFile).call();
+        Git remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
         config.save();

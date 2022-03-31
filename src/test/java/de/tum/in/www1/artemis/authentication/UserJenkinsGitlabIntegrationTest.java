@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.UserTestService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -42,6 +43,12 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Autowired
     private UserTestService userTestService;
+
+    @Autowired
+    private PasswordService passwordService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private JenkinsUserManagementService jenkinsUserManagementService;
@@ -351,6 +358,8 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUserGroups() throws Exception {
+        userTestService.student.setPassword(passwordService.hashPassword("this is a password"));
+        userRepository.save(userTestService.student);
         userTestService.updateUserGroups();
     }
 
@@ -403,6 +412,9 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void shouldBlockUserInGitlabIfAccountNotActivated() throws Exception {
+        String password = "this is a password";
+        userTestService.student.setPassword(passwordService.hashPassword(password));
+        userRepository.save(userTestService.student);
         var oldLogin = userTestService.student.getLogin();
         User user = userTestService.student;
         user.setLogin("new-login");
@@ -411,7 +423,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
         gitlabRequestMockProvider.mockUpdateVcsUser(oldLogin, user, Set.of(), user.getGroups(), true);
 
-        request.put("/api/users", new ManagedUserVM(user, user.getPassword()), HttpStatus.OK);
+        request.put("/api/users", new ManagedUserVM(user, password), HttpStatus.OK);
 
         UserRepository userRepository = userTestService.getUserRepository();
         final var userInDB = userRepository.findById(user.getId());

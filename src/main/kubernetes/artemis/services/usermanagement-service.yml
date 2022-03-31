@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: usermanagement-service
+spec:
+  ports:
+    - port: 8087
+      protocol: TCP
+      targetPort: 8087
+  selector:
+    app: deployment-artemis-usermanagement-service

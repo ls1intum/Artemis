@@ -113,7 +113,7 @@ public class UserTestService {
 
     // Test
     public void deleteUser_FailsInExternalVcsUserManagement_isNotSuccessful() throws Exception {
-        mockDelegate.mockDeleteUserInUserManagement(student, false, true, false);
+        mockDelegate.mockDeleteUserInUserManagement(student, true, true, false);
 
         request.delete("/api/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -144,14 +144,18 @@ public class UserTestService {
         student.setPassword(newPassword);
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, oldGroups);
 
-        var managedUserVM = new ManagedUserVM(student);
+        var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
-        updatedUserIndDB.setPassword(passwordService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
 
         assertThat(response).isNotNull();
-        response.setPassword(passwordService.decryptPasswordByLogin(response.getLogin()).get());
+        assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
+
+        // set passwords to null to exclude them from the comparison
+        student.setPassword(null);
+        updatedUserIndDB.setPassword(null);
+
         assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
         assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
     }
@@ -245,6 +249,7 @@ public class UserTestService {
 
     // Test
     public void createUser_asAdmin_isSuccessful() throws Exception {
+        String password = "foobar1234";
         student.setId(null);
         student.setLogin("batman");
         student.setPassword("foobar");
@@ -252,12 +257,15 @@ public class UserTestService {
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
-        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student, password), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userRepository.findById(response.getId()).get();
-        userInDB.setPassword(passwordService.decryptPasswordByLogin(userInDB.getLogin()).get());
+        assertThat(passwordService.checkPasswordMatch(password, userInDB.getPassword())).isTrue();
         student.setId(response.getId());
-        response.setPassword("foobar");
+
+        // Exclude passwords from comparison
+        response.setPassword(null);
+        userInDB.setPassword(null);
 
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);

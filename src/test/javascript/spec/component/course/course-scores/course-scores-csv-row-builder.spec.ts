@@ -50,9 +50,18 @@ describe('The CourseScoresCsvRowBuilder', () => {
         expect(row[USERNAME_KEY]).toBe('login');
         expect(row[EMAIL_KEY]).toBe('mail@example.com');
         expect(row[REGISTRATION_NUMBER_KEY]).toBe('123456789');
+    });
 
-        user.visibleRegistrationNumber = undefined;
+    it('should allow for empty student information', () => {
+        const user = new User();
+        const student = new CourseScoresStudentStatistics(user);
+
         csvRow.setUserInformation(student);
+
+        const row = csvRow.build();
+        expect(row[NAME_KEY]).toBe('');
+        expect(row[USERNAME_KEY]).toBe('');
+        expect(row[EMAIL_KEY]).toBe('');
         expect(row[REGISTRATION_NUMBER_KEY]).toBe('');
     });
 

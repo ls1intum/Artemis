@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: artemis-gateway
+spec:
+  rules:
+  - host: artemis-gateway
+    http:
+      paths:
+      - backend:
+          service:
+            name: gateway
+            port:
+              number: 8089
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - artemis-gateway

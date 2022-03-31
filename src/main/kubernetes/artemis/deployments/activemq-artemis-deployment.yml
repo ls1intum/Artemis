@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: deployment-artemis-activemq-artemis
+  name: activemq-artemis
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+        app: deployment-artemis-activemq-artemis
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+          app: deployment-artemis-activemq-artemis
+    spec:
+      containers:
+      - envFrom:
+        - secretRef:
+            name: activemq-artemis-secrets
+            optional: false
+        - configMapRef:
+            name: activemq-artemis
+            optional: false
+        # This image is deprecated. In the future we can build our own ActiveMQ Artemis image as described here: https://hub.docker.com/r/vromero/activemq-artemis
+        image: vromero/activemq-artemis
+        imagePullPolicy: Always
+        name: activemq-artemis
+        ports:
+        - containerPort: 61616
+          name: 61616tcp616162
+          protocol: TCP
+        - containerPort: 8161
+          name: 8161tcp81612
+          protocol: TCP
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {}
+          privileged: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+      restartPolicy: Always
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

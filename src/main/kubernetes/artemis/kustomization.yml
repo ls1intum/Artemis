@@ -5,23 +5,69 @@ resources:
   - pvc/artemis-mysql.yml
   - pvc/artemis.yml
   #Secrets
+  - secrets/activemq-artemis-secret.yml
   - secrets/artemis-secrets.yml
   - secrets/jhipster-registry-secret.yml
   #ConfigMaps
+  - configmaps/activemq-artemis-configmap.yml
   - configmaps/application-configmap.yml
   - configmaps/artemis-configmap.yml
+  - configmaps/artemis-lecture-configmap.yml
   - configmaps/artemis-mysql-configmap.yml
-  - configmaps/kafka-configmap.yml
-  - configmaps/zookeeper-configmap.yml
+  - configmaps/artemis-usermanagement-configmap.yml
+  - configmaps/jhipster-registry-common-configmap.yml
   - configmaps/jhipster-registry-configmap.yml
+  - configmaps/gateway-configmap.yml
   #Stateful sets
   - statefulsets/jhipster-registry.yml
   - statefulsets/artemis-mysql.yml
   #Deployments
-  - deployments/artemis-deployment.yml
-  - deployments/zookeeper-deployment.yml
-  - deployments/kafka-deployment.yml
+  - deployments/activemq-artemis-deployment.yml
+  - deployments/artemis-service-deployment.yml
+  - deployments/lecture-service-deployment.yml
+  - deployments/usermanagement-service-deployment.yml
+  - deployments/gateway-deployment.yml
   #Services
+  - services/activemq-artemis-service.yml
+  - services/artemis-mysql-service.yml
+  - services/artemis-service.yml
+  - services/gateway-service.yml
+  - services/lecture-service.yml
+  - services/usermanagement-service.yml
   - services/jhipster-registry-service.yml
   #Ingresses
-  - ingresses/artemis-ingress.yml
+  - ingresses/activemq-artemis-ingress.yml
+  - ingresses/gateway-ingress.yml
+  - ingresses/jhipster-registry-ingress.yml
+
+patches:
+  - target:
+      kind: Ingress
+      name: artemis-gateway
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: artemis-gateway.artemis.rancher.localhost
+      - op: replace
+        path: /spec/tls/0/hosts
+        value: [artemis-gateway.artemis.rancher.localhost]
+  - target:
+      kind: Ingress
+      name: activemq
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: activemq.artemis.rancher.localhost
+      - op: replace
+        path: /spec/tls/0/hosts
+        value: [activemq.artemis.rancher.localhost]
+  - target:
+      kind: Ingress
+      name: jhipster-registry
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: jhipster-registry.artemis.rancher.localhost
+      - op: replace
+        path: /spec/tls/0/hosts
+        value: [jhipster-registry.artemis.rancher.localhost]

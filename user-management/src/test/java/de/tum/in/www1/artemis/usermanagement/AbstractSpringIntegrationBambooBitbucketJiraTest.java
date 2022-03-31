@@ -5,6 +5,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.net.URISyntaxException;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.usermanagement.util.AbstractArtemisIntegrationTest;
 
@@ -27,6 +28,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @Autowired
     protected JiraRequestMockProvider jiraRequestMockProvider;
 
+    @Autowired
+    protected BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
     @AfterEach
     public void resetSpyBeans() {
         super.resetSpyBeans();
@@ -36,7 +40,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockUpdateUserInUserManagement(String oldLogin, User user, Set<String> oldGroups) throws URISyntaxException {
         var managedUserVM = new ManagedUserVM(user);
         jiraRequestMockProvider.mockIsGroupAvailableForMultiple(managedUserVM.getGroups());
-        jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin(), false);
+        jiraRequestMockProvider.mockRemoveUserFromGroup(oldGroups, managedUserVM.getLogin(), false, true);
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(managedUserVM.getGroups());
     }
 

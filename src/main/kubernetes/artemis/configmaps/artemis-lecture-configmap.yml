@@ -1,0 +1,11 @@
+apiVersion: v1
+data:
+  _JAVA_OPTIONS: -Xmx512m -Xms256m
+  JHIPSTER_SLEEP: "30"
+  MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED: "true"
+  SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql/artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+  SPRING_PROFILES_ACTIVE: prod,artemis,scheduling
+  SPRING_ARTEMIS_HOST: activemq-artemis
+kind: ConfigMap
+metadata:
+  name: artemis-lecture-config

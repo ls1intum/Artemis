@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
@@ -1320,8 +1319,9 @@ public class CourseTestService {
         zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
         String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
 
-        return Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip"))
-                .collect(Collectors.toList());
+        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+            return files.filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip")).toList();
+        }
     }
 
     public void testExportCourse_cannotCreateTmpDir() throws Exception {
@@ -1421,7 +1421,10 @@ public class CourseTestService {
 
         // We test for the filenames of the submissions since it's the easiest way.
         // We don't test the directory structure
-        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        List<Path> filenames;
+        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+            filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+        }
 
         var submissions = submissionRepository.findAll();
 

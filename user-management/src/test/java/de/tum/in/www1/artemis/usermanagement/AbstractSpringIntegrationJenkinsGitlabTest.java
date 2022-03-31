@@ -66,7 +66,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception {
-        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), failInVcs);
+        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), userExistsInUserManagement, failInVcs);
         jenkinsRequestMockProvider.mockDeleteUser(user, userExistsInUserManagement, failInCi);
     }
 }

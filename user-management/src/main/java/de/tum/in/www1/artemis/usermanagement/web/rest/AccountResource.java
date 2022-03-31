@@ -169,20 +169,6 @@ public class AccountResource {
     }
 
     /**
-     * GET account/password : get the current users password.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the current user password in body, or status 500 (Internal Server Error) if the user couldn't be returned
-     */
-    @GetMapping(value = "account/password", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getPassword() {
-        // This method is used to show the password for users that have been generated automatically based on LTI
-        // It only allows to decrypt and return the password of internal users and only of the currently logged in user
-        Map<String, String> body = new HashMap<>();
-        body.put("password", passwordService.decryptPasswordOfCurrentUser());
-        return new ResponseEntity<>(body, HttpStatus.OK);
-    }
-
-    /**
      * {@code PUT  account} : update the current user information.
      *
      * @param userDTO the current user information.

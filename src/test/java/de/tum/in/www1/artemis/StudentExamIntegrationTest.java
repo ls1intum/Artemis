@@ -254,7 +254,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
             programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
             for (var user : exam2.getRegisteredUsers()) {
-                var repo = new LocalRepository();
+                var repo = new LocalRepository(defaultBranch);
                 repo.configureRepos("studentRepo", "studentOriginRepo");
                 programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
                 studentRepos.add(repo);

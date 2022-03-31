@@ -745,7 +745,7 @@ describe('GuidedTourService', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
-                declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe), MockDirective(NavbarComponent)],
+                declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe), MockComponent(NavbarComponent)],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },

@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://admin:${jhipster.registry.password}@jhipster-registry:8761/eureka
+  SPRING_CLOUD_CONFIG_URI: http://admin:${jhipster.registry.password}@jhipster-registry:8761/config
+kind: ConfigMap
+metadata:
+  name: jhipster-registry-config

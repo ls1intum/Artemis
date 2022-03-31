@@ -135,9 +135,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         instructor = users.get(users.size() - 1);
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("student42", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("student42", passwordService.hashPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("tutor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("instructor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD)));
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -1989,7 +1989,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
         // Check that the dummy files we created exist in the archive.
-        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        List<Path> filenames;
+        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+            filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+        }
 
         var submissions = submissionRepository.findAll();
 

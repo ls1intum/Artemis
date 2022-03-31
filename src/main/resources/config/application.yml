@@ -26,6 +26,7 @@ artemis:
     version: #project.version#
     file-upload-path: uploads
     submission-export-path: exports
+    bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s

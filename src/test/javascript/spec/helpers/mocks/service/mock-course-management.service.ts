@@ -1,8 +1,9 @@
 import { HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { Course, CourseGroup } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { User } from '@sentry/browser';
 
 export class MockCourseManagementService {
     mockExercises: Exercise[] = [new TextExercise(undefined, undefined)];
@@ -32,4 +33,8 @@ export class MockCourseManagementService {
     findAllCategoriesOfCourse = () => {
         return of();
     };
+
+    getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
+        return of(new HttpResponse({ body: [] }));
+    }
 }
