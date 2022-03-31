@@ -16,6 +16,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     disconnected = false;
     isOnExamParticipationPage = false;
     websocketStatusSubscription: Subscription;
+    routerSubscription: Subscription;
     openTimeout: any;
 
     // Icons
@@ -23,7 +24,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     faWifi = faWifi;
 
     constructor(private websocketService: JhiWebsocketService, private router: Router) {
-        router.events
+        this.routerSubscription = router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
             .subscribe((event: NavigationEnd) => (this.isOnExamParticipationPage = !!event.url.match('^/courses/\\d+/exams/\\d+')));
     }
@@ -43,5 +44,6 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.websocketStatusSubscription.unsubscribe();
+        this.routerSubscription.unsubscribe();
     }
 }
