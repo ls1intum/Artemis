@@ -56,6 +56,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(String login, boolean isInternal);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
@@ -79,6 +82,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select user from User user where :#{#groupName} member of user.groups")
     List<User> findAllInGroup(@Param("groupName") String groupName);
+
+    @Query("select user from User user where user.isInternal = :#{#isInternal}")
+    List<User> findAllByInternal(boolean isInternal);
 
     /**
      * Searches for users in a group by their login or full name.
@@ -135,6 +141,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user")
     Page<User> findAllWithGroups(Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    @Query("select user from User user")
+    Set<User> findAllWithGroupsAndAuthorities();
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("select user from User user where user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}% "

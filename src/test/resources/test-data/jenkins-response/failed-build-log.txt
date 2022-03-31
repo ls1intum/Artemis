@@ -33,9 +33,9 @@ using GIT_ASKPASS to set credentials Gitlab Admin credentials for Artemis
  > git config remote.tests.url http://gitlab:80/CS1JAVA1/cs1java1-tests.git # timeout=10
  > git config --add remote.tests.fetch +refs/heads/*:refs/remotes/tests/* # timeout=10
 Avoid second fetch
-skipping resolution of commit remotes/tests/master, since it originates from another repository
- > git rev-parse refs/remotes/tests/master^{commit} # timeout=10
-Checking out Revision 91c23a5483b14530f6bfdd29a8b73fc516a27c9b (refs/remotes/tests/master)
+skipping resolution of commit remotes/tests/main, since it originates from another repository
+ > git rev-parse refs/remotes/tests/main^{commit} # timeout=10
+Checking out Revision 91c23a5483b14530f6bfdd29a8b73fc516a27c9b (refs/remotes/tests/main)
  > git config core.sparsecheckout # timeout=10
  > git checkout -f 91c23a5483b14530f6bfdd29a8b73fc516a27c9b # timeout=10
 Commit message: "Test-Template pushed by Artemis"
@@ -58,9 +58,9 @@ using GIT_ASKPASS to set credentials Gitlab Admin credentials for Artemis
  > git config remote.assignment.url http://gitlab:80/CS1JAVA1/cs1java1-exercise.git # timeout=10
  > git config --add remote.assignment.fetch +refs/heads/*:refs/remotes/assignment/* # timeout=10
 Avoid second fetch
-skipping resolution of commit remotes/tests/master, since it originates from another repository
- > git rev-parse refs/remotes/assignment/master^{commit} # timeout=10
-Checking out Revision bb8de32e4ebce8bdbbfdf8f78a5d4bfb8698d0f4 (refs/remotes/assignment/master)
+skipping resolution of commit remotes/tests/main, since it originates from another repository
+ > git rev-parse refs/remotes/assignment/main^{commit} # timeout=10
+Checking out Revision bb8de32e4ebce8bdbbfdf8f78a5d4bfb8698d0f4 (refs/remotes/assignment/main)
  > git config core.sparsecheckout # timeout=10
  > git checkout -f bb8de32e4ebce8bdbbfdf8f78a5d4bfb8698d0f4 # timeout=10
 Commit message: "Update BubbleSort.java"

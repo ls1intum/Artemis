@@ -103,7 +103,7 @@ public class UserCreationService {
         if (password == null) {
             password = RandomUtil.generatePassword();
         }
-        String encryptedPassword = passwordService.encodePassword(password);
+        String encryptedPassword = passwordService.hashPassword(password);
         // new user gets initially a generated password
         newUser.setPassword(encryptedPassword);
 
@@ -162,8 +162,9 @@ public class UserCreationService {
                     .collect(Collectors.toSet());
             user.setAuthorities(authorities);
         }
-        String encryptedPassword = passwordService.encodePassword(userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword());
-        user.setPassword(encryptedPassword);
+        String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
+        String passwordHash = passwordService.hashPassword(password);
+        user.setPassword(passwordHash);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
         if (!useExternalUserManagement) {
@@ -181,8 +182,8 @@ public class UserCreationService {
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         saveUser(user);
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
@@ -209,8 +210,8 @@ public class UserCreationService {
             user.setImageUrl(imageUrl);
             saveUser(user);
             log.info("Changed Information for User: {}", user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, true));
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user));
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, null));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, null));
         });
     }
 
@@ -234,7 +235,7 @@ public class UserCreationService {
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());
         if (updatedUserDTO.getPassword() != null) {
-            user.setPassword(passwordService.encodePassword(updatedUserDTO.getPassword()));
+            user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
         }
         user.setOrganizations(updatedUserDTO.getOrganizations());
         Set<Authority> managedAuthorities = user.getAuthorities();

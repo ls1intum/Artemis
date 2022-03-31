@@ -29,8 +29,8 @@ plugins {
 
 group = "de.tum.in.www1.artemis"
 
-sourceCompatibility=16
-targetCompatibility=16
+sourceCompatibility=17
+targetCompatibility=17
 
 apply from: "gradle/docker.gradle"
 apply from: "../gradle/liquibase.gradle"
@@ -186,12 +186,16 @@ sourceSets {
             include "java/de/tum/in/www1/artemis/connector/GitlabRequestMockProvider.*"
             include "java/de/tum/in/www1/artemis/connector/JenkinsRequestMockProvider.*"
             include "java/de/tum/in/www1/artemis/connector/JiraRequestMockProvider.*"
+            include "java/de/tum/in/www1/artemis/connector/BitbucketRequestMockProvider.*"
 
 
             srcDir file("../src/main")
             include "java/de/tum/in/www1/artemis/util/FileUtils.*"
             include "java/de/tum/in/www1/artemis/service/UrlService.*"
+            include "java/de/tum/in/www1/artemis/service/connectors/VersionControlRepositoryPermission.*"
             include "java/de/tum/in/www1/artemis/service/connectors/bamboo/dto/**"
+            include "java/de/tum/in/www1/artemis/service/connectors/bitbucket/BitbucketPermission.*"
+            include "java/de/tum/in/www1/artemis/service/connectors/bitbucket/dto/**"
             include "java/de/tum/in/www1/artemis/service/connectors/jenkins/dto/**"
         }
     }

@@ -183,7 +183,7 @@ public class UserResource {
         final var oldUserLogin = existingUser.getLogin();
         final var oldGroups = existingUser.getGroups();
         var updatedUser = userCreationService.updateInternalUser(existingUser, managedUserVM);
-        userService.updateUserInConnectorsAndAuthProvider(existingUser, oldUserLogin, oldGroups);
+        userService.updateUserInConnectorsAndAuthProvider(existingUser, oldUserLogin, oldGroups, managedUserVM.getPassword());
 
         if (shouldActivateUser) {
             userService.activateUser(updatedUser);

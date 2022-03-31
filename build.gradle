@@ -18,7 +18,7 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.2.0"
     id "com.github.node-gradle.node" version "3.2.1"
-    id "com.diffplug.spotless" version "6.3.0"
+    id "com.diffplug.spotless" version "6.4.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
@@ -27,12 +27,12 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.6.1"
+    version = "5.7.1"
     description = "Interactive Learning with Individual Feedback"
 }
 
-sourceCompatibility=16
-targetCompatibility=16
+sourceCompatibility=17
+targetCompatibility=17
 
 apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
@@ -99,7 +99,8 @@ private excludedClassFilesForReport(classDirectories) {
                 "**/de/tum/in/www1/artemis/domain/**/*_*",
                 "gateway/**", // exclude the gateway project from test coverage report for the moment until it is activated
                 "user-management/**", // exclude the user-management project from test coverage report for the moment until it is activated
-                "**/de/tum/in/www1/artemis/config/migration/entries/*_*"
+                "**/de/tum/in/www1/artemis/config/migration/entries/*_*",
+                "**/gradle-wrapper.jar/**"
             ]
         )
     }))
@@ -123,6 +124,9 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven {
+            url "https://repo.gradle.org/gradle/libs-releases/"
+        }
     }
 }
 
@@ -188,6 +192,8 @@ dependencies {
     }
     testImplementation "com.h2database:h2:${h2_database_version}"
     testImplementation "com.opencsv:opencsv:${opencsv_version}"
+    testImplementation "org.gradle:gradle-tooling-api:${gradle_tooling_api}"
+
 }
 
 task executeTests (type: Exec) {

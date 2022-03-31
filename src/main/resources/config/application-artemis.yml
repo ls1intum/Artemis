@@ -6,7 +6,9 @@ artemis:
     course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
     repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
     repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
-    encryption-password: <encrypt-password>         # arbitrary password for encrypting database values
+    encryption-password: <encrypt-password>         # LEGACY: arbitrary password for encrypting database values
+    bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+                            # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
     user-management:
         use-external: false
         password-reset:
@@ -48,7 +50,7 @@ artemis:
         ssh-keys-url-path: /plugins/servlet/ssh/account/keys  # Url Path to access a users ssh keys, for gitlab this is '/-/profile/keys'
 #        ssh-private-key-folder-path: <ssh-private-key-folder-path>       # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored that can be used to clone git repos on the version control server
 #        ssh-private-key-password: <ssh-private-key-password>        # the password for the private ssh key
-        default-branch: master          # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
+        default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     continuous-integration:
         user: <username>                # e.g. ga12abc
         password: <password>
