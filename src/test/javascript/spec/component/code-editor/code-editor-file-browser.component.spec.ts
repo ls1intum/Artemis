@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
@@ -27,7 +27,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let codeEditorRepositoryService: CodeEditorRepositoryService;
     let conflictService: CodeEditorConflictStateService;
-    let getRepositoryContenStub: jest.SpyInstance;
+    let getRepositoryContentStub: jest.SpyInstance;
     let getStatusStub: jest.SpyInstance;
     let createFileStub: jest.SpyInstance;
     let renameFileStub: jest.SpyInstance;
@@ -62,7 +62,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
                 conflictService = TestBed.inject(CodeEditorConflictStateService);
                 getStatusStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
-                getRepositoryContenStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
+                getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
                 createFileStub = jest.spyOn(codeEditorRepositoryFileService, 'createFile').mockReturnValue(of(undefined));
                 renameFileStub = jest.spyOn(codeEditorRepositoryFileService, 'renameFile').mockReturnValue(of(undefined));
             });
@@ -75,7 +75,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         const expectedFileTreeItems: TreeviewItem<string>[] = [];
-        getRepositoryContenStub.mockReturnValue(of(repositoryContent));
+        getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
 
@@ -93,7 +93,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('should create treeviewItems if getRepositoryContent returns files', () => {
         const repositoryContent: { [fileName: string]: string } = { file: 'FILE', folder: 'FOLDER' };
-        getRepositoryContenStub.mockReturnValue(of(repositoryContent));
+        getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
 
@@ -194,7 +194,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             'allowedFile.java': FileType.FILE,
         };
         const forbiddenFiles = {
-            'danger.bin': FileType.FOLDER,
+            'danger.bin': FileType.FILE,
             'README.md': FileType.FILE,
             '.hidden': FileType.FILE,
             '.': FileType.FOLDER,
@@ -212,7 +212,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 value: 'file1',
             } as any),
         ].map((x) => x.toString());
-        getRepositoryContenStub.mockReturnValue(of(repositoryContent));
+        getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
@@ -225,6 +225,30 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renderedFolders).toHaveLength(0);
         expect(renderedFiles).toHaveLength(1);
     });
+
+    it('should show folders with dots in their names', fakeAsync(() => {
+        const allowedFolders = {
+            'dot.in.folderName': FileType.FOLDER,
+            'regular.folder': FileType.FOLDER,
+        };
+        const hiddenFolders = {
+            '.git': FileType.FOLDER,
+            '.other_hidden_folder': FileType.FOLDER,
+        };
+        const allFolders = {
+            ...allowedFolders,
+            ...hiddenFolders,
+        };
+        getRepositoryContentStub.mockReturnValue(of(allFolders));
+
+        comp.loadFiles().subscribe((filteredFiles) => {
+            const actualFiles = Object.keys(filteredFiles);
+            expect(actualFiles).toHaveLength(2);
+            expect(actualFiles).toEqual(Object.keys(allowedFolders));
+        });
+
+        flush();
+    }));
 
     it('should not load files if commitState could not be retrieved (possibly corrupt repository or server error)', () => {
         const isCleanSubject = new Subject<{ isClean: boolean }>();
@@ -256,7 +280,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
         const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         getStatusStub.mockReturnValue(isCleanSubject);
-        getRepositoryContenStub.mockReturnValue(getRepositoryContentSubject);
+        getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
@@ -432,6 +456,31 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
         expect(onErrorSpy).toHaveBeenCalledTimes(1);
         expect(createFileStub).not.toHaveBeenCalled();
+    });
+
+    it('should be able to create a folder with a name that contains dots', () => {
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+
+        const folderName = 'dot.in.folderName';
+        comp.creatingFile = ['', FileType.FOLDER];
+        comp.repositoryFiles = {};
+        comp.onCreateFile(folderName);
+        fixture.detectChanges();
+
+        expect(onErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([FileType.FILE, FileType.FOLDER])('should not be able to create a hidden %s', (fileType) => {
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+
+        const name = '.hidden_file_or_folder';
+        comp.creatingFile = ['', fileType];
+        comp.repositoryFiles = {};
+        comp.onCreateFile(name);
+        fixture.detectChanges();
+
+        expect(onErrorSpy).toHaveBeenCalledTimes(1);
+        expect(onErrorSpy).toHaveBeenCalledWith('unsupportedFile');
     });
 
     it('should not be able to create node that already exists', () => {
@@ -647,6 +696,33 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renamingInput.nativeElement).toEqual(focusedElement);
     }));
 
+    it('should be able to rename a folder with a new  name that contains dots', () => {
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+
+        const newFolderName = 'dot.in.folderName';
+
+        comp.renamingFile = ['', 'oldFolderName', FileType.FOLDER];
+        comp.repositoryFiles = { oldFolderName: FileType.FOLDER };
+        comp.onRenameFile(newFolderName);
+        fixture.detectChanges();
+
+        expect(onErrorSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([FileType.FILE, FileType.FOLDER])('should not be able to rename a %s so that is hidden', (fileType) => {
+        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+
+        const newName = '.hidden_file_or_folder';
+
+        comp.renamingFile = ['', 'oldName', fileType];
+        comp.repositoryFiles = { oldName: fileType };
+        comp.onRenameFile(newName);
+        fixture.detectChanges();
+
+        expect(onErrorSpy).toHaveBeenCalledTimes(1);
+        expect(onErrorSpy).toHaveBeenCalledWith('unsupportedFile');
+    });
+
     it('should leave rename state if renaming a file to the same file name', fakeAsync(() => {
         const fileName = 'file1';
         const repositoryFiles = { file1: FileType.FILE, newFileName: FileType.FILE };
@@ -678,7 +754,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     it('should disable action buttons if there is a git conflict', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CONFLICT }));
-        getRepositoryContenStub.mockReturnValue(of(repositoryContent));
+        getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         comp.commitState = CommitState.UNDEFINED;
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
@@ -705,7 +781,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBe(false);
         expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBe(false);
 
-        expect(getRepositoryContenStub).toHaveBeenCalledTimes(1);
+        expect(getRepositoryContentStub).toHaveBeenCalledTimes(1);
         expect(comp.selectedFile).toBe(undefined);
     });
 

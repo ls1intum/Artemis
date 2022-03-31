@@ -13,7 +13,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { CourseWideContext, DisplayPriority, MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, MetisPostAction, MetisWebsocketChannelPrefix, PageType } from 'app/shared/metis/metis.util';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -25,7 +25,6 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { of } from 'rxjs';
 import {
-    metisResolvingAnswerPostUser1,
     metisCourse,
     metisCoursePostsWithCourseWideContext,
     metisExercise,
@@ -34,9 +33,11 @@ import {
     metisLecturePosts,
     metisPostExerciseUser1,
     metisReactionUser2,
+    metisResolvingAnswerPostUser1,
     metisUser1,
     metisUser2,
 } from '../../helpers/sample/metis-sample-data';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -421,13 +422,14 @@ describe('Metis Service', () => {
 
         it('should create websocket subscription when posts with exercise context are initially retrieved from DB', fakeAsync(() => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisExercisePosts[0], action: MetisPostAction.DELETE_POST } as MetisPostDTO));
+            metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
-            metisService.getFilteredPosts({ exerciseId: metisExercise.id! });
+            metisService.getFilteredPosts({ exerciseId: metisExercise.id!, page: 0, pageSize: ITEMS_PER_PAGE });
             expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `exercises/${metisExercise.id}`);
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(1);
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseId: metisExercise.id! }, false);
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseId: metisExercise.id!, page: 0, pageSize: ITEMS_PER_PAGE });
         }));
 
         it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', fakeAsync(() => {
