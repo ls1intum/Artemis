@@ -25,7 +25,8 @@
 #pulse-icon {
     position: absolute;
     left: 0;
-    animation: pulse 1s infinite;
+    animation: pulse 1s;
+    animation-iteration-count: 60;
     transform-origin: center;
     pointer-events: none;
 }

@@ -18,5 +18,5 @@
     (click)="popover?.toggle()"
 >
     <fa-icon [icon]="faWifi"></fa-icon>
-    <fa-icon id="pulse-icon" *ngIf="disconnected" [icon]="faWifi"></fa-icon>
+    <fa-icon id="pulse-icon" *ngIf="disconnected && !isOnExamParticipationPage" [icon]="faWifi"></fa-icon>
 </div>

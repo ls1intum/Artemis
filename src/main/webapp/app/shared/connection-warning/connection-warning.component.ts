@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { faExclamationCircle, faWifi } from '@fortawesome/free-solid-svg-icons';
-import { Subscription } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NavigationEnd, Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-connection-warning',
@@ -13,6 +14,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     @ViewChild('popover') popover: NgbPopover;
 
     disconnected = false;
+    isOnExamParticipationPage = false;
     websocketStatusSubscription: Subscription;
     openTimeout: any;
 
@@ -20,7 +22,11 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     faExclamationCircle = faExclamationCircle;
     faWifi = faWifi;
 
-    constructor(private websocketService: JhiWebsocketService) {}
+    constructor(private websocketService: JhiWebsocketService, private router: Router) {
+        router.events
+            .pipe(filter((event) => event instanceof NavigationEnd))
+            .subscribe((event: NavigationEnd) => (this.isOnExamParticipationPage = !!event.url.match('^/courses/\\d+/exams/\\d+$')));
+    }
 
     ngOnInit() {
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
