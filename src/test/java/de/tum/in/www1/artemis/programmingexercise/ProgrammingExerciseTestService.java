@@ -1635,6 +1635,7 @@ public class ProgrammingExerciseTestService {
         }
     }
 
+    // TEST
     public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
@@ -1651,7 +1652,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         ProgrammingExercise newProgrammingExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()),
-                exerciseToBeImported, ProgrammingExercise.class, HttpStatus.CREATED);
+                exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
         assertThat(newProgrammingExercise.getExampleSolutionPublicationDate()).as("programming example solution publication date was correctly set to null in the response")
                 .isNull();
 
@@ -1660,55 +1661,43 @@ public class ProgrammingExerciseTestService {
                 .as("programming example solution publication date was correctly set to null in the database").isNull();
     }
 
+    // TEST
     public void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
-        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).get(0);
+
+        if (isStudent) {
+            assertEquals(studentLogin, username, "The setup is done according to studentLogin value, another username may not work as expected");
+        }
 
         // Utility function to avoid duplication
-        Function<Course, ProgrammingExercise> programmingExerciseGetter = c -> (ProgrammingExercise) c.getExercises().stream()
-                .filter(e -> e.getId().equals(programmingExercise.getId())).findAny().get();
-
-        // programmingExercise.setExampleSolution("Sample<br>solution");
-
-        if (isStudent) {
-            database.createAndSaveParticipationForExercise(programmingExercise, username);
-        }
+        Function<Course, ProgrammingExercise> programmingExerciseGetter = c -> (ProgrammingExercise) c.getExercises().stream().filter(e -> e.getId().equals(exercise.getId()))
+                .findAny().get();
 
         // Test example solution publication date not set.
-        programmingExercise.setExampleSolutionPublicationDate(null);
-        programmingExerciseRepository.save(programmingExercise);
+        exercise.setExampleSolutionPublicationDate(null);
+        programmingExerciseRepository.save(exercise);
 
-        course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
-        ProgrammingExercise programmingExerciseFromApi = programmingExerciseGetter.apply(course);
+        Course courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        ProgrammingExercise programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
-        if (isStudent) {
-            assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
-        }
-        else {
-            assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
-        }
+        assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
 
         // Test example solution publication date in the past.
-        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepository.save(programmingExercise);
+        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(exercise);
 
-        course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
-        programmingExerciseFromApi = programmingExerciseGetter.apply(course);
+        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
 
         // Test example solution publication date in the future.
-        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepository.save(programmingExercise);
+        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(exercise);
 
-        course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
-        programmingExerciseFromApi = programmingExerciseGetter.apply(course);
+        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
-        if (isStudent) {
-            assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
-        }
-        else {
-            assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
-        }
+        assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
+
     }
 }
