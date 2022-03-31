@@ -345,5 +345,17 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate();
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetProgrammingExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetProgrammingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(false, "instructor1");
+    }
+
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError
 }

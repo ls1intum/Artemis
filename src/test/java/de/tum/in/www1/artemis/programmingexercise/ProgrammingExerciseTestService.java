@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -1638,20 +1639,76 @@ public class ProgrammingExerciseTestService {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
-        ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course1);
 
-        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now());
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course1, false);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "Imported", sourceExercise, course2);
 
-        programmingExerciseRepository.save(programmingExercise);
-        programmingExercise.setCourse(course2);
+        exerciseToBeImported.setExampleSolutionPublicationDate(ZonedDateTime.now());
 
-        ProgrammingExercise newProgrammingExercise = request.postWithResponseBody("/api/programming-exercises/import/" + programmingExercise.getId(), programmingExercise,
-                ProgrammingExercise.class, HttpStatus.CREATED);
+        // Mock requests
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+
+        ProgrammingExercise newProgrammingExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, HttpStatus.CREATED);
         assertThat(newProgrammingExercise.getExampleSolutionPublicationDate()).as("programming example solution publication date was correctly set to null in the response")
                 .isNull();
 
         ProgrammingExercise newProgrammingExerciseFromDatabase = programmingExerciseRepository.findById(newProgrammingExercise.getId()).get();
         assertThat(newProgrammingExerciseFromDatabase.getExampleSolutionPublicationDate())
                 .as("programming example solution publication date was correctly set to null in the database").isNull();
+    }
+
+    public void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).get(0);
+
+        // Utility function to avoid duplication
+        Function<Course, ProgrammingExercise> programmingExerciseGetter = c -> (ProgrammingExercise) c.getExercises().stream()
+                .filter(e -> e.getId().equals(programmingExercise.getId())).findAny().get();
+
+        // programmingExercise.setExampleSolution("Sample<br>solution");
+
+        if (isStudent) {
+            database.createAndSaveParticipationForExercise(programmingExercise, username);
+        }
+
+        // Test example solution publication date not set.
+        programmingExercise.setExampleSolutionPublicationDate(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        ProgrammingExercise programmingExerciseFromApi = programmingExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
+        }
+        else {
+            assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
+        }
+
+        // Test example solution publication date in the past.
+        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        programmingExerciseFromApi = programmingExerciseGetter.apply(course);
+
+        assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
+
+        // Test example solution publication date in the future.
+        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        course = request.get("/api/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        programmingExerciseFromApi = programmingExerciseGetter.apply(course);
+
+        if (isStudent) {
+            assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
+        }
+        else {
+            assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
+        }
     }
 }
