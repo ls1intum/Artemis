@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
@@ -37,7 +37,7 @@ describe('PostCreateEditModalComponent', () => {
                 MockComponent(HelpIconComponent),
                 MockComponent(PostTagSelectorComponent),
                 MockComponent(NgbAccordion),
-                MockComponent(NgbPanel),
+                MockDirective(NgbPanel),
             ],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
         })
