@@ -25,7 +25,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     constructor(private websocketService: JhiWebsocketService, private router: Router) {
         router.events
             .pipe(filter((event) => event instanceof NavigationEnd))
-            .subscribe((event: NavigationEnd) => (this.isOnExamParticipationPage = !!event.url.match('^/courses/\\d+/exams/\\d+$')));
+            .subscribe((event: NavigationEnd) => (this.isOnExamParticipationPage = !!event.url.match('^/courses/\\d+/exams/\\d+')));
     }
 
     ngOnInit() {
