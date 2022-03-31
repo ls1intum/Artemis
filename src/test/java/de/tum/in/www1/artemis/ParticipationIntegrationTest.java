@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -61,6 +63,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     private ParticipationService participationService;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
     private Course course;
 
@@ -292,7 +297,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "student1", roles = "USER")
     public void resumeProgrammingExerciseParticipation() throws Exception {
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+        participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURL().toString());
         participationRepo.save(participation);
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
         var updatedParticipation = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);

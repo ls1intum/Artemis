@@ -316,7 +316,7 @@ public class ProgrammingExerciseTestService {
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo) throws Exception {
         final var projectKey = exercise.getProjectKey();
         String participantRepoName = projectKey.toLowerCase() + "-" + participantName;
-        var participantRepoTestUrl = getMockFileRepositoryUrl(studentRepo);
+        var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentRepo);
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
                 true);
@@ -324,10 +324,6 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
         mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + participantRepoName, participantRepoTestUrl);
-    }
-
-    public MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws MalformedURLException {
-        return new MockFileRepositoryUrl(repository.originRepoFile);
     }
 
     // TEST
@@ -1253,12 +1249,12 @@ public class ProgrammingExerciseTestService {
             var team = setupTeam(user);
             participation = database.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUrl(getMockFileRepositoryUrl(studentTeamRepo).getURL().toString());
+            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentTeamRepo).getURL().toString());
         }
         else {
             participation = database.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUrl(getMockFileRepositoryUrl(studentRepo).getURL().toString());
+            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentRepo).getURL().toString());
         }
 
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -1417,7 +1413,7 @@ public class ProgrammingExerciseTestService {
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
-        var participantRepoTestUrl = getMockFileRepositoryUrl(studentTeamRepo);
+        var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
         doThrow(new InterruptedException()).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());

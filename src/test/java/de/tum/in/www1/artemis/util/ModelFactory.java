@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
+import java.net.MalformedURLException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -176,6 +177,10 @@ public class ModelFactory {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setFilePattern(filePattern);
         return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
+    }
+
+    public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws MalformedURLException {
+        return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
     }
 
     private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
