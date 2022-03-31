@@ -109,8 +109,6 @@
             <jhi-programming-exercise-test-schedule-date-picker
                 *ngIf="!isExamMode"
                 [(ngModel)]="exercise.exampleSolutionPublicationDate"
-                [startAt]="exercise.dueDate"
-                [min]="exercise.dueDate"
                 [readOnly]="readOnly"
                 class="test-schedule-date me-2"
                 label="artemisApp.exercise.exampleSolutionPublicationDate"
