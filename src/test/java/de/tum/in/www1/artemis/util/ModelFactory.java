@@ -567,34 +567,59 @@ public class ModelFactory {
         return events;
     }
 
+    /**
+     * Generates a real exam with student review dates set
+     * @param course the associated course
+     * @return the created exam
+     */
     public static Exam generateExamWithStudentReviewDates(Course course) {
+        Exam exam = generateExamHelper(course, false, true);
         ZonedDateTime currentTime = ZonedDateTime.now();
-        Exam exam = new Exam();
-        exam.setTitle("Test exam 1");
-        exam.setVisibleDate(currentTime);
-        exam.setStartDate(currentTime.plusMinutes(10));
-        exam.setEndDate(currentTime.plusMinutes(60));
-        exam.setWorkingTime(3000);
-        exam.setStartText("Start Text");
-        exam.setEndText("End Text");
-        exam.setConfirmationStartText("Confirmation Start Text");
-        exam.setConfirmationEndText("Confirmation End Text");
-        exam.setMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
         exam.setExamStudentReviewStart(currentTime);
         exam.setExamStudentReviewEnd(currentTime.plusMinutes(60));
-        exam.setCourse(course);
         return exam;
     }
 
+    /**
+     * Generates a real exam without student review dates set
+     * @param course the associated course
+     * @return the created exam
+     */
     public static Exam generateExam(Course course) {
+        return generateExamHelper(course, false, true);
+    }
+
+    /**
+     * Generates a test exam without student review dates set and with an endDate set
+     * @param course the associated course
+     * @return the created exam
+     */
+    public static Exam generateTestExamWithEndDateSet(Course course) {
+        return generateExamHelper(course, true, true);
+    }
+
+    /**
+     * Helper method to create an exam
+     * @param course the associated course
+     * @param testExam Boolean flag to determine whether it is a test exam
+     * @param defineEndDate Boolean flag to define, if an endDate should be set (only relevant for testExams)
+     * @return the created Exam
+     */
+    private static Exam generateExamHelper(Course course, boolean testExam, boolean defineEndDate) {
         ZonedDateTime currentTime = ZonedDateTime.now();
         Exam exam = new Exam();
         exam.setTitle("Test exam 1");
+        exam.setTestExam(testExam);
         exam.setVisibleDate(currentTime);
         exam.setStartDate(currentTime.plusMinutes(10));
-        exam.setEndDate(currentTime.plusMinutes(60));
+        if (!testExam) {
+            exam.setEndDate(currentTime.plusMinutes(60));
+        }
+        else if (defineEndDate) {
+            exam.setEndDate(currentTime.plusMinutes(80));
+        }
         exam.setWorkingTime(3000);
         exam.setStartText("Start Text");
         exam.setEndText("End Text");
