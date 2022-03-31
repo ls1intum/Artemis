@@ -31,18 +31,15 @@ public class ComplaintService {
 
     private final ResultRepository resultRepository;
 
-    private final CourseRepository courseRepository;
-
     private final UserRepository userRepository;
 
     private final ExamRepository examRepository;
 
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository) {
+            ExamRepository examRepository, UserRepository userRepository) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
-        this.courseRepository = courseRepository;
         this.examRepository = examRepository;
         this.userRepository = userRepository;
     }
@@ -63,10 +60,10 @@ public class ComplaintService {
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
         Participant participant = studentParticipation.getParticipant(); // Team or Student
 
-        Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
-
         // Retrieve course to get Max Complaints, Max Team Complaints and Max Complaint Time
-        final Course course = courseRepository.findByIdElseThrow(courseId);
+        final Course course = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+
+        Long courseId = course.getId();
 
         // Check whether the complaint text limit is exceeded
         if (course.getMaxComplaintTextLimit() < complaint.getComplaintText().length()) {

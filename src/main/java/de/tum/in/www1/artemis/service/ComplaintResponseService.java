@@ -28,21 +28,15 @@ public class ComplaintResponseService {
 
     private final ComplaintRepository complaintRepository;
 
-    private final ResultRepository resultRepository;
-
-    private final CourseRepository courseRepository;
-
     private final ComplaintResponseRepository complaintResponseRepository;
 
     private final UserRepository userRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public ComplaintResponseService(ComplaintRepository complaintRepository, ResultRepository resultRepository, CourseRepository courseRepository,
-            ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
+    public ComplaintResponseService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.complaintRepository = complaintRepository;
-        this.resultRepository = resultRepository;
-        this.courseRepository = courseRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -196,12 +190,8 @@ public class ComplaintResponseService {
         }
 
         if (updatedComplaintResponse.getResponseText() != null) {
-            Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(originalComplaint.getResult().getId())
-                    .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
-            StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
-            Long courseId = studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
             // Retrieve course to get max complaint response limit
-            final Course course = courseRepository.findByIdElseThrow(courseId);
+            final Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
 
             // Check whether the complaint text limit is exceeded
             if (course.getMaxComplaintResponseTextLimit() < updatedComplaintResponse.getResponseText().length()) {

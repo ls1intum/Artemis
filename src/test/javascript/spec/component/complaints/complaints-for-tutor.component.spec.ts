@@ -257,8 +257,8 @@ describe('ComplaintsForTutorComponent', () => {
         complaintsForTutorComponent.isAssessor = false;
         complaintsForTutorComponent.complaint = unhandledComplaint;
 
+        // Update fixture
         complaintForTutorComponentFixture.detectChanges();
-        // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
@@ -273,8 +273,8 @@ describe('ComplaintsForTutorComponent', () => {
         responseTextArea.value = responseTextArea.value + 'A';
         expect(responseTextArea.value.length).toBe(27);
 
+        // Update fixture
         complaintForTutorComponentFixture.detectChanges();
-        // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
         expect(rejectComplaintButton.disabled).toBe(true);
@@ -308,8 +308,8 @@ describe('ComplaintsForTutorComponent', () => {
         complaintsForTutorComponent.isAssessor = false;
         complaintsForTutorComponent.complaint = unhandledComplaint;
 
+        // Update fixture
         complaintForTutorComponentFixture.detectChanges();
-        // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;

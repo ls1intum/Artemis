@@ -791,6 +791,6 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         complaint.setComplaintText("abcdefghijklmnopqrstuvwxyz");
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
-        assertThat(storedComplaint).as("complaint is saved").isPresent();
+        assertThat(storedComplaint).isPresent();
     }
 }
