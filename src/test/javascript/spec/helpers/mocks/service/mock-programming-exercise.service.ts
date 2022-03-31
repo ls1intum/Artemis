@@ -13,4 +13,5 @@ export class MockProgrammingExerciseService {
     deleteTasksWithSolutionEntries = (exerciseId: number) => of();
     getFullDiffReport = (exerciseId: number) => of({});
     getDiffReport = (exerciseId: number) => of({});
+    createStructuralSolutionEntries = (exerciseId: number) => of({});
 }
