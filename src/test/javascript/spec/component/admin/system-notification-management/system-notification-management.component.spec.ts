@@ -38,9 +38,9 @@ describe('SystemNotificationManagementComponent', () => {
                 MockRouterLinkDirective,
                 MockDirective(RouterOutlet),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(NgbPagination),
                 MockDirective(SortDirective),
                 MockComponent(ItemCountComponent),
+                MockComponent(NgbPagination),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

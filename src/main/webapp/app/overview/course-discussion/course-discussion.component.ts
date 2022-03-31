@@ -134,18 +134,19 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     /**
      *  metis service is invoked to deliver another page of posts, filtered and sorted on the backend
      */
-    onSelectPage(): void {
+    private onSelectPage(): void {
         this.setFilterAndSort();
-        this.metisService.getFilteredPosts(this.currentPostContextFilter);
+        this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
     }
 
     /**
-     * on changing any filter, the metis service is invoked to deliver the first page of posts for the currently set context,
-     * filtered and sorted on the backend
+     * on changing any filter, the metis service is invoked to deliver the first page of posts for the
+     * currently set context, filtered and sorted on the backend
      */
     onSelectContext(): void {
         this.page = 1;
-        this.onSelectPage();
+        this.setFilterAndSort();
+        this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
 
     /**
@@ -254,5 +255,15 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
         };
+    }
+
+    /**
+     * fetches next page of posts when user scrolls to the end of posts
+     */
+    fetchNextPage() {
+        if (this.posts.length < this.totalItems) {
+            this.page += 1;
+            this.onSelectPage();
+        }
     }
 }

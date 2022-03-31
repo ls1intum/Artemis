@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config.auth;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import javax.validation.constraints.NotNull;
 
@@ -27,7 +28,7 @@ public class JiraAuthorizationInterceptor implements ClientHttpRequestIntercepto
     @Override
     public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution) throws IOException {
         if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-            request.getHeaders().setBasicAuth(JIRA_USER, JIRA_PASSWORD);
+            request.getHeaders().setBasicAuth(JIRA_USER, JIRA_PASSWORD, StandardCharsets.UTF_8);
         }
         return execution.execute(request, body);
     }

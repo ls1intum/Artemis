@@ -60,8 +60,8 @@ public class ZipFileService {
      * @throws IOException if an error occurred while zipping
      */
     public Path createZipFileWithFolderContent(Path zipFilePath, Path contentRootPath) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            Files.walk(contentRootPath).filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath)); var files = Files.walk(contentRootPath)) {
+            files.filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(contentRootPath.relativize(path).toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });

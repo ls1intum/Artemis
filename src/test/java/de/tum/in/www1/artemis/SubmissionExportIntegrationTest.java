@@ -229,8 +229,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     private void assertZipContains(File file, Submission... submissions) {
-        try {
-            ZipFile zip = new ZipFile(file);
+        try (ZipFile zip = new ZipFile(file)) {
             for (Submission s : submissions) {
                 assertThat(zip.getEntry(getSubmissionFileName(s))).isNotNull();
             }

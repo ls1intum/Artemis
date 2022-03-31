@@ -18,7 +18,7 @@
             <!-- Comes with JUnit 5, AssertJ and Hamcrest. JUnit 4 (JUnit 5 Vintage) or jqwik need to be added explicitly -->
             <groupId>de.tum.in.ase</groupId>
             <artifactId>artemis-java-test-sandbox</artifactId>
-            <version>1.8.0</version>
+            <version>1.9.0</version>
         </dependency>
     </dependencies>
     <build>
@@ -82,6 +82,8 @@
                                 <file>${project.build.outputDirectory}/org/junit/</file>
                                 <file>${project.build.outputDirectory}/org/opentest4j/</file>
                                 <file>${project.build.outputDirectory}/sun/</file>
+                                <file>${project.build.outputDirectory}/org/gradle/</file>
+                                <file>${project.build.outputDirectory}/worker/org/gradle/</file>
                             </files>
                         </requireFilesDontExist>
                     </rules>

@@ -6,12 +6,10 @@ import static de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRe
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.util.ResourceUtils;
 
 import com.google.gson.JsonObject;
 
@@ -23,6 +21,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLControlFlow;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.in.www1.artemis.util.FileUtils;
 
 public class UMLModelParserTest {
 
@@ -129,11 +128,7 @@ public class UMLModelParserTest {
     }
 
     private JsonObject loadFileFromResources(String path) throws Exception {
-        java.io.File file = ResourceUtils.getFile("classpath:" + path);
-        StringBuilder builder = new StringBuilder();
-        Files.lines(file.toPath()).forEach(builder::append);
-        assertThat(builder.toString()).as("model has been correctly read from file").isNotEqualTo("");
-        return parseString(builder.toString()).getAsJsonObject();
+        return parseString(FileUtils.loadFileFromResources(path)).getAsJsonObject();
     }
 
     private List<UMLElement> createExampleClassDiagramElements() {
