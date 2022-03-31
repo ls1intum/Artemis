@@ -14,7 +14,7 @@
             "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
             "override": "Bewertung überschreiben",
             "resultDismissed": "Deine Bewertung wurde nicht übernommen, da andere Tutor:innen bereits bewertet haben.",
-            "exampleSubmissisonInstruction": "Erstelle eine Beispielabgabe",
+            "exampleSubmissionInstruction": "Erstelle eine Beispielabgabe",
             "error": {
                 "invalidAssessments": "Deine Bewertung ist nicht gültig!",
                 "invalidScoreMustBeNumber": "Das Punkte-Feld muss eine Zahl sein und darf nicht leer sein!",
@@ -49,7 +49,7 @@
             "feedbackEditor": {
                 "dismissFeedback": "Soll das Feedback gelöscht werden?",
                 "dismissFeedbackConfirmation": "Bitte bestätige, dass das Feedback gelöscht werden soll!",
-                "impactWarning": "Dieses Feedback kann <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beinflussen.",
+                "impactWarning": "Dieses Feedback kann <strong style=\"color:blue\">{{affectedSubmissionsCount}}</strong> weitere ähnliche Einreichung/en beeinflussen.",
                 "impactWarningTooltip": "Die Anzahl, wie oft dein Feedback als automatischer Vorschlag in anderen Einreichungen wiederverwendet wird, die einen ähnlichen Textblock aufweisen.",
                 "automaticFeedbackInformationModal": {
                     "heading": "Automatische Feedbackverfolgung",
