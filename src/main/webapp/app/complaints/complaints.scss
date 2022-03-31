@@ -7,9 +7,8 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-}
 
-.complaint-response-block textarea,
-.complaint-block textarea {
-    margin-top: auto;
+    & textarea {
+        margin-top: auto;
+    }
 }
