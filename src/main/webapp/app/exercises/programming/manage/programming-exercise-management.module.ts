@@ -22,6 +22,7 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../shared/ac
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 
 @NgModule({
@@ -44,6 +45,7 @@ import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exe
         OrionModule,
         ArtemisProgrammingExerciseLifecycleModule,
         SubmissionResultStatusModule,
+        GitDiffReportModule,
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,
