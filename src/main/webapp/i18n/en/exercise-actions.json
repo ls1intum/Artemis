@@ -19,7 +19,7 @@
             "repositoryPassword": "Your Password is:",
             "hoverToShow": "(hover to show)",
             "cloneSourceTree": "Clone in SourceTree",
-            "sourceTreeDescription": "<a href='http://www.sourcetreeapp.com' target='_blank'>Atlassian SourceTree</a> is a free Git client for Windows or Mac.",
+            "sourceTreeDescription": "<a href='https://www.sourcetreeapp.com' target='_blank'>Atlassian SourceTree</a> is a free Git client for Windows or Mac.",
             "goToBuildPlan": "Go to build plan",
             "openTextEditor": "Open text editor",
             "copyUrl": "Copy URL",

@@ -14,7 +14,7 @@
             "submitSuccessful": "Your assessment was submitted successfully!",
             "override": "Override Assessment",
             "resultDismissed": "Your assessment was rejected because another tutor has already graded this submission.",
-            "exampleSubmissisonInstruction": "Create an example submission",
+            "exampleSubmissionInstruction": "Create an example submission",
             "error": {
                 "invalidAssessments": "Your assessments are not valid!",
                 "invalidScoreMustBeNumber": "The points field must be a number and can not be empty!",
