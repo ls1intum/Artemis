@@ -27,7 +27,7 @@
         </button>
     </div>
     <div class="row">
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-6 complaint-block">
             <h4>
                 <span
                     >{{
@@ -50,7 +50,7 @@
             <textarea id="complaintTextArea" class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>
         </div>
 
-        <div *ngIf="handled || isAllowedToRespond" class="col-12 col-md-6">
+        <div *ngIf="handled || isAllowedToRespond" class="col-12 col-md-6 complaint-response-block">
             <h3>
                 {{
                     complaint.complaintType === ComplaintType.MORE_FEEDBACK

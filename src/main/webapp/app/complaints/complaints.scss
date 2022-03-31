@@ -1,3 +1,15 @@
 .info-icon {
     color: #ffc107;
 }
+
+.complaint-response-block,
+.complaint-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.complaint-response-block textarea,
+.complaint-block textarea {
+    margin-top: auto;
+}

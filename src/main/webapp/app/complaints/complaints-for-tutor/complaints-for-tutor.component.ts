@@ -15,6 +15,7 @@ import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.s
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
+    styleUrls: ['../complaints.scss'],
     providers: [],
 })
 export class ComplaintsForTutorComponent implements OnInit {
