@@ -1637,7 +1637,6 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
-        var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
 
