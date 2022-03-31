@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.hestia;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -21,6 +22,8 @@ import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.hestia.structural.StructuralSolutionEntryGenerationException;
+import de.tum.in.www1.artemis.service.hestia.structural.StructuralTestCaseService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import tech.jhipster.web.util.HeaderUtil;
 
@@ -48,14 +51,18 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final StructuralTestCaseService structuralTestCaseService;
+
     public ProgrammingExerciseSolutionEntryResource(ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, CodeHintRepository codeHintRepository,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, AuthorizationCheckService authCheckService) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, AuthorizationCheckService authCheckService,
+            StructuralTestCaseService structuralTestCaseService) {
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.codeHintRepository = codeHintRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.authCheckService = authCheckService;
+        this.structuralTestCaseService = structuralTestCaseService;
     }
 
     /**
@@ -207,6 +214,29 @@ public class ProgrammingExerciseSolutionEntryResource {
 
         programmingExerciseSolutionEntryRepository.deleteById(solutionEntryId);
         return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, solutionEntry.toString())).build();
+    }
+
+    /**
+     * POST programming-exercises/:exerciseId/structural-solution-entries : Create the structural solution entries for a programming exercise
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200} and with body the created solution entry,
+     */
+    @PostMapping("programming-exercises/{exerciseId}/structural-solution-entries")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<List<ProgrammingExerciseSolutionEntry>> createStructuralSolutionEntries(@PathVariable Long exerciseId) {
+        log.debug("REST request to create structural solution entries");
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        try {
+            var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
+            return ResponseEntity.ok(solutionEntries);
+        }
+        catch (StructuralSolutionEntryGenerationException e) {
+            log.error("Unable to create structural solution entries", e);
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     private void checkExerciseContainsTestCaseElseThrow(ProgrammingExercise exercise, ProgrammingExerciseTestCase testCase) {
