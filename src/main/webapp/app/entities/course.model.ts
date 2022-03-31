@@ -9,6 +9,7 @@ import { Language } from 'app/entities/tutor-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
+import { DEFAULT_COMPLAINT_RESPONSE_TEXT_LIMIT, DEFAULT_COMPLAINT_TEXT_LIMIT } from 'app/app.constants';
 
 export class Course implements BaseEntity {
     public id?: number;
@@ -77,8 +78,8 @@ export class Course implements BaseEntity {
         this.maxComplaints = 3; // default value
         this.maxTeamComplaints = 3; // default value
         this.maxComplaintTimeDays = 7; // default value
-        this.maxComplaintTextLimit = 2000; // default value
-        this.maxComplaintResponseTextLimit = 2000; // default value
+        this.maxComplaintTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT; // default value
+        this.maxComplaintResponseTextLimit = DEFAULT_COMPLAINT_RESPONSE_TEXT_LIMIT; // default value
         this.complaintsEnabled = true; // default value
         this.postsEnabled = true; // default value
         this.requestMoreFeedbackEnabled = true; // default value
