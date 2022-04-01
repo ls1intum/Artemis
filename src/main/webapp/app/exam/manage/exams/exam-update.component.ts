@@ -141,7 +141,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     /**
-     * Calculates the WorkingTime for Real Exams based on the start- and end-time.
+     * Calculates the WorkingTime for RealExams based on the start- and end-time.
      * StartDate and EndDate are validated in their corresponding methods.
      */
     get calculateWorkingTime(): number {
@@ -169,13 +169,11 @@ export class ExamUpdateComponent implements OnInit {
                 return this.exam.workingTime <= dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
             }
             return false;
-        } else {
-            if (this.exam.workingTime !== undefined && this.exam.startDate !== undefined && this.exam.endDate !== undefined) {
-                return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
-            } else {
-                return false;
-            }
         }
+        if (this.exam.workingTime !== undefined && this.exam.startDate !== undefined && this.exam.endDate !== undefined) {
+            return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+        }
+        return false;
     }
 
     /**

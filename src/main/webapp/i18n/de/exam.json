@@ -258,9 +258,9 @@
             "reviewDatesInvalidWarning": "Das Ende der Klausureinsicht ist falsch definiert oder fehlt",
             "reviewDatesInvalidExplanation": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden. Zusätzlich muss das Ende der Klausureinsicht immer nach dem Beginn datiert sein.",
             "sections": {
-                "modalities": "Klausurkonfiguration",
+                "configuration": "Klausurkonfiguration",
                 "conduction": "Klausurdurchführung",
-                "correction": "Klausurbewertung und Klausureinsicht",
+                "assessment": "Klausurbewertung und Klausureinsicht",
                 "exercises": "Klausuraufgaben",
                 "text": "Klausurtexte"
             },

@@ -237,11 +237,10 @@ public class ModelFactory {
 
     /**
      * Generate users that has registration numbers
-     *
-     * @param loginPrefix              prefix that will be added in front of every user's login
-     * @param groups                   groups that the users will be added
-     * @param authorities              authorities that the users will have
-     * @param amount                   amount of users to generate
+     * @param loginPrefix prefix that will be added in front of every user's login
+     * @param groups groups that the users will be added
+     * @param authorities authorities that the users will have
+     * @param amount amount of users to generate
      * @param registrationNumberPrefix prefix that will be added in front of every user
      * @return users that were generated
      */
@@ -274,14 +273,13 @@ public class ModelFactory {
 
     /**
      * Generate a team
-     *
-     * @param exercise           exercise of the team
-     * @param name               name of the team
-     * @param shortName          short name of the team
-     * @param loginPrefix        prefix that will be added in front of every user's login
-     * @param numberOfStudents   amount of users to generate for team as students
-     * @param owner              owner of the team generally a tutor
-     * @param creatorLogin       login of user that creates the teams
+     * @param exercise exercise of the team
+     * @param name name of the team
+     * @param shortName short name of the team
+     * @param loginPrefix prefix that will be added in front of every user's login
+     * @param numberOfStudents amount of users to generate for team as students
+     * @param owner owner of the team generally a tutor
+     * @param creatorLogin login of user that creates the teams
      * @param registrationPrefix prefix that will be added in front of every student's registration number
      * @return team that was generated
      */
@@ -307,12 +305,11 @@ public class ModelFactory {
 
     /**
      * Generate a team
-     *
-     * @param exercise         exercise of the team
-     * @param name             name of the team
-     * @param shortName        short name of the team
+     * @param exercise exercise of the team
+     * @param name name of the team
+     * @param shortName short name of the team
      * @param numberOfStudents amount of users to generate for team as students
-     * @param owner            owner of the team generally a tutor
+     * @param owner owner of the team generally a tutor
      * @return team that was generated
      */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
@@ -321,13 +318,12 @@ public class ModelFactory {
 
     /**
      * Generate teams
-     *
-     * @param exercise        exercise of the teams
+     * @param exercise exercise of the teams
      * @param shortNamePrefix prefix that will be added in front of every team's short name
-     * @param loginPrefix     prefix that will be added in front of every student's login
-     * @param numberOfTeams   amount of teams to generate
-     * @param owner           owner of the teams generally a tutor
-     * @param creatorLogin    login of user that created the teams
+     * @param loginPrefix prefix that will be added in front of every student's login
+     * @param numberOfTeams amount of teams to generate
+     * @param owner owner of the teams generally a tutor
+     * @param creatorLogin login of user that created the teams
      * @return teams that were generated
      */
     public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
@@ -336,13 +332,12 @@ public class ModelFactory {
 
     /**
      * Generate teams
-     *
-     * @param exercise           exercise of the teams
-     * @param shortNamePrefix    prefix that will be added in front of every team's short name
-     * @param loginPrefix        prefix that will be added in front of every student's login
-     * @param numberOfTeams      amount of teams to generate
-     * @param owner              owner of the teams generally a tutor
-     * @param creatorLogin       login of user that created the teams
+     * @param exercise exercise of the teams
+     * @param shortNamePrefix prefix that will be added in front of every team's short name
+     * @param loginPrefix prefix that will be added in front of every student's login
+     * @param numberOfTeams amount of teams to generate
+     * @param owner owner of the teams generally a tutor
+     * @param creatorLogin login of user that created the teams
      * @param registrationPrefix prefix that will be added in front of every student's registration number
      * @return teams that were generated
      */
@@ -358,15 +353,14 @@ public class ModelFactory {
 
     /**
      * Generate teams
-     *
-     * @param exercise           exercise of the teams
-     * @param shortNamePrefix    prefix that will be added in front of every team's short name
-     * @param loginPrefix        prefix that will be added in front of every student's login
-     * @param numberOfTeams      amount of teams to generate
-     * @param owner              owner of the teams generally a tutor
-     * @param creatorLogin       login of user that created the teams
+     * @param exercise exercise of the teams
+     * @param shortNamePrefix prefix that will be added in front of every team's short name
+     * @param loginPrefix prefix that will be added in front of every student's login
+     * @param numberOfTeams amount of teams to generate
+     * @param owner owner of the teams generally a tutor
+     * @param creatorLogin login of user that created the teams
      * @param registrationPrefix prefix that will be added in front of every student's registration number
-     * @param teamSize           size of each individual team
+     * @param teamSize size of each individual team
      * @return teams that were generated
      */
     public static List<Team> generateTeamsForExerciseFixedTeamSize(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner,
@@ -508,15 +502,14 @@ public class ModelFactory {
 
     /**
      * Generates a TextAssessment event with the given parameters
-     *
-     * @param eventType       the type of the event
-     * @param feedbackType    the type of the feedback
-     * @param segmentType     the segment type of the event
-     * @param courseId        the course id of the event
-     * @param userId          the userid of the event
-     * @param exerciseId      the exercise id of the event
+     * @param eventType the type of the event
+     * @param feedbackType the type of the feedback
+     * @param segmentType the segment type of the event
+     * @param courseId the course id of the event
+     * @param userId the userid of the event
+     * @param exerciseId the exercise id of the event
      * @param participationId the participation id of the event
-     * @param submissionId    the submission id of the event
+     * @param submissionId the submission id of the event
      * @return the TextAssessment event with all the properties applied
      */
     public static TextAssessmentEvent generateTextAssessmentEvent(TextAssessmentEventType eventType, FeedbackType feedbackType, TextBlockType segmentType, Long courseId,
@@ -536,12 +529,11 @@ public class ModelFactory {
 
     /**
      * Generates a list of different combinations of assessment events based on the given parameters
-     *
-     * @param courseId        the course id of the event
-     * @param userId          the userid of the event
-     * @param exerciseId      the exercise id of the event
+     * @param courseId the course id of the event
+     * @param userId the userid of the event
+     * @param exerciseId the exercise id of the event
      * @param participationId the participation id of the event
-     * @param submissionId    the submission id of the event
+     * @param submissionId the submission id of the event
      * @return a list of TextAssessment events that are generated
      */
     public static List<TextAssessmentEvent> generateMultipleTextAssessmentEvents(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
@@ -571,7 +563,6 @@ public class ModelFactory {
 
     /**
      * Generates a RealExam with student review dates set
-     *
      * @param course the associated course
      * @return the created exam
      */
@@ -587,7 +578,6 @@ public class ModelFactory {
 
     /**
      * Generates a RealExam without student review dates set
-     *
      * @param course the associated course
      * @return the created exam
      */
@@ -596,8 +586,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a TestExam (test exams have no student review dates)
-     *
+     * Generates a TestExam (TestExams have no student review dates)
      * @param course the associated course
      * @return the created exam
      */
@@ -607,9 +596,8 @@ public class ModelFactory {
 
     /**
      * Helper method to create an exam
-     *
-     * @param course        the associated course
-     * @param testExam      Boolean flag to determine whether it is a TestExam
+     * @param course the associated course
+     * @param testExam Boolean flag to determine whether it is a TestExam
      * @return the created Exam
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
@@ -848,9 +836,8 @@ public class ModelFactory {
 
     /**
      * Generates a minimal student participation without a specific user attached.
-     *
      * @param initializationState the state of the participation
-     * @param exercise            the referenced exercise of the participation
+     * @param exercise the referenced exercise of the participation
      * @return the StudentParticipation created
      */
     public static StudentParticipation generateStudentParticipationWithoutUser(InitializationState initializationState, Exercise exercise) {
@@ -929,11 +916,10 @@ public class ModelFactory {
 
     /**
      * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
-     *
-     * @param repoName                    name of the repository
-     * @param successfulTestNames         names of successful tests
-     * @param failedTestNames             names of failed tests
-     * @param programmingLanguage         programming language to use
+     * @param repoName name of the repository
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @param programmingLanguage programming language to use
      * @param enableStaticAnalysisReports should the notification include static analysis reports
      * @return TestResultDTO with dummy data
      */
@@ -993,11 +979,10 @@ public class ModelFactory {
      *     <li>CustomSuccessNoMessage: successful test without message</li>
      *     <li>CustomFailedMessage: failed test with a message</li>
      * </ul>
-     *
-     * @param repoName                    name of the repository
-     * @param successfulTestNames         names of successful tests
-     * @param failedTestNames             names of failed tests
-     * @param programmingLanguage         programming language to use
+     * @param repoName name of the repository
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @param programmingLanguage programming language to use
      * @param enableStaticAnalysisReports should the notification include static analysis reports
      * @return TestResultDTO with dummy data
      */
@@ -1110,10 +1095,9 @@ public class ModelFactory {
 
     /**
      * Generate a Bamboo notification with build logs of various sizes
-     *
-     * @param repoName            repository name
+     * @param repoName repository name
      * @param successfulTestNames names of successful tests
-     * @param failedTestNames     names of failed tests
+     * @param failedTestNames names of failed tests
      * @return notification with build logs
      */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
@@ -1240,7 +1224,6 @@ public class ModelFactory {
 
     /**
      * Generates example TextSubmissions
-     *
      * @param count How many submissions should be generated (max. 10)
      * @return A list containing the generated TextSubmissions
      */
@@ -1275,12 +1258,11 @@ public class ModelFactory {
 
     /**
      * Generate an example organization entity
-     *
-     * @param name         of organization
-     * @param shortName    of organization
-     * @param url          of organization
-     * @param description  of organization
-     * @param logoUrl      of organization
+     * @param name of organization
+     * @param shortName of organization
+     * @param url of organization
+     * @param description of organization
+     * @param logoUrl of organization
      * @param emailPattern of organization
      * @return An organization entity
      */

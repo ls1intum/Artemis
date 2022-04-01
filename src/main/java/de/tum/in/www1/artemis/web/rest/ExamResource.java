@@ -109,7 +109,7 @@ public class ExamResource {
      * POST /courses/{courseId}/exams : Create a new exam.
      *
      * @param courseId the course to which the exam belongs
-     * @param exam     the exam to create
+     * @param exam the exam to create
      * @return the ResponseEntity with status 201 (Created) and with body the new exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -140,7 +140,7 @@ public class ExamResource {
      * PUT /courses/{courseId}/exams : Updates an existing exam.
      * This route does not save changes to the exercise groups. This should be done via the ExerciseGroupResource.
      *
-     * @param courseId    the course to which the exam belongs
+     * @param courseId the course to which the exam belongs
      * @param updatedExam the exam to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated exam
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -193,7 +193,7 @@ public class ExamResource {
      * Validates if the working time is equal to (RealExams) or less than/equal to (TestExams) the time difference between start and end date
      *
      * @param courseId the exam should belong to.
-     * @param exam     which should be checked.
+     * @param exam which should be checked.
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
         if (exam.getCourse() == null) {
@@ -246,9 +246,9 @@ public class ExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
-     * @param courseId           the course to which the exam belongs
-     * @param examId             the exam to find
-     * @param withStudents       boolean flag whether to include all students registered for the exam
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam to find
+     * @param withStudents boolean flag whether to include all students registered for the exam
      * @param withExerciseGroups boolean flag whether to include all exercise groups of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
@@ -304,7 +304,7 @@ public class ExamResource {
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
      * @param courseId the course to which the exam belongs
-     * @param examId   the exam to find
+     * @param examId the exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/statistics")
@@ -327,7 +327,7 @@ public class ExamResource {
      * GET /courses/{courseId}/exams/{examId}/scores : Find scores for an exam by id.
      *
      * @param courseId the course to which the exam belongs
-     * @param examId   the exam to find
+     * @param examId the exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found ExamScoreDTO as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/scores")
@@ -345,7 +345,7 @@ public class ExamResource {
      * GET /courses/:courseId/exams/:examId/exam-for-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
-     * @param examId   the id of the exam that contains the exercises
+     * @param examId the id of the exam that contains the exercises
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard")
@@ -382,7 +382,7 @@ public class ExamResource {
      * GET /courses/:courseId/exams/:examId/exam-for-test-run-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
-     * @param examId   the id of the exam that contains the exercises
+     * @param examId the id of the exam that contains the exercises
      * @return data about a exam test run including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard")
@@ -408,7 +408,7 @@ public class ExamResource {
      * including: - number of submissions to the course - number of assessments - number of assessments assessed by the tutor - number of complaints
      *
      * @param courseId - the id of the course
-     * @param examId   - the id of the exam to retrieve stats from
+     * @param examId - the id of the exam to retrieve stats from
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard")
@@ -484,7 +484,7 @@ public class ExamResource {
      * The delete operation cascades to all student exams, exercise group, exercises and their participations.
      *
      * @param courseId the course to which the exam belongs
-     * @param examId   the id of the exam to delete
+     * @param examId the id of the exam to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}")
@@ -504,7 +504,7 @@ public class ExamResource {
      * The reset operation deletes all studentExams, participations, submissions and feedback.
      *
      * @param courseId the course to which the exam belongs
-     * @param examId   the id of the exam to reset
+     * @param examId the id of the exam to reset
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/reset")
@@ -524,8 +524,8 @@ public class ExamResource {
     /**
      * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
      *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
+     * @param courseId the id of the course
+     * @param examId the id of the exam
      * @param studentLogin the login of the user who should get student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
@@ -559,7 +559,7 @@ public class ExamResource {
      * POST /courses/:courseId/exams/:examId/generate-student-exams : Generates the student exams randomly based on the exam configuration and the exercise groups
      *
      * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param examId the id of the exam
      * @return the list of student exams with their corresponding users
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-student-exams")
@@ -594,7 +594,7 @@ public class ExamResource {
      * They are created randomly based on the exam configuration and the exercise groups.
      *
      * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param examId the id of the exam
      * @return the list of student exams with their corresponding users
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-missing-student-exams")
@@ -625,7 +625,7 @@ public class ExamResource {
      * POST /courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises : Evaluate the quiz exercises of the exam
      *
      * @param courseId the course to which the exam belongs to
-     * @param examId   the id of the exam
+     * @param examId the id of the exam
      * @return ResponseEntity the number of evaluated quiz exercises
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises")
@@ -650,7 +650,7 @@ public class ExamResource {
      * POST /courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories : Unlock all repositories of the exam
      *
      * @param courseId the course to which the exam belongs to
-     * @param examId   the id of the exam
+     * @param examId the id of the exam
      * @return the number of unlocked exercises
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
@@ -671,7 +671,7 @@ public class ExamResource {
      * POST /courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories : Lock all repositories of the exam
      *
      * @param courseId the course to which the exam belongs to
-     * @param examId   the id of the exam
+     * @param examId the id of the exam
      * @return the number of locked exercises
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
@@ -692,12 +692,12 @@ public class ExamResource {
      * POST /courses/:courseId/exams/:examId/students : Add multiple users to the students of the exam so that they can access the exam
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
-     * <p>
+     *
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId    the id of the course
-     * @param examId      the id of the exam
+     * @param courseId the id of the course
+     * @param examId the id of the exam
      * @param studentDtos the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
@@ -716,7 +716,7 @@ public class ExamResource {
      * POST /courses/:courseId/exams/:examId/register-course-students : Add all users which are enrolled in the course to the exam so that the student can access the exam
      *
      * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param examId the id of the exam
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/register-course-students")
@@ -736,9 +736,9 @@ public class ExamResource {
      * Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam any more.
      * Optionally, also deletes participations and submissions of the student in the student exam.
      *
-     * @param courseId                        the id of the course
-     * @param examId                          the id of the exam
-     * @param studentLogin                    the login of the user who should lose student access
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @param studentLogin the login of the user who should lose student access
      * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
@@ -764,8 +764,8 @@ public class ExamResource {
      * Remove all students of the exam so that they cannot access the exam any more.
      * Optionally, also deletes participations and submissions of all students in their student exams.
      *
-     * @param courseId                        the id of the course
-     * @param examId                          the id of the exam
+     * @param courseId the id of the course
+     * @param examId the id of the exam
      * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
@@ -785,7 +785,7 @@ public class ExamResource {
      * GET /courses/{courseId}/exams/{examId}/start : Get an exam for the exam start.
      *
      * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param examId the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found student exam (without exercises) as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/start")
@@ -801,8 +801,8 @@ public class ExamResource {
      * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If the received
      * exercise groups do not belong to the exam the operation is aborted.
      *
-     * @param courseId              the id of the course
-     * @param examId                the id of the exam
+     * @param courseId the id of the course
+     * @param examId the id of the exam
      * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
      * @return the list of exercise groups
      */
@@ -841,7 +841,7 @@ public class ExamResource {
      * GET /courses/{courseId}/exams/{examId}/latest-end-date : Get an exam for conduction.
      *
      * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param examId the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it culd not be
      * determined
      */
@@ -860,7 +860,7 @@ public class ExamResource {
      * GET /courses/:courseId/exams/:examId/lockedSubmissions Get locked submissions for exam for user
      *
      * @param courseId - the id of the course
-     * @param examId   - the id of the exam
+     * @param examId - the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/lockedSubmissions")
@@ -881,12 +881,12 @@ public class ExamResource {
 
     /**
      * PUT /courses/{courseId}/exams/{examId}/archive : archive an existing exam asynchronously.
-     * <p>
+     *
      * This method starts the process of archiving all exam exercises and submissions.
      * It immediately returns and runs this task asynchronously. When the task is done, the exam is marked as archived, which means the zip file can be downloaded.
      *
      * @param courseId the id of the course
-     * @param examId   the id of the exam to archive
+     * @param examId the id of the exam to archive
      * @return empty
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/archive")
@@ -914,7 +914,7 @@ public class ExamResource {
      * Downloads the zip file of the archived exam if it exists. Throws a 404 if the exam doesn't exist.
      *
      * @param courseId The course id of the course
-     * @param examId   The id of the archived exam
+     * @param examId The id of the archived exam
      * @return ResponseEntity with status
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/download-archive")

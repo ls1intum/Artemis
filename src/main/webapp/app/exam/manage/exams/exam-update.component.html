@@ -8,10 +8,10 @@
             <ng-template #edit>
                 <h4>{{ 'artemisApp.examManagement.editExam' | artemisTranslate }}</h4>
             </ng-template>
-            <!-- Section exam modalities -->
+            <!-- Section exam configuration -->
             <div>
                 <hr />
-                <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.modalities' | artemisTranslate }}</h5>
+                <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.configuration' | artemisTranslate }}</h5>
                 <div class="form-group" *ngIf="exam.course">
                     <label class="form-control-label" for="course" jhiTranslate="artemisApp.examManagement.courseTitle">Course Title</label>
                     <input id="course" name="course" readonly type="text" class="form-control" [value]="exam.course.title" />
@@ -25,7 +25,7 @@
                     <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
                 </div>
             </div>
-            <!-- Creation of TestExams is currently hidden, as the feature is not yet fully implemented -->
+            <!-- Creation of TestExams is currently hidden for all non-admins, as the feature is not yet fully implemented -->
             <div class="form-group" *ngIf="isAdmin">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
@@ -132,11 +132,11 @@
                 <input class="form-check-input" type="checkbox" id="DublerandomizeExerciseOrder" name="DublerandomizeExerciseOrder" [(ngModel)]="exam.randomizeExerciseOrder" />
                 <label class="form-check-label" for="DublerandomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder"> Randomize Question Order </label>
             </div>
-            <!-- Section exam correction and student review
+            <!-- Section exam assessment and student review
             Deactivated for TestExams, as results are provided right after a TestExam run and complaints are not possible  -->
             <div *ngIf="!exam.testExam">
                 <hr />
-                <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.correction' | artemisTranslate }}</h5>
+                <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.assessment' | artemisTranslate }}</h5>
                 <div class="row mb-3" *ngIf="!exam.testExam">
                     <div class="col-sm-6">
                         <jhi-date-time-picker

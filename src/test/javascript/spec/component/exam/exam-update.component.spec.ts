@@ -200,7 +200,7 @@ describe('Exam Update Component', () => {
         expect(component.isSaving).toBeFalse();
     }));
 
-    it('should calculate the working time for real exams correctly', () => {
+    it('should calculate the working time for RealExams correctly', () => {
         exam.testExam = false;
 
         exam.startDate = undefined;
@@ -236,7 +236,7 @@ describe('Exam Update Component', () => {
         expect(component.calculateWorkingTime).toEqual(60);
     });
 
-    it('validates the working time for test exams correctly', () => {
+    it('validates the working time for TestExams correctly', () => {
         exam.testExam = true;
         exam.workingTime = undefined;
         fixture.detectChanges();
@@ -261,7 +261,7 @@ describe('Exam Update Component', () => {
         expect(component.validateWorkingTime).toBeFalse();
     });
 
-    it('validates the working time for real exams correctly', () => {
+    it('validates the working time for RealExams correctly', () => {
         exam.testExam = false;
 
         exam.workingTime = undefined;

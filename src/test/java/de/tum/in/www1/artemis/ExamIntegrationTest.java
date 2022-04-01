@@ -714,7 +714,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Test for conflict, end date not after start date
         Exam examE = ModelFactory.generateExam(course);
         examE.setEndDate(examE.getStartDate());
-        // Test for conflict, workingTime is not equal to the difference between startDate and endDate
+        // Test for conflict, when workingTime is not equal to the difference between startDate and endDate
         Exam examF = ModelFactory.generateExam(course);
         examF.setWorkingTime(5000);
         return List.of(examA, examB, examC, examD, examE, examF);
@@ -733,7 +733,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         examB.setVisibleDate(examB.getStartDate());
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
 
-        // Test for conflict, where workingTime greather than difference between StartDate and EndDate
+        // Test for conflict, where workingTime is greather than difference between StartDate and EndDate
         Exam examC = ModelFactory.generateTestExam(course1);
         examC.setWorkingTime(5000);
         request.post("/api/courses/" + course1.getId() + "/exams", examC, HttpStatus.CONFLICT);

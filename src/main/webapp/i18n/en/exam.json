@@ -260,9 +260,9 @@
             "reviewDatesInvalidWarning": "End of Student Review is set incorrect or missing",
             "reviewDatesInvalidExplanation": "If the Begin of Student Review is set, the End of Student Review has to be set as well. Furthermore, the End of Student Review has to be chronologically after its Begin.",
             "sections": {
-                "modalities": "Exam Configuration",
+                "configuration": "Exam Configuration",
                 "conduction": "Exam Conduction",
-                "correction": "Exam Assessment and Student Review",
+                "assessment": "Exam Assessment and Student Review",
                 "exercises": "Exam Exercises",
                 "text": "Exam Texts"
             },

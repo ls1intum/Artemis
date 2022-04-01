@@ -30,7 +30,7 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
-     * Boolean-Flag to distinguish between Real Exams (false) and Test Exams (true)
+     * Boolean-Flag to distinguish between RealExams (false) and TestExams (true)
      */
     @Column(name = "test_exam", columnDefinition = "boolean default false")
     private boolean testExam;
