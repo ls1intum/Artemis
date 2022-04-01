@@ -65,8 +65,8 @@
                 </div>
             </div>
             <div class="selection" id="mc-answer-selection-{{ i }}">
-                <fa-icon [icon]="farCheckSquare" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
-                <fa-icon [icon]="farSquare" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
             </div>
         </div>
     </div>
@@ -132,8 +132,8 @@
                 ></fa-icon>
             </td>
             <td class="selection" *ngIf="!forceSampleSolution">
-                <fa-icon [icon]="farCheckSquare" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
-                <fa-icon [icon]="farSquare" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
             </td>
         </tr>
     </table>
