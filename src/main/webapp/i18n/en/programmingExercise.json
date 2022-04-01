@@ -387,6 +387,8 @@
                 "solution": "Solution",
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it."
             },
+            "recordTestwiseCoverage": "Record Testwise Coverage",
+            "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java-Gradle-projects with non-sequential test runs.",
             "testwiseCoverageReport": {
                 "button": "Show testwise coverage",
                 "tooltip": "Shows the testwise coverage for the solution repository.",

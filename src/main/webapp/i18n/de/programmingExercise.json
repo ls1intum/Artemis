@@ -386,6 +386,8 @@
                 "solution": "Lösung",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories um ihn zu erstellen."
             },
+            "recordTestwiseCoverage": "Testweise Test-Abdeckung aufzeichnen",
+            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testweise Test-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java-Gradle-Projekte mit nicht-sequentiellen Testläufen verfügbar.",
             "testwiseCoverageReport": {
                 "button": "Zeige die testweise Test-Abdeckung an",
                 "tooltip": "Zeigt die testwise Test-Abdeckung für das Lösungs-Repository.",
