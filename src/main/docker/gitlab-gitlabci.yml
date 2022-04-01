@@ -6,15 +6,21 @@ services:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab
             - artemis-gitlab-config:/etc/gitlab
+        hostname: 'HOSTNAME'
         environment:
             GITLAB_OMNIBUS_CONFIG: |
+                external_url 'https://EXTERNALURL'
                 prometheus_monitoring['enable'] = false
                 gitlab_rails['gitlab_shell_ssh_port'] = 2222
                 gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
+                letsencrypt['enable'] = true
+                letsencrypt['auto_renew_hour'] = "12"
+                letsencrypt['auto_renew_minute'] = "30"
+                letsencrypt['auto_renew_day_of_month'] = "*/7"
         ports:
             - '2222:22'
-            - '8081:80'
-        hostname: 'gitlab'
+            - '80:80'
+            - '443:443'
         shm_size: '256m'
     gitlab-runner:
         image: gitlab/gitlab-runner:latest
