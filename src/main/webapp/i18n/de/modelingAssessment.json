@@ -16,6 +16,6 @@
             }
         },
         "notFound": "Wir haben keine neue Modellierungsaufgabe ohne Bewertung gefunden, bitte gehe zurück zum Dashboard.",
-        "impactWarning": "Dieses Feedback kann {{affectedSubmissionsCount}} weitere ähnliche Einreichung/en beinflussen."
+        "impactWarning": "Dieses Feedback kann {{affectedSubmissionsCount}} weitere ähnliche Einreichung/en beeinflussen."
     }
 }
