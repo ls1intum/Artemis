@@ -1,4 +1,4 @@
-# Local GitLab and GitLab CI setup
+# GitLab and GitLab CI setup
 
 First, configure the external URL in the `gitlab-gitlabci.yml` file and run the following command to start GitLab and a GitLab Runner in a Docker container:
 ```bash
@@ -30,7 +30,7 @@ gitlab-runner register \
 
 If you experience problems while installing or registering the runner, you can have a look at the documentation for docker (https://docs.gitlab.com/runner/install/docker.html, https://docs.gitlab.com/runner/register/index.html#docker)
 
-# Production use
+## Production use
 Follow the steps from above, but use the following command instead to start the containers (Don't forget to configure `gitlab-gitlabci.prod.yml` before):
 ```bash
 docker-compose -f src/main/docker/gitlab-gitlabci.yml -f src/main/docker/gitlab-gitlabci.prod.yml up --build -d
