@@ -12,9 +12,10 @@ public interface CIUserManagementService {
      * Creates a new user in the CIS based the Artemis user.
      *
      * @param user The Artemis user
+     * @param password The user's password
      * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
-    void createUser(User user) throws ContinuousIntegrationException;
+    void createUser(User user, String password) throws ContinuousIntegrationException;
 
     /**
      * Deletes the user under the specified login from the CIS.
@@ -29,17 +30,19 @@ public interface CIUserManagementService {
      * an exceptions if the user doesn't exist in the CIS.
      *
      * @param user The Artemis user
+     * @param password The user's password
      * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
-    void updateUser(User user) throws ContinuousIntegrationException;
+    void updateUser(User user, String password) throws ContinuousIntegrationException;
 
     /**
      * Updates the user login of the user.
      *
      * @param oldLogin the old login
      * @param user The Artemis user with the new login
+     * @param password The user's password
      */
-    void updateUserLogin(String oldLogin, User user) throws ContinuousIntegrationException;
+    void updateUserLogin(String oldLogin, User user, String password) throws ContinuousIntegrationException;
 
     /**
      * Updates the user in the CIS with the data from the Artemis users. Also adds/removes
@@ -48,11 +51,12 @@ public interface CIUserManagementService {
      *
      * @param oldLogin the old login if it was updated
      * @param user the Artemis user
+     * @param password the user's password
      * @param groupsToAdd groups to add the user to
      * @param groupsToRemove groups to remove the user from
      * @throws ContinuousIntegrationException thrown when a job cannot be fetched/updated
      */
-    void updateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException;
+    void updateUserAndGroups(String oldLogin, User user, String password, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException;
 
     /**
      * Adds the user to the specified group in the CIS. Groups define who has access

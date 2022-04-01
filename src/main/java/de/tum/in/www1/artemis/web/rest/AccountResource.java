@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
@@ -55,8 +54,7 @@ public class AccountResource {
 
     private final MailService mailService;
 
-    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, MailService mailService,
-            PasswordService passwordService) {
+    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, MailService mailService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
