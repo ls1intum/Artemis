@@ -9,6 +9,11 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 export class CourseManagementExerciseTypeRedirectComponent implements OnInit {
     constructor(private route: ActivatedRoute, private router: Router, private exerciseService: ExerciseService) {}
 
+    /**
+     * Redirect to the correct route for the exercise type.
+     * This is currently used when navigating from the teams page of an exercise back to the details page using the breadcrumb links as the teams page
+     * is located in course-management/:cId/exercises/:eId, and the breadcrumb generator can't know that this is wrong
+     */
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
