@@ -12,19 +12,6 @@ fi
 # Ensure at least the directories are owned by artemis. "-R" takes too long
 chown artemis:artemis config data
 
-# Allow waiting for other services
-if [ -n "${WAIT_FOR}" ]; then
-  hosts_ports=$(echo $WAIT_FOR | tr "," "\n" | tr -d "\"")
-  for host_port in $hosts_ports
-  do
-    until [[ "$(curl -s -o /dev/null -L -w ''%{http_code}'' http://$host_port)" == "200" ]]
-    do
-      echo "Waiting for $host_port"
-      sleep 5
-    done
-  done
-fi
-
 echo "Starting application..."
 exec gosu artemis java \
   -Djdk.tls.ephemeralDHKeySize=2048 \
