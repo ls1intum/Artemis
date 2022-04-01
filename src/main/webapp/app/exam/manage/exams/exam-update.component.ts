@@ -11,6 +11,7 @@ import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -22,6 +23,8 @@ export class ExamUpdateComponent implements OnInit {
     isSaving: boolean;
     // The exam.workingTime is stored in seconds, but the working time should be displayed in minutes to the user
     workingTimeInMinutes: number;
+    // Interims-boolean to hide the option to create an TestExam in production, as the feature is not yet fully implemented
+    isAdmin: boolean;
 
     // Icons
     faSave = faSave;
@@ -34,6 +37,7 @@ export class ExamUpdateComponent implements OnInit {
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit(): void {
@@ -54,6 +58,7 @@ export class ExamUpdateComponent implements OnInit {
             }
         });
         this.workingTimeInMinutes = this.exam.workingTime! / 60;
+        this.isAdmin = this.accountService.isAdmin();
     }
 
     /**
@@ -112,15 +117,26 @@ export class ExamUpdateComponent implements OnInit {
         return this.exam?.maxPoints !== undefined && this.exam?.maxPoints > 0;
     }
 
+    /**
+     * Validates the given StartDate.
+     * For RealExams, the visibleDate has to be strictly prior the startDate.
+     * For TestExams, the visible Date has to be prior or equal to the startDate.
+     */
     get isValidStartDate(): boolean {
-        return this.exam.startDate !== undefined && dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
+        if (this.exam.startDate === undefined) {
+            return false;
+        }
+        if (this.exam.testExam) {
+            return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
+        } else {
+            return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
+        }
     }
 
+    /**
+     * Validates the EndDate inputted by the user.
+     */
     get isValidEndDate(): boolean {
-        // For TestExams, an endDate is optional
-        if (this.exam.testExam && this.exam.endDate === undefined) {
-            return true;
-        }
         return this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
     }
 
@@ -142,23 +158,18 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Validates the WorkingTime for TestExams.
-     * For RealExams, the WorkingTime is calculated based on the startDate and EndDate.
+     * For RealExams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference.
      */
     get validateWorkingTime(): boolean {
         if (this.exam.testExam) {
-            // For TestExams, an endDate is optional
             if (this.exam.workingTime === undefined) {
                 return false;
             }
-            if (this.exam.startDate !== undefined && this.exam.endDate === undefined) {
-                return true;
-            }
-            if (this.exam.startDate !== undefined) {
+            if (this.exam.startDate !== undefined && this.exam.endDate) {
                 return this.exam.workingTime <= dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
             }
             return false;
         } else {
-            this.calculateWorkingTime;
             if (this.exam.workingTime !== undefined && this.exam.startDate !== undefined && this.exam.endDate !== undefined) {
                 return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
             } else {

@@ -155,6 +155,7 @@ describe('Exam Update Component', () => {
         exam.visibleDate = dayjs().add(1, 'hours');
         exam.startDate = dayjs().add(2, 'hours');
         exam.endDate = dayjs().add(3, 'hours');
+        exam.workingTime = 3600;
         fixture.detectChanges();
         expect(component.isValidConfiguration).toBeTrue();
 
@@ -174,7 +175,6 @@ describe('Exam Update Component', () => {
         exam.startDate = dayjs().add(2, 'hours');
         exam.endDate = dayjs().add(3, 'hours');
         exam.examStudentReviewEnd = undefined;
-        component.calculateWorkingTime;
         fixture.detectChanges();
         expect(component.isValidConfiguration).toBeFalse();
 
@@ -248,8 +248,6 @@ describe('Exam Update Component', () => {
 
         exam.startDate = dayjs().add(0, 'hours');
         exam.workingTime = 3600;
-        expect(component.validateWorkingTime).toBeTrue();
-
         exam.endDate = dayjs().subtract(2, 'hours');
         expect(component.validateWorkingTime).toBeFalse();
 

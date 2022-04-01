@@ -12,14 +12,12 @@ export class Exam implements BaseEntity {
     public visibleDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;
-    // Default exam working time in Minutes
+    // Default exam working time in seconds
     public workingTime?: number;
     public publishResultsDate?: dayjs.Dayjs;
     public examStudentReviewStart?: dayjs.Dayjs;
     public examStudentReviewEnd?: dayjs.Dayjs;
-    /**
-     * grace period in seconds - time in which students can still submit even though working time is over
-     */
+    // grace period in seconds - time in which students can still submit even though working time is over
     public gracePeriod?: number;
     public examiner?: string;
     public moduleNumber?: string;
