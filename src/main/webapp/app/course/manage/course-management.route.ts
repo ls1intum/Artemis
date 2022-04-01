@@ -17,6 +17,7 @@ import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { PlagiarismCasesComponent } from 'app/course/plagiarism-cases/plagiarism-cases.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { CourseManagementExerciseTypeRedirectComponent } from 'app/course/manage/course-management-exercise-type-redirect.component';
 
 export const courseManagementState: Routes = [
     {
@@ -89,6 +90,14 @@ export const courseManagementState: Routes = [
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA, Authority.ADMIN],
                     pageTitle: 'artemisApp.course.exercises',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'exercises/:exerciseId',
+                component: CourseManagementExerciseTypeRedirectComponent,
+                data: {
+                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                 },
                 canActivate: [UserRouteAccessService],
             },
