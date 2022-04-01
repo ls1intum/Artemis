@@ -970,7 +970,6 @@ public class ModelFactory {
 
     /**
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
-     * <p>
      * Uses {@link #generateTestResultDTO(String, List, List, ProgrammingLanguage, boolean)} as basis.
      * Then adds a new {@link TestsuiteDTO} with name "CustomFeedbacks" to it.
      * This Testsuite has four {@link TestCaseDTO}s:
