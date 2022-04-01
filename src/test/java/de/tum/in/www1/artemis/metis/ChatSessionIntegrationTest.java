@@ -138,8 +138,7 @@ class ChatSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private void checkCreatedUserChatSessions(Set<UserChatSession> userChatSessions, ZonedDateTime creationDate) {
         // check each individual user chat session
         userChatSessions.forEach(userChatSession -> {
-            assertThat(userChatSession.isArchived()).isFalse();
-            assertThat(userChatSession.isDeleted()).isFalse();
+            assertThat(userChatSession.isClosed()).isFalse();
             assertThat(userChatSession.getUser()).isNotNull();
             assertThat(userChatSession.getLastRead()).isEqualTo(creationDate);
         });

@@ -144,9 +144,35 @@ export const metisPostLectureUser2 = {
 
 metisResolvingAnswerPostUser1.post = metisPostLectureUser2;
 
+export const chatSessionBetweenUser1User2 = {
+    id: 1,
+    creationDate: undefined,
+    lastMessageDate: undefined,
+} as ChatSession;
+
+export const directMessageUser1 = {
+    id: 9,
+    author: metisUser1,
+    content: 'user1directMessageToUser2',
+    creationDate: undefined,
+    chatSession: chatSessionBetweenUser1User2,
+} as Post;
+
+export const directMessageUser2 = {
+    id: 10,
+    author: metisUser1,
+    content: 'user2directMessageToUser1',
+    creationDate: undefined,
+    chatSession: chatSessionBetweenUser1User2,
+} as Post;
+
+export const chatSessionsOfUser1 = [chatSessionBetweenUser1User2];
+
 export const metisLecturePosts = [metisPostLectureUser1, metisPostLectureUser2];
 
 export const metisCoursePosts = metisCoursePostsWithCourseWideContext.concat(metisExercisePosts, metisLecturePosts);
+
+export const messagesBetweenUser1User2 = [directMessageUser1, directMessageUser2];
 
 export const metisPostToCreateUser1 = {
     author: metisUser1,

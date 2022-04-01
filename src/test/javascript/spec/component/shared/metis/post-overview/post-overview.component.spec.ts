@@ -31,6 +31,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
+    chatSessionsOfUser1,
+    messagesBetweenUser1User2,
     metisCourse,
     metisCoursePosts,
     metisCoursePostsWithCourseWideContext,
@@ -57,6 +59,8 @@ describe('PostOverviewComponent', () => {
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
     let metisServiceGetUserStub: jest.SpyInstance;
+    let fetchNextPageSpy: jest.SpyInstance;
+    let scrollToBottomOfMessagesSpy: jest.SpyInstance;
     let post1: Post;
     let post2: Post;
     let post3: Post;
@@ -106,6 +110,8 @@ describe('PostOverviewComponent', () => {
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
                 metisServiceGetUserStub = jest.spyOn(metisService, 'getUser');
+                fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
+                scrollToBottomOfMessagesSpy = jest.spyOn(component, 'scrollToBottom');
             });
     });
 
@@ -382,20 +388,65 @@ describe('PostOverviewComponent', () => {
         );
     }));
 
-    function expectGetFilteredPostsToBeCalled() {
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
-            courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
-            page: component.page - 1,
-            pageSize: component.itemsPerPage,
-            pagingEnabled: true,
-            postSortCriterion: 'CREATION_DATE',
-            sortingOrder: 'DESCENDING',
-        });
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-    }
+    it('should call fetchNextPage at course discussions when scrolled to bottom and do nothing when scrolled to top', fakeAsync(() => {
+        component.itemsPerPage = 5;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+
+        const scrollableDiv = getElement(fixture.debugElement, 'div[id=scrollableDiv]');
+        scrollableDiv.dispatchEvent(new Event('scrolledUp'));
+        expect(fetchNextPageSpy).toBeCalledTimes(0);
+
+        scrollableDiv.dispatchEvent(new Event('scrolled'));
+        expect(fetchNextPageSpy).toBeCalledTimes(1);
+    }));
+
+    it('should call fetchNextPage at course messages when scrolled to top and do nothing when scrolled to bottom', fakeAsync(() => {
+        component.itemsPerPage = 5;
+        component.courseMessagesPageFlag = true;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+
+        const scrollableDiv = getElement(fixture.debugElement, 'div[id=scrollableDiv]');
+        scrollableDiv.dispatchEvent(new Event('scrolled'));
+        expect(fetchNextPageSpy).toBeCalledTimes(0);
+
+        scrollableDiv.dispatchEvent(new Event('scrolledUp'));
+        expect(fetchNextPageSpy).toBeCalledTimes(1);
+    }));
+
+    it('if user has no chatSession, no call should be made to fetch posts', fakeAsync(() => {
+        component.itemsPerPage = 5;
+        component.courseMessagesPageFlag = true;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+
+        expect(metisServiceGetFilteredPostsSpy).toBeCalledTimes(0);
+    }));
+
+    it('if user has chatSession, posts should be fetched on page load and displayed in reversed order', fakeAsync(() => {
+        initializeFixtureForCourseMessagesPage();
+
+        component.chatSession = chatSessionsOfUser1.first();
+        component.onSelectContext();
+        expect(component.posts).toEqual(messagesBetweenUser1User2.slice().reverse());
+        expect(metisServiceGetFilteredPostsSpy).toBeCalledTimes(1);
+        expect(metisServiceGetFilteredPostsSpy).toBeCalledWith(component.currentPostContextFilter);
+    }));
+
+    it('should auto scroll to the bottom of messages on init or if last message is displayed', fakeAsync(() => {
+        initializeFixtureForCourseMessagesPage();
+        component.chatSession = chatSessionsOfUser1.first();
+        component.onSelectContext();
+
+        tick();
+        fixture.detectChanges();
+
+        expect(scrollToBottomOfMessagesSpy).toBeCalledTimes(1);
+    }));
 
     describe('sorting of posts', () => {
         beforeEach(() => {
@@ -438,4 +489,27 @@ describe('PostOverviewComponent', () => {
             expect(result).toBe(false);
         });
     });
+
+    function expectGetFilteredPostsToBeCalled() {
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
+            courseId: metisCourse.id,
+            courseWideContext: undefined,
+            exerciseId: undefined,
+            lectureId: undefined,
+            page: component.page - 1,
+            pageSize: component.itemsPerPage,
+            pagingEnabled: true,
+            postSortCriterion: 'CREATION_DATE',
+            sortingOrder: 'DESCENDING',
+        });
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
+    }
+
+    function initializeFixtureForCourseMessagesPage() {
+        component.itemsPerPage = 5;
+        component.courseMessagesPageFlag = true;
+
+        tick();
+        fixture.detectChanges();
+    }
 });

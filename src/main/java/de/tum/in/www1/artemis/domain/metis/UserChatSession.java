@@ -33,11 +33,8 @@ public class UserChatSession extends DomainObject {
     @NotNull
     private ZonedDateTime lastRead;
 
-    @Column(name = "archived")
-    private boolean archived;
-
-    @Column(name = "deleted")
-    private boolean deleted;
+    @Column(name = "closed")
+    private boolean closed;
 
     public ChatSession getChatSession() {
         return chatSession;
@@ -63,19 +60,11 @@ public class UserChatSession extends DomainObject {
         this.lastRead = lastRead;
     }
 
-    public boolean isArchived() {
-        return archived;
+    public boolean isClosed() {
+        return closed;
     }
 
-    public void setArchived(boolean archived) {
-        this.archived = archived;
-    }
-
-    public boolean isDeleted() {
-        return deleted;
-    }
-
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
+    public void setClosed(boolean closed) {
+        this.closed = closed;
     }
 }

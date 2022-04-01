@@ -181,6 +181,16 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
+     * fetches next page of posts on user scroll event
+     */
+    fetchNextPage() {
+        if (this.posts.length < this.totalItems) {
+            this.page += 1;
+            this.onSelectPage();
+        }
+    }
+
+    /**
      *  metis service is invoked to deliver another page of posts, filtered and sorted on the backend
      */
     onSelectPage(): void {
@@ -213,15 +223,13 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
      * only the first page is fetched or user is scrolled to the last post of the chatSession
      */
     scrollToBottom = () => {
-        try {
-            if (
-                this.courseMessagesPageFlag &&
-                this.posts.length > 0 &&
-                ((this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight)
-            ) {
-                this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
-            }
-        } catch (err) {}
+        if (
+            this.courseMessagesPageFlag &&
+            this.posts.length > 0 &&
+            ((this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight)
+        ) {
+            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+        }
     };
 
     /**
@@ -323,15 +331,5 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
         };
-    }
-
-    /**
-     * fetches next page of posts on user scroll event
-     */
-    fetchNextPage() {
-        if (this.posts.length < this.totalItems) {
-            this.page += 1;
-            this.onSelectPage();
-        }
     }
 }
