@@ -54,7 +54,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     private final String currentLocalFolderName = "currentFolderName";
 
-    private final LocalRepository testRepo = new LocalRepository();
+    private final LocalRepository testRepo = new LocalRepository(defaultBranch);
 
     @BeforeEach
     public void setup() throws Exception {
@@ -84,7 +84,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
                 any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
     }
 
     @AfterEach

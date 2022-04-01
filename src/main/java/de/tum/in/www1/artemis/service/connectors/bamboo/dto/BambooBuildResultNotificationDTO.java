@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
@@ -368,6 +369,10 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
+        // For an unknown reason, the deserialization only works with this annotation
+        @JsonProperty("testwiseCoverageReport")
+        private List<TestwiseCoverageReportDTO> testwiseCoverageReport = new ArrayList<>();
+
         private List<BambooBuildLogDTO> logs = new ArrayList<>();
 
         public List<BambooTestJobDTO> getSuccessfulTests() {
@@ -400,6 +405,14 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         public void setStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
             this.staticCodeAnalysisReports = staticCodeAnalysisReports;
+        }
+
+        public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
+            return testwiseCoverageReport;
+        }
+
+        public void setTestwiseCoverageReports(List<TestwiseCoverageReportDTO> testwiseCoverageReport) {
+            this.testwiseCoverageReport = testwiseCoverageReport;
         }
 
         public List<BambooBuildLogDTO> getLogs() {

@@ -102,11 +102,11 @@
     "changes": [
         {
             "ref": {
-                "id": "refs/heads/master",
-                "displayId": "master",
+                "id": "refs/heads/main",
+                "displayId": "main",
                 "type": "BRANCH"
             },
-            "refId": "refs/heads/master",
+            "refId": "refs/heads/main",
             "fromHash": "e13b41982efdd368a72bda1a32f25b0e3954da78",
             "toHash": "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d",
             "type": "UPDATE"

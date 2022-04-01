@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestwiseCoverageReport;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -62,6 +63,10 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "test_case_type")
     private ProgrammingExerciseTestCaseType type;
+
+    @OneToOne(mappedBy = "testCase", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private ProgrammingExerciseTestwiseCoverageReport testwiseCoverageReport;
 
     public ProgrammingExerciseTestCase id(Long id) {
         setId(id);
@@ -193,6 +198,14 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     public void setType(ProgrammingExerciseTestCaseType programmingExerciseTestCaseType) {
         this.type = programmingExerciseTestCaseType;
+    }
+
+    public ProgrammingExerciseTestwiseCoverageReport getTestwiseCoverageReport() {
+        return testwiseCoverageReport;
+    }
+
+    public void setTestwiseCoverageReport(ProgrammingExerciseTestwiseCoverageReport testwiseCoverageReport) {
+        this.testwiseCoverageReport = testwiseCoverageReport;
     }
 
     /**

@@ -165,6 +165,19 @@
                         </button>
                     </span>
                 </div>
+                <div *ngIf="programmingExercise.isAtLeastEditor">
+                    <span class="mr-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="getAndShowFullDiff()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.tooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
+                        </button>
+                    </span>
+                </div>
                 <div>
                     <button
                         id="unlockAllRepositoriesButton"
@@ -439,6 +452,10 @@
                 <dt><span jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents">Show Test Names to Students</span></dt>
                 <dd>
                     <span>{{ programmingExercise.showTestNamesToStudents }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageEnabled">Record testwise coverage</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.testwiseCoverageEnabled }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.programmingLanguage">Programming Language</span></dt>
                 <dd>

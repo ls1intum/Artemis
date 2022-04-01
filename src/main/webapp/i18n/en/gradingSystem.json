@@ -68,7 +68,7 @@
                 "invalidBonusPoints": "The bonus points must be at least 0!",
                 "nonStrictlyIncreasingBonusPoints": "Consecutive grade steps must have increasing bonus point values!",
                 "invalidAdjacency": "The Max % of all grade steps (excluding the last one), must be equal to the Min % of their subsequent grade step!",
-                "invalidFirstAndLastStep": "The Min % of the first grade step must be 0 and the Max % of the last grade step must be 100!"
+                "invalidFirstAndLastStep": "The Min % of the first grade step must be 0 and the Max % of the last grade step must be at least 100!"
             },
             "overview": {
                 "info": "The grading key is based on the attainable points. It could change until the end of the course when more exercises have been assessed.",

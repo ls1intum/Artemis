@@ -41,11 +41,11 @@ describe('ExampleSubmissionImportComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 ExampleSubmissionImportComponent,
+                MockComponent(ButtonComponent),
                 MockComponent(ResultComponent),
-                MockDirective(NgbPagination),
+                MockComponent(NgbPagination),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
-                MockDirective(ButtonComponent),
                 MockDirective(NgModel),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
