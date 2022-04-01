@@ -7,7 +7,6 @@ services:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab
             - artemis-gitlab-config:/etc/gitlab
-        hostname: 'HOSTNAME'
         environment:
             GITLAB_OMNIBUS_CONFIG: |
                 external_url 'https://EXTERNALURL'
