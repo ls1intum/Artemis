@@ -385,6 +385,15 @@
                 "template": "Template",
                 "solution": "Lösung",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories um ihn zu erstellen."
+            },
+            "testwiseCoverageReport": {
+                "button": "Zeige die testweise Test-Abdeckung an",
+                "tooltip": "Zeigt die testwise Test-Abdeckung für das Lösungs-Repository.",
+                "title": "Testweise Test-Abdeckung",
+                "404": "Testweise Test-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
+                "selectTests": "Wähle die Tests aus, für die die Test-Abdeckung angezeigt wird:",
+                "filePath": "Datei-Pfad",
+                "coveredLines": "Abgedeckte Zeilen"
             }
         },
         "error": {

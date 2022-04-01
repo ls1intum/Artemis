@@ -17,6 +17,7 @@ import { Task } from 'app/exercises/programming/shared/instructions-render/task/
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseTestwiseCoverageReport } from 'app/entities/hestia/programming-exercise-testwise-coverage-report.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -472,5 +473,29 @@ export class ProgrammingExerciseService {
      */
     getFullDiffReport(exerciseId: number): Observable<ProgrammingExerciseFullGitDiffReport> {
         return this.http.get<ProgrammingExerciseFullGitDiffReport>(`${this.resourceUrl}/${exerciseId}/full-diff-report`);
+    }
+
+    /**
+     * Gets the testwise coverage reports of a programming exercise for all active test cases
+     * @param exerciseId The id of a programming exercise
+     */
+    getTestwiseCoverageReports(exerciseId: number): Observable<Set<ProgrammingExerciseTestwiseCoverageReport>> {
+        return this.http.get<Set<ProgrammingExerciseTestwiseCoverageReport>>(`${this.resourceUrl}/${exerciseId}/testwise-coverage-report`);
+    }
+
+    /**
+     * Gets all files from the last solution participation repository
+     */
+    getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                if (res === undefined) {
+                    return undefined;
+                }
+                return new Map(Object.entries(res));
+            }),
+        );
     }
 }

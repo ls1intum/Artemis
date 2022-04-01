@@ -42,6 +42,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
+import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
+import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -94,6 +96,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
+        private repositoryFileService: CodeEditorRepositoryFileService,
         private eventManager: EventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
@@ -435,6 +438,33 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 } else {
                     this.onError(err);
                 }
+            },
+        });
+    }
+
+    /**
+     * Gets the testwise coverage reports from the server and displays it in a modal.
+     */
+    getAndShowTestwiseCoverage() {
+        this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!).subscribe({
+            next: (response: Map<string, string>) => {
+                this.programmingExerciseService.getTestwiseCoverageReports(this.programmingExercise.id!).subscribe({
+                    next: (testwiseCoverageReports) => {
+                        const modalRef = this.modalService.open(TestwiseCoverageReportModalComponent, {
+                            size: 'xl',
+                            backdrop: 'static',
+                        });
+                        modalRef.componentInstance.reports = testwiseCoverageReports;
+                        modalRef.componentInstance.fileContentByPath = response;
+                    },
+                    error: (err: HttpErrorResponse) => {
+                        if (err.status === 404) {
+                            this.alertService.error('artemisApp.programmingExercise.testwiseCoverageReport.404');
+                        } else {
+                            this.onError(err);
+                        }
+                    },
+                });
             },
         });
     }
