@@ -2,7 +2,7 @@
 
 First, configure the environment parameters:
 ```bash
-cp src/main/docker/env.example.gitlab-gitlabci.txt .env
+cp src/main/docker/env.example.gitlab-gitlabci.txt src/main/docker/.env
 vi src/main/docker/.env
 ```
 
