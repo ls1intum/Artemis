@@ -5,7 +5,7 @@
             <span> &nbsp;{{ selectedFile }}</span>
             <fa-icon *ngIf="isLoading" [icon]="faCircleNotch" [spin]="true" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}"></fa-icon>
         </h3>
-        <span>
+        <span class="ms-2">
             <span jhiTranslate="artemisApp.editor.tabSize"></span>
             <input class="form-control-sm" type="number" min="1" max="8" step="1" size="1" [(ngModel)]="tabSize" />
         </span>
