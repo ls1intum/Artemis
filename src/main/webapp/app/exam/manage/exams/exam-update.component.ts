@@ -180,7 +180,7 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Used to convert workingTimeInMinutes into exam.workingTime (in seconds) every time, the user inputs a new
-     * working time for a test exam
+     * working time for a TestExam
      * @param event when the user inputs a new working time
      */
     convertWorkingTimeFromMinutesToSeconds(event: any) {

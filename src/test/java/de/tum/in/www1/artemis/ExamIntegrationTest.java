@@ -714,7 +714,31 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Test for conflict, end date not after start date
         Exam examE = ModelFactory.generateExam(course);
         examE.setEndDate(examE.getStartDate());
-        return List.of(examA, examB, examC, examD, examE);
+        // Test for conflict, workingTime is not equal to the difference between startDate and endDate
+        Exam examF = ModelFactory.generateExam(course);
+        examF.setWorkingTime(5000);
+        return List.of(examA, examB, examC, examD, examE, examF);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor() throws Exception {
+
+        // Test the creation of a TestExam
+        Exam examA = ModelFactory.generateTestExam(course1);
+        request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+
+        // Test the creation of a TestExam, where visibleDate equals StartDate
+        Exam examB = ModelFactory.generateTestExam(course1);
+        examB.setVisibleDate(examB.getStartDate());
+        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
+
+        // Test for conflict, where workingTime greather than difference between StartDate and EndDate
+        Exam examC = ModelFactory.generateTestExam(course1);
+        examC.setWorkingTime(5000);
+        request.post("/api/courses/" + course1.getId() + "/exams", examC, HttpStatus.CONFLICT);
+
+        verify(examAccessService, times(2)).checkCourseAccessForInstructorElseThrow(course1.getId());
     }
 
     @Test
@@ -761,6 +785,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
+        examWithProgrammingEx.setWorkingTime(examWithProgrammingEx.getWorkingTime() - 1);
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
@@ -781,6 +806,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
+        examWithProgrammingEx.setWorkingTime(examWithProgrammingEx.getWorkingTime() - 1);
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
@@ -791,6 +817,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
         examWithModelingEx.setEndDate(examWithModelingEx.getEndDate().plusSeconds(2));
+        examWithModelingEx.setWorkingTime(examWithModelingEx.getWorkingTime() + 2);
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
     }
@@ -803,6 +830,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         examWithModelingEx.setVisibleDate(now().plusHours(1));
         examWithModelingEx.setStartDate(now().plusHours(2));
         examWithModelingEx.setEndDate(now().plusHours(3));
+        examWithModelingEx.setWorkingTime(3600);
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
 
         StudentExam studentExam = database.addStudentExam(examWithModelingEx);
