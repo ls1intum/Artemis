@@ -119,4 +119,9 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     public void setTestCase(ProgrammingExerciseTestCase testCase) {
         this.testCase = testCase;
     }
+
+    @Override
+    public String toString() {
+        return "ProgrammingExerciseSolutionEntry (" + filePath + "):\n" + previousCode + "\n>>>>>>>>>>>>>\n" + code;
+    }
 }

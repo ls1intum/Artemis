@@ -186,7 +186,7 @@
                 "question": "Sollen alle Teams der Übung <strong>{{ title }}</strong> und ihre Teilnahmen an der Aufgabe wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Titel der Übung zur Bestätigung ein."
             },
-            "importError": "Import fehlgeschlagen. Bitte versuche es erneut oder kontaktiere die Adminstration für Hilfe.",
+            "importError": "Import fehlgeschlagen. Bitte versuche es erneut oder kontaktiere die Administration für Hilfe.",
             "importSuccess": "Import war erfolgreich! {{ numberOfImportedTeams }} Teams wurden importiert."
         }
     }
