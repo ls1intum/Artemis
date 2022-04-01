@@ -19,6 +19,7 @@ public interface ProgrammingExerciseTestwiseCoverageReportRepository extends Jpa
     @Query("""
                 SELECT DISTINCT r FROM ProgrammingExerciseTestwiseCoverageReport r
                 LEFT JOIN FETCH r.testCase tc
+                LEFT JOIN FETCH r.entries e
                 WHERE tc.id = :#{#testCaseId}
             """)
     Optional<ProgrammingExerciseTestwiseCoverageReport> findByTestCaseId(@Value("testCaseId") Long testCaseId);

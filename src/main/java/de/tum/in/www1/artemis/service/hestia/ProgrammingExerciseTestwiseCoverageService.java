@@ -2,10 +2,13 @@ package de.tum.in.www1.artemis.service.hestia;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestwiseCoverageReport;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTestwiseCoverageReportRepository;
@@ -87,6 +90,16 @@ public class ProgrammingExerciseTestwiseCoverageService {
             testCase.setTestwiseCoverageReport(null);
             programmingExerciseTestCaseRepository.save(testCase);
         }));
+    }
 
+    /**
+     * Returns the testwise coverage reports for all active behavioral test cases for a programming exercise
+     * @param programmingExercise the exercise for which the active reports should be retrieved
+     * @return the testwise coverage reports for all active test cases
+     */
+    public Set<ProgrammingExerciseTestwiseCoverageReport> getTestwiseCoverageReportsForActiveAndBehaviorTestsForProgrammingExercise(ProgrammingExercise programmingExercise) {
+        var tests = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+        return tests.stream().filter(test -> ProgrammingExerciseTestCaseType.BEHAVIORAL.equals(test.getType()))
+                .map(testCase -> programmingExerciseTestwiseCoverageReportRepository.findByTestCaseIdElseThrow(testCase.getId())).collect(Collectors.toSet());
     }
 }
