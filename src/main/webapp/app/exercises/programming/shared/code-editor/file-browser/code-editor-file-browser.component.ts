@@ -415,7 +415,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         if (Object.keys(this.repositoryFiles).includes(newFilePath)) {
             this.onError.emit('fileExists');
             return;
-        } else if (newFileName.split('.').length > 1 && !supportedTextFileExtensions.includes(newFileName.split('.').pop()!)) {
+        } else if (!CodeEditorFileBrowserComponent.shouldDisplayFile(newFileName, fileType)) {
             this.onError.emit('unsupportedFile');
             return;
         }
@@ -453,7 +453,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
         const [folderPath, fileType] = this.creatingFile;
 
-        if (fileName.split('.').length > 1 && !supportedTextFileExtensions.includes(fileName.split('.').pop()!)) {
+        if (!CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType)) {
             this.onError.emit('unsupportedFile');
             return;
         } else if (Object.keys(this.repositoryFiles).includes(folderPath ? [folderPath, fileName].join('/') : fileName)) {
@@ -508,12 +508,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             rxMap((files) =>
                 fromPairs(
                     toPairs(files)
-                        // Remove binary files as they can't be displayed in an editor
-                        .filter(([filename]) => {
-                            const fileSplit = filename.split('.');
-                            // Either the file has no ending or the file ending is allowed
-                            return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
-                        })
+                        .filter(([fileName, fileType]) => CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType))
                         // Filter Readme file that was historically in the student's assignment repo
                         .filter(([value]) => !value.includes('README.md'))
                         // Filter root folder
@@ -529,12 +524,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             rxMap((files) =>
                 fromPairs(
                     toPairs(files)
-                        // Remove binary files as they can't be displayed in an editor
-                        .filter(([filename]) => {
-                            const fileSplit = filename.split('.');
-                            // Either the file has no ending or the file ending is allowed
-                            return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
-                        })
+                        .filter(([filename]) => CodeEditorFileBrowserComponent.shouldDisplayFile(filename, FileType.FILE))
                         // Filter Readme file that was historically in the student's assignment repo
                         .filter(([value]) => !value.includes('README.md')),
                 ),
@@ -568,5 +558,36 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             modalRef.componentInstance.fileNameToDelete = filePath;
             modalRef.componentInstance.fileType = fileType;
         }
+    }
+
+    /**
+     * Determines if the given file or folder should be displayed.
+     *
+     * Folders are only hidden if their name starts with a `.`, files are additionally hidden
+     * based on their file extension (see {@link shouldDisplayFileBasedOnExtension}).
+     * @param fileName The name of the file or folder.
+     * @param fileType The type of the file or folder.
+     * @private
+     */
+    private static shouldDisplayFile(fileName: string, fileType: FileType): boolean {
+        if (fileName.startsWith('.')) {
+            return false;
+        } else if (fileType === FileType.FOLDER) {
+            return true;
+        } else {
+            return CodeEditorFileBrowserComponent.shouldDisplayFileBasedOnExtension(fileName);
+        }
+    }
+
+    /**
+     * Determines if the file should be shown based on its file extension.
+     *
+     * E.g., text files like `SomeClass.java` are shown, binary files like `document.pdf` are not.
+     * @param fileName
+     * @private
+     */
+    private static shouldDisplayFileBasedOnExtension(fileName: string): boolean {
+        const fileSplit = fileName.split('.');
+        return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
     }
 }
