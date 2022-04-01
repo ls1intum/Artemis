@@ -105,8 +105,8 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleInvalidPasswordException(InvalidPasswordException ex, NativeWebRequest request) {
-        return create(new InvalidPasswordException(), request);
+    public ResponseEntity<Problem> handlePasswordViolatesRequirementsException(PasswordViolatesRequirementsException ex, NativeWebRequest request) {
+        return create(new PasswordViolatesRequirementsException(), request);
     }
 
     @ExceptionHandler
