@@ -6,11 +6,11 @@ docker-compose -f src/main/docker/gitlab-gitlabci.yml up --build -d
 ```
 
 Then log on to https://localhost/ with the password (`sudo docker exec -it NAME_OF_THE_CONTAINER grep 'Password:' /etc/gitlab/initial_root_password`) and go to https://localhost/admin/runners.
-Click on Register an instance runner and copy the registration token.
-Open a shell into the container:
+Click on "Register an instance runner" and copy the registration token.
+Open a shell into the `gitlab-runner` container:
 `````bash
 docker ps
-docker exec -it NAME_OF_THE_CONTAINER /bin/bash
+docker exec -it gitlab-runner /bin/bash
 `````
 Execute the following command with your token inside the container with the registration token generated above:
 ````bash

@@ -2,6 +2,7 @@ version: "3.6"
 services:
     gitlab:
         build: gitlab
+        container_name: gitlab
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab
@@ -24,6 +25,7 @@ services:
         shm_size: '256m'
     gitlab-runner:
         image: gitlab/gitlab-runner:latest
+        container_name: gitlab-runner
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - /usr/local/bin/docker:/usr/bin/docker
