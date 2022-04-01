@@ -55,7 +55,6 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
-import { CourseManagementExerciseTypeRedirectComponent } from './course-management-exercise-type-redirect.component';
 
 @NgModule({
     imports: [
@@ -117,7 +116,6 @@ import { CourseManagementExerciseTypeRedirectComponent } from './course-manageme
         CourseDetailDoughnutChartComponent,
         CourseDetailLineChartComponent,
         CourseManagementExercisesSearchComponent,
-        CourseManagementExerciseTypeRedirectComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}
