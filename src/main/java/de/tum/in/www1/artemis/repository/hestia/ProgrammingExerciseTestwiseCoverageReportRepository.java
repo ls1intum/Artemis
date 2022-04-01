@@ -28,6 +28,13 @@ public interface ProgrammingExerciseTestwiseCoverageReportRepository extends Jpa
         return findByTestCaseId(testCaseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Testwise Coverage Report", testCaseId));
     }
 
+    /**
+     * Transforms the testwise coverage report dtos to TestwiseCoverageReports without the test case attribute mapped by the test case name.
+     * This method maps the the reports to primitive test case names because the test case is not present in the database
+     * on creating the entities from the dtos.
+     * @param coverageReports the coverage report dtos
+     * @return testwise coverage reports without the test case mapped by test case name
+     */
     default Map<String, ProgrammingExerciseTestwiseCoverageReport> createTestwiseCoverageReportsWithoutTestsByTestCaseName(List<TestwiseCoverageReportDTO> coverageReports) {
         Map<String, ProgrammingExerciseTestwiseCoverageReport> reports = new HashMap<>();
         coverageReports.forEach(coveragePerTestDTO -> {
@@ -35,6 +42,8 @@ public interface ProgrammingExerciseTestwiseCoverageReportRepository extends Jpa
 
             for (var pathDTO : coveragePerTestDTO.getCoveredPathsPerTestDTOS()) {
                 for (var fileDTO : pathDTO.getCoveredFilesPerTestDTOS()) {
+                    // retrieve consecutive blocks from the ranged covered lines number following this format
+                    // 2,3-6,7,9-30
                     var coverageEntriesPerFile = Arrays.stream(fileDTO.getCoveredLinesWithRanges().split(",")).map(optionalLineRange -> {
                         String filePath = pathDTO.getPath() + "/" + fileDTO.getFileName();
                         int startLineNumber;
