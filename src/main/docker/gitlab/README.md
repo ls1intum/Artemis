@@ -2,8 +2,8 @@
 
 First, configure the environment parameters:
 ```bash
-cp env.example.gitlab-gitlabci.txt .env
-vi .env
+cp src/main/docker/env.example.gitlab-gitlabci.txt .env
+vi src/main/docker/.env
 ```
 
 Run the following command to start GitLab and a GitLab Runner in a Docker container:
