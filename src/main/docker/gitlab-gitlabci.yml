@@ -9,18 +9,13 @@ services:
             - artemis-gitlab-config:/etc/gitlab
         environment:
             GITLAB_OMNIBUS_CONFIG: |
-                external_url 'https://EXTERNALURL'
+                external_url 'http://EXTERNALURL'
                 prometheus_monitoring['enable'] = false
                 gitlab_rails['gitlab_shell_ssh_port'] = 2222
                 gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
-                letsencrypt['enable'] = true
-                letsencrypt['auto_renew_hour'] = "12"
-                letsencrypt['auto_renew_minute'] = "30"
-                letsencrypt['auto_renew_day_of_month'] = "*/7"
         ports:
             - '2222:22'
             - '80:80'
-            - '443:443'
         shm_size: '256m'
     gitlab-runner:
         image: gitlab/gitlab-runner:latest
