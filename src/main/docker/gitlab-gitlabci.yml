@@ -19,7 +19,7 @@ services:
         shm_size: '256m'
         networks:
             gitlab:
-                ipv4_address: 172.20.0.1
+                ipv4_address: 172.20.0.2
     gitlab-runner:
         image: gitlab/gitlab-runner:latest
         container_name: gitlab-runner
@@ -30,7 +30,7 @@ services:
         hostname: 'gitlab-runner'
         networks:
             gitlab:
-                ipv4_address: 172.20.0.2
+                ipv4_address: 172.20.0.3
 
 networks:
   gitlab:
