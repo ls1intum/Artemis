@@ -10,7 +10,6 @@ import { HttpResponse } from '@angular/common/http';
 
 describe('CourseManagementExerciseTypeRedirect', () => {
     let fixture: ComponentFixture<CourseManagementExerciseTypeRedirectComponent>;
-    let component: CourseManagementExerciseTypeRedirectComponent;
     let router: Router;
     let exerciseService: ExerciseService;
 
@@ -30,7 +29,6 @@ describe('CourseManagementExerciseTypeRedirect', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseManagementExerciseTypeRedirectComponent);
-                component = fixture.componentInstance;
                 exerciseService = TestBed.inject(ExerciseService);
             });
     });
