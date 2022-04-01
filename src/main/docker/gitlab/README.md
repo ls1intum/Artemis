@@ -29,6 +29,7 @@ gitlab-runner register \
 ````
 
 For local use, the following command is probably required:
+````bash
 gitlab-runner register \
   --non-interactive \
   --executor "docker" \
@@ -42,5 +43,6 @@ gitlab-runner register \
   --run-untagged="true" \
   --locked="false" \
   --access-level="not_protected"
+````
 
 If you experience problems while installing or registering the runner, you can have a look at the documentation for docker (https://docs.gitlab.com/runner/install/docker.html, https://docs.gitlab.com/runner/register/index.html#docker)
