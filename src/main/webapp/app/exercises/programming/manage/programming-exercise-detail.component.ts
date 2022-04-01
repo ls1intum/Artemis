@@ -44,6 +44,7 @@ import { Task } from 'app/exercises/programming/shared/instructions-render/task/
 import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -440,6 +441,25 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }
             },
         });
+    }
+
+    createStructuralSolutionEntries() {
+        this.programmingExerciseService.createStructuralSolutionEntries(this.programmingExercise.id!).subscribe({
+            next: (res) => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
+                });
+                console.log(this.buildStructuralSolutionEntriesMessage(res));
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
+    }
+
+    private buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
+        return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
     }
 
     /**

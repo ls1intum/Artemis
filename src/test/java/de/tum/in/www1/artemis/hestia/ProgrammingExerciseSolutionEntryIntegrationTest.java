@@ -212,4 +212,28 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
 
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/test-cases/" + testCase.getId() + "/solution-entries/" + entryId, entry, HttpStatus.FORBIDDEN);
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void testCreateStructuralSolutionEntriesAsStudent() throws Exception {
+        request.post("/api/programming-exercises/" + programmingExercise.getId() + "/structural-solution-entries", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testCreateStructuralSolutionEntriesAsTutor() throws Exception {
+        request.post("/api/programming-exercises/" + programmingExercise.getId() + "/structural-solution-entries", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testCreateStructuralSolutionEntriesAsEditor() throws Exception {
+        request.postWithoutLocation("/api/programming-exercises/" + programmingExercise.getId() + "/structural-solution-entries", null, HttpStatus.OK, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateStructuralSolutionEntriesAsInstructor() throws Exception {
+        request.postWithoutLocation("/api/programming-exercises/" + programmingExercise.getId() + "/structural-solution-entries", null, HttpStatus.OK, null);
+    }
 }

@@ -27,6 +27,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -218,6 +219,24 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(addAlertSpy).toHaveBeenCalledWith({
             message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
             type: AlertType.SUCCESS,
+        });
+    });
+
+    it('Should create structural solution entries', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        jest.spyOn(exerciseService, 'createStructuralSolutionEntries').mockReturnValue(of([] as ProgrammingExerciseSolutionEntry[]));
+        jest.spyOn(alertService, 'addAlert');
+
+        comp.createStructuralSolutionEntries();
+
+        expect(exerciseService.createStructuralSolutionEntries).toHaveBeenCalledTimes(1);
+        expect(alertService.addAlert).toHaveBeenCalledTimes(1);
+        expect(alertService.addAlert).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
         });
     });
 });
