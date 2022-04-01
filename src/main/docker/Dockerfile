@@ -23,30 +23,27 @@ RUN echo "Installing prerequisites" \
   && apt-get update && apt-get install -y --no-install-recommends \
   graphviz \
   wget \
-  unzip \
   && dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
   && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch" \
   && chmod +x /usr/local/bin/gosu \
   && gosu nobody true
 
+# Copy default configuration to container
+WORKDIR /defaults/Artemis
+COPY src/main/resources/config/application*.yml .
 
+# Copy Artemis.war to execution location
 WORKDIR /opt/Artemis
 ARG WAR_PATH=build/libs
 COPY $WAR_PATH/*.war Artemis.war
-
-# Create directories for volumes
-RUN mkdir -p /opt/Artemis/config /opt/Artemis/data /opt/Artemis/public/content
-
-# Copy default configuration to /defaults/Artemis
-RUN mkdir -p /defaults/Artemis && unzip /opt/Artemis/Artemis.war "WEB-INF/classes/config*" -d /defaults/Artemis && mv /defaults/Artemis/WEB-INF/classes/config/* /defaults/Artemis/ \
-    && rm -r /defaults/Artemis/WEB-INF \
-    && rm -r /defaults/Artemis/liquibase \
-    && rm -r /defaults/Artemis/tls
 
 COPY bootstrap.sh /bootstrap.sh
 
 RUN chmod +x /bootstrap.sh \
   && useradd -ms /bin/bash artemis
+
+# Create directories for volumes
+RUN mkdir -p /opt/Artemis/config /opt/Artemis/data /opt/Artemis/public/content
 
 VOLUME ["/opt/Artemis/config"]
 VOLUME ["/opt/Artemis/data"]
