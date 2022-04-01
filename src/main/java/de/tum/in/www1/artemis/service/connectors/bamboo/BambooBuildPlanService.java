@@ -117,7 +117,7 @@ public class BambooBuildPlanService {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
-        final boolean recordTestwiseCoverage = programmingExercise.isTestwiseCoverageEnabled() && "SOLUTION".equals(planKey);
+        final boolean recordTestwiseCoverage = Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && "SOLUTION".equals(planKey);
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
                 programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName, auxiliaryRepositories)

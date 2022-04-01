@@ -118,6 +118,7 @@ public class ModelFactory {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
@@ -786,6 +787,7 @@ public class ModelFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
+        toBeImported.setTestwiseCoverageEnabled(template.isTestwiseCoverageEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
