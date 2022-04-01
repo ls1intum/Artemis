@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTestwiseCoverageService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * REST controller for managing ProgrammingExerciseTestwiseCoverageReports and its entries.
@@ -54,6 +55,10 @@ public class ProgrammingExerciseTestwiseCoverageReportResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         var reports = programmingExerciseTestwiseCoverageService.getTestwiseCoverageReportsForActiveAndBehaviorTestsForProgrammingExercise(exercise);
+
+        if (reports.isEmpty()) {
+            throw new EntityNotFoundException("Programming Exercise Testwise Coverage Report", exerciseId);
+        }
 
         return ResponseEntity.ok(reports);
     }
