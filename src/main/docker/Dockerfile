@@ -30,7 +30,7 @@ RUN echo "Installing prerequisites" \
 
 # Copy default configuration to container
 WORKDIR /defaults/Artemis
-COPY src/main/resources/config/application*.yml .
+COPY src/main/resources/config/application*.yml ./
 
 # Copy Artemis.war to execution location
 WORKDIR /opt/Artemis
