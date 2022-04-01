@@ -5,7 +5,7 @@ First, configure the hostname and external URL in the `gitlab-gitlabci.yml` file
 docker-compose -f src/main/docker/gitlab-gitlabci.yml up --build -d
 ```
 
-Then navigate to http://localhost:8081/ login and then go to http://localhost:8081/admin/runners.
+Then log on to https://localhost/ with the password (`sudo docker exec -it NAME_OF_THE_CONTAINER grep 'Password:' /etc/gitlab/initial_root_password`) and go to https://localhost/admin/runners.
 Click on Register an instance runner and copy the registration token.
 Open a shell into the container:
 `````bash
@@ -18,8 +18,7 @@ gitlab-runner register \
   --non-interactive \
   --executor "docker" \
   --docker-image alpine:latest \
-  --url http://gateway.docker.internal:8081 \
-  --clone-url http://gateway.docker.internal:8081 \
+  --url https://EXTERNAL_URL \
   --registration-token "PROJECT_REGISTRATION_TOKEN" \
   --description "docker-runner" \
   --maintenance-note "Just a random local test runner" \
@@ -28,4 +27,20 @@ gitlab-runner register \
   --locked="false" \
   --access-level="not_protected"
 ````
+
+For local use, the following command is probably required:
+gitlab-runner register \
+  --non-interactive \
+  --executor "docker" \
+  --docker-image alpine:latest \
+  --url http://gateway.docker.internal:80 \
+  --clone-url http://gateway.docker.internal:80 \
+  --registration-token "PROJECT_REGISTRATION_TOKEN" \
+  --description "docker-runner" \
+  --maintenance-note "Just a random local test runner" \
+  --tag-list "docker,artemis" \
+  --run-untagged="true" \
+  --locked="false" \
+  --access-level="not_protected"
+
 If you experience problems while installing or registering the runner, you can have a look at the documentation for docker (https://docs.gitlab.com/runner/install/docker.html, https://docs.gitlab.com/runner/register/index.html#docker)
