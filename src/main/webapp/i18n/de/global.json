@@ -1,7 +1,7 @@
 {
     "global": {
         "title": "Artemis",
-        "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Bedienbarkeit zu verbessern.",
+        "browsehappy": "Du benutzt einen <strong>veralteten</strong> Browser. Bitte <a href=\"https://browsehappy.com/?locale=de/\">aktualisiere deinen Browser</a>, um die Bedienbarkeit zu verbessern.",
         "generic": {
             "yes": "Ja",
             "no": "Nein",

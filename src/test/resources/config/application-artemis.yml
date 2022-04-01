@@ -6,7 +6,8 @@ artemis:
     course-archives-path: ./exports/server-integration-test/courses         # a folder in which archived courses and exams are stored.
     repo-clone-path: ./repos/server-integration-test
     repo-download-clone-path: ./repos-download/server-integration-test
-    encryption-password: fake-password
+    encryption-password: fake-password                                     # LEGACY: arbitrary password for encrypting database values
+    bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
     user-management:
         use-external: true
         external:

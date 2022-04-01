@@ -13,6 +13,9 @@ import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormControl } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -39,6 +42,9 @@ export class UserManagementUpdateComponent implements OnInit {
     faBan = faBan;
     faSave = faSave;
 
+    private oldLogin?: string;
+    private isJenkins: boolean;
+
     constructor(
         private languageHelper: JhiLanguageHelper,
         private userService: UserService,
@@ -46,6 +52,8 @@ export class UserManagementUpdateComponent implements OnInit {
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private alertService: AlertService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -59,10 +67,14 @@ export class UserManagementUpdateComponent implements OnInit {
         this.route.parent!.data.subscribe(({ user }) => {
             if (user) {
                 this.user = user.body ? user.body : user;
+                this.oldLogin = this.user.login;
                 this.organizationService.getOrganizationsByUser(this.user.id!).subscribe((organizations) => {
                     this.user.organizations = organizations;
                 });
             }
+        });
+        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+            this.isJenkins = profileInfo.activeProfiles.includes('jenkins');
         });
         this.authorities = [];
         this.userService.authorities().subscribe((authorities) => {
@@ -97,7 +109,17 @@ export class UserManagementUpdateComponent implements OnInit {
         this.isSaving = true;
         if (this.user.id) {
             this.userService.update(this.user).subscribe({
-                next: () => this.onSaveSuccess(),
+                next: () => {
+                    if (this.isJenkins && this.user.login !== this.oldLogin && !this.user.password) {
+                        this.alertService.addAlert({
+                            type: AlertType.WARNING,
+                            message: 'userManagement.jenkinsChange',
+                            timeout: 0,
+                            translationParams: { oldLogin: this.oldLogin, newLogin: this.user.login },
+                        });
+                    }
+                    this.onSaveSuccess();
+                },
                 error: () => this.onSaveError(),
             });
         } else {

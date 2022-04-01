@@ -21,14 +21,14 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.2.0"
     id "com.github.node-gradle.node" version "3.2.1"
-    id "com.diffplug.spotless" version "6.3.0"
+    id "com.diffplug.spotless" version "6.4.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.7.0"
+version = "5.7.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -145,7 +145,7 @@ jacocoTestCoverageVerification {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 20
-                maximum = 22
+                maximum = 23
             }
         }
     }
