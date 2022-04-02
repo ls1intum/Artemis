@@ -15,6 +15,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
 import { Exercise } from 'app/entities/exercise.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -53,6 +54,7 @@ export class StudentExamDetailComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
+        private accountService: AccountService,
         private studentExamService: StudentExamService,
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: AlertService,
@@ -130,6 +132,7 @@ export class StudentExamDetailComponent implements OnInit {
 
         this.student = this.studentExam.user!;
         this.course = this.studentExam.exam!.course!;
+        this.accountService.setAccessRightsForCourse(this.course);
 
         studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
     }
