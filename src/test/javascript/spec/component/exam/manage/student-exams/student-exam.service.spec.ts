@@ -60,7 +60,7 @@ describe('Student Exam Service', () => {
             exam: undefined,
         },
         undefined,
-    ])('should fetch and process an exam correctly on find', (payload) => {
+    ])('should fetch and process an exam correctly on find and updateWorkingTime', (payload) => {
         const response = new HttpResponse<StudentExam>({ body: payload });
         const getSpy = jest.spyOn(httpClient, 'get').mockReturnValue(of(response));
 
