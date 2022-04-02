@@ -71,6 +71,14 @@ describe('Student Exam Service', () => {
         expect(getSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/courses/1/exams/2/student-exams/3`, { observe: 'response' });
         expect(returnedExam).toBe(response);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payload?.exam?.course ? 1 : 0);
+
+        const patchSpy = jest.spyOn(httpClient, 'patch').mockReturnValue(of(response));
+        service.updateWorkingTime(1, 2, 3, 10).subscribe((result) => (returnedExam = result));
+
+        expect(patchSpy).toHaveBeenCalledTimes(1);
+        expect(patchSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/courses/1/exams/2/student-exams/3/working-time`, 10, { observe: 'response' });
+        expect(returnedExam).toBe(response);
+        expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payload?.exam?.course ? 2 : 0);
     });
 
     it('should fetch and process exams correctly on findAllForExam', () => {
