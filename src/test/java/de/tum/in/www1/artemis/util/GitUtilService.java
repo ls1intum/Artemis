@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -28,7 +27,7 @@ public class GitUtilService {
     private String defaultBranch;
 
     // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
-    private final Path localPath = Paths.get("./repos/server-integration-test").resolve("test-repository").normalize();
+    private final Path localPath = Paths.get(".", "repos", "server-integration-test").resolve("test-repository").normalize();
 
     private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
 
@@ -243,12 +242,7 @@ public class GitUtilService {
     }
 
     public VcsRepositoryUrl getRepoUrlByType(REPOS repo) {
-        try {
-            return new VcsRepositoryUrl("file://" + getCompleteRepoPathStringByType(repo));
-        }
-        catch (URISyntaxException ignored) {
-        }
-        return null;
+        return new VcsRepositoryUrl(new File(getCompleteRepoPathStringByType(repo)));
     }
 
     public static final class MockFileRepositoryUrl extends VcsRepositoryUrl {

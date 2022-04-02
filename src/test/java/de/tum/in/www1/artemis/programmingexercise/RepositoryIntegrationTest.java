@@ -435,12 +435,12 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.originRepoFile.toPath(), null);
 
         // Create file in the remote repository
-        Path filePath = Paths.get(studentRepository.originRepoFile + "/" + fileName);
-        Files.createFile(filePath).toFile();
+        Path filePath = Paths.get(studentRepository.originRepoFile.toString()).resolve(fileName);
+        Files.createFile(filePath);
 
         // Check if the file exists in the remote repository and that it doesn't yet exists in the local repository
-        assertThat(Files.exists(Paths.get(studentRepository.originRepoFile + "/" + fileName))).isTrue();
-        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + fileName))).isFalse();
+        assertThat(Files.exists(Paths.get(studentRepository.originRepoFile.toString()).resolve(fileName))).isTrue();
+        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile.toString()).resolve(fileName))).isFalse();
 
         // Stage all changes and make a second commit in the remote repository
         gitService.stageAllChanges(remoteRepository);
@@ -454,7 +454,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
         assertThat(studentRepository.getAllLocalCommits().get(0)).isEqualTo(studentRepository.getAllOriginCommits().get(0));
-        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + fileName))).isTrue();
+        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile.toString()).resolve(fileName))).isTrue();
 
     }
 

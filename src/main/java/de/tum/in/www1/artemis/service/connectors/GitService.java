@@ -5,14 +5,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -504,7 +502,7 @@ public class GitService {
      * @return path of the local file system
      */
     public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUrl targetUrl) {
-        return Paths.get(targetPath.replaceAll("^\\./", ""), targetUrl.folderNameForRepositoryUrl());
+        return Paths.get(targetPath.replaceAll("^\\." + Pattern.quote(FileSystems.getDefault().getSeparator()), ""), targetUrl.folderNameForRepositoryUrl());
     }
 
     /**

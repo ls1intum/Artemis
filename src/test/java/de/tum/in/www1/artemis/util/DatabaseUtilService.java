@@ -10,6 +10,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -570,7 +571,7 @@ public class DatabaseUtilService {
     }
 
     public AttachmentUnit createAttachmentUnit() {
-        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link(Paths.get("files", "temp", "example.txt").toString()).name("example");
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);

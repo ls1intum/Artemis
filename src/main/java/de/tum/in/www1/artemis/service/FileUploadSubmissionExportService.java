@@ -2,9 +2,11 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
 
@@ -30,7 +32,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
 
         // we need to get the 'real' file path here, the submission only has the api url path
         String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
-        String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split("/");
+        String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(FileSystems.getDefault().getSeparator()));
 
         Path submissionPath = Paths.get(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
 
@@ -47,7 +49,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
             return ""; // submission will be ignored by saveSubmissionToFile
         }
         else {
-            String[] parts = ((FileUploadSubmission) submission).getFilePath().split("/");
+            String[] parts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(FileSystems.getDefault().getSeparator()));
             String fileName = parts[parts.length - 1];
             int endingIndex = fileName.indexOf(".");
             return fileName.substring(endingIndex);
