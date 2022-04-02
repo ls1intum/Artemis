@@ -17,6 +17,7 @@ import { Task } from 'app/exercises/programming/shared/instructions-render/task/
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -472,5 +473,9 @@ export class ProgrammingExerciseService {
      */
     getFullDiffReport(exerciseId: number): Observable<ProgrammingExerciseFullGitDiffReport> {
         return this.http.get<ProgrammingExerciseFullGitDiffReport>(`${this.resourceUrl}/${exerciseId}/full-diff-report`);
+    }
+
+    createStructuralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
+        return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/structural-solution-entries`, null);
     }
 }
