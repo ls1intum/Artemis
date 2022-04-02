@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.File;
 import java.net.URISyntaxException;
 
 import org.junit.jupiter.api.Test;
@@ -26,9 +27,9 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     private final VcsRepositoryUrl repositoryUrl5 = new VcsRepositoryUrl("ssh://git@bitbucket.ase.in.tum.de:7999/eist20l06e03/eist20l06e03-ab123cd.git");
 
-    private final VcsRepositoryUrl fileRepositoryUrl1 = new VcsRepositoryUrl("file:///C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950");
+    private final VcsRepositoryUrl fileRepositoryUrl1 = new VcsRepositoryUrl(new File("C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950"));
 
-    private final VcsRepositoryUrl fileRepositoryUrl2 = new VcsRepositoryUrl("file:///var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205");
+    private final VcsRepositoryUrl fileRepositoryUrl2 = new VcsRepositoryUrl(new File("/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205"));
 
     /**
      * empty constructor for exception handling

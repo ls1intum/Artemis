@@ -253,8 +253,8 @@ public class GitUtilService {
 
     public static final class MockFileRepositoryUrl extends VcsRepositoryUrl {
 
-        public MockFileRepositoryUrl(File file) throws URISyntaxException {
-            super(file.toURI().toString());
+        public MockFileRepositoryUrl(File file) {
+            super(file);
         }
 
         @Override

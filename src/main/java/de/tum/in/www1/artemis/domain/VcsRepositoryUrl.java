@@ -15,8 +15,14 @@ public class VcsRepositoryUrl {
         // NOTE: this constructor should not be used and only exists to prevent compile errors
     }
 
-    public VcsRepositoryUrl(String spec) throws URISyntaxException {
-        this.uri = new URI(spec);
+    // Create the url from a uriSpecString, e.g. https://ab123cd@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab123cd
+    public VcsRepositoryUrl(String uriSpecString) throws URISyntaxException {
+        this.uri = new URI(uriSpecString);
+    }
+
+    // Create the url from a file reference, e.g. C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950
+    public VcsRepositoryUrl(java.io.File file) {
+        this.uri = file.toURI();
     }
 
     public VcsRepositoryUrl withUser(final String username) {
