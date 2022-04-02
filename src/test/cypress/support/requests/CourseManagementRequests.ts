@@ -510,9 +510,10 @@ export class CypressExamBuilder {
     constructor(course: any) {
         this.template.course = course;
         this.template.title = 'exam' + generateUUID();
-        this.template.visibleDate = dayjsToString(day());
-        this.template.startDate = dayjsToString(day().add(1, 'day'));
-        this.template.endDate = dayjsToString(day().add(2, 'day'));
+        let time = day();
+        this.template.visibleDate = dayjsToString(time);
+        this.template.startDate = dayjsToString(time.add(1, 'day'));
+        this.template.endDate = dayjsToString(time.add(2, 'day'));
         this.template.workingTime = 86400;
     }
 

@@ -603,16 +603,11 @@ public class ModelFactory {
     private static Exam generateExamHelper(Course course, boolean testExam) {
         ZonedDateTime currentTime = ZonedDateTime.now();
         Exam exam = new Exam();
-        exam.setTitle("Test exam 1");
+        exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");
         exam.setTestExam(testExam);
         exam.setVisibleDate(currentTime);
         exam.setStartDate(currentTime.plusMinutes(10));
-        if (testExam) {
-            exam.setEndDate(currentTime.plusMinutes(80));
-        }
-        else {
-            exam.setEndDate(currentTime.plusMinutes(60));
-        }
+        exam.setEndDate(currentTime.plusMinutes(testExam ? 80 : 60));
         exam.setWorkingTime(3000);
         exam.setStartText("Start Text");
         exam.setEndText("End Text");
