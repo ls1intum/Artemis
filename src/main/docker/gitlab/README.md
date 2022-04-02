@@ -23,8 +23,8 @@ gitlab-runner register \
   --non-interactive \
   --executor "docker" \
   --docker-image alpine:latest \
-  --url http://gateway.docker.internal:80 \
-  --clone-url http://gateway.docker.internal:80 \
+  --url http://gitlab:80 \
+  --clone-url http://gitlab:80 \
   --registration-token "PROJECT_REGISTRATION_TOKEN" \
   --description "docker-runner" \
   --maintenance-note "Just a random local test runner" \
