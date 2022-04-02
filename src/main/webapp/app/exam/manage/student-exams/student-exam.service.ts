@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 type EntityResponseType = HttpResponse<StudentExam>;
 type EntityArrayResponseType = HttpResponse<StudentExam[]>;
@@ -11,7 +12,7 @@ type EntityArrayResponseType = HttpResponse<StudentExam[]>;
 export class StudentExamService {
     public resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private router: Router, private http: HttpClient) {}
+    constructor(private router: Router, private http: HttpClient, private accountService: AccountService) {}
 
     /* istanbul ignore next */
     /**
@@ -21,7 +22,9 @@ export class StudentExamService {
      * @param studentExamId The id of the student exam to get.
      */
     find(courseId: number, examId: number, studentExamId: number): Observable<EntityResponseType> {
-        return this.http.get<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' });
+        return this.http
+            .get<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processStudentExam(res)));
     }
 
     /* istanbul ignore next */
@@ -31,7 +34,9 @@ export class StudentExamService {
      * @param examId The exam id.
      */
     findAllForExam(courseId: number, examId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams`, { observe: 'response' });
+        return this.http
+            .get<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.processStudentExams(res)));
     }
 
     /* istanbul ignore next */
@@ -43,7 +48,9 @@ export class StudentExamService {
      * @param workingTime The working time in seconds.
      */
     updateWorkingTime(courseId: number, examId: number, studentExamId: number, workingTime: number): Observable<EntityResponseType> {
-        return this.http.patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`, workingTime, { observe: 'response' });
+        return this.http
+            .patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`, workingTime, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processStudentExam(res)));
     }
 
     toggleSubmittedState(courseId: number, examId: number, studentExamId: number, unsubmit: boolean): Observable<EntityResponseType> {
@@ -53,5 +60,21 @@ export class StudentExamService {
         } else {
             return this.http.put<StudentExam>(url + `submitted`, {}, { observe: 'response' });
         }
+    }
+
+    private processStudentExam(studentExamResponse: EntityResponseType) {
+        if (studentExamResponse.body?.exam?.course) {
+            this.accountService.setAccessRightsForCourse(studentExamResponse.body.exam.course);
+        }
+        return studentExamResponse;
+    }
+
+    private processStudentExams(studentExamsResponse: EntityArrayResponseType) {
+        studentExamsResponse.body!.forEach((studentExam) => {
+            if (studentExam.exam?.course) {
+                this.accountService.setAccessRightsForCourse(studentExam.exam.course);
+            }
+        });
+        return studentExamsResponse;
     }
 }
