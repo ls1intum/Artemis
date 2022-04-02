@@ -48,7 +48,9 @@ export class StudentExamService {
      * @param workingTime The working time in seconds.
      */
     updateWorkingTime(courseId: number, examId: number, studentExamId: number, workingTime: number): Observable<EntityResponseType> {
-        return this.http.patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`, workingTime, { observe: 'response' });
+        return this.http
+            .patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`, workingTime, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processStudentExam(res)));
     }
 
     toggleSubmittedState(courseId: number, examId: number, studentExamId: number, unsubmit: boolean): Observable<EntityResponseType> {
