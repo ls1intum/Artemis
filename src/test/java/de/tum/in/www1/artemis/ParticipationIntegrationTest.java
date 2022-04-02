@@ -101,6 +101,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         course.addExercises(programmingExercise);
         course = courseRepo.save(course);
 
+        doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
