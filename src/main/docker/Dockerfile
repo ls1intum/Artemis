@@ -7,9 +7,13 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 # Specify profiles
 ENV PROFILES ""
 
+RUN echo "Installing needed dependencies" \
+  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
 # See https://github.com/ls1intum/Artemis/issues/4439
 RUN echo "Fixing locales" \
-  && apt-get update && apt-get install -y --no-install-recommends locales \
   && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
   && locale-gen
 
@@ -19,10 +23,7 @@ ENV LANGUAGE en_US.UTF-8
 
 ARG GOSU_VERSION=1.12
 
-RUN echo "Installing prerequisites" \
-  && apt-get update && apt-get install -y --no-install-recommends \
-  graphviz \
-  wget \
+RUN echo "Installing gosu (needed for bootstrap.sh)" \
   && dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
   && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch" \
   && chmod +x /usr/local/bin/gosu \
