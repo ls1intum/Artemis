@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /opt/Artemis
+cd /opt/Artemis || exit 1
 
 if [ -z "$(ls -A config)" ]; then
    echo "Config is Empty .. copying default ones .."
