@@ -42,13 +42,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         this.buildLogService = buildLogService;
     }
 
-    /**
-     * Generate an Artemis result object from the CI build result. Will use the test case feedback as result feedback.
-     *
-     * @param buildResult   Build result data provided by build notification.
-     * @param participation to attach result to.
-     * @return the created result
-     */
+    @Override
     public Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
         final var result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);

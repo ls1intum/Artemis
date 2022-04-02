@@ -115,8 +115,20 @@ public interface ContinuousIntegrationService {
      */
     String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
+    /**
+     * converts the object from the CI system (Bamboo or Jenkins) into a proper Java DTO
+     * @param requestBody the object sent from the CI system to Artemis
+     * @return the DTO with all information in Java Object form
+     */
     AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody);
 
+    /**
+     * Generate an Artemis result object from the CI build result. Will use the test case results and issues in static code analysis as result feedback.
+     *
+     * @param buildResult   Build result data provided by build notification (already converted into a DTO)
+     * @param participation to attach result to.
+     * @return the created Artemis result with a score, completion date, etc.
+     */
     Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation);
 
     /**

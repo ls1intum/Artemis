@@ -490,6 +490,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
     }
 
+    @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
         final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         // Filter the first build plan in case it was automatically executed when the build plan was created.
