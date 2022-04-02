@@ -210,8 +210,6 @@ public class GitlabRequestMockProvider {
      * @throws GitLabApiException Never
      */
     public void mockCreationOfUser(String login) throws GitLabApiException {
-        UserApi userApi = mock(UserApi.class);
-        doReturn(userApi).when(gitLabApi).getUserApi();
         doReturn(null).when(userApi).getUser(eq(login));
         doAnswer(invocation -> {
             User user = (User) invocation.getArguments()[0];

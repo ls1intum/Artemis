@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.util;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import javax.mail.internet.MimeMessage;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -99,6 +103,11 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Autowired
     protected RequestUtilService request;
+
+    @BeforeEach
+    public void mockMailService() {
+        doNothing().when(javaMailSender).send(any(MimeMessage.class));
+    }
 
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, programmingSubmissionService,
