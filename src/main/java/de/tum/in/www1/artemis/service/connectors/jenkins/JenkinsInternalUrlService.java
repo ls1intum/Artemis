@@ -4,6 +4,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -88,9 +90,10 @@ public class JenkinsInternalUrlService {
      * @param internalUrl the internal url
      * @return the manipulated url
      */
+    @Nullable
     public String replaceUrl(String urlToReplace, URL internalUrl) {
         if (urlToReplace == null) {
-            return urlToReplace;
+            return null;
         }
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(urlToReplace);
