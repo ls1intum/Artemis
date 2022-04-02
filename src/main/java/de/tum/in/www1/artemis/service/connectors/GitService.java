@@ -251,14 +251,14 @@ public class GitService {
     }
 
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURL().toURI();
+        return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
     }
 
     private URI getSshUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
         URI templateUri = new URI(sshUrlTemplate.get());
         // Example Bitbucket: ssh://git@bitbucket.ase.in.tum.de:7999/se2021w07h02/se2021w07h02-ga27yox.git
         // Example Gitlab: ssh://git@gitlab.ase.in.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
-        final var repositoryUri = vcsRepositoryUrl.getURL().toURI();
+        final var repositoryUri = vcsRepositoryUrl.getURI();
         // Bitbucket repository urls (until now mainly used with username and password authentication) include "/scm" in the url, which cannot be used in ssh urls,
         // therefore we need to replace it here
         final var path = repositoryUri.getPath().replace("/scm", "");
@@ -313,7 +313,7 @@ public class GitService {
     public Repository getOrCheckoutRepositoryForJPlag(ProgrammingExerciseParticipation participation, String targetPath)
             throws InterruptedException, GitAPIException, InvalidPathException {
         var repoUrl = participation.getVcsRepositoryUrl();
-        String repoFolderName = folderNameForRepositoryUrl(repoUrl);
+        String repoFolderName = repoUrl.folderNameForRepositoryUrl();
 
         // Replace the exercise name in the repository folder name with the participation ID.
         // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
@@ -504,7 +504,7 @@ public class GitService {
      * @return path of the local file system
      */
     public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUrl targetUrl) {
-        return Paths.get(targetPath.replaceAll("^\\./", ""), folderNameForRepositoryUrl(targetUrl));
+        return Paths.get(targetPath.replaceAll("^\\./", ""), targetUrl.folderNameForRepositoryUrl());
     }
 
     /**
@@ -622,7 +622,7 @@ public class GitService {
         try (Git git = new Git(targetRepo)) {
             // overwrite the old remote uri with the target uri
             git.remoteSetUrl().setRemoteName("origin").setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
-            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURL().toString());
+            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURI().toString());
 
             String oldBranch = git.getRepository().getBranch();
             if (!defaultBranch.equals(oldBranch)) {
@@ -651,7 +651,7 @@ public class GitService {
         try (Git git = new Git(targetRepo)) {
             // overwrite the old remote uri with the target uri
             git.remoteSetUrl().setRemoteName("origin").setRemoteUri(new URIish(getGitUriAsString(targetRepoUrl))).call();
-            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURL().toString());
+            log.debug("pushSourceToTargetRepo -> Push {}", targetRepoUrl.getURI().toString());
 
             if (!defaultBranch.equals(oldBranch)) {
                 targetRepo.getConfig().unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, oldBranch);
@@ -820,7 +820,7 @@ public class GitService {
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
     public ObjectId getLastCommitHash(VcsRepositoryUrl repoUrl) throws EntityNotFoundException {
-        if (repoUrl == null || repoUrl.getURL() == null) {
+        if (repoUrl == null || repoUrl.getURI() == null) {
             return null;
         }
         // Get HEAD ref of repo without cloning it locally
@@ -1245,20 +1245,6 @@ public class GitService {
         Path zipFilePath = Paths.get(repositoryDir, zipFilenameWithoutSlash);
         Files.createDirectories(Paths.get(repositoryDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath());
-    }
-
-    /**
-     * Generates the unique local folder name for a given remote repository URL.
-     *
-     * @param repoUrl URL of the remote repository.
-     * @return the folderName as a string.
-     */
-    private String folderNameForRepositoryUrl(VcsRepositoryUrl repoUrl) {
-        String path = repoUrl.getURL().getPath();
-        path = path.replaceAll(".git$", "");
-        path = path.replaceAll("/$", "");
-        path = path.replaceAll("^/.*scm/", "");
-        return path;
     }
 
     /**

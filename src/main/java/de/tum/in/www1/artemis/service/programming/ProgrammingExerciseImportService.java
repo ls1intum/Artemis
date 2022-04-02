@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.programming;
 import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -265,7 +265,7 @@ public class ProgrammingExerciseImportService {
             updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation,
                     targetExerciseProjectKey);
         }
-        catch (MalformedURLException ex) {
+        catch (URISyntaxException ex) {
             log.error(ex.getMessage(), ex);
         }
     }
@@ -280,7 +280,7 @@ public class ProgrammingExerciseImportService {
                 continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
                         targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryDefaultBranch, Optional.empty());
             }
-            catch (MalformedURLException ex) {
+            catch (URISyntaxException ex) {
                 log.error(ex.getMessage(), ex);
             }
         }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
-import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -753,7 +754,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl) {
-        if (repositoryUrl == null || repositoryUrl.getURL() == null) {
+        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
             return false;
         }
         String projectKey;
@@ -895,18 +896,18 @@ public class BitbucketService extends AbstractVersionControlService {
         public BitbucketRepositoryUrl(String projectKey, String repositorySlug) {
             final var urlString = bitbucketServerUrl.getProtocol() + "://" + bitbucketServerUrl.getAuthority() + buildRepositoryPath(projectKey, repositorySlug);
             try {
-                this.url = new URL(urlString);
+                this.uri = new URI(urlString);
             }
-            catch (MalformedURLException e) {
+            catch (URISyntaxException e) {
                 throw new BitbucketException("Could not Bitbucket Repository URL", e);
             }
         }
 
         private BitbucketRepositoryUrl(String urlString) {
             try {
-                this.url = new URL(urlString);
+                this.uri = new URI(urlString);
             }
-            catch (MalformedURLException e) {
+            catch (URISyntaxException e) {
                 throw new BitbucketException("Could not Bitbucket Repository URL", e);
             }
         }
@@ -914,7 +915,7 @@ public class BitbucketService extends AbstractVersionControlService {
         @Override
         public VcsRepositoryUrl withUser(String username) {
             this.username = username;
-            return new BitbucketRepositoryUrl(url.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
+            return new BitbucketRepositoryUrl(uri.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
         }
 
         private String buildRepositoryPath(String projectKey, String repositorySlug) {

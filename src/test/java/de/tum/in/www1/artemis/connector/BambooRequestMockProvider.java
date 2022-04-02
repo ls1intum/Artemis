@@ -333,11 +333,11 @@ public class BambooRequestMockProvider {
     /**
      * This method mocks that the artifact page the latest build result is empty
      */
-    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException, MalformedURLException {
+    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException {
         var indexOfResponse = "href=\"/download/1\"";
         var noArtifactsResponse = "";
-        final var uri = new URL(bambooServerUrl + "/download/").toURI();
-        final var uri2 = new URL(bambooServerUrl + "/download/1").toURI();
+        final var uri = new URI(bambooServerUrl + "/download/");
+        final var uri2 = new URI(bambooServerUrl + "/download/1");
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.TEXT_HTML).body(indexOfResponse));
         mockServer.expect(requestTo(uri2)).andExpect(method(HttpMethod.GET))

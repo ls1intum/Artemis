@@ -121,7 +121,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         Files.createDirectory(folderPath).toFile();
 
         var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
-        database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURL());
+        database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURI());
         participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findAll().get(0);
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 

@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -437,7 +437,7 @@ public class ProgrammingExerciseTestService {
         // TODO: make sure that the local and remote repos of the origin exercise include the correct files so that the template upgrade service is invoked correctly
     }
 
-    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) throws MalformedURLException {
+    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) throws URISyntaxException {
         AuxiliaryRepository repository = database.addAuxiliaryRepositoryToExercise(sourceExercise);
         var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
@@ -1249,12 +1249,12 @@ public class ProgrammingExerciseTestService {
             var team = setupTeam(user);
             participation = database.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentTeamRepo).getURL().toString());
+            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentTeamRepo).getURI().toString());
         }
         else {
             participation = database.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentRepo).getURL().toString());
+            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentRepo).getURI().toString());
         }
 
         ProgrammingSubmission submission = new ProgrammingSubmission();

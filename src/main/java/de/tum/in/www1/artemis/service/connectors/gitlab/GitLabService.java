@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import static org.gitlab4j.api.models.AccessLevel.*;
 
-import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -154,7 +155,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
-        final var namespaces = repositoryUrl.getURL().toString().split("/");
+        final var namespaces = repositoryUrl.getURI().toString().split("/");
         final var last = namespaces.length - 1;
         return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
     }
@@ -303,7 +304,7 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl) {
-        if (repositoryUrl == null || repositoryUrl.getURL() == null) {
+        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
             return false;
         }
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
@@ -533,9 +534,9 @@ public class GitLabService extends AbstractVersionControlService {
 
         private void stringToURL(String urlString) {
             try {
-                this.url = new URL(urlString);
+                this.uri = new URI(urlString);
             }
-            catch (MalformedURLException e) {
+            catch (URISyntaxException e) {
                 throw new GitLabException("Could not build GitLab URL", e);
             }
         }
@@ -543,7 +544,7 @@ public class GitLabService extends AbstractVersionControlService {
         @Override
         public VcsRepositoryUrl withUser(String username) {
             this.username = username;
-            return new GitLabRepositoryUrl(url.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
+            return new GitLabRepositoryUrl(uri.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
         }
     }
 }

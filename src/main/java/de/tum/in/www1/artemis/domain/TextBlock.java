@@ -202,14 +202,14 @@ public class TextBlock implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
         }
-        if (!(o instanceof TextBlock)) {
+        if (!(obj instanceof TextBlock)) {
             return false;
         }
-        return id != null && id.equals(((TextBlock) o).id);
+        return id != null && id.equals(((TextBlock) obj).id);
     }
 
     @Override

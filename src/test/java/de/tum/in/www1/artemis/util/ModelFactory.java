@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -179,7 +179,7 @@ public class ModelFactory {
         return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
     }
 
-    public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws MalformedURLException {
+    public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws URISyntaxException {
         return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
     }
 

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
@@ -32,16 +32,16 @@ public class JenkinsInternalUrlService {
      * @return the vcs repository url with the internal url
      */
     public VcsRepositoryUrl toInternalVcsUrl(VcsRepositoryUrl vcsRepositoryUrl) {
-        if (vcsRepositoryUrl.getURL() == null) {
+        if (vcsRepositoryUrl.getURI() == null) {
             log.warn("Cannot replace url to internal url {} because the url is null.", internalVcsUrl);
             return vcsRepositoryUrl;
         }
 
         try {
-            String newInternalUrl = toInternalVcsUrl(vcsRepositoryUrl.getURL().toString());
+            String newInternalUrl = toInternalVcsUrl(vcsRepositoryUrl.getURI().toString());
             return new VcsRepositoryUrl(newInternalUrl);
         }
-        catch (MalformedURLException e) {
+        catch (URISyntaxException e) {
             log.warn("Cannot replace url {} to {}: {}. Falling back to original url.", vcsRepositoryUrl, internalVcsUrl, e.getMessage());
             return vcsRepositoryUrl;
         }

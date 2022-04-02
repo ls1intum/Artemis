@@ -299,7 +299,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
-        participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURL().toString());
+        participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
         participationRepo.save(participation);
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
         var updatedParticipation = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/resume-programming-participation", null,

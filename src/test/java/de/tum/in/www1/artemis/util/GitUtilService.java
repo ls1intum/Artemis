@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import java.io.*;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -246,15 +246,15 @@ public class GitUtilService {
         try {
             return new VcsRepositoryUrl("file://" + getCompleteRepoPathStringByType(repo));
         }
-        catch (MalformedURLException ignored) {
+        catch (URISyntaxException ignored) {
         }
         return null;
     }
 
     public static final class MockFileRepositoryUrl extends VcsRepositoryUrl {
 
-        public MockFileRepositoryUrl(File file) throws MalformedURLException {
-            super(file.toURI().toURL().toString());
+        public MockFileRepositoryUrl(File file) throws URISyntaxException {
+            super(file.toURI().toString());
         }
 
         @Override
@@ -262,6 +262,7 @@ public class GitUtilService {
             // the mocked url should already include the user specific part
             return this;
         }
+
     }
 
     public void writeEmptyJsonFileToPath(Path path) throws Exception {
