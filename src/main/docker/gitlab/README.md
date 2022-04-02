@@ -17,14 +17,14 @@ Open a shell into the `gitlab-runner` container:
 ```bash
 docker exec -it gitlab-runner /bin/bash
 ```
-Execute the following command with your token inside the container with the registration token generated above:
+Execute the following command with your token inside the container with the registration token generated above (If you use Linux, try `--clone-url http://172.17.0.1:80 \`, because `gateway.docker.internal` is only for [Windows](https://docs.docker.com/desktop/windows/networking/#use-cases-and-workarounds)):
 ```bash
 gitlab-runner register \
   --non-interactive \
   --executor "docker" \
   --docker-image alpine:latest \
   --url http://gitlab:80 \
-  --clone-url http://gitlab:80 \
+  --clone-url http://gateway.docker.internal:80 \
   --registration-token "PROJECT_REGISTRATION_TOKEN" \
   --description "docker-runner" \
   --maintenance-note "Just a random local test runner" \
