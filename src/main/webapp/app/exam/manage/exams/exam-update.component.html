@@ -100,7 +100,6 @@
                         [value]="workingTimeInMinutes"
                         (change)="convertWorkingTimeFromMinutesToSeconds($event)"
                     />
-                    <span *ngIf="!validateWorkingTime" class="invalid-feedback"> {{ 'artemisApp.examManagement.testExam.workingTimeError' | artemisTranslate }}</span>
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</label>

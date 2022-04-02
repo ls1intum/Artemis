@@ -72,7 +72,6 @@ export class ExamUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.calculateWorkingTime;
         if (this.exam.id !== undefined) {
             this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
         } else {
@@ -163,7 +162,7 @@ export class ExamUpdateComponent implements OnInit {
      */
     get validateWorkingTime(): boolean {
         if (this.exam.testExam) {
-            if (this.exam.workingTime === undefined || this.exam.workingTime <= 0) {
+            if (this.exam.workingTime === undefined) {
                 return false;
             }
             if (this.exam.startDate !== undefined && this.exam.endDate) {
