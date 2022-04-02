@@ -31,7 +31,7 @@
                     <label class="label-narrow" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
                     <jhi-help-icon placement="top" text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
                 </div>
-                <jhi-exam-mode-picker [exam]="exam" [disabled]="exam.id !== undefined"> </jhi-exam-mode-picker>
+                <jhi-exam-mode-picker [exam]="exam" [disabled]="exam.id !== undefined"></jhi-exam-mode-picker>
             </div>
             <div class="row mb-3">
                 <div class="col-sm-4 form-group">
@@ -100,6 +100,7 @@
                         [value]="workingTimeInMinutes"
                         (change)="convertWorkingTimeFromMinutesToSeconds($event)"
                     />
+                    <span *ngIf="!validateWorkingTime" class="invalid-feedback"> {{ 'artemisApp.examManagement.testExam.workingTimeError' | artemisTranslate }}</span>
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</label>

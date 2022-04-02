@@ -311,7 +311,8 @@
                 "examModeTooltip": "Testklausuren können von Studierenden mehrmals innerhalb des Bearbeitungsfensters durchgeführt werden und erhalten nach jedem Durchlauf automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
-                "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
+                "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf",
+                "workingTimeError": "Die Arbeitszeit muss innerhalb des Bearbeitungsfensters liegen"
             },
             "testRun": {
                 "testRun": "Testlauf",

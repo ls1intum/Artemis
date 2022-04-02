@@ -312,7 +312,8 @@
                 "examModeTooltip": "Test Exams can be conducted multiple times within the working window. Students recieve automated feedback after every run. NOTE: This cannot be changed later on!",
                 "startDate": "Start of working window",
                 "endDate": "End of working window",
-                "workingTimeTooltip": "The working time allowed to the students per run"
+                "workingTimeTooltip": "The working time allowed to the students per run",
+                "workingTimeError": "The working time must be within the working window"
             },
             "testRun": {
                 "testRun": "Test Run",
