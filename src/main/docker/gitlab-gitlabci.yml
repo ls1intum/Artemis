@@ -9,7 +9,7 @@ services:
             - artemis-gitlab-config:/etc/gitlab
         environment:
             GITLAB_OMNIBUS_CONFIG: |
-                external_url "http://${GIT_SERVER_NAME}"
+                external_url "${GIT_SERVER_NAME}"
                 prometheus_monitoring['enable'] = false
                 gitlab_rails['gitlab_shell_ssh_port'] = 2222
                 gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
