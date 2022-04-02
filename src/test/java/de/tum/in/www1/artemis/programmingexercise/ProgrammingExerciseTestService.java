@@ -874,6 +874,8 @@ public class ProgrammingExerciseTestService {
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerParticipationBuild(participation);
 
+        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
+
         // These will be updated when triggering a build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
@@ -904,6 +906,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockTriggerFailedBuild(participation);
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerFailedBuild(participation);
+        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -940,6 +943,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockTriggerInstructorBuildAll(participation);
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerInstructorBuildAll(participation);
+
+        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);

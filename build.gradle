@@ -76,10 +76,6 @@ springBoot {
     mainClass = "de.tum.in.www1.artemis.ArtemisApp"
 }
 
-bootRun {
-    jvmArgs = ["--illegal-access=warn"]
-}
-
 modernizer {
     failOnViolations = false
     includeTestClasses = true
@@ -95,7 +91,6 @@ test {
     }
     testLogging.showStandardStreams = true
     reports.html.required = false
-    jvmArgs "--illegal-access=warn"
 }
 
 task testReport(type: TestReport) {
