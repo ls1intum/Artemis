@@ -14,9 +14,9 @@ import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
 public interface TestwiseCoverageReportEntryRepository extends JpaRepository<TestwiseCoverageReportEntry, Long> {
 
     @Query("""
-                SELECT e FROM TestwiseCoverageReportEntry e
-                LEFT JOIN FETCH ProgrammingExerciseTestCase t
-                WHERE t.id = :#{#testCaseId}
+            SELECT e FROM TestwiseCoverageReportEntry e
+            LEFT JOIN FETCH ProgrammingExerciseTestCase t
+            WHERE t.id = :#{#testCaseId}
             """)
     Set<TestwiseCoverageReportEntry> findByTestCaseId(@Value("testCaseId") Long testCaseId);
 }

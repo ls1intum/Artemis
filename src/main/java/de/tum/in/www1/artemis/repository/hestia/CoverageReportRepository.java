@@ -31,9 +31,9 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
     }
 
     @Query("""
-                SELECT DISTINCT r FROM CoverageReport r
-                LEFT JOIN FETCH r.fileReports
-                WHERE r.id = :#{#coverageReportId}
+            SELECT DISTINCT r FROM CoverageReport r
+            LEFT JOIN FETCH r.fileReports
+            WHERE r.id = :#{#coverageReportId}
             """)
     Optional<CoverageReport> findCoverageReportByIdWithEagerFileReports(@Param("coverageReportId") Long coverageReportId);
 
