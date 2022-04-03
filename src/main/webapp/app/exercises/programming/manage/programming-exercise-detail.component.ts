@@ -136,6 +136,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     // This is needed to access the exercise in the result details
                     this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
                 }
+                // this update is needed because the covered line ratio is not an attribute of the programming exercise sent
+                // by the server
+                if (this.programmingExercise.testwiseCoverageEnabled) {
+                    console.log('result has come');
+                    this.programmingExerciseService.getLatestTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
+                        console.log('result has come: ' + coverageReport.coveredLineRatio);
+                        return (this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio);
+                    });
+                }
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
 
@@ -180,6 +189,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             });
 
             this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => (this.programmingExercise.gitDiffReport = gitDiffReport));
+            this.programmingExerciseService
+                .getLatestTestwiseCoverageReport(programmingExercise.id)
+                .subscribe((coverageReport) => (this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio));
         });
     }
 
@@ -468,13 +480,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     getAndShowTestwiseCoverage() {
         this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!).subscribe({
             next: (response: Map<string, string>) => {
-                this.programmingExerciseService.getTestwiseCoverageReports(this.programmingExercise.id!).subscribe({
-                    next: (testwiseCoverageReports) => {
+                this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe({
+                    next: (coverageReport) => {
                         const modalRef = this.modalService.open(TestwiseCoverageReportModalComponent, {
                             size: 'xl',
                             backdrop: 'static',
                         });
-                        modalRef.componentInstance.reports = testwiseCoverageReports;
+                        modalRef.componentInstance.report = coverageReport;
                         modalRef.componentInstance.fileContentByPath = response;
                     },
                     error: (err: HttpErrorResponse) => {

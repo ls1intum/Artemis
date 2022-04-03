@@ -18,7 +18,7 @@ import com.google.common.base.Strings;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestwiseCoverageReport;
+import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -106,12 +106,12 @@ public class Result extends DomainObject {
     @Column(name = "example_result")
     private Boolean exampleResult;
 
-    // This attribute is required to forward the report after creating the build result. This is required in order to
-    // delay referencing the corresponding test cases from the report because the test cases are not saved in the database
+    // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
+    // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
     // at this point of time but the required test case name would be lost, otherwise.
     @Transient
     @JsonIgnore
-    private Map<String, ProgrammingExerciseTestwiseCoverageReport> testwiseCoverageReportByTestCaseName = new HashMap<>();
+    private Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName = new HashMap<>();
 
     public String getResultString() {
         return resultString;
@@ -505,12 +505,12 @@ public class Result extends DomainObject {
         this.exampleResult = exampleResult;
     }
 
-    public Map<String, ProgrammingExerciseTestwiseCoverageReport> getTestwiseCoverageReportByTestCaseName() {
-        return testwiseCoverageReportByTestCaseName;
+    public Map<String, Set<CoverageFileReport>> getCoverageFileReportsByTestCaseName() {
+        return fileReportsByTestCaseName;
     }
 
-    public void setTestwiseCoverageReportByTestCaseName(Map<String, ProgrammingExerciseTestwiseCoverageReport> testwiseCoverageReportByTestCaseName) {
-        this.testwiseCoverageReportByTestCaseName = testwiseCoverageReportByTestCaseName;
+    public void setCoverageFileReportsByTestCaseName(Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName) {
+        this.fileReportsByTestCaseName = fileReportsByTestCaseName;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

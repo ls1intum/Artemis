@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ProgrammingExerciseTestwiseCoverageReport } from 'app/entities/hestia/programming-exercise-testwise-coverage-report.model';
+import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
+import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
 
 @Component({
     selector: 'jhi-testwise-coverage-report',
@@ -7,21 +8,28 @@ import { ProgrammingExerciseTestwiseCoverageReport } from 'app/entities/hestia/p
 })
 export class TestwiseCoverageReportComponent implements OnInit {
     @Input()
-    reports: ProgrammingExerciseTestwiseCoverageReport[];
+    report: CoverageReport;
 
     @Input()
     fileContentByPath: Map<string, string>;
 
     displayedTestCaseNames: Map<string, boolean>;
 
-    reportsByFileName: Map<string, ProgrammingExerciseTestwiseCoverageReport[]>;
+    fileReportByFileName: Map<string, CoverageFileReport>;
 
     constructor() {}
 
     ngOnInit(): void {
         // initially display covered lines for all test cases
         this.displayedTestCaseNames = new Map<string, boolean>();
-        this.reports.forEach((report) => this.displayedTestCaseNames.set(report.testCase!.testName!, true));
+        // retrieve all test cases
+        const testCases = new Set(
+            this.report?.fileReports
+                ?.flatMap((report) => report)
+                .flatMap((fileReport) => fileReport.testwiseCoverageEntries)
+                .map((entry) => entry!.testCase),
+        );
+        testCases.forEach((testCase) => this.displayedTestCaseNames.set(testCase!.testName!, true));
 
         this.setReportsByFileName();
     }
@@ -33,21 +41,27 @@ export class TestwiseCoverageReportComponent implements OnInit {
     }
 
     private setReportsByFileName(): void {
-        const result = new Map<string, ProgrammingExerciseTestwiseCoverageReport[]>();
-        // get reports that only contains entries about a file path for all files
-        this.fileContentByPath.forEach((fileContent, filePath) => {
-            // filter out reports for the current filePath
-            const reports = this.reports
-                .filter((report) => !!this.displayedTestCaseNames.get(report.testCase!.testName!))
-                .map((report) => {
-                    const copiedReport = new ProgrammingExerciseTestwiseCoverageReport();
-                    copiedReport.id = report.id;
-                    copiedReport.testCase = report.testCase;
-                    copiedReport.entries = report.entries?.filter((entry) => 'src/' + entry.filePath === filePath);
-                    return copiedReport;
-                });
-            result.set(filePath, reports);
+        const result = new Map<string, CoverageFileReport>();
+        // create the reports for all files, not only for files that have existing coverage data
+        this.fileContentByPath?.forEach((content, filePath) => {
+            const matchingFileReport = this.report.fileReports?.filter((fileReport) => fileReport?.filePath === filePath)?.first();
+            const copiedFileReport = new CoverageFileReport();
+            copiedFileReport.filePath = filePath;
+            if (matchingFileReport) {
+                copiedFileReport.lineCount = matchingFileReport.lineCount;
+                copiedFileReport.coveredLineCount = matchingFileReport.coveredLineCount;
+
+                // filter out entries for the current file report
+                copiedFileReport.testwiseCoverageEntries = matchingFileReport.testwiseCoverageEntries?.filter(
+                    (entry) => this.displayedTestCaseNames.get(entry.testCase!.testName!)!!,
+                );
+            } else {
+                copiedFileReport.lineCount = content.split('\n').length + 1;
+                copiedFileReport.coveredLineCount = 0;
+                copiedFileReport.testwiseCoverageEntries = [];
+            }
+            result.set(filePath, copiedFileReport);
         });
-        this.reportsByFileName = result;
+        this.fileReportByFileName = result;
     }
 }

@@ -8,10 +8,12 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 
 /**
  * A ProgrammingSubmission.
@@ -36,6 +38,11 @@ public class ProgrammingSubmission extends Submission {
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+
+    // If the submission is deleted, the testwise coverage report with all child entities are deleted
+    @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private CoverageReport testwiseCoverageReport;
 
     public String getCommitHash() {
         return commitHash;

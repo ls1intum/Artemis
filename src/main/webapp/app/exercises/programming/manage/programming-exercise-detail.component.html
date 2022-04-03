@@ -475,7 +475,7 @@
                 <dd>
                     <span>{{ programmingExercise.showTestNamesToStudents }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageEnabled">Record testwise coverage</span></dt>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage">Record testwise coverage</span></dt>
                 <dd>
                     <span>{{ programmingExercise.testwiseCoverageEnabled }}</span>
                 </dd>
@@ -549,6 +549,12 @@
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
                     </a>
                 </dd>
+                <div *ngIf="programmingExercise.isAtLeastTutor && programmingExercise?.testwiseCoverageEnabled">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.coveredLineRatio">Covered Line Ratio</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise?.coveredLinesRatio ? (programmingExercise?.coveredLinesRatio! * 100).toFixed(1) + ' %' : 'n.a.' }}</span>
+                    </dd>
+                </div>
             </dl>
         </div>
     </div>

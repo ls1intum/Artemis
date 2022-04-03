@@ -391,6 +391,7 @@
             },
             "recordTestwiseCoverage": "Testweise Test-Abdeckung aufzeichnen",
             "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testweise Test-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java-Gradle-Projekte mit nicht-sequentiellen Testläufen verfügbar.",
+            "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
                 "button": "Zeige die testweise Test-Abdeckung an",
                 "tooltip": "Zeigt die testwise Test-Abdeckung für das Lösungs-Repository.",

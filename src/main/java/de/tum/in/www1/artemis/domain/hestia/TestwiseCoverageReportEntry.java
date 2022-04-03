@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -12,23 +9,26 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 
 /**
  * A single entry from testwise coverage report by file path and consecutive executed code block.
  * A block is represented by the start line and the length (i.e. number of lines) of the block.
  */
 @Entity
-@Table(name = "programming_exercise_testwise_coverage_entry")
+@Table(name = "testwise_coverage_report_entry")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ProgrammingExerciseTestwiseCoverageEntry extends DomainObject {
+public class TestwiseCoverageReportEntry extends DomainObject {
 
     @ManyToOne
-    @JsonIgnoreProperties("entries")
-    private ProgrammingExerciseTestwiseCoverageReport testwiseCoverageReport;
+    @JsonIgnoreProperties("testwiseCoverageEntries")
+    private CoverageFileReport fileReport;
 
-    @Column(name = "file_path")
-    private String filePath;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnoreProperties("testwiseCoverageReportEntries")
+    @JoinColumn(name = "test_case_id", referencedColumnName = "id")
+    private ProgrammingExerciseTestCase testCase;
 
     @Column(name = "start_line")
     private Integer startLine;
@@ -36,20 +36,20 @@ public class ProgrammingExerciseTestwiseCoverageEntry extends DomainObject {
     @Column(name = "line_count")
     private Integer lineCount;
 
-    public ProgrammingExerciseTestwiseCoverageReport getTestwiseCoverageReport() {
-        return testwiseCoverageReport;
+    public CoverageFileReport getFileReport() {
+        return fileReport;
     }
 
-    public void setTestwiseCoverageReport(ProgrammingExerciseTestwiseCoverageReport testwiseCoverageReport) {
-        this.testwiseCoverageReport = testwiseCoverageReport;
+    public void setFileReport(CoverageFileReport fileReport) {
+        this.fileReport = fileReport;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public ProgrammingExerciseTestCase getTestCase() {
+        return testCase;
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
+    public void setTestCase(ProgrammingExerciseTestCase testCase) {
+        this.testCase = testCase;
     }
 
     public Integer getStartLine() {

@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
-import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTestwiseCoverageService;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -81,7 +81,7 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
-    private final ProgrammingExerciseTestwiseCoverageService programmingExerciseTestwiseCoverageService;
+    private final TestwiseCoverageService testwiseCoverageService;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
@@ -91,7 +91,7 @@ public class ProgrammingExerciseGradingService {
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
-            ProgrammingExerciseTestwiseCoverageService programmingExerciseTestwiseCoverageService) {
+            TestwiseCoverageService testwiseCoverageService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -110,7 +110,7 @@ public class ProgrammingExerciseGradingService {
         this.exerciseDateService = exerciseDateService;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
-        this.programmingExerciseTestwiseCoverageService = programmingExerciseTestwiseCoverageService;
+        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     /**
@@ -156,10 +156,6 @@ public class ProgrammingExerciseGradingService {
         // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
         if (isSolutionParticipation) {
             extractTestCasesFromResult(programmingExercise, newResult);
-            // the test cases have been saved to the database previously, therefore we can add the reference to the coverage reports
-            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
-                programmingExerciseTestwiseCoverageService.updateReportWithTestCases(newResult.getTestwiseCoverageReportByTestCaseName(), programmingExercise);
-            }
         }
 
         Result processedResult = calculateScoreForResult(newResult, programmingExercise, isStudentParticipation);
@@ -167,10 +163,15 @@ public class ProgrammingExerciseGradingService {
         // Note: This programming submission might already have multiple results, however they do not contain the assessor or the feedback
         var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
 
-        // If the solution participation was updated, also trigger the template participation build.
         if (isSolutionParticipation) {
+            // If the solution participation was updated, also trigger the template participation build.
             // This method will return without triggering the build if the submission is not of type TEST.
             triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
+
+            // the test cases and the submission have been saved to the database previously, therefore we can add the reference to the coverage reports
+            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && Boolean.TRUE.equals(processedResult.isSuccessful())) {
+                testwiseCoverageService.createTestwiseCoverageReport(newResult.getCoverageFileReportsByTestCaseName(), programmingExercise, programmingSubmission);
+            }
         }
 
         if (isStudentParticipation) {

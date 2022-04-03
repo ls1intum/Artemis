@@ -17,7 +17,7 @@ import { Task } from 'app/exercises/programming/shared/instructions-render/task/
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseTestwiseCoverageReport } from 'app/entities/hestia/programming-exercise-testwise-coverage-report.model';
+import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
@@ -477,11 +477,19 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Gets the testwise coverage reports of a programming exercise for all active test cases
+     * Gets the testwise coverage report of a programming exercise for the latest solution submission with all descending reports
      * @param exerciseId The id of a programming exercise
      */
-    getTestwiseCoverageReports(exerciseId: number): Observable<Set<ProgrammingExerciseTestwiseCoverageReport>> {
-        return this.http.get<Set<ProgrammingExerciseTestwiseCoverageReport>>(`${this.resourceUrl}/${exerciseId}/testwise-coverage-report`);
+    getLatestFullTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
+        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
+    }
+
+    /**
+     * Gets the testwise coverage report of a programming exercise for the latest solution submission without the actual reports
+     * @param exerciseId The id of a programming exercise
+     */
+    getLatestTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
+        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
     }
 
     /**

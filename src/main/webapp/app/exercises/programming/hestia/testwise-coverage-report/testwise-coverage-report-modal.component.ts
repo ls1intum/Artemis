@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseTestwiseCoverageReport } from 'app/entities/hestia/programming-exercise-testwise-coverage-report.model';
+import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 
 @Component({
     selector: 'jhi-testwise-coverage-report-modal',
@@ -8,7 +8,7 @@ import { ProgrammingExerciseTestwiseCoverageReport } from 'app/entities/hestia/p
 })
 export class TestwiseCoverageReportModalComponent {
     @Input()
-    reports: ProgrammingExerciseTestwiseCoverageReport[];
+    report: CoverageReport;
 
     @Input()
     fileContentByPath: Map<string, string>;

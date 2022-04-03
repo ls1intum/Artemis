@@ -1,7 +1,7 @@
 import { Component, Input, ViewChild, OnInit } from '@angular/core';
-import { ProgrammingExerciseTestwiseCoverageReport } from 'app/entities/hestia/programming-exercise-testwise-coverage-report.model';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import ace from 'brace';
+import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
 
 @Component({
     selector: 'jhi-testwise-coverage-file',
@@ -16,7 +16,7 @@ export class TestwiseCoverageFileComponent implements OnInit {
     fileName: string;
 
     @Input()
-    reports: ProgrammingExerciseTestwiseCoverageReport[];
+    fileReport: CoverageFileReport;
 
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
@@ -26,19 +26,18 @@ export class TestwiseCoverageFileComponent implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
-        this.setupEditor(this.editor, this.fileContent, this.reports);
+        this.proportionCoveredLines = this.fileReport!.coveredLineCount! / this.fileReport!.lineCount!;
+        this.setupEditor(this.editor, this.fileContent, this.fileReport);
     }
 
-    private aggregateCoveredLinesBlocks(reports: ProgrammingExerciseTestwiseCoverageReport[]): Map<number, number> {
+    private aggregateCoveredLinesBlocks(fileReport: CoverageFileReport): Map<number, number> {
         const coveredLines = new Set<number>();
-        const entries = reports.flatMap((entryByReport) => entryByReport.entries);
+        const entries = fileReport.testwiseCoverageEntries!;
         // retrieve all covered line numbers
         entries.forEach((entry) => {
+            // TODO: can the line count be undefined?
             this.getRangeArray(entry!.startLine!, entry!.lineCount ?? 0).forEach((line) => coveredLines.add(line));
         });
-
-        const numberOfLines = this.fileContent.split('\n').length - 1;
-        this.proportionCoveredLines = coveredLines.size / numberOfLines;
 
         // build the blocks
         const orderedLines = Array.from(coveredLines).sort();
@@ -71,7 +70,7 @@ export class TestwiseCoverageFileComponent implements OnInit {
         return [...Array(lineCount).keys()].map((i) => i + startLine - 1);
     }
 
-    private setupEditor(editor: AceEditorComponent, fileContent: string, reports: ProgrammingExerciseTestwiseCoverageReport[]): void {
+    private setupEditor(editor: AceEditorComponent, fileContent: string, fileReport: CoverageFileReport): void {
         editor.setTheme('dreamweaver');
         editor.getEditor().setOptions({
             animatedScroll: true,
@@ -79,9 +78,12 @@ export class TestwiseCoverageFileComponent implements OnInit {
             highlightActiveLine: false,
             showPrintMargin: false,
         });
-        editor.getEditor().getSession().setValue(fileContent);
+        editor
+            .getEditor()
+            .getSession()
+            .setValue(fileContent ?? '');
 
-        const aggregatedLineBlocks = this.aggregateCoveredLinesBlocks(reports);
+        const aggregatedLineBlocks = this.aggregateCoveredLinesBlocks(fileReport);
 
         ace.Range = ace.acequire('ace/range').Range;
         aggregatedLineBlocks.forEach((blockLength, lineNumber) => {

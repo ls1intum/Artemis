@@ -14,10 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestwiseCoverageReport;
+import de.tum.in.www1.artemis.domain.hestia.*;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -64,9 +61,9 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Column(name = "test_case_type")
     private ProgrammingExerciseTestCaseType type;
 
-    @OneToOne(mappedBy = "testCase", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private ProgrammingExerciseTestwiseCoverageReport testwiseCoverageReport;
+    @OneToMany(mappedBy = "testCase", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("testCase")
+    private Set<TestwiseCoverageReportEntry> coverageEntries;
 
     public ProgrammingExerciseTestCase id(Long id) {
         setId(id);
@@ -200,12 +197,12 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.type = programmingExerciseTestCaseType;
     }
 
-    public ProgrammingExerciseTestwiseCoverageReport getTestwiseCoverageReport() {
-        return testwiseCoverageReport;
+    public Set<TestwiseCoverageReportEntry> getCoverageEntries() {
+        return coverageEntries;
     }
 
-    public void setTestwiseCoverageReport(ProgrammingExerciseTestwiseCoverageReport testwiseCoverageReport) {
-        this.testwiseCoverageReport = testwiseCoverageReport;
+    public void setCoverageEntries(Set<TestwiseCoverageReportEntry> coverageEntries) {
+        this.coverageEntries = coverageEntries;
     }
 
     /**
