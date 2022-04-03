@@ -225,10 +225,9 @@ public class ExamResource {
                         "examTimes");
             }
         }
-        /** else if (exam.getWorkingTime() != differenceStartEndDate) {
+        else if (exam.getWorkingTime() != differenceStartEndDate) {
             throw new ConflictException("For RealExams, the working time of an exam must be equal to the difference between the start and end dates.", ENTITY_NAME, "examTimes");
-        
-        } */
+        }
     }
 
     private void checkExamPointsElseThrow(Exam exam) {
