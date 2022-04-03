@@ -733,10 +733,20 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         examB.setVisibleDate(examB.getStartDate());
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
 
-        // Test for conflict, where workingTime is greather than difference between StartDate and EndDate
+        // Test for conflict, where workingTime is greater than difference between StartDate and EndDate
         Exam examC = ModelFactory.generateTestExam(course1);
         examC.setWorkingTime(5000);
         request.post("/api/courses/" + course1.getId() + "/exams", examC, HttpStatus.CONFLICT);
+
+        // Test for conflict, if the working time is null
+        Exam examD = ModelFactory.generateTestExam(course1);
+        examD.setWorkingTime(null);
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
+
+        // Test for conflict, if the working time is 0
+        Exam examE = ModelFactory.generateTestExam(course1);
+        examE.setWorkingTime(0);
+        request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CONFLICT);
 
         verify(examAccessService, times(2)).checkCourseAccessForInstructorElseThrow(course1.getId());
     }

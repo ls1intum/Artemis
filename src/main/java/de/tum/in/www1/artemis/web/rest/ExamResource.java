@@ -189,8 +189,10 @@ public class ExamResource {
     }
 
     /**
-     * Checks that the correct course is set in the exam and that the visible/start/end-dates are in the correct order.
-     * Validates if the working time is equal to (RealExams) or less than/equal to (TestExams) the time difference between start and end date
+     * Checks that the correct course is set in the exam and that the visible/start/end-dates are present and in the correct order.
+     * For RealExams: visibleDate < startDate < endDate
+     * For TestExams: visibleDate <= startDate < endDate
+     * Validates the working time, which should be equal (RealExams) or smaller / equal (TestExams) to the difference beteween start- and endDate.
      *
      * @param courseId the exam should belong to.
      * @param exam     which should be checked.
@@ -202,8 +204,8 @@ public class ExamResource {
 
         checkExamCourseIdElseThrow(courseId, exam);
 
-        if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null) {
-            throw new ConflictException("An exam has to have times when it becomes visible, starts, and ends.", ENTITY_NAME, "examTimes");
+        if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null || exam.getWorkingTime() == null) {
+            throw new ConflictException("An exam has to have times when it becomes visible, starts, and ends as well as a working time.", ENTITY_NAME, "examTimes");
         }
 
         if (exam.isTestExam()) {
@@ -213,16 +215,14 @@ public class ExamResource {
             }
         }
         else if (!exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
-            throw new ConflictException("For TestExams, the visibleDate has to be before or equal to the startDate and the startDate has to be before the EndDate", ENTITY_NAME,
-                    "examTimes");
+            throw new ConflictException("For RealExams, the visibleDate has to be before the startDate and the startDate has to be before the endDate", ENTITY_NAME, "examTimes");
         }
 
         int differenceStartEndDate = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
 
         if (exam.isTestExam()) {
-            if (exam.isTestExam() && exam.getWorkingTime() > differenceStartEndDate) {
-                throw new ConflictException("For TestExams, the working time of an exam must not be greater than the difference between the start and end dates.", ENTITY_NAME,
-                        "examTimes");
+            if (exam.getWorkingTime() > differenceStartEndDate || exam.getWorkingTime() < 1) {
+                throw new ConflictException("For TestExams, the working time must be at least 1 and at most the duration of the working window.", ENTITY_NAME, "examTimes");
             }
         }
         else if (exam.getWorkingTime() != differenceStartEndDate) {

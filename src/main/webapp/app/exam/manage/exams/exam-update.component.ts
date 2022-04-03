@@ -142,7 +142,6 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Calculates the WorkingTime for RealExams based on the start- and end-time.
-     * StartDate and EndDate are validated in their corresponding methods.
      */
     get calculateWorkingTime(): number {
         if (!this.exam.testExam) {
@@ -157,12 +156,13 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     /**
-     * Validates the WorkingTime for TestExams.
+     * Validates the WorkingTime.
+     * For TestExams, the WorkingTime should be at least 1 and smaller / equal to the working window
      * For RealExams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference.
      */
     get validateWorkingTime(): boolean {
         if (this.exam.testExam) {
-            if (this.exam.workingTime === undefined) {
+            if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
                 return false;
             }
             if (this.exam.startDate !== undefined && this.exam.endDate) {
