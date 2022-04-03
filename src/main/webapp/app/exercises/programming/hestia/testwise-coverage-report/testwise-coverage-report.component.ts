@@ -34,7 +34,7 @@ export class TestwiseCoverageReportComponent implements OnInit {
         this.setReportsByFileName();
     }
 
-    public changeReportsBySelectedTestCases(testCaseName: string): void {
+    changeReportsBySelectedTestCases(testCaseName: string): void {
         const selected = this.displayedTestCaseNames.get(testCaseName) ?? false;
         this.displayedTestCaseNames.set(testCaseName, !selected);
         this.setReportsByFileName();
@@ -56,7 +56,7 @@ export class TestwiseCoverageReportComponent implements OnInit {
                     (entry) => this.displayedTestCaseNames.get(entry.testCase!.testName!)!!,
                 );
             } else {
-                copiedFileReport.lineCount = content.split('\n').length + 1;
+                copiedFileReport.lineCount = content.split('\n').length;
                 copiedFileReport.coveredLineCount = 0;
                 copiedFileReport.testwiseCoverageEntries = [];
             }
