@@ -72,6 +72,9 @@ export class ExamUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
+        if (!this.exam.testExam) {
+            this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+        }
         if (this.exam.id !== undefined) {
             this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
         } else {
