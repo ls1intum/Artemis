@@ -14,7 +14,6 @@ export class StudentExamService {
 
     constructor(private router: Router, private http: HttpClient, private accountService: AccountService) {}
 
-    /* istanbul ignore next */
     /**
      * Find a student exam on the server using a GET request.
      * @param courseId The course id.
@@ -27,7 +26,6 @@ export class StudentExamService {
             .pipe(map((res: EntityResponseType) => this.processStudentExam(res)));
     }
 
-    /* istanbul ignore next */
     /**
      * Find all student exams for the given exam.
      * @param courseId The course id.
@@ -39,7 +37,6 @@ export class StudentExamService {
             .pipe(map((res: EntityArrayResponseType) => this.processStudentExams(res)));
     }
 
-    /* istanbul ignore next */
     /**
      * Update the working time of the given student exam.
      * @param courseId The course id.
