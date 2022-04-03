@@ -156,7 +156,7 @@ public class ProgrammingExerciseGitDiffReportService {
     public ProgrammingExerciseGitDiffReport updateReport(ProgrammingExercise programmingExercise) {
         // Synchronized to prevent multiple git-diffs to be generated for the same exercise at the same time
         // This happens e.g. when creating an exercise
-        synchronized (programmingExercise) {
+        synchronized (programmingExercise.getId().toString().intern()) {
             var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
             var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
             if (templateParticipationOptional.isEmpty() || solutionParticipationOptional.isEmpty()) {
