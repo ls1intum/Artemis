@@ -136,13 +136,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     // This is needed to access the exercise in the result details
                     this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
                 }
-                // this update is needed because the covered line ratio is not an attribute of the programming exercise sent
-                // by the server
-                if (this.programmingExercise.testwiseCoverageEnabled) {
-                    this.programmingExerciseService.getLatestTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
-                        return (this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio);
-                    });
-                }
+                this.setLatestCoveredLineRatio();
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
 
@@ -187,9 +181,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             });
 
             this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => (this.programmingExercise.gitDiffReport = gitDiffReport));
-            this.programmingExerciseService
-                .getLatestTestwiseCoverageReport(programmingExercise.id)
-                .subscribe((coverageReport) => (this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio));
+            this.setLatestCoveredLineRatio();
         });
     }
 
@@ -470,6 +462,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
         return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
+    }
+
+    /**
+     * Returns undefined if the last solution submission was not successful or no report exists yet
+     */
+    private setLatestCoveredLineRatio() {
+        const latestSolutionSubmissionSuccessful = this.getLatestResult(this.programmingExercise?.solutionParticipation?.submissions)?.successful;
+        if (this.programmingExercise.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
+            this.programmingExerciseService.getLatestTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
+                this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
+            });
+        }
     }
 
     /**
