@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, OnInit } from '@angular/core';
+import { Component, Input, ViewChild, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import ace from 'brace';
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
@@ -8,7 +8,7 @@ import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.mod
     templateUrl: './testwise-coverage-file.component.html',
     styleUrls: ['./testwise-coverage-file.component.scss'],
 })
-export class TestwiseCoverageFileComponent implements OnInit {
+export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     @Input()
     fileContent: string;
 
@@ -27,7 +27,14 @@ export class TestwiseCoverageFileComponent implements OnInit {
 
     ngOnInit(): void {
         this.proportionCoveredLines = this.fileReport!.coveredLineCount! / this.fileReport!.lineCount!;
-        this.setupEditor(this.editor, this.fileContent, this.fileReport);
+        this.setupEditor();
+        this.renderFile();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.fileReport || changes.fileContent) {
+            this.renderFile();
+        }
     }
 
     private aggregateCoveredLinesBlocks(fileReport: CoverageFileReport): Map<number, number> {
@@ -70,25 +77,26 @@ export class TestwiseCoverageFileComponent implements OnInit {
         return [...Array(lineCount).keys()].map((i) => i + startLine - 1);
     }
 
-    private setupEditor(editor: AceEditorComponent, fileContent: string, fileReport: CoverageFileReport): void {
-        editor.setTheme('dreamweaver');
-        editor.getEditor().setOptions({
+    private setupEditor(): void {
+        this.editor.setTheme('dreamweaver');
+        this.editor.getEditor().setOptions({
             animatedScroll: true,
             maxLines: Infinity,
             highlightActiveLine: false,
             showPrintMargin: false,
         });
-        editor
-            .getEditor()
-            .getSession()
-            .setValue(fileContent ?? '');
-
-        const aggregatedLineBlocks = this.aggregateCoveredLinesBlocks(fileReport);
-
         ace.Range = ace.acequire('ace/range').Range;
-        aggregatedLineBlocks.forEach((blockLength, lineNumber) => {
+    }
+
+    private renderFile() {
+        const session = this.editor.getEditor().getSession();
+        session.setValue(this.fileContent ?? '');
+
+        Object.entries(session.getMarkers() ?? {}).forEach(([, v]) => session.removeMarker((v as any).id));
+
+        this.aggregateCoveredLinesBlocks(this.fileReport).forEach((blockLength, lineNumber) => {
             const range = new ace.Range(lineNumber, 0, lineNumber + blockLength - 1, 1);
-            editor.getEditor().getSession().addMarker(range, 'ace_highlight-marker', 'fullLine');
+            session.addMarker(range, 'ace_highlight-marker', 'fullLine');
         });
     }
 }
