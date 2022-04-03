@@ -35,8 +35,7 @@ export class TestwiseCoverageFileComponent implements OnInit {
         const entries = fileReport.testwiseCoverageEntries!;
         // retrieve all covered line numbers
         entries.forEach((entry) => {
-            // TODO: can the line count be undefined?
-            this.getRangeArray(entry!.startLine!, entry!.lineCount ?? 0).forEach((line) => coveredLines.add(line));
+            this.getRangeArray(entry.startLine!, entry.lineCount!).forEach((line) => coveredLines.add(line));
         });
 
         // build the blocks
