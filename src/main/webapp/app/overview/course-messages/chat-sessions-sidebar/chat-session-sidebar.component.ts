@@ -1,24 +1,23 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
+import { CourseMessagesService } from 'app/shared/metis/course.messages.service';
 import { ChatSessionService } from 'app/shared/metis/chat-session.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { UserChatSession } from 'app/entities/metis/chat.session/user-chat-session.model';
 import { Course } from 'app/entities/course.model';
-import { ChatService } from 'app/shared/metis/chat.service';
 
 @Component({
     selector: 'jhi-chat-session-sidebar',
     styleUrls: ['./chat-session-sidebar.component.scss', '../../discussion-section/discussion-section.component.scss'],
     templateUrl: './chat-session-sidebar.component.html',
-    providers: [MetisService, ChatSessionService],
+    providers: [ChatSessionService],
 })
 export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
     @Output() selectChatSession = new EventEmitter<ChatSession>();
@@ -33,27 +32,17 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
     private chatSessionSubscription: Subscription;
     private paramSubscription: Subscription;
 
-    isAdmin = false;
     isLoading = false;
     isSearching = false;
     searchFailed = false;
     searchNoResults = false;
     isTransitioning = false;
-    rowClass: string | undefined = undefined;
 
     // Icons
     faChevronLeft = faChevronLeft;
     faChevronRight = faChevronRight;
-    faGripLinesVertical = faGripLinesVertical;
-    faArrowLeft = faArrowLeft;
-    faPlus = faPlus;
 
-    constructor(
-        protected metisService: MetisService,
-        protected chatService: ChatService,
-        private courseManagementService: CourseManagementService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
+    constructor(protected courseMessagesService: CourseMessagesService, private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute) {}
 
     ngOnInit(): void {
         this.paramSubscription = combineLatest({
@@ -67,10 +56,10 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
                     this.course = res.body!;
                 }
             });
-            this.chatService.getChatSessionsOfUser(this.courseId);
-            this.chatSessionSubscription = this.chatService.chatSessions.pipe().subscribe((chatSessions: ChatSession[]) => {
+            this.courseMessagesService.getChatSessionsOfUser(this.courseId);
+            this.chatSessionSubscription = this.courseMessagesService.chatSessions.pipe().subscribe((chatSessions: ChatSession[]) => {
                 this.chatSessions = chatSessions;
-                if (this.chatSessions.length > 0) {
+                if (this.chatSessions.length > 0 && !this.activeChatSession) {
                     // emit the value to fetch chatSession posts on post overview tab
                     this.activeChatSession = this.chatSessions.first()!;
                     this.selectChatSession.emit(this.activeChatSession);
@@ -80,10 +69,10 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Receives the search text and filter results from DataTableComponent, modifies them and returns the result which will be used by ngbTypeahead.
+     * Receives the search text, modifies them and returns the result which will be used by course messages.
      *
      * 1. Perform server-side search using the search text
-     * 2. Return results from server query that contain all users (instead of only the client-side users who are group members already)
+     * 2. Return results from server query that contain other users of course
      *
      * @param stream$ stream of searches of the format {text, entities} where entities are the results
      * @return stream of users for the autocomplete
@@ -120,10 +109,8 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
 
     /**
      * Receives the user that was selected in the autocomplete and the callback from DataTableComponent.
-     * The callback inserts the search term of the selected entity into the search field and updates the displayed users.
      *
      * @param user The selected user from the autocomplete suggestions
-     * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
      */
     onAutocompleteSelect = (user: User): void => {
         const foundChatSession = this.findChatSessionWithUser(user);
@@ -131,7 +118,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
         if (foundChatSession === undefined) {
             const newChatSession = this.createNewChatSessionWithUser(user);
             this.isTransitioning = true;
-            this.chatService.createChatSession(this.courseId, newChatSession).subscribe({
+            this.courseMessagesService.createChatSession(this.courseId, newChatSession).subscribe({
                 next: (chatSession: ChatSession) => {
                     this.isTransitioning = false;
 
@@ -158,7 +145,7 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
     }
 
     getNameOfChatSessionParticipant(chatSession: ChatSession): string {
-        const participant = chatSession.userChatSessions!.find((userChatSession) => userChatSession.user.id !== this.metisService.getUser().id)!.user;
+        const participant = chatSession.userChatSessions!.find((userChatSession) => userChatSession.user.id !== this.courseMessagesService.userId)!.user;
         return participant.firstName!;
     }
 

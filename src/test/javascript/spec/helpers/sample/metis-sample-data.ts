@@ -144,8 +144,22 @@ export const metisPostLectureUser2 = {
 
 metisResolvingAnswerPostUser1.post = metisPostLectureUser2;
 
+const userChatSessionUser1 = { id: 1, user: metisUser1 } as UserChatSession;
+
+const userChatSessionUser2 = { id: 2, user: metisUser2 } as UserChatSession;
+
+const userChatSessionTutor = { id: 3, user: metisTutor } as UserChatSession;
+
 export const chatSessionBetweenUser1User2 = {
     id: 1,
+    userChatSessions: [userChatSessionUser1, userChatSessionUser2],
+    creationDate: undefined,
+    lastMessageDate: undefined,
+} as ChatSession;
+
+export const chatSessionBetweenUser2AndTutor = {
+    id: 2,
+    userChatSessions: [userChatSessionUser2, userChatSessionTutor],
     creationDate: undefined,
     lastMessageDate: undefined,
 } as ChatSession;
@@ -167,6 +181,8 @@ export const directMessageUser2 = {
 } as Post;
 
 export const chatSessionsOfUser1 = [chatSessionBetweenUser1User2];
+
+export const chatSessionsOfUser2 = [chatSessionBetweenUser1User2, chatSessionBetweenUser2AndTutor];
 
 export const metisLecturePosts = [metisPostLectureUser1, metisPostLectureUser2];
 

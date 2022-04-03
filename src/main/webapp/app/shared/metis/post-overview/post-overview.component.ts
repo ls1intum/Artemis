@@ -35,7 +35,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
 
     /**
      * receives and updates the selected chatSession, fetching its posts
-     * @param activeChatSession selectedChatSessiob
+     * @param activeChatSession selectedChatSession
      */
     @Input() set activeChatSession(activeChatSession: ChatSession) {
         if (this.courseMessagesPageFlag && activeChatSession) {

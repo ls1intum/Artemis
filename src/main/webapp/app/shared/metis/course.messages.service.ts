@@ -10,7 +10,7 @@ import { ChatSessionDTO } from 'app/entities/metis/chat.session/chat-session-dto
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
 
 @Injectable({ providedIn: 'root' })
-export class ChatService implements OnDestroy {
+export class CourseMessagesService implements OnDestroy {
     private chatSessions$: ReplaySubject<ChatSession[]> = new ReplaySubject<ChatSession[]>(1);
     private subscribedChannel?: string;
     userId: number;
@@ -22,7 +22,6 @@ export class ChatService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        // prevents subscription to a user's chatSessions from leaking
         if (this.subscribedChannel) {
             this.jhiWebsocketService.unsubscribe(this.subscribedChannel);
         }

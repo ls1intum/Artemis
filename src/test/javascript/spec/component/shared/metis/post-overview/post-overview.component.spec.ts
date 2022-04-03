@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { getElement } from '../../../../helpers/utils/general.utils';
-import { NgbPaginationModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -30,6 +30,8 @@ import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+
 import {
     chatSessionsOfUser1,
     messagesBetweenUser1User2,
@@ -50,7 +52,7 @@ import {
     metisUpVoteReactionUser1,
     metisUser1,
 } from '../../../../helpers/sample/metis-sample-data';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { MessageInlineInputComponent } from 'app/shared/metis/posting-inline-input/message-inline-input.component';
 
 describe('PostOverviewComponent', () => {
     let component: PostOverviewComponent;
@@ -77,11 +79,12 @@ describe('PostOverviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbPaginationModule)],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             declarations: [
                 PostOverviewComponent,
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
+                MockComponent(MessageInlineInputComponent),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
@@ -435,6 +438,14 @@ describe('PostOverviewComponent', () => {
         expect(component.posts).toEqual(messagesBetweenUser1User2.slice().reverse());
         expect(metisServiceGetFilteredPostsSpy).toBeCalledTimes(1);
         expect(metisServiceGetFilteredPostsSpy).toBeCalledWith(component.currentPostContextFilter);
+    }));
+
+    it('should fetch posts on activeChatSession input outside of the component', fakeAsync(() => {
+        initializeFixtureForCourseMessagesPage();
+        component.activeChatSession = chatSessionsOfUser1.first()!;
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(1);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ ...component.currentPostContextFilter, page: 0 });
+        expect(component.chatSession).toBe(chatSessionsOfUser1.first());
     }));
 
     it('should auto scroll to the bottom of messages on init or if last message is displayed', fakeAsync(() => {
