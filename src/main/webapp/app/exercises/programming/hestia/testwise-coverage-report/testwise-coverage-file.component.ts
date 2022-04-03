@@ -26,7 +26,6 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     constructor() {}
 
     ngOnInit(): void {
-        this.proportionCoveredLines = this.fileReport!.coveredLineCount! / this.fileReport!.lineCount!;
         this.setupEditor();
         this.renderFile();
     }
@@ -48,6 +47,9 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
         // build the blocks
         const orderedLines = Array.from(coveredLines).sort();
         const startLineByLength = new Map<number, number>();
+
+        // set the covered line ratio accordingly
+        this.proportionCoveredLines = orderedLines.length / this.fileReport!.lineCount!;
 
         let index = 0;
         while (index < orderedLines.length) {
