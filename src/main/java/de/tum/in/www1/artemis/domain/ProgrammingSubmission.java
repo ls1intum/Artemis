@@ -81,6 +81,14 @@ public class ProgrammingSubmission extends Submission {
         this.buildLogEntries = buildLogEntries;
     }
 
+    public CoverageReport getTestwiseCoverageReport() {
+        return testwiseCoverageReport;
+    }
+
+    public void setTestwiseCoverageReport(CoverageReport testwiseCoverageReport) {
+        this.testwiseCoverageReport = testwiseCoverageReport;
+    }
+
     public boolean belongsToTestRepository() {
         return SubmissionType.TEST.equals(getType());
     }
