@@ -192,7 +192,7 @@ public class ExamResource {
      * Checks that the correct course is set in the exam and that the visible/start/end-dates are present and in the correct order.
      * For RealExams: visibleDate < startDate < endDate
      * For TestExams: visibleDate <= startDate < endDate
-     * Validates the working time, which should be equal (RealExams) or smaller / equal (TestExams) to the difference beteween start- and endDate.
+     * Validates the working time, which should be equal (RealExams) or smaller / equal (TestExams) to the difference between start- and endDate.
      *
      * @param courseId the exam should belong to.
      * @param exam     which should be checked.
