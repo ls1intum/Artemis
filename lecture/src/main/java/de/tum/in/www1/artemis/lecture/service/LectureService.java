@@ -96,7 +96,7 @@ public class LectureService {
 
         // The Objects::nonNull is needed here because the relationship lecture -> lecture units is ordered and
         // hibernate sometimes adds nulls into the list of lecture units to keep the order
-        Set<de.tum.in.www1.artemis.domain.Exercise> relatedExercises = filteredLecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
+        Set<Exercise> relatedExercises = filteredLecture.getLectureUnits().stream().filter(Objects::nonNull).filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
             .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
 
         Set<Exercise> exercisesWithAllInformationNeeded = lectureServiceProducer.getLectureExercises(relatedExercises, user);

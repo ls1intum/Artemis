@@ -220,16 +220,16 @@ public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
         Lecture receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
         assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(3);
-        List<LectureUnit> exerciseUnits = receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList());
-        assertThat(exerciseUnits).isEmpty();
+        boolean exerciseUnitsFound = receivedLectureWithDetails.getLectureUnits().stream().anyMatch(lectureUnit -> lectureUnit instanceof ExerciseUnit);
+        assertThat(exerciseUnitsFound).isFalse();
 
         // now we test that it is included when the user is at least a teaching assistant
         database.changeUser("tutor1");
         Lecture receivedLectureWithDetailsForTA = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetailsForTA.getId()).isEqualTo(lecture1.getId());
         assertThat(receivedLectureWithDetailsForTA.getLectureUnits()).hasSize(4);
-        List<LectureUnit> exerciseUnitsForTA = receivedLectureWithDetailsForTA.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).collect(Collectors.toList());
-        assertThat(exerciseUnitsForTA).isNotEmpty();
+        boolean exerciseUnitsForTAFound = receivedLectureWithDetailsForTA.getLectureUnits().stream().anyMatch(lectureUnit -> lectureUnit instanceof ExerciseUnit);
+        assertThat(exerciseUnitsForTAFound).isTrue();
 
         testGetLecture(lecture1.getId());
     }
@@ -248,21 +248,22 @@ public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
 
         Lecture receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        Optional attachmentOptional = receivedLectureWithDetails.getAttachments().stream().filter(attachment -> attachment.getId().equals(lectureAttachment.getId())).findFirst();
-        assertThat(attachmentOptional).isEmpty();
+        boolean attachmentFound = receivedLectureWithDetails.getAttachments().stream().anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()));
+        assertThat(attachmentFound).isFalse();
+
         assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(3);
-        List<LectureUnit> attachmentUnits = receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList());
-        assertThat(attachmentUnits).isEmpty();
+        boolean attachmentUnitsFound = receivedLectureWithDetails.getLectureUnits().stream().anyMatch(lectureUnit -> lectureUnit instanceof AttachmentUnit);
+        assertThat(attachmentUnitsFound).isFalse();
 
         // now we test that it is included when the user is at least a teaching assistant
         database.changeUser("tutor1");
         Lecture receivedLectureWithDetailsForTA = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetailsForTA.getId()).isEqualTo(lecture1.getId());
-        boolean attachmentFound = receivedLectureWithDetailsForTA.getAttachments().stream().anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()));
-        assertThat(attachmentFound).isTrue();
+        boolean attachmentForTAFound = receivedLectureWithDetailsForTA.getAttachments().stream().anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()));
+        assertThat(attachmentForTAFound).isTrue();
         assertThat(receivedLectureWithDetailsForTA.getLectureUnits()).hasSize(4);
-        List<LectureUnit> attachmentUnitsForTA = receivedLectureWithDetailsForTA.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).collect(Collectors.toList());
-        assertThat(attachmentUnitsForTA).isNotEmpty();
+        boolean attachmentUnitsForTAFound = receivedLectureWithDetailsForTA.getLectureUnits().stream().anyMatch(lectureUnit -> lectureUnit instanceof AttachmentUnit);
+        assertThat(attachmentUnitsForTAFound).isTrue();
 
         testGetLecture(lecture1.getId());
     }
