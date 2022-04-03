@@ -109,7 +109,7 @@ public class HestiaUtilTestService {
                 eq(false), any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(templateRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch("main", urlService.getProjectKeyFromRepositoryUrl(templateRepoUrl));
 
         var savedExercise = exerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(savedExercise);
@@ -170,7 +170,7 @@ public class HestiaUtilTestService {
                 eq(false), any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(solutionRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch("main", urlService.getProjectKeyFromRepositoryUrl(solutionRepoUrl));
 
         var savedExercise = exerciseRepository.save(exercise);
         database.addSolutionParticipationForProgrammingExercise(savedExercise);
@@ -231,7 +231,7 @@ public class HestiaUtilTestService {
                 any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch("main", urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
 
         return exerciseRepository.save(exercise);
     }

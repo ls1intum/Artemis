@@ -16,6 +16,8 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -39,7 +41,13 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     private HestiaUtilTestService hestiaUtilTestService;
 
     @Autowired
+    private ProgrammingExerciseRepository exerciseRepository;
+
+    @Autowired
     private ProgrammingExerciseGitDiffReportService reportService;
+
+    @Autowired
+    private ProgrammingExerciseGitDiffReportRepository reportRepository;
 
     @BeforeEach
     public void initTestCase() throws Exception {
@@ -60,6 +68,28 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2", exercise, solutionRepo);
         var report = reportService.getFullReport(exercise);
         assertThat(report).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateGitDiffParallel() throws Exception {
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
+        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2\nLine 3\n", exercise, solutionRepo);
+        var thread1 = new Thread(() -> reportService.updateReport(exerciseRepository.getById(exercise.getId())));
+        var thread2 = new Thread(() -> reportService.updateReport(exercise));
+        thread1.start();
+        thread2.start();
+        thread1.join();
+        thread2.join();
+        var reports = reportRepository.findAll();
+        assertThat(reports).hasSize(1);
+        var report = reports.get(0);
+        assertThat(report.getEntries()).hasSize(1);
+        var entry = report.getEntries().stream().findFirst().orElseThrow();
+        assertThat(entry.getPreviousStartLine()).isEqualTo(2);
+        assertThat(entry.getStartLine()).isEqualTo(2);
+        assertThat(entry.getPreviousLineCount()).isEqualTo(1);
+        assertThat(entry.getLineCount()).isEqualTo(2);
     }
 
     @Test
