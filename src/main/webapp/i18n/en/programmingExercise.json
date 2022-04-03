@@ -398,7 +398,7 @@
                 "tooltip": "Shows the testwise coverage for the solution repository.",
                 "title": "Testwise Coverage",
                 "404": "Testwise Coverage has not been generated yet. Please do a push to the solution or test repository to generate the report.",
-                "selectTests": "Select the tests for which the covered lines are displayed:",
+                "selectTests": "Select the tests for which the covered lines are marked:",
                 "filePath": "File Path",
                 "coveredLines": "Covered Lines"
             }
