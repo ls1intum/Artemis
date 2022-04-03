@@ -139,9 +139,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 // this update is needed because the covered line ratio is not an attribute of the programming exercise sent
                 // by the server
                 if (this.programmingExercise.testwiseCoverageEnabled) {
-                    console.log('result has come');
                     this.programmingExerciseService.getLatestTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
-                        console.log('result has come: ' + coverageReport.coveredLineRatio);
                         return (this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio);
                     });
                 }
