@@ -1327,7 +1327,7 @@ public class ProgrammingExerciseIntegrationTestService {
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise", "tasks", "solutionEntries")
+        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(testCasesInDB);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();

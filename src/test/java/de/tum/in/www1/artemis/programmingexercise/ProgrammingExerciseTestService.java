@@ -551,7 +551,8 @@ public class ProgrammingExerciseTestService {
         var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
         var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
         assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
-        assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries")
+        assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
+                .usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
 
         // Assert correct creation of hints
