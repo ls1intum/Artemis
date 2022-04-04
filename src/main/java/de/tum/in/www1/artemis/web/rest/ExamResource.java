@@ -227,7 +227,11 @@ public class ExamResource {
             }
         }
         else if (exam.getWorkingTime() != differenceStartEndDate) {
-            throw new ConflictException("For RealExams, the working time of an exam must be equal to the difference between the start and end dates.", ENTITY_NAME, "examTimes");
+            /*
+             * Set the working time to the time difference for RealExams, if not done by the client. This can be an issue if the working time calculation in the client is not
+             * performed (e.g. for Cypress-2E2-Tests). However, since the working time currently depends on the start- and end-date, we can do a server-side assignment
+             */
+            exam.setWorkingTime(differenceStartEndDate);
         }
     }
 
