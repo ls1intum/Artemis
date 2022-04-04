@@ -3810,6 +3810,7 @@ public class DatabaseUtilService {
         course.setMaxComplaintResponseTextLimit(complaintResponseTextLimit);
         assertThat(course.getMaxComplaintResponseTextLimit()).as("course contains the correct complaint response text limit").isEqualTo(complaintResponseTextLimit);
         return courseRepo.save(course);
+    }
 
     public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
         for (Posting posting : postings) {
