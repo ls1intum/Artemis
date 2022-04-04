@@ -16,8 +16,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -41,13 +39,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     private HestiaUtilTestService hestiaUtilTestService;
 
     @Autowired
-    private ProgrammingExerciseRepository exerciseRepository;
-
-    @Autowired
     private ProgrammingExerciseGitDiffReportService reportService;
-
-    @Autowired
-    private ProgrammingExerciseGitDiffReportRepository reportRepository;
 
     @BeforeEach
     public void initTestCase() throws Exception {
