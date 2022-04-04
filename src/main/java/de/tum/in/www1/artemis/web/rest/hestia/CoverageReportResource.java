@@ -45,12 +45,12 @@ public class CoverageReportResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the coverage report
      */
     @GetMapping("programming-exercises/{exerciseId}/full-testwise-coverage-report")
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<CoverageReport> getLatestFullCoverageReport(@PathVariable Long exerciseId) {
         log.debug("REST request to get a CoverageReport for exercise {}", exerciseId);
 
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var reportWithFileReports = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exercise);
         return ResponseEntity.ok(reportWithFileReports);
@@ -63,13 +63,13 @@ public class CoverageReportResource {
      * @param exerciseId the exerciseId of the exercise of which to retrieve the testwise coverage report for the latest solution submission
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the coverage report
      */
-    @GetMapping("programming-exercises/{exerciseId}/-testwise-coverage-report")
-    @PreAuthorize("hasRole('EDITOR')")
+    @GetMapping("programming-exercises/{exerciseId}/testwise-coverage-report")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<CoverageReport> getLatestCoverageReport(@PathVariable Long exerciseId) {
         log.debug("REST request to get a CoverageReport for exercise {}", exerciseId);
 
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var reportWithoutFileReports = testwiseCoverageService.getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(exercise);
         return ResponseEntity.ok(reportWithoutFileReports);

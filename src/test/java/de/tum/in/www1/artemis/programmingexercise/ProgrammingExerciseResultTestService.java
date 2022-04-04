@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import java.util.*;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -19,8 +22,10 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -72,6 +77,9 @@ public class ProgrammingExerciseResultTestService {
     private ResultRepository resultRepository;
 
     @Autowired
+    private GitService gitService;
+
+    @Autowired
     private RequestUtilService request;
 
     private ProgrammingExercise programmingExercise;
@@ -88,9 +96,9 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
-        Course course = database.addCourseWithOneProgrammingExercise(false, programmingLanguage);
+        Course course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
-        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, programmingLanguage);
+        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
@@ -289,6 +297,31 @@ public class ProgrammingExerciseResultTestService {
         // Call again and shouln't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
         assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+    }
+
+    // Test
+    public void shouldGenerateTestwiseCoverageFileReports(Object resultNotification) throws GitAPIException, InterruptedException {
+        // set testwise coverage analysis for programming exercise
+        programmingExercise.setTestwiseCoverageEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+        solutionProgrammingExerciseRepository.save(solutionParticipation);
+        database.createProgrammingSubmission(solutionParticipation, false);
+
+        // setup mocks
+        when(gitService.getOrCheckoutRepository(any())).thenReturn(null);
+
+        var expectedReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
+
+        final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        assertThat(optionalResult).isPresent();
+        var result = optionalResult.get();
+        var actualReportsByTestName = result.getCoverageFileReportsByTestCaseName();
+        assertThat(actualReportsByTestName).usingRecursiveComparison().isEqualTo(expectedReportsByTestName);
+
+        // the coverage result attribute is transient in the result and should not be saved to the database
+        var resultFromDatabase = resultRepository.findByIdElseThrow(result.getId());
+        assertThat(resultFromDatabase.getCoverageFileReportsByTestCaseName()).isNull();
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.util.List;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,13 +14,17 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
+@MockBean(GitService.class)
 class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -111,5 +116,12 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     public void shouldGenerateNewManualResultIfManualAssessmentExists() {
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldGenerateTestwiseCoverageFileReport() throws GitAPIException, InterruptedException {
+        var resultNotification = TestwiseCoverageTestUtil.generateBambooBuildResultWithCoverage();
+        programmingExerciseResultTestService.shouldGenerateTestwiseCoverageFileReports(resultNotification);
     }
 }

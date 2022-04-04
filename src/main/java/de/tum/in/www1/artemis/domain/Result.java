@@ -111,7 +111,7 @@ public class Result extends DomainObject {
     // at this point of time but the required test case name would be lost, otherwise.
     @Transient
     @JsonIgnore
-    private Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName = new HashMap<>();
+    private Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName;
 
     public String getResultString() {
         return resultString;
