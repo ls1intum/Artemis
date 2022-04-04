@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -81,6 +82,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
@@ -88,7 +91,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository,
             ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -104,6 +108,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.resultRepository = resultRepository;
         this.auditEventRepository = auditEventRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
     }
 
     /**
@@ -127,7 +132,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         Commit commit;
         try {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
-            // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
+            // if the branch is different than main, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
             commit = versionControlService.get().getLastCommitDetails(requestBody);
             log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.getCommitHash(), commit.getAuthorName(), commit.getAuthorEmail(),
                     commit.getBranch());
@@ -186,8 +191,28 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+
+        updateGitDiffReport(programmingExerciseParticipation);
+
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
+    }
+
+    /**
+     * Update the git-diff of the programming exercise when the push was to a solution or template repository
+     *
+     * @param programmingExerciseParticipation The participation
+     */
+    private void updateGitDiffReport(ProgrammingExerciseParticipation programmingExerciseParticipation) {
+        if (programmingExerciseParticipation instanceof TemplateProgrammingExerciseParticipation
+                || programmingExerciseParticipation instanceof SolutionProgrammingExerciseParticipation) {
+            try {
+                programmingExerciseGitDiffReportService.updateReport(programmingExerciseParticipation.getProgrammingExercise());
+            }
+            catch (Exception e) {
+                log.error("Unable to update git-diff for programming exercise " + programmingExerciseParticipation.getProgrammingExercise().getId(), e);
+            }
+        }
     }
 
     /**

@@ -12,9 +12,10 @@ public interface VcsUserManagementService {
      * Creates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user creation
      * and management
      *
-     * @param user The local Artemis user, which will be available in the VCS after invoking this method
+     * @param user     The local Artemis user, which will be available in the VCS after invoking this method
+     * @param password the password of the user to be set
      */
-    void createVcsUser(User user) throws VersionControlException;
+    void createVcsUser(User user, String password) throws VersionControlException;
 
     /**
      * Updates a new user in the VCS based on a local Artemis user. Should be called if Artemis handles user management.
@@ -24,13 +25,17 @@ public interface VcsUserManagementService {
      *     <li>Update the groups the user belongs to, i.e. removing him from exercises that reference old groups</li>
      * </ul>
      *
-     * @param vcsLogin                  The username of the user in the VCS
-     * @param user                      The updated user in Artemis
-     * @param removedGroups             groups that the user does not belong to any longer
-     * @param addedGroups               The new groups the Artemis user got added to
-     * @param shouldSynchronizePassword whether the password should be synchronized between Artemis and the VcsUserManagementService
+     * @param vcsLogin      The username of the user in the VCS
+     * @param user          The updated user in Artemis
+     * @param removedGroups groups that the user does not belong to any longer
+     * @param addedGroups   The new groups the Artemis user got added to
+     * @param newPassword   if set, the password gets updated
      */
-    void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword);
+    void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, String newPassword);
+
+    default void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups) {
+        updateVcsUser(vcsLogin, user, removedGroups, addedGroups, null);
+    }
 
     /**
      * Deletes the user under the specified login from the VCS

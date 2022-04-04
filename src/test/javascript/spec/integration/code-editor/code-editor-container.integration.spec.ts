@@ -42,7 +42,7 @@ import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { omit } from 'lodash-es';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
@@ -232,7 +232,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
-        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toEqual(extractedBuildLogErrors);
+        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toEqual(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).toBe(false);
 
         // instructions
@@ -308,7 +308,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
-        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA)).toEqual(extractedBuildLogErrors);
+        expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toEqual(extractedBuildLogErrors);
         expect(container.buildOutput.isBuilding).toBe(false);
 
         // instructions

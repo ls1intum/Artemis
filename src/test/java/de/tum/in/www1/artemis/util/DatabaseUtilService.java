@@ -304,15 +304,15 @@ public class DatabaseUtilService {
 
         authorityRepository.saveAll(adminAuthorities);
 
-        List<User> students = ModelFactory.generateActivatedUsers("student", passwordService.encryptPassword(ModelFactory.USER_PASSWORD), new String[] { "tumuser", "testgroup" },
+        List<User> students = ModelFactory.generateActivatedUsers("student", passwordService.hashPassword(ModelFactory.USER_PASSWORD), new String[] { "tumuser", "testgroup" },
                 studentAuthorities, numberOfStudents);
-        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", passwordService.encryptPassword(ModelFactory.USER_PASSWORD), new String[] { "tutor", "testgroup" },
+        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", passwordService.hashPassword(ModelFactory.USER_PASSWORD), new String[] { "tutor", "testgroup" },
                 tutorAuthorities, numberOfTutors);
-        List<User> editors = ModelFactory.generateActivatedUsers("editor", passwordService.encryptPassword(ModelFactory.USER_PASSWORD), new String[] { "editor", "testgroup" },
+        List<User> editors = ModelFactory.generateActivatedUsers("editor", passwordService.hashPassword(ModelFactory.USER_PASSWORD), new String[] { "editor", "testgroup" },
                 editorAuthorities, numberOfEditors);
-        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", passwordService.encryptPassword(ModelFactory.USER_PASSWORD),
+        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", passwordService.hashPassword(ModelFactory.USER_PASSWORD),
                 new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
-        User admin = ModelFactory.generateActivatedUser("admin", passwordService.encryptPassword(ModelFactory.USER_PASSWORD));
+        User admin = ModelFactory.generateActivatedUser("admin", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
         admin.setGroups(Set.of("admin"));
         admin.setAuthorities(adminAuthorities);
         List<User> usersToAdd = new ArrayList<>();

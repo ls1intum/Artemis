@@ -37,7 +37,8 @@ export class GradingKeyOverviewComponent implements OnInit {
     isBonus = false;
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        // Note: due to lazy loading and router outlet, we use parent 2x here
+        this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             if (params['examId']) {
                 this.examId = Number(params['examId']);
@@ -62,7 +63,7 @@ export class GradingKeyOverviewComponent implements OnInit {
                 }
             });
         });
-        this.route.queryParams.subscribe((queryParams) => {
+        this.route.parent?.parent?.queryParams.subscribe((queryParams) => {
             this.studentGrade = queryParams['grade'];
         });
     }

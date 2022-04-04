@@ -141,7 +141,7 @@
                 At the moment, this is only visible to admins as the actual main functionality has not yet been added on the server.
                 In the future, this feature will be available to editors and instructors as well.
                 -->
-                <div *ngIf="isAdmin">
+                <div *ngIf="isAdmin && programmingExercise.programmingLanguage == ProgrammingLanguage.JAVA">
                     <span class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -162,6 +162,30 @@
                             ngbTooltip="{{ 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesWarning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.deleteTasksAndSolutionEntriesTitle">Delete Tasks</span>
+                        </button>
+                    </span>
+                    <span class="me-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="createStructuralSolutionEntries()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.createStructuralSolutionEntriesTooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.createStructuralSolutionEntriesTitle">Create Structural Solution Entries</span>
+                        </button>
+                    </span>
+                </div>
+                <div *ngIf="programmingExercise.isAtLeastEditor">
+                    <span class="mr-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="getAndShowFullDiff()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.tooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
                         </button>
                     </span>
                 </div>

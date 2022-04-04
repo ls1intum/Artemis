@@ -5,12 +5,12 @@ import java.io.Serial;
 import org.zalando.problem.AbstractThrowableProblem;
 import org.zalando.problem.Status;
 
-public class InvalidPasswordException extends AbstractThrowableProblem {
+public class PasswordViolatesRequirementsException extends AbstractThrowableProblem {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public InvalidPasswordException() {
+    public PasswordViolatesRequirementsException() {
         super(ErrorConstants.INVALID_PASSWORD_TYPE, "Incorrect password", Status.BAD_REQUEST);
     }
 }
