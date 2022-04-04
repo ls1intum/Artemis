@@ -102,17 +102,17 @@ for i in {1..20}; do
             }" \
     $jira_user_url
 
-#    # Add user to group
-#    curl -v -u $jira_uservar:$jira_passvar \
-#    -s \
-#    --header "Content-Type: application/json" \
-#    --request POST \
-#    --fail \
-#    --show-error \
-#    --data "{
-#                \"name\": \"artemis_test_user_$i\"
-#            }" \
-#    "$jira_group_add_url$group"
+    # Add user to group
+    curl -v -u $jira_uservar:$jira_passvar \
+    -s \
+    --header "Content-Type: application/json" \
+    --request POST \
+    --fail \
+    --show-error \
+    --data "{
+                \"name\": \"artemis_test_user_$i\"
+            }" \
+    "$jira_group_add_url$group"
 done
 
 # Application Links
@@ -293,6 +293,11 @@ jira_application_links_url="http://localhost:$jira_external_port/plugins/servlet
 bamboo_application_links_url="http://localhost:$bamboo_port/plugins/servlet/applinks/listApplicationLinks"
 bitbucket_application_links_url="http://localhost:$bitbucket_port/plugins/servlet/applinks/listApplicationLinks"
 
-xdg-open $jira_application_links_url
-xdg-open $bamboo_application_links_url
-xdg-open $bitbucket_application_links_url
+if [ "$(uname)" == "Darwin" ]
+then
+    open $jira_application_links_url $bamboo_application_links_url $bitbucket_application_links_url
+else
+    xdg-open $jira_application_links_url
+    xdg-open $bamboo_application_links_url
+    xdg-open $bitbucket_application_links_url
+fi
