@@ -717,7 +717,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Test for conflict, when workingTime is not equal to the difference between startDate and endDate
         Exam examF = ModelFactory.generateExam(course);
         examF.setWorkingTime(5000);
-        return List.of(examA, examB, examC, examD, examE, examF);
+        // Test for conflict, when visibleDate equals the startDate
+        Exam examG = ModelFactory.generateExam(course);
+        examG.setVisibleDate(examG.getStartDate());
+        return List.of(examA, examB, examC, examD, examE, examF, examG);
     }
 
     @Test
@@ -738,15 +741,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         examC.setWorkingTime(5000);
         request.post("/api/courses/" + course1.getId() + "/exams", examC, HttpStatus.CONFLICT);
 
-        // Test for conflict, if the working time is null
-        Exam examD = ModelFactory.generateTestExam(course1);
-        examD.setWorkingTime(null);
-        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
-
         // Test for conflict, if the working time is 0
-        Exam examE = ModelFactory.generateTestExam(course1);
-        examE.setWorkingTime(0);
-        request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CONFLICT);
+        Exam examD = ModelFactory.generateTestExam(course1);
+        examD.setWorkingTime(0);
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
 
         verify(examAccessService, times(2)).checkCourseAccessForInstructorElseThrow(course1.getId());
     }

@@ -30,7 +30,7 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
-     * Boolean-Flag to distinguish between RealExams (false) and TestExams (true)
+     * This boolean indicates weather it is a RealExam (false) or TestExams (true)
      */
     @Column(name = "test_exam", columnDefinition = "boolean default false")
     private boolean testExam;
@@ -70,10 +70,10 @@ public class Exam extends DomainObject {
 
     /**
      * The default working time for an exam in seconds.
-     * (The individual working time of a student is stored in StudentExam)
+     * (The individual working time of a student is stored in {@link StudentExam})
      */
     @Column(name = "working_time", nullable = false)
-    private Integer workingTime;
+    private int workingTime;
 
     @Column(name = "start_text")
     @Lob
@@ -214,15 +214,15 @@ public class Exam extends DomainObject {
         return gracePeriod;
     }
 
-    public void setGracePeriod(Integer gracePeriod) {
+    public void setGracePeriod(int gracePeriod) {
         this.gracePeriod = gracePeriod;
     }
 
-    public Integer getWorkingTime() {
+    public int getWorkingTime() {
         return workingTime;
     }
 
-    public void setWorkingTime(Integer workingTime) {
+    public void setWorkingTime(int workingTime) {
         this.workingTime = workingTime;
     }
 
