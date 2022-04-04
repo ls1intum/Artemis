@@ -581,7 +581,7 @@ public class CourseService {
 
         // users should not find themselves
         User searchingUser = userRepository.getUser();
-        searchResult = searchResult.stream().distinct().filter(user -> user.getId() != searchingUser.getId()).toList();
+        searchResult = searchResult.stream().distinct().filter(user -> !user.getId().equals(searchingUser.getId())).toList();
 
         return (searchResult);
     }
