@@ -46,9 +46,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -3790,5 +3788,27 @@ public class DatabaseUtilService {
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
                 exerciseId, participationId, submissionId);
+    }
+
+    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
+        for (Posting posting : postings) {
+            assertSensitiveInformationHidden(posting);
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Posting posting) {
+        if (posting.getAuthor() != null) {
+            assertThat(posting.getAuthor().getEmail()).isNull();
+            assertThat(posting.getAuthor().getLogin()).isNull();
+            assertThat(posting.getAuthor().getRegistrationNumber()).isNull();
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Reaction reaction) {
+        if (reaction.getUser() != null) {
+            assertThat(reaction.getUser().getEmail()).isNull();
+            assertThat(reaction.getUser().getLogin()).isNull();
+            assertThat(reaction.getUser().getRegistrationNumber()).isNull();
+        }
     }
 }
