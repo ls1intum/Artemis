@@ -122,7 +122,6 @@ public class ExamResource {
         }
 
         checkForExamConflictsElseThrow(courseId, exam);
-        checkExamPointsElseThrow(exam);
 
         // Check that exerciseGroups are not set to prevent manipulation of associated exerciseGroups
         if (!exam.getExerciseGroups().isEmpty()) {
@@ -154,7 +153,6 @@ public class ExamResource {
         }
 
         checkForExamConflictsElseThrow(courseId, updatedExam);
-        checkExamPointsElseThrow(updatedExam);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, updatedExam.getId());
 
@@ -189,21 +187,46 @@ public class ExamResource {
     }
 
     /**
-     * Checks that the correct course is set in the exam and that the visible/start/end-dates are present and in the correct order.
-     * For RealExams: visibleDate < startDate < endDate
-     * For TestExams: visibleDate <= startDate < endDate
-     * Validates the working time, which should be equal (RealExams) or smaller / equal (TestExams) to the difference between start- and endDate.
+     * Checks if the input values are set correctly. More details in the corresponding methods
      *
      * @param courseId the exam should belong to.
      * @param exam     which should be checked.
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
+
+        checkExamCourseIdElseThrow(courseId, exam);
+
+        checkExamForDatesConflictsElseThrow(exam);
+
+        checkExamForWorkingTimeConflictsElseThrow(exam);
+
+        checkExamPointsElseThrow(exam);
+    }
+
+    /**
+     * Checks that the correct course is present and set
+     *
+     * @param courseId the course to which the exam should be linked
+     * @param exam     the exam to be checked
+     */
+    private void checkExamCourseIdElseThrow(Long courseId, Exam exam) {
         if (exam.getCourse() == null) {
             throw new ConflictException("An exam has to belong to a course.", ENTITY_NAME, "noCourse");
         }
 
-        checkExamCourseIdElseThrow(courseId, exam);
+        if (!exam.getCourse().getId().equals(courseId)) {
+            throw new ConflictException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
+        }
+    }
 
+    /**
+     * Checks that the visible/start/end-dates are present and in the correct order.
+     * For RealExams: visibleDate < startDate < endDate
+     * For TestExams: visibleDate <= startDate < endDate
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamForDatesConflictsElseThrow(Exam exam) {
         if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null) {
             throw new ConflictException("An exam has to have times when it becomes visible, starts, and ends as well as a working time.", ENTITY_NAME, "examTimes");
         }
@@ -218,7 +241,15 @@ public class ExamResource {
             throw new ConflictException("For RealExams, the visible Date has to be before the start Date and the start Date has to be before the end Date", ENTITY_NAME,
                     "examTimes");
         }
+    }
 
+    /**
+     * Validates the working time, which should be equal (RealExams) or smaller / equal (TestExams) to the
+     * difference between start- and endDate.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamForWorkingTimeConflictsElseThrow(Exam exam) {
         int differenceStartEndDate = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
 
         if (exam.isTestExam()) {
@@ -235,15 +266,14 @@ public class ExamResource {
         }
     }
 
+    /**
+     * Checks if the exam has at least one Points achievable
+     *
+     * @param exam the exam to be checked
+     */
     private void checkExamPointsElseThrow(Exam exam) {
         if (exam.getMaxPoints() <= 0) {
             throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
-        }
-    }
-
-    private void checkExamCourseIdElseThrow(Long courseId, Exam exam) {
-        if (!exam.getCourse().getId().equals(courseId)) {
-            throw new ConflictException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
         }
     }
 
