@@ -460,7 +460,7 @@ public class GitService {
      * @throws GitException If the path is still busy after the maximum number of retries.
      */
     private void waitUntilPathNotBusy(final Path localPath) throws CanceledException, GitException {
-        int numberOfAttempts = JGIT_TIMEOUT_IN_SECONDS;
+        int remainingSeconds = JGIT_TIMEOUT_IN_SECONDS;
 
         while (cloneInProgressOperations.containsKey(localPath)) {
             log.warn("Clone is already in progress. This will lead to an error. Wait for a second");
@@ -471,11 +471,11 @@ public class GitService {
                 throw new CanceledException("Waiting for local path to be free for cloning got interrupted.");
             }
 
-            if (numberOfAttempts == 0) {
+            if (remainingSeconds == 0) {
                 throw new GitException("Cannot clone the same repository multiple times");
             }
             else {
-                numberOfAttempts--;
+                remainingSeconds--;
             }
         }
     }
