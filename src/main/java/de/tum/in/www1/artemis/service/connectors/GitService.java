@@ -471,7 +471,7 @@ public class GitService {
                 throw new CanceledException("Waiting for local path to be free for cloning got interrupted.");
             }
 
-            if (remainingSeconds == 0) {
+            if (remainingSeconds <= 0) {
                 throw new GitException("Cannot clone the same repository multiple times");
             }
             else {
