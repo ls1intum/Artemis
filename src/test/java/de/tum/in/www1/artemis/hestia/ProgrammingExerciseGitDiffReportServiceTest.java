@@ -72,28 +72,6 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateGitDiffParallel() throws Exception {
-        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
-        exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2\nLine 3\n", exercise, solutionRepo);
-        var thread1 = new Thread(() -> reportService.updateReport(exerciseRepository.getById(exercise.getId())));
-        var thread2 = new Thread(() -> reportService.updateReport(exercise));
-        thread1.start();
-        thread2.start();
-        thread1.join();
-        thread2.join();
-        var reports = reportRepository.findAll();
-        assertThat(reports).hasSize(1);
-        var report = reports.get(0);
-        assertThat(report.getEntries()).hasSize(1);
-        var entry = report.getEntries().stream().findFirst().orElseThrow();
-        assertThat(entry.getPreviousStartLine()).isEqualTo(2);
-        assertThat(entry.getStartLine()).isEqualTo(2);
-        assertThat(entry.getPreviousLineCount()).isEqualTo(1);
-        assertThat(entry.getLineCount()).isEqualTo(2);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateGitDiffNoChanges() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2", exercise, solutionRepo);
