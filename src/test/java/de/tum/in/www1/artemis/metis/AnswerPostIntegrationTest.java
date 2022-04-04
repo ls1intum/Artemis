@@ -16,11 +16,9 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 
 public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -40,12 +38,15 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     private Long courseId;
 
+    private User student1;
+
     private static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
     public void initTestCase() {
 
         database.addUsers(5, 5, 0, 1);
+        student1 = database.getUserByLogin("student1");
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)
@@ -80,6 +81,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
@@ -92,6 +94,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
@@ -104,6 +107,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
@@ -116,6 +120,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdAnswerPost);
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -126,6 +131,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdAnswerPost);
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -136,6 +142,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdAnswerPost);
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -158,9 +165,10 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("filterToUnresolved", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user and compare
         List<Post> resolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))).toList();
+                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))).toList();
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
     }
@@ -174,10 +182,10 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("filterToOwn", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         // get unresolved posts of current user and compare
-        List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(
-                post -> "student1".equals(post.getAuthor().getLogin()) && (post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))))
-                .toList();
+        List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())
+                && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))).toList();
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
     }
@@ -190,6 +198,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("courseWideContext", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         List<Post> resolvedPosts = existingPostsWithAnswers.stream().filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())).toList();
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
@@ -204,8 +213,9 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("courseWideContext", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         List<Post> resolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
                         && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
                 .toList();
 
@@ -221,9 +231,10 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("courseWideContext", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         List<Post> resolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> "student1".equals(post.getAuthor().getLogin())
-                        && post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                .filter(post -> student1.getId().equals(post.getAuthor().getId())
+                        && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
                         && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
                 .toList();
 
@@ -240,10 +251,11 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("courseWideContext", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         // get unresolved posts of current user and compare
         List<Post> resolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> "student1".equals(post.getAuthor().getLogin())
-                        && post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                .filter(post -> student1.getId().equals(post.getAuthor().getId())
+                        && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
                         && CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()))
                 .toList();
 
@@ -267,6 +279,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("sortingOrder", sortingOrder.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream().sorted(Comparator.comparing((Post post) -> post.getAnswers().size()).reversed()).toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
@@ -289,6 +302,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("sortingOrder", sortingOrder.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream().sorted(Comparator.comparing(post -> post.getAnswers().size())).toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
@@ -302,9 +316,10 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("filterToAnsweredOrReacted", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
-                        || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin())))
+                .filter(post -> post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                        || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId())))
                 .toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
@@ -319,9 +334,10 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("filterToOwn", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream().filter(
-                post -> "student1".equals(post.getAuthor().getLogin()) && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
-                        || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                        || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId()))))
                 .toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
@@ -336,10 +352,11 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("filterToUnresolved", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
-                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
                 .toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
@@ -355,10 +372,11 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("filterToAnsweredOrReacted", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream().filter(
-                post -> "student1".equals(post.getAuthor().getLogin()) && (post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
-                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin())))))
+                post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId())))))
                 .toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
@@ -373,10 +391,11 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("courseWideContext", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
                 .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())
-                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
-                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
                 .toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
@@ -392,10 +411,11 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("courseWideContext", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
-                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && "student1".equals(post.getAuthor().getLogin())
-                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
-                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && student1.getId().equals(post.getAuthor().getId())
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
                 .toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
@@ -411,11 +431,12 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("courseWideContext", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
                 .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext())
-                        && post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
-                                || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin()))))
+                        && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
                 .toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
@@ -432,11 +453,12 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         params.add("courseWideContext", "TECH_SUPPORT");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswersCourseWide = existingPostsWithAnswersCourseWide.stream()
-                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && "student1".equals(post.getAuthor().getLogin())
-                        && (post.getAnswers().stream().allMatch(answerPost -> !Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                                && (post.getAnswers().stream().anyMatch(answerPost -> "student1".equals(answerPost.getAuthor().getLogin()))
-                                        || post.getReactions().stream().anyMatch(reaction -> "student1".equals(reaction.getUser().getLogin())))))
+                .filter(post -> CourseWideContext.TECH_SUPPORT.equals(post.getCourseWideContext()) && student1.getId().equals(post.getAuthor().getId())
+                        && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                                && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                                        || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId())))))
                 .toList();
 
         assertThat(returnedPosts).isEqualTo(existingPostsWithAnswersCourseWide);
@@ -451,6 +473,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
                 HttpStatus.OK);
+        database.assertSensitiveInformationHidden(updatedAnswerPost);
         assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
     }
 
@@ -462,6 +485,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
                 HttpStatus.OK);
+        database.assertSensitiveInformationHidden(updatedAnswerPost);
         assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
     }
 

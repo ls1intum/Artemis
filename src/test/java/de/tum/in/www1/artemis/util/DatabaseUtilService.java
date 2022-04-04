@@ -3833,4 +3833,26 @@ public class DatabaseUtilService {
         return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
                 exerciseId, participationId, submissionId);
     }
+
+    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
+        for (Posting posting : postings) {
+            assertSensitiveInformationHidden(posting);
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Posting posting) {
+        if (posting.getAuthor() != null) {
+            assertThat(posting.getAuthor().getEmail()).isNull();
+            assertThat(posting.getAuthor().getLogin()).isNull();
+            assertThat(posting.getAuthor().getRegistrationNumber()).isNull();
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Reaction reaction) {
+        if (reaction.getUser() != null) {
+            assertThat(reaction.getUser().getEmail()).isNull();
+            assertThat(reaction.getUser().getLogin()).isNull();
+            assertThat(reaction.getUser().getRegistrationNumber()).isNull();
+        }
+    }
 }
