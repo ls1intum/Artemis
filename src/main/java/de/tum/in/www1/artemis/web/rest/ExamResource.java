@@ -267,7 +267,7 @@ public class ExamResource {
     }
 
     /**
-     * Checks if the exam has at least one Points achievable
+     * Checks if the exam has at least one point achievable
      *
      * @param exam the exam to be checked
      */
