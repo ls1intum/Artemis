@@ -6,6 +6,7 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
@@ -23,6 +24,8 @@ export enum ProgrammingLanguage {
 export enum ProjectType {
     MAVEN_MAVEN = 'MAVEN_MAVEN',
     PLAIN_MAVEN = 'PLAIN_MAVEN',
+    PLAIN_GRADLE = 'PLAIN_GRADLE',
+    GRADLE_GRADLE = 'GRADLE_GRADLE',
     PLAIN = 'PLAIN',
     XCODE = 'XCODE',
     FACT = 'FACT',
@@ -47,6 +50,7 @@ export class ProgrammingExercise extends Exercise {
     public checkoutSolutionRepository?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
     public submissionPolicy?: SubmissionPolicy;
+    public gitDiffReport?: ProgrammingExerciseGitDiffReport;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;

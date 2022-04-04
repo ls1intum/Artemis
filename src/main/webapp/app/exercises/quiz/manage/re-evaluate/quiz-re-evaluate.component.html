@@ -43,6 +43,7 @@
                                 *ngIf="quizExercise.includedInOverallScore"
                                 [includedInOverallScore]="quizExercise.includedInOverallScore!"
                                 (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
+                                [allowNotIncluded]="!!quizExercise.course"
                             ></jhi-included-in-overall-score-picker>
                         </div>
                     </div>

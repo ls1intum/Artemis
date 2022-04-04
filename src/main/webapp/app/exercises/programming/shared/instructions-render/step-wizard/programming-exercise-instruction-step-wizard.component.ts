@@ -3,7 +3,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { faCheck, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons';
 
@@ -15,6 +15,7 @@ import { faCheck, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons'
 export class ProgrammingExerciseInstructionStepWizardComponent implements OnChanges {
     TestCaseState = TestCaseState;
 
+    @Input() exercise: Exercise;
     @Input() latestResult?: Result;
     @Input() tasks: TaskArray;
     @Input() showTestDetails?: boolean;
@@ -58,6 +59,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as ResultDetailComponent;
+        componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;

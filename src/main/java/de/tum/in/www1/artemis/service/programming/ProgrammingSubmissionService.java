@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -81,6 +82,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
@@ -88,7 +91,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, AuditEventRepository auditEventRepository,
             ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -104,6 +108,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.resultRepository = resultRepository;
         this.auditEventRepository = auditEventRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
     }
 
     /**
@@ -127,7 +132,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         Commit commit;
         try {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
-            // if the branch is different than master, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
+            // if the branch is different than main, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
             commit = versionControlService.get().getLastCommitDetails(requestBody);
             log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.getCommitHash(), commit.getAuthorName(), commit.getAuthorEmail(),
                     commit.getBranch());
@@ -186,8 +191,28 @@ public class ProgrammingSubmissionService extends SubmissionService {
         programmingExerciseParticipation.addSubmission(programmingSubmission);
 
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+
+        updateGitDiffReport(programmingExerciseParticipation);
+
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
+    }
+
+    /**
+     * Update the git-diff of the programming exercise when the push was to a solution or template repository
+     *
+     * @param programmingExerciseParticipation The participation
+     */
+    private void updateGitDiffReport(ProgrammingExerciseParticipation programmingExerciseParticipation) {
+        if (programmingExerciseParticipation instanceof TemplateProgrammingExerciseParticipation
+                || programmingExerciseParticipation instanceof SolutionProgrammingExerciseParticipation) {
+            try {
+                programmingExerciseGitDiffReportService.updateReport(programmingExerciseParticipation.getProgrammingExercise());
+            }
+            catch (Exception e) {
+                log.error("Unable to update git-diff for programming exercise " + programmingExerciseParticipation.getProgrammingExercise().getId(), e);
+            }
+        }
     }
 
     /**
@@ -650,7 +675,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 latestResult.setSubmission(null);
             }
         });
-        return submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
+        List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
+        // In Exam-Mode, the Submissions are retrieved from the studentParticipationRepository, for which the Set<Submission> is appended
+        // In non-Exam Mode, the Submissions are retrieved from the submissionRepository, for which no Set<submission> is appended
+        return removeExerciseAndSubmissionSet(programmingSubmissions, examMode);
     }
 
     /**
@@ -670,12 +698,36 @@ public class ProgrammingSubmissionService extends SubmissionService {
         else {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         }
-        List<ProgrammingSubmission> submissions = new ArrayList<>();
+        List<ProgrammingSubmission> programmingSubmissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestLegalOrIllegalSubmission)
                 // filter out non submitted submissions if the flag is set to true
-                .filter(submission -> submission.isPresent() && (!submittedOnly || submission.get().isSubmitted()))
-                .forEach(submission -> submissions.add((ProgrammingSubmission) submission.get()));
-        return submissions;
+                .filter(optionalSubmission -> optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted()))
+                .forEach(optionalSubmission -> programmingSubmissions.add((ProgrammingSubmission) optionalSubmission.get()));
+        return removeExerciseAndSubmissionSet(programmingSubmissions, true);
+    }
+
+    /**
+     * Given a List of ProgrammingSubmissions, this method will remove the attribute participation.exercise.
+     * If removeSubmissionSet = true, also the Set participation.submissions is removed. The number of submissions will be
+     * stored in the attribute participation.submissionCount instead of being determined by the size of the set of all submissions.
+     * This method is intended to reduce the amount of data transferred to the client.
+     * @param programmingSubmissionList - a List with all ProgrammingSubmissions to be modified
+     * @param removeSubmissionSet - option to also remove the SubmissionSet from the ProgrammingSubmssion
+     * @return a List with ProgrammingSubmissions and removed attributes
+     */
+    private List<ProgrammingSubmission> removeExerciseAndSubmissionSet(List<ProgrammingSubmission> programmingSubmissionList, boolean removeSubmissionSet) {
+        programmingSubmissionList.forEach(programmingSubmission -> {
+            if (programmingSubmission.getParticipation() != null) {
+                Participation participation = programmingSubmission.getParticipation();
+                participation.setExercise(null);
+                if (removeSubmissionSet && participation.getSubmissions() != null) {
+                    // Only remove the Submissions and store them in submissionsCount, if the Set<Submissions> is present.
+                    participation.setSubmissionCount(participation.getSubmissions().size());
+                    participation.setSubmissions(null);
+                }
+            }
+        });
+        return programmingSubmissionList;
     }
 
     /**
