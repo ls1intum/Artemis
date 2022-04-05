@@ -195,14 +195,10 @@ public class BambooBuildPlanService {
                 }
 
                 if (!sequentialBuildRuns) {
-                    setRegularTestTaskForJavaAndKotlinExercise(isMavenProject, defaultTasks, finalTasks);
+                    setRegularTestTaskForJavaAndKotlinExercise(isMavenProject, recordTestwiseCoverage, defaultTasks, finalTasks, artifacts);
                 }
                 else {
                     setSequentialTestTaskForJavaAndKotlinExercise(isMavenProject, defaultTasks, finalTasks);
-                }
-
-                if (Boolean.TRUE.equals(recordTestwiseCoverage)) {
-                    setTaskForRecordingTestwiseCoverage(isMavenProject, defaultTasks, artifacts);
                 }
 
                 // This conversion is required because the attributes are passed as varargs-parameter which is only possible
@@ -320,14 +316,20 @@ public class BambooBuildPlanService {
      * Adds the tasks for executing a non-sequential test run to the stage and returns the stage for the Bamboo Build Plan for Java and Kotlin Exercises.
      * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
      */
-    private void setRegularTestTaskForJavaAndKotlinExercise(boolean isMavenProject, List<Task<?, ?>> defaultTasks, List<Task<?, ?>> finalTasks) {
+    private void setRegularTestTaskForJavaAndKotlinExercise(boolean isMavenProject, boolean recordTestwiseCoverage, List<Task<?, ?>> defaultTasks, List<Task<?, ?>> finalTasks,
+            List<Artifact> artifacts) {
         if (isMavenProject) {
             defaultTasks.add(new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true));
         }
         else {
             // setting the permission as a final task is required as a workaround because the docker container runs as a root user
             // and creates files that cannot be deleted by Bamboo because it does not have these root permissions
-            defaultTasks.add(new ScriptTask().inlineBody("./gradlew clean test").description("Tests"));
+            String testCommand = "./gradlew clean test";
+            if (recordTestwiseCoverage) {
+                testCommand += " tiaTests --run-all-tests";
+                artifacts.add(new Artifact().name("testwiseCoverageReport").location("build/reports/testwise-coverage/tiaTests").copyPattern("tiaTests.json"));
+            }
+            defaultTasks.add(new ScriptTask().inlineBody(testCommand).description("Tests"));
             finalTasks.add(new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/test/*.xml").description("JUnit Parser"));
             finalTasks.add(new ScriptTask().inlineBody("chmod -R 777 ${bamboo.working.directory}").description("Setup working directory for cleanup"));
         }
@@ -353,16 +355,6 @@ public class BambooBuildPlanService {
             defaultTasks.add(new ScriptTask().inlineBody("./gradlew clean structuralTests").description("Structural tests"));
             defaultTasks.add(new ScriptTask().inlineBody("./gradlew behaviorTests").description("Behavior tests"));
         }
-    }
-
-    private void setTaskForRecordingTestwiseCoverage(boolean isMavenProject, List<Task<?, ?>> defaultTasks, List<Artifact> artifacts) {
-        // the plugin for recording the testwise coverage is not available for Maven
-        if (isMavenProject) {
-            return;
-        }
-
-        defaultTasks.add(new ScriptTask().inlineBody("./gradlew tiaTests --run-all-tests").description("Record the testwise coverage"));
-        artifacts.add(new Artifact().name("testwiseCoverageReport").location("build/reports/testwise-coverage/tiaTests").copyPattern("tiaTests.json"));
     }
 
     private Stage createDefaultStage(ProgrammingLanguage programmingLanguage, boolean sequentialBuildRuns, VcsCheckoutTask checkoutTask, Stage defaultStage, Job defaultJob,
