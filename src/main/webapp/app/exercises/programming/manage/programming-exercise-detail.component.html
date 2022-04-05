@@ -53,6 +53,16 @@
                         <fa-icon [icon]="faListAlt"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                     </a>
+                    <!-- Teams -->
+                    <a
+                        *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
+                        [routerLink]="teamBaseResource + 'teams'"
+                        class="btn btn-primary btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
+                        <fa-icon [icon]="faUsers"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+                    </a>
                     <a
                         *ngIf="programmingExercise.assessmentType === assessmentType"
                         [routerLink]="shortBaseResource + 'assessment-dashboard/' + programmingExercise.id"
