@@ -34,7 +34,7 @@ public class CoverageReport extends DomainObject {
 
     // When retrieving only the aggregated data (such as covered line ratio), the file reports are not required
     @OneToMany(mappedBy = "fullReport", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("fullReport")
+    @JsonIgnoreProperties(value = { "fullReport" }, allowSetters = true)
     private Set<CoverageFileReport> fileReports;
 
     // The ratio between the number of lines that are covered by all tests and the number of lines for all files in

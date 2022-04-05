@@ -26,7 +26,7 @@ public class TestwiseCoverageReportEntry extends DomainObject {
     private CoverageFileReport fileReport;
 
     @ManyToOne()
-    @JsonIgnoreProperties("testwiseCoverageReportEntries")
+    @JsonIgnoreProperties("coverageEntries")
     @JoinColumn(name = "test_case_id", referencedColumnName = "id")
     private ProgrammingExerciseTestCase testCase;
 
