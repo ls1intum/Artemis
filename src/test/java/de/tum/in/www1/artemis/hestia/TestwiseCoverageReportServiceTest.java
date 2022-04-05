@@ -1,40 +1,38 @@
 package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.MockBeans;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.util.GitUtilService;
+import de.tum.in.www1.artemis.util.HestiaUtilTestService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 
-@MockBeans({ @MockBean(GitService.class), @MockBean(RepositoryService.class) })
 public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private GitService gitService;
+
+    @Autowired
+    private GitUtilService gitUtilService;
 
     @Autowired
     private RepositoryService repositoryService;
@@ -54,20 +52,43 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseGradingService gradingService;
+
+    @Autowired
+    private HestiaUtilTestService hestiaUtilTestService;
+
+    @Autowired
+    private ResultRepository resultRepository;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingSubmission solutionSubmission;
 
+    private SolutionProgrammingExerciseParticipation solutionParticipation;
+
+    private final LocalRepository solutionRepo = new LocalRepository("main");
+
     @BeforeEach
-    public void setup() {
+    public void setup() throws Exception {
         database.addUsers(1, 0, 0, 1);
         database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
-        var testCase1 = new ProgrammingExerciseTestCase().testName("test1()").exercise(programmingExercise);
+
+        programmingExercise = hestiaUtilTestService.setupSolution(
+                Map.ofEntries(Map.entry("src/de/tum/in/ase/BubbleSort.java", "\n ".repeat(28)), Map.entry("src/de/tum/in/ase/Context.java", "\n ".repeat(18))), programmingExercise,
+                solutionRepo);
+
+        var testCase1 = new ProgrammingExerciseTestCase().testName("test1()").exercise(programmingExercise).active(true).weight(1.0);
         programmingExerciseTestCaseRepository.save(testCase1);
-        var testCase2 = new ProgrammingExerciseTestCase().testName("test2()").exercise(programmingExercise);
+        var testCase2 = new ProgrammingExerciseTestCase().testName("test2()").exercise(programmingExercise).active(true).weight(1.0);
         programmingExerciseTestCaseRepository.save(testCase2);
-        solutionSubmission = programmingSubmissionRepository.save(new ProgrammingSubmission());
+        solutionSubmission = database.createProgrammingSubmission(solutionParticipation, false);
+        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
     }
 
     @AfterEach
@@ -77,11 +98,7 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCreateFullTestwiseCoverageReport() throws GitAPIException, InterruptedException {
-        doReturn(null).when(gitService).getOrCheckoutRepository(any());
-        doReturn(Map.ofEntries(Map.entry("src/de/tum/in/ase/BubbleSort.java", "\n ".repeat(28)), Map.entry("src/de/tum/in/ase/Context.java", "\n ".repeat(18))))
-                .when(repositoryService).getFilesWithContent(any());
-
+    public void shouldCreateFullTestwiseCoverageReport() {
         var fileReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
         testwiseCoverageService.createTestwiseCoverageReport(fileReportsByTestName, programmingExercise, solutionSubmission);
 

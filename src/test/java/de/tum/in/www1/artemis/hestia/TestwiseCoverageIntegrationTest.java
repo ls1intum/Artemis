@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -60,36 +59,26 @@ public class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBa
 
     private ProgrammingSubmission latestSolutionSubmission;
 
-    private ProgrammingSubmission previousSolutionSubmission;
-
-    private SolutionProgrammingExerciseParticipation solutionParticipation;
-
-    private CoverageReport previousReport;
-
     private CoverageReport latestReport;
-
-    private ProgrammingExerciseTestCase testCase1;
-
-    private ProgrammingExerciseTestCase testCase2;
 
     @BeforeEach
     public void setup() {
         database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         database.addUsers(1, 1, 0, 0);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
-        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
+        var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         var unsavedPreviousSubmission = new ProgrammingSubmission();
         unsavedPreviousSubmission.setParticipation(solutionParticipation);
         unsavedPreviousSubmission.setSubmissionDate(ZonedDateTime.of(2022, 4, 5, 12, 0, 0, 0, ZoneId.of("Europe/Berlin")));
-        previousSolutionSubmission = programmingSubmissionRepository.save(unsavedPreviousSubmission);
+        var previousSolutionSubmission = programmingSubmissionRepository.save(unsavedPreviousSubmission);
         var unsavedLatestSubmission = new ProgrammingSubmission();
         unsavedLatestSubmission.setParticipation(solutionParticipation);
         unsavedLatestSubmission.setSubmissionDate(ZonedDateTime.of(2022, 4, 5, 13, 0, 0, 0, ZoneId.of("Europe/Berlin")));
         latestSolutionSubmission = programmingSubmissionRepository.save(unsavedLatestSubmission);
 
-        testCase1 = programmingExerciseTestCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1()"));
-        testCase2 = programmingExerciseTestCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2()"));
-        previousReport = generateAndSaveSimpleReport(0.3, "src/de/tum/in/ase/BubbleSort.java", 15, 5, 1, 5, testCase1, previousSolutionSubmission);
+        var testCase1 = programmingExerciseTestCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1()"));
+        var testCase2 = programmingExerciseTestCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2()"));
+        generateAndSaveSimpleReport(0.3, "src/de/tum/in/ase/BubbleSort.java", 15, 5, 1, 5, testCase1, previousSolutionSubmission);
         latestReport = generateAndSaveSimpleReport(0.4, "src/de/tum/in/ase/BubbleSort.java", 20, 8, 1, 8, testCase2, latestSolutionSubmission);
     }
 

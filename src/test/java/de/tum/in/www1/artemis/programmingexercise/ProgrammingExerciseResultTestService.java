@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 
 import java.util.*;
 
@@ -309,7 +310,8 @@ public class ProgrammingExerciseResultTestService {
         database.createProgrammingSubmission(solutionParticipation, false);
 
         // setup mocks
-        when(gitService.getOrCheckoutRepository(any())).thenReturn(null);
+        doReturn(null).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doReturn(Collections.emptyMap()).when(gitService).listFilesAndFolders(any());
 
         var expectedReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
 
