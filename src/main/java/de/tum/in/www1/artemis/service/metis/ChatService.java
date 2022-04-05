@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.CrudAction;
 @Service
 public class ChatService {
 
-    private static final String METIS_CHAT_SESSION_ENTITY_NAME = "metis.chatSession";
+    private static final String CHAT_SESSION_ENTITY_NAME = "messages.chatSession";
 
     private static final String METIS_USER_CHAT_SESSION_ENTITY_NAME = "metis.userChatSession";
 
@@ -61,7 +63,7 @@ public class ChatService {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
         if (chatSession.getId() != null) {
-            throw new BadRequestAlertException("A new chat session cannot already have an ID", METIS_CHAT_SESSION_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new chat session cannot already have an ID", CHAT_SESSION_ENTITY_NAME, "idexists");
         }
 
         if (chatSession.getUserChatSessions().isEmpty()) {
@@ -85,16 +87,35 @@ public class ChatService {
         return savedChatSession;
     }
 
+    public ChatSession getChatSessionById(Long chatSessionId) {
+        Optional<ChatSession> chatSession = chatSessionRepository.findById(chatSessionId);
+        chatSession.ifPresent(chatSession1 -> chatSession1.setUserChatSessions(new HashSet<>(userChatSessionRepository.findUserChatSessionsByChatSessionId(chatSessionId))));
+
+        return chatSession.get();
+    }
+
     /**
      * Retrieve chat sessions from database by userId and courseId
      *
      * @param courseId id of course the chatSessions belongs to
      * @return retrieved chat sessions
      */
-    public List<ChatSession> getChatSessions(Long courseId) {
+    public List<ChatSession> getChatSessionsOfUser(Long courseId) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        return chatSessionRepository.getChatSessionsOfUser(courseId, user.getId());
+        List<ChatSession> chatSessions = chatSessionRepository.getChatSessionsOfUser(courseId, user.getId());
+
+        chatSessions.forEach(chatSession -> {
+            List<UserChatSession> userChatSessions = userChatSessionRepository.findUserChatSessionsByChatSessionId(chatSession.getId());
+            userChatSessions.forEach(userChatSession -> {
+                if (!userChatSession.getUser().getId().equals(user.getId())) {
+                    userChatSession.filterSensitiveInformation();
+                }
+            });
+            chatSession.setUserChatSessions(new HashSet<UserChatSession>(userChatSessions));
+        });
+
+        return chatSessions;
     }
 
     /**
@@ -140,6 +161,6 @@ public class ChatService {
      * @return chatSession entity name
      */
     public String getEntityName() {
-        return METIS_CHAT_SESSION_ENTITY_NAME;
+        return CHAT_SESSION_ENTITY_NAME;
     }
 }

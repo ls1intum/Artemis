@@ -62,6 +62,7 @@ public class Post extends Posting {
     private CourseWideContext courseWideContext;
 
     @ManyToOne
+    @JsonIncludeProperties({ "id" })
     private ChatSession chatSession;
 
     @Enumerated(EnumType.STRING)

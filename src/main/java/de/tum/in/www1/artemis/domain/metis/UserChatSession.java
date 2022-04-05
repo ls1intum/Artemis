@@ -30,11 +30,10 @@ public class UserChatSession extends DomainObject {
     private User user;
 
     @Column(name = "last_read")
-    @NotNull
     private ZonedDateTime lastRead;
 
     @Column(name = "closed")
-    private boolean closed;
+    private Boolean closed;
 
     public ChatSession getChatSession() {
         return chatSession;
@@ -60,11 +59,16 @@ public class UserChatSession extends DomainObject {
         this.lastRead = lastRead;
     }
 
-    public boolean isClosed() {
+    public Boolean isClosed() {
         return closed;
     }
 
-    public void setClosed(boolean closed) {
+    public void setClosed(Boolean closed) {
         this.closed = closed;
+    }
+
+    public void filterSensitiveInformation() {
+        setLastRead(null);
+        setClosed(null);
     }
 }

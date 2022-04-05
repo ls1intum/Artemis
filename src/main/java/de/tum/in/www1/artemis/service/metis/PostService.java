@@ -26,15 +26,11 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
-import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.ChatSessionRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -56,8 +52,6 @@ public class PostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final ChatSessionRepository chatSessionRepository;
-
     private final ChatService chatService;
 
     private final GroupNotificationService groupNotificationService;
@@ -66,14 +60,12 @@ public class PostService extends PostingService {
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, ChatSessionRepository chatSessionRepository,
-            ChatService chatService) {
+            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, ChatService chatService) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
-        this.chatSessionRepository = chatSessionRepository;
         this.chatService = chatService;
     }
 
@@ -591,10 +583,11 @@ public class PostService extends PostingService {
         }
     }
 
-    private void mayInteractWithChatSessionElseThrow(Long sessionId) {
+    private void mayInteractWithChatSessionElseThrow(Long chatSessionId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        var chatSession = chatSessionRepository.findById(sessionId);
-        if (chatSession.isEmpty() || chatSession.get().getUserChatSessions().stream().noneMatch(userChatSession -> userChatSession.getUser().getId().equals(user.getId()))) {
+        ChatSession chatSession = chatService.getChatSessionById(chatSessionId);
+
+        if (chatSession == null || chatSession.getUserChatSessions().stream().noneMatch(userChatSession -> userChatSession.getUser().getId().equals(user.getId()))) {
             throw new BadRequestAlertException("User not authorized to access this chat!", METIS_POST_ENTITY_NAME, "");
         }
     }

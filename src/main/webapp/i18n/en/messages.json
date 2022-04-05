@@ -4,6 +4,7 @@
             "label": "Direct Messages",
             "chatSession": {
                 "header": "Direct messages",
+                "created": "Chat Session created",
                 "show": "Show messages",
                 "hide": "Hide messages",
                 "notFound": "No chat found",

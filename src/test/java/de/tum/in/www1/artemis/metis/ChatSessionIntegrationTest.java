@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.metis.ChatSession;
 import de.tum.in.www1.artemis.domain.metis.UserChatSession;
 import de.tum.in.www1.artemis.repository.metis.ChatSessionRepository;
+import de.tum.in.www1.artemis.service.metis.ChatService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ChatSessionDTO;
 
@@ -29,6 +30,9 @@ class ChatSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private ChatSessionRepository chatSessionRepository;
+
+    @Autowired
+    private ChatService chatService;
 
     private ChatSession existingChatSession;
 
@@ -101,6 +105,12 @@ class ChatSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser("student3");
         chatSessionsOfUser = request.getList("/api/courses/" + course.getId() + "/chatSessions/", HttpStatus.OK, ChatSession.class, params);
         assertThat(chatSessionsOfUser).isEmpty();
+    }
+
+    @Test
+    void testGetChatSessionById() {
+        ChatSession chatSession = chatService.getChatSessionById(existingChatSession.getId());
+        assertThat(chatSession).isEqualTo(existingChatSession);
     }
 
     private void createChatSessionBadRequest(ChatSession chatSessionToSave) throws Exception {

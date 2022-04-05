@@ -4,6 +4,7 @@
             "label": "Direktnachrichten",
             "chatSession": {
                 "header": "Direktnachrichten",
+                "created": "Chatsitzung erstellt",
                 "show": "Nachrichten anzeigen",
                 "hide": "Nachrichten ausblenden",
                 "notFound": "Kein Chat gefunden",

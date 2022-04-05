@@ -41,7 +41,7 @@ public class ChatSessionResource {
     @GetMapping("/{courseId}/chatSessions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ChatSession>> getChatSessionsOfUser(@PathVariable Long courseId) {
-        List<ChatSession> chatSessions = chatService.getChatSessions(courseId);
+        List<ChatSession> chatSessions = chatService.getChatSessionsOfUser(courseId);
         return new ResponseEntity<>(chatSessions, null, HttpStatus.OK);
     }
 
