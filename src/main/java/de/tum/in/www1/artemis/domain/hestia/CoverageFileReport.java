@@ -25,9 +25,12 @@ public class CoverageFileReport extends DomainObject {
     @Column(name = "file_path")
     private String filePath;
 
+    // The number of lines in the whole file
     @Column(name = "line_count")
     private Integer lineCount;
 
+    // The number of lines that are covered by test cases. The number refers to the unique count, meaning the same line
+    // that is covered in multiple entries will only count as one line
     @Column(name = "covered_line_count")
     private Integer coveredLineCount;
 

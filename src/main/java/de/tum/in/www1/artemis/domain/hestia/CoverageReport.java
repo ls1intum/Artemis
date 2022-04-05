@@ -25,16 +25,20 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CoverageReport extends DomainObject {
 
+    // The ProgrammingSubmission to which this CoverageReport is related. This ProgrammingSubmission is always related
+    // to a SolutionProgrammingExerciseParticipation because the report will only be generated for solution participations.
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "submission_id", referencedColumnName = "id")
     @JsonIgnore
     private ProgrammingSubmission submission;
 
-    // when retrieving only the aggregated data (such as covered line ratio), we do not need the file reports
+    // When retrieving only the aggregated data (such as covered line ratio), the file reports are not required
     @OneToMany(mappedBy = "fullReport", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("fullReport")
     private Set<CoverageFileReport> fileReports;
 
+    // The ratio between the number of lines that are covered by all tests and the number of lines for all files in
+    // the corresponding (solution) submission. The attribute can take values within the range of [0, 1].
     @Column(name = "covered_line_ratio")
     private Double coveredLineRatio;
 
