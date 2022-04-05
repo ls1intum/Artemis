@@ -8,7 +8,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, COMPLAINT_RESPONSE_TEXT_LIMIT, COMPLAINT_TEXT_LIMIT, DEFAULT_COMPLAINT_RESPONSE_TEXT_LIMIT, DEFAULT_COMPLAINT_TEXT_LIMIT } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -55,6 +55,11 @@ export class CourseUpdateComponent implements OnInit {
     faTimes = faTimes;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
+
+    // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
+    // This is the maximum value allowed in our database. These values must be the same as in Constants.java
+    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 5000;
+    readonly COMPLAINT_TEXT_LIMIT = 5000;
 
     constructor(
         private courseService: CourseManagementService,
@@ -152,10 +157,10 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 maxComplaintTextLimit: new FormControl(this.course.maxComplaintTextLimit, {
-                    validators: [Validators.required, Validators.min(0), Validators.max(COMPLAINT_TEXT_LIMIT)],
+                    validators: [Validators.required, Validators.min(0), Validators.max(this.COMPLAINT_TEXT_LIMIT)],
                 }),
                 maxComplaintResponseTextLimit: new FormControl(this.course.maxComplaintResponseTextLimit, {
-                    validators: [Validators.required, Validators.min(0), Validators.max(COMPLAINT_RESPONSE_TEXT_LIMIT)],
+                    validators: [Validators.required, Validators.min(0), Validators.max(this.COMPLAINT_RESPONSE_TEXT_LIMIT)],
                 }),
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
@@ -350,8 +355,8 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['maxComplaints'].setValue(3);
             this.courseForm.controls['maxTeamComplaints'].setValue(3);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(7);
-            this.courseForm.controls['maxComplaintTextLimit'].setValue(DEFAULT_COMPLAINT_TEXT_LIMIT);
-            this.courseForm.controls['maxComplaintResponseTextLimit'].setValue(DEFAULT_COMPLAINT_RESPONSE_TEXT_LIMIT);
+            this.courseForm.controls['maxComplaintTextLimit'].setValue(2000);
+            this.courseForm.controls['maxComplaintResponseTextLimit'].setValue(2000);
         } else {
             this.complaintsEnabled = false;
             this.courseForm.controls['maxComplaints'].setValue(0);

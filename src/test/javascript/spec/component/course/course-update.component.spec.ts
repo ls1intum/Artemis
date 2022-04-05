@@ -28,7 +28,6 @@ import dayjs from 'dayjs/esm';
 import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { base64StringToBlob } from 'app/utils/blob-util';
-import { DEFAULT_COMPLAINT_RESPONSE_TEXT_LIMIT, DEFAULT_COMPLAINT_TEXT_LIMIT } from 'app/app.constants';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -371,8 +370,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(7);
-            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(DEFAULT_COMPLAINT_TEXT_LIMIT);
-            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(DEFAULT_COMPLAINT_RESPONSE_TEXT_LIMIT);
+            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
+            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
             expect(comp.complaintsEnabled).toBe(true);
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(0);
