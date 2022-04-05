@@ -32,11 +32,11 @@ public class CustomMetricsExtension {
      * @return extended jhimetrics
      */
     @ReadOperation
-    public Map<String, Map> getMetrics() {
-        Map<String, Map> metrics = this.jHipsterMetricsEndpoint.allMetrics();
+    public Map<String, Map<?, ?>> getMetrics() {
+        var metrics = this.jHipsterMetricsEndpoint.allMetrics();
         HashMap<String, Integer> activeUsers = new HashMap<>();
         activeUsers.put("activeUsers", this.simpUserRegistry.getUserCount());
-        metrics.put("customMetrics", new HashMap(activeUsers));
+        metrics.put("customMetrics", new HashMap<>(activeUsers));
         return metrics;
     }
 
