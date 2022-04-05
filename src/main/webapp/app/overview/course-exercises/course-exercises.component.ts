@@ -178,7 +178,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     private updateNextRelevantExercise() {
-        const nextExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises, 12, this.currentUser);
+        const nextExercise = this.exerciseService.getNextExerciseForHours(this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this)), 12, this.currentUser);
         if (nextExercise) {
             const dueDate = CourseExercisesComponent.exerciseDueDate(nextExercise);
             this.nextRelevantExercise = {
@@ -207,6 +207,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         filters.forEach((filter) => (this.activeFilters.has(filter) ? this.activeFilters.delete(filter) : this.activeFilters.add(filter)));
         this.localStorage.store(SortFilterStorageKey.FILTER, Array.from(this.activeFilters).join(','));
         this.applyFiltersAndOrder();
+        this.updateNextRelevantExercise();
     }
 
     /**
@@ -230,21 +231,29 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
      * Applies all selected activeFilters and orders and groups the user's exercises
      */
     private applyFiltersAndOrder() {
+        const filtered = this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this));
+        this.groupExercises(filtered);
+    }
+
+    /**
+     * Check if the given exercise fulfills the currently selected filters
+     * @param exercise the exercise to check
+     * @return true if the current exercise fullfills the currently selected filters; false otherwise
+     * @private
+     */
+    private fulfillsCurrentFilter(exercise: Exercise): boolean {
         const needsWorkFilterActive = this.activeFilters.has(ExerciseFilter.NEEDS_WORK);
         const overdueFilterActive = this.activeFilters.has(ExerciseFilter.OVERDUE);
         const unreleasedFilterActive = this.activeFilters.has(ExerciseFilter.UNRELEASED);
         const optionalFilterActive = this.activeFilters.has(ExerciseFilter.OPTIONAL);
-        const filtered = this.course?.exercises?.filter((exercise) => {
-            const participation = CourseExercisesComponent.studentParticipation(exercise);
-            return (
-                (!needsWorkFilterActive || this.needsWork(exercise)) &&
-                (!exercise.dueDate || !overdueFilterActive || !hasExerciseDueDatePassed(exercise, participation)) &&
-                (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
-                (!optionalFilterActive || exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) &&
-                (!isOrion || exercise.type === ExerciseType.PROGRAMMING)
-            );
-        });
-        this.groupExercises(filtered);
+        const participation = CourseExercisesComponent.studentParticipation(exercise);
+        return !!(
+            (!needsWorkFilterActive || this.needsWork(exercise)) &&
+            (!exercise.dueDate || !overdueFilterActive || !hasExerciseDueDatePassed(exercise, participation)) &&
+            (!exercise.releaseDate || !unreleasedFilterActive || (exercise as QuizExercise)?.visibleToStudents) &&
+            (!optionalFilterActive || exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED) &&
+            (!isOrion || exercise.type === ExerciseType.PROGRAMMING)
+        );
     }
 
     private getSortingAttributeFromExercise(): (exercise: Exercise) => dayjs.Dayjs | undefined {
