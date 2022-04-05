@@ -3,6 +3,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { NgModel } from '@angular/forms';
+import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
@@ -65,7 +67,6 @@ import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
-import { NgModel } from '@angular/forms';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -101,6 +102,7 @@ describe('CodeEditorContainerIntegration', () => {
                 KeysPipe,
                 MockDirective(FeatureToggleDirective),
                 MockDirective(FeatureToggleLinkDirective),
+                MockDirective(NgbDropdown),
                 MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
                 CodeEditorActionsComponent,

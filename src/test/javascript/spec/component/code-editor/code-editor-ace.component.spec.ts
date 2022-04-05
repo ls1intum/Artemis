@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement, EventEmitter } from '@angular/core';
 import { NgModel } from '@angular/forms';
+import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -27,7 +28,13 @@ describe('CodeEditorAceComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule],
-            declarations: [CodeEditorAceComponent, TranslatePipeMock, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockDirective(NgModel)],
+            declarations: [
+                CodeEditorAceComponent,
+                TranslatePipeMock,
+                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+                MockDirective(NgModel),
+                MockDirective(NgbDropdown),
+            ],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
