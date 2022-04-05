@@ -187,15 +187,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
             this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => {
                 this.programmingExercise.gitDiffReport = gitDiffReport;
-                if (gitDiffReport !== undefined) {
+                if (gitDiffReport) {
                     this.addedLineCount = gitDiffReport.entries
                         .map((entry) => entry.lineCount)
-                        .filter((lineCount) => lineCount !== undefined)
+                        .filter((lineCount) => lineCount)
                         .map((lineCount) => lineCount!)
                         .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
                     this.removedLineCount = gitDiffReport.entries
                         .map((entry) => entry.previousLineCount)
-                        .filter((lineCount) => lineCount !== undefined)
+                        .filter((lineCount) => lineCount)
                         .map((lineCount) => lineCount!)
                         .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
                 }

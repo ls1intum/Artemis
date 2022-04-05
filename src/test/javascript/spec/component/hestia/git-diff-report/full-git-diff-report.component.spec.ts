@@ -3,8 +3,8 @@ import { FullGitDiffReportComponent } from 'app/exercises/programming/hestia/git
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
-import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
-import { ActivatedRoute } from '@angular/router';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe } from 'ng-mocks';
 
 describe('ProgrammingExerciseFullGitDiffReport Component', () => {
     let comp: FullGitDiffReportComponent;
@@ -13,8 +13,8 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [FullGitDiffReportComponent],
-            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
+            declarations: [FullGitDiffReportComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(FullGitDiffReportComponent);
         comp = fixture.componentInstance;
@@ -48,7 +48,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.entries).toStrictEqual(expectedEntries);
     });
 
-    it('Should show 5-0 boxes', () => {
+    it('Should set added/removed lines to 1-0', () => {
         const entries = [{ filePath: 'src/a.java', code: 'Test' }] as ProgrammingExerciseFullGitDiffEntry[];
 
         comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;
@@ -57,7 +57,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(0);
     });
 
-    it('Should show 4-1 boxes', () => {
+    it('Should set added/removed lines to 4-1', () => {
         const entries = [
             {
                 filePath: 'src/a.java',
@@ -72,7 +72,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(1);
     });
 
-    it('Should show 3-2 boxes', () => {
+    it('Should set added/removed lines to 3-2', () => {
         const entries = [
             {
                 filePath: 'src/a.java',
@@ -87,7 +87,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(2);
     });
 
-    it('Should show 2-3 boxes', () => {
+    it('Should set added/removed lines to 2-3', () => {
         const entries = [
             {
                 filePath: 'src/a.java',
@@ -102,7 +102,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(3);
     });
 
-    it('Should show 1-4 boxes', () => {
+    it('Should set added/removed lines to 1-4', () => {
         const entries = [
             {
                 filePath: 'src/a.java',
@@ -117,7 +117,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(4);
     });
 
-    it('Should show 0-5 boxes', () => {
+    it('Should set added/removed lines to 0-1', () => {
         const entries = [{ filePath: 'src/a.java', previousCode: '1' }] as ProgrammingExerciseFullGitDiffEntry[];
 
         comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;

@@ -24,6 +24,8 @@ export class GitDiffLineStatComponent implements OnInit {
             this.removedSquareCount = 0;
         } else {
             const totalLineCount = this.addedLineCount + this.removedLineCount;
+            // Calculates the amount of green rectangles to show between 1 and 4
+            // This is the rounded percentage of added lines divided by total lines
             this.addedSquareCount = Math.round(Math.max(1, Math.min(4, (this.addedLineCount / totalLineCount) * 5)));
             this.removedSquareCount = 5 - this.addedSquareCount;
         }

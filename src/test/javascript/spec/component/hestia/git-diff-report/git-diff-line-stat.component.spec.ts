@@ -1,6 +1,8 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe } from 'ng-mocks';
 
 describe('Git-Diff line-stat Component', () => {
     let comp: GitDiffLineStatComponent;
@@ -9,23 +11,23 @@ describe('Git-Diff line-stat Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [GitDiffLineStatComponent],
+            declarations: [GitDiffLineStatComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffLineStatComponent);
         comp = fixture.componentInstance;
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
-    it('Should show 5-0 boxes', () => {
+    function checkBoxesCount() {
         comp.addedLineCount = 100;
         comp.removedLineCount = 0;
         comp.ngOnInit();
         expect(comp.addedSquareCount).toBe(5);
         expect(comp.removedSquareCount).toBe(0);
+    }
+
+    it('Should show 5-0 boxes', () => {
+        checkBoxesCount();
     });
 
     it('Should show 4-1 boxes', () => {
