@@ -78,6 +78,15 @@
                     "leftExclusiveRightInclusive": "Left boundary is excluded from and right is included in the interval",
                     "bothInclusive": "Both boundaries are included in the interval"
                 }
+            },
+            "intervalTab": {
+                "title": "Interval",
+                "mode": "Mode",
+                "pointsMode": "Points",
+                "percentageMode": "Percentage"
+            },
+            "detailedTab": {
+                "title": "Detailed"
             }
         },
         "gradingScale": {

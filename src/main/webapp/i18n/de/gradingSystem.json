@@ -78,6 +78,15 @@
                     "leftExclusiveRightInclusive": "Die linke Schranke ist vom Intervall ausgeschlossen und die rechte ist darin enthalten",
                     "bothInclusive": "Beide Schranken sind im Intervall enthalten"
                 }
+            },
+            "intervalTab": {
+                "title": "Intervall",
+                "mode": "Modus",
+                "pointsMode": "Punkte",
+                "percentageMode": "Prozentsatz"
+            },
+            "detailedTab": {
+                "title": "Ausführlich"
             }
         },
         "gradingScale": {

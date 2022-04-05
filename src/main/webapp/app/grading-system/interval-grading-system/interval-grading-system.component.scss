@@ -1,0 +1,23 @@
+.dropdown-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin: 1em 0;
+}
+
+.dropdown-container .form-group {
+    width: 18%;
+    min-width: 15%;
+
+    .form-control {
+        margin-top: 0.25em;
+    }
+}
+
+.grading-scale-table-row td {
+    width: 17%;
+
+    input {
+        min-width: 50%;
+    }
+}
