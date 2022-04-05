@@ -136,7 +136,7 @@ public class ProgrammingExerciseGradingService {
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            latestSubmission.setBuildFailed(newResult.getResultString().equals("No tests found"));
+            latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
             // Add artifacts to submission
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 

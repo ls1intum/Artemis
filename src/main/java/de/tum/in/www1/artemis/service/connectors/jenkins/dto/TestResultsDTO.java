@@ -179,7 +179,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     @Override
     public boolean hasLogs() {
-        return this.logs != null && this.logs.size() > 0;
+        return this.logs != null && !this.logs.isEmpty();
     }
 
     @Override

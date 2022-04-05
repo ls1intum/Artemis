@@ -76,7 +76,7 @@ public class VcsRepositoryUrl {
      * @return the folderName as a string.
      */
     public String folderNameForRepositoryUrl() {
-        if (uri.getScheme().equals("file")) {
+        if ("file".equals(uri.getScheme())) {
             // Take the last element of the path
             final var segments = uri.getPath().split("/");
             return segments[segments.length - 1];

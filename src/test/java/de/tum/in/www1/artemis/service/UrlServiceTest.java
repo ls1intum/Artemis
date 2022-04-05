@@ -36,6 +36,7 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
      * @throws URISyntaxException exception in case the above URLs would be malformed
      */
     public UrlServiceTest() throws URISyntaxException {
+        // Intentionally empty, see JavaDoc
     }
 
     @Test

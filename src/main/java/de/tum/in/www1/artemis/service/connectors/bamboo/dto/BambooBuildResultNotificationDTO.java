@@ -105,13 +105,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @Override
     public boolean hasLogs() {
-        for (var job : getBuild().getJobs()) {
-            for (var ignored : job.getLogs()) {
-                // as soon as one log is found, the build result has logs
-                return true;
-            }
-        }
-        return false;
+        return getBuild().getJobs().stream().anyMatch(job -> !job.getLogs().isEmpty());
     }
 
     @Override
