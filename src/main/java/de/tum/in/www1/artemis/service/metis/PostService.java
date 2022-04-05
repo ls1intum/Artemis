@@ -188,7 +188,6 @@ public class PostService extends PostingService {
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
         Post post = postRepository.findByIdElseThrow(postId);
         post.setDisplayPriority(displayPriority);
-
         return updatePost(courseId, postId, post);
     }
 
