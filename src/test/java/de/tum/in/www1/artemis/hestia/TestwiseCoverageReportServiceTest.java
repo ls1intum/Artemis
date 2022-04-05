@@ -18,24 +18,11 @@ import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private GitService gitService;
-
-    @Autowired
-    private GitUtilService gitUtilService;
-
-    @Autowired
-    private RepositoryService repositoryService;
 
     @Autowired
     private TestwiseCoverageService testwiseCoverageService;
@@ -50,19 +37,10 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
-
-    @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    private ProgrammingExerciseGradingService gradingService;
-
-    @Autowired
     private HestiaUtilTestService hestiaUtilTestService;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     private ProgrammingExercise programmingExercise;
 
