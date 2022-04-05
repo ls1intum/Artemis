@@ -3,7 +3,7 @@ import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model'
 
 @Component({
     selector: 'jhi-messages',
-    styleUrls: ['./course-messages.component.scss', '../discussion-section/discussion-section.component.scss'],
+    styleUrls: ['../discussion-section/discussion-section.component.scss'],
     templateUrl: './course-messages.component.html',
 })
 export class CourseMessagesComponent {

@@ -9,7 +9,8 @@
                 "hide": "Hide messages",
                 "notFound": "No chat found",
                 "searchForUsers": "Search users within course"
-            }
+            },
+            "submit": "Send"
         }
     }
 }

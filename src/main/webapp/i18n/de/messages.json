@@ -9,7 +9,8 @@
                 "hide": "Nachrichten ausblenden",
                 "notFound": "Kein Chat gefunden",
                 "searchForUsers": "Suchen Sie Benutzer innerhalb des Kurses"
-            }
+            },
+            "submit": "Senden"
         }
     }
 }
