@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,8 +63,7 @@ public class StructuralTestCaseService {
      * @return The new structural solution entries
      * @throws StructuralSolutionEntryGenerationException If there was an error while generating the solution entries
      */
-    public List<ProgrammingExerciseSolutionEntry> generateStructuralSolutionEntries(ProgrammingExercise programmingExercise)
-            throws StructuralSolutionEntryGenerationException, URISyntaxException {
+    public List<ProgrammingExerciseSolutionEntry> generateStructuralSolutionEntries(ProgrammingExercise programmingExercise) throws StructuralSolutionEntryGenerationException {
         log.debug("Generating the structural SolutionEntries for the following programmingExercise: {} {}", programmingExercise.getId(), programmingExercise.getProjectName());
 
         var testCases = testCaseRepository.findByExerciseIdWithSolutionEntriesAndActive(programmingExercise.getId(), true);
@@ -127,16 +125,14 @@ public class StructuralTestCaseService {
      * @return The new structural solution entries
      */
     private List<ProgrammingExerciseSolutionEntry> generateStructuralSolutionEntries(Set<ProgrammingExerciseTestCase> testCases, Repository solutionRepository,
-            StructuralClassElements[] classElements, Map<String, JavaClass> solutionClasses) throws URISyntaxException {
-        List<ProgrammingExerciseSolutionEntry> programmingExerciseSolutionEntries = new ArrayList<>();
-
-        for (var classElement : classElements) {
+            StructuralClassElements[] classElements, Map<String, JavaClass> solutionClasses) {
+        return Arrays.stream(classElements).flatMap(classElement -> {
             var packageName = classElement.getStructuralClass().getPackageName();
             var name = classElement.getStructuralClass().getName();
             var solutionClass = solutionClasses.get(packageName + "." + name);
             String filePath;
             if (solutionClass != null) {
-                filePath = solutionRepository.getLocalPath().toAbsolutePath().toUri().relativize(solutionClass.getSource().getURL().toURI()).toString();
+                filePath = solutionClass.getSource().getURL().getPath().replace(solutionRepository.getLocalPath().toAbsolutePath() + "/", "");
             }
             else {
                 filePath = "src/" + packageName.replaceAll("\\.", "/") + "/" + name + ".java";
@@ -146,15 +142,11 @@ public class StructuralTestCaseService {
             List<String> constructorsSolutionCode = generateCodeForConstructor(classElement.getConstructors(), classElement.getStructuralClass().getName(), solutionClass);
             List<String> methodsSolutionCode = generateCodeForMethods(classElement.getMethods(), classElement.getStructuralClass(), solutionClass);
             List<String> attributesSolutionCode = generateCodeForAttributes(classElement.getAttributes(), solutionClass);
-
-            programmingExerciseSolutionEntries.add(createSolutionEntry(filePath, classSolutionCode, findStructuralTestCase("Class", name, testCases)));
-            programmingExerciseSolutionEntries
-                    .add(createSolutionEntry(filePath, String.join("\n\n", attributesSolutionCode), findStructuralTestCase("Attributes", name, testCases)));
-            programmingExerciseSolutionEntries
-                    .add(createSolutionEntry(filePath, String.join("\n\n", constructorsSolutionCode), findStructuralTestCase("Constructors", name, testCases)));
-            programmingExerciseSolutionEntries.add(createSolutionEntry(filePath, String.join("\n\n", methodsSolutionCode), findStructuralTestCase("Methods", name, testCases)));
-        }
-        return programmingExerciseSolutionEntries.stream().filter(Objects::nonNull).collect(Collectors.toList());
+            return Stream.of(createSolutionEntry(filePath, classSolutionCode, findStructuralTestCase("Class", name, testCases)),
+                    createSolutionEntry(filePath, String.join("\n\n", attributesSolutionCode), findStructuralTestCase("Attributes", name, testCases)),
+                    createSolutionEntry(filePath, String.join("\n\n", constructorsSolutionCode), findStructuralTestCase("Constructors", name, testCases)),
+                    createSolutionEntry(filePath, String.join("\n\n", methodsSolutionCode), findStructuralTestCase("Methods", name, testCases)));
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     /**

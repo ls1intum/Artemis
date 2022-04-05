@@ -233,7 +233,7 @@ public class ProgrammingExerciseSolutionEntryResource {
             var solutionEntries = structuralTestCaseService.generateStructuralSolutionEntries(exercise);
             return ResponseEntity.ok(solutionEntries);
         }
-        catch (StructuralSolutionEntryGenerationException | URISyntaxException e) {
+        catch (StructuralSolutionEntryGenerationException e) {
             log.error("Unable to create structural solution entries", e);
             return ResponseEntity.badRequest().build();
         }
