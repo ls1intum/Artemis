@@ -47,11 +47,11 @@
                     [readOnly]="readOnly"
                     [disabled]="readOnly"
                     [placeholder]="
-                        assessment.gradingInstruction!
+                        assessment.gradingInstruction! && assessment.gradingInstruction!.feedback!
                             ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
                             : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
                     "
-                    [required]="!assessment.gradingInstruction"
+                    [required]="!assessment.gradingInstruction || !assessment.gradingInstruction!.feedback"
                 ></textarea>
             </div>
         </div>
