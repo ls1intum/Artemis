@@ -32,7 +32,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -129,25 +128,25 @@ public class BitbucketRequestMockProvider {
      * @param commitHash The expected commit hash
      * @param pushDate The expected push date for the commit
      */
-    public void mockGetPushDate(String projectKey, String commitHash, ZonedDateTime pushDate) {
-        JsonObject refChange = new JsonObject();
-        refChange.addProperty("refId", "refs/heads/main");
-        refChange.addProperty("fromHash", "7".repeat(40));
-        refChange.addProperty("toHash", commitHash);
-        JsonObject pushEvent = new JsonObject();
-        pushEvent.addProperty("id", 42);
-        pushEvent.addProperty("createdDate", pushDate.toInstant().toEpochMilli());
-        pushEvent.addProperty("trigger", "push");
-        pushEvent.add("refChange", refChange);
+    public void mockGetPushDate(String projectKey, String commitHash, ZonedDateTime pushDate) throws JsonProcessingException {
+        final var refChangeDTO = new BitbucketChangeActivitiesDTO.ValuesDTO.RefChangeDTO();
+        refChangeDTO.setRefId("refs/heads/main");
+        refChangeDTO.setFromHash("7".repeat(40));
+        refChangeDTO.setToHash(commitHash);
+        final var valuesDTO = new BitbucketChangeActivitiesDTO.ValuesDTO();
+        valuesDTO.setId(42L);
+        valuesDTO.setCreatedDate(pushDate.toInstant().toEpochMilli());
+        valuesDTO.setTrigger("push");
+        valuesDTO.setRefChange(refChangeDTO);
 
-        JsonArray array = new JsonArray();
-        array.add(pushEvent);
-        JsonObject object = new JsonObject();
-        object.add("values", array);
+        final var changeActivitiesDTO = new BitbucketChangeActivitiesDTO();
+        changeActivitiesDTO.setValues(List.of(valuesDTO));
+        ObjectMapper objectMapper = new ObjectMapper();
         mockServer
                 .expect(ExpectedCount.once(),
                         requestTo(Matchers.matchesPattern(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*?/ref-change-activities(\\?.*)?")))
-                .andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).body(object.toString()));
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).body(objectMapper.writeValueAsString(changeActivitiesDTO)).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockGrantGroupPermissionToProject(ProgrammingExercise exercise, String groupName, BitbucketPermission permission) throws URISyntaxException {

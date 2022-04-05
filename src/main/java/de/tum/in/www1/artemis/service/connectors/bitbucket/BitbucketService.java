@@ -23,7 +23,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -31,10 +30,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -828,31 +823,15 @@ public class BitbucketService extends AbstractVersionControlService {
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String hash) {
         final var url = bitbucketServerUrl + "/rest/api/latest/projects/" + participation.getProgrammingExercise().getProjectKey() + "/repos/"
                 + urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()) + "/ref-change-activities?start=0&limit=25";
-        final var response = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
+        final var response = restTemplate.exchange(url, HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
         if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
             throw new BambooException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
         }
-        try {
-            // TODO: use a DTO (e.g. something similar to CommitDTO)
-            JsonObject responseJson = (JsonObject) JsonParser.parseString(response.getBody());
-            Assert.notNull(responseJson, "No response");
-            JsonArray values = responseJson.getAsJsonArray("values");
-            Assert.notNull(values, "Values not found");
-            for (JsonElement value : values) {
-                JsonObject object = (JsonObject) value;
-                Assert.notNull(object, "Values element not found");
-                Assert.notNull(object.getAsJsonObject("refChange"), "Reference changes not found");
-                Assert.notNull(object.getAsJsonObject("refChange").get("toHash"), "New hash not found");
-                if (object.getAsJsonObject("refChange").get("toHash").getAsString().equals(hash)) {
-                    Assert.notNull(object.get("createdDate"), "Created date not found");
-                    return Instant.ofEpochMilli(object.get("createdDate").getAsLong()).atZone(ZoneOffset.UTC);
-                }
-            }
-        }
-        catch (IllegalArgumentException | ClassCastException e) {
-            throw new BambooException("Unable to parse the push date result for participation " + participation.getId() + " and hash " + hash, e);
-        }
-        throw new BambooException("Unable to parse the push date result for participation " + participation.getId() + " and hash " + hash);
+        final var changeActivities = response.getBody().getValues();
+
+        final var activityOfPush = changeActivities.stream().filter(activity -> activity.getRefChange().getToHash().equals(hash)).findFirst()
+                .orElseThrow(() -> new BambooException("Unable to find push date result for participation " + participation.getId() + " and hash " + hash));
+        return Instant.ofEpochMilli(activityOfPush.getCreatedDate()).atZone(ZoneOffset.UTC);
     }
 
     @Nullable
