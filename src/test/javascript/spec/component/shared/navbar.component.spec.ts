@@ -27,6 +27,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ArtemisTestModule } from '../../test.module';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 class MockBreadcrumb {
     label: string;
@@ -38,7 +39,8 @@ describe('NavbarComponent', () => {
     let fixture: ComponentFixture<NavbarComponent>;
     let component: NavbarComponent;
     let courseManagementStub: jest.SpyInstance;
-    let exerciseStub: jest.SpyInstance;
+    let exerciseTitleStub: jest.SpyInstance;
+    let exerciseService: ExerciseService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -95,8 +97,8 @@ describe('NavbarComponent', () => {
                 const courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
                 courseManagementStub = jest.spyOn(courseManagementService, 'getTitle').mockReturnValue(of({ body: 'Test Course' } as HttpResponse<string>));
 
-                const exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                exerciseStub = jest.spyOn(exerciseService, 'getTitle').mockReturnValue(of({ body: 'Test Exercise' } as HttpResponse<string>));
+                exerciseService = fixture.debugElement.injector.get(ExerciseService);
+                exerciseTitleStub = jest.spyOn(exerciseService, 'getTitle').mockReturnValue(of({ body: 'Test Exercise' } as HttpResponse<string>));
             });
     });
 
@@ -221,7 +223,7 @@ describe('NavbarComponent', () => {
             fixture.detectChanges();
 
             expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseStub).toHaveBeenCalledWith(2);
+            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
 
             const gradingCrumb = {
                 label: 'artemisApp.programmingExercise.configureGrading.shortTitle',
@@ -245,7 +247,7 @@ describe('NavbarComponent', () => {
             fixture.detectChanges();
 
             expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseStub).toHaveBeenCalledWith(2);
+            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
 
             const assessmentCrumb = {
                 label: 'artemisApp.assessment.assessment',
@@ -268,11 +270,14 @@ describe('NavbarComponent', () => {
 
             const hintService = fixture.debugElement.injector.get(ExerciseHintService);
             const hintsStub = jest.spyOn(hintService, 'getTitle').mockReturnValue(of({ body: 'Exercise Hint' } as HttpResponse<string>));
+            const findStub = jest
+                .spyOn(exerciseService, 'find')
+                .mockReturnValue(of({ body: { title: 'Test Exercise', type: ExerciseType.PROGRAMMING } } as HttpResponse<Exercise>));
 
             fixture.detectChanges();
 
             expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseStub).toHaveBeenCalledWith(2);
+            expect(findStub).toHaveBeenCalledWith(2);
             expect(hintsStub).toHaveBeenCalledWith(2, 3);
 
             const hintsCrumb = {
@@ -292,7 +297,7 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.course.exercises', translate: true, uri: '/course-management/1/exercises/' } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exercise', translate: false, uri: '/course-management/1/exercises/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Exercise', translate: false, uri: '/course-management/1/programming-exercises/2/' } as MockBreadcrumb);
             expect(component.breadcrumbs[4]).toEqual(hintsCrumb);
             expect(component.breadcrumbs[5]).toEqual(hintCrumb);
         });
@@ -304,7 +309,7 @@ describe('NavbarComponent', () => {
             fixture.detectChanges();
 
             expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseStub).toHaveBeenCalledWith(2);
+            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
 
             const submissionsCrumb = {
                 label: 'artemisApp.exercise.submissions',
@@ -337,7 +342,7 @@ describe('NavbarComponent', () => {
             fixture.detectChanges();
 
             expect(courseManagementStub).toHaveBeenCalledWith(courseId);
-            expect(exerciseStub).toHaveBeenCalledWith(exerciseId);
+            expect(exerciseTitleStub).toHaveBeenCalledWith(exerciseId);
 
             expect(component.breadcrumbs.length).toEqual(4);
 
@@ -362,7 +367,7 @@ describe('NavbarComponent', () => {
             fixture.detectChanges();
 
             expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseStub).toHaveBeenCalledWith(2);
+            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
 
             const submissionCrumb = {
                 label: 'artemisApp.exampleSubmission.home.title',
@@ -397,7 +402,7 @@ describe('NavbarComponent', () => {
             fixture.detectChanges();
 
             expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseStub).toHaveBeenCalledWith(2);
+            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
 
             const submissionCrumb = {
                 label: 'artemisApp.exampleSubmission.home.title',
@@ -527,7 +532,7 @@ describe('NavbarComponent', () => {
 
             expect(courseManagementStub).toHaveBeenCalledWith(1);
             expect(examStub).toHaveBeenCalledWith(2);
-            expect(exerciseStub).toHaveBeenCalledWith(4);
+            expect(exerciseTitleStub).toHaveBeenCalledWith(4);
 
             const exerciseGroupsCrumb = {
                 label: 'artemisApp.examManagement.exerciseGroups',
