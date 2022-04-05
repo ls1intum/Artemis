@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -110,7 +111,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         // at the moment, only Java and Swift are supported
         if (isStaticCodeAnalysisEnabled) {
-            String staticCodeAnalysisScript = createStaticCodeAnalysisScript(programmingLanguage);
+            String staticCodeAnalysisScript = createStaticCodeAnalysisScript(programmingLanguage, projectType);
             replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
         }
         return replacements;
@@ -124,13 +125,27 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
         final var programmingLanguageName = programmingLanguage.name().toLowerCase();
 
+        Optional<String> projectTypeName;
+
+        // Set a project type name in case the chosen Jenkinsfile also depend on the project type
         if (projectType.isPresent() && ProgrammingLanguage.C.equals(programmingLanguage)) {
-            final var projectTypeName = projectType.get().name().toLowerCase();
-            return new String[] { "templates", "jenkins", programmingLanguageName, projectTypeName, regularOrSequentialDir, pipelineScriptFilename };
+            projectTypeName = Optional.of(projectType.get().name().toLowerCase(Locale.ROOT));
+        }
+        else if (projectType.isPresent() && projectType.get().isGradle()) {
+            projectTypeName = Optional.of("gradle");
+        }
+        // Maven is also the project type for all other Java exercises (also if the project type is not present)
+        else if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
+            projectTypeName = Optional.of("maven");
         }
         else {
-            return new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename };
+            projectTypeName = Optional.empty();
         }
+
+        if (projectTypeName.isPresent()) {
+            return new String[] { "templates", "jenkins", programmingLanguageName, projectTypeName.get(), regularOrSequentialDir, pipelineScriptFilename };
+        }
+        return new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename };
     }
 
     @Override
@@ -170,16 +185,23 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     // at the moment, only Java and Swift are supported
-    private String createStaticCodeAnalysisScript(ProgrammingLanguage programmingLanguage) {
+    private String createStaticCodeAnalysisScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> optionalProjectType) {
         StringBuilder script = new StringBuilder();
         String lineEnding = "&#xd;";
         // Delete a possible old directory for generated static code analysis reports and create a new one
         script.append("rm -rf ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
         script.append("mkdir ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            script.append("mvn ");
-            // Execute all static code analysis tools for Java
-            script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(programmingLanguage)).append(lineEnding);
+            boolean isMaven = optionalProjectType.isEmpty() || optionalProjectType.get().isMaven();
+            if (isMaven) {
+                script.append("mvn ");
+                // Execute all static code analysis tools for Java
+                script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(programmingLanguage)).append(lineEnding);
+            }
+            else {
+                script.append("./gradlew check\n");
+            }
+
             // Copy all static code analysis reports to new directory
             for (var tool : StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage)) {
                 script.append("cp target/").append(tool.getFilePattern()).append(" ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
