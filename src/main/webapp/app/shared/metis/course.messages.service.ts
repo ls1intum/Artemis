@@ -9,7 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { ChatSessionDTO } from 'app/entities/metis/chat.session/chat-session-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class CourseMessagesService implements OnDestroy {
     private chatSessions$: ReplaySubject<ChatSession[]> = new ReplaySubject<ChatSession[]>(1);
     private subscribedChannel?: string;

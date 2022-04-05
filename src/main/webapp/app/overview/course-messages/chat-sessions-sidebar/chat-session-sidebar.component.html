@@ -34,7 +34,7 @@
                 <div class="my-2">
                     <ul class="chat-session-list" *ngIf="chatSessions && chatSessions.length">
                         <li
-                            *ngFor="let chatSession of chatSessions"
+                            *ngFor="let chatSession of chatSessions; trackBy: chatSessionsTrackByFn"
                             class="chat-session-list-item"
                             [class.selected]="activeChatSession.id === chatSession.id"
                             (click)="activeChatSession = chatSession; selectChatSession.emit(chatSession)"

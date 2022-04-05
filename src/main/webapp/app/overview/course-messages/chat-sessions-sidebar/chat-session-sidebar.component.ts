@@ -4,7 +4,6 @@ import { HttpResponse } from '@angular/common/http';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 import { CourseMessagesService } from 'app/shared/metis/course.messages.service';
-import { ChatSessionService } from 'app/shared/metis/chat-session.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 import { User } from 'app/core/user/user.model';
@@ -17,7 +16,7 @@ import { Course } from 'app/entities/course.model';
     selector: 'jhi-chat-session-sidebar',
     styleUrls: ['./chat-session-sidebar.component.scss', '../../discussion-section/discussion-section.component.scss'],
     templateUrl: './chat-session-sidebar.component.html',
-    providers: [ChatSessionService],
+    providers: [CourseMessagesService],
 })
 export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
     @Output() selectChatSession = new EventEmitter<ChatSession>();
@@ -143,6 +142,12 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.chatSessionSubscription?.unsubscribe();
     }
+
+    /**
+     * defines a function that returns the post id as unique identifier,
+     * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
+     */
+    chatSessionsTrackByFn = (index: number, chatSession: ChatSession): number => chatSession.id!;
 
     getNameOfChatSessionParticipant(chatSession: ChatSession): string {
         const participant = chatSession.userChatSessions!.find((userChatSession) => userChatSession.user.id !== this.courseMessagesService.userId)!.user;
