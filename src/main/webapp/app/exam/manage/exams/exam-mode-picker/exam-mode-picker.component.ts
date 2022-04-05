@@ -10,7 +10,7 @@ export class ExamModePickerComponent {
     @Input() exam: Exam;
     @Input() disableInput: boolean;
 
-    @Output() ngModelChange = new EventEmitter();
+    @Output() examModeChanged = new EventEmitter();
 
     /**
      * Set the mode and emit the changes to the parent component to notice changes
@@ -19,7 +19,7 @@ export class ExamModePickerComponent {
     setExamMode(testExam: boolean) {
         if (!this.disableInput && this.exam.testExam !== testExam) {
             this.exam.testExam = testExam;
-            this.ngModelChange.emit();
+            this.examModeChanged.emit();
         }
     }
 }

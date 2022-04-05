@@ -6,6 +6,7 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-date-time-picker',
     templateUrl: `./date-time-picker.component.html`,
+    styleUrls: [`./date-time-picker.component.scss`],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,

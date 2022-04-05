@@ -215,7 +215,7 @@ describe('Exam Update Component', () => {
         exam.startDate = dayjs().add(0, 'hours');
         exam.endDate = dayjs().add(2, 'hours');
         fixture.detectChanges();
-        expect(exam.workingTime).toBe(7200);
+        expect(exam.workingTime).toEqual(7200);
         expect(component.calculateWorkingTime).toEqual(120);
 
         exam.startDate = dayjs().add(0, 'hours');

@@ -11,7 +11,7 @@
             <!-- Section exam configuration -->
             <div>
                 <hr />
-                <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.configuration' | artemisTranslate }}</h5>
+                <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.configuration">Exam Configuration</h5>
                 <div class="form-group" *ngIf="exam.course">
                     <label class="form-control-label" for="course" jhiTranslate="artemisApp.examManagement.courseTitle">Course Title</label>
                     <input id="course" name="course" readonly type="text" class="form-control" [value]="exam.course.title" />
@@ -49,7 +49,7 @@
             </div>
             <hr />
             <!-- Section exam conduction (release dates and working time) -->
-            <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.conduction' | artemisTranslate }}</h5>
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.conduction">Exam Conduction</h5>
             <div class="row mb-3">
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -94,10 +94,10 @@
                         *ngIf="exam.testExam"
                         id="workingTimeInMinutes"
                         name="workingTimeInMinutes"
-                        type="number"
-                        min="0"
                         class="form-control"
-                        [value]="workingTimeInMinutes"
+                        type="number"
+                        min="1"
+                        [(ngModel)]="workingTimeInMinutes"
                         (change)="convertWorkingTimeFromMinutesToSeconds($event)"
                     />
                 </div>
@@ -109,7 +109,7 @@
             </div>
             <hr />
             <!-- Section settings for exam exercises -->
-            <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.exercises' | artemisTranslate }}</h5>
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.exercises">Exam Exercises</h5>
             <div class="row mb-3">
                 <div class="col-sm-6">
                     <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
@@ -136,7 +136,7 @@
             Deactivated for TestExams, as results are provided right after a TestExam run and complaints are not possible  -->
             <div *ngIf="!exam.testExam">
                 <hr />
-                <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.assessment' | artemisTranslate }}</h5>
+                <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment">Exam Assessment</h5>
                 <div class="row mb-3" *ngIf="!exam.testExam">
                     <div class="col-sm-6">
                         <jhi-date-time-picker
@@ -186,7 +186,7 @@
             </div>
             <hr />
             <!-- Section Texts-->
-            <h5 style="padding-bottom: 5px">{{ 'artemisApp.examManagement.sections.text' | artemisTranslate }}</h5>
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.text">Exam Texts</h5>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.startText">>Start Text</label>
                 <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.startText" [enableResize]="true"></jhi-markdown-editor>
