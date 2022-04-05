@@ -522,6 +522,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
         const rows: CourseScoresCsvRow[] = [];
         const keys = this.generateCsvColumnNames();
+        // required because the currently used library for exporting to csv does not quote the header fields (keys)
+        const quotedKeys = keys.map((key) => customOptions.quoteStrings + key + customOptions.quoteStrings);
 
         this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student)));
 
@@ -533,7 +535,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         rows.push(this.generateCsvRowParticipation());
         rows.push(this.generateCsvRowSuccessfulParticipation());
 
-        this.exportAsCsv(keys, rows, customOptions);
+        this.exportAsCsv(quotedKeys, rows, customOptions);
     }
 
     /**

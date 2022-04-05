@@ -15,6 +15,8 @@
             },
             "quoteStrings": {
                 "label": "Quote Strings",
+                "quotes_single": "'",
+                "quotes_double": "\"",
                 "none": "None"
             }
         }

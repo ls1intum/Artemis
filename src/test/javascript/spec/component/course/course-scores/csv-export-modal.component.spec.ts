@@ -36,14 +36,14 @@ describe('CsvExportModalComponent', () => {
         jest.spyOn(translateService, 'currentLang', 'get').mockReturnValue('en');
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.COMMA);
-        expect(component.options.quoteStrings).toBe(CsvQuoteStrings.DOUBLE_QUOTES);
+        expect(component.options.quoteStrings).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
     });
 
     it('should init with german default options', () => {
         jest.spyOn(translateService, 'currentLang', 'get').mockReturnValue('de');
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SEMICOLON);
-        expect(component.options.quoteStrings).toBe(CsvQuoteStrings.DOUBLE_QUOTES);
+        expect(component.options.quoteStrings).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
     });
 
     it('should set csv options', () => {
@@ -56,7 +56,7 @@ describe('CsvExportModalComponent', () => {
     it('should return the export options on finish', () => {
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
-            quoteStrings: CsvQuoteStrings.SINGLE_QUOTES,
+            quoteStrings: CsvQuoteStrings.QUOTES_SINGLE,
         };
         component.options = testOptions;
         const activeModalStub = jest.spyOn(ngbActiveModal, 'close');

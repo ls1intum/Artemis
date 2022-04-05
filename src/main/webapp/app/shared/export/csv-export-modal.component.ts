@@ -12,8 +12,8 @@ export enum CsvFieldSeparator {
 }
 
 export enum CsvQuoteStrings {
-    DOUBLE_QUOTES = '\x22',
-    SINGLE_QUOTES = '\x27',
+    QUOTES_DOUBLE = '\x22',
+    QUOTES_SINGLE = '\x27',
     NONE = '',
 }
 
@@ -45,13 +45,13 @@ export class CsvExportModalComponent implements OnInit {
             case 'de':
                 this.options = {
                     fieldSeparator: CsvFieldSeparator.SEMICOLON,
-                    quoteStrings: CsvQuoteStrings.DOUBLE_QUOTES,
+                    quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
                 };
                 break;
             default:
                 this.options = {
                     fieldSeparator: CsvFieldSeparator.COMMA,
-                    quoteStrings: CsvQuoteStrings.DOUBLE_QUOTES,
+                    quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
                 };
         }
     }
