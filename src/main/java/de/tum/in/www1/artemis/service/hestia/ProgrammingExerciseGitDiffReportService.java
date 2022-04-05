@@ -79,7 +79,12 @@ public class ProgrammingExerciseGitDiffReportService {
         try {
             var report = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
             if (report == null) {
-                return null;
+                // Generate the report if it does not exist yet
+                report = updateReport(programmingExercise);
+                if (report == null) {
+                    // Report could not be generated
+                    return null;
+                }
             }
             var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
             var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
@@ -183,7 +188,9 @@ public class ProgrammingExerciseGitDiffReportService {
             newReport.setSolutionRepositoryCommitHash(solutionHash);
             newReport.setProgrammingExercise(programmingExercise);
             // Delete any old report first
-            programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExercise.getId());
+            if (existingReport != null) {
+                programmingExerciseGitDiffReportRepository.delete(existingReport);
+            }
             newReport = programmingExerciseGitDiffReportRepository.save(newReport);
             programmingExercise.setGitDiffReport(newReport);
             programmingExerciseRepository.save(programmingExercise);
