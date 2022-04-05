@@ -108,6 +108,7 @@ class ChatSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void testGetChatSessionById() {
         ChatSession chatSession = chatService.getChatSessionById(existingChatSession.getId());
         assertThat(chatSession).isEqualTo(existingChatSession);

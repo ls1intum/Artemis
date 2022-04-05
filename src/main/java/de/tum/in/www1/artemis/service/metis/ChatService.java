@@ -139,6 +139,7 @@ public class ChatService {
      */
     private UserChatSession createUserChatSession(UserChatSession userChatSession, ChatSession chatSession) {
         userChatSession.setChatSession(chatSession);
+        userChatSession.setClosed(false);
         userChatSession.setLastRead(chatSession.getLastMessageDate());
         return userChatSessionRepository.save(userChatSession);
     }
