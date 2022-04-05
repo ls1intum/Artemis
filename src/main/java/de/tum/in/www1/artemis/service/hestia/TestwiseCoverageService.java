@@ -196,7 +196,7 @@ public class TestwiseCoverageService {
      * @return the number of covered lines by file path
      */
     private Map<String, Integer> calculateAndSaveUniqueLineCountsByFilePath(CoverageReport coverageReport) {
-        var report = coverageReportRepository.findCoverageReportByIdWithEagerFileReportsElseThrow(coverageReport.getId());
+        var report = coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(coverageReport.getId());
         var coveredLinesByFilePath = new HashMap<String, Integer>();
         report.getFileReports().forEach(fileReport -> {
             var lineSet = new HashSet<Integer>();
@@ -228,6 +228,6 @@ public class TestwiseCoverageService {
      */
     public CoverageReport getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
         var lazyReport = getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise);
-        return coverageReportRepository.findCoverageReportByIdWithEagerFileReportsElseThrow(lazyReport.getId());
+        return coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(lazyReport.getId());
     }
 }

@@ -95,7 +95,7 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
         var testCase1 = testCases.stream().filter(testCase -> "test1()".equals(testCase.getTestName())).findFirst().get();
         var testCase2 = testCases.stream().filter(testCase -> "test2()".equals(testCase.getTestName())).findFirst().get();
 
-        var optionalFullReportWithFileReports = coverageReportRepository.findCoverageReportByIdWithEagerFileReports(report.getId());
+        var optionalFullReportWithFileReports = coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntries(report.getId());
         assertThat(optionalFullReportWithFileReports).isPresent();
         var fullReportWithFileReports = optionalFullReportWithFileReports.get();
         var fileReports = fullReportWithFileReports.getFileReports();

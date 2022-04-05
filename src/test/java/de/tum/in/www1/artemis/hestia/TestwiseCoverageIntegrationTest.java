@@ -156,6 +156,6 @@ public class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBa
         unsavedLatestEntry.setFileReport(unsavedLatestFileReport);
         testwiseCoverageReportEntryRepository.save(unsavedLatestEntry);
 
-        return coverageReportRepository.findCoverageReportByIdWithEagerFileReportsElseThrow(resultReport.getId());
+        return coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(resultReport.getId());
     }
 }

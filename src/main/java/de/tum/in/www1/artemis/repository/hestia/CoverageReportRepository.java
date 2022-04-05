@@ -34,13 +34,14 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
 
     @Query("""
             SELECT DISTINCT r FROM CoverageReport r
-            LEFT JOIN FETCH r.fileReports
+            LEFT JOIN FETCH r.fileReports f
+            LEFT JOIN FETCH f.testwiseCoverageEntries
             WHERE r.id = :#{#coverageReportId}
             """)
-    Optional<CoverageReport> findCoverageReportByIdWithEagerFileReports(@Param("coverageReportId") Long coverageReportId);
+    Optional<CoverageReport> findCoverageReportByIdWithEagerFileReportsAndEntries(@Param("coverageReportId") Long coverageReportId);
 
-    default CoverageReport findCoverageReportByIdWithEagerFileReportsElseThrow(Long coverageReportId) {
-        var optionalReport = findCoverageReportByIdWithEagerFileReports(coverageReportId);
+    default CoverageReport findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(Long coverageReportId) {
+        var optionalReport = findCoverageReportByIdWithEagerFileReportsAndEntries(coverageReportId);
         return optionalReport.orElseThrow(() -> new EntityNotFoundException("Coverage Report", coverageReportId));
     }
 

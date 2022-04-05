@@ -39,7 +39,8 @@ public class ProgrammingSubmission extends Submission {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
-    // If the submission is deleted, the testwise coverage report with all child entities are deleted
+    // If the submission is deleted, the testwise coverage report with all child entities are deleted.
+    // This attribute is only valid for submissions related to a solution participation.
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private CoverageReport testwiseCoverageReport;

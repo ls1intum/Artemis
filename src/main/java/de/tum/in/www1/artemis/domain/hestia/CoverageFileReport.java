@@ -31,7 +31,7 @@ public class CoverageFileReport extends DomainObject {
     @Column(name = "covered_line_count")
     private Integer coveredLineCount;
 
-    @OneToMany(mappedBy = "fileReport", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "fileReport", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("fileReport")
     private Set<TestwiseCoverageReportEntry> testwiseCoverageEntries;
 
