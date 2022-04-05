@@ -812,15 +812,8 @@ public class BitbucketService extends AbstractVersionControlService {
         return commit;
     }
 
-    /**
-     * Retrieves the date at which the push event was received by the VCS intance.
-     *
-     * @param participation The participation we need the date for
-     * @param hash          The hash we expect to find
-     * @return The build queue date
-     */
     @Override
-    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String hash) {
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash) {
         final var url = bitbucketServerUrl + "/rest/api/latest/projects/" + participation.getProgrammingExercise().getProjectKey() + "/repos/"
                 + urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()) + "/ref-change-activities?start=0&limit=25";
         final var response = restTemplate.exchange(url, HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
@@ -829,8 +822,8 @@ public class BitbucketService extends AbstractVersionControlService {
         }
         final var changeActivities = response.getBody().getValues();
 
-        final var activityOfPush = changeActivities.stream().filter(activity -> activity.getRefChange().getToHash().equals(hash)).findFirst()
-                .orElseThrow(() -> new BambooException("Unable to find push date result for participation " + participation.getId() + " and hash " + hash));
+        final var activityOfPush = changeActivities.stream().filter(activity -> activity.getRefChange().getToHash().equals(commitHash)).findFirst()
+                .orElseThrow(() -> new BambooException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash));
         return Instant.ofEpochMilli(activityOfPush.getCreatedDate()).atZone(ZoneOffset.UTC);
     }
 

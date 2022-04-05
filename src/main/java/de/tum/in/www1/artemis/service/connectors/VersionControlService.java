@@ -77,13 +77,13 @@ public interface VersionControlService {
     Commit getLastCommitDetails(Object requestBody) throws VersionControlException;
 
     /**
-     * Retrieves the date at which the push event was received by the VCS intance.
+     * Retrieves the date at which the push event was received by the VCS instance.
      *
      * @param participation The participation we need the date for
-     * @param hash The hash we expect to find
+     * @param commitHash The commit hash we want to find the event for
      * @return The build queue date
      */
-    ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String hash);
+    ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash);
 
     /**
      * Creates a project on the VCS.

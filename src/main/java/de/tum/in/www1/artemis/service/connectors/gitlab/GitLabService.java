@@ -335,20 +335,13 @@ public class GitLabService extends AbstractVersionControlService {
         return commit;
     }
 
-    /**
-     * Retrieves the date at which the build server was notified about a new push.
-     *
-     * @param participation The participation we need the date for
-     * @param hash          The hash we expect to find
-     * @return The build queue date
-     */
     @Override
-    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String hash) {
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash) {
         try {
             String repositoryUrl = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
             List<Event> events = gitlab.getEventsApi().getProjectEvents(repositoryUrl, Constants.ActionType.PUSHED, null, null, null, Constants.SortOrder.DESC);
             for (Event event : events) {
-                if (event.getPushData().getCommitTo().equals(hash)) {
+                if (event.getPushData().getCommitTo().equals(commitHash)) {
                     return event.getCreatedAt().toInstant().atZone(ZoneOffset.UTC);
                 }
             }
