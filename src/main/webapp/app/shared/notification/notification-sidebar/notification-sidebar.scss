@@ -1,5 +1,9 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
+:host {
+    white-space: initial;
+}
+
 .light-button {
     border: 0;
     background-color: transparent;
