@@ -193,9 +193,9 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         script.append("mkdir ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             boolean isMaven = optionalProjectType.isEmpty() || optionalProjectType.get().isMaven();
+            // Execute all static code analysis tools for Java
             if (isMaven) {
                 script.append("mvn ");
-                // Execute all static code analysis tools for Java
                 script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(programmingLanguage)).append(lineEnding);
             }
             else {
