@@ -17,8 +17,6 @@ import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageFileReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.TestwiseCoverageReportEntryRepository;
@@ -44,26 +42,19 @@ public class TestwiseCoverageService {
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
     private final GitService gitService;
 
     private final RepositoryService repositoryService;
 
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
     public TestwiseCoverageService(CoverageReportRepository coverageReportRepository, CoverageFileReportRepository coverageFileReportRepository,
             TestwiseCoverageReportEntryRepository testwiseCoverageReportEntryRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, RepositoryService repositoryService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, GitService gitService) {
+            RepositoryService repositoryService, GitService gitService) {
         this.coverageReportRepository = coverageReportRepository;
         this.coverageFileReportRepository = coverageFileReportRepository;
         this.testwiseCoverageReportEntryRepository = testwiseCoverageReportEntryRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
-        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     /**

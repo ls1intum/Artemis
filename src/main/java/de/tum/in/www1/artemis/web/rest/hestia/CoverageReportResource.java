@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -31,14 +30,11 @@ public class CoverageReportResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final CoverageReportRepository coverageReportRepository;
-
     public CoverageReportResource(TestwiseCoverageService testwiseCoverageService, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, CoverageReportRepository coverageReportRepository) {
+            AuthorizationCheckService authCheckService) {
         this.testwiseCoverageService = testwiseCoverageService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.coverageReportRepository = coverageReportRepository;
     }
 
     /**
