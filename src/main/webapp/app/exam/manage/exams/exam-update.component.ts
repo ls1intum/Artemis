@@ -120,7 +120,7 @@ export class ExamUpdateComponent implements OnInit {
     /**
      * Validates the given StartDate.
      * For RealExams, the visibleDate has to be strictly prior the startDate.
-     * For TestExams, the visible Date has to be prior or equal to the startDate.
+     * For TestExams, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
         if (this.exam.startDate === undefined) {
@@ -145,7 +145,7 @@ export class ExamUpdateComponent implements OnInit {
      */
     get calculateWorkingTime(): number {
         if (!this.exam.testExam) {
-            if (this.exam.startDate !== undefined && this.exam.endDate !== undefined) {
+            if (this.exam.startDate && this.exam.endDate) {
                 this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
             } else {
                 this.exam.workingTime = 0;
@@ -165,12 +165,12 @@ export class ExamUpdateComponent implements OnInit {
             if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
                 return false;
             }
-            if (this.exam.startDate !== undefined && this.exam.endDate) {
+            if (this.exam.startDate && this.exam.endDate) {
                 return this.exam.workingTime <= dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
             }
             return false;
         }
-        if (this.exam.workingTime !== undefined && this.exam.startDate !== undefined && this.exam.endDate !== undefined) {
+        if (this.exam.workingTime && this.exam.startDate && this.exam.endDate) {
             return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
         }
         return false;

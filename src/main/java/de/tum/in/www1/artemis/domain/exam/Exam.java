@@ -32,7 +32,7 @@ public class Exam extends DomainObject {
     /**
      * This boolean indicates weather it is a RealExam (false) or TestExams (true)
      */
-    @Column(name = "test_exam", columnDefinition = "boolean default false")
+    @Column(name = "test_exam")
     private boolean testExam;
 
     /**
@@ -72,7 +72,7 @@ public class Exam extends DomainObject {
      * The default working time for an exam in seconds.
      * (The individual working time of a student is stored in {@link StudentExam})
      */
-    @Column(name = "working_time", nullable = false)
+    @Column(name = "working_time")
     private int workingTime;
 
     @Column(name = "start_text")

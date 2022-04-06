@@ -85,10 +85,7 @@
             <div class="row mb-3">
                 <div class="col-sm-6">
                     <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime">Working Time</label>
-                    <jhi-help-icon-without-translation
-                        placement="top"
-                        text="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip' | artemisTranslate }}"
-                    ></jhi-help-icon-without-translation>
+                    <jhi-help-icon placement="top" [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'"></jhi-help-icon>
                     <input *ngIf="!exam.testExam" readonly type="text" class="form-control" [value]="calculateWorkingTime" />
                     <input
                         *ngIf="exam.testExam"
