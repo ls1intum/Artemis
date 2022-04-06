@@ -1,4 +1,4 @@
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -65,6 +65,7 @@ export class CourseUpdateComponent implements OnInit {
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -208,7 +209,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     private subscribeToSaveResponse(result: Observable<HttpResponse<Course>>) {
         result.subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (response: HttpResponse<Course>) => this.onSaveSuccess(response.body),
             error: (res: HttpErrorResponse) => this.onSaveError(res),
         });
     }
@@ -216,9 +217,9 @@ export class CourseUpdateComponent implements OnInit {
     /**
      * Action on successful course creation or edit
      */
-    private onSaveSuccess() {
+    private onSaveSuccess(updatedCourse: Course | null) {
         this.isSaving = false;
-        this.previousState();
+        this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
     }
 
     /**
