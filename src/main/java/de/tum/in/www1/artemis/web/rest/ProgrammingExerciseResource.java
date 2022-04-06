@@ -736,7 +736,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId) {
-        log.debug("REST request to delete ProgrammingExerciseTasks with ProgrammingExerciseSolutionEntries for ProgrammingExercise with id : {}", exerciseId);
+        log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
