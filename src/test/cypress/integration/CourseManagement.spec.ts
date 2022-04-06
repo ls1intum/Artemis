@@ -77,7 +77,8 @@ describe('Course management', () => {
             cy.wait('@createCourseQuery').then((request: Interception) => {
                 courseId = request.response!.body.id!;
             });
-            courseManagementPage.getCourseCard(courseShortName).should('be.visible');
+            cy.url().should('include', '/course-management/' + courseId);
+            cy.get('#course-overview-info-bar').contains(courseName).should('be.visible');
         });
 
         after(() => {
