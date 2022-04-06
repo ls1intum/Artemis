@@ -61,7 +61,7 @@ export class AssessmentHeaderComponent {
     // Icons
     faSpinner = faSpinner;
     faSave = faSave;
-    faArrowRight = faSquareCaretRight;
+    faSquareCaretRight = faSquareCaretRight;
 
     @Input() set highlightDifferences(highlightDifferences: boolean) {
         this._highlightDifferences = highlightDifferences;
