@@ -1,24 +1,29 @@
-<nav class="navbar navbar-dark navbar-expand-md jh-navbar">
+<nav class="navbar navbar-dark navbar-expand-xl jh-navbar">
     <div class="jh-logo-container float-start">
-        <a
-            class="jh-navbar-toggler d-lg-none float-end"
-            data-toggle="collapse"
-            data-target="#navbarResponsive"
-            aria-controls="navbarResponsive"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-            (click)="toggleNavbar()"
-        >
-            <fa-icon [icon]="faBars"></fa-icon>
-        </a>
-        <a class="navbar-brand logo float-start" routerLink="/" (click)="collapseNavbar()">
+        <a class="navbar-brand logo" routerLink="/" (click)="collapseNavbar()">
             <div class="row">
                 <img class="logo-img col" [src]="SERVER_API_URL + 'public/images/logo.png'" />
                 <div jhiTranslate="global.title" class="navbar-title col">Artemis</div>
                 <div class="navbar-version col px-0 align-self-center">{{ version }}</div>
-                <jhi-loading-notification class="col align-self-center"></jhi-loading-notification>
             </div>
         </a>
+        <div class="indicators row">
+            <jhi-connection-warning class="col align-self-center"></jhi-connection-warning>
+            <jhi-loading-notification class="col align-self-center"></jhi-loading-notification>
+        </div>
+        <div class="d-xl-none flex-grow-1 d-flex justify-content-end">
+            <a
+                class="jh-navbar-toggler"
+                data-toggle="collapse"
+                data-target="#navbarResponsive"
+                aria-controls="navbarResponsive"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+                (click)="toggleNavbar()"
+            >
+                <fa-icon [icon]="faBars"></fa-icon>
+            </a>
+        </div>
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
         <ul class="navbar-nav ms-auto">
@@ -158,7 +163,7 @@
                 ngbDropdown
                 class="nav-item dropdown pointer"
                 display="dynamic"
-                placement="bottom-right"
+                [placement]="isCollapsed ? 'bottom-left' : 'bottom-right'"
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
                 [autoClose]="true"

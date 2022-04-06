@@ -36,6 +36,7 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 
 // Store a copy of now to avoid timing issues
 const now = dayjs();
@@ -126,6 +127,10 @@ describe('QuizParticipationComponent', () => {
                     {
                         provide: TranslateService,
                         useClass: MockTranslateService,
+                    },
+                    {
+                        provide: JhiWebsocketService,
+                        useClass: MockWebsocketService,
                     },
                 ],
             })
