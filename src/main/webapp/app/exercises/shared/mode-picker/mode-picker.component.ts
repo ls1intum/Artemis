@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
 
 export type ModePickerOption<TMode> = {
     value: TMode;
