@@ -37,13 +37,13 @@ describe('CourseMessagesComponent', () => {
     });
 
     it('should trigger selectedConversation on selectConversation event', () => {
-        const saveExerciseWithoutReevaluationSpy = jest.spyOn(component, 'selectConversation');
+        const selectConversationSpy = jest.spyOn(component, 'selectConversation');
 
-        const scrollableDiv = getElement(fixture.debugElement, 'jhi-chat-session-sidebar');
+        const scrollableDiv = getElement(fixture.debugElement, 'jhi-conversation-sidebar');
         scrollableDiv.dispatchEvent(new Event('selectConversation'));
 
         fixture.detectChanges();
 
-        expect(saveExerciseWithoutReevaluationSpy).toBeCalledTimes(1);
+        expect(selectConversationSpy).toBeCalledTimes(1);
     });
 });

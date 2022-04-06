@@ -88,6 +88,12 @@ public class ConversationService {
         return savedConversation;
     }
 
+    /**
+     * fetch conversation from database by conversationId
+     *
+     * @param conversationId  id of the conversation to fetch
+     * @return  fetched conversation
+     */
     public Conversation getConversationById(Long conversationId) {
         Optional<Conversation> conversation = conversationRepository.findById(conversationId);
         conversation.ifPresent(conversation1 -> conversation1
