@@ -4,20 +4,13 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { ConnectionNotificationService } from 'app/shared/notification/connection-notification/connection-notification.service';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
 })
 export class JhiMainComponent implements OnInit {
-    constructor(
-        private jhiLanguageHelper: JhiLanguageHelper,
-        private router: Router,
-        private profileService: ProfileService,
-        private sentryErrorHandler: SentryErrorHandler,
-        private connectionNotificationService: ConnectionNotificationService,
-    ) {
+    constructor(private jhiLanguageHelper: JhiLanguageHelper, private router: Router, private profileService: ProfileService, private sentryErrorHandler: SentryErrorHandler) {
         this.setupErrorHandling().then(null);
     }
 
@@ -37,7 +30,6 @@ export class JhiMainComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.connectionNotificationService.init();
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
