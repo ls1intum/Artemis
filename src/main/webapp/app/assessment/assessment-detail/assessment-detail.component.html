@@ -1,6 +1,6 @@
 <div (drop)="updateAssessmentOnDrop($event)" (dragover)="$event.preventDefault()" class="card mb-3" id="assessment-detail">
     <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
-        <jhi-grading-instruction-link-icon *ngIf="assessment.gradingInstruction!" [assessment]="assessment"></jhi-grading-instruction-link-icon>
+        <jhi-grading-instruction-link-icon *ngIf="assessment?.gradingInstruction" [assessment]="assessment"></jhi-grading-instruction-link-icon>
         <fa-icon [icon]="faTrashAlt" class="float-end" (click)="delete()" *ngIf="!readOnly"></fa-icon>
         <span class="badge bg-secondary float-end" *ngIf="assessment.type == FeedbackType_AUTOMATIC" title="{{ 'artemisApp.assessment.automaticGenerated' | artemisTranslate }}">
             <fa-icon [icon]="faRobot"></fa-icon>
@@ -25,7 +25,7 @@
         <div class="form-group row">
             <div class="col-4 assessment-label">
                 <label class="pe-0" style="float: left" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
-                <div *ngIf="assessment.gradingInstruction!">
+                <div *ngIf="assessment?.gradingInstruction">
                     <fa-icon
                         [icon]="faQuestionCircle"
                         class="text-secondary ps-1"
@@ -35,7 +35,7 @@
                 </div>
             </div>
             <div class="col p-0">
-                <div *ngIf="assessment.gradingInstruction!">
+                <div *ngIf="assessment?.gradingInstruction">
                     <span>{{ assessment.gradingInstruction!.feedback }}</span>
                 </div>
                 <textarea
@@ -47,11 +47,11 @@
                     [readOnly]="readOnly"
                     [disabled]="readOnly"
                     [placeholder]="
-                        assessment.gradingInstruction! && assessment.gradingInstruction!.feedback!
+                        assessment.gradingInstruction?.feedback
                             ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
                             : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
                     "
-                    [required]="!assessment.gradingInstruction || !assessment.gradingInstruction!.feedback"
+                    [required]="!assessment.gradingInstruction?.feedback"
                 ></textarea>
             </div>
         </div>
