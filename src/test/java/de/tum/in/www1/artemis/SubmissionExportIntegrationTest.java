@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
@@ -112,7 +111,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     private void saveEmptySubmissionFile(Exercise exercise, FileUploadSubmission submission) throws IOException {
 
-        String[] parts = submission.getFilePath().split(Pattern.quote(FileSystems.getDefault().getSeparator()));
+        String[] parts = submission.getFilePath().split(Pattern.quote(File.separator));
         String fileName = parts[parts.length - 1];
         File file = Paths.get(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName).toFile();
 

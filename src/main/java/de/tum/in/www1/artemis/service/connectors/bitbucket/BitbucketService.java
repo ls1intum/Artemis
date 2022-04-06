@@ -814,17 +814,23 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash) {
-        final var url = bitbucketServerUrl + "/rest/api/latest/projects/" + participation.getProgrammingExercise().getProjectKey() + "/repos/"
-                + urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()) + "/ref-change-activities?start=0&limit=25";
-        final var response = restTemplate.exchange(url, HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
-        if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
-            throw new BambooException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
-        }
-        final var changeActivities = response.getBody().getValues();
+        boolean isLastPage = false;
+        while (!isLastPage) {
+            final var url = bitbucketServerUrl + "/rest/api/latest/projects/" + participation.getProgrammingExercise().getProjectKey() + "/repos/"
+                    + urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()) + "/ref-change-activities?start=0&limit=25";
+            final var response = restTemplate.exchange(url, HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
+            if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+                throw new BambooException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
+            }
+            isLastPage = response.getBody().getLastPage();
+            final var changeActivities = response.getBody().getValues();
 
-        final var activityOfPush = changeActivities.stream().filter(activity -> activity.getRefChange().getToHash().equals(commitHash)).findFirst()
-                .orElseThrow(() -> new BambooException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash));
-        return Instant.ofEpochMilli(activityOfPush.getCreatedDate()).atZone(ZoneOffset.UTC);
+            final var activityOfPush = changeActivities.stream().filter(activity -> commitHash.equals(activity.getRefChange().getToHash())).findFirst();
+            if (activityOfPush.isPresent()) {
+                return Instant.ofEpochMilli(activityOfPush.get().getCreatedDate()).atZone(ZoneOffset.UTC);
+            }
+        }
+        throw new BambooException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash);
     }
 
     @Nullable

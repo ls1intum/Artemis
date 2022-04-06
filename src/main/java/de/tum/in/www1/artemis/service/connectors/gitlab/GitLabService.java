@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -339,11 +340,11 @@ public class GitLabService extends AbstractVersionControlService {
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash) {
         try {
             String repositoryUrl = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
-            List<Event> events = gitlab.getEventsApi().getProjectEvents(repositoryUrl, Constants.ActionType.PUSHED, null, null, null, Constants.SortOrder.DESC);
-            for (Event event : events) {
-                if (event.getPushData().getCommitTo().equals(commitHash)) {
-                    return event.getCreatedAt().toInstant().atZone(ZoneOffset.UTC);
-                }
+            Stream<Event> eventStream = gitlab.getEventsApi().getProjectEventsStream(repositoryUrl, Constants.ActionType.PUSHED, null, null, null, Constants.SortOrder.DESC);
+            var eventOptional = eventStream.filter(event -> commitHash.equals(event.getPushData().getCommitTo())).findFirst();
+
+            if (eventOptional.isPresent()) {
+                return eventOptional.get().getCreatedAt().toInstant().atZone(ZoneOffset.UTC);
             }
         }
         catch (GitLabApiException e) {

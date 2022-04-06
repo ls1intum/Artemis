@@ -11,6 +11,7 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.gitlab4j.api.*;
 import org.gitlab4j.api.models.*;
@@ -189,7 +190,7 @@ public class GitlabRequestMockProvider {
         Event event = new Event().withCreatedAt(Date.from(pushDate.toInstant()));
         event.setPushData(pushData);
         var path = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
-        doReturn(List.of(event)).when(eventsApi).getProjectEvents(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null), eq(Constants.SortOrder.DESC));
+        doReturn(Stream.of(event)).when(eventsApi).getProjectEventsStream(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null), eq(Constants.SortOrder.DESC));
     }
 
     public void mockAddAuthenticatedWebHook() throws GitLabApiException {

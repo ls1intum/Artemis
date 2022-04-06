@@ -141,6 +141,7 @@ public class BitbucketRequestMockProvider {
 
         final var changeActivitiesDTO = new BitbucketChangeActivitiesDTO();
         changeActivitiesDTO.setValues(List.of(valuesDTO));
+        changeActivitiesDTO.setLastPage(true);
         ObjectMapper objectMapper = new ObjectMapper();
         mockServer
                 .expect(ExpectedCount.once(),

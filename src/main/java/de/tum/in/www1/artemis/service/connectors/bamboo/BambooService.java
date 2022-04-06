@@ -580,9 +580,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public QueriedBambooBuildResultDTO queryLatestBuildResultFromBambooServer(String planKey) {
         ResponseEntity<QueriedBambooBuildResultDTO> response = null;
         try {
-            response = restTemplate.exchange(serverUrl + "/rest/api/latest/result/" + planKey.toUpperCase()
-                    + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes," + "vcsRevisions", HttpMethod.GET, null,
-                    QueriedBambooBuildResultDTO.class);
+            response = restTemplate.exchange(
+                    serverUrl + "/rest/api/latest/result/" + planKey.toUpperCase()
+                            + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions",
+                    HttpMethod.GET, null, QueriedBambooBuildResultDTO.class);
         }
         catch (Exception e) {
             log.warn("HttpError while retrieving latest build results from Bamboo for planKey {}: {}", planKey, e.getMessage());

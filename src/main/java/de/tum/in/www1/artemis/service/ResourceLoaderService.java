@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ public class ResourceLoaderService {
      * @return the loaded resource, which might not exist ({@link Resource#exists()}.
      */
     public Resource getResource(String... pathSegments) {
-        return getResource(StringUtils.join(pathSegments, FileSystems.getDefault().getSeparator()));
+        return getResource(StringUtils.join(pathSegments, File.separator));
     }
 
     /**
@@ -100,7 +100,7 @@ public class ResourceLoaderService {
      * @return the loaded resources, which might be an empty array
      */
     public Resource[] getResources(String... pathSegments) {
-        return getResources(StringUtils.join(pathSegments, FileSystems.getDefault().getSeparator()));
+        return getResources(StringUtils.join(pathSegments, File.separator));
     }
 
     /**
@@ -114,11 +114,11 @@ public class ResourceLoaderService {
             return "";
         }
 
-        if (templateFileSystemPath.get().endsWith(FileSystems.getDefault().getSeparator())) {
+        if (templateFileSystemPath.get().endsWith(File.separator)) {
             return templateFileSystemPath.get();
         }
         else {
-            return templateFileSystemPath.get() + FileSystems.getDefault().getSeparator();
+            return templateFileSystemPath.get() + File.separator;
         }
     }
 
