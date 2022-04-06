@@ -75,7 +75,7 @@ describe('ConversationSidebarComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should set course and user chat sessions, activeConversation on initialization and emitActiveConversation for other components', fakeAsync(() => {
+    it('should set course and user conversation, activeConversation on initialization and emitActiveConversation for other components', fakeAsync(() => {
         component.ngOnInit();
         tick();
         expect(component.course).toBe(metisCourse);
@@ -157,7 +157,7 @@ describe('ConversationSidebarComponent', () => {
 
         component.conversations = conversationsOfUser1;
 
-        // chat session already exists, activeConversation will be set and emitted for other postOverview component
+        // conversation already exists, activeConversation will be set and emitted for other postOverview component
         component.onAutocompleteSelect(metisUser2);
         fixture.detectChanges();
 

@@ -69,7 +69,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(conversationRepository.findById(createdConversation.getId())).isNotEmpty();
 
-        // checks if members of the created chat session were notified via broadcast
+        // checks if members of the created conversation were notified via broadcast
         verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ConversationDTO.class));
     }
 
@@ -118,7 +118,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 HttpStatus.BAD_REQUEST);
         assertThat(createdConversation).isNull();
 
-        // checks if members of the created chat session were not notified via broadcast
+        // checks if members of the created conversation were not notified via broadcast
         verify(messagingTemplate, times(0)).convertAndSend(anyString(), any(ConversationDTO.class));
     }
 

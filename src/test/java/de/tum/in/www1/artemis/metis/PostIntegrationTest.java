@@ -79,12 +79,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         student1 = database.getUserByLogin("student1");
 
         // initialize test setup and get all existing posts
-        // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with chat session initialized): 14 posts in total
+        // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
         existingPostsAndChats = database.createPostsWithinCourse();
 
         existingPosts = existingPostsAndChats.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
 
-        // filters existing posts with chat session
+        // filters existing posts with conversation
         existingConversationPosts = existingPostsAndChats.stream().filter(post -> post.getConversation() != null).toList();
 
         // filter existing posts with exercise context
@@ -185,7 +185,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         checkCreatedPost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
         assertThat(postRepository.findPostsBySessionId(createdPost.getConversation().getId()).size()).isEqualTo(1);
-        // checks if members of the created chat session were notified via broadcast
+        // checks if members of the created conversation were notified via broadcast
         verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ConversationDTO.class));
     }
 
@@ -550,7 +550,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetConversationPost() throws Exception {
-        // conversation set will fetch all posts of chat session if the user is involved
+        // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         params.add("conversationId", existingConversationPosts.get(0).getConversation().getId().toString());
 

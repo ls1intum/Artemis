@@ -6,7 +6,7 @@ import javax.validation.ConstraintValidatorContext;
 /**
  * A specific ConstraintValidator that validates if the Post context is mutually exclusive,
  * i.e. that either a Lecture, an Exercise, a  CourseWideContext or a Conversation is associated with the Post.
- * In case the Post is associated with a CourseWideContext or Chat Session, the according course has to be set as well.
+ * In case the Post is associated with a CourseWideContext or Conversation, the according course has to be set as well.
  */
 public class PostContextConstraintValidator implements ConstraintValidator<PostConstraints, Post> {
 
