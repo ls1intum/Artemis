@@ -1,8 +1,8 @@
 <div class="row mt-2">
     <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
-        <jhi-chat-session-sidebar (selectChatSession)="selectChatSession($event)"></jhi-chat-session-sidebar>
+        <jhi-conversation-sidebar (selectConversation)="selectConversation($event)"></jhi-conversation-sidebar>
     </div>
     <div class="col pe-0 flex-grow-1">
-        <jhi-post-overview [courseMessagesPageFlag]="true" [activeChatSession]="selectedChatSession"></jhi-post-overview>
+        <jhi-post-overview [courseMessagesPageFlag]="true" [activeConversation]="selectedConversation"></jhi-post-overview>
     </div>
 </div>

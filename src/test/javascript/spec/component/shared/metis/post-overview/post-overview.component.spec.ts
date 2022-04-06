@@ -33,7 +33,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
 import {
-    chatSessionsOfUser1,
+    conversationsOfUser1,
     messagesBetweenUser1User2,
     metisCourse,
     metisCoursePosts,
@@ -420,7 +420,7 @@ describe('PostOverviewComponent', () => {
         expect(fetchNextPageSpy).toBeCalledTimes(1);
     }));
 
-    it('if user has no chatSession, no call should be made to fetch posts', fakeAsync(() => {
+    it('if user has no conversation, no call should be made to fetch posts', fakeAsync(() => {
         component.itemsPerPage = 5;
         component.courseMessagesPageFlag = true;
         component.ngOnInit();
@@ -430,27 +430,27 @@ describe('PostOverviewComponent', () => {
         expect(metisServiceGetFilteredPostsSpy).toBeCalledTimes(0);
     }));
 
-    it('if user has chatSession, posts should be fetched on page load and displayed in reversed order', fakeAsync(() => {
+    it('if user has conversation, posts should be fetched on page load and displayed in reversed order', fakeAsync(() => {
         initializeFixtureForCourseMessagesPage();
 
-        component.chatSession = chatSessionsOfUser1.first();
+        component.conversation = conversationsOfUser1.first();
         component.onSelectContext();
         expect(component.posts).toEqual(messagesBetweenUser1User2.slice().reverse());
         expect(metisServiceGetFilteredPostsSpy).toBeCalledTimes(1);
         expect(metisServiceGetFilteredPostsSpy).toBeCalledWith(component.currentPostContextFilter);
     }));
 
-    it('should fetch posts on activeChatSession input outside of the component', fakeAsync(() => {
+    it('should fetch posts on activeConversation input outside of the component', fakeAsync(() => {
         initializeFixtureForCourseMessagesPage();
-        component.activeChatSession = chatSessionsOfUser1.first()!;
+        component.activeConversation = conversationsOfUser1.first()!;
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(1);
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ ...component.currentPostContextFilter, page: 0 });
-        expect(component.chatSession).toBe(chatSessionsOfUser1.first());
+        expect(component.conversation).toBe(conversationsOfUser1.first());
     }));
 
     it('should auto scroll to the bottom of messages on init or if last message is displayed', fakeAsync(() => {
         initializeFixtureForCourseMessagesPage();
-        component.chatSession = chatSessionsOfUser1.first();
+        component.conversation = conversationsOfUser1.first();
         component.onSelectContext();
 
         tick();

@@ -52,7 +52,7 @@ public class PostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final ChatService chatService;
+    private final ConversationService conversationService;
 
     private final GroupNotificationService groupNotificationService;
 
@@ -60,13 +60,13 @@ public class PostService extends PostingService {
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, ChatService chatService) {
+            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, ConversationService conversationService) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
-        this.chatService = chatService;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -103,9 +103,9 @@ public class PostService extends PostingService {
             return savedPost;
         }
 
-        // create chat session for chat if session does not exist
-        if (post.getChatSession() != null && post.getChatSession().getId() == null) {
-            post.setChatSession(chatService.createChatSession(courseId, post.getChatSession()));
+        // persist conversation for post if provided
+        if (post.getConversation() != null && post.getConversation().getId() == null) {
+            post.setConversation(conversationService.createConversation(courseId, post.getConversation()));
         }
 
         Post savedPost = postRepository.save(post);
@@ -222,7 +222,7 @@ public class PostService extends PostingService {
         List<Post> postsInCourse;
         // no filter -> get all posts in course
         if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
-                && postContextFilter.getChatSessionId() == null) {
+                && postContextFilter.getConversationId() == null) {
             postsInCourse = this.getAllCoursePosts(postContextFilter);
         }
         // filter by course-wide context
@@ -237,8 +237,8 @@ public class PostService extends PostingService {
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null) {
             postsInCourse = this.getAllLecturePosts(postContextFilter);
         }
-        else if (postContextFilter.getChatSessionId() != null) {
-            postsInCourse = this.getPostsByChatSession(postContextFilter.getChatSessionId());
+        else if (postContextFilter.getConversationId() != null) {
+            postsInCourse = this.getPostsByConversation(postContextFilter.getConversationId());
         }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
@@ -539,19 +539,19 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Retrieve post from database by chatSession
+     * fetch posts from database by conversationId
      *
-     * @param sessionId id of chatSession to retrieve posts associated
-     * @return          retrieved posts
+     * @param conversationId    id of conversation to retrieve associated posts
+     * @return                  retrieved posts
      */
-    public List<Post> getPostsByChatSession(Long sessionId) {
-        mayInteractWithChatSessionElseThrow(sessionId);
+    public List<Post> getPostsByConversation(Long conversationId) {
+        mayInteractWithConversationElseThrow(conversationId);
 
-        List<Post> chatSessionPosts = postRepository.findPostsBySessionId(sessionId);
+        List<Post> conversationPosts = postRepository.findPostsBySessionId(conversationId);
 
         // protect sample solution, grading instructions, etc.
-        chatSessionPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-        return chatSessionPosts;
+        conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+        return conversationPosts;
     }
 
     /**
@@ -583,12 +583,13 @@ public class PostService extends PostingService {
         }
     }
 
-    private void mayInteractWithChatSessionElseThrow(Long chatSessionId) {
+    private void mayInteractWithConversationElseThrow(Long conversationId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        ChatSession chatSession = chatService.getChatSessionById(chatSessionId);
+        Conversation conversation = conversationService.getConversationById(conversationId);
 
-        if (chatSession == null || chatSession.getUserChatSessions().stream().noneMatch(userChatSession -> userChatSession.getUser().getId().equals(user.getId()))) {
-            throw new BadRequestAlertException("User not authorized to access this chat!", METIS_POST_ENTITY_NAME, "");
+        if (conversation == null
+                || conversation.getConversationParticipants().stream().noneMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))) {
+            throw new BadRequestAlertException("User not authorized to access this conversation!", METIS_POST_ENTITY_NAME, "");
         }
     }
 

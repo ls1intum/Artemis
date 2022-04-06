@@ -12,7 +12,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 @Component({
@@ -34,12 +34,12 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private messagesContainerHeight = 350;
 
     /**
-     * receives and updates the selected chatSession, fetching its posts
-     * @param activeChatSession selectedChatSession
+     * receives and updates the selected conversation, fetching its posts
+     * @param activeConversation selectedConversation
      */
-    @Input() set activeChatSession(activeChatSession: ChatSession) {
-        if (this.courseMessagesPageFlag && activeChatSession) {
-            this.chatSession = activeChatSession;
+    @Input() set activeConversation(activeConversation: Conversation) {
+        if (this.courseMessagesPageFlag && activeConversation) {
+            this.conversation = activeConversation;
             if (this.course) {
                 this.onSelectContext();
                 this.createEmptyPost();
@@ -57,7 +57,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     currentSortCriterion = PostSortCriterion.CREATION_DATE;
     currentSortDirection = SortDirection.DESCENDING;
     searchText?: string;
-    chatSession?: ChatSession;
+    conversation?: Conversation;
     formGroup: FormGroup;
     createdPost: Post;
     posts: Post[];
@@ -116,10 +116,10 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
                     }
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
-                    if (!(this.courseMessagesPageFlag && !this.chatSession)) {
+                    if (!(this.courseMessagesPageFlag && !this.conversation)) {
                         this.metisService.getFilteredPosts({
                             courseId: this.course!.id,
-                            chatSessionId: this.chatSession?.id,
+                            conversationId: this.conversation?.id,
                             searchText: this.searchText ? this.searchText : undefined,
                             postSortCriterion: this.currentSortCriterion,
                             sortingOrder: this.currentSortDirection,
@@ -128,7 +128,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
                             pageSize: this.itemsPerPage,
                         });
                     } else {
-                        // if user has no chatSessions to load on messages page
+                        // if user has no conversations to load on messages page
                         this.isLoading = false;
                     }
                     this.resetCurrentFilter();
@@ -219,8 +219,8 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
-     * scrolls to the bottom of the message container if in messages page and posts exist for the selected chatSession and
-     * only the first page is fetched or user is scrolled to the last post of the chatSession
+     * scrolls to the bottom of the message container if in messages page and posts exist for the selected conversation and
+     * only the first page is fetched or user is scrolled to the last post of the conversation
      */
     scrollToBottom = () => {
         if (
@@ -281,7 +281,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
             this.currentPostContextFilter.courseWideContext,
             this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
             this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
-            this.chatSession,
+            this.conversation,
         );
     }
 
@@ -302,7 +302,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
             lectureId: undefined,
             ...this.formGroup?.get('context')?.value,
             searchText: this.searchText ? this.searchText : undefined,
-            chatSessionId: this.chatSession?.id,
+            conversationId: this.conversation?.id,
             pagingEnabled: this.pagingEnabled,
             page: this.page - 1,
             pageSize: this.itemsPerPage,
@@ -320,7 +320,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private resetCurrentFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course!.id,
-            chatSessionId: this.chatSession?.id,
+            conversationId: this.conversation?.id,
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,

@@ -24,7 +24,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE post.chatSession IS NULL
+            WHERE post.conversation IS NULL
                 AND (lecture.course.id = :#{#courseId}
                 OR exercise.course.id = :#{#courseId}
                 OR post.course.id = :#{#courseId})
@@ -55,7 +55,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("""
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE post.chatSession IS NULL
+            WHERE post.conversation IS NULL
             AND post.lecture.id = :#{#lectureId}
             AND (:#{#own} IS NULL
                 OR post.author.id = :#{#userId})
@@ -73,7 +73,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("""
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE post.chatSession IS NULL
+            WHERE post.conversation IS NULL
             AND post.exercise.id = :#{#exerciseId}
             AND (:#{#own} IS NULL
                 OR post.author.id = :#{#userId})
@@ -90,8 +90,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("""
              SELECT DISTINCT post FROM Post post
-             LEFT JOIN post.chatSession chatSession
-             WHERE chatSession.id = :#{#sessionId}
+             LEFT JOIN post.conversation conversation
+             WHERE conversation.id = :#{#sessionId}
             """)
     List<Post> findPostsBySessionId(@Param("sessionId") Long sessionId);
 

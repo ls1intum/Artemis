@@ -1,11 +1,11 @@
 <div *ngIf="course" class="h-100">
-    <div *ngIf="!collapsed; else collapsedChatSessions" class="postings-container expanded-discussion">
+    <div *ngIf="!collapsed; else collapsedConversations" class="postings-container expanded-discussion">
         <div class="card">
             <!-- header -->
-            <div class="card-header text-white" [ngbTooltip]="'artemisApp.messages.chatSession.hide' | artemisTranslate" (click)="collapsed = true">
+            <div class="card-header text-white" [ngbTooltip]="'artemisApp.messages.conversation.hide' | artemisTranslate" (click)="collapsed = true">
                 <div class="row flex-grow-1">
                     <div class="col">
-                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.messages.chatSession.header">Private messages</h5>
+                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.messages.conversation.header">Private messages</h5>
                     </div>
                     <div class="col-auto">
                         <fa-icon [icon]="faChevronLeft"></fa-icon>
@@ -28,39 +28,39 @@
                         [searchResultFormatter]="searchResultFormatter"
                         [onAutocompleteSelectWrapper]="onAutocompleteSelect"
                         [searchTextFromEntity]="clearUserSearchBar"
-                        searchPlaceholderTranslation="artemisApp.messages.chatSession.searchForUsers"
+                        searchPlaceholderTranslation="artemisApp.messages.conversation.searchForUsers"
                     ></jhi-data-table>
                 </div>
                 <div class="my-2">
-                    <ul class="chat-session-list" *ngIf="chatSessions && chatSessions.length">
+                    <ul class="chat-session-list" *ngIf="conversations && conversations.length">
                         <li
-                            *ngFor="let chatSession of chatSessions; trackBy: chatSessionsTrackByFn"
+                            *ngFor="let conversation of conversations; trackBy: conversationsTrackByFn"
                             class="chat-session-list-item"
-                            [class.selected]="activeChatSession.id === chatSession.id"
-                            (click)="activeChatSession = chatSession; selectChatSession.emit(chatSession)"
+                            [class.selected]="activeConversation.id === conversation.id"
+                            (click)="activeConversation = conversation; selectConversation.emit(conversation)"
                         >
                             <div class="chat-session-list-item-info">
                                 <span class="chat-session-list-item-user">
-                                    <span>{{ getNameOfChatSessionParticipant(chatSession) }}</span>
+                                    <span>{{ getNameOfConversationParticipant(conversation) }}</span>
                                 </span>
                             </div>
                         </li>
                     </ul>
                 </div>
-                <!-- no chatSessions -->
-                <div class="post-result-information row mt-2" *ngIf="!chatSessions || chatSessions.length == 0">
+                <!-- no conversations -->
+                <div class="post-result-information row mt-2" *ngIf="!conversations || conversations.length == 0">
                     <div class="col-12">
-                        {{ 'artemisApp.messages.chatSession.notFound' | artemisTranslate }}
+                        {{ 'artemisApp.messages.conversation.notFound' | artemisTranslate }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- collapsed chatSessions -->
-    <ng-template #collapsedChatSessions>
-        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.messages.chatSession.show' | artemisTranslate">
+    <!-- collapsed conversations -->
+    <ng-template #collapsedConversations>
+        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.messages.conversation.show' | artemisTranslate">
             <fa-icon class="expand-postings-icon" [icon]="faChevronRight"></fa-icon>
-            <span class="h5" jhiTranslate="artemisApp.messages.chatSession.header"></span>
+            <span class="h5" jhiTranslate="artemisApp.messages.conversation.header"></span>
             <fa-icon class="expand-postings-icon" [icon]="faChevronRight"></fa-icon>
         </div>
     </ng-template>

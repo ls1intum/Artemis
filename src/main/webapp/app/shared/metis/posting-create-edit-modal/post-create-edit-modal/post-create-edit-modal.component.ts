@@ -11,7 +11,7 @@ import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/m
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
-import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 const TITLE_MAX_LENGTH = 200;
 const DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK = 800;
@@ -20,7 +20,7 @@ export interface ContextSelectorOption {
     lecture?: Lecture;
     exercise?: Exercise;
     courseWideContext?: CourseWideContext;
-    chatSession?: ChatSession;
+    conversation?: Conversation;
 }
 
 @Component({
@@ -198,8 +198,8 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         if (currentContextSelectorOption.courseWideContext) {
             post.course = { id: this.course.id, title: this.course.title };
         }
-        if (currentContextSelectorOption.chatSession) {
-            post.chatSession = currentContextSelectorOption.chatSession;
+        if (currentContextSelectorOption.conversation) {
+            post.conversation = currentContextSelectorOption.conversation;
         }
         return post;
     }

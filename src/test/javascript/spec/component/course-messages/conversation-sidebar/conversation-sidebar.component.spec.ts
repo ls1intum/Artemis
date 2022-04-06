@@ -1,4 +1,3 @@
-import { ChatSessionSidebarComponent } from 'app/overview/course-messages/chat-sessions-sidebar/chat-session-sidebar.component';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,23 +11,24 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { ChatSessionService } from 'app/shared/metis/chat-session.service';
-import { MockChatSessionService } from '../../../helpers/mocks/service/mock-chat-session.service';
-import { CourseMessagesService } from 'app/shared/metis/course.messages.service';
-
-import { chatSessionBetweenUser1User2, chatSessionsOfUser1, metisCourse, metisTutor, metisUser2 } from '../../../helpers/sample/metis-sample-data';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { ConversationService } from 'app/shared/metis/conversation.service';
+import { MockConversationService } from '../../../helpers/mocks/service/mock-conversation.service';
+import { CourseMessagesService } from 'app/shared/metis/course.messages.service';
+import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 
-describe('ChatSessionSidebarComponent', () => {
-    let component: ChatSessionSidebarComponent;
-    let fixture: ComponentFixture<ChatSessionSidebarComponent>;
+import { conversationBetweenUser1User2, conversationsOfUser1, metisCourse, metisTutor, metisUser2 } from '../../../helpers/sample/metis-sample-data';
+
+describe('ConversationSidebarComponent', () => {
+    let component: ConversationSidebarComponent;
+    let fixture: ComponentFixture<ConversationSidebarComponent>;
     let courseManagementService: CourseManagementService;
-    let emitActiveChatSessionSpy: jest.SpyInstance;
+    let emitActiveConversationSpy: jest.SpyInstance;
 
     const id = metisCourse.id;
     const parentRoute = {
@@ -43,7 +43,7 @@ describe('ChatSessionSidebarComponent', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, NgxDatatableModule],
             declarations: [
-                ChatSessionSidebarComponent,
+                ConversationSidebarComponent,
                 MockComponent(FaIconComponent),
                 MockComponent(DataTableComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -53,7 +53,7 @@ describe('ChatSessionSidebarComponent', () => {
                 FormBuilder,
                 MockProvider(SessionStorageService),
                 { provide: CourseMessagesService, useClass: CourseMessagesService },
-                { provide: ChatSessionService, useClass: MockChatSessionService },
+                { provide: ConversationService, useClass: MockConversationService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
@@ -65,9 +65,9 @@ describe('ChatSessionSidebarComponent', () => {
             .then(() => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
-                fixture = TestBed.createComponent(ChatSessionSidebarComponent);
+                fixture = TestBed.createComponent(ConversationSidebarComponent);
                 component = fixture.componentInstance;
-                emitActiveChatSessionSpy = jest.spyOn(component.selectChatSession, 'emit');
+                emitActiveConversationSpy = jest.spyOn(component.selectConversation, 'emit');
             });
     });
 
@@ -75,14 +75,14 @@ describe('ChatSessionSidebarComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should set course and user chat sessions, activeChatSession on initialization and emitActiveChatSession for other components', fakeAsync(() => {
+    it('should set course and user chat sessions, activeConversation on initialization and emitActiveConversation for other components', fakeAsync(() => {
         component.ngOnInit();
         tick();
         expect(component.course).toBe(metisCourse);
-        expect(component.chatSessions).toBe(chatSessionsOfUser1);
-        expect(component.activeChatSession).toBe(chatSessionsOfUser1.first());
-        expect(emitActiveChatSessionSpy).toBeCalledTimes(1);
-        expect(emitActiveChatSessionSpy).toBeCalledWith(chatSessionsOfUser1.first());
+        expect(component.conversations).toBe(conversationsOfUser1);
+        expect(component.activeConversation).toBe(conversationsOfUser1.first());
+        expect(emitActiveConversationSpy).toBeCalledTimes(1);
+        expect(emitActiveConversationSpy).toBeCalledWith(conversationsOfUser1.first());
     }));
 
     it('should search for other users via the searchbar', () => {
@@ -136,49 +136,49 @@ describe('ChatSessionSidebarComponent', () => {
         expect(userServiceSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should find if there is existing chatSession with searched user', fakeAsync(() => {
+    it('should find if there is existing conversation with searched user', fakeAsync(() => {
         component.ngOnInit();
         tick();
 
-        const usersChatSessions = component.findChatSessionWithUser(metisUser2);
-        expect(usersChatSessions).toEqual(chatSessionBetweenUser1User2);
+        const usersConversations = component.findConversationWithUser(metisUser2);
+        expect(usersConversations).toEqual(conversationBetweenUser1User2);
     }));
 
-    it('should return undefined if there is no existing chatSession with searched user', fakeAsync(() => {
+    it('should return undefined if there is no existing conversation with searched user', fakeAsync(() => {
         component.ngOnInit();
         tick();
 
-        const usersChatSessions = component.findChatSessionWithUser(metisTutor);
-        expect(usersChatSessions).toBeUndefined();
+        const usersConversations = component.findConversationWithUser(metisTutor);
+        expect(usersConversations).toBeUndefined();
     }));
 
-    it('should handle selection of a user from the search list with existing chatSession', () => {
-        const spy = jest.spyOn(component, 'findChatSessionWithUser');
+    it('should handle selection of a user from the search list with existing conversation', () => {
+        const spy = jest.spyOn(component, 'findConversationWithUser');
 
-        component.chatSessions = chatSessionsOfUser1;
+        component.conversations = conversationsOfUser1;
 
-        // chat session already exists, activeChatSession will be set and emitted for other postOverview component
+        // chat session already exists, activeConversation will be set and emitted for other postOverview component
         component.onAutocompleteSelect(metisUser2);
         fixture.detectChanges();
 
         expect(spy).toBeCalledTimes(1);
         expect(spy).toBeCalledWith(metisUser2);
-        expect(component.activeChatSession).toBe(component.findChatSessionWithUser(metisUser2));
-        expect(emitActiveChatSessionSpy).toBeCalledTimes(1);
+        expect(component.activeConversation).toBe(component.findConversationWithUser(metisUser2));
+        expect(emitActiveConversationSpy).toBeCalledTimes(1);
     });
 
-    it('should handle selection of a user from the search list without existing chatSession', () => {
-        const spy = jest.spyOn(component, 'findChatSessionWithUser');
-        component.chatSessions = chatSessionsOfUser1;
+    it('should handle selection of a user from the search list without existing conversation', () => {
+        const spy = jest.spyOn(component, 'findConversationWithUser');
+        component.conversations = conversationsOfUser1;
 
-        // chat session doesn't exist, so it will be created and added to the beginning of the chatSessions
+        // conversation doesn't exist, so it will be created and added to the beginning of the conversations
         component.onAutocompleteSelect(metisTutor);
         fixture.detectChanges();
 
         expect(spy).toBeCalledTimes(1);
         expect(spy).toBeCalledWith(metisTutor);
-        expect(component.activeChatSession).toBe(component.findChatSessionWithUser(metisTutor));
-        expect(emitActiveChatSessionSpy).toBeCalledTimes(1);
+        expect(component.activeConversation).toBe(component.findConversationWithUser(metisTutor));
+        expect(emitActiveConversationSpy).toBeCalledTimes(1);
     });
 
     it('should format search result', () => {
@@ -191,12 +191,12 @@ describe('ChatSessionSidebarComponent', () => {
         expect(resultString).toEqual('');
     });
 
-    it('should create and initialize chatSession correctly', fakeAsync(() => {
+    it('should create and initialize conversation correctly', fakeAsync(() => {
         component.ngOnInit();
         tick();
 
-        const newChatSessionWithUser2 = component.createNewChatSessionWithUser(metisUser2);
-        expect(newChatSessionWithUser2.course).toBe(metisCourse);
-        expect(newChatSessionWithUser2.userChatSessions!.first()?.user).toBe(metisUser2);
+        const newConversationWithUser = component.createNewConversationWithUser(metisUser2);
+        expect(newConversationWithUser.course).toBe(metisCourse);
+        expect(newConversationWithUser.conversationParticipants!.first()?.user).toBe(metisUser2);
     }));
 });

@@ -72,7 +72,7 @@ export class MockPostService {
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         }
-        if (postContextFilter.chatSessionId) {
+        if (postContextFilter.conversationId) {
             return of({
                 body: messagesBetweenUser1User2,
                 headers: new HttpHeaders({

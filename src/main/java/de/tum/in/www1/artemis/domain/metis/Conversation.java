@@ -16,12 +16,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 @Entity
-@Table(name = "chat_session")
+@Table(name = "conversation")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ChatSession extends DomainObject {
+public class Conversation extends DomainObject {
 
-    @OneToMany(mappedBy = "chatSession", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<UserChatSession> userChatSessions = new HashSet<>();
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<ConversationParticipant> conversationParticipants = new HashSet<>();
 
     @ManyToOne
     @JsonIncludeProperties({ "id" })
@@ -35,12 +35,12 @@ public class ChatSession extends DomainObject {
     @Column(name = "last_message_date", updatable = false)
     private ZonedDateTime lastMessageDate = ZonedDateTime.now();
 
-    public Set<UserChatSession> getUserChatSessions() {
-        return userChatSessions;
+    public Set<ConversationParticipant> getConversationParticipants() {
+        return conversationParticipants;
     }
 
-    public void setUserChatSessions(Set<UserChatSession> userChatSessions) {
-        this.userChatSessions = userChatSessions;
+    public void setConversationParticipants(Set<ConversationParticipant> conversationParticipant) {
+        this.conversationParticipants = conversationParticipant;
     }
 
     public Course getCourse() {

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
     selector: 'jhi-messages',
@@ -8,13 +8,13 @@ import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model'
 })
 export class CourseMessagesComponent {
     /**
-     * Index of the currently selected chatSession.
+     * currently selected conversation.
      */
-    selectedChatSession: ChatSession;
+    selectedConversation: Conversation;
 
     constructor() {}
 
-    selectChatSession(chatSession: ChatSession) {
-        this.selectedChatSession = chatSession;
+    selectConversation(conversation: Conversation) {
+        this.selectedConversation = conversation;
     }
 }

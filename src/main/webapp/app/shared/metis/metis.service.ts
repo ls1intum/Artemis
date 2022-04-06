@@ -29,7 +29,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
-import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -166,7 +166,7 @@ export class MetisService implements OnDestroy {
         if (
             forceUpdate ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
-            postContextFilter?.chatSessionId !== this.currentPostContextFilter?.chatSessionId ||
+            postContextFilter?.conversationId !== this.currentPostContextFilter?.conversationId ||
             postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
             postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
             postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId ||
@@ -305,7 +305,7 @@ export class MetisService implements OnDestroy {
      * @param {Lecture | undefined} lecture optional lecture as default context
      * @return {Post} created default object
      */
-    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, chatSession?: ChatSession): Post {
+    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, conversation?: Conversation): Post {
         const emptyPost: Post = new Post();
         if (courseWideContext) {
             emptyPost.courseWideContext = courseWideContext;
@@ -315,8 +315,8 @@ export class MetisService implements OnDestroy {
             emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
         } else if (lecture) {
             emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;
-        } else if (chatSession) {
-            emptyPost.chatSession = chatSession;
+        } else if (conversation) {
+            emptyPost.conversation = conversation;
             emptyPost.course = this.course;
         } else {
             // set default
@@ -480,8 +480,8 @@ export class MetisService implements OnDestroy {
             channel += `exercises/${this.currentPostContextFilter.exerciseId}`;
         } else if (this.currentPostContextFilter.lectureId) {
             channel += `lectures/${this.currentPostContextFilter.lectureId}`;
-        } else if (this.currentPostContextFilter.chatSessionId) {
-            channel += `courses/${this.courseId}/chatSessions/` + this.currentPostContextFilter.chatSessionId;
+        } else if (this.currentPostContextFilter.conversationId) {
+            channel += `courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
         } else {
             // subscribe to course as this is topic that is emitted on in every case
             channel += `courses/${this.courseId}`;

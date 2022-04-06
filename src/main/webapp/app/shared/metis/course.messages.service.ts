@@ -1,21 +1,21 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 import { map, Observable, ReplaySubject } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ChatSessionService } from 'app/shared/metis/chat-session.service';
+import { ConversationService } from 'app/shared/metis/conversation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { ChatSessionDTO } from 'app/entities/metis/chat.session/chat-session-dto.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 @Injectable()
 export class CourseMessagesService implements OnDestroy {
-    private chatSessions$: ReplaySubject<ChatSession[]> = new ReplaySubject<ChatSession[]>(1);
+    private conversations$: ReplaySubject<Conversation[]> = new ReplaySubject<Conversation[]>(1);
     private subscribedChannel?: string;
     userId: number;
 
-    constructor(protected chatSessionService: ChatSessionService, private jhiWebsocketService: JhiWebsocketService, protected accountService: AccountService) {
+    constructor(protected conversationService: ConversationService, private jhiWebsocketService: JhiWebsocketService, protected accountService: AccountService) {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
         });
@@ -28,22 +28,22 @@ export class CourseMessagesService implements OnDestroy {
     }
 
     /**
-     * creates a new chatSession by invoking the chatSession service
-     * @param {number} courseId             course to associate the chatSession to
-     * @param {ChatSession} chatSession     to be created
-     * @return {Observable<ChatSession>}    created chatSession
+     * creates a new conversation by invoking the conversation service
+     * @param {number} courseId             course to associate the conversation to
+     * @param {Conversation} conversation    to be created
+     * @return {Observable<Conversation>}    created conversation
      */
-    createChatSession(courseId: number, chatSession: ChatSession): Observable<ChatSession> {
-        return this.chatSessionService.create(courseId, chatSession).pipe(map((res: HttpResponse<ChatSession>) => res.body!));
+    createConversation(courseId: number, conversation: Conversation): Observable<Conversation> {
+        return this.conversationService.create(courseId, conversation).pipe(map((res: HttpResponse<Conversation>) => res.body!));
     }
 
-    get chatSessions(): Observable<ChatSession[]> {
-        return this.chatSessions$.asObservable();
+    get conversations(): Observable<Conversation[]> {
+        return this.conversations$.asObservable();
     }
 
-    getChatSessionsOfUser(courseId: number): void {
-        this.chatSessionService.getChatSessionsOfUser(courseId).subscribe((res) => {
-            this.chatSessions$.next(res.body!);
+    getConversationsOfUser(courseId: number): void {
+        this.conversationService.getConversationsOfUser(courseId).subscribe((res) => {
+            this.conversations$.next(res.body!);
             this.createSubscription(courseId, this.userId);
         });
     }
@@ -55,16 +55,16 @@ export class CourseMessagesService implements OnDestroy {
         this.subscribedChannel = channel;
         this.jhiWebsocketService.subscribe(channel);
 
-        this.jhiWebsocketService.receive(channel).subscribe((chatSessionDTO: ChatSessionDTO) => {
-            if (chatSessionDTO.crudAction === MetisPostAction.CREATE) {
-                this.getChatSessionsOfUser(courseId);
+        this.jhiWebsocketService.receive(channel).subscribe((conversationDTO: ConversationDTO) => {
+            if (conversationDTO.crudAction === MetisPostAction.CREATE) {
+                this.getConversationsOfUser(courseId);
             }
         });
     }
 
     private channelName(courseId: number, userId: number) {
         const courseTopicName = MetisWebsocketChannelPrefix + 'courses/' + courseId;
-        const channel = courseTopicName + '/chatSessions/user/' + userId;
+        const channel = courseTopicName + '/conversations/user/' + userId;
         return channel;
     }
 }

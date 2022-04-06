@@ -60,8 +60,8 @@ public abstract class PostingService {
             specificTopicName += "lectures/" + postDTO.getPost().getLecture().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
-        else if (postDTO.getPost().getChatSession() != null) {
-            messagingTemplate.convertAndSend(genericTopicName + "/chatSessions/" + postDTO.getPost().getChatSession().getId(), postDTO);
+        else if (postDTO.getPost().getConversation() != null) {
+            messagingTemplate.convertAndSend(genericTopicName + "/conversations/" + postDTO.getPost().getConversation().getId(), postDTO);
             return;
         }
         messagingTemplate.convertAndSend(genericTopicName, postDTO);

@@ -5,30 +5,30 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 
 import { CourseMessagesService } from 'app/shared/metis/course.messages.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
-import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
 import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { UserChatSession } from 'app/entities/metis/chat.session/user-chat-session.model';
 import { Course } from 'app/entities/course.model';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-details.model';
 
 @Component({
-    selector: 'jhi-chat-session-sidebar',
-    styleUrls: ['./chat-session-sidebar.component.scss', '../../discussion-section/discussion-section.component.scss'],
-    templateUrl: './chat-session-sidebar.component.html',
+    selector: 'jhi-conversation-sidebar',
+    styleUrls: ['./conversation-sidebar.component.scss', '../../discussion-section/discussion-section.component.scss'],
+    templateUrl: './conversation-sidebar.component.html',
     providers: [CourseMessagesService],
 })
-export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
-    @Output() selectChatSession = new EventEmitter<ChatSession>();
+export class ConversationSidebarComponent implements OnInit, OnDestroy {
+    @Output() selectConversation = new EventEmitter<Conversation>();
 
-    chatSessions: ChatSession[];
-    activeChatSession: ChatSession;
+    conversations: Conversation[];
+    activeConversation: Conversation;
 
     course?: Course;
     collapsed: boolean;
     courseId: number;
 
-    private chatSessionSubscription: Subscription;
+    private conversationSubscription: Subscription;
     private paramSubscription: Subscription;
 
     isLoading = false;
@@ -55,13 +55,13 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
                     this.course = res.body!;
                 }
             });
-            this.courseMessagesService.getChatSessionsOfUser(this.courseId);
-            this.chatSessionSubscription = this.courseMessagesService.chatSessions.pipe().subscribe((chatSessions: ChatSession[]) => {
-                this.chatSessions = chatSessions;
-                if (this.chatSessions.length > 0 && !this.activeChatSession) {
-                    // emit the value to fetch chatSession posts on post overview tab
-                    this.activeChatSession = this.chatSessions.first()!;
-                    this.selectChatSession.emit(this.activeChatSession);
+            this.courseMessagesService.getConversationsOfUser(this.courseId);
+            this.conversationSubscription = this.courseMessagesService.conversations.pipe().subscribe((conversations: Conversation[]) => {
+                this.conversations = conversations;
+                if (this.conversations.length > 0 && !this.activeConversation) {
+                    // emit the value to fetch conversation posts on post overview tab
+                    this.activeConversation = this.conversations.first()!;
+                    this.selectConversation.emit(this.activeConversation);
                 }
             });
         });
@@ -112,45 +112,45 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
      * @param user The selected user from the autocomplete suggestions
      */
     onAutocompleteSelect = (user: User): void => {
-        const foundChatSession = this.findChatSessionWithUser(user);
-        // if a chatSession does not already exist with selected user
-        if (foundChatSession === undefined) {
-            const newChatSession = this.createNewChatSessionWithUser(user);
+        const foundConversation = this.findConversationWithUser(user);
+        // if a conversation does not already exist with selected user
+        if (foundConversation === undefined) {
+            const newConversation = this.createNewConversationWithUser(user);
             this.isTransitioning = true;
-            this.courseMessagesService.createChatSession(this.courseId, newChatSession).subscribe({
-                next: (chatSession: ChatSession) => {
+            this.courseMessagesService.createConversation(this.courseId, newConversation).subscribe({
+                next: (conversation: Conversation) => {
                     this.isTransitioning = false;
 
-                    // add newly created chatSession to the beginning of current user's chatSessions
-                    this.chatSessions.unshift(chatSession);
+                    // add newly created conversation to the beginning of current user's conversations
+                    this.conversations.unshift(conversation);
 
-                    // select the new chatSession
-                    this.activeChatSession = chatSession;
-                    this.selectChatSession.emit(chatSession);
+                    // select the new conversation
+                    this.activeConversation = conversation;
+                    this.selectConversation.emit(conversation);
                 },
                 error: () => {
                     this.isTransitioning = false;
                 },
             });
         } else {
-            // chatSession with the found user already exists, so we select it
-            this.activeChatSession = foundChatSession;
-            this.selectChatSession.emit(foundChatSession);
+            // conversation with the found user already exists, so we select it
+            this.activeConversation = foundConversation;
+            this.selectConversation.emit(foundConversation);
         }
     };
 
     ngOnDestroy(): void {
-        this.chatSessionSubscription?.unsubscribe();
+        this.conversationSubscription?.unsubscribe();
     }
 
     /**
      * defines a function that returns the post id as unique identifier,
      * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
      */
-    chatSessionsTrackByFn = (index: number, chatSession: ChatSession): number => chatSession.id!;
+    conversationsTrackByFn = (index: number, conversation: Conversation): number => conversation.id!;
 
-    getNameOfChatSessionParticipant(chatSession: ChatSession): string {
-        const participant = chatSession.userChatSessions!.find((userChatSession) => userChatSession.user.id !== this.courseMessagesService.userId)!.user;
+    getNameOfConversationParticipant(conversation: Conversation): string {
+        const participant = conversation.conversationParticipants!.find((conversationParticipants) => conversationParticipants.user.id !== this.courseMessagesService.userId)!.user;
         return participant.firstName!;
     }
 
@@ -168,21 +168,21 @@ export class ChatSessionSidebarComponent implements OnInit, OnDestroy {
         return '';
     };
 
-    findChatSessionWithUser(user: User) {
-        return this.chatSessions.find((chatSession) => chatSession.userChatSessions!.some((userChatSession) => userChatSession.user.id === user.id));
+    findConversationWithUser(user: User) {
+        return this.conversations.find((conversation) => conversation.conversationParticipants!.some((conversationParticipant) => conversationParticipant.user.id === user.id));
     }
 
-    createNewChatSessionWithUser(user: User) {
-        const chatSession = new ChatSession();
-        chatSession.course = this.course!;
-        chatSession.userChatSessions = [this.createNewUserChatSession(user)];
+    createNewConversationWithUser(user: User) {
+        const conversation = new Conversation();
+        conversation.course = this.course!;
+        conversation.conversationParticipants = [this.createNewConversationParticipant(user)];
 
-        return chatSession;
+        return conversation;
     }
 
-    createNewUserChatSession(user: User) {
-        const userChatSession = new UserChatSession();
-        userChatSession.user = user;
-        return userChatSession;
+    createNewConversationParticipant(user: User) {
+        const conversationParticipant = new ConversationParticipant();
+        conversationParticipant.user = user;
+        return conversationParticipant;
     }
 }

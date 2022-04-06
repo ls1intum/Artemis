@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.ChatSessionDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 
 public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -46,7 +46,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private List<Post> existingPosts;
 
-    private List<Post> existingChatSessionPosts;
+    private List<Post> existingConversationPosts;
 
     private List<Post> existingExercisePosts;
 
@@ -82,10 +82,10 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with chat session initialized): 14 posts in total
         existingPostsAndChats = database.createPostsWithinCourse();
 
-        existingPosts = existingPostsAndChats.stream().filter(post -> post.getChatSession() == null).collect(Collectors.toList());
+        existingPosts = existingPostsAndChats.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
 
         // filters existing posts with chat session
-        existingChatSessionPosts = existingPostsAndChats.stream().filter(post -> post.getChatSession() != null).toList();
+        existingConversationPosts = existingPostsAndChats.stream().filter(post -> post.getConversation() != null).toList();
 
         // filter existing posts with exercise context
         existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList());
@@ -178,15 +178,15 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateChatSessionPost() throws Exception {
-        Post postToSave = createPostWithChatSession();
+    public void testCreateConversationPost() throws Exception {
+        Post postToSave = createPostWithConversation();
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(createdPost.getChatSession().getId()).isNotNull();
-        assertThat(postRepository.findPostsBySessionId(createdPost.getChatSession().getId()).size()).isEqualTo(1);
+        assertThat(createdPost.getConversation().getId()).isNotNull();
+        assertThat(postRepository.findPostsBySessionId(createdPost.getConversation().getId()).size()).isEqualTo(1);
         // checks if members of the created chat session were notified via broadcast
-        verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ChatSessionDTO.class));
+        verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ConversationDTO.class));
     }
 
     @Test
@@ -549,14 +549,14 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetChatSessionPost() throws Exception {
-        // chatSessionId set will fetch all posts of chat session if the user is involved
+    public void testGetConversationPost() throws Exception {
+        // conversation set will fetch all posts of chat session if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("chatSessionId", existingChatSessionPosts.get(0).getChatSession().getId().toString());
+        params.add("conversationId", existingConversationPosts.get(0).getConversation().getId().toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts.size()).isEqualTo(existingChatSessionPosts.size());
+        assertThat(returnedPosts.size()).isEqualTo(existingConversationPosts.size());
     }
 
     @Test
@@ -762,12 +762,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         return post;
     }
 
-    private Post createPostWithChatSession() {
+    private Post createPostWithConversation() {
         Post post = new Post();
         post.setAuthor(database.getUserByLogin("student1"));
         post.setCourse(course);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setChatSession(ChatSessionIntegrationTest.createChatSession(course, database));
+        post.setConversation(ConversationIntegrationTest.createConversation(course, database));
         return post;
     }
 

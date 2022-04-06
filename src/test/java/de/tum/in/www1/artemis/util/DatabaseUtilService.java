@@ -57,9 +57,9 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
-import de.tum.in.www1.artemis.repository.metis.ChatSessionRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.UserChatSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -196,10 +196,10 @@ public class DatabaseUtilService {
     private AnswerPostRepository answerPostRepository;
 
     @Autowired
-    private ChatSessionRepository chatSessionRepository;
+    private ConversationRepository conversationRepository;
 
     @Autowired
-    private UserChatSessionRepository userChatSessionRepository;
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private ModelingSubmissionService modelSubmissionService;
@@ -761,7 +761,7 @@ public class DatabaseUtilService {
         // add posts to course with different course-wide contexts provided in input array
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
-        posts.addAll(createBasicPosts(createChatSession(course1)));
+        posts.addAll(createBasicPosts(createConversation(course1)));
 
         return posts;
     }
@@ -770,7 +770,7 @@ public class DatabaseUtilService {
         List<Post> posts = createPostsWithinCourse();
 
         // remove chats
-        posts = posts.stream().filter(post -> post.getChatSession() == null).collect(Collectors.toList());
+        posts = posts.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
 
         // add answer for one post in each context (lecture, exercise, course-wide)
         Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
@@ -840,12 +840,12 @@ public class DatabaseUtilService {
         return post;
     }
 
-    private List<Post> createBasicPosts(ChatSession chatSession) {
+    private List<Post> createBasicPosts(Conversation conversation) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             Post postToAdd = createBasicPost(i);
-            postToAdd.setCourse(chatSession.getCourse());
-            postToAdd.setChatSession(chatSession);
+            postToAdd.setCourse(conversation.getCourse());
+            postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
@@ -875,26 +875,26 @@ public class DatabaseUtilService {
         return answerPosts;
     }
 
-    public ChatSession createChatSession(Course course) {
-        ChatSession chatSession = new ChatSession();
-        chatSession.setCourse(course);
-        chatSession = chatSessionRepository.save(chatSession);
+    public Conversation createConversation(Course course) {
+        Conversation conversation = new Conversation();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
 
-        List<UserChatSession> userChatSessions = new ArrayList<>();
-        userChatSessions.add(createUserChatSession(chatSession, "student1"));
-        userChatSessions.add(createUserChatSession(chatSession, "student2"));
+        List<ConversationParticipant> conversationParticipants = new ArrayList<>();
+        conversationParticipants.add(createConversationParticipant(conversation, "student1"));
+        conversationParticipants.add(createConversationParticipant(conversation, "student2"));
 
-        chatSession.setUserChatSessions(new HashSet<>(userChatSessions));
-        return chatSessionRepository.save(chatSession);
+        conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
+        return conversationRepository.save(conversation);
     }
 
-    private UserChatSession createUserChatSession(ChatSession chatSession, String userName) {
-        UserChatSession userChatSession = new UserChatSession();
-        userChatSession.setChatSession(chatSession);
-        userChatSession.setLastRead(chatSession.getLastMessageDate());
-        userChatSession.setUser(getUserByLogin(userName));
+    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
+        ConversationParticipant conversationParticipant = new ConversationParticipant();
+        conversationParticipant.setConversation(conversation);
+        conversationParticipant.setLastRead(conversation.getLastMessageDate());
+        conversationParticipant.setUser(getUserByLogin(userName));
 
-        return userChatSessionRepository.save(userChatSession);
+        return conversationParticipantRepository.save(conversationParticipant);
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {

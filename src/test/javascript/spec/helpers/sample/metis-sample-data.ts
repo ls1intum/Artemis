@@ -6,8 +6,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { ChatSession } from 'app/entities/metis/chat.session/chat-session.model';
-import { UserChatSession } from 'app/entities/metis/chat.session/user-chat-session.model';
+import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-details.model';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 export const metisLecture = { id: 1, title: 'Metis  Lecture' } as Lecture;
 export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture' } as Lecture;
@@ -144,32 +144,32 @@ export const metisPostLectureUser2 = {
 
 metisResolvingAnswerPostUser1.post = metisPostLectureUser2;
 
-const userChatSessionUser1 = { id: 1, user: metisUser1 } as UserChatSession;
+const conversationParticipantUser1 = { id: 1, user: metisUser1 } as ConversationParticipant;
 
-const userChatSessionUser2 = { id: 2, user: metisUser2 } as UserChatSession;
+const conversationParticipantUser2 = { id: 2, user: metisUser2 } as ConversationParticipant;
 
-const userChatSessionTutor = { id: 3, user: metisTutor } as UserChatSession;
+const conversationParticipantTutor = { id: 3, user: metisTutor } as ConversationParticipant;
 
-export const chatSessionBetweenUser1User2 = {
+export const conversationBetweenUser1User2 = {
     id: 1,
-    userChatSessions: [userChatSessionUser1, userChatSessionUser2],
+    conversationParticipants: [conversationParticipantUser1, conversationParticipantUser2],
     creationDate: undefined,
     lastMessageDate: undefined,
-} as ChatSession;
+} as Conversation;
 
-export const chatSessionBetweenUser2AndTutor = {
+export const conversationBetweenUser2AndTutor = {
     id: 2,
-    userChatSessions: [userChatSessionUser2, userChatSessionTutor],
+    conversationParticipants: [conversationParticipantUser2, conversationParticipantTutor],
     creationDate: undefined,
     lastMessageDate: undefined,
-} as ChatSession;
+} as Conversation;
 
 export const directMessageUser1 = {
     id: 9,
     author: metisUser1,
     content: 'user1directMessageToUser2',
     creationDate: undefined,
-    chatSession: chatSessionBetweenUser1User2,
+    conversation: conversationBetweenUser1User2,
 } as Post;
 
 export const directMessageUser2 = {
@@ -177,12 +177,12 @@ export const directMessageUser2 = {
     author: metisUser1,
     content: 'user2directMessageToUser1',
     creationDate: undefined,
-    chatSession: chatSessionBetweenUser1User2,
+    conversation: conversationBetweenUser1User2,
 } as Post;
 
-export const chatSessionsOfUser1 = [chatSessionBetweenUser1User2];
+export const conversationsOfUser1 = [conversationBetweenUser1User2];
 
-export const chatSessionsOfUser2 = [chatSessionBetweenUser1User2, chatSessionBetweenUser2AndTutor];
+export const conversationsOfUser2 = [conversationBetweenUser1User2, conversationBetweenUser2AndTutor];
 
 export const metisLecturePosts = [metisPostLectureUser1, metisPostLectureUser2];
 
@@ -196,18 +196,17 @@ export const metisPostToCreateUser1 = {
     creationDate: undefined,
 } as Post;
 
-export const metisUserChatSessionToCreateUser2 = {
+export const conversationParticipantToCreateUser2 = {
     user: metisUser2,
     lastRead: undefined,
-    archived: false,
-    deleted: false,
-} as UserChatSession;
+    closed: false,
+} as ConversationParticipant;
 
-export const metisChatSessionToCreateUser1 = {
+export const conversationToCreateUser1 = {
     course: metisCourse,
-    userChatSessions: [metisUserChatSessionToCreateUser2],
+    conversationParticipants: [conversationParticipantToCreateUser2],
     creationDate: undefined,
     lastMessageDate: undefined,
-} as ChatSession;
+} as Conversation;
 
-export const metisChatSessionsOfUser1 = [metisChatSessionToCreateUser1];
+export const metisConversationsOfUser1 = [conversationToCreateUser1];

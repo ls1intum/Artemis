@@ -16,13 +16,13 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
-@Table(name = "user_chat_session")
+@Table(name = "conversation_participant")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class UserChatSession extends DomainObject {
+public class ConversationParticipant extends DomainObject {
 
     @ManyToOne
     @JsonIgnore
-    private ChatSession chatSession;
+    private Conversation conversation;
 
     @ManyToOne
     @JsonIncludeProperties({ "id", "firstName", "lastName" })
@@ -35,12 +35,12 @@ public class UserChatSession extends DomainObject {
     @Column(name = "closed")
     private Boolean closed;
 
-    public ChatSession getChatSession() {
-        return chatSession;
+    public Conversation getConversation() {
+        return conversation;
     }
 
-    public void setChatSession(ChatSession chatSession) {
-        this.chatSession = chatSession;
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
     }
 
     public User getUser() {

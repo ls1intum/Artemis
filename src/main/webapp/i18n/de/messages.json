@@ -1,14 +1,18 @@
 {
     "artemisApp": {
         "messages": {
-            "label": "Direktnachrichten",
-            "chatSession": {
-                "header": "Direktnachrichten",
-                "created": "Chatsitzung erstellt",
-                "show": "Nachrichten anzeigen",
-                "hide": "Nachrichten ausblenden",
-                "notFound": "Kein Chat gefunden",
+            "label": "Nachrichten",
+            "conversation": {
+                "header": "Gespräch",
+                "created": "Gespräch erstellt",
+                "show": "Gespräch anzeigen",
+                "hide": "Gespräch ausblenden",
+                "notFound": "Kein Gespräch gefunden",
                 "searchForUsers": "Suchen Sie Benutzer innerhalb des Kurses"
+            },
+            "conversationParticipant": {
+                "created": "Gesprächsteilnehmer erstellt",
+                "notFound": "Kein Gesprächsteilnehmer gefunden"
             },
             "submit": "Senden"
         }

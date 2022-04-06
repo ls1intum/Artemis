@@ -2,7 +2,7 @@ import { CourseMessagesComponent } from 'app/overview/course-messages/course-mes
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { getElement } from '../../../helpers/utils/general.utils';
 
-import { ChatSessionSidebarComponent } from 'app/overview/course-messages/chat-sessions-sidebar/chat-session-sidebar.component';
+import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 
 describe('CourseMessagesComponent', () => {
     let fixture: ComponentFixture<CourseMessagesComponent>;
@@ -11,7 +11,7 @@ describe('CourseMessagesComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [ChatSessionSidebarComponent],
+            declarations: [ConversationSidebarComponent],
             providers: [],
         })
             .compileComponents()
@@ -29,18 +29,18 @@ describe('CourseMessagesComponent', () => {
         fixture.detectChanges();
 
         expect(component).not.toBeNull();
-        expect(component.selectedChatSession).toBeUndefined();
+        expect(component.selectedConversation).toBeUndefined();
 
         const postOverviewComponent = getElement(fixture.debugElement, 'jhi-post-overview');
         expect(postOverviewComponent.courseMessagesPageFlag).toBeTrue();
-        expect(postOverviewComponent.activeChatSession).toBe(component.selectedChatSession);
+        expect(postOverviewComponent.activeConversation).toBe(component.selectedConversation);
     });
 
-    it('should trigger selectedChatSession on selectChatSession event', () => {
-        const saveExerciseWithoutReevaluationSpy = jest.spyOn(component, 'selectChatSession');
+    it('should trigger selectedConversation on selectConversation event', () => {
+        const saveExerciseWithoutReevaluationSpy = jest.spyOn(component, 'selectConversation');
 
         const scrollableDiv = getElement(fixture.debugElement, 'jhi-chat-session-sidebar');
-        scrollableDiv.dispatchEvent(new Event('selectChatSession'));
+        scrollableDiv.dispatchEvent(new Event('selectConversation'));
 
         fixture.detectChanges();
 

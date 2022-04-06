@@ -20,7 +20,7 @@ public class PostContextFilter {
 
     private Long lectureId;
 
-    private Long chatSessionId;
+    private Long conversationId;
 
     private String searchText;
 
@@ -66,12 +66,12 @@ public class PostContextFilter {
         this.lectureId = lectureId;
     }
 
-    public Long getChatSessionId() {
-        return chatSessionId;
+    public Long getConversationId() {
+        return conversationId;
     }
 
-    public void setChatSessionId(Long chatSessionId) {
-        this.chatSessionId = chatSessionId;
+    public void setConversationId(Long conversationId) {
+        this.conversationId = conversationId;
     }
 
     public String getSearchText() {

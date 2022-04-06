@@ -72,6 +72,10 @@
                 "metis": {
                     "post": "Beitrag",
                     "answerPost": "Antwort"
+                },
+                "messages": {
+                    "conversation": "Gespräch",
+                    "conversationParticipant": "Unterhaltungsdetails"
                 }
             },
             "account": {
