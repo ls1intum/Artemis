@@ -52,6 +52,10 @@
         {
             "fieldName": "registrationEnabled",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "defaultProgrammingLanguage",
+            "fieldType": "Boolean"
         }
     ],
     "relationships": [
