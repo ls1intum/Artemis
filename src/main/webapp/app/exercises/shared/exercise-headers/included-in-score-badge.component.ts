@@ -21,12 +21,14 @@ export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChang
      * Sets the badge attributes based on the included in score enum
      */
     ngOnInit(): void {
+        console.log('init');
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.setBadgeAttributes();
         });
     }
 
     ngOnChanges(): void {
+        console.log('chages');
         this.setBadgeAttributes();
     }
 
