@@ -1,5 +1,6 @@
-import { Component, OnInit, OnDestroy, ContentChild, ElementRef } from '@angular/core';
+import { Component, ContentChild, ElementRef, OnDestroy, OnInit } from '@angular/core';
 import { faCircle } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
@@ -11,30 +12,17 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     @ContentChild('innerContent', { static: false }) innerContent: ElementRef;
 
     disconnected = true;
-    onConnected: () => void;
-    onDisconnected: () => void;
+    websocketStatusSubscription: Subscription;
 
     // Icons
     faCircle = faCircle;
 
-    constructor(private jhiWebsocketService: JhiWebsocketService) {}
+    constructor(private websocketService: JhiWebsocketService) {}
 
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
     ngOnInit() {
         // listen to connect / disconnect events
-        this.onConnected = () => {
-            this.disconnected = false;
-        };
-        this.jhiWebsocketService.bind('connect', () => {
-            this.onConnected();
-        });
-        this.onDisconnected = () => {
-            this.disconnected = true;
-        };
-        this.jhiWebsocketService.bind('disconnect', () => {
-            this.onDisconnected();
+        this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
+            this.disconnected = !status.connected;
         });
     }
 
@@ -42,11 +30,6 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
      * Life cycle hook called by Angular for cleanup just before Angular destroys the component
      */
     ngOnDestroy() {
-        if (this.onConnected) {
-            this.jhiWebsocketService.unbind('connect', this.onConnected);
-        }
-        if (this.onDisconnected) {
-            this.jhiWebsocketService.unbind('disconnect', this.onDisconnected);
-        }
+        this.websocketStatusSubscription.unsubscribe();
     }
 }

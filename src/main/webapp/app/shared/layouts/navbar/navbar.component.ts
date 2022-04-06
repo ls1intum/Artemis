@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Observable, of, Subscription } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -72,6 +72,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isRegistrationEnabled = false;
     passwordResetEnabled = false;
     breadcrumbs: Breadcrumb[];
+    isCollapsed: boolean;
+
     // Icons
     faBars = faBars;
     faThLarge = faThLarge;
@@ -127,6 +129,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
         this.getExamId();
+        this.onResize();
+    }
+
+    @HostListener('window:resize', ['$event'])
+    onResize() {
+        this.isCollapsed = window.innerWidth < 1200;
     }
 
     ngOnInit() {
