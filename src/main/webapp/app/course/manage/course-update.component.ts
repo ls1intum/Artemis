@@ -22,6 +22,7 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-course-update',
@@ -30,6 +31,7 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
 })
 export class CourseUpdateComponent implements OnInit {
     CachingStrategy = CachingStrategy;
+    ProgrammingLanguage = ProgrammingLanguage;
 
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -138,6 +140,7 @@ export class CourseUpdateComponent implements OnInit {
                 accuracyOfScores: new FormControl(this.course.accuracyOfScores, {
                     validators: [Validators.min(1)],
                 }),
+                defaultProgrammingLanguage: new FormControl(this.course.defaultProgrammingLanguage),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),

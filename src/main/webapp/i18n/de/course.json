@@ -66,6 +66,7 @@
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für den Kurs aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl"
             },
             "accuracyOfScores": "Anzahl der Nachkommastellen bei der Berechnung von Punktzahlen",
+            "defaultProgrammingLanguage": "Standardmäßige Programmiersprache",
             "gradingSystem": "Notenschlüssel",
             "testCourse": {
                 "title": "Testkurs",

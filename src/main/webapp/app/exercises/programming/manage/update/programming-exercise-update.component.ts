@@ -352,6 +352,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.courseService.find(courseId).subscribe((res) => {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
+                                if (this.programmingExercise.course?.defaultProgrammingLanguage) {
+                                    this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
+                                }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
                                 this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe({
                                     next: (categoryRes: HttpResponse<string[]>) => {

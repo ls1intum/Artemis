@@ -142,6 +142,12 @@
                     </label>
                     <input required type="number" class="form-control" name="accuracyOfScores" id="field_accuracyOfScores" min="0" max="5" formControlName="accuracyOfScores" />
                 </div>
+                <div class="form-group">
+                    <label jhiTranslate="artemisApp.course.defaultProgrammingLanguage"></label>
+                    <select class="form-select" formControlName="defaultProgrammingLanguage">
+                        <option *ngFor="let programmingLanguage of ProgrammingLanguage | keyvalue" [value]="programmingLanguage.key">{{ programmingLanguage.value }}</option>
+                    </select>
+                </div>
                 <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
                     <div *ngIf="!course.id" class="form-check">
                         <input
