@@ -14,7 +14,7 @@ import 'brace/mode/kotlin';
 import 'brace/mode/assembly_x86';
 import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { AceEditorComponent, MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
@@ -80,6 +80,8 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     readonly LineWidgets = acequire('ace/line_widgets').LineWidgets;
 
     readonly Range = acequire('ace/range').Range;
+
+    readonly MAX_TAB_SIZE = MAX_TAB_SIZE;
 
     /** Ace Editor Options **/
     editorMode: string; // string or mode object
@@ -535,5 +537,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             obj.addEventListener('DOMNodeRemoved', callback, false);
         }
         callback();
+    }
+
+    /**
+     * Changes the tab size to a valid value in case it is not.
+     *
+     * Valid values are in range [1, {@link MAX_TAB_SIZE}].
+     */
+    validateTabSize(): void {
+        this.tabSize = Math.max(1, Math.min(this.tabSize, MAX_TAB_SIZE));
     }
 }

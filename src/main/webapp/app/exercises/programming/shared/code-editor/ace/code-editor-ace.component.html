@@ -12,7 +12,7 @@
             <div ngbDropdownMenu aria-labelledby="dropdownCodeEditorSettings">
                 <div ngbDropdownItem class="d-flex">
                     <span class="dropdown-item" jhiTranslate="artemisApp.editor.tabSize"></span>
-                    <input class="form-control-sm" type="number" min="1" max="8" step="1" size="1" [(ngModel)]="tabSize" />
+                    <input class="form-control-sm" type="number" min="1" [max]="MAX_TAB_SIZE" step="1" size="1" [(ngModel)]="tabSize" (change)="validateTabSize()" />
                 </div>
             </div>
         </div>

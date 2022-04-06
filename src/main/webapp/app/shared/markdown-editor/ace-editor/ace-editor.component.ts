@@ -5,6 +5,8 @@ import 'brace/theme/monokai';
 
 declare var ace: any;
 
+export const MAX_TAB_SIZE = 8;
+
 @Component({
     selector: 'jhi-ace-editor',
     template: '',
@@ -22,9 +24,14 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     @Output() textChange = new EventEmitter();
     @Input() style: any = {};
 
+    /**
+     * Sets the size in spaces of newly inserted tabs and the display size of existing true tabs.
+     *
+     * @param value The display width between 1 and {@link MAX_TAB_SIZE} (both inclusive).
+     */
     @Input('tabSize')
     public set tabSize(value: number) {
-        if (value > 0) {
+        if (value > 0 && value <= MAX_TAB_SIZE) {
             this._editor.session.setTabSize(value);
         }
     }
