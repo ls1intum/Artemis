@@ -199,7 +199,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
                 script.append(StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(programmingLanguage)).append(lineEnding);
             }
             else {
-                script.append("./gradlew check\n");
+                script.append("./gradlew check").append(lineEnding);
             }
 
             // Copy all static code analysis reports to new directory
