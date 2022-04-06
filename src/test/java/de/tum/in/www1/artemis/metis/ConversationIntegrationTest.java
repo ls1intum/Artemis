@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -65,7 +64,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Conversation createdConversation = request.postWithResponseBody("/api/courses/" + course.getId() + "/conversations/", conversationToSave, Conversation.class,
                 HttpStatus.CREATED);
 
-        checkCreatedConversationParticipants(createdConversation.getConversationParticipants(), createdConversation.getCreationDate());
+        checkCreatedConversationParticipants(createdConversation.getConversationParticipants());
         checkCreatedConversation(conversationToSave, createdConversation);
 
         assertThat(conversationRepository.findById(createdConversation.getId())).isNotEmpty();
@@ -146,7 +145,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(createdConversation.getCreationDate()).isNotNull();
     }
 
-    private void checkCreatedConversationParticipants(Set<ConversationParticipant> conversationParticipants, ZonedDateTime creationDate) {
+    private void checkCreatedConversationParticipants(Set<ConversationParticipant> conversationParticipants) {
         // check each individual conversationParticipant
         conversationParticipants.forEach(conversationParticipant -> {
             assertThat(conversationParticipant.isClosed()).isFalse();

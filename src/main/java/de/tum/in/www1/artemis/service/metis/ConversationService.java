@@ -70,7 +70,7 @@ public class ConversationService {
             throw new BadRequestAlertException("A new conversation must have conversationParticipants", CONVERSATION_DETAILS_ENTITY_NAME, "NotNull");
         }
 
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = checkUserAndCourse(user, courseId);
         conversation.setCourse(course);
 
         Conversation savedConversation = conversationRepository.save(conversation);
@@ -152,15 +152,11 @@ public class ConversationService {
         return conversationParticipantRepository.save(conversationParticipant);
     }
 
-    Course preCheckUserAndCourse(User user, Long courseId) {
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-        // user has to be at least student in the course
+    Course checkUserAndCourse(User user, Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        // user has to at least have student role in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        // check if course has posts enabled
-        if (!course.getPostsEnabled()) {
-            throw new BadRequestAlertException("Postings are not enabled for this course", getEntityName(), "400", true);
-        }
         return course;
     }
 
