@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
@@ -8,19 +8,21 @@ import { User } from 'app/core/user/user.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { filter, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-system-notification',
     templateUrl: './system-notification.component.html',
     styleUrls: ['system-notification.scss'],
 })
-export class SystemNotificationComponent implements OnInit {
+export class SystemNotificationComponent implements OnInit, OnDestroy {
     readonly INFO = SystemNotificationType.INFO;
     readonly WARNING = SystemNotificationType.WARNING;
     notification: SystemNotification | undefined;
     alertClass: string;
     alertIcon: IconProp;
     websocketChannel: string;
+    websocketStatusSubscription?: Subscription;
 
     constructor(
         private route: ActivatedRoute,
@@ -35,12 +37,14 @@ export class SystemNotificationComponent implements OnInit {
             if (user) {
                 // maybe use connectedPromise as a set function
                 setTimeout(() => {
-                    this.jhiWebsocketService.bind('connect', () => {
-                        this.subscribeSocket();
-                    });
+                    this.websocketStatusSubscription = this.jhiWebsocketService.connectionState.pipe(filter((status) => status.connected)).subscribe(() => this.subscribeSocket());
                 }, 500);
             }
         });
+    }
+
+    ngOnDestroy() {
+        this.websocketStatusSubscription?.unsubscribe();
     }
 
     private loadActiveNotification() {

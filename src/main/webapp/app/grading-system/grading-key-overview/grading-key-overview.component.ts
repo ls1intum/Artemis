@@ -72,7 +72,13 @@ export class GradingKeyOverviewComponent implements OnInit {
      * Navigates to the previous page (back button on the browser)
      */
     previousState() {
-        this.navigationUtilService.navigateBack(['courses', this.courseId!.toString(), 'statistics']);
+        const fallbackUrl = ['courses', this.courseId!.toString()];
+        if (this.isExam) {
+            fallbackUrl.push('exams', this.examId!.toString());
+        } else {
+            fallbackUrl.push('statistics');
+        }
+        this.navigationUtilService.navigateBack(fallbackUrl);
     }
 
     /**
