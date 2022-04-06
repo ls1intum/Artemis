@@ -1,8 +1,4 @@
 <div>
-    <h2 style="margin-bottom: 0.5em">
-        {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
-        {{ isExam ? examId : courseId }}
-    </h2>
     <div>
         <div class="d-flex">
             <button (click)="generateDefaultGradingScale()" class="btn btn-primary me-1 mb-1" type="button">
@@ -115,10 +111,10 @@
                             (change)="setPercentage(gradeStep, false)"
                         />
                     </td>
-                    <td *ngIf="gradingScale.gradeType != GradeType.BONUS">
+                    <td *ngIf="gradingScale.gradeType !== GradeType.BONUS">
                         <input [(ngModel)]="gradeStep.gradeName" type="text" required />
                     </td>
-                    <td *ngIf="gradingScale.gradeType == GradeType.BONUS">
+                    <td *ngIf="gradingScale.gradeType === GradeType.BONUS">
                         <input [(ngModel)]="gradeStep.gradeName" type="number" step="0.25" min="0" placeholder="0" required />
                     </td>
                     <td>

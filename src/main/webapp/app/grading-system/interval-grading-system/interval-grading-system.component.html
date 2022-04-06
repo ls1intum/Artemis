@@ -91,7 +91,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index" class="grading-scale-table-row">
+                <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index; let last = last" class="grading-scale-table-row">
                     <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
                         <input [ngModel]="getPercentageInterval(gradeStep)" type="number" step="0.5" min="0" (ngModelChange)="setPercentageInterval(i, $event)" required />
                     </td>
@@ -113,10 +113,12 @@
                         <input [ngModel]="gradeStep.lowerBoundPoints" type="number" step="0.5" min="0" disabled />
                     </td>
                     <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
-                        <input [ngModel]="gradeStep.upperBoundPercentage" type="number" step="0.5" min="0" disabled />
+                        <input *ngIf="!last" [ngModel]="gradeStep.upperBoundPercentage" type="number" step="0.5" min="0" disabled />
+                        <input *ngIf="last" value="&infin;" type="text" disabled />
                     </td>
                     <td *ngIf="gradeEditMode === GradeEditMode.POINTS">
-                        <input [ngModel]="gradeStep.upperBoundPoints" type="number" step="0.5" min="0" disabled />
+                        <input *ngIf="!last" [ngModel]="gradeStep.upperBoundPoints" type="number" step="0.5" min="0" disabled />
+                        <input *ngIf="last" value="&infin;" type="text" disabled />
                     </td>
                     <td *ngIf="gradingScale.gradeType !== GradeType.BONUS">
                         <input [(ngModel)]="gradeStep.gradeName" type="text" required />
