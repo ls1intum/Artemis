@@ -37,7 +37,7 @@ describe('Detailed Grading System Component', () => {
     let translateStub: jest.SpyInstance;
     let examService: ExamManagementService;
 
-    const route = { params: of({ courseId: 1, examId: 1 }) } as any as ActivatedRoute;
+    const route = { parent: { params: of({ courseId: 1, examId: 1 }) } } as any as ActivatedRoute;
 
     const gradeStep1: GradeStep = {
         gradeName: 'Fail',
