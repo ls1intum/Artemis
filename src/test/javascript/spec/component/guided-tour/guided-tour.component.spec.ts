@@ -11,8 +11,9 @@ import { By } from '@angular/platform-browser';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 
 describe('GuidedTourComponent', () => {
     const tourStep = new TextTourStep({
@@ -56,7 +57,7 @@ describe('GuidedTourComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe)],
+            declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe), MockComponent(JhiConnectionWarningComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
