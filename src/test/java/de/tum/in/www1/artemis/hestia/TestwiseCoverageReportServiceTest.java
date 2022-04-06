@@ -65,8 +65,8 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
         programmingExerciseTestCaseRepository.save(testCase1);
         var testCase2 = new ProgrammingExerciseTestCase().testName("test2()").exercise(programmingExercise).active(true).weight(1.0);
         programmingExerciseTestCaseRepository.save(testCase2);
-        solutionSubmission = database.createProgrammingSubmission(solutionParticipation, false);
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
+        solutionSubmission = database.createProgrammingSubmission(solutionParticipation, false);
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
     }
 

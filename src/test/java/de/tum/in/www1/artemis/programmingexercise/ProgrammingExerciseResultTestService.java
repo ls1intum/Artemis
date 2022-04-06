@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.*;
@@ -311,6 +312,8 @@ public class ProgrammingExerciseResultTestService {
 
         // setup mocks
         doReturn(null).when(gitService).getOrCheckoutRepository(any(), eq(true));
+        doNothing().when(gitService).resetToOriginHead(any());
+        doNothing().when(gitService).pullIgnoreConflicts(any());
         doReturn(Collections.emptyMap()).when(gitService).listFilesAndFolders(any());
 
         var expectedReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();

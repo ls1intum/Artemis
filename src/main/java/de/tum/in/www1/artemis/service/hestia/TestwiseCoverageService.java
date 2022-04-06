@@ -133,7 +133,7 @@ public class TestwiseCoverageService {
         }
 
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId());
-        var solutionLineCountByFilePath = getLineCountByFilePath(exercise, submission);
+        var solutionLineCountByFilePath = getLineCountByFilePath(submission);
 
         // Save the full report with the test case and submission, but without the individual file reports as they do not have an ID yet
         var fullReport = new CoverageReport();
@@ -204,10 +204,9 @@ public class TestwiseCoverageService {
 
     /**
      * Returns the line count by file name for all files in the solution repository for the last submission.
-     * @param programmingExercise the exercise from which the latest submission to the solution repository will be used
      * @return line count by file name of files in the last submission's solution repository
      */
-    private Map<String, Integer> getLineCountByFilePath(ProgrammingExercise programmingExercise, ProgrammingSubmission submission) {
+    private Map<String, Integer> getLineCountByFilePath(ProgrammingSubmission submission) {
         try {
             var solutionParticipation = (SolutionProgrammingExerciseParticipation) submission.getParticipation();
             var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
