@@ -1,0 +1,22 @@
+<ng-template #popContent class="connection-warning-popover">
+    <fa-icon [icon]="faExclamationCircle" size="2x"></fa-icon>
+    <div>
+        {{ 'artemisApp.disconnectedAlert' | artemisTranslate }}
+    </div>
+    <jhi-close-circle (click)="popover.close()"></jhi-close-circle>
+</ng-template>
+
+<div
+    class="connection-warning"
+    [ngClass]="{ disconnected: disconnected }"
+    [ngbPopover]="popContent"
+    popoverClass="connection-warning-popover"
+    #popover="ngbPopover"
+    [triggers]="'manual'"
+    [placement]="'auto'"
+    [autoClose]="false"
+    (click)="popover?.toggle()"
+>
+    <fa-icon [icon]="faWifi"></fa-icon>
+    <fa-icon id="pulse-icon" *ngIf="disconnected && !isOnExamParticipationPage" [icon]="faWifi"></fa-icon>
+</div>
