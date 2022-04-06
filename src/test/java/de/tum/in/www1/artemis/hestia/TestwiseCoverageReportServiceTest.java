@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -47,8 +46,6 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
 
     private ProgrammingSubmission solutionSubmission;
 
-    private SolutionProgrammingExerciseParticipation solutionParticipation;
-
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
     @BeforeEach
@@ -65,7 +62,7 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
         programmingExerciseTestCaseRepository.save(testCase1);
         var testCase2 = new ProgrammingExerciseTestCase().testName("test2()").exercise(programmingExercise).active(true).weight(1.0);
         programmingExerciseTestCaseRepository.save(testCase2);
-        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
+        var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         solutionSubmission = database.createProgrammingSubmission(solutionParticipation, false);
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
     }
