@@ -71,6 +71,7 @@ public class ProgrammingExerciseGitDiffReportService {
     /**
      * Gets the full git-diff report of a programming exercise. A full git-diff report is created from the normal git-diff report
      * but contains the actual code blocks of the template and solution.
+     * If the git-diff report does not exist yet it will generate it first.
      *
      * @param programmingExercise The programming exercise
      * @return The full git-diff report for the given programming exercise
@@ -119,6 +120,8 @@ public class ProgrammingExerciseGitDiffReportService {
 
     /**
      * Converts a normal git-diff entry to a full git-diff entry containing the actual code block of the change it represents.
+     * This method should not be called twice for the same programming exercise at the same time, as this will result in
+     * the creation of 2 reports. See https://github.com/ls1intum/Artemis/pull/4893 for more information about it.
      *
      * @param entry The normal git-diff entry
      * @param templateRepoFiles The files of the solution repository
