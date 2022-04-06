@@ -82,7 +82,7 @@ public class TestwiseCoverageTestUtil {
         filesByPath.forEach((path, fileEntries) -> {
             var coveredPath = new TestwiseCoverageReportDTO.CoveredPathsPerTestDTO();
             coveredPath.setPath(path);
-            coveredPath.setCoveredFilesPerTestDTOS(fileEntries);
+            coveredPath.setCoveredFilesPerTestDTOs(fileEntries);
             result.add(coveredPath);
         });
         return result;
@@ -94,7 +94,7 @@ public class TestwiseCoverageTestUtil {
         result.setUniformPath(uniformPath);
         result.setContent(content);
         result.setDuration(duration);
-        result.setCoveredPathsPerTestDTOS(pathEntries);
+        result.setCoveredPathsPerTestDTOs(pathEntries);
         return result;
     }
 }

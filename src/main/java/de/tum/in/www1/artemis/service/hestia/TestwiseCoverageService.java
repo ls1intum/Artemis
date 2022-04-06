@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.hestia;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -13,6 +14,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
+import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -21,6 +24,7 @@ import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -63,6 +67,64 @@ public class TestwiseCoverageService {
     }
 
     /**
+     * Transforms the testwise coverage report dtos to CoverageFileReports (without the test case attribute) mapped by the test case name.
+     * This method maps the file reports to primitive test case names because the test case is not present in the database
+     * on creating the entities from the dtos.
+     * @param coverageReports the coverage report dtos
+     * @return coverage file reports mapped by the test case name
+     */
+    public Map<String, Set<CoverageFileReport>> createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(List<TestwiseCoverageReportDTO> coverageReports) {
+        Map<String, Set<CoverageFileReport>> fileReportsByTestName = new HashMap<>();
+        coverageReports.forEach(coveragePerTestDTO -> {
+
+            for (var pathDTO : coveragePerTestDTO.getCoveredPathsPerTestDTOs()) {
+
+                // the file reports for the current test case
+                Set<CoverageFileReport> fileCoverageReports = new HashSet<>();
+                for (var fileDTO : pathDTO.getCoveredFilesPerTestDTOs()) {
+                    var coverageEntriesPerFile = Arrays.stream(fileDTO.getCoveredLinesWithRanges().split(",")).map(optionalLineRange -> {
+                        int startLineNumber;
+                        int linesCount;
+
+                        // retrieve consecutive blocks from the ranged covered lines number
+                        // Example: "2,3-6,7,9-30"
+                        if (optionalLineRange.contains("-")) {
+                            String[] range = optionalLineRange.split("-");
+                            startLineNumber = Integer.parseInt(range[0]);
+                            linesCount = Integer.parseInt(range[1]) - startLineNumber + 1;
+                        }
+                        else {
+                            startLineNumber = Integer.parseInt(optionalLineRange);
+                            linesCount = 1;
+                        }
+
+                        // The test case is not set for the report because it has not been saved yet to the database
+                        var entry = new TestwiseCoverageReportEntry();
+                        entry.setStartLine(startLineNumber);
+                        entry.setLineCount(linesCount);
+                        return entry;
+                    }).collect(Collectors.toSet());
+
+                    // build the file report with the entries for this specific file
+                    var fileReport = new CoverageFileReport();
+                    // 'src/' needs to be prepended to match the repositories' relative file path
+                    String filePath = "src/" + pathDTO.getPath() + "/" + fileDTO.getFileName();
+                    fileReport.setFilePath(filePath);
+                    fileReport.setTestwiseCoverageEntries(coverageEntriesPerFile);
+                    fileCoverageReports.add(fileReport);
+                }
+
+                // extract the test case name from the uniformPath
+                String[] split = coveragePerTestDTO.getUniformPath().split("/");
+                String receivedTestCaseName = split[split.length - 1];
+                fileReportsByTestName.put(receivedTestCaseName, fileCoverageReports);
+            }
+        });
+
+        return fileReportsByTestName;
+    }
+
+    /**
      * Creates a coverage report from a testwise coverage report.
      * Test case names are resolved to a test case of the given programming exercise, adds this reference to the given
      * entries and saves the entries with the test case reference to the database.
@@ -74,13 +136,13 @@ public class TestwiseCoverageService {
      */
     public void createTestwiseCoverageReport(Map<String, Set<CoverageFileReport>> fileReportByTestCaseName, ProgrammingExercise exercise, ProgrammingSubmission submission) {
         // If the report already exists, do not create a new report. This is the case if the build plan will be re-run
-        boolean reportAlreadyExists = coverageReportRepository.findCoverageReportBySubmissionId(submission.getId()).isPresent();
+        boolean reportAlreadyExists = coverageReportRepository.existsBySubmissionId(submission.getId());
         if (reportAlreadyExists) {
             return;
         }
 
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId());
-        var solutionLineCountByFilePath = getLineCountByFilePath(exercise);
+        var solutionLineCountByFilePath = getLineCountByFilePath(exercise, submission);
 
         // Save the full report with the test case and submission, but without the individual file reports as they do not have an ID yet
         var fullReport = new CoverageReport();
@@ -95,6 +157,7 @@ public class TestwiseCoverageService {
             // retrieve the test matching the extracted test case name
             var optionalTestCase = testCases.stream().filter(testCase -> testCaseName.equals(testCase.getTestName())).findFirst();
             if (optionalTestCase.isEmpty()) {
+                log.error("No test case with name {} could be found when matching with the testwise coverage", testCaseName);
                 return;
             }
             var testCase = optionalTestCase.get();
@@ -138,7 +201,7 @@ public class TestwiseCoverageService {
             });
         });
 
-        var updatedFullReport = coverageReportRepository.findByIdElseThrow(savedFullReport.getId());
+        var updatedFullReport = coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(savedFullReport.getId());
         // Calculate the unique line count for all file reports and save this value to the database
         var coveredLinesCountByFilePath = calculateAndSaveUniqueLineCountsByFilePath(updatedFullReport);
 
@@ -153,10 +216,12 @@ public class TestwiseCoverageService {
      * @param programmingExercise the exercise from which the latest submission to the solution repository will be used
      * @return line count by file name of files in the last submission's solution repository
      */
-    private Map<String, Integer> getLineCountByFilePath(ProgrammingExercise programmingExercise) {
+    private Map<String, Integer> getLineCountByFilePath(ProgrammingExercise programmingExercise, ProgrammingSubmission submission) {
         try {
-            var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExercise.getId());
+            var solutionParticipation = (SolutionProgrammingExerciseParticipation) submission.getParticipation();
             var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
+            gitService.resetToOriginHead(solutionRepo);
+            gitService.pullIgnoreConflicts(solutionRepo);
             var solutionFiles = repositoryService.getFilesWithContent(solutionRepo);
             var result = new HashMap<String, Integer>();
             solutionFiles.forEach((filePath, value) -> {
@@ -192,11 +257,10 @@ public class TestwiseCoverageService {
      * individual file reports. CoverageFileReports can contain multiple TestwiseCoverageReportEntries referencing
      * the same lines, but referencing a different test case. This mapping is still required, but simple summing may
      * count the same covered lines multiple times.
-     * @param coverageReport the report for which the line counts of its file reports should be caluclated and saved
+     * @param report the report for which the line counts of its file reports should be caluclated and saved
      * @return the number of covered lines by file path
      */
-    private Map<String, Integer> calculateAndSaveUniqueLineCountsByFilePath(CoverageReport coverageReport) {
-        var report = coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(coverageReport.getId());
+    private Map<String, Integer> calculateAndSaveUniqueLineCountsByFilePath(CoverageReport report) {
         var coveredLinesByFilePath = new HashMap<String, Integer>();
         report.getFileReports().forEach(fileReport -> {
             var lineSet = new HashSet<Integer>();
@@ -215,10 +279,11 @@ public class TestwiseCoverageService {
      * @return the testwise coverage report for the latest solution submission without the file reports
      */
     public CoverageReport getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExercise.getId());
-        var latestSubmissions = programmingSubmissionRepository.findLatestLegalSubmissionForParticipation(solutionParticipation.getId(), Pageable.ofSize(1));
-        var latestSubmission = latestSubmissions.get(0);
-        return coverageReportRepository.findCoverageReportBySubmissionIdElseThrow(latestSubmission.getId());
+        var reports = coverageReportRepository.getLatestCoverageReportForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+        if (reports.isEmpty()) {
+            return null;
+        }
+        return reports.get(0);
     }
 
     /**
@@ -228,6 +293,9 @@ public class TestwiseCoverageService {
      */
     public CoverageReport getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
         var lazyReport = getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise);
+        if (lazyReport == null) {
+            return null;
+        }
         return coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(lazyReport.getId());
     }
 }

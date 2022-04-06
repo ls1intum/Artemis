@@ -128,7 +128,7 @@ public class ProgrammingExercise extends Exercise {
     private ProgrammingExerciseGitDiffReport gitDiffReport;
 
     @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
-    private Boolean testwiseCoverageEnabled;
+    private boolean testwiseCoverageEnabled;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).

@@ -40,13 +40,13 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Service
 @Profile("bamboo")
@@ -71,12 +71,12 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final ExerciseDateService exerciseDateService;
 
-    private final CoverageReportRepository coverageReportRepository;
+    private final TestwiseCoverageService testwiseCoverageService;
 
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService, ExerciseDateService exerciseDateService, CoverageReportRepository coverageReportRepository) {
+            UrlService urlService, BuildLogEntryService buildLogService, ExerciseDateService exerciseDateService, TestwiseCoverageService testwiseCoverageService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -85,7 +85,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         this.mapper = mapper;
         this.urlService = urlService;
         this.exerciseDateService = exerciseDateService;
-        this.coverageReportRepository = coverageReportRepository;
+        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     @Override
@@ -639,7 +639,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
                 var report = job.getTestwiseCoverageReports();
                 if (report != null) {
                     // since the test cases are not saved to the database yet, the test case is null for the entries
-                    var coverageFileReportsWithoutTestsByTestCaseName = coverageReportRepository.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
+                    var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
                     result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
                 }
             }

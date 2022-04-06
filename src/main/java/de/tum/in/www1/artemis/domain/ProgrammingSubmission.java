@@ -40,10 +40,10 @@ public class ProgrammingSubmission extends Submission {
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
     // This attribute is only valid for ProgrammingSubmissions related to a SolutionProgrammingExerciseParticipation.
-    // If the submission is deleted, the testwise coverage report with all child entities are deleted.
+    // If the submission is deleted, the coverage report with all child entities are deleted.
     @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
-    private CoverageReport testwiseCoverageReport;
+    private CoverageReport coverageReport;
 
     public String getCommitHash() {
         return commitHash;
@@ -82,12 +82,12 @@ public class ProgrammingSubmission extends Submission {
         this.buildLogEntries = buildLogEntries;
     }
 
-    public CoverageReport getTestwiseCoverageReport() {
-        return testwiseCoverageReport;
+    public CoverageReport getCoverageReport() {
+        return coverageReport;
     }
 
-    public void setTestwiseCoverageReport(CoverageReport testwiseCoverageReport) {
-        this.testwiseCoverageReport = testwiseCoverageReport;
+    public void setCoverageReport(CoverageReport testwiseCoverageReport) {
+        this.coverageReport = testwiseCoverageReport;
     }
 
     public boolean belongsToTestRepository() {

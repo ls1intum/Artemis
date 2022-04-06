@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -80,9 +81,9 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
         var fileReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
         testwiseCoverageService.createTestwiseCoverageReport(fileReportsByTestName, programmingExercise, solutionSubmission);
 
-        var optionalReport = coverageReportRepository.findCoverageReportBySubmissionId(solutionSubmission.getId());
-        assertThat(optionalReport).isPresent();
-        var report = optionalReport.get();
+        var reports = coverageReportRepository.getLatestCoverageReportForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+        assertThat(reports).hasSize(1);
+        var report = reports.get(0);
         // 18/50 lines covered = 32%
         assertThat(report.getCoveredLineRatio()).isEqualTo(0.32);
 

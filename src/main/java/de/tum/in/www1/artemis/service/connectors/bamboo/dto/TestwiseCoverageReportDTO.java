@@ -19,7 +19,7 @@ public class TestwiseCoverageReportDTO {
     private String content;
 
     @JsonProperty("paths")
-    private List<CoveredPathsPerTestDTO> coveredPathsPerTestDTOS = new ArrayList<>();
+    private List<CoveredPathsPerTestDTO> coveredPathsPerTestDTOs = new ArrayList<>();
 
     public String getUniformPath() {
         return uniformPath;
@@ -45,12 +45,12 @@ public class TestwiseCoverageReportDTO {
         this.content = content;
     }
 
-    public List<CoveredPathsPerTestDTO> getCoveredPathsPerTestDTOS() {
-        return coveredPathsPerTestDTOS;
+    public List<CoveredPathsPerTestDTO> getCoveredPathsPerTestDTOs() {
+        return coveredPathsPerTestDTOs;
     }
 
-    public void setCoveredPathsPerTestDTOS(List<CoveredPathsPerTestDTO> coveredPathsPerTestDTOS) {
-        this.coveredPathsPerTestDTOS = coveredPathsPerTestDTOS;
+    public void setCoveredPathsPerTestDTOs(List<CoveredPathsPerTestDTO> coveredPathsPerTestDTOs) {
+        this.coveredPathsPerTestDTOs = coveredPathsPerTestDTOs;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -60,7 +60,7 @@ public class TestwiseCoverageReportDTO {
         private String path;
 
         @JsonProperty("files")
-        private List<CoveredFilesPerTestDTO> coveredFilesPerTestDTOS = new ArrayList<>();
+        private List<CoveredFilesPerTestDTO> coveredFilesPerTestDTOs = new ArrayList<>();
 
         public String getPath() {
             return path;
@@ -70,12 +70,12 @@ public class TestwiseCoverageReportDTO {
             this.path = path;
         }
 
-        public List<CoveredFilesPerTestDTO> getCoveredFilesPerTestDTOS() {
-            return coveredFilesPerTestDTOS;
+        public List<CoveredFilesPerTestDTO> getCoveredFilesPerTestDTOs() {
+            return coveredFilesPerTestDTOs;
         }
 
-        public void setCoveredFilesPerTestDTOS(List<CoveredFilesPerTestDTO> coveredFilesPerTestDTOS) {
-            this.coveredFilesPerTestDTOS = coveredFilesPerTestDTOS;
+        public void setCoveredFilesPerTestDTOs(List<CoveredFilesPerTestDTO> coveredFilesPerTestDTOs) {
+            this.coveredFilesPerTestDTOs = coveredFilesPerTestDTOs;
         }
     }
 
