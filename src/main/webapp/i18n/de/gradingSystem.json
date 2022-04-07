@@ -30,6 +30,7 @@
             "deleteQuestion": "Willst Du den Notenschlüssel wirklich löschen?",
             "add": "Notenstufe hinzufügen",
             "save": "Speichern",
+            "stickyGradeStep": "Der letzte Notenschritt ist immer offen, um Punkte zu verarbeiten, die das Maximum überschreiten. Es klebt am Boden.",
             "info": {
                 "title": "Hilfe zum Notenschlüssel",
                 "general": {

@@ -228,7 +228,7 @@ describe('Detailed Grading System Component', () => {
     it('should set inclusivity correctly', () => {
         comp.lowerBoundInclusivity = false;
 
-        comp.setInclusivity(comp.gradingScale.gradeSteps);
+        comp.setInclusivity();
 
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
             expect(gradeStep.upperBoundInclusive).toBe(true);
@@ -252,7 +252,7 @@ describe('Detailed Grading System Component', () => {
             isPassingGrade: true,
         });
 
-        comp.setInclusivity(comp.gradingScale.gradeSteps);
+        comp.setInclusivity();
 
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
             expect(gradeStep.upperBoundInclusive).toBe(true);

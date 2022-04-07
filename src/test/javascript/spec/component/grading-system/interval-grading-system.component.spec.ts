@@ -62,7 +62,16 @@ describe('Interval Grading System Component', () => {
         upperBoundInclusive: true,
         isPassingGrade: true,
     };
-    const gradeSteps = [gradeStep1, gradeStep2, gradeStep3];
+
+    const gradeStep4: GradeStep = {
+        gradeName: 'Sticky',
+        lowerBoundPercentage: 100,
+        upperBoundPercentage: 200,
+        lowerBoundInclusive: false,
+        upperBoundInclusive: true,
+        isPassingGrade: true,
+    };
+    const gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
 
     const exam = new Exam();
     exam.maxPoints = 100;
@@ -124,7 +133,7 @@ describe('Interval Grading System Component', () => {
         expect(comp.gradingScale.gradeType).toStrictEqual(GradeType.GRADE);
         expect(comp.firstPassingGrade).toStrictEqual('4.0');
         expect(comp.lowerBoundInclusivity).toBe(true);
-        expect(comp.gradingScale.gradeSteps).toHaveLength(13);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(14);
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
             expect(gradeStep.id).toBe(undefined);
             expect(gradeStep.gradeName).not.toBe(undefined);
@@ -154,11 +163,12 @@ describe('Interval Grading System Component', () => {
 
         comp.deleteGradeStep(1);
 
-        expect(comp.gradingScale.gradeSteps).toHaveLength(2);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(3);
         expect(comp.gradingScale.gradeSteps).not.toContain(gradeStep2);
 
         validateGradeStepBounds(comp.gradingScale.gradeSteps[0], 0, 40, maxPoints);
         validateGradeStepBounds(comp.gradingScale.gradeSteps[1], 40, 75, maxPoints);
+        validateGradeStepBounds(comp.gradingScale.gradeSteps[2], 75, 175, maxPoints);
     });
 
     it('should create grade step', () => {
@@ -166,7 +176,7 @@ describe('Interval Grading System Component', () => {
 
         comp.createGradeStep();
 
-        expect(comp.gradingScale.gradeSteps).toHaveLength(4);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(5);
 
         const newGradeStep = comp.gradingScale.gradeSteps[3];
         expect(newGradeStep.id).toBe(undefined);
@@ -193,12 +203,14 @@ describe('Interval Grading System Component', () => {
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[0])).toBe(40);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[1])).toBe(25);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[2])).toBe(35);
+        expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[3])).toBe(100);
     });
 
     it('should set all grade step point intervals correctly', () => {
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(undefined);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBe(undefined);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBe(undefined);
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(undefined);
 
         const multiplier = 2;
         const maxPoints = multiplier * 100;
@@ -208,15 +220,19 @@ describe('Interval Grading System Component', () => {
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(40 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBe(25 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBe(35 * multiplier);
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(100 * multiplier);
 
-        comp.onChangeMaxPoints(-10);
+        const negativeMaxPoints = -10;
+        comp.maxPoints = negativeMaxPoints;
+        comp.onChangeMaxPoints(negativeMaxPoints);
 
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(undefined);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBe(undefined);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBe(undefined);
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(undefined);
     });
 
-    it('should cascade percentage increase', () => {
+    it('should cascade percentage interval increase', () => {
         const multiplier = 2;
         const maxPoints = multiplier * 100;
         comp.maxPoints = maxPoints;
@@ -227,17 +243,20 @@ describe('Interval Grading System Component', () => {
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[0])).toBe(40);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[1])).toBe(50);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[2])).toBe(35);
+        expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[3])).toBe(100);
 
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(40 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBe(50 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBe(35 * multiplier);
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(100 * multiplier);
 
         validateGradeStepBounds(comp.gradingScale.gradeSteps[0], 0, 40, maxPoints);
         validateGradeStepBounds(comp.gradingScale.gradeSteps[1], 40, 90, maxPoints);
         validateGradeStepBounds(comp.gradingScale.gradeSteps[2], 90, 125, maxPoints);
+        validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 125, 225, maxPoints);
     });
 
-    it('should cascade percentage decrease', () => {
+    it('should cascade percentage interval decrease', () => {
         const multiplier = 2;
         const maxPoints = multiplier * 100;
         comp.maxPoints = maxPoints;
@@ -248,17 +267,20 @@ describe('Interval Grading System Component', () => {
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[0])).toBe(40);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[1])).toBe(10);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[2])).toBe(35);
+        expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[3])).toBe(100);
 
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(40 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBe(10 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBe(35 * multiplier);
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(100 * multiplier);
 
         validateGradeStepBounds(comp.gradingScale.gradeSteps[0], 0, 40, maxPoints);
         validateGradeStepBounds(comp.gradingScale.gradeSteps[1], 40, 50, maxPoints);
         validateGradeStepBounds(comp.gradingScale.gradeSteps[2], 50, 85, maxPoints);
+        validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 85, 185, maxPoints);
     });
 
-    it('should cascade points increase', () => {
+    it('should cascade points interval increase', () => {
         const multiplier = 2;
         const maxPoints = multiplier * 100;
         comp.maxPoints = maxPoints;
@@ -269,17 +291,20 @@ describe('Interval Grading System Component', () => {
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[0])).toBe(40);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[1])).toBe(50);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[2])).toBe(35);
+        expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[3])).toBe(100);
 
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(40 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBe(50 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBe(35 * multiplier);
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(100 * multiplier);
 
         validateGradeStepBounds(comp.gradingScale.gradeSteps[0], 0, 40, maxPoints);
         validateGradeStepBounds(comp.gradingScale.gradeSteps[1], 40, 90, maxPoints);
         validateGradeStepBounds(comp.gradingScale.gradeSteps[2], 90, 125, maxPoints);
+        validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 125, 225, maxPoints);
     });
 
-    it('should cascade points decrease', () => {
+    it('should cascade points interval decrease', () => {
         const multiplier = 2;
         const maxPoints = multiplier * 100;
         comp.maxPoints = maxPoints;
@@ -290,13 +315,23 @@ describe('Interval Grading System Component', () => {
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[0])).toBe(40);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[1])).toBe(10);
         expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[2])).toBe(35);
+        expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[3])).toBe(100);
 
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(40 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBe(10 * multiplier);
         expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBe(35 * multiplier);
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(100 * multiplier);
 
         validateGradeStepBounds(comp.gradingScale.gradeSteps[0], 0, 40, maxPoints);
         validateGradeStepBounds(comp.gradingScale.gradeSteps[1], 40, 50, maxPoints);
         validateGradeStepBounds(comp.gradingScale.gradeSteps[2], 50, 85, maxPoints);
+        validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 85, 185, maxPoints);
+    });
+
+    it('should throw on points interval change when max points are not defined', () => {
+        expect(comp.maxPoints).toBe(undefined);
+        expect(() => {
+            comp.setPointsInterval(0, 10);
+        }).toThrow();
     });
 });

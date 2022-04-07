@@ -32,6 +32,11 @@ const csvColumnsBonus = Object.freeze({
 // needed to map from csv object to grade step
 type CsvGradeStep = object;
 
+export enum GradeEditMode {
+    POINTS,
+    PERCENTAGE,
+}
+
 @Component({ template: '' })
 export abstract class BaseGradingSystemComponent implements OnInit {
     GradeType = GradeType;
@@ -59,7 +64,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     constructor(
-        private gradingSystemService: GradingSystemService,
+        protected gradingSystemService: GradingSystemService,
         private route: ActivatedRoute,
         private translateService: TranslateService,
         private courseService: CourseManagementService,
@@ -133,7 +138,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     save(): void {
         this.isLoading = true;
         this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
-        this.gradingScale.gradeSteps = this.setInclusivity(this.gradingScale.gradeSteps);
+        this.setInclusivity();
         this.gradingScale.gradeSteps = this.setPassingGrades(this.gradingScale.gradeSteps);
         // new grade steps shouldn't have ids set
         this.gradingScale.gradeSteps.forEach((gradeStep) => {
@@ -403,24 +408,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      *
      * @param gradeSteps the grade steps which will be adjusted
      */
-    setInclusivity(gradeSteps: GradeStep[]): GradeStep[] {
-        // copy the grade steps in a separate array, so they don't get dynamically updated when sorting
-        let sortedGradeSteps: GradeStep[] = [];
-        this.gradingScale.gradeSteps.forEach((gradeStep) => sortedGradeSteps.push(Object.assign({}, gradeStep)));
-        sortedGradeSteps = this.gradingSystemService.sortGradeSteps(sortedGradeSteps);
-
-        gradeSteps.forEach((gradeStep) => {
-            if (this.lowerBoundInclusivity) {
-                gradeStep.lowerBoundInclusive = true;
-                gradeStep.upperBoundInclusive = sortedGradeSteps.last()!.gradeName === gradeStep.gradeName;
-            } else {
-                gradeStep.lowerBoundInclusive = sortedGradeSteps.first()!.gradeName === gradeStep.gradeName;
-                gradeStep.upperBoundInclusive = true;
-            }
-        });
-
-        return gradeSteps;
-    }
+    abstract setInclusivity(): void;
 
     /**
      * Sets the firstPassingGrade property based on the grade steps
@@ -649,7 +637,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         if (event.target.files.length > 0) {
             await this.readGradingStepsFromCSVFile(event, event.target.files[0]);
             this.lowerBoundInclusivity = true;
-            this.setInclusivity(this.gradingScale.gradeSteps);
+            this.setInclusivity();
             this.maxPoints = 100;
             this.onChangeMaxPoints(this.maxPoints);
             this.determineFirstPassingGrade();

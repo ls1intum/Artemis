@@ -86,35 +86,25 @@
             </thead>
             <tbody>
                 <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index; let last = last" class="grading-scale-table-row">
-                    <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
-                        <input [ngModel]="getPercentageInterval(gradeStep)" type="number" step="0.5" min="0" (ngModelChange)="setPercentageInterval(i, $event)" required />
+                    <td *ngIf="last; else intervalInputs">
+                        <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.stickyGradeStep"></jhi-help-icon>
                     </td>
-                    <td *ngIf="gradeEditMode === GradeEditMode.POINTS">
-                        <input
-                            [ngModel]="getPointsInterval(gradeStep)"
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            (ngModelChange)="setPointsInterval(i, $event)"
-                            [required]="maxPoints != undefined && maxPoints > 0"
-                            [disabled]="maxPoints == undefined || maxPoints <= 0"
-                        />
-                    </td>
-                    <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
-                        <input [ngModel]="gradeStep.lowerBoundPercentage" type="number" step="0.5" min="0" disabled />
-                    </td>
-                    <td *ngIf="gradeEditMode === GradeEditMode.POINTS">
-                        <input [ngModel]="gradeStep.lowerBoundPoints" type="number" step="0.5" min="0" disabled />
-                    </td>
-                    <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
-                        <input *ngIf="!last" [ngModel]="gradeStep.upperBoundPercentage" type="number" step="0.5" min="0" disabled />
-                        <input *ngIf="last" value="&infin;" type="text" disabled />
-                    </td>
-                    <td *ngIf="gradeEditMode === GradeEditMode.POINTS">
-                        <input *ngIf="!last" [ngModel]="gradeStep.upperBoundPoints" type="number" step="0.5" min="0" disabled />
-                        <input *ngIf="last" value="&infin;" type="text" disabled />
-                    </td>
-                    <td *ngIf="gradingScale.gradeType !== GradeType.BONUS"></td>
+                    <ng-template #intervalInputs>
+                        <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
+                            <input [ngModel]="getPercentageInterval(gradeStep)" type="number" step="0.5" min="0" (ngModelChange)="setPercentageInterval(i, $event)" required />
+                        </td>
+                        <td *ngIf="gradeEditMode === GradeEditMode.POINTS">
+                            <input
+                                [ngModel]="getPointsInterval(gradeStep)"
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                (ngModelChange)="setPointsInterval(i, $event)"
+                                [required]="maxPoints != undefined && maxPoints > 0"
+                                [disabled]="maxPoints == undefined || maxPoints <= 0"
+                            />
+                        </td>
+                    </ng-template>
                     <td>
                         <span [innerHTML]="gradeStep | gradeStepBounds: gradeEditMode:last | safeHtml"></span>
                     </td>
