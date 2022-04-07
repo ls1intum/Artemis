@@ -710,6 +710,10 @@ public class ExamService {
         final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
+        final long numberOfComplaintResponses = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(examId, ComplaintType.COMPLAINT);
+        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+
         final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExamId(userRepository.getUserWithGroupsAndAuthorities().getId(), examId);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
