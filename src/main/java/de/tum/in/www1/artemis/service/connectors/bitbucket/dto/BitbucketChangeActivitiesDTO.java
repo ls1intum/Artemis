@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.bitbucket.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * DTO representing a Bitbucket change activity response
  * Not all possible values are included. If you want to extend this DTO for new functionality, consult the Bitbucket documentation.
@@ -14,6 +16,7 @@ public class BitbucketChangeActivitiesDTO {
 
     private Long start;
 
+    @JsonProperty("isLastPage")
     private Boolean isLastPage;
 
     private List<ValuesDTO> values;

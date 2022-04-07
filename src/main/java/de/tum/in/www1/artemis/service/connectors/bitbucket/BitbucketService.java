@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -815,19 +816,29 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash) {
         boolean isLastPage = false;
+        final int perPage = 40;
+        int start = 0;
         while (!isLastPage) {
-            final var url = bitbucketServerUrl + "/rest/api/latest/projects/" + participation.getProgrammingExercise().getProjectKey() + "/repos/"
-                    + urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()) + "/ref-change-activities?start=0&limit=25";
-            final var response = restTemplate.exchange(url, HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
-            if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
-                throw new BambooException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
-            }
-            isLastPage = response.getBody().getLastPage();
-            final var changeActivities = response.getBody().getValues();
+            try {
+                UriComponents builder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
+                        .pathSegment("rest", "api", "latest", "projects", participation.getProgrammingExercise().getProjectKey(), "repos",
+                                urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()), "ref-change-activities")
+                        .queryParam("start", start).queryParam("limit", perPage).queryParam("ref", "refs/heads/" + defaultBranch).build();
+                final var response = restTemplate.exchange(builder.toUri(), HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
+                if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+                    throw new BambooException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
+                }
+                final var changeActivities = response.getBody().getValues();
 
-            final var activityOfPush = changeActivities.stream().filter(activity -> commitHash.equals(activity.getRefChange().getToHash())).findFirst();
-            if (activityOfPush.isPresent()) {
-                return Instant.ofEpochMilli(activityOfPush.get().getCreatedDate()).atZone(ZoneOffset.UTC);
+                final var activityOfPush = changeActivities.stream().filter(activity -> commitHash.equals(activity.getRefChange().getToHash())).findFirst();
+                if (activityOfPush.isPresent()) {
+                    return Instant.ofEpochMilli(activityOfPush.get().getCreatedDate()).atZone(ZoneOffset.UTC);
+                }
+                isLastPage = response.getBody().getLastPage();
+                start += perPage;
+            }
+            catch (URISyntaxException e) {
+                throw new BambooException("Unable to get push date for participation " + participation.getId(), e);
             }
         }
         throw new BambooException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash);
