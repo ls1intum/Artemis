@@ -184,7 +184,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
-        assertThat(postRepository.findPostsBySessionId(createdPost.getConversation().getId()).size()).isEqualTo(1);
+        assertThat(postRepository.findPostsByConversationId(createdPost.getConversation().getId()).size()).isEqualTo(1);
         // checks if members of the created conversation were notified via broadcast
         verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ConversationDTO.class));
     }

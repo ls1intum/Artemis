@@ -859,19 +859,19 @@ public class CourseResource {
      * GET /courses/:courseId/search-users : search users for a given course within all groups.
      *
      * @param courseId    the id of the course for which to search users
-     * @param loginOrName the login or name by which to search users
+     * @param nameOfUser  the name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @GetMapping("/courses/{courseId}/search-other-users")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<User>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("loginOrName") String loginOrName) {
+    public ResponseEntity<List<User>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("nameOfUser") String nameOfUser) {
         // restrict result size by only allowing reasonable searches
-        if (loginOrName.length() < 3) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
+        if (nameOfUser.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'name' must be three characters or longer.");
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
 
-        return ResponseEntity.ok().body(courseService.searchOtherUsersByLoginOrNameInCourse(course, loginOrName));
+        return ResponseEntity.ok().body(courseService.searchOtherUsersNameInCourse(course, nameOfUser));
     }
 
     /**

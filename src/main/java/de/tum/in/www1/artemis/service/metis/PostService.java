@@ -547,7 +547,7 @@ public class PostService extends PostingService {
     public List<Post> getPostsByConversation(Long conversationId) {
         mayInteractWithConversationElseThrow(conversationId);
 
-        List<Post> conversationPosts = postRepository.findPostsBySessionId(conversationId);
+        List<Post> conversationPosts = postRepository.findPostsByConversationId(conversationId);
 
         // protect sample solution, grading instructions, etc.
         conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);

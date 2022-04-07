@@ -91,9 +91,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("""
              SELECT DISTINCT post FROM Post post
              LEFT JOIN post.conversation conversation
-             WHERE conversation.id = :#{#sessionId}
+             WHERE conversation.id = :#{#conversationId}
             """)
-    List<Post> findPostsBySessionId(@Param("sessionId") Long sessionId);
+    List<Post> findPostsByConversationId(@Param("conversationId") Long conversationId);
 
     default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));

@@ -86,6 +86,14 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // conversation with existing ID
         createConversationBadRequest(conversationToSave);
+
+        // conversation with user's own conversationParticipant object
+        conversationToSave = createConversation(course, database);
+        ConversationParticipant conversationParticipant = new ConversationParticipant();
+        conversationParticipant.setUser(database.getUserByLogin("student1"));
+        conversationToSave.getConversationParticipants().add(conversationParticipant);
+        createConversationBadRequest(conversationToSave);
+
     }
 
     @Test

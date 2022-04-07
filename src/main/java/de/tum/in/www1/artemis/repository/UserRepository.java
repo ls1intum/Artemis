@@ -7,8 +7,14 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.domain.*;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,6 +103,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select user from User user where :#{#groupName} member of user.groups and "
             + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
+
+    /**
+     * Searches for users in groups by their full name.
+     *
+     * @param groupNames   List of names of groups in which to search for users
+     * @param nameOfUser        Name (e.g. Max Mustermann) by which to search
+     * @return list of found users that match the search criteria
+     */
+    @Query("""
+             SELECT user FROM User user
+             LEFT JOIN user.groups userGroup
+             WHERE userGroup IN :#{#groupNames}
+             AND concat_ws(' ', user.firstName, user.lastName) LIKE %:#{#nameOfUser}%
+             ORDER BY concat_ws(' ', user.firstName, user.lastName)
+            """)
+    List<User> searchByNameInGroups(@Param("groupNames") Set<String> groupNames, @Param("nameOfUser") String nameOfUser);
 
     /**
      * Gets users in a group by their registration number.

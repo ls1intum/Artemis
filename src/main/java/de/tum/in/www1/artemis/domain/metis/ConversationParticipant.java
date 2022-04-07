@@ -33,7 +33,7 @@ public class ConversationParticipant extends DomainObject {
     private ZonedDateTime lastRead;
 
     @Column(name = "closed")
-    private Boolean closed;
+    private Boolean closed = false;
 
     public Conversation getConversation() {
         return conversation;

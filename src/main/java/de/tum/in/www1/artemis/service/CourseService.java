@@ -565,18 +565,20 @@ public class CourseService {
     /**
      * Search for users of all user groups by login or name in course
      *
-     * @param course Course in which to search students
-     * @param loginOrName Login or name by which to search students
+     * @param course        Course in which to search students
+     * @param nameOfUser    Login or name by which to search students
      * @return users whose login matched
      */
-    public List<User> searchOtherUsersByLoginOrNameInCourse(Course course, String loginOrName) {
+    public List<User> searchOtherUsersNameInCourse(Course course, String nameOfUser) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
-        List<User> searchResult = new ArrayList<>();
-        searchResult.addAll(userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName));
-        searchResult.addAll(userRepository.searchByLoginOrNameInGroup(course.getTeachingAssistantGroupName(), loginOrName));
-        searchResult.addAll(userRepository.searchByLoginOrNameInGroup(course.getEditorGroupName(), loginOrName));
-        searchResult.addAll(userRepository.searchByLoginOrNameInGroup(course.getInstructorGroupName(), loginOrName));
+        Set<String> groupNames = new HashSet<>();
+        groupNames.add(course.getStudentGroupName());
+        groupNames.add(course.getTeachingAssistantGroupName());
+        groupNames.add(course.getEditorGroupName());
+        groupNames.add(course.getInstructorGroupName());
+
+        List<User> searchResult = userRepository.searchByNameInGroups(groupNames, nameOfUser);
         removeUserVariables(searchResult);
 
         // users should not find themselves

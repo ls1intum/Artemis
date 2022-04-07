@@ -5,12 +5,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.data.annotation.CreatedDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -24,8 +23,7 @@ public class Conversation extends DomainObject {
     private Set<ConversationParticipant> conversationParticipants = new HashSet<>();
 
     @ManyToOne
-    @JsonIncludeProperties({ "id" })
-    @NotNull
+    @JsonIgnore
     private Course course;
 
     @CreatedDate

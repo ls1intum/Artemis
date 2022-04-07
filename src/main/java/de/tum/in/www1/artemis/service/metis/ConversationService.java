@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -66,8 +64,9 @@ public class ConversationService {
             throw new BadRequestAlertException("A new conversation cannot already have an ID", CONVERSATION_ENTITY_NAME, "idexists");
         }
 
-        if (conversation.getConversationParticipants().isEmpty()) {
-            throw new BadRequestAlertException("A new conversation must have conversationParticipants", CONVERSATION_DETAILS_ENTITY_NAME, "NotNull");
+        if (conversation.getConversationParticipants().isEmpty()
+                || conversation.getConversationParticipants().stream().anyMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))) {
+            throw new BadRequestAlertException("A new conversation must have other conversationParticipants", CONVERSATION_DETAILS_ENTITY_NAME, "NotNull");
         }
 
         final Course course = checkUserAndCourse(user, courseId);
@@ -79,8 +78,8 @@ public class ConversationService {
         conversationParticipantOfCurrentUser.setUser(user);
         conversation.getConversationParticipants().add(conversationParticipantOfCurrentUser);
 
-        conversation.getConversationParticipants()
-                .forEach(conversationParticipant -> conversationParticipant = createConversationParticipant(conversationParticipant, savedConversation));
+        conversation.getConversationParticipants().forEach(conversationParticipant -> createConversationParticipant(conversationParticipant, savedConversation));
+        savedConversation.setConversationParticipants(conversation.getConversationParticipants());
 
         // informs involved users about a new conversation
         broadcastForConversation(new ConversationDTO(savedConversation, CrudAction.CREATE));
@@ -95,11 +94,7 @@ public class ConversationService {
      * @return  fetched conversation
      */
     public Conversation getConversationById(Long conversationId) {
-        Optional<Conversation> conversation = conversationRepository.findById(conversationId);
-        conversation.ifPresent(conversation1 -> conversation1
-                .setConversationParticipants(new HashSet<>(conversationParticipantRepository.findConversationParticipantByConversationId(conversationId))));
-
-        return conversation.get();
+        return conversationRepository.findConversationById(conversationId);
     }
 
     /**
@@ -111,16 +106,14 @@ public class ConversationService {
     public List<Conversation> getConversationsOfUser(Long courseId) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        List<Conversation> conversations = conversationRepository.getConversationsOfUser(courseId, user.getId());
+        List<Conversation> conversations = conversationRepository.findConversationsOfUser(courseId, user.getId());
 
         conversations.forEach(conversation -> {
-            List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId());
-            conversationParticipants.forEach(conversationParticipant -> {
+            conversation.getConversationParticipants().forEach(conversationParticipant -> {
                 if (!conversationParticipant.getUser().getId().equals(user.getId())) {
                     conversationParticipant.filterSensitiveInformation();
                 }
             });
-            conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
         });
 
         return conversations;

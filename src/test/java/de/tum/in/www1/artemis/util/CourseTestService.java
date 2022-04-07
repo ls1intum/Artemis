@@ -1060,24 +1060,24 @@ public class CourseTestService {
         course = courseRepo.save(course);
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("loginOrName", "student1");
+        parameters.add("nameOfUser", "student1");
 
         // users must not be able to find themselves
         List<User> student1 = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
         assertThat(student1).as("User could not find themself").hasSize(0);
 
         // find another student for course
-        parameters.set("loginOrName", "student2");
+        parameters.set("nameOfUser", "student2");
         List<User> student2 = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
         assertThat(student2).as("Another student in course found").hasSize(1);
 
         // find a tutor for course
-        parameters.set("loginOrName", "tutor1");
+        parameters.set("nameOfUser", "tutor1");
         List<User> tutor = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
         assertThat(tutor).as("A tutors in course found").hasSize(1);
 
         // find an instructors for course
-        parameters.set("loginOrName", "instructor");
+        parameters.set("nameOfUser", "instructor");
         List<User> instructor = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
         assertThat(instructor).as("An instructors in course found").hasSize(1);
     }
@@ -1091,7 +1091,7 @@ public class CourseTestService {
         course = courseRepo.save(course);
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("loginOrName", "student2");
+        parameters.add("name", "student2");
 
         // find a user in another course
         request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.FORBIDDEN, User.class, parameters);
