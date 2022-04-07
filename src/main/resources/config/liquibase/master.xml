@@ -156,8 +156,8 @@
     <include file="classpath:config/liquibase/changelog/20220210155100_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220218140000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220303030303_changelog.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:config/liquibase/changelog/20220407115710_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220313131313_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20220407115710_changelog.xml" relativeToChangelogFile="false"/>
 
     <!-- NOTE: please use the format "YYYYMMDDhhmmss_changelog.xml", i.e. year month day hour minutes seconds and not something else! -->
     <!-- we should also stay in a chronological order! -->
