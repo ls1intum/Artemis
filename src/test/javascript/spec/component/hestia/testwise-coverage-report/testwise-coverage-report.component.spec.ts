@@ -121,13 +121,13 @@ describe('TestwiseCoverageReport Component', () => {
     });
 
     it('should create empty file report if no report exists for file', () => {
-        comp.fileContentByPath.set('notexisting', '\n\n');
+        comp.fileContentByPath.set('notexisting.java', '\n\n');
         comp.ngOnInit();
 
-        expect(comp.fileReportByFileName.get('notexisting')).toEqual({
+        expect(comp.fileReportByFileName.get('notexisting.java')).toEqual({
             lineCount: 3,
             coveredLineCount: 0,
-            filePath: 'notexisting',
+            filePath: 'notexisting.java',
             testwiseCoverageEntries: [],
         } as CoverageFileReport);
     });
