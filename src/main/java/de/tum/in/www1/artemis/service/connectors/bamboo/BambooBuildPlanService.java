@@ -185,9 +185,9 @@ public class BambooBuildPlanService {
                 // exist in Artemis yet)
                 boolean isMavenProject = projectType == null || projectType.isMaven();
 
-                var defaultTasks = new ArrayList<Task>();
+                var defaultTasks = new ArrayList<Task<?, ?>>();
                 defaultTasks.add(checkoutTask);
-                var finalTasks = new ArrayList<Task>();
+                var finalTasks = new ArrayList<Task<?, ?>>();
                 var artifacts = new ArrayList<Artifact>();
 
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
@@ -299,7 +299,7 @@ public class BambooBuildPlanService {
      * @param finalTasks the list containing the final tasks for the build plan to be created
      * @param artifacts the list containing all artifacts for the build plan to be created
      */
-    private void modifyBuildConfigurationForStaticCodeAnalysisForJavaAndKotlinExercise(boolean isMavenProject, List<Task> finalTasks, List<Artifact> artifacts) {
+    private void modifyBuildConfigurationForStaticCodeAnalysisForJavaAndKotlinExercise(boolean isMavenProject, List<Task<?, ?>> finalTasks, List<Artifact> artifacts) {
         // Create artifacts and a final task for the execution of static code analysis
         List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
         var scaArtifacts = staticCodeAnalysisTools.stream()
@@ -323,8 +323,8 @@ public class BambooBuildPlanService {
      * @param finalTasks the list containing the final tasks for the build plan to be created
      * @param artifacts the list containing all artifacts for the build plan to be created
      */
-    private void modifyBuildConfigurationForRegularTestsForJavaAndKotlinExercise(boolean isMavenProject, boolean recordTestwiseCoverage, List<Task> defaultTasks,
-            List<Task> finalTasks, List<Artifact> artifacts) {
+    private void modifyBuildConfigurationForRegularTestsForJavaAndKotlinExercise(boolean isMavenProject, boolean recordTestwiseCoverage, List<Task<?, ?>> defaultTasks,
+            List<Task<?, ?>> finalTasks, List<Artifact> artifacts) {
         if (isMavenProject) {
             defaultTasks.add(new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true));
         }
@@ -348,7 +348,7 @@ public class BambooBuildPlanService {
      * @param defaultTasks the list containing the default tasks for the build plan to be created
      * @param finalTasks the list containing the final tasks for the build plan to be created
      */
-    private void modifyBuildConfigurationForSequentialTestsForJavaAndKotlinExercise(boolean isMavenProject, List<Task> defaultTasks, List<Task> finalTasks) {
+    private void modifyBuildConfigurationForSequentialTestsForJavaAndKotlinExercise(boolean isMavenProject, List<Task<?, ?>> defaultTasks, List<Task<?, ?>> finalTasks) {
         if (isMavenProject) {
             defaultTasks
                     .add(new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests").hasTests(true));
@@ -453,12 +453,12 @@ public class BambooBuildPlanService {
         return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(permissions);
     }
 
-    private List<Task> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, String subDirectory, final boolean sequentialBuildRuns, final boolean getScaTasks,
-            Map<String, String> replacements) {
+    private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, String subDirectory, final boolean sequentialBuildRuns,
+            final boolean getScaTasks, Map<String, String> replacements) {
         final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + subDirectory
                 + (getScaTasks ? "/staticCodeAnalysisRuns/" : sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
         try {
-            List<Task> tasks = new ArrayList<>();
+            List<Task<?, ?>> tasks = new ArrayList<>();
             final var scriptResources = Arrays.asList(resourceLoaderService.getResources(directoryPattern));
             scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
