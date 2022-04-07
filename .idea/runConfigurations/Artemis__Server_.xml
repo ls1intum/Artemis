@@ -3,8 +3,7 @@
     <module name="Artemis.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.in.www1.artemis.ArtemisApp" />
     <option name="ACTIVE_PROFILES" value="dev,bamboo,bitbucket,jira,artemis,scheduling,local" />
-    <option name="VM_PARAMETERS" value="--illegal-access=warn" />
-    <option name="ALTERNATIVE_JRE_PATH" />
+    <option name="VM_PARAMETERS" value="--illegal-access=warn -Duser.country=DE -Duser.language=de" />
     <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
     <method v="2">
       <option name="Gradle.BeforeRunTask" enabled="false" tasks="build" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters="-x webapp -x test -x jacocoTestCoverageVerification -x spotlessCheck -x checkstyleMain -x checkstyleTest" />
