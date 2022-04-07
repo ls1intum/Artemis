@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRequestDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
 @Profile("gitlab")
@@ -51,7 +50,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     private Boolean versionControlAccessToken;
 
     public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlabApi, UserRepository userRepository,
-            PasswordService passwordService, @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
+            @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitlabApi = gitlabApi;
         this.userRepository = userRepository;
@@ -484,8 +483,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      */
     public org.gitlab4j.api.models.User createUser(User user, String password) {
         try {
-            var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user))
-                    .withCanCreateGroup(false).withCanCreateProject(false).withSkipConfirmation(true);
+            var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user)).withCanCreateGroup(false)
+                    .withCanCreateProject(false).withSkipConfirmation(true);
             gitlabUser = gitlabApi.getUserApi().createUser(gitlabUser, password, false);
             generateVersionControlAccessTokenIfNecessary(gitlabUser, user);
             return gitlabUser;
