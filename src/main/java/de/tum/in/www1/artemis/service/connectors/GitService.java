@@ -1077,7 +1077,7 @@ public class GitService {
      * Get a specific file by name. Makes sure the file is actually part of the repository.
      *
      * @param repo     Local Repository Object.
-     * @param filename String of zje filename (including path)
+     * @param filename String of the filename (including path)
      * @return The File object
      */
     public Optional<File> getFileByName(Repository repo, String filename) {
