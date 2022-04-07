@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
-import { GradeStep } from 'app/entities/grade-step.model';
 
 @Component({
     selector: 'jhi-detailed-grading-system',

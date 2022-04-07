@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { round } from 'app/shared/util/utils';
 import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
