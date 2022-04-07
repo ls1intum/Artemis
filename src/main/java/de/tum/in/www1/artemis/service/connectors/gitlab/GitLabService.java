@@ -88,6 +88,9 @@ public class GitLabService extends AbstractVersionControlService {
                 // NOTE: null values are interpreted as offline IDE is allowed
                 addMemberToRepository(repositoryUrl, user);
             }
+
+            // Validate that the access token exist, if it is required
+            gitLabUserManagementService.generateVersionControlAccessTokenIfNecessary(user);
         }
 
         var defaultBranch = getDefaultBranchOfRepository(repositoryUrl);
