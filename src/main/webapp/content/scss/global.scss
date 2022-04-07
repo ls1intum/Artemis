@@ -920,6 +920,12 @@ Course Info Bar
     .edit-quiz-footer {
         display: none;
     }
+    /* Hide popovers and notifications */
+    .connection-warning,
+    .popover,
+    .alert-wrap {
+        display: none;
+    }
     /* Fix progress bars */
     .progress {
         position: relative;
