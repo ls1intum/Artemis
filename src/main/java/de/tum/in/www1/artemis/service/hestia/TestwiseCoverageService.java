@@ -263,28 +263,30 @@ public class TestwiseCoverageService {
     }
 
     /**
-     * Returns the testwise coverage report for the latest solution submission for a programming exercise without the file reports
+     * Return the testwise coverage report for the latest solution submission for a programming exercise without the file reports.
      * @param programmingExercise the exercise for which the latest coverage report should be retrieved
-     * @return the testwise coverage report for the latest solution submission without the file reports
+     * @return an Optional of the testwise coverage report for the latest solution submission without the file reports
+     * if a report exists for the latest submission, otherwise an empty Optional
      */
-    public CoverageReport getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
+    public Optional<CoverageReport> getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
         var reports = coverageReportRepository.getLatestCoverageReportsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
         if (reports.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
-        return reports.get(0);
+        return Optional.of(reports.get(0));
     }
 
     /**
-     * Returns the full testwise coverage report for the latest solution submission for a programming exercise containing all file reports
+     * Return the full testwise coverage report for the latest solution submission for a programming exercise containing all file reports
      * @param programmingExercise the exercise for which the latest coverage report should be retrieved
-     * @return the full testwise coverage report for the latest solution submission with all file reports
+     * @return an Optional of the full testwise coverage report for the latest solution submission with all file reports
+     * if a report exists for the latest submission, otherwise an empty Optional
      */
-    public CoverageReport getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var lazyReport = getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise);
-        if (lazyReport == null) {
-            return null;
+    public Optional<CoverageReport> getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
+        var optionalLazyReport = getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise);
+        if (optionalLazyReport.isEmpty()) {
+            return Optional.empty();
         }
-        return coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(lazyReport.getId());
+        return Optional.of(coverageReportRepository.findCoverageReportByIdWithEagerFileReportsAndEntriesElseThrow(optionalLazyReport.get().getId()));
     }
 }
