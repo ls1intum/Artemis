@@ -145,6 +145,7 @@
                 <div class="form-group">
                     <label jhiTranslate="artemisApp.course.defaultProgrammingLanguage"></label>
                     <select class="form-select" formControlName="defaultProgrammingLanguage">
+                        <option [ngValue]="null"></option>
                         <option *ngFor="let programmingLanguage of ProgrammingLanguage | keyvalue" [value]="programmingLanguage.key">{{ programmingLanguage.value }}</option>
                     </select>
                 </div>

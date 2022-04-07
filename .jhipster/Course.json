@@ -55,7 +55,7 @@
         },
         {
             "fieldName": "defaultProgrammingLanguage",
-            "fieldType": "Boolean"
+            "fieldType": "String"
         }
     ],
     "relationships": [
