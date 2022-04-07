@@ -1227,7 +1227,8 @@ public class GitService {
     }
 
     /**
-     * Zips the contents of a git repository with or without ".git" directory.
+     * Zips the contents of a git repository, files are filtered according to the contentFilter.
+     * Content filtering is added with the intention of optionally excluding ".git" directory from the result.
      *
      * @param repository    The repository
      * @param zipFilename   the name of the zipped file
