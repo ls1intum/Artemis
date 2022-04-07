@@ -148,8 +148,6 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(createdConversation.getId()).isNotNull();
         assertThat(createdConversation.getCreationDate()).isNotNull();
         assertThat(createdConversation.getLastMessageDate()).isNotNull();
-
-        assertThat(createdConversation.getCourse()).isEqualTo(expectedConversation.getCourse());
         assertThat(createdConversation.getCreationDate()).isNotNull();
     }
 

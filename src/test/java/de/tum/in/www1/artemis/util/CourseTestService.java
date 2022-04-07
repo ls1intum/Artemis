@@ -1091,7 +1091,7 @@ public class CourseTestService {
         course = courseRepo.save(course);
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("name", "student2");
+        parameters.add("nameOfUser", "student2");
 
         // find a user in another course
         request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.FORBIDDEN, User.class, parameters);
