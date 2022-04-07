@@ -31,7 +31,7 @@
             </div>
             <div class="form-group">
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.inclusivity.title">Inclusivity</span>
-                <select class="form-select" [(ngModel)]="lowerBoundInclusivity" title="inclusivity">
+                <select class="form-select" [(ngModel)]="lowerBoundInclusivity" (ngModelChange)="setInclusivity()" title="inclusivity">
                     <option [ngValue]="true" jhiTranslate="artemisApp.gradingSystem.inclusivity.lower">Lower Bound Inclusive</option>
                     <option [ngValue]="false" jhiTranslate="artemisApp.gradingSystem.inclusivity.upper">Upper Bound Inclusive</option>
                 </select>
@@ -64,19 +64,13 @@
                     <th *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
                         <span>
                             {{ 'artemisApp.gradingSystem.min' | artemisTranslate }}
+                            - {{ 'artemisApp.gradingSystem.max' | artemisTranslate }}
                         </span>
                     </th>
                     <th *ngIf="gradeEditMode === GradeEditMode.POINTS">
                         <span>
                             {{ 'artemisApp.gradingSystem.minPoints' | artemisTranslate }}
-                        </span>
-                    </th>
-                    <th *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
-                        <span> {{ 'artemisApp.gradingSystem.max' | artemisTranslate }} </span>
-                    </th>
-                    <th *ngIf="gradeEditMode === GradeEditMode.POINTS">
-                        <span>
-                            {{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }}
+                            - {{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }}
                         </span>
                     </th>
                     <th [colSpan]="2">
@@ -119,6 +113,10 @@
                     <td *ngIf="gradeEditMode === GradeEditMode.POINTS">
                         <input *ngIf="!last" [ngModel]="gradeStep.upperBoundPoints" type="number" step="0.5" min="0" disabled />
                         <input *ngIf="last" value="&infin;" type="text" disabled />
+                    </td>
+                    <td *ngIf="gradingScale.gradeType !== GradeType.BONUS"></td>
+                    <td>
+                        <span [innerHTML]="gradeStep | gradeStepBounds: gradeEditMode:last | safeHtml"></span>
                     </td>
                     <td *ngIf="gradingScale.gradeType !== GradeType.BONUS">
                         <input [(ngModel)]="gradeStep.gradeName" type="text" required />
