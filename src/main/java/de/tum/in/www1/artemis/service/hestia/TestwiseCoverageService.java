@@ -58,10 +58,10 @@ public class TestwiseCoverageService {
     }
 
     /**
-     * Transforms the testwise coverage report dtos to CoverageFileReports (without the test case attribute) mapped by the test case name.
+     * Transforms the testwise coverage report DTOs to CoverageFileReports (without the test case attribute) mapped by the test case name.
      * This method maps the file reports to primitive test case names because the test case is not present in the database
-     * on creating the entities from the dtos.
-     * @param coverageReports the coverage report dtos
+     * on creating the entities from the DTOs.
+     * @param coverageReports the coverage report DTOs
      * @return coverage file reports mapped by the test case name
      */
     public Map<String, Set<CoverageFileReport>> createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(List<TestwiseCoverageReportDTO> coverageReports) {
@@ -74,25 +74,20 @@ public class TestwiseCoverageService {
                 Set<CoverageFileReport> fileCoverageReports = new HashSet<>();
                 for (var fileDTO : pathDTO.getCoveredFilesPerTestDTOs()) {
                     var coverageEntriesPerFile = Arrays.stream(fileDTO.getCoveredLinesWithRanges().split(",")).map(optionalLineRange -> {
-                        int startLineNumber;
-                        int linesCount;
-
+                        // The test case is not set for the report because it has not been saved yet to the database
+                        var entry = new TestwiseCoverageReportEntry();
                         // retrieve consecutive blocks from the ranged covered lines number
                         // Example: "2,3-6,7,9-30"
                         if (optionalLineRange.contains("-")) {
                             String[] range = optionalLineRange.split("-");
-                            startLineNumber = Integer.parseInt(range[0]);
-                            linesCount = Integer.parseInt(range[1]) - startLineNumber + 1;
+                            int startLineNumber = Integer.parseInt(range[0]);
+                            entry.setStartLine(startLineNumber);
+                            entry.setLineCount(Integer.parseInt(range[1]) - startLineNumber + 1);
                         }
                         else {
-                            startLineNumber = Integer.parseInt(optionalLineRange);
-                            linesCount = 1;
+                            entry.setStartLine(Integer.parseInt(optionalLineRange));
+                            entry.setLineCount(1);
                         }
-
-                        // The test case is not set for the report because it has not been saved yet to the database
-                        var entry = new TestwiseCoverageReportEntry();
-                        entry.setStartLine(startLineNumber);
-                        entry.setLineCount(linesCount);
                         return entry;
                     }).collect(Collectors.toSet());
 
@@ -273,7 +268,7 @@ public class TestwiseCoverageService {
      * @return the testwise coverage report for the latest solution submission without the file reports
      */
     public CoverageReport getCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(ProgrammingExercise programmingExercise) {
-        var reports = coverageReportRepository.getLatestCoverageReportForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
+        var reports = coverageReportRepository.getLatestCoverageReportsForProgrammingExercise(programmingExercise.getId(), Pageable.ofSize(1));
         if (reports.isEmpty()) {
             return null;
         }

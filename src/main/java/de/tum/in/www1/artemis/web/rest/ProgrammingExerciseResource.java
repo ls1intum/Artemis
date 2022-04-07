@@ -726,6 +726,8 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * GET programming-exercise/:exerciseId/solution-files-content
+     *
      * Returns the solution repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
