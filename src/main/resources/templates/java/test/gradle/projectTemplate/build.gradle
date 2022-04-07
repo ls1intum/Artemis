@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.9.0'
+    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.9.2'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
 }
 

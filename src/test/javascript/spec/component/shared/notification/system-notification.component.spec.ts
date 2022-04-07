@@ -11,6 +11,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 
 describe('System Notification Component', () => {
     let systemNotificationComponent: SystemNotificationComponent;
@@ -37,7 +38,7 @@ describe('System Notification Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: jhiWebsocketService, useClass: JhiWebsocketService },
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
         })
             .compileComponents()
@@ -74,11 +75,9 @@ describe('System Notification Component', () => {
     });
 
     describe('Websocket', () => {
-        let bindSpy: jest.SpyInstance;
+        let connectionStateSubscribeSpy: jest.SpyInstance;
         beforeEach(() => {
-            bindSpy = jest.spyOn(jhiWebsocketService, 'bind').mockImplementation((event: string, callback: () => void) => {
-                callback();
-            });
+            connectionStateSubscribeSpy = jest.spyOn(jhiWebsocketService.connectionState, 'subscribe');
         });
 
         it('should subscribe to socket messages on init', fakeAsync(() => {
@@ -86,7 +85,7 @@ describe('System Notification Component', () => {
             const receiveSpy = jest.spyOn(jhiWebsocketService, 'receive');
             systemNotificationComponent.ngOnInit();
             tick(500);
-            expect(bindSpy).toHaveBeenCalledTimes(1);
+            expect(connectionStateSubscribeSpy).toHaveBeenCalledTimes(1);
             expect(systemNotificationComponent.websocketChannel).toEqual('/topic/system-notification');
             expect(subscribeSpy).toHaveBeenCalledTimes(1);
             expect(receiveSpy).toHaveBeenCalledTimes(1);
