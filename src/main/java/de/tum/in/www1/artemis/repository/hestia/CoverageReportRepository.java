@@ -33,7 +33,7 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
             AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             order by s.submissionDate desc
             """)
-    List<CoverageReport> getLatestCoverageReportsForProgrammingExercise(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
+    List<CoverageReport> getLatestCoverageReportsForLegalSubmissionsForProgrammingExercise(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);
 
     @Query("""
             SELECT DISTINCT r FROM CoverageReport r
