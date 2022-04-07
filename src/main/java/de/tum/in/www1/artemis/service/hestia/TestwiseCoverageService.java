@@ -215,6 +215,10 @@ public class TestwiseCoverageService {
             var solutionFiles = repositoryService.getFilesWithContent(solutionRepo);
             var result = new HashMap<String, Integer>();
             solutionFiles.forEach((filePath, value) -> {
+                // do not count lines for non-java files
+                if (!filePath.endsWith(".java")) {
+                    return;
+                }
                 var lineCount = value.split("\n").length + 1;
                 result.put(filePath, lineCount);
             });

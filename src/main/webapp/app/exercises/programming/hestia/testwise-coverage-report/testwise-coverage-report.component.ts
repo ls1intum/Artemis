@@ -44,6 +44,10 @@ export class TestwiseCoverageReportComponent implements OnInit {
         const result = new Map<string, CoverageFileReport>();
         // create the reports for all files, not only for files that have existing coverage data
         this.fileContentByPath?.forEach((content, filePath) => {
+            // do not include non-java files
+            if (!filePath.endsWith('.java')) {
+                return;
+            }
             const matchingFileReport = this.report.fileReports?.filter((fileReport) => fileReport?.filePath === filePath)?.first();
             const copiedFileReport = new CoverageFileReport();
             copiedFileReport.filePath = filePath;
