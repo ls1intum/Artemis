@@ -23,6 +23,8 @@ export class ExamUpdateComponent implements OnInit {
     isSaving: boolean;
     // The exam.workingTime is stored in seconds, but the working time should be displayed in minutes to the user
     workingTimeInMinutes: number;
+    // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
+    maxWorkingTimeInMinutes: number;
     // Interims-boolean to hide the option to create an TestExam in production, as the feature is not yet fully implemented
     isAdmin: boolean;
 
@@ -57,7 +59,9 @@ export class ExamUpdateComponent implements OnInit {
                 this.exam.numberOfCorrectionRoundsInExam = 1;
             }
         });
+        // Initialize helper attributes
         this.workingTimeInMinutes = this.exam.workingTime! / 60;
+        this.calculateMaxWorkingTime();
         this.isAdmin = this.accountService.isAdmin();
     }
 
@@ -184,6 +188,20 @@ export class ExamUpdateComponent implements OnInit {
     convertWorkingTimeFromMinutesToSeconds(event: any) {
         this.workingTimeInMinutes = event.target.value;
         this.exam.workingTime = this.workingTimeInMinutes * 60;
+    }
+
+    /**
+     * Used to determine the maximum working time every time, the user changes the start- or endDate.
+     * Used to show a graphical warning at the working time input field
+     */
+    calculateMaxWorkingTime() {
+        if (this.exam.testExam) {
+            if (this.exam.startDate && this.exam.endDate) {
+                this.maxWorkingTimeInMinutes = dayjs(this.exam.endDate).diff(this.exam.startDate, 's') / 60;
+            } else {
+                this.maxWorkingTimeInMinutes = 0;
+            }
+        }
     }
 
     get isValidPublishResultsDate(): boolean {
