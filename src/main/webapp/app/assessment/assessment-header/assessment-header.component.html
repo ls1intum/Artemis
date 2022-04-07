@@ -193,9 +193,9 @@
                 <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission">Use as Example Submission</span>
             </button>
-            <ng-template #nextSubmissionShortcut
-                >{{ 'artemisApp.assessment.button.control' | artemisTranslate }} + Shift + <fa-icon [icon]="faSquareCaretRight"></fa-icon
-            ></ng-template>
+            <ng-template #nextSubmissionShortcut>
+                {{ 'artemisApp.assessment.button.control' | artemisTranslate }} + Shift + <fa-icon [icon]="faSquareCaretRight"></fa-icon>
+            </ng-template>
             <button
                 class="btn m-1 btn-success"
                 id="assessNextButton"
