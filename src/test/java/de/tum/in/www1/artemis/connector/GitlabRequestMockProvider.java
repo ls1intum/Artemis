@@ -11,7 +11,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.gitlab4j.api.*;
 import org.gitlab4j.api.models.*;
@@ -174,23 +173,33 @@ public class GitlabRequestMockProvider {
     }
 
     /**
-     * Mocks the call on the events API to receive all qualifying push events to get the push date of a certain commit.
+     * Mocks the call on the events API to receive all qualifying push events to get the push dates of certain commits.
      *
-     * @param participation Affected participation
-     * @param commitHash Expected commit hash
-     * @param pushDate Expected push date for the commit hash
+     * @param participation         Affected participation
+     * @param commitHashPushDateMap A map mapping the commit hashes to their push date. We expect here that only one commit is pushed at a time and the order of the map is the
+     *                              order of the commits
      * @throws GitLabApiException if events API fails
      */
-    public void mockGetPushDate(ProgrammingExerciseParticipation participation, String commitHash, ZonedDateTime pushDate) throws GitLabApiException {
-        PushData pushData = new PushData();
-        pushData.setAction(Constants.ActionType.PUSHED);
-        pushData.setCommitCount(1);
-        pushData.setCommitFrom("7".repeat(40));
-        pushData.setCommitTo(commitHash);
-        Event event = new Event().withCreatedAt(Date.from(pushDate.toInstant()));
-        event.setPushData(pushData);
+    public void mockGetPushDate(ProgrammingExerciseParticipation participation, Map<String, ZonedDateTime> commitHashPushDateMap) throws GitLabApiException {
+        if (commitHashPushDateMap.isEmpty()) {
+            return;
+        }
+        List<String> commits = new ArrayList<>(commitHashPushDateMap.keySet());
+        commits.add(0, "7".repeat(40));
+        List<Event> events = new ArrayList<>();
+        for (int i = 0; i < commits.size() - 1; i++) {
+            PushData pushData = new PushData();
+            pushData.setAction(Constants.ActionType.PUSHED);
+            pushData.setCommitCount(1);
+            pushData.setCommitFrom(commits.get(i));
+            pushData.setCommitTo(commits.get(i + 1));
+            Event event = new Event().withCreatedAt(Date.from(commitHashPushDateMap.get(commits.get(i + 1)).toInstant()));
+            event.setPushData(pushData);
+            events.add(0, event); // The latest event has to be at the front
+        }
         var path = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
-        doReturn(Stream.of(event)).when(eventsApi).getProjectEventsStream(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null), eq(Constants.SortOrder.DESC));
+        doAnswer((invocation) -> events.stream()).when(eventsApi).getProjectEventsStream(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null),
+                eq(Constants.SortOrder.DESC));
     }
 
     public void mockAddAuthenticatedWebHook() throws GitLabApiException {

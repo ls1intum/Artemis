@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.json.simple.JSONObject;
@@ -173,8 +174,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
 
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-        gitlabRequestMockProvider.mockGetPushDate(testService.participation, secondCommitHash, secondCommitDate);
-        gitlabRequestMockProvider.mockGetPushDate(testService.participation, firstCommitHash, firstCommitDate);
+        gitlabRequestMockProvider.mockGetPushDate(testService.participation, Map.of(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate));
 
         // First commit is pushed but not recorded
 

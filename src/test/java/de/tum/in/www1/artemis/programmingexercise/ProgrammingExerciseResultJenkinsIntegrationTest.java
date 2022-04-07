@@ -4,6 +4,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.gitlab4j.api.GitLabApiException;
@@ -58,7 +59,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws GitLabApiException {
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true);
-        gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now());
+        gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, false);
     }
 
@@ -66,7 +67,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTests() throws GitLabApiException {
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of("test3"), ProgrammingLanguage.JAVA, true);
-        gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now());
+        gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, true);
     }
 
