@@ -676,17 +676,17 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam examA = ModelFactory.generateExam(course1);
         examA.setId(55L);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
-        // Test for conflict when course is null.
+        // Test for bad request when course is null.
         Exam examB = ModelFactory.generateExam(course1);
         examB.setCourse(null);
-        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CONFLICT);
-        // Test for conflict when course deviates from course specified in route.
+        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
+        // Test for bad request when course deviates from course specified in route.
         Exam examC = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
         // Test invalid dates
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
         for (var exam : examsWithInvalidDate) {
-            request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+            request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
         }
         // Test for conflict when user tries to create an exam with exercise groups.
         Exam examD = ModelFactory.generateExam(course1);
@@ -699,22 +699,22 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private List<Exam> createExamsWithInvalidDates(Course course) {
-        // Test for conflict, visible date not set
+        // Test for bad request, visible date not set
         Exam examA = ModelFactory.generateExam(course);
         examA.setVisibleDate(null);
-        // Test for conflict, start date not set
+        // Test for bad request, start date not set
         Exam examB = ModelFactory.generateExam(course);
         examB.setStartDate(null);
-        // Test for conflict, end date not set
+        // Test for bad request, end date not set
         Exam examC = ModelFactory.generateExam(course);
         examC.setEndDate(null);
-        // Test for conflict, start date not after visible date
+        // Test for bad request, start date not after visible date
         Exam examD = ModelFactory.generateExam(course);
         examD.setStartDate(examD.getVisibleDate());
-        // Test for conflict, end date not after start date
+        // Test for bad request, end date not after start date
         Exam examE = ModelFactory.generateExam(course);
         examE.setEndDate(examE.getStartDate());
-        // Test for conflict, when visibleDate equals the startDate
+        // Test for bad request, when visibleDate equals the startDate
         Exam examF = ModelFactory.generateExam(course);
         examF.setVisibleDate(examF.getStartDate());
         return List.of(examA, examB, examC, examD, examE, examF);
@@ -723,27 +723,60 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTestExam_asInstructor() throws Exception {
-
         // Test the creation of a TestExam
         Exam examA = ModelFactory.generateTestExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
 
+        verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor_withVisibleDateEqualsStartDate() throws Exception {
         // Test the creation of a TestExam, where visibleDate equals StartDate
         Exam examB = ModelFactory.generateTestExam(course1);
         examB.setVisibleDate(examB.getStartDate());
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
 
-        // Test for conflict, where workingTime is greater than difference between StartDate and EndDate
+        verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor_badReuestWithWorkingTimeGreatherThanWorkingWindow() throws Exception {
+        // Test for bad request, where workingTime is greater than difference between StartDate and EndDate
         Exam examC = ModelFactory.generateTestExam(course1);
         examC.setWorkingTime(5000);
-        request.post("/api/courses/" + course1.getId() + "/exams", examC, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course1.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
+    }
 
-        // Test for conflict, if the working time is 0
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor_badRequestWithWorkingTimeSetToZero() throws Exception {
+        // Test for bad request, if the working time is 0
         Exam examD = ModelFactory.generateTestExam(course1);
         examD.setWorkingTime(0);
-        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
 
-        verify(examAccessService, times(2)).checkCourseAccessForInstructorElseThrow(course1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateTestExam_asInstructor_withExamModeChanged() throws Exception {
+        // The Exam-Mode should not be changeable with a PUT / update operation, a CONFLICT should be returned instead
+        // Case 1: TestExam should be updated to RealExam
+        Exam examA = ModelFactory.generateTestExam(course1);
+        Exam createdExamA = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
+        createdExamA.setTestExam(false);
+        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
+
+        // Case 2: RealExam should be updated to TestExam
+        Exam examB = ModelFactory.generateTestExam(course1);
+        examB.setTestExam(false);
+        Exam createdExamB = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
+        createdExamB.setTestExam(true);
+        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamB, Exam.class, HttpStatus.CONFLICT);
+
     }
 
     @Test
@@ -760,20 +793,20 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Note: ZonedDateTime has problems with comparison due to time zone differences for values saved in the database and values not saved in the database
         assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate").isEqualTo(createdExam);
         assertThat(examCountBefore + 1).isEqualTo(examRepository.count());
-        // No course is set -> conflict
+        // No course is set -> bad request
         exam = ModelFactory.generateExam(course1);
         exam.setId(1L);
         exam.setCourse(null);
-        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
-        // Course id in the updated exam and in the REST resource url do not match -> conflict
+        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        // Course id in the updated exam and in the REST resource url do not match -> bad request
         exam = ModelFactory.generateExam(course1);
         exam.setId(1L);
-        request.put("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
-        // Dates in the updated exam are not valid -> conflict
+        request.put("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        // Dates in the updated exam are not valid -> bad request
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
         for (var examWithInvDate : examsWithInvalidDate) {
             examWithInvDate.setId(1L);
-            request.put("/api/courses/" + course1.getId() + "/exams", examWithInvDate, HttpStatus.CONFLICT);
+            request.put("/api/courses/" + course1.getId() + "/exams", examWithInvDate, HttpStatus.BAD_REQUEST);
         }
         // Update the exam -> ok
         exam1.setTitle("Best exam ever");
@@ -1128,8 +1161,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExamForTestRunDashboard_conflict() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.CONFLICT, Exam.class);
+    public void testGetExamForTestRunDashboard_badRequest() throws Exception {
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.BAD_REQUEST, Exam.class);
     }
 
     @Test
@@ -1439,8 +1472,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExamForExamAssessmentDashboard_courseIdDoesNotMatch_conflict() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.CONFLICT, Course.class);
+    public void testGetExamForExamAssessmentDashboard_courseIdDoesNotMatch_badRequest() throws Exception {
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.BAD_REQUEST, Course.class);
     }
 
     @Test

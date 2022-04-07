@@ -67,6 +67,7 @@
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
                         [error]="!isValidStartDate"
+                        (valueChange)="calculateMaxWorkingTime()"
                         name="startDate"
                         id="startDate"
                     ></jhi-date-time-picker>
@@ -77,6 +78,7 @@
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
                         [error]="!isValidEndDate"
+                        (valueChange)="calculateMaxWorkingTime()"
                         name="endDate"
                         id="endDate"
                     ></jhi-date-time-picker>
@@ -93,7 +95,8 @@
                         name="workingTimeInMinutes"
                         class="form-control"
                         type="number"
-                        min="1"
+                        [customMin]="1"
+                        [customMax]="maxWorkingTimeInMinutes"
                         [(ngModel)]="workingTimeInMinutes"
                         (change)="convertWorkingTimeFromMinutesToSeconds($event)"
                     />

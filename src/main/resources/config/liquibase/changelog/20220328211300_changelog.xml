@@ -5,6 +5,8 @@
     <changeSet author="mallgaier" id="20220328211300">
         <addColumn tableName="exam">
             <column name="test_exam" defaultValueBoolean="false" type="boolean"/>
+        </addColumn>
+        <addColumn tableName="exam">
             <column name="working_time" type="INT">
                 <constraints nullable="false"/>
             </column>

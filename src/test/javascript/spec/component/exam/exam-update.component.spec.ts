@@ -26,8 +26,9 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { HelpIconComponentWithoutTranslationComponent } from 'app/shared/components/help-icon-without-translation.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 
 @Component({
     template: '',
@@ -67,7 +68,8 @@ describe('Exam Update Component', () => {
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(HelpIconComponent),
-                MockComponent(HelpIconComponentWithoutTranslationComponent),
+                MockDirective(CustomMinDirective),
+                MockDirective(CustomMaxDirective),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -145,10 +147,10 @@ describe('Exam Update Component', () => {
         expect(fixture).not.toBeNull();
         expect(component.exam).not.toBeNull();
         expect(component.exam.course).toEqual(course);
-        expect(component.exam.gracePeriod).toEqual(180);
-        expect(component.exam.numberOfCorrectionRoundsInExam).toEqual(1);
+        expect(component.exam.gracePeriod).toBe(180);
+        expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
         expect(component.exam.testExam).toBeFalse();
-        expect(component.exam.workingTime).toEqual(0);
+        expect(component.exam.workingTime).toBe(0);
     });
 
     it('should validate the dates correctly', () => {
@@ -208,22 +210,22 @@ describe('Exam Update Component', () => {
         fixture.detectChanges();
         // Without a valid startDate, the workingTime should be 0
         // exam.workingTime is stored in seconds
-        expect(exam.workingTime).toEqual(0);
+        expect(exam.workingTime).toBe(0);
         // the component returns the workingTime in Minutes
-        expect(component.calculateWorkingTime).toEqual(0);
+        expect(component.calculateWorkingTime).toBe(0);
 
         exam.startDate = dayjs().add(0, 'hours');
         exam.endDate = dayjs().add(2, 'hours');
         fixture.detectChanges();
-        expect(exam.workingTime).toEqual(7200);
-        expect(component.calculateWorkingTime).toEqual(120);
+        expect(exam.workingTime).toBe(7200);
+        expect(component.calculateWorkingTime).toBe(120);
 
         exam.startDate = dayjs().add(0, 'hours');
         exam.endDate = undefined;
         fixture.detectChanges();
         // Without an endDate, the working time should be 0;
-        expect(exam.workingTime).toEqual(0);
-        expect(component.calculateWorkingTime).toEqual(0);
+        expect(exam.workingTime).toBe(0);
+        expect(component.calculateWorkingTime).toBe(0);
     });
 
     it('should not calculate the working time for testExams', () => {
@@ -232,8 +234,8 @@ describe('Exam Update Component', () => {
         exam.startDate = dayjs().add(0, 'hours');
         exam.endDate = dayjs().add(12, 'hours');
         fixture.detectChanges();
-        expect(exam.workingTime).toEqual(3600);
-        expect(component.calculateWorkingTime).toEqual(60);
+        expect(exam.workingTime).toBe(3600);
+        expect(component.calculateWorkingTime).toBe(60);
     });
 
     it('validates the working time for TestExams correctly', () => {

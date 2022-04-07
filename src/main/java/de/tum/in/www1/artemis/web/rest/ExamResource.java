@@ -159,6 +159,11 @@ public class ExamResource {
         // Make sure that the original references are preserved.
         Exam originalExam = examRepository.findByIdElseThrow(updatedExam.getId());
 
+        // The Exam Mode cannot be changed after creation -> Compare request with version in the database
+        if (updatedExam.isTestExam() != originalExam.isTestExam()) {
+            throw new ConflictException("The Exam Mode cannot be changed after creation", ENTITY_NAME, "examModeMismatch");
+        }
+
         // NOTE: Make sure that all references are preserved here
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
@@ -211,11 +216,11 @@ public class ExamResource {
      */
     private void checkExamCourseIdElseThrow(Long courseId, Exam exam) {
         if (exam.getCourse() == null) {
-            throw new ConflictException("An exam has to belong to a course.", ENTITY_NAME, "noCourse");
+            throw new BadRequestAlertException("An exam has to belong to a course.", ENTITY_NAME, "noCourse");
         }
 
         if (!exam.getCourse().getId().equals(courseId)) {
-            throw new ConflictException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
+            throw new BadRequestAlertException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
         }
     }
 
@@ -228,17 +233,17 @@ public class ExamResource {
      */
     private void checkExamForDatesConflictsElseThrow(Exam exam) {
         if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null) {
-            throw new ConflictException("An exam has to have times when it becomes visible, starts, and ends as well as a working time.", ENTITY_NAME, "examTimes");
+            throw new BadRequestAlertException("An exam has to have times when it becomes visible, starts, and ends as well as a working time.", ENTITY_NAME, "examTimes");
         }
 
         if (exam.isTestExam()) {
             if (!(exam.getVisibleDate().isBefore(exam.getStartDate()) || exam.getVisibleDate().isEqual(exam.getStartDate())) || !exam.getStartDate().isBefore(exam.getEndDate())) {
-                throw new ConflictException("For TestExams, the visible Date has to be before or equal to the start Date and the start Date has to be before the End Date",
+                throw new BadRequestAlertException("For TestExams, the visible Date has to be before or equal to the start Date and the start Date has to be before the End Date",
                         ENTITY_NAME, "examTimes");
             }
         }
         else if (!exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
-            throw new ConflictException("For RealExams, the visible Date has to be before the start Date and the start Date has to be before the end Date", ENTITY_NAME,
+            throw new BadRequestAlertException("For RealExams, the visible Date has to be before the start Date and the start Date has to be before the end Date", ENTITY_NAME,
                     "examTimes");
         }
     }
@@ -254,7 +259,7 @@ public class ExamResource {
 
         if (exam.isTestExam()) {
             if (exam.getWorkingTime() > differenceStartEndDate || exam.getWorkingTime() < 1) {
-                throw new ConflictException("For TestExams, the working time must be at least 1 and at most the duration of the working window.", ENTITY_NAME, "examTimes");
+                throw new BadRequestAlertException("For TestExams, the working time must be at least 1 and at most the duration of the working window.", ENTITY_NAME, "examTimes");
             }
         }
         else if (exam.getWorkingTime() != differenceStartEndDate) {
