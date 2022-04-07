@@ -6,21 +6,9 @@ import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 
-export const template = `
-        <jhi-button
-            [disabled]="!exerciseId"
-            [btnType]="ButtonType.INFO"
-            [btnSize]="ButtonSize.SMALL"
-            [shouldSubmit]="false"
-            [featureToggle]="FeatureToggle.ProgrammingExercises"
-            [icon]="faDownload"
-            [title]="'artemisApp.programmingExercise.export.downloadRepo'"
-            (onClick)="exportRepository()"
-        ></jhi-button>`;
-
 @Component({
     selector: 'jhi-programming-exercise-instructor-repo-download',
-    template,
+    templateUrl: './programming-exercise-instructor-repo-download.component.html',
 })
 export class ProgrammingExerciseInstructorRepoDownloadComponent {
     ButtonType = ButtonType;

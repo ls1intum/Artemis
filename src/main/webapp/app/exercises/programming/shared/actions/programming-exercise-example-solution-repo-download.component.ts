@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { ProgrammingExerciseInstructorRepoDownloadComponent, template } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 
 @Component({
     selector: 'jhi-programming-exercise-example-solution-repo-download',
-    template,
+    templateUrl: './programming-exercise-instructor-repo-download.component.html',
 })
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
     exportRepository() {
