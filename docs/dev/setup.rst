@@ -4,7 +4,7 @@ Setup Guide
 In this guide you learn how to setup the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
-development on the application server using Java 16, and TypeScript
+development on the application server using Java 17, and TypeScript
 development on the application client in the browser using
 `Angular <https://angular.io>`__ and Webpack. To get an overview of the
 used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
@@ -21,7 +21,7 @@ following dependencies/tools on your machine:
 
 1. `Java
    JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__:
-   We use Java (JDK 16) to develop and run the Artemis application
+   We use Java (JDK 17) to develop and run the Artemis application
    server which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__:
@@ -95,7 +95,9 @@ You can override the following configuration options in this file.
    artemis:
        repo-clone-path: ./repos/
        repo-download-clone-path: ./repos-download/
-       encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
+       encryption-password: <encrypt-password>      # LEGACY: arbitrary password for encrypting database values
+       bcrypt-salt-rounds: 11   # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+                                # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
        user-management:
            use-external: true
            password-reset:

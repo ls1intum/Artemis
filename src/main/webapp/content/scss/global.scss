@@ -1107,3 +1107,34 @@ Course Info Bar
     top: -0.1em !important;
     color: #ccc;
 }
+
+/* Connection Warning Tooltip */
+.connection-warning-popover {
+    pointer-events: none;
+    flex-wrap: nowrap;
+    background-color: transparent;
+
+    .popover-arrow::after {
+        border-bottom-color: #f1d1d1e0;
+    }
+
+    .popover-body {
+        border: none;
+        max-width: 70vw;
+        width: 400px;
+        background-color: #f1d1d1e0;
+        color: #600c0c;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding-left: 20px;
+        box-shadow: rgba(0, 0, 0, 0.55) 0 5px 15px;
+    }
+}
+
+@media only screen and (max-width: 400px) {
+    .connection-warning-popover .popover-body .ng-fa-icon {
+        display: none;
+    }
+}

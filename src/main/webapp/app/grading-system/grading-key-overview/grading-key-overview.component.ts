@@ -37,7 +37,8 @@ export class GradingKeyOverviewComponent implements OnInit {
     isBonus = false;
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        // Note: due to lazy loading and router outlet, we use parent 2x here
+        this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             if (params['examId']) {
                 this.examId = Number(params['examId']);
@@ -62,7 +63,7 @@ export class GradingKeyOverviewComponent implements OnInit {
                 }
             });
         });
-        this.route.queryParams.subscribe((queryParams) => {
+        this.route.parent?.parent?.queryParams.subscribe((queryParams) => {
             this.studentGrade = queryParams['grade'];
         });
     }
@@ -71,7 +72,13 @@ export class GradingKeyOverviewComponent implements OnInit {
      * Navigates to the previous page (back button on the browser)
      */
     previousState() {
-        this.navigationUtilService.navigateBack(['courses', this.courseId!.toString(), 'statistics']);
+        const fallbackUrl = ['courses', this.courseId!.toString()];
+        if (this.isExam) {
+            fallbackUrl.push('exams', this.examId!.toString());
+        } else {
+            fallbackUrl.push('statistics');
+        }
+        this.navigationUtilService.navigateBack(fallbackUrl);
     }
 
     /**

@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @Profile("gitlab")
@@ -80,9 +79,6 @@ public class GitlabRequestMockProvider {
 
     @Mock
     private ProtectedBranchesApi protectedBranchesApi;
-
-    @SpyBean
-    private PasswordService passwordService;
 
     @SpyBean
     private GitLabUserManagementService gitLabUserManagementService;
@@ -237,8 +233,6 @@ public class GitlabRequestMockProvider {
     private void mockImportUser(de.tum.in.www1.artemis.domain.User user, boolean shouldFail) throws GitLabApiException {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
-
         if (!shouldFail) {
             var createdUser = gitlabUser.withId(1L);
             doReturn(createdUser).when(userApi).createUser(isA(User.class), anyString(), eq(false));
@@ -337,7 +331,7 @@ public class GitlabRequestMockProvider {
         var gitlabUser = new User().withUsername(login).withId(1L);
         doReturn(gitlabUser).when(userApi).getUser(login);
         if (shouldUpdatePassword) {
-            doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, user.getPassword());
+            doReturn(gitlabUser).when(userApi).updateUser(eq(gitlabUser), any(CharSequence.class));
         }
         else {
             doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, null);

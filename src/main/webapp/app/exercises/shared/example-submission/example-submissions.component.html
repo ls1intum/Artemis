@@ -64,6 +64,7 @@
                         <jhi-result
                             *ngIf="exampleSubmission.submission && exampleSubmission.submission!.results && exampleSubmission.submission!.results!.length > 0; else showEmptyResult"
                             [result]="exampleSubmission.submission!.results![0]"
+                            [exercise]="exercise"
                         ></jhi-result>
                         <ng-template #showEmptyResult>
                             <jhi-result></jhi-result>
