@@ -518,7 +518,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             generateVersionControlAccessTokenIfNecessary(gitlabUser, user);
         }
         catch (GitLabApiException e) {
-            e.printStackTrace();
+            log.error("Could not generate a Gitlab access token for user " + user.getLogin(), e);
         }
     }
 
