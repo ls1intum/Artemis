@@ -1615,6 +1615,7 @@ public class CourseTestService {
         // Add a single participation to that exercise
         final var exerciseIdInAssessment = exerciseInAssessment.getId();
         var resultToSetAssessorFor = database.createParticipationSubmissionAndResult(exerciseIdInAssessment, student, 15.0, 0.0, 30, true);
+        resultToSetAssessorFor.getSubmission().setSubmissionDate(dueDate.minusHours(1));
         resultToSetAssessorFor.setAssessor(instructor);
         resultRepo.saveAndFlush(resultToSetAssessorFor);
 
