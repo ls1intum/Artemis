@@ -84,6 +84,15 @@ describe('Programming Exercise Management', () => {
                 courseExercises.shouldContainExerciseWithName(exercise.id);
             });
         });
+
+        it('Sets course default programming language', function () {
+            cy.login(admin, '/');
+            navigationBar.openCourseManagement();
+            courseManagementPage.openExercisesOfCourse(course.shortName!);
+            courseExercises.clickCreateProgrammingExerciseButton();
+            cy.url().should('include', '/programming-exercises/new');
+            cy.get('#field_programmingLanguage').should('have.value', course.defaultProgrammingLanguage);
+        });
     });
 
     after(() => {
