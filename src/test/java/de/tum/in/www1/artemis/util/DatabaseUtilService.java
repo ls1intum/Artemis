@@ -3790,6 +3790,30 @@ public class DatabaseUtilService {
                 exerciseId, participationId, submissionId);
     }
 
+    /**
+     * Update the max complaint text limit of the course.
+     * @param course course which is updated
+     * @param complaintTextLimit new complaint text limit
+     * @return updated course
+     */
+    public Course updateCourseComplaintTextLimit(Course course, int complaintTextLimit) {
+        course.setMaxComplaintTextLimit(complaintTextLimit);
+        assertThat(course.getMaxComplaintTextLimit()).as("course contains the correct complaint text limit").isEqualTo(complaintTextLimit);
+        return courseRepo.save(course);
+    }
+
+    /**
+     * Update the max complaint response text limit of the course.
+     * @param course course which is updated
+     * @param complaintTextLimit new complaint response text limit
+     * @return updated course
+     */
+    public Course updateCourseComplaintResponseTextLimit(Course course, int complaintResponseTextLimit) {
+        course.setMaxComplaintResponseTextLimit(complaintResponseTextLimit);
+        assertThat(course.getMaxComplaintResponseTextLimit()).as("course contains the correct complaint response text limit").isEqualTo(complaintResponseTextLimit);
+        return courseRepo.save(course);
+    }
+
     public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
         for (Posting posting : postings) {
             assertSensitiveInformationHidden(posting);

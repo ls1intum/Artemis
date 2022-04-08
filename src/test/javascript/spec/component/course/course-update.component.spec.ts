@@ -62,6 +62,8 @@ describe('Course Management Update Component', () => {
         course.maxComplaints = 12;
         course.maxTeamComplaints = 13;
         course.maxComplaintTimeDays = 14;
+        course.maxComplaintTextLimit = 500;
+        course.maxComplaintResponseTextLimit = 1000;
         course.maxRequestMoreFeedbackTimeDays = 15;
         course.postsEnabled = true;
         course.registrationEnabled = true;
@@ -152,6 +154,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxComplaints'])?.value).toBe(course.maxComplaints);
             expect(comp.courseForm.get(['maxTeamComplaints'])?.value).toBe(course.maxTeamComplaints);
             expect(comp.courseForm.get(['maxComplaintTimeDays'])?.value).toBe(course.maxComplaintTimeDays);
+            expect(comp.courseForm.get(['maxComplaintTextLimit'])?.value).toBe(course.maxComplaintTextLimit);
+            expect(comp.courseForm.get(['maxComplaintResponseTextLimit'])?.value).toBe(course.maxComplaintResponseTextLimit);
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
             expect(comp.courseForm.get(['postsEnabled'])?.value).toBe(course.postsEnabled);
             expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.registrationEnabled);
@@ -178,6 +182,8 @@ describe('Course Management Update Component', () => {
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
+                maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
+                maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
                 postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
@@ -209,6 +215,8 @@ describe('Course Management Update Component', () => {
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
+                maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
+                maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
                 postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
@@ -354,17 +362,23 @@ describe('Course Management Update Component', () => {
                 maxComplaints: new FormControl(2),
                 maxTeamComplaints: new FormControl(2),
                 maxComplaintTimeDays: new FormControl(2),
+                maxComplaintTextLimit: new FormControl(2),
+                maxComplaintResponseTextLimit: new FormControl(2),
             });
             comp.complaintsEnabled = false;
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(7);
+            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
+            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
             expect(comp.complaintsEnabled).toBe(true);
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(0);
+            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(0);
+            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(0);
             expect(comp.complaintsEnabled).toBe(false);
         });
     });
