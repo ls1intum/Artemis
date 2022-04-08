@@ -27,6 +27,8 @@
             "rejected": "Rejected",
             "rejectedLong": "Complaint was rejected",
             "tooManyComplaints": "Complaint limit reached. You may not have more than {{ maxComplaintNumber }} open or rejected complaints at the same time.",
+            "exceededComplaintTextLimit": "Maximum number of characters for the complaints reached. You can't use more than {{ maxComplaintTextLimit }} characters.",
+            "exceededComplaintResponseTextLimit": "Maximum number of characters for the complaint response reached. You can't use more than {{ maxComplaintRespondTextLimit }} characters.",
             "complaintAlreadyHandled": "The complaint has been resolved",
             "listOfComplaints": {
                 "exercise": "Exercise",

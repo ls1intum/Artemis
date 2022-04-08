@@ -269,17 +269,6 @@ public class ProgrammingExerciseGradingService {
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 
-        // Update the git-diff of the programming exercise when the push was to the solution repository and
-        // no git-diff report exists yet. This will be the case when a new exercise is created or imported
-        if ((isSolutionParticipation || isTemplateParticipation) && programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId()) == null) {
-            try {
-                programmingExerciseGitDiffReportService.updateReport(programmingExercise);
-            }
-            catch (Exception e) {
-                log.error("Unable to update git-diff for programming exercise " + programmingExercise.getId(), e);
-            }
-        }
-
         return processedResult;
     }
 

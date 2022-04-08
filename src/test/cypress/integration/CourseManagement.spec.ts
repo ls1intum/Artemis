@@ -76,8 +76,8 @@ describe('Course management', () => {
             cy.get('#save-entity').click();
             cy.wait('@createCourseQuery').then((request: Interception) => {
                 courseId = request.response!.body.id!;
+                cy.get('#course-detail-info-bar').contains(courseName).should('be.visible');
             });
-            courseManagementPage.getCourseCard(courseShortName).should('be.visible');
         });
 
         after(() => {

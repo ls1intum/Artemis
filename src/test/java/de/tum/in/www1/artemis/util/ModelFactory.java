@@ -481,12 +481,12 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, true, 7);
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true, 7);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            boolean postsEnabled, int requestMoreFeedbackTimeDays) {
+            int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean postsEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
         course.setTitle("Course title " + UUID.randomUUID());
@@ -496,6 +496,8 @@ public class ModelFactory {
         course.setMaxComplaints(maxComplaints);
         course.setMaxTeamComplaints(maxTeamComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
+        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
+        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
         course.setPostsEnabled(postsEnabled);
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);
