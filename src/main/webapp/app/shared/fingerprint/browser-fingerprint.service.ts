@@ -3,8 +3,6 @@ import { BehaviorSubject } from 'rxjs';
 import { LocalStorageService } from 'ngx-webstorage';
 import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
 import { v4 as uuid } from 'uuid';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Injectable({ providedIn: 'root' })
 export class BrowserFingerprintService {
@@ -13,16 +11,16 @@ export class BrowserFingerprintService {
     public fingerprint = new BehaviorSubject<string | undefined>(undefined);
     public instanceIdentifier = new BehaviorSubject<string | undefined>(undefined);
 
-    constructor(private localStorage: LocalStorageService, private profileService: ProfileService) {
-        profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
-            // If undefined, still enable it to not break older configurations without the field in profile info
-            if (profileInfo.browserFingerprintsEnabled !== false) {
-                this.setFingerprint();
-                this.setInstance();
-            } else {
-                this.clearInstance();
-            }
-        });
+    constructor(private localStorage: LocalStorageService) {}
+
+    public initialize(browserFingerprintsEnabled: boolean | undefined) {
+        // If undefined, still enable it to not break older configurations without the field in profile info
+        if (browserFingerprintsEnabled !== false) {
+            this.setFingerprint();
+            this.setInstance();
+        } else {
+            this.clearInstance();
+        }
     }
 
     private setFingerprint(): void {

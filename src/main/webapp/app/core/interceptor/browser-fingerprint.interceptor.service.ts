@@ -22,6 +22,8 @@ export class BrowserFingerprintInterceptor implements HttpInterceptor {
      * @returns An observable of the event stream.
      */
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        console.log(this.instanceIdentifier, this.fingerprint);
+        console.log(isRequestToArtemisServer(request));
         if (isRequestToArtemisServer(request) && (this.instanceIdentifier || this.fingerprint)) {
             request = request.clone({
                 setHeaders: {

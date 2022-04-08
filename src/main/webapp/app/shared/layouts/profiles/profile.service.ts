@@ -7,14 +7,15 @@ import { filter, map } from 'rxjs/operators';
 
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
-import { reduce, extend } from 'lodash-es';
+import { extend, reduce } from 'lodash-es';
+import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
     private infoUrl = SERVER_API_URL + 'management/info';
     private profileInfo: BehaviorSubject<ProfileInfo | undefined>;
 
-    constructor(private http: HttpClient, private featureToggleService: FeatureToggleService) {}
+    constructor(private http: HttpClient, private featureToggleService: FeatureToggleService, private browserFingerprintService: BrowserFingerprintService) {}
 
     getProfileInfo(): Observable<ProfileInfo> {
         if (!this.profileInfo) {
@@ -76,6 +77,7 @@ export class ProfileService {
                 .subscribe((profileInfo: ProfileInfo) => {
                     this.profileInfo.next(profileInfo);
                     this.featureToggleService.initializeFeatureToggles(profileInfo.features);
+                    this.browserFingerprintService.initialize(profileInfo.browserFingerprintsEnabled);
                 });
         }
 
