@@ -118,6 +118,16 @@ public final class Constants {
 
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
+    // Used to define the maximum allowed complaint response text limit.
+    // This value must be similar to the allowed value in the database.
+    // Also, the value on the client side must match this value.
+    public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = 5000;
+
+    // Used to define the maximum allowed complaint text limit.
+    // This value must be similar to the allowed value in the database.
+    // Also, the value on the client side must match this value.
+    public static final int COMPLAINT_TEXT_LIMIT = 5000;
+
     public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
 
     public static final String TESTS_CHECKOUT_PATH = "tests";
