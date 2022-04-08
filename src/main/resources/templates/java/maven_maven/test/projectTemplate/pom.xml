@@ -87,6 +87,8 @@
                                 <file>${project.build.outputDirectory}/org/junit/</file>
                                 <file>${project.build.outputDirectory}/org/opentest4j/</file>
                                 <file>${project.build.outputDirectory}/sun/</file>
+                                <file>${project.build.outputDirectory}/org/gradle/</file>
+                                <file>${project.build.outputDirectory}/worker/org/gradle/</file>
                             </files>
                         </requireFilesDontExist>
                     </rules>
