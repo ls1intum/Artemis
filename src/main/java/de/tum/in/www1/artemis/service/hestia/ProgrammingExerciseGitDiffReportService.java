@@ -71,6 +71,7 @@ public class ProgrammingExerciseGitDiffReportService {
     /**
      * Gets the full git-diff report of a programming exercise. A full git-diff report is created from the normal git-diff report
      * but contains the actual code blocks of the template and solution.
+     * If the git-diff report does not exist yet it will generate it first.
      *
      * @param programmingExercise The programming exercise
      * @return The full git-diff report for the given programming exercise
@@ -79,7 +80,12 @@ public class ProgrammingExerciseGitDiffReportService {
         try {
             var report = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
             if (report == null) {
-                return null;
+                // Generate the report if it does not exist yet
+                report = updateReport(programmingExercise);
+                if (report == null) {
+                    // Report could not be generated
+                    return null;
+                }
             }
             var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
             var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
@@ -114,6 +120,8 @@ public class ProgrammingExerciseGitDiffReportService {
 
     /**
      * Converts a normal git-diff entry to a full git-diff entry containing the actual code block of the change it represents.
+     * This method should not be called twice for the same programming exercise at the same time, as this will result in
+     * the creation of 2 reports. See https://github.com/ls1intum/Artemis/pull/4893 for more information about it.
      *
      * @param entry The normal git-diff entry
      * @param templateRepoFiles The files of the solution repository
@@ -154,50 +162,46 @@ public class ProgrammingExerciseGitDiffReportService {
      * @return The git-diff report for the given programming exercise
      */
     public ProgrammingExerciseGitDiffReport updateReport(ProgrammingExercise programmingExercise) {
-        // Synchronized to prevent multiple git-diffs to be generated for the same exercise at the same time
-        // This happens e.g. when creating an exercise
-        synchronized (programmingExercise) {
-            var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
-            var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
-            if (templateParticipationOptional.isEmpty() || solutionParticipationOptional.isEmpty()) {
-                return null;
-            }
-            var templateParticipation = templateParticipationOptional.get();
-            var solutionParticipation = solutionParticipationOptional.get();
+        var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
+        var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
+        if (templateParticipationOptional.isEmpty() || solutionParticipationOptional.isEmpty()) {
+            return null;
+        }
+        var templateParticipation = templateParticipationOptional.get();
+        var solutionParticipation = solutionParticipationOptional.get();
 
-            var templateSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(templateParticipation.getId());
-            var solutionSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(solutionParticipation.getId());
-            if (templateSubmissionOptional.isEmpty() || solutionSubmissionOptional.isEmpty()) {
-                return null;
-            }
-            var templateSubmission = templateSubmissionOptional.get();
-            var solutionSubmission = solutionSubmissionOptional.get();
+        var templateSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(templateParticipation.getId());
+        var solutionSubmissionOptional = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(solutionParticipation.getId());
+        if (templateSubmissionOptional.isEmpty() || solutionSubmissionOptional.isEmpty()) {
+            return null;
+        }
+        var templateSubmission = templateSubmissionOptional.get();
+        var solutionSubmission = solutionSubmissionOptional.get();
 
-            var templateHash = templateSubmission.getCommitHash();
-            var solutionHash = solutionSubmission.getCommitHash();
-            var existingReport = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
-            if (existingReport != null && canUseExistingReport(existingReport, templateHash, solutionHash)) {
-                return existingReport;
-            }
+        var templateHash = templateSubmission.getCommitHash();
+        var solutionHash = solutionSubmission.getCommitHash();
+        var existingReport = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
+        if (existingReport != null && canUseExistingReport(existingReport, templateHash, solutionHash)) {
+            return existingReport;
+        }
 
-            try {
-                var newReport = generateReport(templateParticipation, solutionParticipation);
-                newReport.setTemplateRepositoryCommitHash(templateHash);
-                newReport.setSolutionRepositoryCommitHash(solutionHash);
-                newReport.setProgrammingExercise(programmingExercise);
-                // Delete the old report first
-                if (existingReport != null) {
-                    programmingExerciseGitDiffReportRepository.delete(existingReport);
-                }
-                newReport = programmingExerciseGitDiffReportRepository.save(newReport);
-                programmingExercise.setGitDiffReport(newReport);
-                programmingExerciseRepository.save(programmingExercise);
-                return newReport;
+        try {
+            var newReport = generateReport(templateParticipation, solutionParticipation);
+            newReport.setTemplateRepositoryCommitHash(templateHash);
+            newReport.setSolutionRepositoryCommitHash(solutionHash);
+            newReport.setProgrammingExercise(programmingExercise);
+            // Delete any old report first
+            if (existingReport != null) {
+                programmingExerciseGitDiffReportRepository.delete(existingReport);
             }
-            catch (GitAPIException | IOException e) {
-                log.error("Exception while generating git diff report", e);
-                throw new InternalServerErrorException("Error while generating git-diff: " + e.getMessage());
-            }
+            newReport = programmingExerciseGitDiffReportRepository.save(newReport);
+            programmingExercise.setGitDiffReport(newReport);
+            programmingExerciseRepository.save(programmingExercise);
+            return newReport;
+        }
+        catch (GitAPIException | IOException e) {
+            log.error("Exception while generating git diff report", e);
+            throw new InternalServerErrorException("Error while generating git-diff: " + e.getMessage());
         }
     }
 
