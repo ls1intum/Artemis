@@ -65,7 +65,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 HttpStatus.CREATED);
 
         checkCreatedConversationParticipants(createdConversation.getConversationParticipants());
-        checkCreatedConversation(conversationToSave, createdConversation);
+        checkCreatedConversation(createdConversation);
 
         assertThat(conversationRepository.findById(createdConversation.getId())).isNotEmpty();
 
@@ -143,7 +143,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         return conversation;
     }
 
-    private void checkCreatedConversation(Conversation expectedConversation, Conversation createdConversation) {
+    private void checkCreatedConversation(Conversation createdConversation) {
         assertThat(createdConversation).isNotNull();
         assertThat(createdConversation.getId()).isNotNull();
         assertThat(createdConversation.getCreationDate()).isNotNull();
