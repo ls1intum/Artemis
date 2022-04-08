@@ -13,6 +13,16 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { By } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { Course } from 'app/entities/course.model';
+
+// Mock getCourseFromExercise(exercise) to get a course even if there isn't a course.
+jest.mock('app/entities/exercise.model', () => ({
+    getCourseFromExercise: () => {
+        const course = new Course();
+        course.maxComplaintResponseTextLimit = 26;
+        return course;
+    },
+}));
 
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
@@ -219,4 +229,90 @@ describe('ComplaintsForTutorComponent', () => {
 
         expect(resolveStub).toHaveBeenCalled();
     });
+
+    it('should just display disabled accept and reject complaint button', fakeAsync(() => {
+        const unhandledComplaint = new Complaint();
+        unhandledComplaint.id = 1;
+        unhandledComplaint.accepted = undefined;
+        unhandledComplaint.complaintText = 'please check again';
+        unhandledComplaint.complaintResponse = undefined;
+        unhandledComplaint.complaintResponse = new ComplaintResponse();
+        unhandledComplaint.complaintResponse.id = 1;
+        unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
+
+        const freshlyCreatedComplaintResponse = new ComplaintResponse();
+        freshlyCreatedComplaintResponse.id = 1;
+        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
+        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
+
+        jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: freshlyCreatedComplaintResponse,
+                    status: 201,
+                }),
+            ),
+        );
+
+        complaintsForTutorComponent.isAssessor = false;
+        complaintsForTutorComponent.complaint = unhandledComplaint;
+
+        // Update fixture
+        complaintForTutorComponentFixture.detectChanges();
+        tick();
+
+        const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
+        responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
+        expect(responseTextArea.value.length).toBe(26);
+
+        const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
+        const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
+        expect(rejectComplaintButton.disabled).toBe(false);
+        expect(acceptComplaintButton.disabled).toBe(false);
+
+        responseTextArea.value = responseTextArea.value + 'A';
+        expect(responseTextArea.value.length).toBe(27);
+
+        // Update fixture
+        complaintForTutorComponentFixture.detectChanges();
+        tick();
+
+        expect(rejectComplaintButton.disabled).toBe(true);
+        expect(acceptComplaintButton.disabled).toBe(true);
+    }));
+
+    it('text area should have the correct max length', fakeAsync(() => {
+        const unhandledComplaint = new Complaint();
+        unhandledComplaint.id = 1;
+        unhandledComplaint.accepted = undefined;
+        unhandledComplaint.complaintText = 'please check again';
+        unhandledComplaint.complaintResponse = undefined;
+        unhandledComplaint.complaintResponse = new ComplaintResponse();
+        unhandledComplaint.complaintResponse.id = 1;
+        unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
+
+        const freshlyCreatedComplaintResponse = new ComplaintResponse();
+        freshlyCreatedComplaintResponse.id = 1;
+        freshlyCreatedComplaintResponse.isCurrentlyLocked = true;
+        freshlyCreatedComplaintResponse.complaint = unhandledComplaint;
+
+        jest.spyOn(injectedComplaintResponseService, 'refreshLock').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: freshlyCreatedComplaintResponse,
+                    status: 201,
+                }),
+            ),
+        );
+
+        complaintsForTutorComponent.isAssessor = false;
+        complaintsForTutorComponent.complaint = unhandledComplaint;
+
+        // Update fixture
+        complaintForTutorComponentFixture.detectChanges();
+        tick();
+
+        const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
+        expect(responseTextArea.maxLength).toBe(26);
+    }));
 });

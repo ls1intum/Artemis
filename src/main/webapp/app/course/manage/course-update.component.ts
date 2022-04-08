@@ -1,4 +1,4 @@
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -58,6 +58,11 @@ export class CourseUpdateComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
 
+    // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
+    // This is the maximum value allowed in our database. These values must be the same as in Constants.java
+    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 5000;
+    readonly COMPLAINT_TEXT_LIMIT = 5000;
+
     constructor(
         private courseService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
@@ -67,6 +72,7 @@ export class CourseUpdateComponent implements OnInit {
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -81,7 +87,11 @@ export class CourseUpdateComponent implements OnInit {
                 });
 
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
-                this.complaintsEnabled = (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) && this.course.maxComplaintTimeDays! > 0;
+                this.complaintsEnabled =
+                    (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
+                    this.course.maxComplaintTimeDays! > 0 &&
+                    this.course.maxComplaintTextLimit! > 0 &&
+                    this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             }
         });
@@ -150,6 +160,12 @@ export class CourseUpdateComponent implements OnInit {
                 maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
+                maxComplaintTextLimit: new FormControl(this.course.maxComplaintTextLimit, {
+                    validators: [Validators.required, Validators.min(0), Validators.max(this.COMPLAINT_TEXT_LIMIT)],
+                }),
+                maxComplaintResponseTextLimit: new FormControl(this.course.maxComplaintResponseTextLimit, {
+                    validators: [Validators.required, Validators.min(0), Validators.max(this.COMPLAINT_RESPONSE_TEXT_LIMIT)],
+                }),
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
@@ -211,7 +227,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     private subscribeToSaveResponse(result: Observable<HttpResponse<Course>>) {
         result.subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (response: HttpResponse<Course>) => this.onSaveSuccess(response.body),
             error: (res: HttpErrorResponse) => this.onSaveError(res),
         });
     }
@@ -219,9 +235,9 @@ export class CourseUpdateComponent implements OnInit {
     /**
      * Action on successful course creation or edit
      */
-    private onSaveSuccess() {
+    private onSaveSuccess(updatedCourse: Course | null) {
         this.isSaving = false;
-        this.previousState();
+        this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
     }
 
     /**
@@ -343,11 +359,15 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['maxComplaints'].setValue(3);
             this.courseForm.controls['maxTeamComplaints'].setValue(3);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(7);
+            this.courseForm.controls['maxComplaintTextLimit'].setValue(2000);
+            this.courseForm.controls['maxComplaintResponseTextLimit'].setValue(2000);
         } else {
             this.complaintsEnabled = false;
             this.courseForm.controls['maxComplaints'].setValue(0);
             this.courseForm.controls['maxTeamComplaints'].setValue(0);
             this.courseForm.controls['maxComplaintTimeDays'].setValue(0);
+            this.courseForm.controls['maxComplaintTextLimit'].setValue(0);
+            this.courseForm.controls['maxComplaintResponseTextLimit'].setValue(0);
         }
     }
 
