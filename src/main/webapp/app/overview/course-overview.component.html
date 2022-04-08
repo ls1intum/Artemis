@@ -51,7 +51,7 @@
                         <b jhiTranslate="artemisApp.courseOverview.menu.discussion">Discussion</b>
                     </div>
                     <div
-                        *ngIf="course.postsEnabled && !inProductionEnvironment"
+                        *ngIf="course.postsEnabled && inDevTestNonProdEnvironment"
                         jhiOrionFilter
                         [showInOrionWindow]="false"
                         class="tab-item discussion"

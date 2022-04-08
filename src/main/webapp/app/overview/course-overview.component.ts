@@ -62,7 +62,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
     // for testing purpose
-    public inProductionEnvironment: boolean;
+    public inDevTestNonProdEnvironment: boolean;
 
     // Icons
     faSync = faSync;
@@ -84,8 +84,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     async ngOnInit() {
         // Checks if the current environment is production
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.inProductionEnvironment = profileInfo.inProduction;
+            if (profileInfo && (profileInfo.testServer || !profileInfo.inProduction)) {
+                this.inDevTestNonProdEnvironment = true;
             }
         });
 
