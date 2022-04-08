@@ -119,6 +119,7 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for development environment
     text-assessment-analytics-enabled: true
+    browser-fingerprints-enabled: true
 
 # Eureka configuration
 eureka:
