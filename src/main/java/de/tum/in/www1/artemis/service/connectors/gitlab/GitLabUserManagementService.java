@@ -580,7 +580,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * Create a personal access token for the user with the given id.
      * The token has scopes "read_repository" and "write_repository".
      *
-     *
      * @param userId the id of the user in Gitlab
      * @return the personal access token created for that user
      */
