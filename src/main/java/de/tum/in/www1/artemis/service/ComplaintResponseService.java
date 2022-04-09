@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.ComplaintResponseResource;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
 
 /**
@@ -20,6 +21,8 @@ import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
  */
 @Service
 public class ComplaintResponseService {
+
+    private static final String ENTITY_NAME = "complaintResponse";
 
     private final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
 
@@ -186,6 +189,18 @@ public class ComplaintResponseService {
             throw new IllegalArgumentException("You need to either accept or reject a complaint");
         }
 
+        if (updatedComplaintResponse.getResponseText() != null) {
+            // Retrieve course to get max complaint response limit
+            final Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+
+            // Check whether the complaint text limit is exceeded
+            if (course.getMaxComplaintResponseTextLimit() < updatedComplaintResponse.getResponseText().length()) {
+                throw new BadRequestAlertException(
+                        "You cannot submit a complaint response that exceeds the maximum number of " + course.getMaxComplaintResponseTextLimit() + " characters", ENTITY_NAME,
+                        "exceededComplaintResponseTextLimit");
+            }
+        }
+
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(originalComplaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for resolving the complaint");
@@ -207,6 +222,7 @@ public class ComplaintResponseService {
 
     /**
      * Checks if a user is blocked by a complaintResponse representing a lock
+     *
      * @param complaintResponseRepresentingLock the complaintResponse representing a lock
      * @param user user to check
      * @return true if blocked by lock, false otherwise
@@ -225,15 +241,16 @@ public class ComplaintResponseService {
     }
 
     /**
-     * Checks whether the reviewer is authorized to respond to this complaint, note: instructors are always allowed to respond to complaints
+     * Checks whether the reviewer is authorized to respond to this complaint, note: instructors are always allowed
+     * to respond to complaints
      *
      * 1. Team Exercises
-     *    => The team tutor assesses the submissions and responds to complaints and more feedback requests
+     *     => The team tutor assesses the submissions and responds to complaints and more feedback requests
      *
      * 2. Individual Exercises
-     *    => Complaints can only be handled by a tutor who is not the original assessor
-     *    => Complaints of exam test runs can be assessed by instructors. They are identified by the same user being the assessor and student
-     *    => More feedback requests are handled by the assessor himself
+     *     => Complaints can only be handled by a tutor who is not the original assessor
+     *     => Complaints of exam test runs can be assessed by instructors. They are identified by the same user being the assessor and student
+     *     => More feedback requests are handled by the assessor himself
      *
      * @param complaint Complaint for which to check
      * @param user user who is trying to create a response to the complaint
