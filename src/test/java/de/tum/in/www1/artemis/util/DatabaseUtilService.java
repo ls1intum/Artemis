@@ -522,6 +522,7 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         result.completionDate(ZonedDateTime.now());
         submission.addResult(result);
+        submission.setSubmitted(true);
         submission = submissionRepository.saveAndFlush(submission);
         return submission.getResults().get(0);
     }
@@ -3542,6 +3543,19 @@ public class DatabaseUtilService {
 
         studentParticipationRepo.save(studentParticipation);
         textSubmissionRepo.save(textSubmission);
+        return textSubmission;
+    }
+
+    public TextSubmission createTeamSubmissionForTextExercise(TextExercise exercise, Team team, String text) {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
+        textSubmission = textSubmissionRepo.save(textSubmission);
+
+        StudentParticipation participation = addTeamParticipationForExercise(exercise, team.getId());
+        participation.addSubmission(textSubmission);
+        textSubmission.setParticipation(participation);
+
+        textSubmissionRepo.save(textSubmission);
+        studentParticipationRepo.save(participation);
         return textSubmission;
     }
 
