@@ -1596,7 +1596,7 @@ public class CourseTestService {
         var teamStudents = new HashSet<User>();
         teamStudents.add(student);
         var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded, "team");
-        database.createTeamSubmissionForTextExercise(teamExerciseNotEnded, team, "Team Text");
+        database.createSubmissionForTextExercise(teamExerciseNotEnded, team, "Team Text");
         instructorsCourse.addExercises(teamExerciseNotEnded);
 
         // Create an exercise which has passed the due and assessment due date
@@ -1621,6 +1621,7 @@ public class CourseTestService {
         final var exerciseIdInAssessment = exerciseInAssessment.getId();
         var resultToSetAssessorFor = database.createParticipationSubmissionAndResult(exerciseIdInAssessment, student, 15.0, 0.0, 30, true);
         resultToSetAssessorFor.getSubmission().setSubmissionDate(dueDate.minusHours(1));
+        resultToSetAssessorFor.getSubmission().setSubmitted(true);
         resultToSetAssessorFor.setAssessor(instructor);
         resultRepo.saveAndFlush(resultToSetAssessorFor);
         submissionRepository.saveAndFlush(resultToSetAssessorFor.getSubmission());

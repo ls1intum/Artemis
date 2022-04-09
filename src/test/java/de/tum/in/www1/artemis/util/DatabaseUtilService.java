@@ -522,7 +522,6 @@ public class DatabaseUtilService {
         result.setSubmission(submission);
         result.completionDate(ZonedDateTime.now());
         submission.addResult(result);
-        submission.setSubmitted(true);
         submission = submissionRepository.saveAndFlush(submission);
         return submission.getResults().get(0);
     }
@@ -3534,28 +3533,24 @@ public class DatabaseUtilService {
         storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));
     }
 
-    public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
+    public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, Participant participant, String text) {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
         textSubmission = textSubmissionRepo.save(textSubmission);
 
-        var studentParticipation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        StudentParticipation studentParticipation;
+        if (participant instanceof User user) {
+            studentParticipation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        }
+        else if (participant instanceof Team team) {
+            studentParticipation = addTeamParticipationForExercise(textExercise, team.getId());
+        }
+        else {
+            throw new RuntimeException("unsupported participant!");
+        }
         studentParticipation.addSubmission(textSubmission);
 
         studentParticipationRepo.save(studentParticipation);
         textSubmissionRepo.save(textSubmission);
-        return textSubmission;
-    }
-
-    public TextSubmission createTeamSubmissionForTextExercise(TextExercise exercise, Team team, String text) {
-        TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
-        textSubmission = textSubmissionRepo.save(textSubmission);
-
-        StudentParticipation participation = addTeamParticipationForExercise(exercise, team.getId());
-        participation.addSubmission(textSubmission);
-        textSubmission.setParticipation(participation);
-
-        textSubmissionRepo.save(textSubmission);
-        studentParticipationRepo.save(participation);
         return textSubmission;
     }
 
