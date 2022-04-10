@@ -99,7 +99,7 @@ task testReport(type: TestReport) {
 }
 
 jacoco {
-    toolVersion = "0.8.7"
+    toolVersion = "0.8.8"
 }
 
 jar {
@@ -193,7 +193,7 @@ dependencies {
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.8.4"
-    implementation "net.logstash.logback:logstash-logback-encoder:7.0.1"
+    implementation "net.logstash.logback:logstash-logback-encoder:7.1"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"
@@ -283,7 +283,7 @@ dependencies {
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.2.0"
-    testImplementation "org.apache.maven.shared:maven-invoker:3.1.0"
+    testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
     testImplementation "org.gradle:gradle-tooling-api:7.3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M6"
     testImplementation "com.opencsv:opencsv:5.6"
