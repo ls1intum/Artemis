@@ -295,6 +295,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else {
             this.programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
         }
+
+        // Don't override the problem statement with the template in edit mode.
+        if (this.programmingExercise.id === undefined) {
+            this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, this.programmingExercise.projectType);
+            // Rerender the instructions as the template has changed.
+            this.rerenderSubject.next();
+        }
     }
 
     get selectedTestRepositoryProjectType() {
