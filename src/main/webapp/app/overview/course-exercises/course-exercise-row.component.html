@@ -48,7 +48,7 @@
                 <h4 class="fw-medium" *ngFor="let category of exerciseCategories">
                     <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
                 </h4>
-                <h4 class="fw-medium">
+                <h4 class="fw-medium" *ngIf="exercise.difficulty">
                     <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
                 </h4>
                 <h4 class="fw-medium" *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">

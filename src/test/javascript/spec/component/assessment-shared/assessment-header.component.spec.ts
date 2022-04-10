@@ -328,4 +328,74 @@ describe('AssessmentHeaderComponent', () => {
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);
     });
+
+    it('should save assessment on control and s', () => {
+        component.isLoading = false;
+        component.assessmentsAreValid = true;
+        component.isAssessor = true;
+        component.saveBusy = false;
+        component.submitBusy = false;
+        component.cancelBusy = false;
+        fixture.detectChanges();
+
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
+        const spyOnControlAndS = jest.spyOn(component, 'saveOnControlAndS');
+        const saveSpy = jest.spyOn(component.save, 'emit');
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
+        expect(saveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should submit assessment on control and enter', () => {
+        component.isLoading = false;
+        component.assessmentsAreValid = true;
+        component.isAssessor = true;
+        component.saveBusy = false;
+        component.submitBusy = false;
+        component.cancelBusy = false;
+        fixture.detectChanges();
+
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
+        const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
+        const submitSpy = jest.spyOn(component.submit, 'emit');
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
+        expect(submitSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should override assessment on control and enter', () => {
+        component.result = new Result();
+        component.result.completionDate = dayjs();
+        component.canOverride = true;
+        component.assessmentsAreValid = true;
+        component.submitBusy = false;
+        fixture.detectChanges();
+
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
+        const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
+        const submitSpy = jest.spyOn(component.submit, 'emit');
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
+        expect(submitSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should assess next submission on control, shift and arrow right', () => {
+        component.isAssessor = true;
+        component.result = new Result();
+        component.result.completionDate = dayjs();
+        component.isTeamMode = false;
+        component.isTestRun = false;
+        fixture.detectChanges();
+
+        const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, shiftKey: true, key: 'ArrowRight' });
+        const spyOnControlShiftAndArrowRight = jest.spyOn(component, 'assessNextOnControlShiftAndArrowRight');
+        const nextSpy = jest.spyOn(component.nextSubmission, 'emit');
+        document.dispatchEvent(eventMock);
+
+        expect(spyOnControlShiftAndArrowRight).toHaveBeenCalledTimes(1);
+        expect(nextSpy).toHaveBeenCalledTimes(1);
+    });
 });

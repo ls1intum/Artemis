@@ -93,7 +93,7 @@ export function createProgrammingExercise(artemis, courseId, exerciseGroup = und
         staticCodeAnalysisEnabled: enableSCA,
         sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
-        projectType: programmingLanguage === 'JAVA' ? 'ECLIPSE' : undefined,
+        projectType: programmingLanguage === 'JAVA' ? 'PLAIN_MAVEN' : undefined,
     };
 
     if (courseId) {

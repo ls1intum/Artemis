@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement, EventEmitter } from '@angular/core';
+import { NgModel } from '@angular/forms';
+import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -12,9 +14,10 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
@@ -26,7 +29,13 @@ describe('CodeEditorAceComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule],
-            declarations: [CodeEditorAceComponent, TranslatePipeMock, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent)],
+            declarations: [
+                CodeEditorAceComponent,
+                TranslatePipeMock,
+                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+                MockDirective(NgModel),
+                MockDirective(NgbDropdown),
+            ],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
@@ -202,5 +211,39 @@ describe('CodeEditorAceComponent', () => {
 
         expect(setupLineIconsSpy).toBeCalledTimes(1);
         expect(observerDomSpy).toBeCalledTimes(1);
+    });
+
+    it('should only allow tab sizes between 1 and the maximum size', () => {
+        comp.tabSize = 4;
+        comp.validateTabSize();
+        expect(comp.tabSize).toBe(4);
+
+        comp.tabSize = -1;
+        comp.validateTabSize();
+        expect(comp.tabSize).toBe(1);
+
+        comp.tabSize = MAX_TAB_SIZE + 10;
+        comp.validateTabSize();
+        expect(comp.tabSize).toBe(MAX_TAB_SIZE);
+    });
+
+    it('should only change the displayed tab width if it is valid', () => {
+        const editorTabSize = () => comp.editor.getEditor().getSession().getTabSize();
+
+        comp.tabSize = 5;
+        fixture.detectChanges();
+        expect(editorTabSize()).toBe(5);
+
+        // invalid values either too small or too big should be ignored
+        comp.tabSize = -1;
+        fixture.detectChanges();
+        expect(editorTabSize()).toBe(5);
+        comp.tabSize = MAX_TAB_SIZE + 10;
+        fixture.detectChanges();
+        expect(editorTabSize()).toBe(5);
+
+        comp.tabSize = 4;
+        fixture.detectChanges();
+        expect(editorTabSize()).toBe(4);
     });
 });
