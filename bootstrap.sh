@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Entrypoint file for Docker Images of Artemis. The deployment of the application is set to /opt/Artemis
+# Entrypoint file for Docker Images of Artemis. The deployment of the application is set to /opt/artemis
 
-cd /opt/Artemis || exit 1
+cd /opt/artemis || exit 1
 
 if [ -z "$(ls -A config)" ]; then
    echo "Config is Empty .. copying default ones .."
-   cp -n -a /defaults/Artemis/. config/
+   cp -n -a /defaults/artemis/. config/
 else
    echo "Config is not empty .. not copying default configs .."
 fi

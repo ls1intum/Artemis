@@ -7,8 +7,8 @@ services:
             context: ../../..
             dockerfile: src/main/docker/Dockerfile
         volumes:
-            - ../resources/config/application-dev.yml:/opt/Artemis/application-dev.yml:ro
-            - ../resources/config/application-artemis.yml:/opt/Artemis/application-artemis.yml:ro
+            - ../resources/config/application-dev.yml:/opt/artemis/application-dev.yml:ro
+            - ../resources/config/application-artemis.yml:/opt/artemis/application-artemis.yml:ro
         environment:
             _JAVA_OPTIONS: -Xmx5120m -Xms2560m
             SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,local

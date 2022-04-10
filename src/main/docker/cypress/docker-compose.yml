@@ -16,8 +16,8 @@ services:
             context: ../../../..
             dockerfile: src/main/docker/Dockerfile
         volumes:
-            - ../../resources/config/application-prod.yml:/opt/Artemis/application-prod.yml:ro
-            - ./application.yml:/opt/Artemis/application.yml:ro
+            - ../../resources/config/application-prod.yml:/opt/artemis/application-prod.yml:ro
+            - ./application.yml:/opt/artemis/application.yml:ro
         environment:
             _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
             JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
