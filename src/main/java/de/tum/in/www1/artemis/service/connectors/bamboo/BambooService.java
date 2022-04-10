@@ -305,6 +305,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     public void getBuildLogStats(List<BuildLogEntry> buildLogEntries) {
+        log.warn("Extracting build log stats");
         var jobStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("started building on agent")).findFirst();
         var dockerSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("Executing build")).findFirst();
         var testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Tests'")).findFirst();
@@ -314,14 +315,14 @@ public class BambooService extends AbstractContinuousIntegrationService {
         var dependenciesDownloadedCount = buildLogEntries.stream().filter(b -> b.getLog().contains("Downloaded from central")).count();
         var jobFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished building")).findFirst();
 
-        log.info("jobStarted {}", jobStarted);
-        log.info("dockerSetupCompleted {}", dockerSetupCompleted);
-        log.info("testsStarted {}", testsStarted);
-        log.info("testsFinished {}", testsFinished);
-        log.info("scaStarted {}", scaStarted);
-        log.info("scaFinished {}", scaFinished);
-        log.info("dependenciesDownloadedCount {}", dependenciesDownloadedCount);
-        log.info("jobFinished {}", jobFinished);
+        log.warn("jobStarted {}", jobStarted);
+        log.warn("dockerSetupCompleted {}", dockerSetupCompleted);
+        log.warn("testsStarted {}", testsStarted);
+        log.warn("testsFinished {}", testsFinished);
+        log.warn("scaStarted {}", scaStarted);
+        log.warn("scaFinished {}", scaFinished);
+        log.warn("dependenciesDownloadedCount {}", dependenciesDownloadedCount);
+        log.warn("jobFinished {}", jobFinished);
     }
 
     /**
@@ -581,6 +582,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
         if (buildLogEntries.isEmpty()) {
             return buildLogEntries;
         }
+
+        getBuildLogStats(buildLogEntries);
 
         // Filter unwanted logs
         return removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
