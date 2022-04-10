@@ -292,8 +292,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
-        var buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()),
-                programmingLanguage);
+        var buildLogEntries = retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId());
+        getBuildLogStats(buildLogEntries);
+        buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
         var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
         // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
@@ -301,6 +302,26 @@ public class BambooService extends AbstractContinuousIntegrationService {
         programmingSubmissionRepository.save(programmingSubmission);
 
         return buildLogEntries;
+    }
+
+    public void getBuildLogStats(List<BuildLogEntry> buildLogEntries) {
+        var jobStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("started building on agent")).findFirst();
+        var dockerSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("Executing build")).findFirst();
+        var testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Tests'")).findFirst();
+        var testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Tests' with result")).findFirst();
+        var scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Static Code Analysis'")).findFirst();
+        var scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Static Code Analysis'")).findFirst();
+        var dependenciesDownloadedCount = buildLogEntries.stream().filter(b -> b.getLog().contains("Downloaded from central")).count();
+        var jobFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished building")).findFirst();
+
+        log.info("jobStarted {}", jobStarted);
+        log.info("dockerSetupCompleted {}", dockerSetupCompleted);
+        log.info("testsStarted {}", testsStarted);
+        log.info("testsFinished {}", testsFinished);
+        log.info("scaStarted {}", scaStarted);
+        log.info("scaFinished {}", scaFinished);
+        log.info("dependenciesDownloadedCount {}", dependenciesDownloadedCount);
+        log.info("jobFinished {}", jobFinished);
     }
 
     /**
