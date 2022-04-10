@@ -35,7 +35,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     @Column(name = "verdict_message")
     private String verdictMessage;
 
-    @ManyToOne
+    @ManyToOne(targetEntity = User.class)
     private User verdictBy;
 
     @Column(name = "verdict_date")
@@ -118,7 +118,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
 
     @Override
     public String toString() {
-        return "PlagiarismCase{" + "exercise=" + exercise + ", student=" + student + ", post=" + post + ", plagiarismSubmissions=" + plagiarismSubmissions + ", verdict=" + verdict
-                + ", verdictMessage=" + verdictMessage + ", verdictBy=" + verdictBy + ", verdictDate=" + verdictDate + ", verdictPointDeduction=" + verdictPointDeduction + "}";
+        return "PlagiarismCase{" + "exercise=" + exercise + ", student=" + student + ", post=" + post + ", verdict=" + verdict + ", verdictMessage=" + verdictMessage
+                + ", verdictBy=" + verdictBy + ", verdictDate=" + verdictDate + ", verdictPointDeduction=" + verdictPointDeduction + "}";
     }
 }

@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -174,6 +176,9 @@ public class Course extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
+
+    @Transient
+    private List<PlagiarismCase> plagiarismCasesTransient;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -601,6 +606,14 @@ public class Course extends DomainObject {
 
     public void setAccuracyOfScores(Integer accuracyOfScores) {
         this.accuracyOfScores = accuracyOfScores;
+    }
+
+    public List<PlagiarismCase> getPlagiarismCases() {
+        return plagiarismCasesTransient;
+    }
+
+    public void setPlagiarismCases(List<PlagiarismCase> plagiarismCases) {
+        this.plagiarismCasesTransient = plagiarismCases;
     }
 
     public void validateOnlineCourseAndRegistrationEnabled() {

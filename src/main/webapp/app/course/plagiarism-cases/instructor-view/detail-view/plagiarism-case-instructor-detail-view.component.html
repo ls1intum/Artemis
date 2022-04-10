@@ -1,0 +1,63 @@
+<ng-container *ngIf="plagiarismCase">
+    <h1>{{ 'artemisApp.plagiarism.plagiarismCases.plagiarismCase' | artemisTranslate }}: {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})</h1>
+    <div class="plagiarism-case-detail">
+        <div class="plagiarism-case-detail--header row justify-content-between">
+            <div class="col-3">
+                <div class="card">
+                    {{ 'artemisApp.plagiarism.plagiarismCases.exercise' | artemisTranslate }}
+                    <fa-icon *ngIf="plagiarismCase.exercise!.type!" [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
+                    {{ plagiarismCase.exercise!.title }}
+                </div>
+            </div>
+            <div class="col-3" *ngIf="!plagiarismCase.exercise!.exerciseGroup">EXAM if is exam</div>
+            <div class="col-3">
+                <div class="card">
+                    <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-verdict>
+                </div>
+            </div>
+        </div>
+        <h2>Message</h2>
+        <div class="plagiarism-case-detail--message row">
+            <jhi-posting-thread></jhi-posting-thread>
+        </div>
+        <h2>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}</h2>
+        <div class="plagiarism-case-detail--verdict row justify-content-between">
+            <div class="col-3">
+                <input type="number" [(ngModel)]="verdictPointDeduction" min="0" max="100" [readonly]="!!plagiarismCase.verdict" [disabled]="!!plagiarismCase.verdict" />
+                <jhi-confirm-button
+                    title="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"
+                    confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                    confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                    [translateText]="true"
+                    [disabled]="!!plagiarismCase.verdict"
+                    (onConfirm)="savePointDeductionVerdict()"
+                ></jhi-confirm-button>
+            </div>
+            <div class="col-3">
+                <textarea [(ngModel)]="verdictMessage" [disabled]="!!plagiarismCase.verdict"></textarea>
+                <jhi-confirm-button
+                    title="artemisApp.plagiarism.plagiarismCases.verdict.warning"
+                    confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                    confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                    [translateText]="true"
+                    [disabled]="!!plagiarismCase.verdict"
+                    (onConfirm)="saveWarningVerdict()"
+                ></jhi-confirm-button>
+            </div>
+            <div class="col-3">
+                <jhi-confirm-button
+                    title="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"
+                    confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                    confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                    [translateText]="true"
+                    [disabled]="!!plagiarismCase.verdict"
+                    (onConfirm)="saveVerdict()"
+                ></jhi-confirm-button>
+            </div>
+        </div>
+        <h2>{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h2>
+        <div class="plagiarism-case-detail--comparisons">
+            <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-review>
+        </div>
+    </div>
+</ng-container>

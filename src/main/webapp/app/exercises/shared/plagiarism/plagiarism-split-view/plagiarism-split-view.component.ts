@@ -25,6 +25,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
     @Input() studentLogin: string;
+    @Input() sortByStudentLogin: string;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
@@ -70,6 +71,11 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
                 .getPlagiarismComparisonForSplitView(this.exercise.course?.id!, changes.comparison.currentValue.id, this.studentLogin)
                 .subscribe((resp: HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>) => {
                     this.plagiarismComparison = resp.body!;
+                    if (this.sortByStudentLogin && this.sortByStudentLogin === this.plagiarismComparison.submissionB.studentLogin) {
+                        const temp = this.plagiarismComparison.submissionA;
+                        this.plagiarismComparison.submissionA = this.plagiarismComparison.submissionB;
+                        this.plagiarismComparison.submissionB = temp;
+                    }
                     if (this.isProgrammingOrTextExercise) {
                         this.parseTextMatches(this.plagiarismComparison as PlagiarismComparison<TextSubmissionElement>);
                     }

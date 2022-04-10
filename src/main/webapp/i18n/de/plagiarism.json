@@ -41,6 +41,25 @@
             "resetFilter": "Filter zurücksetzen",
             "loading": "Laden...",
             "fetchingResults": "Plagiate werden geladen...",
+            "plagiarismCases": {
+                "pageTitle": "Plagiatsfälle",
+                "plagiarismCases": "Plagiatsfälle",
+                "plagiarismCase": "Plagiatsfall",
+                "verdict": {
+                    "verdict": "Urteil",
+                    "none": "Noch kein Urteil",
+                    "plagiarism": "Unterschleid",
+                    "warning": "Warnung",
+                    "pointDeduction": "Punktabzug",
+                    "confirmationTitle": "Bestätige das Urteil",
+                    "confirmationText": "Are you sure you want to set this verdict? Dies kann nicht rückgängig gemacht werden."
+                },
+                "exercise": "Betroffene Übung",
+                "comparisons": "Vergleiche",
+                "casesWithVerdict": "Fälle mit Urteil",
+                "casesWithPost": "Studierende benachrichtigt",
+                "appearsInComparisons": "Erscheint in {{ count }} Vergleichen"
+            },
             "cases": {
                 "pageTitle": "Plagiatsfälle",
                 "plagiarismReview": "Plagiate Prüfen",

@@ -9,6 +9,7 @@ import { Language } from 'app/entities/tutor-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 export class Course implements BaseEntity {
     public id?: number;
@@ -53,6 +54,7 @@ export class Course implements BaseEntity {
     public exams?: Exam[];
     public tutorGroups?: TutorGroup[];
     public organizations?: Organization[];
+    public plagiarismCases?: PlagiarismCase[];
 
     // helper attributes
     public isAtLeastTutor?: boolean;

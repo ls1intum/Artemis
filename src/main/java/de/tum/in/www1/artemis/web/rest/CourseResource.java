@@ -414,6 +414,7 @@ public class CourseResource {
 
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsForUser(courseId, user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
+        courseService.fetchPlagiarismCasesForCourses(List.of(course), user);
         return course;
     }
 
@@ -432,6 +433,7 @@ public class CourseResource {
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
+        courseService.fetchPlagiarismCasesForCourses(courses, user);
         return courses;
     }
 

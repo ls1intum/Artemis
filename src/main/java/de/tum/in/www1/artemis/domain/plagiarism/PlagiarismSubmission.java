@@ -180,8 +180,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
 
     @Override
     public String toString() {
-        return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", elements=" + elements + ", size=" + size + ", score="
-                + score + '}';
+        return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", size=" + size + ", score=" + score + '}';
     }
 
     @Override

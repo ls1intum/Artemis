@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
@@ -68,6 +69,8 @@ public class SingleUserNotificationFactoryTest {
 
     private static PlagiarismSubmission plagiarismSubmission;
 
+    private static PlagiarismCase plagiarismCase;
+
     private static final String PLAGIARISM_INSTRUCTOR_STATEMENT = "You definitely plagiarised! Your answers are identical!";
 
     /**
@@ -108,6 +111,8 @@ public class SingleUserNotificationFactoryTest {
         plagiarismComparison.setInstructorStatementA(PLAGIARISM_INSTRUCTOR_STATEMENT);
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
+
+        plagiarismCase = new PlagiarismCase();
     }
 
     /// Test for Notifications based on Posts
@@ -132,7 +137,7 @@ public class SingleUserNotificationFactoryTest {
      * Calls the real createNotification method of the singleUserNotificationFactory and tests if the result is correct for plagiarism related notifications.
      */
     private void createAndCheckPlagiarismNotification() {
-        createdNotification = createNotification(plagiarismComparison, notificationType, cheatingUser, user);
+        createdNotification = createNotification(plagiarismCase, notificationType, cheatingUser, user);
         checkNotification();
     }
 
@@ -227,8 +232,8 @@ public class SingleUserNotificationFactoryTest {
      */
     @Test
     public void createNotification_withNotificationType_NewPossiblePlagiarismCaseStudent() {
-        notificationType = NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT;
-        expectedTitle = NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE;
+        notificationType = NEW_PLAGIARISM_CASE_STUDENT;
+        expectedTitle = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
         expectedText = PLAGIARISM_INSTRUCTOR_STATEMENT;
         expectedPriority = HIGH;
         expectedTransientTarget = createPlagiarismCaseTarget(plagiarismComparison.getId(), COURSE_ID);
@@ -241,10 +246,10 @@ public class SingleUserNotificationFactoryTest {
      */
     @Test
     public void createNotification_withNotificationType_PlagiarismCaseFinalStateStudent() {
-        notificationType = PLAGIARISM_CASE_FINAL_STATE_STUDENT;
-        expectedTitle = PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE;
+        notificationType = PLAGIARISM_CASE_VERDICT_STUDENT;
+        expectedTitle = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
         expectedText = "Your plagiarism case concerning the " + plagiarismResult.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
-                + plagiarismResult.getExercise().getTitle() + "\"" + " has a final verdict.";
+                + plagiarismResult.getExercise().getTitle() + "\"" + " has a verdict.";
         expectedPriority = HIGH;
         expectedTransientTarget = createPlagiarismCaseTarget(plagiarismComparison.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();

@@ -4,7 +4,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.repository.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
@@ -17,8 +18,11 @@ public class PlagiarismService {
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
-    public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository) {
+    private final PlagiarismCaseService plagiarismCaseService;
+
+    public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
+        this.plagiarismCaseService = plagiarismCaseService;
     }
 
     /**
@@ -72,5 +76,15 @@ public class PlagiarismService {
         submission.setResults(null);
         submission.setSubmissionDate(null);
         return submission;
+    }
+
+    public void updatePlagiarismComparisonStatus(long plagiarismComparisonId, PlagiarismStatus plagiarismStatus) {
+        plagiarismComparisonRepository.updatePlagiarismComparisonStatus(plagiarismComparisonId, plagiarismStatus);
+        if (plagiarismStatus.equals(PlagiarismStatus.CONFIRMED)) {
+            plagiarismCaseService.createOrAddPlagiarismCaseForComparison(plagiarismComparisonId);
+        }
+        else if (plagiarismStatus.equals(PlagiarismStatus.DENIED)) {
+            // TODO: delete existing plagiarism cases here if they exist
+        }
     }
 }

@@ -17,9 +17,10 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.web.rest.PlagiarismResource;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
+import de.tum.in.www1.artemis.web.rest.plagiarism.PlagiarismResource;
 
 public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -472,6 +473,8 @@ public class TextExerciseResource {
         if (plagiarismResult != null) {
             for (var comparison : plagiarismResult.getComparisons()) {
                 comparison.setPlagiarismResult(null);
+                comparison.getSubmissionA().setPlagiarismComparison(null);
+                comparison.getSubmissionB().setPlagiarismComparison(null);
             }
         }
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);

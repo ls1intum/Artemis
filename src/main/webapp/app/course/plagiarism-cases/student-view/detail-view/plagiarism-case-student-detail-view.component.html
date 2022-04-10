@@ -1,0 +1,22 @@
+<ng-container *ngIf="plagiarismCase">
+    <h1>Plagiarism Case: {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})</h1>
+    <div class="plagiarism-case-detail">
+        <div class="plagiarism-case-detail--header row justify-content-between">
+            <div class="col-3">
+                Exercise
+                <fa-icon *ngIf="plagiarismCase.exercise!.type!" [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
+                {{ plagiarismCase.exercise!.title }}
+            </div>
+            <div class="col-3" *ngIf="!plagiarismCase.exercise!.exerciseGroup">EXAM if is exam</div>
+            <div class="col-3">
+                <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-verdict>
+            </div>
+        </div>
+        <h2>Message</h2>
+        <div class="plagiarism-case-detail--message row">Thread</div>
+        <h2>Comparison</h2>
+        <div class="plagiarism-case-detail--comparisons">
+            <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-review>
+        </div>
+    </div>
+</ng-container>

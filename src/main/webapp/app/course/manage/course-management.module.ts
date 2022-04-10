@@ -55,6 +55,7 @@ import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiar
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
+import { ArtemisPlagiarismCasesModule } from 'app/course/plagiarism-cases/plagiarism-cases.module';
 
 @NgModule({
     imports: [
@@ -99,6 +100,7 @@ import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module
         UserImportModule,
         NgxChartsModule,
         ArtemisPlagiarismModule,
+        ArtemisPlagiarismCasesModule,
         ArtemisChartsModule,
     ],
     declarations: [

@@ -108,7 +108,9 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
 
         comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.getFirstSubmission()));
+        comparison.getSubmissionA().setPlagiarismComparison(comparison);
         comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.getSecondSubmission()));
+        comparison.getSubmissionB().setPlagiarismComparison(comparison);
         comparison.setMatches(jplagComparison.getMatches().stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toSet()));
         comparison.setSimilarity(jplagComparison.similarity());
         comparison.setStatus(PlagiarismStatus.NONE);
@@ -236,15 +238,13 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
             return false;
         }
         PlagiarismComparison<?> that = (PlagiarismComparison<?>) o;
-        return Double.compare(that.similarity, similarity) == 0 && Objects.equals(plagiarismResult, that.plagiarismResult) && Objects.equals(submissionA, that.submissionA)
-                && Objects.equals(submissionB, that.submissionB) && Objects.equals(matches, that.matches) && status == that.status
-                && Objects.equals(studentStatementA, that.studentStatementB) && Objects.equals(instructorStatementA, that.instructorStatementA)
-                && Objects.equals(instructorStatementB, that.instructorStatementB) && Objects.equals(studentStatementB, that.studentStatementB) && statusA == that.statusA
-                && statusB == that.statusB;
+        return Double.compare(that.similarity, similarity) == 0 && status == that.status && Objects.equals(studentStatementA, that.studentStatementB)
+                && Objects.equals(instructorStatementA, that.instructorStatementA) && Objects.equals(instructorStatementB, that.instructorStatementB)
+                && Objects.equals(studentStatementB, that.studentStatementB) && statusA == that.statusA && statusB == that.statusB;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getSubmissionA(), getSubmissionB(), getSimilarity(), getStatus());
+        return Objects.hash(super.hashCode(), getSimilarity(), getStatus());
     }
 }

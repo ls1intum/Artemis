@@ -1,0 +1,15 @@
+<ng-container *ngIf="plagiarismCase">
+    <div class="row">
+        <div class="col-12 badge bg-secondary">
+            {{ verdictTranslationString | artemisTranslate }}
+        </div>
+        <ng-container *ngIf="plagiarismCase.verdict">
+            <div class="col-12">
+                {{ plagiarismCase.verdictDate | artemisDate }}
+            </div>
+            <div class="col-12">
+                {{ plagiarismCase.verdictBy!.name }}
+            </div>
+        </ng-container>
+    </div>
+</ng-container>

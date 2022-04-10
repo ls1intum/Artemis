@@ -47,6 +47,7 @@ export interface PostContextFilter {
     courseWideContext?: CourseWideContext;
     exerciseId?: number;
     lectureId?: number;
+    plagiarismCaseId?: number;
     searchText?: string;
     filterToUnresolved?: boolean;
     filterToOwn?: boolean;
