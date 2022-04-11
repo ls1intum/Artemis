@@ -4,8 +4,8 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \
     JAVA_OPTS=""
 
-# Specify profiles
-ENV PROFILES ""
+# Specify profiles for Spring Boot
+ENV spring.profiles.active ""
 
 RUN echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
@@ -30,11 +30,11 @@ RUN echo "Installing gosu (needed for bootstrap.sh)" \
   && gosu nobody true
 
 # Copy default configuration to container
-WORKDIR /defaults/Artemis
+WORKDIR /defaults/artemis
 COPY src/main/resources/config/application*.yml ./
 
 # Copy Artemis.war to execution location
-WORKDIR /opt/Artemis
+WORKDIR /opt/artemis
 ARG WAR_PATH=build/libs
 COPY $WAR_PATH/*.war Artemis.war
 
@@ -44,12 +44,12 @@ RUN chmod +x /bootstrap.sh \
   && useradd -ms /bin/bash artemis
 
 # Create directories for volumes
-RUN mkdir -p /opt/Artemis/config /opt/Artemis/data /opt/Artemis/public/content
+RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content
 
-VOLUME ["/opt/Artemis/config"]
-VOLUME ["/opt/Artemis/data"]
-VOLUME ["/opt/Artemis/public/content"]
+VOLUME ["/opt/artemis/config"]
+VOLUME ["/opt/artemis/data"]
+VOLUME ["/opt/artemis/public/content"]
 
 EXPOSE 8080
 
-CMD exec /bootstrap.sh
+ENTRYPOINT ["/bin/bash", "/bootstrap.sh"]

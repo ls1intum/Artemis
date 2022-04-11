@@ -83,8 +83,8 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: Artemis.war
-    - name: Copy Dockerfile & Bootstrap to Build Directory
-      run: cp src/main/docker/Dockerfile . &&  cp src/main/docker/bootstrap.sh .
+    - name: Copy Dockerfile to Build Directory
+      run: cp src/main/docker/Dockerfile .
     - name: Build Docker Image
       run: docker build --build-arg WAR_PATH=. -t artemis .
 
