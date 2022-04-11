@@ -34,11 +34,11 @@ server:
   url: http://localhost
 
 artemis:
-  course-archives-path: ./course-archives
-  repo-clone-path: ./repos
-  repo-download-clone-path: repos-download
-  file-upload-path: ./uploads
-  submission-export-path: exports
+  course-archives-path: ./data/course-archives
+  repo-clone-path: ./data/repos
+  repo-download-clone-path: ./data/repos-download
+  file-upload-path: ./data/uploads
+  submission-export-path: ./data/exports
   encryption-password: cypressEncryptionPassword # LEGACY: arbitrary password for encrypting database values
   bcrypt-salt-rounds: 4    # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest
   user-management:
