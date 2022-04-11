@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Subscription } from 'rxjs';
@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
     templateUrl: './included-in-score-badge.component.html',
     styles: [],
 })
-export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy {
+export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChanges {
     @Input() includedInOverallScore: IncludedInOverallScore | undefined;
     public translatedEnum = '';
     public translatedTooltip = '';
@@ -24,6 +24,9 @@ export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy {
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.setBadgeAttributes();
         });
+    }
+
+    ngOnChanges(): void {
         this.setBadgeAttributes();
     }
 

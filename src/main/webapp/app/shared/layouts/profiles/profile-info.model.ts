@@ -31,6 +31,7 @@ export class ProfileInfo {
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;
     public textAssessmentAnalyticsEnabled?: boolean;
+    public browserFingerprintsEnabled?: boolean;
     public useExternal: boolean;
     public externalCredentialProvider: string;
     public externalPasswordResetLinkMap: Map<string, string>;
