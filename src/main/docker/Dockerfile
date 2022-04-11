@@ -52,4 +52,4 @@ VOLUME ["/opt/artemis/public/content"]
 
 EXPOSE 8080
 
-CMD exec /bootstrap.sh
+ENTRYPOINT /bootstrap.sh
