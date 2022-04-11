@@ -4,8 +4,8 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \
     JAVA_OPTS=""
 
-# Specify profiles
-ENV PROFILES ""
+# Specify profiles for Spring Boot
+ENV spring.profiles.active ""
 
 RUN echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
