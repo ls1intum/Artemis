@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
@@ -37,6 +38,9 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
  */
 @Service
 public class HestiaUtilTestService {
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
     @Autowired
     private GitService gitService;
@@ -109,7 +113,7 @@ public class HestiaUtilTestService {
                 eq(false), any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(templateRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(templateRepoUrl));
 
         var savedExercise = exerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(savedExercise);
@@ -170,7 +174,7 @@ public class HestiaUtilTestService {
                 eq(false), any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(solutionRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(solutionRepoUrl));
 
         var savedExercise = exerciseRepository.save(exercise);
         database.addSolutionParticipationForProgrammingExercise(savedExercise);
@@ -231,7 +235,7 @@ public class HestiaUtilTestService {
                 any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
 
         return exerciseRepository.save(exercise);
     }

@@ -420,6 +420,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(serviceSpy).toHaveBeenCalledTimes(1);
         }));
     });
+
     it('should invoke import example submission', () => {
         const course = new Course();
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);

@@ -22,4 +22,9 @@ sourceSets {
             srcDir assignmentSrcDir
         }
     }
+    test {
+        java {
+            srcDirs = []
+        }
+    }
 }

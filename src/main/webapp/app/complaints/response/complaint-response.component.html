@@ -9,5 +9,12 @@
         >:
     </p>
 
-    <textarea class="col-12 px-1" rows="4" [(ngModel)]="complaint.complaintResponse.responseText" [readOnly]="true" [disabled]="true"></textarea>
+    <textarea
+        class="col-12 px-1"
+        rows="4"
+        [(ngModel)]="complaint.complaintResponse.responseText"
+        [readOnly]="true"
+        [disabled]="true"
+        [maxLength]="maxComplaintResponseTextLimit"
+    ></textarea>
 </div>
