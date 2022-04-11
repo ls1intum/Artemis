@@ -32,9 +32,9 @@ export const USERNAME_KEY = 'Username';
 export const EMAIL_KEY = 'Email';
 export const REGISTRATION_NUMBER_KEY = 'Registration Number';
 export const OVERALL_COURSE_POINTS_KEY = 'Overall Course Points';
-export const OVERALL_COURSE_SCORE_KEY = 'Overall Course Score';
+export const OVERALL_COURSE_SCORE_KEY = 'Overall Course Score (%)';
 export const POINTS_KEY = 'Points';
-export const SCORE_KEY = 'Score';
+export const SCORE_KEY = 'Score (%)';
 export const GRADE_KEY = 'Grades';
 export const BONUS_KEY = 'Bonus Points';
 
@@ -618,7 +618,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
                 const points = roundValueSpecifiedByCourseSettings(student.pointsPerExerciseType.getValue(exerciseType, exercise), this.course);
-                rowData.setLocalized(exercise.title!, points);
+                rowData.set(exercise.title!, points);
             });
 
             rowData.setExerciseTypePoints(exerciseType, exercisePointsPerType);
@@ -626,11 +626,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
 
         const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
-        rowData.setLocalized(OVERALL_COURSE_POINTS_KEY, student.overallPoints);
-        rowData.setLocalizedPercent(OVERALL_COURSE_SCORE_KEY, overallScore);
+        rowData.set(OVERALL_COURSE_POINTS_KEY, student.overallPoints);
+        rowData.set(OVERALL_COURSE_SCORE_KEY, overallScore);
 
         if (this.course.presentationScore) {
-            rowData.setLocalized(PRESENTATION_SCORE_KEY, student.presentationScore);
+            rowData.set(PRESENTATION_SCORE_KEY, student.presentationScore);
         }
 
         this.setCsvRowGradeValue(rowData, student.gradeStep?.gradeName);
@@ -648,14 +648,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
-                rowData.setLocalized(exercise.title!, this.exerciseMaxPointsPerType.getValue(exerciseType, exercise) ?? 0);
+                rowData.set(exercise.title!, this.exerciseMaxPointsPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
             rowData.setExerciseTypeScore(exerciseType, 100);
         }
 
-        rowData.setLocalized(OVERALL_COURSE_POINTS_KEY, this.maxNumberOfOverallPoints);
-        rowData.setLocalizedPercent(OVERALL_COURSE_SCORE_KEY, 100);
+        rowData.set(OVERALL_COURSE_POINTS_KEY, this.maxNumberOfOverallPoints);
+        rowData.set(OVERALL_COURSE_SCORE_KEY, 100);
 
         if (this.course.presentationScore) {
             rowData.set(PRESENTATION_SCORE_KEY, '');
@@ -677,7 +677,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
                 const points = roundValueSpecifiedByCourseSettings(this.exerciseAveragePointsPerType.getValue(exerciseType, exercise), this.course);
-                rowData.setLocalized(exercise.title!, points);
+                rowData.set(exercise.title!, points);
             });
 
             const averageScore = roundScorePercentSpecifiedByCourseSettings(
@@ -690,8 +690,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
 
         const averageOverallScore = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
-        rowData.setLocalized(OVERALL_COURSE_POINTS_KEY, this.averageNumberOfOverallPoints);
-        rowData.setLocalizedPercent(OVERALL_COURSE_SCORE_KEY, averageOverallScore);
+        rowData.set(OVERALL_COURSE_POINTS_KEY, this.averageNumberOfOverallPoints);
+        rowData.set(OVERALL_COURSE_SCORE_KEY, averageOverallScore);
 
         if (this.course.presentationScore) {
             rowData.set(PRESENTATION_SCORE_KEY, '');
@@ -712,7 +712,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
-                rowData.setLocalized(exercise.title!, this.exerciseParticipationsPerType.getValue(exerciseType, exercise) ?? 0);
+                rowData.set(exercise.title!, this.exerciseParticipationsPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, '');
             rowData.setExerciseTypeScore(exerciseType, '');
@@ -732,7 +732,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
-                rowData.setLocalized(exercise.title!, this.exerciseSuccessfulPerType.getValue(exerciseType, exercise) ?? 0);
+                rowData.set(exercise.title!, this.exerciseSuccessfulPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, '');
             rowData.setExerciseTypeScore(exerciseType, '');

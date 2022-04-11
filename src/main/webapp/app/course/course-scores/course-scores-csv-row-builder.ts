@@ -41,7 +41,11 @@ export class CourseScoresCsvRowBuilder {
      * @param value That should be placed in the row. Replaced by the empty string if undefined.
      */
     set<T>(key: string, value: T) {
-        this.csvRow[key] = value ?? '';
+        if (typeof value === 'number' && isNaN(value)) {
+            this.csvRow[key] = '-';
+        } else {
+            this.csvRow[key] = value ?? '';
+        }
     }
 
     /**
@@ -80,11 +84,7 @@ export class CourseScoresCsvRowBuilder {
      */
     setExerciseTypePoints(exerciseType: ExerciseType, points: number | string) {
         const key = CourseScoresCsvRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY);
-        if (typeof points === 'number') {
-            this.setLocalized(key, points);
-        } else {
-            this.set(key, points);
-        }
+        this.set(key, points);
     }
 
     /**
@@ -94,11 +94,7 @@ export class CourseScoresCsvRowBuilder {
      */
     setExerciseTypeScore(exerciseType: ExerciseType, score: number | string) {
         const key = CourseScoresCsvRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY);
-        if (typeof score === 'number') {
-            this.setLocalizedPercent(key, score);
-        } else {
-            this.set(key, score);
-        }
+        this.set(key, score);
     }
 
     /**

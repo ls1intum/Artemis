@@ -41,13 +41,32 @@
                 </div>
             </div>
         </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="export.csvFile.decimalSeparator.label">Decimal Separator</label>
+            <div>
+                <div class="btn-group">
+                    <div
+                        *ngFor="let separator of CsvDecimalSeparator | keyvalue"
+                        class="btn"
+                        [ngClass]="{ 'btn-primary': options.decimalSeparator === separator.value, 'btn-default': options.decimalSeparator !== separator.value }"
+                        (click)="setCsvDecimalSeparator(separator.value)"
+                    >
+                        {{ 'export.csvFile.decimalSeparator.' + separator.key.toLowerCase() | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="options.decimalSeparator.toString() === options.fieldSeparator.toString()" class="alert alert-warning">
+            {{ 'export.csvFile.options.noExportPossible' | artemisTranslate }}
+        </div>
     </div>
+
     <div class="modal-footer justify-content-between">
         <div class="flex-grow-1 d-flex justify-content-end">
             <button type="button" class="btn btn-default cancel me-1" data-dismiss="modal" (click)="cancel()">
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+            <button class="btn btn-success" [disabled]="options.decimalSeparator.toString() === options.fieldSeparator.toString()" id="finish-button" (click)="onFinish()">
                 <fa-icon [icon]="faDownload" class="me-2"></fa-icon>
                 <span jhiTranslate="entity.action.export">Export</span>
             </button>

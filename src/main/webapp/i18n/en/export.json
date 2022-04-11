@@ -3,7 +3,8 @@
         "csvFile": {
             "options": {
                 "dialogTitle": "CSV-Export Options",
-                "introText": "Select the options used for generating the .csv file."
+                "introText": "Select the options used for generating the .csv file.",
+                "noExportPossible": "No export possible as the chosen field separator and decimal separator are the same. Please select another field separator."
             },
             "fieldSeparator": {
                 "label": "Field Separator",
@@ -18,6 +19,11 @@
                 "quotes_single": "'",
                 "quotes_double": "\"",
                 "none": "None"
+            },
+            "decimalSeparator": {
+                "label": "Decimal Separator",
+                "comma": "Comma (1,42)",
+                "period": "Period (1.42)"
             }
         }
     }
