@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 
 public class GroupNotificationFactory {
 
@@ -181,6 +182,13 @@ public class GroupNotificationFactory {
                 text = "Course \"" + course.getTitle() + "\" got a new course-wide post.";
                 notification = new GroupNotification(course, title, text, author, groupNotificationType);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
+            }
+            case NEW_PLAGIARISM_CASE_POST -> {
+                PlagiarismCase plagiarismCase = post.getPlagiarismCase();
+                title = NEW_PLAGIARISM_CASE_POST_TITLE;
+                text = "Plagiarism case for user \"" + plagiarismCase.getId() + "\" got a new post.";
+                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification.setTransientAndStringTarget(createPlagiarismCaseTarget(plagiarismCase.getId(), course.getId()));
             }
             case NEW_ANNOUNCEMENT_POST -> {
                 title = NEW_ANNOUNCEMENT_POST_TITLE;

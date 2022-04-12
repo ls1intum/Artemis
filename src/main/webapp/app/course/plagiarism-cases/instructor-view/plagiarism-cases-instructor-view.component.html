@@ -39,15 +39,15 @@
         <div class="card-body">
             <ng-container *ngFor="let plagiarismCase of groupedPlagiarismCases[exercise!.id!]">
                 <div class="row mb-3">
-                    <div class="col-3">
+                    <div class="col-3 text-center">
                         <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
                             {{ plagiarismCase.student.firstName }} {{ plagiarismCase.student.lastName }} ({{ plagiarismCase.student.login }})
                         </a>
                     </div>
-                    <div class="col-3">
+                    <div class="col-3 text-center">
                         {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions.length } }}
                     </div>
-                    <div class="col-3">{{ plagiarismCase.post ? plagiarismCase.post : 'Not yet notified' }}</div>
+                    <div class="col-3 text-center">{{ plagiarismCase.post ? (plagiarismCase.post.creationDate | artemisDate) : 'Not yet notified' }}</div>
                     <div class="col-3">
                         <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-verdict>
                     </div>

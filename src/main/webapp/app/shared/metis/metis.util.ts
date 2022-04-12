@@ -21,6 +21,7 @@ export enum DisplayPriority {
 export enum PageType {
     OVERVIEW = 'OVERVIEW',
     PAGE_SECTION = 'PAGE_SECTION',
+    PLAGIARISM_CASE = 'PLAGIARISM_CASE',
 }
 
 export const VOTE_EMOJI_ID = 'heavy_plus_sign';

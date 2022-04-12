@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
@@ -57,16 +58,19 @@ public class PostService extends PostingService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final PlagiarismCaseService plagiarismCaseService;
+
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate) {
+            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
+        this.plagiarismCaseService = plagiarismCaseService;
     }
 
     /**
@@ -103,6 +107,10 @@ public class PostService extends PostingService {
             return savedPost;
         }
         Post savedPost = postRepository.save(post);
+        // save post to plagiarism case
+        if (savedPost.getPlagiarismCase() != null) {
+            plagiarismCaseService.savePostForPlagiarismCase(post.getPlagiarismCase().getId(), savedPost);
+        }
 
         broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
         sendNotification(savedPost, course);
@@ -216,20 +224,29 @@ public class PostService extends PostingService {
 
         List<Post> postsInCourse;
         // no filter -> get all posts in course
-        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
+        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+                && postContextFilter.getPlagiarismCaseId() == null) {
             postsInCourse = this.getAllCoursePosts(postContextFilter);
         }
         // filter by course-wide context
-        else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
+        else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+                && postContextFilter.getPlagiarismCaseId() == null) {
             postsInCourse = this.getAllPostsByCourseWideContext(postContextFilter);
         }
         // filter by exercise
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null) {
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null
+                && postContextFilter.getPlagiarismCaseId() == null) {
             postsInCourse = this.getAllExercisePosts(postContextFilter);
         }
         // filter by lecture
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null) {
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null
+                && postContextFilter.getPlagiarismCaseId() == null) {
             postsInCourse = this.getAllLecturePosts(postContextFilter);
+        }
+        // filter by plagiarism case
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+                && postContextFilter.getPlagiarismCaseId() != null) {
+            postsInCourse = this.getAllPlagiarismCasePosts(postContextFilter);
         }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
@@ -390,6 +407,24 @@ public class PostService extends PostingService {
         return lecturePosts;
     }
 
+    public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        preCheckUserAndCourse(user, postContextFilter.getCourseId());
+        // TODO: add check for plagiarism case
+
+        // retrieve posts
+        List<Post> plagiarismCasePosts;
+        plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.getPlagiarismCaseId(), postContextFilter.getFilterToUnresolved(),
+                postContextFilter.getFilterToOwn(), postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+
+        // protect sample solution, grading instructions, etc.
+        plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return plagiarismCasePosts;
+    }
+
     /**
      * Checks course, user and post validity,
      * determines authority to delete post and deletes the post
@@ -473,6 +508,7 @@ public class PostService extends PostingService {
         postForNotification.setCourseWideContext(post.getCourseWideContext());
         postForNotification.setLecture(post.getLecture());
         postForNotification.setExercise(post.getExercise());
+        postForNotification.setPlagiarismCase(post.getPlagiarismCase());
         postForNotification.setCreationDate(post.getCreationDate());
         postForNotification.setTitle(post.getTitle());
 
@@ -508,6 +544,10 @@ public class PostService extends PostingService {
         // notify via lecture
         if (post.getLecture() != null) {
             groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
+        }
+        // notify via plagiarism case
+        if (post.getPlagiarismCase() != null) {
+            groupNotificationService.notifyAllGroupsAboutNewPostForPlagiarismCase(postForNotification, course);
         }
     }
 

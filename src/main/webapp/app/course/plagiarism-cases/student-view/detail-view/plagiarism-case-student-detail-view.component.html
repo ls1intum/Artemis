@@ -12,9 +12,11 @@
                 <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-verdict>
             </div>
         </div>
-        <h2>Message</h2>
-        <div class="plagiarism-case-detail--message row">Thread</div>
-        <h2>Comparison</h2>
+        <h2 class="mt-3">Message</h2>
+        <div class="plagiarism-case-detail--message row">
+            <jhi-posting-thread *ngIf="posts && posts.length > 0" [post]="posts[0]" [showAnswers]="true"></jhi-posting-thread>
+        </div>
+        <h2 class="mt-3">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h2>
         <div class="plagiarism-case-detail--comparisons">
             <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-review>
         </div>

@@ -1,5 +1,5 @@
 <div *ngIf="plagiarismCases" class="row">
-    <div class="col-4 clickable" *ngFor="let plagiarismCase of plagiarismCases" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCase.id]">
+    <div class="col-4 clickable mt-3" *ngFor="let plagiarismCase of plagiarismCases" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCase.id]">
         <div class="card mb-3">
             <div class="card-header">
                 <h5 class="mb-0">

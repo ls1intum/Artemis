@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { getIcon } from 'app/entities/exercise.model';
@@ -8,12 +8,15 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
+import { Subscription } from 'rxjs';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
+    providers: [MetisService],
 })
-export class PlagiarismCaseInstructorDetailViewComponent implements OnInit {
+export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
     courseId: number;
     plagiarismCaseId: number;
     plagiarismCase: PlagiarismCase;
@@ -22,7 +25,12 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit {
     createdPost: Post;
     getIcon = getIcon;
 
-    readonly pageType = PageType.OVERVIEW;
+    readonly pageType = PageType.PLAGIARISM_CASE;
+    private postsSubscription: Subscription;
+    posts: Post[];
+
+    // Icons
+    faPlus = faPlus;
 
     constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
 
@@ -36,9 +44,19 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit {
                 this.verdictPointDeduction = this.plagiarismCase.verdictPointDeduction ?? 0;
                 this.metisService.setCourse(this.plagiarismCase.exercise!.course!);
                 this.metisService.setPageType(this.pageType);
+                this.metisService.getFilteredPosts({
+                    plagiarismCaseId: this.plagiarismCase!.id,
+                });
                 this.createEmptyPost();
             },
         });
+        this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
+            this.posts = posts;
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.postsSubscription?.unsubscribe();
     }
 
     /**
@@ -92,6 +110,12 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit {
      **/
     createEmptyPost(): void {
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, this.plagiarismCase);
+        this.createdPost.content = `Dear ${this.plagiarismCase.student!.name},\nAfter a meticulous review of your final submission for the ${
+            this.plagiarismCase.exercise!.title
+        } in the course ${
+            this.plagiarismCase.exercise!.course!.title
+        }, we have concluded that you have committed plagiarism.\nThis is not only a violation of principles of good student practice but also of the “Student Code of Conduct” of the faculty of computer science that you have agreed upon. You can check the Student conduct code [here](https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf) §22.1 of the “Allgemeine Studien- und Prüfungsordnung (APSO)” [“General Examination and Study Regulations”] regulates consequences for such cases. You can find the APSO [here](tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1).\nYou have one week to provide a statement about this situation.`;
+        this.createdPost.title = `Plagiarism Case ${this.plagiarismCase.exercise!.title}`;
     }
 
     exportPlagiarismCase(): void {

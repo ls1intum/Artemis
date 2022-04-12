@@ -188,12 +188,12 @@ public class NotificationTargetFactory {
     /**
      * Create a NotificationTarget for plagiarism related notifications
      *
-     * @param plagiarismComparisonId is the id of the PlagiarismComparison
+     * @param plagiarismCaseId is the id of the PlagiarismComparison
      * @param courseId of the Course
      * @return the final NotificationTarget
      */
-    public static NotificationTarget createPlagiarismCaseTarget(Long plagiarismComparisonId, Long courseId) {
-        return new NotificationTarget(PLAGIARISM_DETECTED_TEXT, plagiarismComparisonId, PLAGIARISM_TEXT, courseId, COURSES_TEXT);
+    public static NotificationTarget createPlagiarismCaseTarget(Long plagiarismCaseId, Long courseId) {
+        return new NotificationTarget(PLAGIARISM_DETECTED_TEXT, plagiarismCaseId, PLAGIARISM_TEXT, courseId, COURSES_TEXT);
     }
 
     /// URL/Link related methods

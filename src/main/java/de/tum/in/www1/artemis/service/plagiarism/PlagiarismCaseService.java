@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -52,6 +53,12 @@ public class PlagiarismCaseService {
         plagiarismCaseRepository.save(plagiarismCase);
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, plagiarismCase.getStudent());
         return plagiarismCase;
+    }
+
+    public void savePostForPlagiarismCase(long plagiarismCaseId, Post post) {
+        PlagiarismCase plagiarismCase = plagiarismCaseRepository.getById(plagiarismCaseId);
+        plagiarismCase.setPost(post);
+        plagiarismCaseRepository.save(plagiarismCase);
     }
 
     public void createOrAddPlagiarismCaseForComparison(long plagiarismComparisonId) {

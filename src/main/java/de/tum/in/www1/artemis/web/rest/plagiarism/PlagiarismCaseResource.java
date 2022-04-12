@@ -134,7 +134,7 @@ public class PlagiarismCaseResource {
             throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
         }
         // TODO: anonymize submissions
-        var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesFotStudentForCourse(user.getId(), courseId);
+        var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesForStudentForCourse(user.getId(), courseId);
         for (var plagiarismCase : plagiarismCases) {
             for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
                 submission.setPlagiarismCase(null);

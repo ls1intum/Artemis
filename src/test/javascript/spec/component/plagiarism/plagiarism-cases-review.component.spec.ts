@@ -5,7 +5,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { PlagiarismCasesReviewComponent } from 'app/course/plagiarism-cases/plagiarism-cases-review.component';
 import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
 import { ActivatedRoute } from '@angular/router';
-import { PlagiarismCasesService, StatementEntityResponseType } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { PlagiarismCasesService, StatementEntityResponseType } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { NgModel } from '@angular/forms';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';

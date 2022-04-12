@@ -27,6 +27,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
                 SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
                 LEFT JOIN FETCH plagiarismCase.student
                 LEFT JOIN FETCH plagiarismCase.exercise
+                LEFT JOIN FETCH plagiarismCase.post
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
                 WHERE plagiarismCase.student.login = :studentLogin
                 AND plagiarismCase.exercise.id = :exerciseId
@@ -36,6 +37,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.exercise exercise
+            LEFT JOIN FETCH plagiarismCase.post
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
             LEFT JOIN FETCH plagiarismComparison.submissionA submissionA
@@ -47,14 +49,16 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.exercise exercise
+            LEFT JOIN FETCH plagiarismCase.post
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
             LEFT JOIN FETCH plagiarismComparison.submissionA submissionA
             LEFT JOIN FETCH plagiarismComparison.submissionB submissionB
             WHERE plagiarismCase.exercise.course.id = :courseId
             AND plagiarismCase.student.id = :userId
+            AND plagiarismCase.post IS NOT NULL
             """)
-    List<PlagiarismCase> findPlagiarismCasesFotStudentForCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    List<PlagiarismCase> findPlagiarismCasesForStudentForCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase

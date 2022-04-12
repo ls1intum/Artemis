@@ -68,6 +68,7 @@ public class Post extends Posting {
 
     @OneToOne
     @JoinColumn(name = "plagiarism_case_id")
+    @JsonIncludeProperties({ "id" })
     private PlagiarismCase plagiarismCase;
 
     public String getTitle() {
@@ -192,6 +193,9 @@ public class Post extends Posting {
             return true;
         }
         else if (getLecture() != null && otherPost.getLecture() != null && getLecture().getId().equals(otherPost.getLecture().getId())) {
+            return true;
+        }
+        else if (getPlagiarismCase() != null && otherPost.getPlagiarismCase() != null && getPlagiarismCase().getId().equals(otherPost.getPlagiarismCase().getId())) {
             return true;
         }
         return getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext();

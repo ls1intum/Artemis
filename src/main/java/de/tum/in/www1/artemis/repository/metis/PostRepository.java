@@ -85,6 +85,23 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findPostsByExerciseId(@Param("exerciseId") Long exerciseId, @Param("unresolved") Boolean unresolved, @Param("own") Boolean own,
             @Param("reactedOrReplied") Boolean reactedOrReplied, @Param("userId") Long userId);
 
+    @Query("""
+            SELECT DISTINCT post FROM Post post
+            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
+            WHERE post.plagiarismCase.id = :#{#plagiarismCaseId}
+            AND (:#{#own} IS NULL
+                OR post.author.id = :#{#userId})
+            AND (:#{#reactedOrReplied} IS NULL
+                OR answer.author.id = :#{#userId}
+                OR reaction.user.id = :#{#userId})
+            AND (:#{#unresolved} IS NULL
+                OR NOT EXISTS (SELECT answerPost FROM AnswerPost answerPost
+                    WHERE answerPost.resolvesPost = true
+                    AND answerPost.post.id = post.id))
+            """)
+    List<Post> findPostsByPlagiarismCaseId(@Param("plagiarismCaseId") Long plagiarismCaseId, @Param("unresolved") Boolean unresolved, @Param("own") Boolean own,
+            @Param("reactedOrReplied") Boolean reactedOrReplied, @Param("userId") Long userId);
+
     default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));
     }

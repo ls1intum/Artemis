@@ -8,8 +8,6 @@ import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { PlagiarismCasesStudentViewComponent } from 'app/course/plagiarism-cases/student-view/plagiarism-cases-student-view.component';
-import { PlagiarismCaseStudentDetailViewComponent } from 'app/course/plagiarism-cases/student-view/detail-view/plagiarism-case-student-detail-view.component';
 
 const routes: Routes = [
     {
@@ -71,21 +69,7 @@ const routes: Routes = [
             },
             {
                 path: 'plagiarism-cases',
-                component: PlagiarismCasesStudentViewComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.plagiarism-cases',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                path: 'plagiarism-cases/:plagiarismCaseId',
-                component: PlagiarismCaseStudentDetailViewComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.plagiarism-cases',
-                },
-                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('../course/plagiarism-cases/student-view/plagiarism-cases-student-view.module').then((m) => m.ArtemisPlagiarismCasesStudentViewModule),
             },
             {
                 path: '',
@@ -102,10 +86,6 @@ const routes: Routes = [
             pageTitle: 'artemisApp.gradingSystem.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'courses/:courseId/plagiarism',
-        loadChildren: () => import('app/course/plagiarism-cases/plagiarism-cases.module').then((m) => m.ArtemisPlagiarismCasesModule),
     },
 ];
 
