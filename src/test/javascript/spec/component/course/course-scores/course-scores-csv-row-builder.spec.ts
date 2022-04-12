@@ -5,13 +5,10 @@ import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, US
 import { ExerciseType } from 'app/entities/exercise.model';
 
 describe('The CourseScoresCsvRowBuilder', () => {
-    const localizer = (value: number): string => `${value}l`;
-    const percentageLocalizer = (value: number): string => `${value}%`;
-
     let csvRow: CourseScoresCsvRowBuilder;
 
     beforeEach(() => {
-        csvRow = new CourseScoresCsvRowBuilder(localizer, percentageLocalizer);
+        csvRow = new CourseScoresCsvRowBuilder();
     });
 
     it('should set a string', () => {
@@ -23,16 +20,6 @@ describe('The CourseScoresCsvRowBuilder', () => {
     it('should set an empty string instead of undefined', () => {
         csvRow.set('a', undefined);
         expect(csvRow.build()['a']).toBe('');
-    });
-
-    it('should convert numbers to their localized format', () => {
-        csvRow.setLocalized('n', 100);
-        expect(csvRow.build()['n']).toBe('100l');
-    });
-
-    it('should convert percentage numbers to their localized format', () => {
-        csvRow.setLocalizedPercent('n', 5);
-        expect(csvRow.build()['n']).toBe('5%');
     });
 
     it('should trim all user values when storing them', () => {
@@ -70,7 +57,7 @@ describe('The CourseScoresCsvRowBuilder', () => {
         const key = `Programming ${POINTS_KEY}`;
 
         csvRow.setExerciseTypePoints(exerciseType, 100);
-        expect(csvRow.build()[key]).toBe('100l');
+        expect(csvRow.build()[key]).toBe(100);
 
         // should take the value as is if it is a string
         csvRow.setExerciseTypePoints(exerciseType, '');
@@ -82,7 +69,7 @@ describe('The CourseScoresCsvRowBuilder', () => {
         const key = `Programming ${SCORE_KEY}`;
 
         csvRow.setExerciseTypeScore(exerciseType, 100);
-        expect(csvRow.build()[key]).toBe('100%');
+        expect(csvRow.build()[key]).toBe(100);
 
         // should take the value as is if it is a string
         csvRow.setExerciseTypeScore(exerciseType, '');

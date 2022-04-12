@@ -38,7 +38,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
-import { CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
 import { CsvExportButtonComponent } from 'app/shared/export/csv-export-button.component';
 
 describe('CourseScoresComponent', () => {
@@ -407,31 +407,16 @@ describe('CourseScoresComponent', () => {
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
             quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            decimalSeparator: CsvDecimalSeparator.COMMA,
         };
         component.exportResults(testOptions);
         const generatedRows = exportAsCsvStub.mock.calls[0][1];
         const user1Row = generatedRows[0];
-        validateUserRow(
-            user1Row,
-            user1.name!,
-            user1.login!,
-            user1.email!,
-            '0',
-            '0%',
-            '10',
-            '10',
-            '100%',
-            '20',
-            '200%',
-            '10',
-            '0%',
-            '40',
-            roundScorePercentSpecifiedByCourseSettings(40 / 30, course).toLocaleString() + '%',
-        );
+        validateUserRow(user1Row, user1.name!, user1.login!, user1.email!, 0, 0, 10, 10, 100, 20, 200, 10, 0, 40, roundScorePercentSpecifiedByCourseSettings(40 / 30, course));
         const user2Row = generatedRows[1];
-        validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
+        validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, 0, 0, 5, 5, 50, 0, 0, 10, 0, 15, 50);
         const maxRow = generatedRows[3];
-        expect(maxRow[OVERALL_COURSE_POINTS_KEY]).toEqual('30');
+        expect(maxRow[OVERALL_COURSE_POINTS_KEY]).toEqual(30);
     });
 
     it('should set grading scale properties correctly', () => {
@@ -486,28 +471,28 @@ describe('CourseScoresComponent', () => {
         expectedName: string,
         expectedUsername: string,
         expectedEmail: string,
-        expectedQuizPoints: string,
-        expectedQuizScore: string,
-        expectedScoreModelingExercise: string,
-        expectedModelingPoints: string,
-        expectedModelingScore: string,
-        expectedTextPoints: string,
-        expectedTextScore: string,
-        expectedFileUploadPoints: string,
-        expectedFileUploadScore: string,
-        expectedOverallCoursePoints: string,
-        expectedOverallCourseScore: string,
+        expectedQuizPoints: number,
+        expectedQuizScore: number,
+        expectedScoreModelingExercise: number,
+        expectedModelingPoints: number,
+        expectedModelingScore: number,
+        expectedTextPoints: number,
+        expectedTextScore: number,
+        expectedFileUploadPoints: number,
+        expectedFileUploadScore: number,
+        expectedOverallCoursePoints: number,
+        expectedOverallCourseScore: number,
     ) {
         expect(userRow[NAME_KEY]).toEqual(expectedName);
         expect(userRow[USERNAME_KEY]).toEqual(expectedUsername);
         expect(userRow[EMAIL_KEY]).toEqual(expectedEmail);
         expect(userRow['Quiz Points']).toEqual(expectedQuizPoints);
-        expect(userRow['Quiz Score']).toEqual(expectedQuizScore);
+        expect(userRow['Quiz Score (%)']).toEqual(expectedQuizScore);
         expect(userRow['exercise four']).toEqual(expectedScoreModelingExercise);
         expect(userRow['Modeling Points']).toEqual(expectedModelingPoints);
-        expect(userRow['Modeling Score']).toEqual(expectedModelingScore);
+        expect(userRow['Modeling Score (%)']).toEqual(expectedModelingScore);
         expect(userRow['File-upload Points']).toEqual(expectedFileUploadPoints);
-        expect(userRow['File-upload Score']).toEqual(expectedFileUploadScore);
+        expect(userRow['File-upload Score (%)']).toEqual(expectedFileUploadScore);
         expect(userRow[OVERALL_COURSE_POINTS_KEY]).toEqual(expectedOverallCoursePoints);
         expect(userRow[OVERALL_COURSE_SCORE_KEY]).toEqual(expectedOverallCourseScore);
     }

@@ -2,31 +2,18 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 
-/**
- * A function that converts a number into the localized representation for the user.
- */
-type Localizer = (value: number) => string;
-
 export type CourseScoresCsvRow = any;
 
 /**
  * Builds CSV rows for the course scores export.
  */
 export class CourseScoresCsvRowBuilder {
-    private readonly localizer: Localizer;
-    private readonly percentLocalizer: Localizer;
-
     private csvRow = {};
 
     /**
      * Creates a new empty CSV row.
-     * @param localizer The function that should be used to convert numbers into their localized representations.
-     * @param percentLocalizer The function that should be used to convert percentage values into their localized representations.
      */
-    constructor(localizer: Localizer, percentLocalizer: Localizer) {
-        this.localizer = localizer;
-        this.percentLocalizer = percentLocalizer;
-    }
+    constructor() {}
 
     /**
      * Constructs and returns the actual CSV row data.
@@ -46,24 +33,6 @@ export class CourseScoresCsvRowBuilder {
         } else {
             this.csvRow[key] = value ?? '';
         }
-    }
-
-    /**
-     * Stores the given value under the key in the row after converting it to the localized format.
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
-     */
-    setLocalized(key: string, value: number) {
-        this.set(key, this.localizer(value));
-    }
-
-    /**
-     * Stores the given value under the key in the row after converting it to the localized percentage format.
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
-     */
-    setLocalizedPercent(key: string, value: number) {
-        this.set(key, this.percentLocalizer(value));
     }
 
     /**

@@ -565,9 +565,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @private
      */
     private newCsvRowBuilder(): CourseScoresCsvRowBuilder {
-        const localizer = this.localize.bind(this);
-        const percentageLocalizer = this.localizePercent.bind(this);
-        return new CourseScoresCsvRowBuilder(localizer, percentageLocalizer);
+        return new CourseScoresCsvRowBuilder();
     }
 
     /**
