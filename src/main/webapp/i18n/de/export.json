@@ -3,8 +3,7 @@
         "csvFile": {
             "options": {
                 "dialogTitle": "CSV-Export Optionen",
-                "introText": "Wähle die Optionen, die beim Erstellen der .csv Datei angewendet werden sollen.",
-                "noExportPossible": "Kein Export möglich, da das gewählte Trennzeichen und Dezimaltrennzeichen gleich sind. Bitte wähle ein anderes Trennzeichen."
+                "introText": "Wähle die Optionen, die beim Erstellen der .csv Datei angewendet werden sollen."
             },
             "fieldSeparator": {
                 "label": "Trennzeichen",
