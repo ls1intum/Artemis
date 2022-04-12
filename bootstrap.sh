@@ -1,10 +1,12 @@
 #!/bin/bash
 
-cd /opt/Artemis || exit 1
+# Entrypoint file for Docker Images of Artemis. The deployment of the application is set to /opt/artemis
+
+cd /opt/artemis || exit 1
 
 if [ -z "$(ls -A config)" ]; then
    echo "Config is Empty .. copying default ones .."
-   cp -n -a /defaults/Artemis/. config/
+   cp -n -a /defaults/artemis/. config/
 else
    echo "Config is not empty .. not copying default configs .."
 fi
@@ -28,5 +30,4 @@ exec gosu artemis java \
   --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
   --add-opens java.management/sun.management=ALL-UNNAMED \
   --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
-  -jar Artemis.war \
-  --spring.profiles.active="$PROFILES"
+  -jar Artemis.war
