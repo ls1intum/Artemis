@@ -506,13 +506,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Localizes a percent number, e.g. switching the decimal separator
-     */
-    localizePercent(numberToLocalize: number): string {
-        return this.localeConversionService.toLocalePercentageString(numberToLocalize, this.course.accuracyOfScores);
-    }
-
-    /**
      * Method for exporting the csv with the needed data
      */
     exportResults(customOptions: CsvExportOptions) {
@@ -546,7 +539,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     exportAsCsv(keys: string[], rows: CourseScoresCsvRow[], customOptions: CsvExportOptions) {
         const generalExportOptions = {
-            decimalSeparator: 'locale',
             showLabels: true,
             showTitle: false,
             filename: 'Artemis Course ' + this.course.title + ' Scores',
