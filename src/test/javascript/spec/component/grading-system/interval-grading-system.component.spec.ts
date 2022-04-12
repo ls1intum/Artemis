@@ -323,4 +323,64 @@ describe('Interval Grading System Component', () => {
             comp.setPointsInterval(0, 10);
         }).toThrow();
     });
+
+    it('should prevent total percentage is less than 100 when only sticky step remains', () => {
+        comp.deleteGradeStep(0);
+        comp.deleteGradeStep(0);
+        comp.deleteGradeStep(0);
+
+        expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[0])).toBe(100);
+    });
+
+    it('should create the initial step and the sticky step when grading scale is empty', () => {
+        comp.gradingScale = new GradingScale();
+        comp.lowerBoundInclusivity = true;
+
+        comp.createGradeStep();
+
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps).toHaveLength(2);
+    });
+
+    it('should handle inclusivity setting when there are no grade steps', () => {
+        comp.gradingScale = new GradingScale();
+
+        comp.setInclusivity();
+
+        expect(comp.gradingScale.gradeSteps).toHaveLength(0);
+    });
+
+    it('should set inclusivity to lower bound inclusive', () => {
+        comp.lowerBoundInclusivity = true;
+        comp.setInclusivity();
+
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBe(false);
+
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBe(false);
+
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBe(true);
+
+        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBe(true);
+    });
+
+    it('should set inclusivity to upper bound inclusive', () => {
+        comp.lowerBoundInclusivity = false;
+        comp.setInclusivity();
+
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBe(true);
+
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBe(true);
+
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBe(true);
+
+        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBe(true);
+    });
 });
