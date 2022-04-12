@@ -278,7 +278,7 @@ You could use a compose file similar to this (as an example this deployment uses
         volumes:
           - ./data/gitlab/config:/etc/gitlab
           - ./data/gitlab/logs:/var/log/gitlab
-          - $BACKUP_DIR/gitlab:/var/opt/gitlab/backups # Optional but useful
+          # - $BACKUP_DIR/gitlab:/var/opt/gitlab/backups # Optional but useful
           - ./data/gitlab/data:/var/opt/gitlab
         environment:
           - GITLAB_OMNIBUS_CONFIG: |
