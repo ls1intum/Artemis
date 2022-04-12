@@ -3,12 +3,13 @@ import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-s
 import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { CsvDecimalSeparator } from 'app/shared/export/csv-export-modal.component';
 
 describe('The CourseScoresCsvRowBuilder', () => {
     let csvRow: CourseScoresCsvRowBuilder;
 
     beforeEach(() => {
-        csvRow = new CourseScoresCsvRowBuilder();
+        csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.PERIOD);
     });
 
     it('should set a string', () => {
@@ -20,6 +21,18 @@ describe('The CourseScoresCsvRowBuilder', () => {
     it('should set an empty string instead of undefined', () => {
         csvRow.set('a', undefined);
         expect(csvRow.build()['a']).toBe('');
+    });
+
+    it('should convert numbers to their localized format', () => {
+        csvRow.setLocalized('n', 100);
+        expect(csvRow.build()['n']).toBe('100');
+        csvRow.setLocalized('n', 25.5);
+        expect(csvRow.build()['n']).toBe('25.5');
+    });
+
+    it('should convert percentage numbers to their localized format', () => {
+        csvRow.setLocalizedPercent('n', 5);
+        expect(csvRow.build()['n']).toBe('5%');
     });
 
     it('should trim all user values when storing them', () => {
@@ -57,7 +70,7 @@ describe('The CourseScoresCsvRowBuilder', () => {
         const key = `Programming ${POINTS_KEY}`;
 
         csvRow.setExerciseTypePoints(exerciseType, 100);
-        expect(csvRow.build()[key]).toBe(100);
+        expect(csvRow.build()[key]).toBe('100');
 
         // should take the value as is if it is a string
         csvRow.setExerciseTypePoints(exerciseType, '');
@@ -69,7 +82,7 @@ describe('The CourseScoresCsvRowBuilder', () => {
         const key = `Programming ${SCORE_KEY}`;
 
         csvRow.setExerciseTypeScore(exerciseType, 100);
-        expect(csvRow.build()[key]).toBe(100);
+        expect(csvRow.build()[key]).toBe('100%');
 
         // should take the value as is if it is a string
         csvRow.setExerciseTypeScore(exerciseType, '');

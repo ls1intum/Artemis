@@ -1,6 +1,7 @@
 import { ExerciseType } from 'app/entities/exercise.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
+import { CsvDecimalSeparator } from 'app/shared/export/csv-export-modal.component';
 
 export type CourseScoresCsvRow = any;
 
@@ -8,12 +9,17 @@ export type CourseScoresCsvRow = any;
  * Builds CSV rows for the course scores export.
  */
 export class CourseScoresCsvRowBuilder {
+    private readonly decimalSeparator: CsvDecimalSeparator;
+
     private csvRow = {};
 
     /**
      * Creates a new empty CSV row.
+     * @param decimalSeparator The separator that should be used for numbers.
      */
-    constructor() {}
+    constructor(decimalSeparator: CsvDecimalSeparator) {
+        this.decimalSeparator = decimalSeparator;
+    }
 
     /**
      * Constructs and returns the actual CSV row data.
@@ -28,10 +34,32 @@ export class CourseScoresCsvRowBuilder {
      * @param value That should be placed in the row. Replaced by the empty string if undefined.
      */
     set<T>(key: string, value: T) {
-        if (typeof value === 'number' && isNaN(value)) {
-            this.csvRow[key] = '-';
+        this.csvRow[key] = value ?? '';
+    }
+
+    /**
+     * Stores the given value under the key in the row after converting it to the localized format.
+     * @param key Which should be associated with the given value.
+     * @param value That should be placed in the row.
+     */
+    setLocalized(key: string, value: number) {
+        if (isNaN(value)) {
+            this.set(key, '-');
         } else {
-            this.csvRow[key] = value ?? '';
+            this.set(key, value.toString().replace(/\./, this.decimalSeparator));
+        }
+    }
+
+    /**
+     * Stores the given value under the key in the row after converting it to the localized percentage format.
+     * @param key Which should be associated with the given value.
+     * @param value That should be placed in the row.
+     */
+    setLocalizedPercent(key: string, value: number) {
+        if (isNaN(value)) {
+            this.set(key, '-');
+        } else {
+            this.set(key, `${value.toString().replace(/\./, this.decimalSeparator)}%`);
         }
     }
 
@@ -53,7 +81,11 @@ export class CourseScoresCsvRowBuilder {
      */
     setExerciseTypePoints(exerciseType: ExerciseType, points: number | string) {
         const key = CourseScoresCsvRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY);
-        this.set(key, points);
+        if (typeof points === 'number') {
+            this.setLocalized(key, points);
+        } else {
+            this.set(key, points);
+        }
     }
 
     /**
@@ -63,7 +95,11 @@ export class CourseScoresCsvRowBuilder {
      */
     setExerciseTypeScore(exerciseType: ExerciseType, score: number | string) {
         const key = CourseScoresCsvRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY);
-        this.set(key, score);
+        if (typeof score === 'number') {
+            this.setLocalizedPercent(key, score);
+        } else {
+            this.set(key, score);
+        }
     }
 
     /**

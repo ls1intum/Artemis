@@ -23,7 +23,7 @@ import { CourseScoresCsvRow, CourseScoresCsvRowBuilder } from 'app/course/course
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
-import { CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
+import { CsvDecimalSeparator, CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
@@ -32,9 +32,9 @@ export const USERNAME_KEY = 'Username';
 export const EMAIL_KEY = 'Email';
 export const REGISTRATION_NUMBER_KEY = 'Registration Number';
 export const OVERALL_COURSE_POINTS_KEY = 'Overall Course Points';
-export const OVERALL_COURSE_SCORE_KEY = 'Overall Course Score (%)';
+export const OVERALL_COURSE_SCORE_KEY = 'Overall Course Score';
 export const POINTS_KEY = 'Points';
-export const SCORE_KEY = 'Score (%)';
+export const SCORE_KEY = 'Score';
 export const GRADE_KEY = 'Grades';
 export const BONUS_KEY = 'Bonus Points';
 
@@ -525,15 +525,15 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         // required because the currently used library for exporting to csv does not quote the header fields (keys)
         const quotedKeys = keys.map((key) => customOptions.quoteStrings + key + customOptions.quoteStrings);
 
-        this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student)));
+        this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student, customOptions.decimalSeparator)));
 
         // empty row as separator
-        rows.push(this.prepareEmptyCsvRow('').build());
+        rows.push(this.prepareEmptyCsvRow('', customOptions.decimalSeparator).build());
 
-        rows.push(this.generateCsvRowMaxValues());
-        rows.push(this.generateCsvRowAverageValues());
-        rows.push(this.generateCsvRowParticipation());
-        rows.push(this.generateCsvRowSuccessfulParticipation());
+        rows.push(this.generateCsvRowMaxValues(customOptions.decimalSeparator));
+        rows.push(this.generateCsvRowAverageValues(customOptions.decimalSeparator));
+        rows.push(this.generateCsvRowParticipation(customOptions.decimalSeparator));
+        rows.push(this.generateCsvRowSuccessfulParticipation(customOptions.decimalSeparator));
 
         this.exportAsCsv(quotedKeys, rows, customOptions);
     }
@@ -564,8 +564,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Constructs a new builder for a new CSV row.
      * @private
      */
-    private newCsvRowBuilder(): CourseScoresCsvRowBuilder {
-        return new CourseScoresCsvRowBuilder();
+    private newCsvRowBuilder(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRowBuilder {
+        return new CourseScoresCsvRowBuilder(decimalSeparator);
     }
 
     /**
@@ -599,8 +599,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @param student The student for which a row in the CSV should be created.
      * @private
      */
-    private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics): CourseScoresCsvRow {
-        const rowData = this.newCsvRowBuilder();
+    private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics, decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
+        const rowData = this.newCsvRowBuilder(decimalSeparator);
         rowData.setUserInformation(student);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
@@ -616,7 +616,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
                 const points = roundValueSpecifiedByCourseSettings(student.pointsPerExerciseType.getValue(exerciseType, exercise), this.course);
-                rowData.set(exercise.title!, points);
+                rowData.setLocalized(exercise.title!, points);
             });
 
             rowData.setExerciseTypePoints(exerciseType, exercisePointsPerType);
@@ -624,11 +624,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
 
         const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
-        rowData.set(OVERALL_COURSE_POINTS_KEY, student.overallPoints);
-        rowData.set(OVERALL_COURSE_SCORE_KEY, overallScore);
+        rowData.setLocalized(OVERALL_COURSE_POINTS_KEY, student.overallPoints);
+        rowData.setLocalizedPercent(OVERALL_COURSE_SCORE_KEY, overallScore);
 
         if (this.course.presentationScore) {
-            rowData.set(PRESENTATION_SCORE_KEY, student.presentationScore);
+            rowData.setLocalized(PRESENTATION_SCORE_KEY, student.presentationScore);
         }
 
         this.setCsvRowGradeValue(rowData, student.gradeStep?.gradeName);
@@ -640,20 +640,20 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Generates a row for the exported csv with the maximum values of the various statistics.
      * @private
      */
-    private generateCsvRowMaxValues(): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Max');
+    private generateCsvRowMaxValues(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
+        const rowData = this.prepareEmptyCsvRow('Max', decimalSeparator);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
-                rowData.set(exercise.title!, this.exerciseMaxPointsPerType.getValue(exerciseType, exercise) ?? 0);
+                rowData.setLocalized(exercise.title!, this.exerciseMaxPointsPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, this.maxNumberOfPointsPerExerciseType.get(exerciseType)!);
             rowData.setExerciseTypeScore(exerciseType, 100);
         }
 
-        rowData.set(OVERALL_COURSE_POINTS_KEY, this.maxNumberOfOverallPoints);
-        rowData.set(OVERALL_COURSE_SCORE_KEY, 100);
+        rowData.setLocalized(OVERALL_COURSE_POINTS_KEY, this.maxNumberOfOverallPoints);
+        rowData.setLocalizedPercent(OVERALL_COURSE_SCORE_KEY, 100);
 
         if (this.course.presentationScore) {
             rowData.set(PRESENTATION_SCORE_KEY, '');
@@ -668,14 +668,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Generates a row for the exported csv with the average values of the various statistics.
      * @private
      */
-    private generateCsvRowAverageValues(): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Average');
+    private generateCsvRowAverageValues(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
+        const rowData = this.prepareEmptyCsvRow('Average', decimalSeparator);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
                 const points = roundValueSpecifiedByCourseSettings(this.exerciseAveragePointsPerType.getValue(exerciseType, exercise), this.course);
-                rowData.set(exercise.title!, points);
+                rowData.setLocalized(exercise.title!, points);
             });
 
             const averageScore = roundScorePercentSpecifiedByCourseSettings(
@@ -688,8 +688,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
 
         const averageOverallScore = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
-        rowData.set(OVERALL_COURSE_POINTS_KEY, this.averageNumberOfOverallPoints);
-        rowData.set(OVERALL_COURSE_SCORE_KEY, averageOverallScore);
+        rowData.setLocalized(OVERALL_COURSE_POINTS_KEY, this.averageNumberOfOverallPoints);
+        rowData.setLocalizedPercent(OVERALL_COURSE_SCORE_KEY, averageOverallScore);
 
         if (this.course.presentationScore) {
             rowData.set(PRESENTATION_SCORE_KEY, '');
@@ -704,13 +704,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Generates a row for the exported Csv with information about the number of participants.
      * @private
      */
-    private generateCsvRowParticipation(): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Number of Participations');
+    private generateCsvRowParticipation(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
+        const rowData = this.prepareEmptyCsvRow('Number of Participations', decimalSeparator);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
-                rowData.set(exercise.title!, this.exerciseParticipationsPerType.getValue(exerciseType, exercise) ?? 0);
+                rowData.setLocalized(exercise.title!, this.exerciseParticipationsPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, '');
             rowData.setExerciseTypeScore(exerciseType, '');
@@ -724,13 +724,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Generates a row for the exported Csv with information about the number of successful participants.
      * @private
      */
-    private generateCsvRowSuccessfulParticipation(): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Number of Successful Participations');
+    private generateCsvRowSuccessfulParticipation(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
+        const rowData = this.prepareEmptyCsvRow('Number of Successful Participations', decimalSeparator);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
-                rowData.set(exercise.title!, this.exerciseSuccessfulPerType.getValue(exerciseType, exercise) ?? 0);
+                rowData.setLocalized(exercise.title!, this.exerciseSuccessfulPerType.getValue(exerciseType, exercise) ?? 0);
             });
             rowData.setExerciseTypePoints(exerciseType, '');
             rowData.setExerciseTypeScore(exerciseType, '');
@@ -744,8 +744,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Prepares an empty row (except for the first column) with an empty column for each exercise type.
      * @param firstValue The value that should be placed in the first column of the row.
      */
-    private prepareEmptyCsvRow(firstValue: string): CourseScoresCsvRowBuilder {
-        const emptyLine = this.newCsvRowBuilder();
+    private prepareEmptyCsvRow(firstValue: string, decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRowBuilder {
+        const emptyLine = this.newCsvRowBuilder(decimalSeparator);
 
         emptyLine.set(NAME_KEY, firstValue);
         emptyLine.set(USERNAME_KEY, '');

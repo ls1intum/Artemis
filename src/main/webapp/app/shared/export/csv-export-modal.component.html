@@ -56,9 +56,6 @@
                 </div>
             </div>
         </div>
-        <div *ngIf="options.decimalSeparator.toString() === options.fieldSeparator.toString()" class="alert alert-warning">
-            {{ 'export.csvFile.options.noExportPossible' | artemisTranslate }}
-        </div>
     </div>
 
     <div class="modal-footer justify-content-between">
@@ -66,7 +63,7 @@
             <button type="button" class="btn btn-default cancel me-1" data-dismiss="modal" (click)="cancel()">
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button class="btn btn-success" [disabled]="options.decimalSeparator.toString() === options.fieldSeparator.toString()" id="finish-button" (click)="onFinish()">
+            <button class="btn btn-success" id="finish-button" (click)="onFinish()">
                 <fa-icon [icon]="faDownload" class="me-2"></fa-icon>
                 <span jhiTranslate="entity.action.export">Export</span>
             </button>
