@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonS
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.CrudAction;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
@@ -99,7 +99,7 @@ public class PostService extends PostingService {
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
             sendNotification(savedPost, course);
-            broadcastForPost(new PostDTO(savedPost, CrudAction.CREATE), course);
+            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
             return savedPost;
         }
 
@@ -110,7 +110,7 @@ public class PostService extends PostingService {
 
         Post savedPost = postRepository.save(post);
 
-        broadcastForPost(new PostDTO(savedPost, CrudAction.CREATE), course);
+        broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
         sendNotification(savedPost, course);
 
         return savedPost;
@@ -144,7 +144,7 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as deleted post in the old context
-            broadcastForPost(new PostDTO(existingPost, CrudAction.DELETE), course);
+            broadcastForPost(new PostDTO(existingPost, MetisCrudAction.DELETE), course);
         }
 
         // update: allow overwriting of values only for depicted fields if user is at least student
@@ -174,11 +174,11 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as newly created post in the new context
-            broadcastForPost(new PostDTO(updatedPost, CrudAction.CREATE), course);
+            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.CREATE), course);
         }
         else {
             // in case the context did not change we emit with trigger a post update via websocket
-            broadcastForPost(new PostDTO(updatedPost, CrudAction.UPDATE), course);
+            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
         }
         return updatedPost;
     }
@@ -208,7 +208,7 @@ public class PostService extends PostingService {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
-        broadcastForPost(new PostDTO(updatedPost, CrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
     }
 
     /**
@@ -418,7 +418,7 @@ public class PostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
-        broadcastForPost(new PostDTO(post, CrudAction.DELETE), course);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
     }
 
     /**

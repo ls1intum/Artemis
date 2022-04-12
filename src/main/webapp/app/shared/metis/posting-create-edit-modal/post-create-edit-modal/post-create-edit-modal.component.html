@@ -5,7 +5,7 @@
             <button type="button" class="btn-close" aria-label="Close" (click)="d('Cross click')"></button>
         </div>
         <div class="modal-body">
-            <div *ngIf="!courseMessagesPageFlag">
+            <div *ngIf="!isCourseMessagesPage">
                 <!-- context -> only tutors can select from all possibles contexts in update mode, no matter if they open the post at course overview or page section level -->
                 <div *ngIf="isAtLeastTutorInCourse && editType === EditType.UPDATE; else restrictedContextSelect" class="position-relative mb-3">
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.context"></label>
@@ -57,7 +57,7 @@
                 </div>
             </div>
             <!-- title -->
-            <div class="position-relative mb-3" *ngIf="!courseMessagesPageFlag">
+            <div class="position-relative mb-3" *ngIf="!isCourseMessagesPage">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
                     <jhi-help-icon placement="top auto" text="artemisApp.metis.post.titleTooltip"></jhi-help-icon>
@@ -67,7 +67,7 @@
                 </div>
             </div>
             <!-- tags -->
-            <div class="position-relative mb-3" *ngIf="!courseMessagesPageFlag">
+            <div class="position-relative mb-3" *ngIf="!isCourseMessagesPage">
                 <div>
                     <label jhiTranslate="artemisApp.metis.post.tags">Tags</label>
                     <jhi-help-icon placement="top auto" text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>

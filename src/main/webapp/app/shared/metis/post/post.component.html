@@ -1,4 +1,4 @@
-<jhi-post-header [previewMode]="previewMode" [posting]="posting" [courseMessagesPageFlag]="courseMessagesPageFlag" (isModalOpen)="isModalOpen.emit()"></jhi-post-header>
+<jhi-post-header [previewMode]="previewMode" [posting]="posting" [isCourseMessagesPage]="isCourseMessagesPage" (isModalOpen)="isModalOpen.emit()"></jhi-post-header>
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
@@ -19,7 +19,7 @@
             ></fa-icon>
             <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
             <!-- not shown in course messages page -->
-            <span *ngIf="!courseMessagesPageFlag && (pageType === PageType.OVERVIEW || previewMode)" class="col-auto">
+            <span *ngIf="!isCourseMessagesPage && (pageType === PageType.OVERVIEW || previewMode)" class="col-auto">
                 <a
                     class="linked-context-information"
                     *ngIf="contextInformation.routerLinkComponents"
@@ -31,7 +31,7 @@
                 <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
             </span>
             <!-- post title not shown in course messages page -->
-            <span *ngIf="!courseMessagesPageFlag" class="col-auto">
+            <span *ngIf="!isCourseMessagesPage" class="col-auto">
                 <a
                     class="post-title"
                     [routerLink]="metisService.getLinkForPost(posting)"

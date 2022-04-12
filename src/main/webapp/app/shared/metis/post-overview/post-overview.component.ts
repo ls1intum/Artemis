@@ -28,7 +28,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     @ViewChildren('postingThread') messages: QueryList<any>;
     @ViewChild('container') content: ElementRef;
 
-    @Input() courseMessagesPageFlag: boolean;
+    @Input() isCourseMessagesPage: boolean;
     private previousScrollDistanceFromTop: number;
     // as set for the css class '.posting-infinite-scroll-container'
     private messagesContainerHeight = 350;
@@ -38,7 +38,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
      * @param activeConversation selectedConversation
      */
     @Input() set activeConversation(activeConversation: Conversation) {
-        if (this.courseMessagesPageFlag && activeConversation) {
+        if (this.isCourseMessagesPage && activeConversation) {
             this.conversation = activeConversation;
             if (this.course) {
                 this.onSelectContext();
@@ -116,7 +116,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
                     }
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
-                    if (!(this.courseMessagesPageFlag && !this.conversation)) {
+                    if (!(this.isCourseMessagesPage && !this.conversation)) {
                         this.metisService.getFilteredPosts({
                             courseId: this.course!.id,
                             conversationId: this.conversation?.id,
@@ -137,8 +137,8 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
             });
         });
-        this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
-            if (!this.courseMessagesPageFlag) {
+        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+            if (!this.isCourseMessagesPage) {
                 this.posts = posts;
             } else {
                 this.posts = posts.slice().reverse();
@@ -146,7 +146,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
             }
             this.isLoading = false;
         });
-        this.totalItemsSubscription = this.metisService.totalItems.pipe().subscribe((totalItems: number) => {
+        this.totalItemsSubscription = this.metisService.totalItems.subscribe((totalItems: number) => {
             this.totalItems = totalItems;
         });
     }
@@ -155,7 +155,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
      * subscribes to changes in the message container, in order display the bottom of the list at the messages page
      */
     ngAfterViewInit() {
-        if (this.courseMessagesPageFlag) {
+        if (this.isCourseMessagesPage) {
             this.scrollBottomSubscription = this.messages.changes.subscribe(this.scrollToBottom);
         }
     }
@@ -224,7 +224,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
      */
     scrollToBottom = () => {
         if (
-            this.courseMessagesPageFlag &&
+            this.isCourseMessagesPage &&
             this.posts.length > 0 &&
             ((this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight)
         ) {

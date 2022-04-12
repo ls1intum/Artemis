@@ -865,11 +865,13 @@ public class CourseResource {
     @GetMapping("/courses/{courseId}/search-other-users")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<User>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("nameOfUser") String nameOfUser) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
         // restrict result size by only allowing reasonable searches
         if (nameOfUser.length() < 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'name' must be three characters or longer.");
         }
-        Course course = courseRepository.findByIdElseThrow(courseId);
 
         return ResponseEntity.ok().body(courseService.searchOtherUsersNameInCourse(course, nameOfUser));
     }

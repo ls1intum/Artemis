@@ -48,7 +48,7 @@
                     </ul>
                 </div>
                 <!-- no conversations -->
-                <div class="post-result-information row mt-2" *ngIf="!conversations || conversations.length == 0">
+                <div class="post-result-information row mt-2" *ngIf="!conversations || conversations.length === 0">
                     <div class="col-12">
                         {{ 'artemisApp.messages.conversation.notFound' | artemisTranslate }}
                     </div>

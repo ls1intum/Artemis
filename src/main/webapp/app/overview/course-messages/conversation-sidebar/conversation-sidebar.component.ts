@@ -56,7 +56,7 @@ export class ConversationSidebarComponent implements OnInit, OnDestroy {
                 }
             });
             this.courseMessagesService.getConversationsOfUser(this.courseId);
-            this.conversationSubscription = this.courseMessagesService.conversations.pipe().subscribe((conversations: Conversation[]) => {
+            this.conversationSubscription = this.courseMessagesService.conversations.subscribe((conversations: Conversation[]) => {
                 this.conversations = conversations;
                 if (this.conversations.length > 0 && !this.activeConversation) {
                     // emit the value to fetch conversation posts on post overview tab
@@ -160,8 +160,7 @@ export class ConversationSidebarComponent implements OnInit, OnDestroy {
      * @param user
      */
     searchResultFormatter = (user: User) => {
-        const { name } = user;
-        return `${name}`;
+        return `${user.name}`;
     };
 
     clearUserSearchBar = () => {

@@ -10,10 +10,6 @@
                 "notFound": "No conversations found",
                 "searchForUsers": "Search users within course"
             },
-            "conversationParticipant": {
-                "created": "Conversation Participant created",
-                "notFound": "No conversationParticipant found"
-            },
             "submit": "Send"
         }
     }

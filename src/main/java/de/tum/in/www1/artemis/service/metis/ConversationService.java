@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.CrudAction;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Service
 public class ConversationService {
@@ -66,7 +66,7 @@ public class ConversationService {
 
         if (conversation.getConversationParticipants().isEmpty()
                 || conversation.getConversationParticipants().stream().anyMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))) {
-            throw new BadRequestAlertException("A new conversation must have other conversationParticipants", CONVERSATION_DETAILS_ENTITY_NAME, "NotNull");
+            throw new BadRequestAlertException("A new conversation must have other conversation participants", CONVERSATION_DETAILS_ENTITY_NAME, "invalidconversationparticipants");
         }
 
         final Course course = checkUserAndCourse(user, courseId);
@@ -78,11 +78,12 @@ public class ConversationService {
         conversationParticipantOfCurrentUser.setUser(user);
         conversation.getConversationParticipants().add(conversationParticipantOfCurrentUser);
 
-        conversation.getConversationParticipants().forEach(conversationParticipant -> createConversationParticipant(conversationParticipant, savedConversation));
+        conversation.getConversationParticipants().forEach(conversationParticipant -> conversationParticipantToCreate(conversationParticipant, savedConversation));
+        conversationParticipantRepository.saveAll(conversation.getConversationParticipants());
         savedConversation.setConversationParticipants(conversation.getConversationParticipants());
 
         // informs involved users about a new conversation
-        broadcastForConversation(new ConversationDTO(savedConversation, CrudAction.CREATE));
+        broadcastForConversation(new ConversationDTO(savedConversation, MetisCrudAction.CREATE));
 
         return savedConversation;
     }
@@ -94,7 +95,7 @@ public class ConversationService {
      * @return  fetched conversation
      */
     public Conversation getConversationById(Long conversationId) {
-        return conversationRepository.findConversationById(conversationId);
+        return conversationRepository.findConversationByIdWithConversationParticipants(conversationId);
     }
 
     /**
@@ -106,7 +107,7 @@ public class ConversationService {
     public List<Conversation> getConversationsOfUser(Long courseId) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        List<Conversation> conversations = conversationRepository.findConversationsOfUser(courseId, user.getId());
+        List<Conversation> conversations = conversationRepository.findConversationsOfUserWithConversationParticipants(courseId, user.getId());
 
         conversations.forEach(conversation -> {
             conversation.getConversationParticipants().forEach(conversationParticipant -> {
@@ -133,16 +134,16 @@ public class ConversationService {
     }
 
     /**
-     * Helper method that persists a conversationParticipant
-     * @param conversationParticipant   conversationParticipant to be persisted
+     * Helper method that prepares a conversationParticipant that will later be persisted
+     * @param conversationParticipant   conversationParticipant to be created
      * @param conversation              conversation in association with the conversationParticipant
-     * @return                          persisted conversationParticipant
+     * @return                          returned conversationParticipant ready to be persisted
      */
-    private ConversationParticipant createConversationParticipant(ConversationParticipant conversationParticipant, Conversation conversation) {
+    private ConversationParticipant conversationParticipantToCreate(ConversationParticipant conversationParticipant, Conversation conversation) {
         conversationParticipant.setConversation(conversation);
         conversationParticipant.setClosed(false);
         conversationParticipant.setLastRead(conversation.getLastMessageDate());
-        return conversationParticipantRepository.save(conversationParticipant);
+        return conversationParticipant;
     }
 
     Course checkUserAndCourse(User user, Long courseId) {

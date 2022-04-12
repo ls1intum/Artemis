@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.CrudAction;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
@@ -112,7 +112,7 @@ public class ReactionService {
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        postService.broadcastForPost(new PostDTO(updatedPost, CrudAction.UPDATE), course);
+        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
         reactionRepository.deleteById(reactionId);
     }
 }

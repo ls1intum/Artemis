@@ -52,7 +52,7 @@ describe('MessageInlineInputComponent', () => {
             lecture: undefined,
         });
         tick();
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
         expect(onCreateSpy).toHaveBeenCalledTimes(1);
     }));
 });

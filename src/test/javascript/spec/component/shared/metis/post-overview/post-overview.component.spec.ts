@@ -126,7 +126,7 @@ describe('PostOverviewComponent', () => {
         component.ngOnInit();
         tick();
         expect(component.course).toBe(metisCourse);
-        expect(component.createdPost).not.toBe(null);
+        expect(component.createdPost).not.toBeNull();
         expect(component.posts).toEqual(metisCoursePosts);
         expect(component.currentPostContextFilter).toEqual({
             courseId: metisCourse.id,
@@ -158,9 +158,9 @@ describe('PostOverviewComponent', () => {
             sortingOrder: SortDirection.DESCENDING,
         });
         expect(component.formGroup.get('sortBy')?.value).toBe(PostSortCriterion.CREATION_DATE);
-        expect(component.formGroup.get('filterToUnresolved')?.value).toBe(false);
-        expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
-        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
+        expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
+        expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
+        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
     }));
 
     it('should initialize overview page with course posts for default settings correctly', fakeAsync(() => {
@@ -210,6 +210,7 @@ describe('PostOverviewComponent', () => {
         tick();
         component.searchText = 'textToSearch';
         component.onSelectContext();
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(2);
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
             courseId: metisCourse.id,
             courseWideContext: undefined,
@@ -225,7 +226,6 @@ describe('PostOverviewComponent', () => {
             postSortCriterion: 'CREATION_DATE',
             sortingOrder: 'DESCENDING',
         });
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(2);
     }));
 
     it('should invoke metis service and update filter setting when filterToUnresolved checkbox is checked', fakeAsync(() => {
@@ -242,7 +242,7 @@ describe('PostOverviewComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
         // actual post filtering done at server side, tested by AnswerPostIntegrationTest
     }));
 
@@ -264,9 +264,9 @@ describe('PostOverviewComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
-        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
-        expect(component.currentPostContextFilter.filterToOwn).toBe(true);
-        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(false);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
+        expect(component.currentPostContextFilter.filterToOwn).toBeTrue();
+        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBeFalse();
         // actual post filtering done at server side, tested by AnswerPostIntegrationTest
     }));
 
@@ -286,9 +286,9 @@ describe('PostOverviewComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.currentPostContextFilter.filterToUnresolved).toBe(false);
-        expect(component.currentPostContextFilter.filterToOwn).toBe(true);
-        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(false);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBeFalse();
+        expect(component.currentPostContextFilter.filterToOwn).toBeTrue();
+        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBeFalse();
         // actual post filtering done at server side, tested by PostIntegrationTest
     }));
 
@@ -407,7 +407,7 @@ describe('PostOverviewComponent', () => {
 
     it('should call fetchNextPage at course messages when scrolled to top and do nothing when scrolled to bottom', fakeAsync(() => {
         component.itemsPerPage = 5;
-        component.courseMessagesPageFlag = true;
+        component.isCourseMessagesPage = true;
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -422,7 +422,7 @@ describe('PostOverviewComponent', () => {
 
     it('if user has no conversation, no call should be made to fetch posts', fakeAsync(() => {
         component.itemsPerPage = 5;
-        component.courseMessagesPageFlag = true;
+        component.isCourseMessagesPage = true;
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -518,7 +518,7 @@ describe('PostOverviewComponent', () => {
 
     function initializeFixtureForCourseMessagesPage() {
         component.itemsPerPage = 5;
-        component.courseMessagesPageFlag = true;
+        component.isCourseMessagesPage = true;
 
         tick();
         fixture.detectChanges();

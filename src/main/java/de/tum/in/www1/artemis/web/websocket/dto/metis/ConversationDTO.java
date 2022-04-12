@@ -12,11 +12,11 @@ public class ConversationDTO {
 
     private Conversation conversation;
 
-    private CrudAction crudAction;
+    private MetisCrudAction metisCrudAction;
 
-    public ConversationDTO(Conversation conversation, CrudAction crudAction) {
+    public ConversationDTO(Conversation conversation, MetisCrudAction metisCrudAction) {
         this.conversation = conversation;
-        this.crudAction = crudAction;
+        this.metisCrudAction = metisCrudAction;
     }
 
     public Conversation getConversation() {
@@ -27,11 +27,11 @@ public class ConversationDTO {
         this.conversation = conversation;
     }
 
-    public CrudAction getCrudAction() {
-        return crudAction;
+    public MetisCrudAction getCrudAction() {
+        return metisCrudAction;
     }
 
-    public void setCrudAction(CrudAction crudAction) {
-        this.crudAction = crudAction;
+    public void setCrudAction(MetisCrudAction metisCrudAction) {
+        this.metisCrudAction = metisCrudAction;
     }
 }

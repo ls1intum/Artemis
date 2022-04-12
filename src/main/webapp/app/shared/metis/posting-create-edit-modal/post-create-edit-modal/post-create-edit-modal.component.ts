@@ -29,7 +29,7 @@ export interface ContextSelectorOption {
     styleUrls: ['../../metis.component.scss'],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
-    @Input() courseMessagesPageFlag: boolean;
+    @Input() isCourseMessagesPage: boolean;
 
     exercises?: Exercise[];
     lectures?: Lecture[];
@@ -83,7 +83,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.similarPosts = [];
         this.posting.title = this.posting.title ?? '';
         this.resetCurrentContextSelectorOption();
-        this.formGroup = this.formBuilder.group(!this.courseMessagesPageFlag ? this.postValidator() : this.messageValidator());
+        this.formGroup = this.formBuilder.group(!this.isCourseMessagesPage ? this.postValidator() : this.messageValidator());
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
             // announcements should no show similar posts

@@ -12,7 +12,7 @@ import { faComments, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 })
 export class PostingThreadComponent implements OnInit, OnChanges, OnDestroy {
     @Input() post: Post;
-    @Input() courseMessagesPageFlag: boolean;
+    @Input() isCourseMessagesPage: boolean;
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @Input() showAnswers: boolean;
     @Output() isModalOpen = new EventEmitter<void>();

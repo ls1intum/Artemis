@@ -22,7 +22,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
              WHERE conversation.id = :#{#conversationId}
              AND conversationParticipant.conversation.id = conversation.id
             """)
-    Conversation findConversationById(@Param("conversationId") Long conversationId);
+    Conversation findConversationByIdWithConversationParticipants(@Param("conversationId") Long conversationId);
 
     @Query("""
              SELECT DISTINCT conversation FROM Conversation conversation
@@ -35,5 +35,5 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
              )
              ORDER BY conversation.lastMessageDate DESC
             """)
-    List<Conversation> findConversationsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    List<Conversation> findConversationsOfUserWithConversationParticipants(@Param("courseId") Long courseId, @Param("userId") Long userId);
 }

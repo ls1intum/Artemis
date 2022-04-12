@@ -18,11 +18,11 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.service.metis.ConversationService;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 
 class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -33,6 +33,9 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ConversationService conversationService;
 
+    @Autowired
+    private SimpMessageSendingOperations messagingTemplate;
+
     private Conversation existingConversation;
 
     private Course course;
@@ -40,12 +43,8 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @BeforeEach
     public void initTestCase() {
         database.addUsers(5, 5, 0, 1);
-
         course = database.createCourse(1L);
-
         existingConversation = database.createConversation(course);
-
-        SimpMessageSendingOperations messagingTemplate = mock(SimpMessageSendingOperations.class);
         doNothing().when(messagingTemplate).convertAndSend(any());
     }
 
@@ -59,7 +58,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateConversation() throws Exception {
-        Conversation conversationToSave = createConversation(course, database);
+        Conversation conversationToSave = conversationToCreate(course, database.getUserByLogin("student2"));
 
         Conversation createdConversation = request.postWithResponseBody("/api/courses/" + course.getId() + "/conversations/", conversationToSave, Conversation.class,
                 HttpStatus.CREATED);
@@ -81,14 +80,14 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // conversation without required conversationParticipant
         createConversationBadRequest(conversationToSave);
 
-        conversationToSave = createConversation(course, database);
+        conversationToSave = conversationToCreate(course, database.getUserByLogin("student2"));
         conversationToSave.setId(1L);
 
         // conversation with existing ID
         createConversationBadRequest(conversationToSave);
 
         // conversation with user's own conversationParticipant object
-        conversationToSave = createConversation(course, database);
+        conversationToSave = conversationToCreate(course, database.getUserByLogin("student2"));
         ConversationParticipant conversationParticipant = new ConversationParticipant();
         conversationParticipant.setUser(database.getUserByLogin("student1"));
         conversationToSave.getConversationParticipants().add(conversationParticipant);
@@ -130,11 +129,11 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         verify(messagingTemplate, times(0)).convertAndSend(anyString(), any(ConversationDTO.class));
     }
 
-    static Conversation createConversation(Course course, DatabaseUtilService databaseUtilService) {
+    static Conversation conversationToCreate(Course course, User conversatingUser) {
         Conversation conversation = new Conversation();
 
         ConversationParticipant conversationParticipant2 = new ConversationParticipant();
-        conversationParticipant2.setUser(databaseUtilService.getUserByLogin("student2"));
+        conversationParticipant2.setUser(conversatingUser);
         conversationParticipant2.setLastRead(conversation.getCreationDate());
 
         conversation.getConversationParticipants().add(conversationParticipant2);

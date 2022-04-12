@@ -6,7 +6,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 @Directive()
 export abstract class PostingHeaderDirective<T extends Posting> implements OnInit {
     @Input() posting: T;
-    @Input() courseMessagesPageFlag: boolean;
+    @Input() isCourseMessagesPage: boolean;
     @Output() isModalOpen = new EventEmitter<void>();
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;

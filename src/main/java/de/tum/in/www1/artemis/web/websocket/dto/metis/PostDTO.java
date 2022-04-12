@@ -12,9 +12,9 @@ public class PostDTO {
 
     private Post post;
 
-    private CrudAction action;
+    private MetisCrudAction action;
 
-    public PostDTO(Post post, CrudAction action) {
+    public PostDTO(Post post, MetisCrudAction action) {
         this.post = post;
         this.action = action;
     }
@@ -23,7 +23,7 @@ public class PostDTO {
         return post;
     }
 
-    public CrudAction getAction() {
+    public MetisCrudAction getAction() {
         return action;
     }
 
@@ -31,7 +31,7 @@ public class PostDTO {
         this.post = post;
     }
 
-    public void setAction(CrudAction action) {
+    public void setAction(MetisCrudAction action) {
         this.action = action;
     }
 }

@@ -184,7 +184,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedPost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
-        assertThat(postRepository.findPostsByConversationId(createdPost.getConversation().getId()).size()).isEqualTo(1);
+        assertThat(postRepository.findPostsByConversationId(createdPost.getConversation().getId())).hasSize(1);
         // checks if members of the created conversation were notified via broadcast
         verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ConversationDTO.class));
     }
@@ -215,7 +215,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
-        assertThat(existingPostsAndChats.size()).isEqualTo(postRepository.count());
+        assertThat(existingPostsAndChats).hasSize((int) postRepository.count());
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewAnnouncement(any(), any());
     }
 
@@ -225,7 +225,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post existingPostToSave = existingPosts.get(0);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingPostsAndChats.size()).isEqualTo(postRepository.count());
+        assertThat(existingPostsAndChats).hasSize((int) postRepository.count());
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 
@@ -556,7 +556,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts.size()).isEqualTo(existingConversationPosts.size());
+        assertThat(returnedPosts).hasSize(existingConversationPosts.size());
     }
 
     @Test
@@ -767,7 +767,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         post.setAuthor(database.getUserByLogin("student1"));
         post.setCourse(course);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setConversation(ConversationIntegrationTest.createConversation(course, database));
+        post.setConversation(ConversationIntegrationTest.conversationToCreate(course, database.getUserByLogin("student2")));
         return post;
     }
 

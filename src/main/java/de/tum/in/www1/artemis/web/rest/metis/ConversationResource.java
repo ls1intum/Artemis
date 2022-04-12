@@ -13,6 +13,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.metis.Conversation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.ConversationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -25,15 +28,21 @@ public class ConversationResource {
 
     private final ConversationService conversationService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    public ConversationResource(ConversationService conversationService) {
+    public ConversationResource(ConversationService conversationService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.conversationService = conversationService;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
-     * GET conversations : get all conversations for user within course by courseId
+     * GET /courses/{courseId}/conversations : get all conversations for user within course by courseId
      *
      * @param courseId the courseId which the searched conversations belong to
      * @return the ResponseEntity with status 200 (OK) and with body
@@ -41,12 +50,14 @@ public class ConversationResource {
     @GetMapping("/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Conversation>> getConversationsOfUser(@PathVariable Long courseId) {
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);
+
         List<Conversation> conversations = conversationService.getConversationsOfUser(courseId);
         return new ResponseEntity<>(conversations, null, HttpStatus.OK);
     }
 
     /**
-     * POST /courses/{courseId}/conversations : Create a new conversatipn
+     * POST /courses/{courseId}/conversations : create a new conversation
      *
      * @param courseId        course to associate the new conversation
      * @param conversation    conversation to create
@@ -56,6 +67,8 @@ public class ConversationResource {
     @PostMapping("/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Conversation> createConversation(@PathVariable Long courseId, @Valid @RequestBody Conversation conversation) throws URISyntaxException {
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);
+
         Conversation createdConversation = conversationService.createConversation(courseId, conversation);
         return ResponseEntity.created(new URI("/api/conversations/" + createdConversation.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, conversationService.getEntityName(), createdConversation.getId().toString()))

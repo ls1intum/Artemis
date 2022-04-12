@@ -570,8 +570,6 @@ public class CourseService {
      * @return users whose login matched
      */
     public List<User> searchOtherUsersNameInCourse(Course course, String nameOfUser) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-
         Set<String> groupNames = new HashSet<>();
         groupNames.add(course.getStudentGroupName());
         groupNames.add(course.getTeachingAssistantGroupName());

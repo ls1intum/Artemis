@@ -14,7 +14,7 @@
                 <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
             </div>
             <!-- new post button -->
-            <div class="col-2" *ngIf="createdPost && !courseMessagesPageFlag">
+            <div class="col-2" *ngIf="createdPost && !isCourseMessagesPage">
                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
                     <fa-icon [icon]="faPlus"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
@@ -22,7 +22,7 @@
                 <jhi-post-create-edit-modal
                     #createEditModal
                     [posting]="createdPost"
-                    [courseMessagesPageFlag]="courseMessagesPageFlag"
+                    [isCourseMessagesPage]="isCourseMessagesPage"
                     (onCreate)="createEmptyPost()"
                     (isModalOpen)="inlineInputEnabled = !inlineInputEnabled"
                 >
@@ -36,10 +36,10 @@
                 <div class="col-auto">
                     <div class="row">
                         <!-- context filter -->
-                        <div class="col-auto p-0 selection-prefix" *ngIf="!courseMessagesPageFlag">
+                        <div class="col-auto p-0 selection-prefix" *ngIf="!isCourseMessagesPage">
                             <span>{{ 'artemisApp.metis.overview.postContextFilter' | artemisTranslate }}</span>
                         </div>
-                        <div class="col-auto p-0" *ngIf="!courseMessagesPageFlag">
+                        <div class="col-auto p-0" *ngIf="!isCourseMessagesPage">
                             <select formControlName="context" class="form-select" [compareWith]="compareContextFilterOptionFn" (change)="onSelectContext()" name="context">
                                 <option [ngValue]="{ courseId: course.id }">
                                     {{ course.title + ' ' + ('artemisApp.metis.overview.courseFilterExplanation' | artemisTranslate) }}
@@ -62,7 +62,7 @@
                             </select>
                         </div>
                         <!-- attribute filter -->
-                        <div class="col-auto px-0 selection-prefix" *ngIf="!courseMessagesPageFlag">
+                        <div class="col-auto px-0 selection-prefix" *ngIf="!isCourseMessagesPage">
                             <fa-icon [icon]="faFilter"></fa-icon>
                             <input class="form-check-input" type="checkbox" formControlName="filterToUnresolved" name="filterToUnresolved" (change)="onSelectContext()" />
                             <span class="px-1">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</span>
@@ -123,23 +123,23 @@
             <div
                 id="scrollableDiv"
                 #container
-                class="{{ courseMessagesPageFlag ? 'posting-infinite-scroll-container' : 'col-12' }}"
+                class="{{ isCourseMessagesPage ? 'posting-infinite-scroll-container' : 'col-12' }}"
                 infinite-scroll
-                [scrollWindow]="!courseMessagesPageFlag"
-                (scrolled)="!courseMessagesPageFlag ? fetchNextPage() : null"
-                (scrolledUp)="courseMessagesPageFlag ? fetchNextPage() : null"
+                [scrollWindow]="!isCourseMessagesPage"
+                (scrolled)="!isCourseMessagesPage ? fetchNextPage() : null"
+                (scrolledUp)="isCourseMessagesPage ? fetchNextPage() : null"
             >
                 <jhi-posting-thread
                     #postingThread
                     *ngFor="let post of posts; trackBy: postsTrackByFn"
                     [post]="post"
                     [showAnswers]="posts.length === 1"
-                    [courseMessagesPageFlag]="courseMessagesPageFlag"
+                    [isCourseMessagesPage]="isCourseMessagesPage"
                     (isModalOpen)="inlineInputEnabled = !inlineInputEnabled"
                 >
                 </jhi-posting-thread>
             </div>
         </div>
-        <jhi-message-inline-input *ngIf="courseMessagesPageFlag && inlineInputEnabled" [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-message-inline-input>
+        <jhi-message-inline-input *ngIf="isCourseMessagesPage && inlineInputEnabled" [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-message-inline-input>
     </div>
 </div>

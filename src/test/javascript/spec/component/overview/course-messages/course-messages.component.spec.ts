@@ -32,7 +32,7 @@ describe('CourseMessagesComponent', () => {
         expect(component.selectedConversation).toBeUndefined();
 
         const postOverviewComponent = getElement(fixture.debugElement, 'jhi-post-overview');
-        expect(postOverviewComponent.courseMessagesPageFlag).toBeTrue();
+        expect(postOverviewComponent.isCourseMessagesPage).toBeTrue();
         expect(postOverviewComponent.activeConversation).toBe(component.selectedConversation);
     });
 

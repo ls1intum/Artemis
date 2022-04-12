@@ -3,16 +3,12 @@
         "messages": {
             "label": "Nachrichten",
             "conversation": {
-                "header": "Gespräch",
+                "header": "Konversation",
                 "created": "Gespräch erstellt",
                 "show": "Gespräch anzeigen",
                 "hide": "Gespräch ausblenden",
-                "notFound": "Kein Gespräch gefunden",
-                "searchForUsers": "Suchen Sie Benutzer innerhalb des Kurses"
-            },
-            "conversationParticipant": {
-                "created": "Gesprächsteilnehmer erstellt",
-                "notFound": "Kein Gesprächsteilnehmer gefunden"
+                "notFound": "Keine Konversation gefunden",
+                "searchForUsers": "Benutzer innerhalb des Kurses suchen"
             },
             "submit": "Senden"
         }

@@ -94,7 +94,7 @@ describe('ConversationSidebarComponent', () => {
 
         // Check if the observable output matches our expectancies
         search.subscribe((a) => {
-            expect(a).toEqual([{ id: metisUser2.id, login: metisUser2.login }]);
+            expect(a).toBe([{ id: metisUser2.id, login: metisUser2.login }]);
             expect(component.searchNoResults).toBeFalse();
             expect(component.searchFailed).toBeFalse();
         });
@@ -111,7 +111,7 @@ describe('ConversationSidebarComponent', () => {
 
         // Check if the observable output matches our expectancies
         search.subscribe((a) => {
-            expect(a).toEqual([]);
+            expect(a).toBeEmpty();
             expect(component.searchNoResults).toBeFalse();
             expect(component.searchFailed).toBeFalse();
         });
@@ -128,7 +128,7 @@ describe('ConversationSidebarComponent', () => {
 
         // Check if the observable output matches our expectancies
         search.subscribe((a) => {
-            expect(a).toEqual([]);
+            expect(a).toBeEmpty();
             expect(component.searchNoResults).toBeTrue();
             expect(component.searchFailed).toBeFalse();
         });
@@ -141,7 +141,7 @@ describe('ConversationSidebarComponent', () => {
         tick();
 
         const usersConversations = component.findConversationWithUser(metisUser2);
-        expect(usersConversations).toEqual(conversationBetweenUser1User2);
+        expect(usersConversations).toBe(conversationBetweenUser1User2);
     }));
 
     it('should return undefined if there is no existing conversation with searched user', fakeAsync(() => {
@@ -163,7 +163,7 @@ describe('ConversationSidebarComponent', () => {
 
         expect(spy).toBeCalledTimes(1);
         expect(spy).toBeCalledWith(metisUser2);
-        expect(component.activeConversation).toBe(component.findConversationWithUser(metisUser2));
+        expect(component.activeConversation).toBe(conversationBetweenUser1User2);
         expect(emitActiveConversationSpy).toBeCalledTimes(1);
     });
 
@@ -177,18 +177,18 @@ describe('ConversationSidebarComponent', () => {
 
         expect(spy).toBeCalledTimes(1);
         expect(spy).toBeCalledWith(metisTutor);
-        expect(component.activeConversation).toBe(component.findConversationWithUser(metisTutor));
+        expect(component.activeConversation).toBe(component.conversations[0]);
         expect(emitActiveConversationSpy).toBeCalledTimes(1);
     });
 
     it('should format search result', () => {
         const resultString = component.searchResultFormatter(metisUser2);
-        expect(resultString).toEqual(metisUser2.name);
+        expect(resultString).toBe(metisUser2.name);
     });
 
     it('should clear search text from user', () => {
         const resultString = component.clearUserSearchBar();
-        expect(resultString).toEqual('');
+        expect(resultString).toBe('');
     });
 
     it('should create and initialize conversation correctly', fakeAsync(() => {

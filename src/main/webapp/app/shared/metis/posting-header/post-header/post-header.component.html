@@ -11,7 +11,7 @@
         <fa-icon
             *ngIf="
                 !previewMode &&
-                ((!courseMessagesPageFlag && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
+                ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
                     isAuthorOfPosting)
             "
             size="xs"
@@ -24,13 +24,13 @@
         <jhi-post-create-edit-modal
             #createEditModal
             [posting]="posting"
-            [courseMessagesPageFlag]="courseMessagesPageFlag"
+            [isCourseMessagesPage]="isCourseMessagesPage"
             (isModalOpen)="isModalOpen.emit()"
         ></jhi-post-create-edit-modal>
         <jhi-confirm-icon
             *ngIf="
                 !previewMode &&
-                ((!courseMessagesPageFlag && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
+                ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
                     isAuthorOfPosting)
             "
             iconSize="xs"

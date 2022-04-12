@@ -16,9 +16,9 @@ export class ConversationService {
 
     /**
      * creates a conversation
-     * @param {number} courseId
-     * @param {Conversation} conversation
-     * @return {Observable<EntityResponseType>}
+     * @param {number} courseId                 ID of course the conversation will belong to
+     * @param {Conversation} conversation       conversation to create
+     * @return {Observable<EntityResponseType>} the created conversation
      */
     create(courseId: number, conversation: Conversation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(conversation);
@@ -27,8 +27,8 @@ export class ConversationService {
 
     /**
      * gets all conversations for user within course by courseId
-     * @param {number} courseId
-     * @return {Observable<EntityArrayResponseType>}
+     * @param {number} courseId                      ID of course the conversations belong to
+     * @return {Observable<EntityArrayResponseType>} conversations of user
      */
     getConversationsOfUser(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
