@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -826,7 +825,7 @@ public class BitbucketService extends AbstractVersionControlService {
                         .queryParam("start", start).queryParam("limit", perPage).queryParam("ref", "refs/heads/" + defaultBranch).build();
                 final var response = restTemplate.exchange(builder.toUri(), HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
                 if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
-                    throw new BambooException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
+                    throw new BitbucketException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
                 }
                 final var changeActivities = response.getBody().getValues();
 
@@ -838,10 +837,10 @@ public class BitbucketService extends AbstractVersionControlService {
                 start += perPage;
             }
             catch (URISyntaxException e) {
-                throw new BambooException("Unable to get push date for participation " + participation.getId(), e);
+                throw new BitbucketException("Unable to get push date for participation " + participation.getId(), e);
             }
         }
-        throw new BambooException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash);
+        throw new BitbucketException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash);
     }
 
     @Nullable

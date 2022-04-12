@@ -34,7 +34,7 @@ public class File extends java.io.File {
     public String toString() {
         String path = repository.getLocalPath().relativize(super.toPath()).toString();
         // Unify separator
-        if (!File.separator.equals("/")) {
+        if (!"/".equals(File.separator)) {
             path = path.replaceAll(Pattern.quote(File.separator), "/");
         }
         return path;
