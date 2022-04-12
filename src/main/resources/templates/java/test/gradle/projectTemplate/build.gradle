@@ -1,11 +1,15 @@
+// %static-code-analysis-start%
 plugins {
-    id 'java'
-    // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
     id 'com.github.spotbugs' version '5.0.6'
-    // %static-code-analysis-stop%
 }
+// %static-code-analysis-stop%
+
+apply plugin: 'java'
+sourceCompatibility = 17
+version = '1.0.0'
+compileJava.options.encoding = 'UTF-8'
 
 repositories {
     mavenCentral()
