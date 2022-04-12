@@ -407,7 +407,7 @@ describe('CourseScoresComponent', () => {
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
             quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
-            decimalSeparator: CsvDecimalSeparator.COMMA,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
         };
         component.exportResults(testOptions);
         const generatedRows = exportAsCsvStub.mock.calls[0][1];
