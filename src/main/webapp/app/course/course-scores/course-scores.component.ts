@@ -23,6 +23,8 @@ import { CourseScoresCsvRow, CourseScoresCsvRowBuilder } from 'app/course/course
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
+import { CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -109,6 +111,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     readonly highlightType = HighlightType;
     readonly roundScorePercentSpecifiedByCourseSettings = roundScorePercentSpecifiedByCourseSettings;
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly ButtonSize = ButtonSize;
 
     // Icons
     faSort = faSort;
@@ -512,13 +515,15 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Method for exporting the csv with the needed data
      */
-    exportResults() {
+    exportResults(customOptions: CsvExportOptions) {
         if (!this.exportReady || this.students.length === 0) {
             return;
         }
 
         const rows: CourseScoresCsvRow[] = [];
         const keys = this.generateCsvColumnNames();
+        // required because the currently used library for exporting to csv does not quote the header fields (keys)
+        const quotedKeys = keys.map((key) => customOptions.quoteStrings + key + customOptions.quoteStrings);
 
         this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student)));
 
@@ -530,18 +535,17 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         rows.push(this.generateCsvRowParticipation());
         rows.push(this.generateCsvRowSuccessfulParticipation());
 
-        this.exportAsCsv(keys, rows);
+        this.exportAsCsv(quotedKeys, rows, customOptions);
     }
 
     /**
      * Builds the CSV from the rows and starts the download.
      * @param keys The column names of the CSV.
      * @param rows The data rows that should be part of the CSV.
+     * @param customOptions Custom csv options that should be used for export
      */
-    exportAsCsv(keys: string[], rows: CourseScoresCsvRow[]) {
-        const options = {
-            fieldSeparator: ';', // TODO: allow user to customize
-            quoteStrings: '"',
+    exportAsCsv(keys: string[], rows: CourseScoresCsvRow[], customOptions: CsvExportOptions) {
+        const generalExportOptions = {
             decimalSeparator: 'locale',
             showLabels: true,
             showTitle: false,
@@ -551,7 +555,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             headers: keys,
         };
 
-        const csvExporter = new ExportToCsv(options);
+        const combinedOptions = Object.assign(generalExportOptions, customOptions);
+        const csvExporter = new ExportToCsv(combinedOptions);
         csvExporter.generateCsv(rows); // includes download
     }
 
