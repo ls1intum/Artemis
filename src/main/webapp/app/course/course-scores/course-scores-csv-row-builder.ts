@@ -38,7 +38,7 @@ export class CourseScoresCsvRowBuilder {
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized format.
+     * Stores the given value under the key in the row after converting it to the format using the specified decimal separator.
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
@@ -51,7 +51,7 @@ export class CourseScoresCsvRowBuilder {
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized percentage format.
+     * Stores the given value under the key in the row after converting it to the percentage format using the specified decimal separator.
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */

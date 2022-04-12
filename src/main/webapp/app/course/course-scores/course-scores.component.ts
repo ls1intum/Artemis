@@ -562,6 +562,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Constructs a new builder for a new CSV row.
+     * @param decimalSeparator that is used for number values
      * @private
      */
     private newCsvRowBuilder(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRowBuilder {
@@ -597,6 +598,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported csv with the statistics for the given student.
      * @param student The student for which a row in the CSV should be created.
+     * @param decimalSeparator that is used for number values
      * @private
      */
     private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics, decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
@@ -638,6 +640,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the maximum values of the various statistics.
+     * @param decimalSeparator that is used for number values
      * @private
      */
     private generateCsvRowMaxValues(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
@@ -666,6 +669,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the average values of the various statistics.
+     * @param decimalSeparator that is used for number values
      * @private
      */
     private generateCsvRowAverageValues(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
@@ -702,6 +706,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of participants.
+     * @param decimalSeparator that is used for number values
      * @private
      */
     private generateCsvRowParticipation(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
@@ -722,6 +727,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of successful participants.
+     * @param decimalSeparator that is used for number values
      * @private
      */
     private generateCsvRowSuccessfulParticipation(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
@@ -743,6 +749,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Prepares an empty row (except for the first column) with an empty column for each exercise type.
      * @param firstValue The value that should be placed in the first column of the row.
+     * @param decimalSeparator that is used for number values
      */
     private prepareEmptyCsvRow(firstValue: string, decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRowBuilder {
         const emptyLine = this.newCsvRowBuilder(decimalSeparator);
