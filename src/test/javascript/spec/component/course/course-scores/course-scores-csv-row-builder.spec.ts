@@ -35,6 +35,13 @@ describe('The CourseScoresCsvRowBuilder', () => {
         expect(csvRow.build()['n']).toBe('5%');
     });
 
+    it('should return a hyphen for NaN values', () => {
+        csvRow.setLocalized('n', NaN);
+        expect(csvRow.build()['n']).toBe('-');
+        csvRow.setLocalizedPercent('p', NaN);
+        expect(csvRow.build()['p']).toBe('-');
+    });
+
     it('should trim all user values when storing them', () => {
         const user = new User();
         user.name = 'Testuser ';
