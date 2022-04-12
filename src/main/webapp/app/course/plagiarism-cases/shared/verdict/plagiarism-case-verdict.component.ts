@@ -8,6 +8,9 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 })
 export class PlagiarismCaseVerdictComponent {
     @Input() plagiarismCase: PlagiarismCase;
+    @Input() hideDetails = false;
+
+    readonly plagiarismVerdict = PlagiarismVerdict;
 
     get verdictTranslationString(): string {
         switch (this.plagiarismCase.verdict) {

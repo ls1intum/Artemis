@@ -60,7 +60,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     }
 
     /**
-     *
+     * saves the verdict of the plagiarism case as POINT_DEDUCTION
+     * and saves the point deduction in percent
      */
     savePointDeductionVerdict(): void {
         this.plagiarismCasesService
@@ -77,7 +78,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     }
 
     /**
-     *
+     * saves the verdict of the plagiarism case as WARNING
+     * and saves the warning message
      */
     saveWarningVerdict(): void {
         this.plagiarismCasesService
@@ -94,7 +96,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     }
 
     /**
-     *
+     * saves the verdict of the plagiarism case as PLAGIARISM
      */
     saveVerdict(): void {
         this.plagiarismCasesService.savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
@@ -106,7 +108,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
     /**
      * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
-     * this empty post has a default course-wide context as well as the course set as context
+     * this empty post has no course-wide context as well as the plagiarism case set as context
+     * it has an example text for the instructor and a default title containing the exercise title
      **/
     createEmptyPost(): void {
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, this.plagiarismCase);
@@ -118,6 +121,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.createdPost.title = `Plagiarism Case ${this.plagiarismCase.exercise!.title}`;
     }
 
+    /**
+     * exports the plagiarism case with all relevant information as PDF
+     */
     exportPlagiarismCase(): void {
         // TODO: export the plagiarism case as a PDF with all relevant information
     }

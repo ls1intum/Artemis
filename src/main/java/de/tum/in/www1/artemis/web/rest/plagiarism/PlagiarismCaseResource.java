@@ -68,7 +68,7 @@ public class PlagiarismCaseResource {
     }
 
     /**
-     * Retrieves all plagiarismCases related to a course for the instrcutor view
+     * Retrieves all plagiarism cases related to a course for the instructor view.
      *
      * @param courseId the id of the course
      * @return all plagiarism cases of the course
@@ -93,10 +93,17 @@ public class PlagiarismCaseResource {
         return ResponseEntity.ok(plagiarismCases);
     }
 
+    /**
+     * Retrieves the plagiarism cases with the given ID for the instructor view.
+     *
+     * @param courseId the id of the course
+     * @param plagiarismCaseId the id of the plagiarism case
+     * @return all plagiarism cases of the course
+     */
     @GetMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/for-instructor")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismCase> getPlagiarismCaseForInstructor(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
-        log.debug("REST request to get all plagiarism case for instructor with id: {}", plagiarismCaseId);
+        log.debug("REST request to get plagiarism case for instructor with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
@@ -111,6 +118,14 @@ public class PlagiarismCaseResource {
         return ResponseEntity.ok(plagiarismCase);
     }
 
+    /**
+     * Update the verdict of the plagiarism case with the given ID.
+     *
+     * @param courseId the id of the course
+     * @param plagiarismCaseId the id of the plagiarism case
+     * @param plagiarismVerdictDTO the verdict of the plagiarism case
+     * @return the updated plagiarism case
+     */
     @PutMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/verdict")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<PlagiarismCase> savePlagiarismCaseVerdict(@PathVariable long courseId, @PathVariable long plagiarismCaseId,
@@ -124,6 +139,12 @@ public class PlagiarismCaseResource {
         return ResponseEntity.ok(plagiarismCase);
     }
 
+    /**
+     * Retrieves all plagiarismCases related to a course for the student view
+     *
+     * @param courseId the id of the course
+     * @return all plagiarism cases of the course
+     */
     @GetMapping("courses/{courseId}/plagiarism-cases/for-student")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForCourseForStudent(@PathVariable long courseId) {
@@ -146,10 +167,17 @@ public class PlagiarismCaseResource {
         return ResponseEntity.ok(plagiarismCases);
     }
 
+    /**
+     * Retrieves the plagiarism cases with the given ID for the student view.
+     *
+     * @param courseId the id of the course
+     * @param plagiarismCaseId the id of the plagiarism case
+     * @return all plagiarism cases of the course
+     */
     @GetMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/for-student")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PlagiarismCase> getPlagiarismCaseForStudent(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
-        log.debug("REST request to get all plagiarism case for instructor with id: {}", plagiarismCaseId);
+        log.debug("REST request to get plagiarism case for student with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");

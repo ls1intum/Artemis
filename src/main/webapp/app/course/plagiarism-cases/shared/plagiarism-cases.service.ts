@@ -40,7 +40,7 @@ export class PlagiarismCasesService {
      *
      * @param { number } courseId id of the course
      * @param { number } plagiarismCaseId id of the plagiarismCase
-     * @param plagiarismVerdict
+     * @param plagiarismVerdict plagiarism case verdict to save including the verdict itself and optionally the message or the point deduction
      */
     public savePlagiarismCaseVerdict(
         courseId: number,

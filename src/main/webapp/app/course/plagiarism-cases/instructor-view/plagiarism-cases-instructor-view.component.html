@@ -1,7 +1,7 @@
 <h3 jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</h3>
 <h4 jhiTranslate="artemisApp.plagiarism.cases.pageSubtitle"></h4>
 
-<div *ngIf="plagiarismCases; else noPlagiarismCases" class="plagiarism-cases">
+<div *ngIf="plagiarismCases && plagiarismCases.length > 0; else noPlagiarismCases">
     <div class="plagiarism-cases--toolbar row mb-3">
         <div class="col-auto">
             <button class="btn btn-primary" (click)="exportPlagiarismCases()">{{ 'artemisApp.plagiarism.cases.exportCsv' | artemisTranslate }}</button>
@@ -41,19 +41,22 @@
                 <div class="row mb-3">
                     <div class="col-3 text-center">
                         <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
-                            {{ plagiarismCase.student.firstName }} {{ plagiarismCase.student.lastName }} ({{ plagiarismCase.student.login }})
+                            {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
                         </a>
                     </div>
                     <div class="col-3 text-center">
                         {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions.length } }}
                     </div>
-                    <div class="col-3 text-center">{{ plagiarismCase.post ? (plagiarismCase.post.creationDate | artemisDate) : 'Not yet notified' }}</div>
+                    <div *ngIf="plagiarismCase.post" class="col-3 text-center">
+                        {{ 'artemisApp.plagiarism.plagiarismCases.notifiedAt' | artemisTranslate }} {{ plagiarismCase.post.creationDate | artemisDate }}
+                    </div>
+                    <div *ngIf="!plagiarismCase.post" class="col-3 text-center">{{ 'artemisApp.plagiarism.plagiarismCases.notNotified' | artemisTranslate }}</div>
                     <div class="col-3">
-                        <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-verdict>
+                        <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" [hideDetails]="true"></jhi-plagiarism-case-verdict>
                     </div>
                 </div>
             </ng-container>
         </div>
     </div>
 </div>
-<ng-template #noPlagiarismCases> NO plagiarism cases, nice B) </ng-template>
+<ng-template #noPlagiarismCases>{{ 'artemisApp.plagiarism.plagiarismCases.noCases' | artemisTranslate }}</ng-template>

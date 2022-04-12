@@ -32,7 +32,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
             const { params } = routeParams;
             this.courseId = params.courseId;
             this.plagiarismCaseId = Number(this.activatedRoute.snapshot.paramMap.get('plagiarismCaseId'));
-            console.log(this.plagiarismCaseId);
             this.plagiarismCasesService.getPlagiarismCaseDetailForStudent(this.courseId, this.plagiarismCaseId).subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
                     this.plagiarismCase = res.body!;

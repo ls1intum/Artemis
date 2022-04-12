@@ -109,7 +109,7 @@ public class PostService extends PostingService {
         Post savedPost = postRepository.save(post);
         // save post to plagiarism case
         if (savedPost.getPlagiarismCase() != null) {
-            plagiarismCaseService.savePostForPlagiarismCase(post.getPlagiarismCase().getId(), savedPost);
+            plagiarismCaseService.savePostForPlagiarismCase(savedPost.getPlagiarismCase().getId(), savedPost);
         }
 
         broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);

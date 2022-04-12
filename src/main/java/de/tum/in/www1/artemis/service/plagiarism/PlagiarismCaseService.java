@@ -56,7 +56,7 @@ public class PlagiarismCaseService {
     }
 
     public void savePostForPlagiarismCase(long plagiarismCaseId, Post post) {
-        PlagiarismCase plagiarismCase = plagiarismCaseRepository.getById(plagiarismCaseId);
+        PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         plagiarismCase.setPost(post);
         plagiarismCaseRepository.save(plagiarismCase);
     }

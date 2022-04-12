@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
-import java.util.List;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -84,24 +82,6 @@ public class PlagiarismResource {
         plagiarismService.updatePlagiarismComparisonStatus(comparisonId, statusDTO.getStatus());
         log.info("Finished updating the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
         return ResponseEntity.ok().body(null);
-    }
-
-    /**
-     * Retrieves all plagiarismComparisons related to a course that were previously confirmed.
-     *
-     * @param courseId the id of the course
-     * @return all plagiarism cases
-     */
-    @GetMapping("courses/{courseId}/plagiarism-cases")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<PlagiarismComparison<?>>> getPlagiarismComparisonsForCourse(@PathVariable long courseId) {
-        log.debug("REST request to get all plagiarism cases in course with id: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
-            throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
-        }
-        var foundPlagiarismCasesForCourse = plagiarismComparisonRepository.findCasesForCourse(PlagiarismStatus.CONFIRMED, courseId);
-        return ResponseEntity.ok(foundPlagiarismCasesForCourse);
     }
 
     /**
