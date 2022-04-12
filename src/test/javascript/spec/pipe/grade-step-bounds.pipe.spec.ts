@@ -60,4 +60,17 @@ describe('GradeStepBoundsPipe', () => {
         const intervalText = pipe.transform(gradeStep, GradeEditMode.POINTS, true);
         expect(intervalText).toBe('(80 - &infin;)');
     });
+
+    it('should return a placeholder when formatting undefined points', () => {
+        const gradeStep: GradeStep = {
+            gradeName: 'Pass',
+            lowerBoundPercentage: 40,
+            upperBoundPercentage: 140,
+            lowerBoundInclusive: false,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        };
+        const intervalText = pipe.transform(gradeStep, GradeEditMode.POINTS, true);
+        expect(intervalText).toBe('-');
+    });
 });
