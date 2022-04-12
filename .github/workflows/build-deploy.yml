@@ -80,7 +80,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Download Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: Artemis.war
     - name: Copy Dockerfile to Build Directory
@@ -165,7 +165,7 @@ jobs:
           }
 
     - name: Download Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: Artemis.war
     - name: Store Artifact Name
