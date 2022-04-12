@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
 
 @Component({
     selector: 'jhi-grading-system',

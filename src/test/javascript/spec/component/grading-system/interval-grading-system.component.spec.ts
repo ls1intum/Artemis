@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grading-system/interval-grading-system.component';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -12,7 +11,6 @@ import { GradeStep } from 'app/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -31,10 +29,6 @@ jest.mock('export-to-csv', () => ({
 describe('Interval Grading System Component', () => {
     let comp: IntervalGradingSystemComponent;
     let fixture: ComponentFixture<IntervalGradingSystemComponent>;
-    let gradingSystemService: GradingSystemService;
-    let translateService: TranslateService;
-    let translateStub: jest.SpyInstance;
-    let examService: ExamManagementService;
 
     const route = { parent: { params: of({ courseId: 1, examId: 1 }) } } as any as ActivatedRoute;
 
@@ -110,16 +104,11 @@ describe('Interval Grading System Component', () => {
                 fixture = TestBed.createComponent(IntervalGradingSystemComponent);
                 comp = fixture.componentInstance;
 
-                gradingSystemService = TestBed.inject(GradingSystemService);
-                examService = TestBed.inject(ExamManagementService);
-                translateService = TestBed.inject(TranslateService);
-
                 comp.gradingScale = new GradingScale();
                 comp.gradingScale.gradeSteps = cloneDeep(gradeSteps);
                 comp.courseId = 123;
                 comp.examId = 456;
                 comp.firstPassingGrade = 'Pass';
-                translateStub = jest.spyOn(translateService, 'instant');
             });
     });
 
