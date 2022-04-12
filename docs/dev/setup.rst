@@ -333,7 +333,7 @@ You could use a compose file similar to this (as an example this deployment uses
         environment:
           - spring.profiles.active=prod,jenkins,gitlab,artemis,scheduling
         ports:
-          - "${ARTEMIS_HTTP_PORT}:8080"
+          - "${ARTEMIS_HTTP_PORT:-8080}:8080"
         networks:
           - artemis-net
 
