@@ -312,7 +312,6 @@ You could use a compose file similar to this (as an example this deployment uses
           - ./data/jenkins/home:/var/jenkins_home
           - /var/run/docker.sock:/var/run/docker.sock
           - /usr/bin/docker:/usr/bin/docker:ro
-          - /usr/bin/com.docker.cli:/usr/bin/com.docker.cli:ro
         ports:
           - "${JENKINS_HTTP_PORT}:8080"
           - "50000:50000"
