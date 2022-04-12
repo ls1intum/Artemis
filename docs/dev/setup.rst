@@ -364,7 +364,7 @@ You can find the latest Dockerfile with additional information `here <https://gi
 * The Dockerfile defines three Docker volumes
 
     * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files. If this directory is empty, the default configuration of Artemis will be copied upon container start.
-    * ``/opt/artemis/data``: this directory should be used for any data (e.g., local clone of repositories). Therefore, configure Artemis to store this files into this directory. Otherwise you'll get permission failures.
+    * ``/opt/artemis/data``: This directory should be used for any data (e.g., local clone of repositories). Therefore, configure Artemis to store this files into this directory. Otherwise you'll get permission failures.
     * ``/opt/artemis/public/content``: This directory will be used for branding. You can specify a favicon, ``imprint.html``, and ``privacy_statement.html`` here.
 
 * The Dockerfile sets the correct permissions to the folders that are mounted to the volumes on startup (not recursive).
