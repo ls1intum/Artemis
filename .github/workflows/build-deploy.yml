@@ -59,7 +59,7 @@ jobs:
       env:
         NODE_OPTIONS: --max_old_space_size=6144
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Artemis.war
         path: build/libs/Artemis-*.war
@@ -80,11 +80,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Download Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: Artemis.war
-    - name: Copy Dockerfile & Bootstrap to Build Directory
-      run: cp src/main/docker/Dockerfile . &&  cp src/main/docker/bootstrap.sh .
+    - name: Copy Dockerfile to Build Directory
+      run: cp src/main/docker/Dockerfile .
     - name: Build Docker Image
       run: docker build --build-arg WAR_PATH=. -t artemis .
 
@@ -165,7 +165,7 @@ jobs:
           }
 
     - name: Download Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: Artemis.war
     - name: Store Artifact Name
