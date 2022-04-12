@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -563,11 +564,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var firstChange = (JSONObject) changes.get(0);
         var firstCommitHash = (String) firstChange.get("fromHash");
         var secondCommitHash = (String) firstChange.get("toHash");
-        var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
-        var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
+        var secondCommitDate = ZonedDateTime.parse(pushJSON.get("date").toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+        var firstCommitDate = secondCommitDate.minusSeconds(30);
 
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, testService.programmingExercise.getProjectKey());
-        bitbucketRequestMockProvider.mockGetPushDate(testService.programmingExercise.getProjectKey(), secondCommitHash, secondCommitDate);
         bitbucketRequestMockProvider.mockGetPushDate(testService.programmingExercise.getProjectKey(), firstCommitHash, firstCommitDate);
 
         // First commit is pushed but not recorded

@@ -6,6 +6,8 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -813,7 +815,21 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash) {
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {
+        // If the event object is supplied we try to retrieve the push date from there to save one call
+        if (eventObject != null) {
+            JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
+            String dateString = node.get("date").asText(null);
+            if (dateString != null) {
+                try {
+                    return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+                }
+                catch (DateTimeParseException e) {
+                    // If parsing fails for some reason we ignore the exception and try to get it via the direct request.
+                }
+            }
+        }
+
         boolean isLastPage = false;
         final int perPage = 40;
         int start = 0;

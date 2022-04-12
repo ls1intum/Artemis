@@ -81,9 +81,10 @@ public interface VersionControlService {
      *
      * @param participation The participation we need the date for
      * @param commitHash The commit hash we want to find the event for
+     * @param eventObject The object provided by the VCS on a push event. null if not available
      * @return The build queue date
      */
-    ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash);
+    ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject);
 
     /**
      * Creates a project on the VCS.

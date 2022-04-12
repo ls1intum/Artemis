@@ -337,7 +337,8 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash) {
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {
+        // Gitlab never provides the push date initially so we can ignore the eventObject
         try {
             String repositoryUrl = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
             Stream<Event> eventStream = gitlab.getEventsApi().getProjectEventsStream(repositoryUrl, Constants.ActionType.PUSHED, null, null, null, Constants.SortOrder.DESC);

@@ -186,7 +186,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
         try {
-            submissionDate = versionControlService.get().getPushDate(programmingExerciseParticipation, commit.getCommitHash());
+            submissionDate = versionControlService.get().getPushDate(programmingExerciseParticipation, commit.getCommitHash(), requestBody);
         }
         catch (VersionControlException e) {
             log.error("Could not retrieve push date for participation " + participation.getId(), e);

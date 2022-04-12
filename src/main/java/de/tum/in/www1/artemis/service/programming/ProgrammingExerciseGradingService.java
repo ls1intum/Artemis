@@ -194,7 +194,7 @@ public class ProgrammingExerciseGradingService {
         ZonedDateTime submissionDate = buildResult.getBuildRunDate();
         if (commitHash.isPresent()) {
             try {
-                submissionDate = versionControlService.get().getPushDate(participation, commitHash.get());
+                submissionDate = versionControlService.get().getPushDate(participation, commitHash.get(), null);
             }
             catch (VersionControlException e) {
                 log.error("Could not retrieve push date for participation " + participation.getId() + " and build plan " + participation.getBuildPlanId(), e);
