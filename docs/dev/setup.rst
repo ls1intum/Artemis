@@ -267,7 +267,7 @@ Releases like ``5.7.1`` are deployed as ``ghcr.io/ls1intum/artemis:5.7.1``.
 The easiest way to configure a local deployment via docker is a deployment with a docker-compose file.
 You could use a compose file similar to this (as an example this deployment uses the gitlab-jenkins configuration of artemis:
 
-::
+.. code:: yaml
 
     version: '3'
 
