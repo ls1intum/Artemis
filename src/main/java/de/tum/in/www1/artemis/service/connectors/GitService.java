@@ -175,7 +175,6 @@ public class GitService {
 
             @Override
             public char[] getPassphrase(URIish uri, int attempt) {
-                log.debug("getPassphrase: {}, attempt: {}", uri, attempt);
                 // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
                 if (gitSshPrivateKeyPath.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
                     return gitSshPrivateKeyPassphrase.get().toCharArray();
