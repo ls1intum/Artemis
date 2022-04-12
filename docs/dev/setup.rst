@@ -308,7 +308,7 @@ You could use a compose file similar to this (as an example this deployment uses
         restart: unless-stopped
         user: root
         volumes:
-          - $BACKUP_DIR/jenkins:/var/jenkins_backup
+          # - $BACKUP_DIR/jenkins:/var/jenkins_backup # Optional but useful
           - ./data/jenkins/home:/var/jenkins_home
           - /var/run/docker.sock:/var/run/docker.sock
           - /usr/bin/docker:/usr/bin/docker:ro
