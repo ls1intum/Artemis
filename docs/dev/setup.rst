@@ -320,7 +320,7 @@ You could use a compose file similar to this (as an example this deployment uses
           - artemis-net
 
       artemis:
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_VERSION}
+        image: ghcr.io/ls1intum/artemis:${ARTEMIS_VERSION:-latest}
         restart: unless-stopped
         depends_on:
           - artemis-db
