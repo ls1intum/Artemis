@@ -10,7 +10,10 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.LearningGoal;
@@ -65,6 +68,11 @@ public abstract class LectureUnit extends DomainObject {
         this.lecture = lecture;
     }
 
+    public LectureUnit lecture(Lecture lecture) {
+        this.lecture = lecture;
+        return this;
+    }
+
     public ZonedDateTime getReleaseDate() {
         return releaseDate;
     }
@@ -88,5 +96,4 @@ public abstract class LectureUnit extends DomainObject {
         }
         return releaseDate.isBefore(ZonedDateTime.now());
     }
-
 }

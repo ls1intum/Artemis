@@ -234,6 +234,11 @@ public class Attachment extends DomainObject implements Serializable {
         this.lecture = lecture;
     }
 
+    public Attachment lecture(Lecture lecture) {
+        this.lecture = lecture;
+        return this;
+    }
+
     public AttachmentUnit getAttachmentUnit() {
         return attachmentUnit;
     }

@@ -5,12 +5,15 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -54,6 +57,27 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             WHERE lecture.id = :#{#lectureId}
             """)
     Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
+
+    Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
+
+    /**
+     * Query which fetches all lectures for which the user is instructor in the course and matching the search criteria.
+     *
+     * @param partialTitle       lecture title search term
+     * @param partialCourseTitle course title search term
+     * @param groups             user groups
+     * @param pageable           Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT l FROM Lecture l
+            WHERE l.id IN
+             (SELECT courseL.id FROM Lecture courseL
+              WHERE (courseL.course.instructorGroupName IN :groups OR courseL.course.editorGroupName IN :groups)
+              AND (courseL.title LIKE %:partialTitle% OR courseL.course.title LIKE %:partialCourseTitle%))
+              """)
+    Page<ModelingExercise> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
+            @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
      * Returns the title of the lecture with the given id

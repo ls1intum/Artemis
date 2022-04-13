@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +11,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
 public class LectureService {
@@ -66,6 +70,25 @@ public class LectureService {
             lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
         }
         return lecturesWithFilteredAttachments;
+    }
+
+    /**
+     * Search for all lectures fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user   The user for whom to fetch all available exercises
+     * @return A wrapper object containing a list of all found lectures and the total number of pages
+     */
+    public SearchResultPageDTO<Lecture> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createLecturePageRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        final Page<Lecture> lecturePage;
+        if (authCheckService.isAdmin(user)) {
+            lecturePage = lectureRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
+        }
+        else {
+            lecturePage = lectureRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
+        }
+        return new SearchResultPageDTO<>(lecturePage.getContent(), lecturePage.getTotalPages());
     }
 
     /**
