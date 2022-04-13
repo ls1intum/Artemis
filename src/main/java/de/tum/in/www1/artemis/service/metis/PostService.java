@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -589,7 +590,7 @@ public class PostService extends PostingService {
 
         if (conversation == null
                 || conversation.getConversationParticipants().stream().noneMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))) {
-            throw new BadRequestAlertException("User not authorized to access this conversation!", METIS_POST_ENTITY_NAME, "");
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
     }
 
