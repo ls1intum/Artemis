@@ -182,7 +182,7 @@ The following universities are actively using Artemis or are currently evaluatin
 ##### Universität Passau
 
 * https://artemis.se2.fim.uni-passau.de
-* Main contact person: [Christian Bachmaier](mailto:bachmaier@fim.uni-passau.de)
+* Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)
 
 ##### Karlsruhe Institute of Technology
 
