@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
@@ -138,7 +137,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     public void replacePlaceHolder() throws IOException {
         copyFile("pom.xml", "pom.xml");
-        File pomXml = Paths.get(".", "exportTest", "pom.xml").toFile();
+        File pomXml = Path.of(".", "exportTest", "pom.xml").toFile();
         String fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
@@ -155,7 +154,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     public void replacePlaceHolderIgnoreNames() throws IOException {
         copyFile("pom.xml", "pom.xml");
-        File pomXml = Paths.get(".", "exportTest", "pom.xml").toFile();
+        File pomXml = Path.of(".", "exportTest", "pom.xml").toFile();
         String fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
@@ -202,8 +201,8 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         writeFile("testfile2.pdf", outputStream.toString());
 
-        paths.add(Paths.get(".", "exportTest", "testfile1.pdf").toString());
-        paths.add(Paths.get(".", "exportTest", "testfile2.pdf").toString());
+        paths.add(Path.of(".", "exportTest", "testfile1.pdf").toString());
+        paths.add(Path.of(".", "exportTest", "testfile2.pdf").toString());
 
         Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths);
         assertThat(mergedFile).isPresent();
@@ -222,19 +221,19 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     public void testActualPathForPublicPath() {
         String actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/backgrounds");
-        assertThat(actualPath).isEqualTo(Paths.get("uploads", "images", "drag-and-drop", "backgrounds", "backgrounds").toString());
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "backgrounds").toString());
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/drag-items");
-        assertThat(actualPath).isEqualTo(Paths.get("uploads", "images", "drag-and-drop", "drag-items", "drag-items").toString());
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "drag-items").toString());
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/course/icons");
-        assertThat(actualPath).isEqualTo(Paths.get("uploads", "images", "course", "icons", "icons").toString());
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icons").toString());
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/lecture");
-        assertThat(actualPath).isEqualTo(Paths.get("uploads", "attachments", "lecture", "asdasdfiles", "attachments", "lecture").toString());
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "asdasdfiles", "attachments", "lecture").toString());
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/attachment-unit");
-        assertThat(actualPath).isEqualTo(Paths.get("uploads", "attachments", "attachment-unit", "asdasdfiles", "attachments", "attachment-unit").toString());
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "asdasdfiles", "attachments", "attachment-unit").toString());
     }
 
     @Test
@@ -261,7 +260,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         });
         assertThat(exception.getMessage()).startsWith("Unexpected String in upload file path. Exercise ID should be present here:");
 
-        exception = assertThrows(FilePathParsingException.class, () -> fileService.publicPathForActualPath(Paths.get("asdasdfiles", "file-asd-exercises").toString(), 1L));
+        exception = assertThrows(FilePathParsingException.class, () -> fileService.publicPathForActualPath(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L));
         assertThat(exception.getMessage()).startsWith("Unknown Filepath:");
     }
 

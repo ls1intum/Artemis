@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +31,7 @@ public class ResourceLoaderService {
     public ResourceLoaderService(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
 
-        allowedOverridePrefixes.add(Paths.get("templates", "jenkins").toString());
+        allowedOverridePrefixes.add(Path.of("templates", "jenkins").toString());
     }
 
     /**

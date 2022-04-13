@@ -1,11 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -42,7 +47,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -316,7 +320,7 @@ public class GitService {
         // Replace the exercise name in the repository folder name with the participation ID.
         // This is necessary to be able to refer back to the correct participation after the JPlag detection run.
         String updatedRepoFolderName = repoFolderName.replaceAll("/[a-zA-Z0-9]*-", "/" + participation.getId() + "-");
-        Path localPath = Paths.get(targetPath, updatedRepoFolderName);
+        Path localPath = Path.of(targetPath, updatedRepoFolderName);
 
         Repository repository = getOrCheckoutRepository(repoUrl, localPath, true);
         repository.setParticipation(participation);
@@ -357,9 +361,9 @@ public class GitService {
     /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      *
-     * @param repoUrl    The remote repository.
-     * @param pullOnGet  Pull from the remote on the checked out repository, if it does not need to be cloned.
-     * @param defaultBranch  The default branch of the target repository.
+     * @param repoUrl       The remote repository.
+     * @param pullOnGet     Pull from the remote on the checked out repository, if it does not need to be cloned.
+     * @param defaultBranch The default branch of the target repository.
      * @return the repository if it could be checked out.
      * @throws InterruptedException if the repository could not be checked out.
      * @throws GitAPIException      if the repository could not be checked out.
@@ -502,7 +506,7 @@ public class GitService {
      * @return path of the local file system
      */
     public Path getLocalPathOfRepo(String targetPath, VcsRepositoryUrl targetUrl) {
-        return Paths.get(targetPath.replaceAll("^\\." + Pattern.quote(File.separator), ""), targetUrl.folderNameForRepositoryUrl());
+        return Path.of(targetPath.replaceAll("^\\." + Pattern.quote(File.separator), ""), targetUrl.folderNameForRepositoryUrl());
     }
 
     /**
@@ -523,7 +527,7 @@ public class GitService {
      *
      * @param localPath           to git repo on server.
      * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
-     * @param defaultBranch the name of the branch that should be used as defalut branch
+     * @param defaultBranch       the name of the branch that should be used as defalut branch
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
     public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUrl remoteRepositoryUrl, String defaultBranch) {
@@ -993,7 +997,7 @@ public class GitService {
             }
 
             // Delete .git/logs/ folder to delete git reflogs
-            Path logsPath = Paths.get(repository.getDirectory().getPath(), "logs");
+            Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
             FileUtils.deleteDirectory(logsPath.toFile());
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
@@ -1184,7 +1188,7 @@ public class GitService {
      * @param programmingExercise contains the project key which is used as the folder name
      */
     public void deleteLocalProgrammingExerciseReposFolder(ProgrammingExercise programmingExercise) {
-        var folderPath = Paths.get(repoClonePath, programmingExercise.getProjectKey());
+        var folderPath = Path.of(repoClonePath, programmingExercise.getProjectKey());
         try {
             FileUtils.deleteDirectory(folderPath.toFile());
         }
@@ -1240,8 +1244,8 @@ public class GitService {
             zipFilenameWithoutSlash += ".zip";
         }
 
-        Path zipFilePath = Paths.get(repositoryDir, zipFilenameWithoutSlash);
-        Files.createDirectories(Paths.get(repositoryDir));
+        Path zipFilePath = Path.of(repositoryDir, zipFilenameWithoutSlash);
+        Files.createDirectories(Path.of(repositoryDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath());
     }
 

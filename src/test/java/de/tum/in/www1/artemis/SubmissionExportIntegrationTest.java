@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -113,7 +113,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
         String[] parts = submission.getFilePath().split(Pattern.quote(File.separator));
         String fileName = parts[parts.length - 1];
-        File file = Paths.get(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName).toFile();
+        File file = Path.of(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName).toFile();
 
         File parent = file.getParentFile();
         if (!parent.exists() && !parent.mkdirs()) {
