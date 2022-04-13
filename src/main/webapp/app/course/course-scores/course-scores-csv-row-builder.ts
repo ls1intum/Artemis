@@ -2,6 +2,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { CsvDecimalSeparator } from 'app/shared/export/csv-export-modal.component';
+import { round } from 'app/shared/util/utils';
 
 export type CourseScoresCsvRow = any;
 
@@ -46,13 +47,10 @@ export class CourseScoresCsvRowBuilder {
      * @param value That should be placed in the row.
      */
     setLocalized(key: string, value: number) {
-        const options: Intl.NumberFormatOptions = {
-            maximumFractionDigits: this.accuracyOfScores,
-        };
         if (isNaN(value)) {
             this.set(key, '-');
         } else {
-            this.set(key, value.toLocaleString(undefined, options).replace(/\./, this.decimalSeparator));
+            this.set(key, round(value, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator));
         }
     }
 
@@ -62,13 +60,10 @@ export class CourseScoresCsvRowBuilder {
      * @param value That should be placed in the row.
      */
     setLocalizedPercent(key: string, value: number) {
-        const options: Intl.NumberFormatOptions = {
-            maximumFractionDigits: this.accuracyOfScores,
-        };
         if (isNaN(value)) {
             this.set(key, '-');
         } else {
-            this.set(key, `${value.toLocaleString(undefined, options).replace(/\./, this.decimalSeparator)}%`);
+            this.set(key, `${round(value, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator)}%`);
         }
     }
 

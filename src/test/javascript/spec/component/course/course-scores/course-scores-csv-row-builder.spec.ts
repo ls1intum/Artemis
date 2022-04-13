@@ -28,6 +28,8 @@ describe('The CourseScoresCsvRowBuilder', () => {
         expect(csvRow.build()['n']).toBe('100');
         csvRow.setLocalized('n', 25.5);
         expect(csvRow.build()['n']).toBe('25.5');
+        csvRow.setLocalized('n', 1000.23);
+        expect(csvRow.build()['n']).toBe('1000.2');
     });
 
     it('should convert percentage numbers to their localized format', () => {
@@ -54,6 +56,8 @@ describe('The CourseScoresCsvRowBuilder', () => {
             expect(csvRow.build()['n']).toBe('100');
             csvRow.setLocalized('n', 25.5);
             expect(csvRow.build()['n']).toBe('25,5');
+            csvRow.setLocalized('n', 1000.23);
+            expect(csvRow.build()['n']).toBe('1000,2');
         });
 
         it('should convert percentage numbers to their localized format', () => {
@@ -76,6 +80,8 @@ describe('The CourseScoresCsvRowBuilder', () => {
             expect(csvRow.build()['n']).toBe('100');
             csvRow.setLocalized('n', 25.5678);
             expect(csvRow.build()['n']).toBe('25.568');
+            csvRow.setLocalized('n', 1000.2345);
+            expect(csvRow.build()['n']).toBe('1000.235');
         });
 
         it('should convert percentage numbers to their localized format', () => {
