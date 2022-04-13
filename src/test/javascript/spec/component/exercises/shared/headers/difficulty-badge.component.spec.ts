@@ -28,6 +28,7 @@ describe('DifficultyBadge', () => {
 
     it('should show an info badge if no difficulty level should be shown', () => {
         component.showNoLevel = true;
+        component.ngOnChanges();
         component.ngOnInit();
 
         expect(component.badgeClass).toBe('bg-info');
@@ -35,6 +36,7 @@ describe('DifficultyBadge', () => {
 
     it('should show no badge if the exercise has no difficulty level', () => {
         component.showNoLevel = false;
+        component.ngOnChanges();
         component.ngOnInit();
 
         expect(component.badgeClass).toBe(undefined);
@@ -42,6 +44,7 @@ describe('DifficultyBadge', () => {
 
     it('should a success badge for easy exercises', () => {
         exercise.difficulty = DifficultyLevel.EASY;
+        component.ngOnChanges();
         component.ngOnInit();
 
         expect(component.badgeClass).toBe('bg-success');
@@ -49,6 +52,7 @@ describe('DifficultyBadge', () => {
 
     it('should a warning badge for medium difficulty exercises', () => {
         exercise.difficulty = DifficultyLevel.MEDIUM;
+        component.ngOnChanges();
         component.ngOnInit();
 
         expect(component.badgeClass).toBe('bg-warning');
@@ -56,6 +60,7 @@ describe('DifficultyBadge', () => {
 
     it('should a danger badge for hard exercises', () => {
         exercise.difficulty = DifficultyLevel.HARD;
+        component.ngOnChanges();
         component.ngOnInit();
 
         expect(component.badgeClass).toBe('bg-danger');
