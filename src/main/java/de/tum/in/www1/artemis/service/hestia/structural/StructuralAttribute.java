@@ -30,7 +30,7 @@ class StructuralAttribute implements StructuralElement {
         JavaField solutionAttribute = getSolutionAttribute(solutionClass);
         String attributeCode = "";
         if (!this.getAnnotations().isEmpty()) {
-            attributeCode += getAnnotationsString(this.getAnnotations(), solutionAttribute != null ? solutionAttribute.getAnnotations() : null);
+            attributeCode += getAnnotationsString(this.getAnnotations(), solutionAttribute);
         }
         if (!this.getModifiers().isEmpty()) {
             attributeCode += formatModifiers(this.getModifiers()) + " ";

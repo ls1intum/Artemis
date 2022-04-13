@@ -39,28 +39,9 @@ class StructuralClass implements StructuralElement {
         String classSolutionCode = "package " + this.getPackageName() + ";\n\n";
 
         if (!this.getAnnotations().isEmpty()) {
-            classSolutionCode += getAnnotationsString(this.getAnnotations(), solutionClass != null ? solutionClass.getAnnotations() : null);
+            classSolutionCode += getAnnotationsString(this.getAnnotations(), solutionClass);
         }
-
-        // Class header (modifiers, name & generics)
-        if (!this.getModifiers().isEmpty()) {
-            classSolutionCode += formatModifiers(this.getModifiers()) + " ";
-        }
-        classSolutionCode += (this.isInterface() ? "interface" : (this.isEnum() ? "enum" : "class")) + " ";
-        classSolutionCode += this.getName();
-        if (solutionClass != null && !solutionClass.getTypeParameters().isEmpty()) {
-            classSolutionCode += getGenericTypesString(solutionClass.getTypeParameters());
-        }
-        classSolutionCode += " ";
-
-        // Inheritance
-        if (this.getSuperclass() != null) {
-            classSolutionCode += "extends " + this.getSuperclass() + " ";
-        }
-        if (!this.getInterfaces().isEmpty()) {
-            classSolutionCode += "implements " + String.join(", ", this.getInterfaces()) + " ";
-        }
-
+        classSolutionCode += getClassHeaderCode(solutionClass);
         // Class Body
         classSolutionCode += "{\n";
         classSolutionCode += SINGLE_INDENTATION;
@@ -70,6 +51,32 @@ class StructuralClass implements StructuralElement {
         classSolutionCode += "\n}";
 
         return classSolutionCode;
+    }
+
+    private String getClassHeaderCode(JavaClass solutionClass) {
+        String classHeaderCode = "";
+        if (!this.getModifiers().isEmpty()) {
+            classHeaderCode += formatModifiers(this.getModifiers()) + " ";
+        }
+        classHeaderCode += (this.isInterface() ? "interface" : (this.isEnum() ? "enum" : "class")) + " ";
+        classHeaderCode += this.getName();
+        if (solutionClass != null && !solutionClass.getTypeParameters().isEmpty()) {
+            classHeaderCode += getGenericTypesString(solutionClass.getTypeParameters());
+        }
+        classHeaderCode += " ";
+        classHeaderCode += getInheritanceCode();
+        return classHeaderCode;
+    }
+
+    private String getInheritanceCode() {
+        String inheritanceCode = "";
+        if (this.getSuperclass() != null) {
+            inheritanceCode += "extends " + this.getSuperclass() + " ";
+        }
+        if (!this.getInterfaces().isEmpty()) {
+            inheritanceCode += "implements " + String.join(", ", this.getInterfaces()) + " ";
+        }
+        return inheritanceCode;
     }
 
     public String getName() {

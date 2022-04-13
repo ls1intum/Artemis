@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -26,14 +25,13 @@ class StructuralConstructor implements StructuralElement {
         JavaConstructor solutionConstructor = getSolutionConstructor(solutionClass);
         String constructorSolutionCode = "";
         if (!this.getAnnotations().isEmpty()) {
-            constructorSolutionCode += getAnnotationsString(this.getAnnotations(), solutionConstructor != null ? solutionConstructor.getAnnotations() : null);
+            constructorSolutionCode += getAnnotationsString(this.getAnnotations(), solutionConstructor);
         }
         if (!this.getModifiers().isEmpty()) {
             constructorSolutionCode += formatModifiers(this.getModifiers()) + " ";
         }
         constructorSolutionCode += structuralClassElements.getStructuralClass().getName();
-        constructorSolutionCode += generateParametersString(this.getParameters(), solutionConstructor != null ? solutionConstructor.getParameters() : Collections.emptyList())
-                + " ";
+        constructorSolutionCode += generateParametersString(this.getParameters(), solutionConstructor) + " ";
         constructorSolutionCode += "{\n" + SINGLE_INDENTATION + "\n}";
         return constructorSolutionCode;
     }

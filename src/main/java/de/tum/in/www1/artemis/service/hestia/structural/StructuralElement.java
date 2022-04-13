@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,15 +24,15 @@ public interface StructuralElement {
      * Annotations that are present in the source code, but not in the test.json file will be excluded.
      *
      * @param structuralAnnotations The annotation names from the test.json
-     * @param solutionAnnotations   The annotations read by QDox
+     * @param annotatedElement      The annotated element (e.g. method) read by QDox
      * @return The code for the annotations
      */
-    default String getAnnotationsString(List<String> structuralAnnotations, List<JavaAnnotation> solutionAnnotations) {
-        if (solutionAnnotations == null) {
+    default String getAnnotationsString(List<String> structuralAnnotations, JavaAnnotatedElement annotatedElement) {
+        if (annotatedElement == null) {
             return String.join("\n", structuralAnnotations) + "\n";
         }
         else {
-            return solutionAnnotations.stream().filter(solutionAnnotation -> structuralAnnotations.contains(solutionAnnotation.getType().getSimpleName()))
+            return annotatedElement.getAnnotations().stream().filter(solutionAnnotation -> structuralAnnotations.contains(solutionAnnotation.getType().getSimpleName()))
                     .map(JavaModel::getCodeBlock).collect(Collectors.joining());
         }
     }
@@ -96,11 +97,12 @@ public interface StructuralElement {
     /**
      * Generates the string representing the source code of a parameter list
      *
-     * @param parameterTypes     The parameters from the test.json file
-     * @param solutionParameters The parameters from the source code
+     * @param parameterTypes The parameters from the test.json file
+     * @param javaExecutable The executable (e.g. method) read by QDox to take the parameters from
      * @return The parameter source code
      */
-    default String generateParametersString(List<String> parameterTypes, List<JavaParameter> solutionParameters) {
+    default String generateParametersString(List<String> parameterTypes, JavaExecutable javaExecutable) {
+        List<JavaParameter> solutionParameters = javaExecutable != null ? javaExecutable.getParameters() : Collections.emptyList();
         String result = "(";
         if (parameterTypes != null) {
             for (int i = 0; i < parameterTypes.size(); i++) {
