@@ -133,7 +133,7 @@ public class StatisticsService {
         if (exercises.isEmpty()) {
             // Handle newly created courses that have no exercises
             courseManagementStatisticsDTO.setAverageScoreOfCourse(0.0);
-            courseManagementStatisticsDTO.setAverageScoresOfExercises(new ArrayList<>());
+            courseManagementStatisticsDTO.setAverageScoresOfExercises(Collections.emptyList());
             return courseManagementStatisticsDTO;
         }
 
@@ -161,7 +161,7 @@ public class StatisticsService {
             courseManagementStatisticsDTO.setAverageScoresOfExercises(averageScoreForExercises);
         }
         else {
-            courseManagementStatisticsDTO.setAverageScoresOfExercises(new ArrayList<>());
+            courseManagementStatisticsDTO.setAverageScoresOfExercises(Collections.emptyList());
         }
 
         return courseManagementStatisticsDTO;
