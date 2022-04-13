@@ -33,6 +33,8 @@ describe('The CourseScoresCsvRowBuilder', () => {
     it('should convert percentage numbers to their localized format', () => {
         csvRow.setLocalizedPercent('n', 5);
         expect(csvRow.build()['n']).toBe('5%');
+        csvRow.setLocalizedPercent('n', 5.5);
+        expect(csvRow.build()['n']).toBe('5.5%');
     });
 
     it('should return a hyphen for NaN values', () => {
@@ -40,6 +42,50 @@ describe('The CourseScoresCsvRowBuilder', () => {
         expect(csvRow.build()['n']).toBe('-');
         csvRow.setLocalizedPercent('p', NaN);
         expect(csvRow.build()['p']).toBe('-');
+    });
+
+    describe('Test the CourseScoresCsvRowBuilder with a comma as a decimal separator', () => {
+        beforeEach(() => {
+            csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.COMMA);
+        });
+
+        it('should convert numbers to their localized format', () => {
+            csvRow.setLocalized('n', 100);
+            expect(csvRow.build()['n']).toBe('100');
+            csvRow.setLocalized('n', 25.5);
+            expect(csvRow.build()['n']).toBe('25,5');
+        });
+
+        it('should convert percentage numbers to their localized format', () => {
+            csvRow.setLocalizedPercent('n', 5);
+            expect(csvRow.build()['n']).toBe('5%');
+            csvRow.setLocalizedPercent('n', 5.5);
+            expect(csvRow.build()['n']).toBe('5,5%');
+        });
+    });
+
+    describe('Test the CourseScoresCsvRowBuilder with a specific accuracyOfScores', () => {
+        beforeEach(() => {
+            csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.PERIOD, 3);
+        });
+
+        it('should convert numbers to their localized format respecting the accuracyOfScores', () => {
+            csvRow.setLocalized('n', 100.12345);
+            expect(csvRow.build()['n']).toBe('100.123');
+            csvRow.setLocalized('n', 99.9999);
+            expect(csvRow.build()['n']).toBe('100');
+            csvRow.setLocalized('n', 25.5678);
+            expect(csvRow.build()['n']).toBe('25.568');
+        });
+
+        it('should convert percentage numbers to their localized format', () => {
+            csvRow.setLocalizedPercent('n', 5.12345);
+            expect(csvRow.build()['n']).toBe('5.123%');
+            csvRow.setLocalizedPercent('n', 99.9999);
+            expect(csvRow.build()['n']).toBe('100%');
+            csvRow.setLocalizedPercent('n', 25.5678);
+            expect(csvRow.build()['n']).toBe('25.568%');
+        });
     });
 
     it('should trim all user values when storing them', () => {

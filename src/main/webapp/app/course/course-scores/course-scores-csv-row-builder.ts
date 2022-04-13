@@ -10,15 +10,18 @@ export type CourseScoresCsvRow = any;
  */
 export class CourseScoresCsvRowBuilder {
     private readonly decimalSeparator: CsvDecimalSeparator;
+    private readonly accuracyOfScores: number;
 
     private csvRow = {};
 
     /**
      * Creates a new empty CSV row.
      * @param decimalSeparator The separator that should be used for numbers.
+     * @param accuracyOfScores The accuracy of fraction digits that should be used for numbers.
      */
-    constructor(decimalSeparator: CsvDecimalSeparator) {
+    constructor(decimalSeparator: CsvDecimalSeparator, accuracyOfScores = 1) {
         this.decimalSeparator = decimalSeparator;
+        this.accuracyOfScores = accuracyOfScores;
     }
 
     /**
@@ -43,10 +46,13 @@ export class CourseScoresCsvRowBuilder {
      * @param value That should be placed in the row.
      */
     setLocalized(key: string, value: number) {
+        const options: Intl.NumberFormatOptions = {
+            maximumFractionDigits: this.accuracyOfScores,
+        };
         if (isNaN(value)) {
             this.set(key, '-');
         } else {
-            this.set(key, value.toString().replace(/\./, this.decimalSeparator));
+            this.set(key, value.toLocaleString(undefined, options).replace(/\./, this.decimalSeparator));
         }
     }
 
@@ -56,10 +62,13 @@ export class CourseScoresCsvRowBuilder {
      * @param value That should be placed in the row.
      */
     setLocalizedPercent(key: string, value: number) {
+        const options: Intl.NumberFormatOptions = {
+            maximumFractionDigits: this.accuracyOfScores,
+        };
         if (isNaN(value)) {
             this.set(key, '-');
         } else {
-            this.set(key, `${value.toString().replace(/\./, this.decimalSeparator)}%`);
+            this.set(key, `${value.toLocaleString(undefined, options).replace(/\./, this.decimalSeparator)}%`);
         }
     }
 

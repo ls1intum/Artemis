@@ -558,7 +558,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @private
      */
     private newCsvRowBuilder(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRowBuilder {
-        return new CourseScoresCsvRowBuilder(decimalSeparator);
+        return new CourseScoresCsvRowBuilder(decimalSeparator, this.course.accuracyOfScores);
     }
 
     /**
