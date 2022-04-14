@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -316,7 +316,7 @@ public class ProgrammingExerciseTestService {
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo) throws Exception {
         final var projectKey = exercise.getProjectKey();
         String participantRepoName = projectKey.toLowerCase() + "-" + participantName;
-        var participantRepoTestUrl = getMockFileRepositoryUrl(studentRepo);
+        var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentRepo);
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
                 true);
@@ -324,10 +324,6 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
         mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + participantRepoName, participantRepoTestUrl);
-    }
-
-    public MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws MalformedURLException {
-        return new MockFileRepositoryUrl(repository.originRepoFile);
     }
 
     // TEST
@@ -441,7 +437,7 @@ public class ProgrammingExerciseTestService {
         // TODO: make sure that the local and remote repos of the origin exercise include the correct files so that the template upgrade service is invoked correctly
     }
 
-    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) throws MalformedURLException {
+    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) throws URISyntaxException {
         AuxiliaryRepository repository = database.addAuxiliaryRepositoryToExercise(sourceExercise);
         var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
@@ -878,6 +874,8 @@ public class ProgrammingExerciseTestService {
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerParticipationBuild(participation);
 
+        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
+
         // These will be updated when triggering a build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
@@ -908,6 +906,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockTriggerFailedBuild(participation);
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerFailedBuild(participation);
+        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -944,6 +943,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockTriggerInstructorBuildAll(participation);
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerInstructorBuildAll(participation);
+
+        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -1253,12 +1254,12 @@ public class ProgrammingExerciseTestService {
             var team = setupTeam(user);
             participation = database.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUrl(getMockFileRepositoryUrl(studentTeamRepo).getURL().toString());
+            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentTeamRepo).getURI().toString());
         }
         else {
             participation = database.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUrl(getMockFileRepositoryUrl(studentRepo).getURL().toString());
+            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentRepo).getURI().toString());
         }
 
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -1417,7 +1418,7 @@ public class ProgrammingExerciseTestService {
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
-        var participantRepoTestUrl = getMockFileRepositoryUrl(studentTeamRepo);
+        var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
         doThrow(new InterruptedException()).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
