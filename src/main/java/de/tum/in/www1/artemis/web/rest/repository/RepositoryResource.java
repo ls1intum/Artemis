@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
@@ -47,7 +46,7 @@ import de.tum.in.www1.artemis.web.rest.repository.util.RepositoryExecutor;
  */
 public abstract class RepositoryResource {
 
-    protected final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
+    protected final Logger log = LoggerFactory.getLogger(RepositoryResource.class);
 
     protected final AuthorizationCheckService authCheckService;
 
@@ -82,11 +81,10 @@ public abstract class RepositoryResource {
      * @return the repository if available.
      * @throws IOException            if the repository folder can't be accessed.
      * @throws IllegalAccessException if the user is not allowed to access the repository.
-     * @throws InterruptedException   if the repository can't be checked out.
      * @throws GitAPIException        if the repository can't be checked out.
      */
     abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout)
-            throws IOException, IllegalAccessException, IllegalArgumentException, InterruptedException, GitAPIException;
+            throws IOException, IllegalAccessException, IllegalArgumentException, GitAPIException;
 
     /**
      * Get the url for a repository.
@@ -266,10 +264,9 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
-     * @throws GitAPIException      if the repository can't be checked out to retrieve the status.
-     * @throws InterruptedException if the repository can't be checked out to retrieve the status.
+     * @throws GitAPIException if the repository can't be checked out to retrieve the status.
      */
-    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws GitAPIException {
         log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
 
         if (!canAccessRepository(domainId)) {
@@ -322,14 +319,14 @@ public abstract class RepositoryResource {
         catch (FileNotFoundException ex) {
             throw new EntityNotFoundException("File not found");
         }
-        catch (GitAPIException | IOException | InterruptedException ex) {
+        catch (GitAPIException | IOException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntitySuccess;
     }
 
     /**
-     * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store it's error in the resulting
+     * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store its error in the resulting
      * Map.
      *
      * @param submissions the file submissions (changes) that should be saved in the repository
@@ -339,7 +336,7 @@ public abstract class RepositoryResource {
     protected Map<String, String> saveFileSubmissions(List<FileSubmission> submissions, Repository repository) {
         // If updating the file fails due to an IOException, we send an error message for the specific file and try to update the rest
         Map<String, String> fileSaveResult = new HashMap<>();
-        submissions.forEach((submission) -> {
+        submissions.forEach(submission -> {
             try {
                 fetchAndUpdateFile(submission, repository);
                 fileSaveResult.put(submission.getFileName(), null);

@@ -138,7 +138,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
                     }
                 }
             }
-            catch (GitAPIException | IOException | InterruptedException | NullPointerException ex) {
+            catch (GitAPIException | IOException | NullPointerException ex) {
                 log.error("Exception while doing empty commit", ex);
             }
         }

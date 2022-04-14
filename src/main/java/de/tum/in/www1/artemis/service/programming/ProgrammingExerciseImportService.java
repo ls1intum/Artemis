@@ -204,7 +204,7 @@ public class ProgrammingExerciseImportService {
             // Adjust placeholders that were replaced during creation of template exercise
             adjustProjectNames(templateExercise, newExercise);
         }
-        catch (GitAPIException | IOException | InterruptedException e) {
+        catch (GitAPIException | IOException e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
         }
     }
@@ -450,10 +450,9 @@ public class ProgrammingExerciseImportService {
      * @param templateExercise the exercise from which the values that should be replaced are extracted
      * @param newExercise the exercise from which the values that should be inserted are extracted
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws InterruptedException If the checkout of one repository fails
      * @throws IOException If the values in the files could not be replaced
      */
-    private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, InterruptedException, IOException {
+    private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
         final var projectKey = newExercise.getProjectKey();
 
         Map<String, String> replacements = new HashMap<>();
@@ -479,11 +478,9 @@ public class ProgrammingExerciseImportService {
      * @param repositoryName the name of the repository that should be adjusted
      * @param user the user which performed the action (used as Git author)
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws InterruptedException If the checkout of one repository fails
      * @throws IOException If the values in the files could not be replaced
      */
-    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user)
-            throws GitAPIException, IOException, InterruptedException {
+    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
         final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
