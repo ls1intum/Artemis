@@ -405,6 +405,7 @@ public class ProgrammingExerciseImportService {
      */
     private void setupExerciseForImport(ProgrammingExercise newExercise) {
         newExercise.setId(null);
+        newExercise.setExampleSolutionPublicationDate(null);
         newExercise.setTemplateParticipation(null);
         newExercise.setSolutionParticipation(null);
         newExercise.setExerciseHints(null);

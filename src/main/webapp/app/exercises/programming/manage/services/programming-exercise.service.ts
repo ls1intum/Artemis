@@ -382,6 +382,17 @@ export class ProgrammingExerciseService {
     }
 
     /**
+     * Exports the example solution repository for a given exercise, suitable for distributing to students.
+     * @param exerciseId
+     */
+    exportSolutionRepository(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-solution-repository`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
      * Re-evaluates and updates an existing programming exercise.
      *
      * @param programmingExercise that should be updated of type {ProgrammingExercise}
