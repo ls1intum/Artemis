@@ -59,10 +59,6 @@ public abstract class PostingService {
             specificTopicName += "lectures/" + postDTO.getPost().getLecture().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
-        else if (postDTO.getPost().getPlagiarismCase() != null) {
-            specificTopicName += "plagiarism-cases/" + postDTO.getPost().getPlagiarismCase().getId();
-            messagingTemplate.convertAndSend(specificTopicName, postDTO);
-        }
         messagingTemplate.convertAndSend(genericTopicName, postDTO);
     }
 

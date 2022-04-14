@@ -33,16 +33,14 @@ public class PlagiarismService {
      * @param userLogin of the student asking to see his plagiarism comparison.
      * @return the anoymized plagiarism comparison for the given student
      */
-    public PlagiarismComparison anonymizeComparisonForStudentView(PlagiarismComparison comparison, String userLogin) {
+    public PlagiarismComparison anonymizeComparisonForStudent(PlagiarismComparison comparison, String userLogin) {
         if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
             comparison.getSubmissionA().setStudentLogin(YOUR_SUBMISSION);
             comparison.getSubmissionB().setStudentLogin(OTHER_SUBMISSION);
-            comparison.setInstructorStatementB(null);
         }
         else if (comparison.getSubmissionB().getStudentLogin().equals(userLogin)) {
             comparison.getSubmissionA().setStudentLogin(OTHER_SUBMISSION);
             comparison.getSubmissionB().setStudentLogin(YOUR_SUBMISSION);
-            comparison.setInstructorStatementA(null);
         }
         else {
             throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");
@@ -54,37 +52,30 @@ public class PlagiarismService {
      * Anonymize the submission for the student view.
      * A student should not see sensitive information but be able to retrieve both answers from both students for the comparison
      *
-     * @param submission to anonymize.
-     * @param userLogin of the student asking to see his plagiarism comparison.
+     * @param submission    the submission to anonymize.
+     * @param userLogin     the user login of the student asking to see his plagiarism comparison.
      * @return the anoymized submission for the given student
      */
-    public Submission anonymizeSubmissionForStudentView(Submission submission, String userLogin) {
-        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submission.getId(), submission.getId());
-
-        // disallow requests from users who are not notified about this case:
-        boolean isUserNotifiedByInstructor = false;
-        if (comparisonOptional.isPresent()) {
-            var comparisons = comparisonOptional.get();
-            isUserNotifiedByInstructor = comparisons.stream()
-                    .anyMatch(comparison -> (comparison.getInstructorStatementA() != null && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
-                            || (comparison.getInstructorStatementB() != null && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
-        }
-        if (!isUserNotifiedByInstructor) {
-            throw new AccessForbiddenException("This plagiarism submission is not related to the requesting user or the user has not been notified yet.");
-        }
+    public Submission anonymizeSubmissionForStudent(Submission submission, String userLogin) {
         submission.setParticipation(null);
         submission.setResults(null);
         submission.setSubmissionDate(null);
         return submission;
     }
 
+    /**
+     * Update the status of the plagiarism comparison.
+     *
+     * @param plagiarismComparisonId    the ID of the plagiarism comparison
+     * @param plagiarismStatus          the status to be set
+     */
     public void updatePlagiarismComparisonStatus(long plagiarismComparisonId, PlagiarismStatus plagiarismStatus) {
         plagiarismComparisonRepository.updatePlagiarismComparisonStatus(plagiarismComparisonId, plagiarismStatus);
         if (plagiarismStatus.equals(PlagiarismStatus.CONFIRMED)) {
-            plagiarismCaseService.createOrAddPlagiarismCaseForComparison(plagiarismComparisonId);
+            plagiarismCaseService.createOrAddPlagiarismCasesForComparison(plagiarismComparisonId);
         }
         else if (plagiarismStatus.equals(PlagiarismStatus.DENIED)) {
-            // TODO: delete existing plagiarism cases here if they exist
+            plagiarismCaseService.removeSubmissionsInPlagiarismCasesForComparison(plagiarismComparisonId);
         }
     }
 }

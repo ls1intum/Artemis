@@ -107,13 +107,15 @@ public class PostService extends PostingService {
             return savedPost;
         }
         Post savedPost = postRepository.save(post);
-        // save post to plagiarism case
-        if (savedPost.getPlagiarismCase() != null) {
-            plagiarismCaseService.savePostForPlagiarismCase(savedPost.getPlagiarismCase().getId(), savedPost);
-        }
 
-        broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
-        sendNotification(savedPost, course);
+        // handle posts for plagiarism cases specifically
+        if (savedPost.getPlagiarismCase() != null) {
+            plagiarismCaseService.savePostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
+        }
+        else {
+            broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
+            sendNotification(savedPost, course);
+        }
 
         return savedPost;
     }
@@ -508,7 +510,6 @@ public class PostService extends PostingService {
         postForNotification.setCourseWideContext(post.getCourseWideContext());
         postForNotification.setLecture(post.getLecture());
         postForNotification.setExercise(post.getExercise());
-        postForNotification.setPlagiarismCase(post.getPlagiarismCase());
         postForNotification.setCreationDate(post.getCreationDate());
         postForNotification.setTitle(post.getTitle());
 
@@ -544,10 +545,6 @@ public class PostService extends PostingService {
         // notify via lecture
         if (post.getLecture() != null) {
             groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
-        }
-        // notify via plagiarism case
-        if (post.getPlagiarismCase() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForPlagiarismCase(postForNotification, course);
         }
     }
 
@@ -593,7 +590,7 @@ public class PostService extends PostingService {
      * @param course    course the posting belongs to
      */
     private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
-        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
     }

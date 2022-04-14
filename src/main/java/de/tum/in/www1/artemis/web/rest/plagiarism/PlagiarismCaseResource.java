@@ -10,19 +10,15 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
-import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
- * REST controller for managing PlagiarismCases.
+ * REST controller for managing Plagiarism Cases.
  */
 @RestController
 @RequestMapping("api/")
@@ -30,39 +26,21 @@ public class PlagiarismCaseResource {
 
     private final CourseRepository courseRepository;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     private final AuthorizationCheckService authenticationCheckService;
 
     private final UserRepository userRepository;
-
-    private final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
-
-    private final PlagiarismComparisonRepository plagiarismComparisonRepository;
-
-    private final PlagiarismService plagiarismService;
 
     private final PlagiarismCaseService plagiarismCaseService;
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
-    /**
-     * helper class for plagiarism case verdict update requests
-     */
-    public static class PlagiarismCaseVerdictDTO {
+    private final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
 
-        public PlagiarismVerdict plagiarismVerdict;
-    }
-
-    public PlagiarismCaseResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository,
-            SingleUserNotificationService singleUserNotificationService, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
-            PlagiarismService plagiarismService, PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository) {
-        this.plagiarismComparisonRepository = plagiarismComparisonRepository;
+    public PlagiarismCaseResource(CourseRepository courseRepository, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
+            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository) {
         this.courseRepository = courseRepository;
-        this.singleUserNotificationService = singleUserNotificationService;
         this.authenticationCheckService = authenticationCheckService;
         this.userRepository = userRepository;
-        this.plagiarismService = plagiarismService;
         this.plagiarismCaseService = plagiarismCaseService;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
     }
@@ -82,19 +60,11 @@ public class PlagiarismCaseResource {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
         var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesForCourse(courseId);
-        for (var plagiarismCase : plagiarismCases) {
-            for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
-                submission.setPlagiarismCase(null);
-                submission.getPlagiarismComparison().getPlagiarismResult().setExercise(null);
-                submission.getPlagiarismComparison().setSubmissionA(null);
-                submission.getPlagiarismComparison().setSubmissionB(null);
-            }
-        }
-        return ResponseEntity.ok(plagiarismCases);
+        return getPlagiarismCasesResponseEntity(plagiarismCases);
     }
 
     /**
-     * Retrieves the plagiarism cases with the given ID for the instructor view.
+     * Retrieves the plagiarism case with the given ID for the instructor view.
      *
      * @param courseId the id of the course
      * @param plagiarismCaseId the id of the plagiarism case
@@ -108,6 +78,10 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
+        return getPlagiarismCaseResponseEntity(plagiarismCaseId);
+    }
+
+    private ResponseEntity<PlagiarismCase> getPlagiarismCaseResponseEntity(@PathVariable long plagiarismCaseId) {
         var plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
             submission.setPlagiarismCase(null);
@@ -140,7 +114,7 @@ public class PlagiarismCaseResource {
     }
 
     /**
-     * Retrieves all plagiarismCases related to a course for the student view
+     * Retrieves all plagiarismCases related to a course for the student view.
      *
      * @param courseId the id of the course
      * @return all plagiarism cases of the course
@@ -156,6 +130,10 @@ public class PlagiarismCaseResource {
         }
         // TODO: anonymize submissions
         var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesForStudentForCourse(user.getId(), courseId);
+        return getPlagiarismCasesResponseEntity(plagiarismCases);
+    }
+
+    private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {
         for (var plagiarismCase : plagiarismCases) {
             for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
                 submission.setPlagiarismCase(null);
@@ -168,7 +146,7 @@ public class PlagiarismCaseResource {
     }
 
     /**
-     * Retrieves the plagiarism cases with the given ID for the student view.
+     * Retrieves the plagiarism case with the given ID for the student view.
      *
      * @param courseId the id of the course
      * @param plagiarismCaseId the id of the plagiarism case
@@ -182,13 +160,6 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
-        for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
-            submission.setPlagiarismCase(null);
-            submission.getPlagiarismComparison().getPlagiarismResult().setExercise(null);
-            submission.getPlagiarismComparison().setSubmissionA(null);
-            submission.getPlagiarismComparison().setSubmissionB(null);
-        }
-        return ResponseEntity.ok(plagiarismCase);
+        return getPlagiarismCaseResponseEntity(plagiarismCaseId);
     }
 }

@@ -71,8 +71,6 @@ public class SingleUserNotificationFactoryTest {
 
     private static PlagiarismCase plagiarismCase;
 
-    private static final String PLAGIARISM_INSTRUCTOR_STATEMENT = "You definitely plagiarised! Your answers are identical!";
-
     /**
      * sets up all needed mocks and their wanted behavior once for all test cases.
      */
@@ -108,7 +106,6 @@ public class SingleUserNotificationFactoryTest {
         plagiarismSubmission.setStudentLogin(USER_LOGIN);
 
         plagiarismComparison = new PlagiarismComparison();
-        plagiarismComparison.setInstructorStatementA(PLAGIARISM_INSTRUCTOR_STATEMENT);
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
 
@@ -234,7 +231,6 @@ public class SingleUserNotificationFactoryTest {
     public void createNotification_withNotificationType_NewPossiblePlagiarismCaseStudent() {
         notificationType = NEW_PLAGIARISM_CASE_STUDENT;
         expectedTitle = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
-        expectedText = PLAGIARISM_INSTRUCTOR_STATEMENT;
         expectedPriority = HIGH;
         expectedTransientTarget = createPlagiarismCaseTarget(plagiarismComparison.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();

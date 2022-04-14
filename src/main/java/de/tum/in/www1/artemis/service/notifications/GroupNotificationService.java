@@ -190,8 +190,8 @@ public class GroupNotificationService {
      * Auxiliary method that calls two other methods to check (create/schedule) notifications when a new exercise has been created
      * E.g. ExerciseReleased notification or AssessedExerciseSubmission notification
      *
-     * @param exercise
-     * @param instanceMessageSendService
+     * @param exercise that is created
+     * @param instanceMessageSendService that will call the service to update the scheduled exercise-created notification
      */
     public void checkNotificationsForNewExercise(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
         checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
@@ -245,7 +245,7 @@ public class GroupNotificationService {
             GroupNotification resultingGroupNotification;
             resultingGroupNotification = switch (notificationType) {
                 // Post Types
-                case NEW_EXERCISE_POST, NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_ANNOUNCEMENT_POST, NEW_PLAGIARISM_CASE_POST -> createNotification(
+                case NEW_EXERCISE_POST, NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createNotification(
                         (Post) notificationSubject, author, group, notificationType, (Course) typeSpecificInformation);
                 // General Types
                 case ATTACHMENT_CHANGE -> createNotification((Attachment) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
@@ -395,10 +395,6 @@ public class GroupNotificationService {
      */
     public void notifyAllGroupsAboutNewCoursePost(Post post, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, NEW_COURSE_POST, post, course, post.getAuthor());
-    }
-
-    public void notifyAllGroupsAboutNewPostForPlagiarismCase(Post post, Course course) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, NEW_PLAGIARISM_CASE_POST, post, course, post.getAuthor());
     }
 
     /**

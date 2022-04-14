@@ -4,7 +4,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
@@ -61,42 +60,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     private PlagiarismStatus status = PlagiarismStatus.NONE;
 
     /**
-     * Statement made by student A on the case
-     */
-    @Column(name = "student_statement_a")
-    private String studentStatementA;
-
-    /**
-     * Statement made by student B on the case
-     */
-    @Column(name = "student_statement_b")
-    private String studentStatementB;
-
-    /**
-     * Status on the Statement student A made
-     */
-    @Column(name = "status_a")
-    private PlagiarismStatus statusA;
-
-    /**
-     * Status on the Statement student B made
-     */
-    @Column(name = "status_b")
-    private PlagiarismStatus statusB;
-
-    /**
      * Instructor statement/message sent to student A, null if not sent
      */
-    @Nullable
-    @Column(name = "instructor_statement_a")
-    private String instructorStatementA;
-
-    /**
-     * Instructor statement/message sent to student B, null if not sent
-     */
-    @Nullable
-    @Column(name = "instructor_statement_b")
-    private String instructorStatementB;
 
     /**
      * Create a new PlagiarismComparison instance from an existing JPlagComparison object.
@@ -166,54 +131,6 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         this.status = status;
     }
 
-    public String getStudentStatementA() {
-        return studentStatementA;
-    }
-
-    public void setStudentStatementA(String studentStatementA) {
-        this.studentStatementA = studentStatementA;
-    }
-
-    public String getStudentStatementB() {
-        return studentStatementB;
-    }
-
-    public void setStudentStatementB(String studentStatementB) {
-        this.studentStatementB = studentStatementB;
-    }
-
-    public PlagiarismStatus getStatusA() {
-        return statusA;
-    }
-
-    public void setStatusA(PlagiarismStatus statusA) {
-        this.statusA = statusA;
-    }
-
-    public PlagiarismStatus getStatusB() {
-        return statusB;
-    }
-
-    public void setStatusB(PlagiarismStatus statusB) {
-        this.statusB = statusB;
-    }
-
-    public String getInstructorStatementA() {
-        return instructorStatementA;
-    }
-
-    public void setInstructorStatementA(String instructorStatementA) {
-        this.instructorStatementA = instructorStatementA;
-    }
-
-    public String getInstructorStatementB() {
-        return instructorStatementB;
-    }
-
-    public void setInstructorStatementB(String instructorStatementB) {
-        this.instructorStatementB = instructorStatementB;
-    }
-
     @Override
     public int compareTo(@NotNull PlagiarismComparison<E> otherComparison) {
         return Double.compare(similarity, otherComparison.similarity);
@@ -221,9 +138,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     @Override
     public String toString() {
-        return "PlagiarismComparison{" + "similarity=" + similarity + ", status=" + status + ", studentStatementA='" + studentStatementA + '\'' + ", studentStatementB='"
-                + studentStatementB + '\'' + ", statusA=" + statusA + ", statusB=" + statusB + ", instructorStatementA='" + instructorStatementA + '\'' + ", instructorStatementB='"
-                + instructorStatementB + '\'' + '}';
+        return "PlagiarismComparison{" + "similarity=" + similarity + ", status=" + status + '}';
     }
 
     @Override
@@ -238,9 +153,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
             return false;
         }
         PlagiarismComparison<?> that = (PlagiarismComparison<?>) o;
-        return Double.compare(that.similarity, similarity) == 0 && status == that.status && Objects.equals(studentStatementA, that.studentStatementB)
-                && Objects.equals(instructorStatementA, that.instructorStatementA) && Objects.equals(instructorStatementB, that.instructorStatementB)
-                && Objects.equals(studentStatementB, that.studentStatementB) && statusA == that.statusA && statusB == that.statusB;
+        return Double.compare(that.similarity, similarity) == 0 && status == that.status;
     }
 
     @Override

@@ -161,6 +161,12 @@ public class CourseService {
                 System.currentTimeMillis() - startTimeInMillis, courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
     }
 
+    /**
+     * Fetch the plagiarism cases for a user for course.
+     *
+     * @param courses   the courses for which the plagiarism cases should be fetched
+     * @param user      the user for which the plagiarism cases should be fetched
+     */
     public void fetchPlagiarismCasesForCourses(List<Course> courses, User user) {
         for (Course course : courses) {
             var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesForStudentForCourse(user.getId(), course.getId());

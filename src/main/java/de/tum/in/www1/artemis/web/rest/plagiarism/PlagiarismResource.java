@@ -39,14 +39,6 @@ public class PlagiarismResource {
 
     private final PlagiarismService plagiarismService;
 
-    /**
-     * helper class for plagiarism statement update requests
-     */
-    public static class PlagiarismStatementDTO {
-
-        public String statement;
-    }
-
     public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository,
             AuthorizationCheckService authenticationCheckService, UserRepository userRepository, PlagiarismService plagiarismService) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
@@ -85,7 +77,7 @@ public class PlagiarismResource {
     }
 
     /**
-     * Retrieves the plagiarismComparison specified by its Id.
+     * Retrieves the plagiarismComparison specified by its ID.
      * If a studentLogin is passed the comparison is anonymized
      *
      * @param courseId the id of the course
@@ -96,7 +88,7 @@ public class PlagiarismResource {
      */
     @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-split-view")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForEditor(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId,
+    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId,
             @RequestParam(value = "studentLogin", required = false) String studentLogin) {
         var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
         var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
@@ -112,7 +104,7 @@ public class PlagiarismResource {
 
         comparisonA.setSubmissionB(comparisonB.getSubmissionB());
         if (studentLogin != null) {
-            comparisonA = this.plagiarismService.anonymizeComparisonForStudentView(comparisonA, studentLogin);
+            comparisonA = this.plagiarismService.anonymizeComparisonForStudent(comparisonA, studentLogin);
         }
         comparisonA.getSubmissionA().setPlagiarismComparison(null);
         comparisonB.getSubmissionB().setPlagiarismComparison(null);

@@ -29,6 +29,12 @@
             <column name="plagiarism_case_id" type="BIGINT"/>
             <column name="plagiarism_comparison_id" type="BIGINT"/>
         </addColumn>
+        <dropColumn tableName="plagiarism_comparison" columnName="student_statement_a"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="student_statement_b"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="status_a"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="status_b"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="instructor_statement_a"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="instructor_statement_b"/>
         <addForeignKeyConstraint
             baseTableName="plagiarism_case"
             baseColumnNames="exercise_id"

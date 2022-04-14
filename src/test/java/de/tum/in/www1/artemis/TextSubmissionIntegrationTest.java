@@ -66,8 +66,6 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     private StudentParticipation lateParticipation;
 
-    private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
-
     @BeforeEach
     public void initTestCase() {
         User student = database.addUsers(2, 1, 0, 1).get(0);
@@ -122,7 +120,6 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void getTextSubmissionWithResult_involved_allowed() throws Exception {
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
         PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
         PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
         submissionA.setStudentLogin("student1");
         submissionA.setSubmissionId(this.textSubmission.getId());

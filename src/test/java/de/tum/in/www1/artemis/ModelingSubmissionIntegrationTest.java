@@ -98,8 +98,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     private Course course;
 
-    private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
-
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 0, 1);
@@ -408,7 +406,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
         PlagiarismComparison<ModelingSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
         PlagiarismSubmission<ModelingSubmissionElement> submissionA = new PlagiarismSubmission<>();
         submissionA.setStudentLogin("student1");
         submissionA.setSubmissionId(submission.getId());
