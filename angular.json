@@ -69,7 +69,10 @@
               { "glob": "axios.min.js", "input": "./node_modules/axios/dist", "output": "swagger-ui" },
               { "glob": "**/*", "input": "src/main/webapp/swagger-ui/", "output": "swagger-ui" }
             ],
-            "styles": ["src/main/webapp/content/scss/global.scss"],
+            "styles": [
+              "src/main/webapp/content/scss/global.scss",
+              "src/main/webapp/content/scss/themes/default-theme.scss"
+            ],
             "scripts": []
           },
           "configurations": {

@@ -1,0 +1,39 @@
+// Boostrap
+$primary: #3e8acc;
+$success: #28a745;
+$info: #17a2b8;
+$warning: #ffc107;
+$danger: #dc3545;
+
+// Global colors
+$artemis-dark: #353d47;
+$artemis-lighter-dark: saturate(lighten($artemis-dark, 10%), 15%);
+
+// Backgrounds
+$body-bg: #e4e5e6;
+$darker-body-bg: darken($body-bg, 20);
+$slightly-darker-body-bg: darken($body-bg, 10);
+$brighter-body-bg: lighten($body-bg, 20);
+
+// Border
+$border-color: #979797;
+
+// Footer
+$footer-bg: #fff;
+
+// Navbar
+$navbar-foreground: #ccc;
+$navbar-bg: $artemis-dark;
+$navbar-item-active-hover-bg: $artemis-dark;
+$navbar-breadcrumb-background: #e4e5e6;
+$navbar-breadcrumb-color: #0065bd;
+
+// Component: plagiarism-inspector.component.scss
+$plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
+
+// Overview variables
+$overview-border-color: $border-color;
+$overview-light-border-color: lighten($overview-border-color, 30%);
+$overview-light-background-color: rgba($overview-light-border-color, 0.3);
+$overview-light-primary-background-color: rgba($primary, 0.3);
+$overview-blue-border-color: $primary;

@@ -43,7 +43,7 @@
 
     &:focus {
         outline: none;
-        border: 1px solid $artemis-dark;
+        border: 1px solid var(--artemis-dark);
         background-color: #fbfbfb;
         box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
     }

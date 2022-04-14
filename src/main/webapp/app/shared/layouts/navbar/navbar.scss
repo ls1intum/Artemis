@@ -5,7 +5,7 @@ Navbar
 ========================================================================== */
 .navbar-version {
     font-size: 10px;
-    color: #ccc;
+    color: var(--navbar-foreground);
 }
 
 /* Don't underline the menu items on hover */
@@ -26,7 +26,7 @@ a:not(.btn):hover {
     .dropdown-item.active,
     .dropdown-item.active:focus,
     .dropdown-item.active:hover {
-        background-color: #353d47;
+        background-color: var(--navbar-bg);
     }
     .dropdown-toggle::after {
         margin-left: 0.15em;
@@ -41,11 +41,11 @@ a:not(.btn):hover {
         font-weight: 400;
     }
     .jh-navbar-toggler {
-        color: #ccc;
+        color: var(--navbar-foreground);
         font-size: 1.5em;
         padding: 10px;
         &:hover {
-            color: #fff;
+            color: var(--bs-white);
         }
     }
 }
@@ -55,13 +55,13 @@ a:not(.btn):hover {
 }
 
 .breadcrumb-container {
-    background-color: #e4e5e6;
+    background-color: var(--navbar-breadcrumb-background);
     overflow: auto;
     margin-left: -15px;
     min-height: 0.5rem;
     .breadcrumb {
-        color: #0065bd;
-        background-color: #e4e5e6;
+        color: var(--navbar-breadcrumb-color);
+        background-color: var(--navbar-breadcrumb-background);
         margin-left: 1rem;
         margin-bottom: 0;
         padding: 10px 16px 10px 16px;

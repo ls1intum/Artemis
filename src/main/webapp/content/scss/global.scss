@@ -33,7 +33,7 @@ h4 {
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
 a:not(.btn):hover {
-    color: $primary;
+    color: var(--primary);
     font-weight: bold;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
@@ -102,7 +102,7 @@ a.btn {
         left: 15px;
         right: 15px;
         bottom: 0;
-        background-color: white;
+        background-color: var(--footer-bg);
         padding: 5px 0;
     }
 
@@ -162,7 +162,7 @@ a.btn {
 }
 
 .form-check-input:checked {
-    background-color: $primary;
+    background-color: var(--primary);
 }
 
 .btn-primary input,
@@ -222,7 +222,7 @@ Generic styles
     transition: background-color 0.2s;
 
     &::before {
-        background-color: darken($body-bg, 10);
+        background-color: var(--slightly-darker-body-bg);
         border-radius: 1px;
         content: '';
         height: 24px;
@@ -236,10 +236,10 @@ Generic styles
 
     &:active,
     &:hover {
-        background-color: $body-bg;
+        background-color: var(--body-bg);
 
         &::before {
-            background-color: darken($body-bg, 20);
+            background-color: var(--darker-body-bg);
         }
     }
 }
@@ -313,7 +313,8 @@ entity tables helpers
 
 /* Remove Bootstrap padding from the element
    http://stackoverflow.com/questions/19562903/remove-padding-from-columns-in-bootstrap-3 */
-@mixin no-padding($side) {
+$padding-sides: 'left', 'right', 'top', 'bottom', 'all';
+@each $side in $padding-sides {
     @if $side == 'all' {
         .no-padding {
             padding: 0 !important;
@@ -324,12 +325,6 @@ entity tables helpers
         }
     }
 }
-
-@include no-padding('left');
-@include no-padding('right');
-@include no-padding('top');
-@include no-padding('bottom');
-@include no-padding('all');
 
 /* bootstrap 3 input-group 100% width
    http://stackoverflow.com/questions/23436430/bootstrap-3-input-group-100-width */
@@ -651,7 +646,7 @@ code.password:hover {
             }
 
             .fa-check {
-                color: $success;
+                color: var(--success);
 
                 &.half {
                     &:after {
@@ -665,7 +660,7 @@ code.password:hover {
             }
 
             .fa-times {
-                color: $danger;
+                color: var(--danger);
 
                 &.half {
                     &:after {
@@ -706,11 +701,11 @@ code.password:hover {
 Course Info Bar
 ========================================================================== */
 .course-info-bar {
-    background-color: $artemis-dark;
+    background-color: var(--artemis-dark);
     padding: 1em 1em;
     margin: -1.25rem -1.25rem 0 -1.25rem;
     display: flex;
-    color: #ffffff;
+    color: var(--bs-white);
     flex-direction: column;
     justify-content: center;
 }
@@ -1225,7 +1220,7 @@ Course Info Bar
 }
 
 .accordion-body {
-    background: white;
+    background: var(--body-bg);
     max-height: 50vh;
     overflow: scroll;
     padding: 0 0.5rem;
