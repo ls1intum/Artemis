@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
@@ -8,6 +8,7 @@ import { ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -60,6 +61,7 @@ export class AssessmentHeaderComponent {
     // Icons
     faSpinner = faSpinner;
     faSave = faSave;
+    faSquareCaretRight = faSquareCaretRight;
 
     @Input() set highlightDifferences(highlightDifferences: boolean) {
         this._highlightDifferences = highlightDifferences;
@@ -72,6 +74,71 @@ export class AssessmentHeaderComponent {
 
     get highlightDifferences() {
         return this._highlightDifferences;
+    }
+
+    get overrideVisible() {
+        return this.result?.completionDate && this.canOverride;
+    }
+
+    get assessNextVisible() {
+        return this.result?.completionDate && (this.isAssessor || this.exercise?.isAtLeastInstructor) && !this.hasComplaint && !this.isTeamMode && !this.isTestRun;
+    }
+
+    get saveDisabled() {
+        // if there is no 'save' button
+        if (this.result?.completionDate) {
+            return true;
+        } else {
+            return !this.assessmentsAreValid || !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+        }
+    }
+
+    get submitDisabled() {
+        return !this.assessmentsAreValid || !this.isAssessor || this.saveBusy || this.submitBusy || this.cancelBusy;
+    }
+
+    get overrideDisabled() {
+        if (this.overrideVisible) {
+            return !this.assessmentsAreValid || this.submitBusy;
+        } else {
+            return true;
+        }
+    }
+
+    get assessNextDisabled() {
+        if (this.assessNextVisible) {
+            return this.nextSubmissionBusy || this.submitBusy;
+        } else {
+            return true;
+        }
+    }
+
+    @HostListener('document:keydown.control.s', ['$event'])
+    saveOnControlAndS(event: KeyboardEvent) {
+        event.preventDefault();
+        if (!this.saveDisabled) {
+            this.save.emit();
+        }
+    }
+
+    @HostListener('document:keydown.control.enter', ['$event'])
+    submitOnControlAndEnter(event: KeyboardEvent) {
+        event.preventDefault();
+        if (!this.overrideDisabled) {
+            this.submit.emit();
+        } else if (!this.submitDisabled) {
+            this.submit.emit();
+            this.sendSubmitAssessmentEventToAnalytics();
+        }
+    }
+
+    @HostListener('document:keydown.control.shift.arrowRight', ['$event'])
+    assessNextOnControlShiftAndArrowRight(event: KeyboardEvent) {
+        event.preventDefault();
+        if (!this.assessNextDisabled) {
+            this.nextSubmission.emit();
+            this.sendAssessNextEventToAnalytics();
+        }
     }
 
     /**

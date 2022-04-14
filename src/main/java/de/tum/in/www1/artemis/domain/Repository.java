@@ -33,7 +33,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     public Repository(BaseRepositoryBuilder options, Path localPath, VcsRepositoryUrl remoteRepositoryUrl) throws IOException {
         super(options);
-        this.localPath = localPath;
+        this.localPath = localPath.normalize();
         this.remoteRepositoryUrl = remoteRepositoryUrl;
     }
 

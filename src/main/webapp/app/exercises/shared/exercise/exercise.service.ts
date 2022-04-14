@@ -193,7 +193,7 @@ export class ExerciseService {
             exercises?.find((exercise) => {
                 const studentParticipation = student ? exercise.studentParticipations?.find((participation) => participation.student?.id === student?.id) : undefined;
                 const dueDate = getExerciseDueDate(exercise, studentParticipation);
-                return dayjs().isBefore(dueDate) && dayjs().add(delayInHours, 'hours').isSameOrAfter(dueDate);
+                return dueDate && dayjs().isBefore(dueDate) && dayjs().add(delayInHours, 'hours').isSameOrAfter(dueDate);
             })
         );
     }

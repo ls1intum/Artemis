@@ -38,10 +38,12 @@ import {
     faTable,
     faTimes,
     faUserCheck,
+    faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -62,6 +64,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     supportsAuxiliaryRepositories: boolean;
     baseResource: string;
     shortBaseResource: string;
+    teamBaseResource: string;
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
     lockingOrUnlockingRepositories = false;
@@ -85,6 +88,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faChartBar = faChartBar;
     faPencilAlt = faPencilAlt;
     faEraser = faEraser;
+    faUsers = faUsers;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -162,11 +166,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             if (!this.isExamExercise) {
                 this.baseResource = `/course-management/${this.courseId}/programming-exercises/${programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/`;
+                this.teamBaseResource = `/course-management/${this.courseId}/exercises/${programmingExercise.id}/`;
             } else {
                 this.baseResource =
                     `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
+                this.teamBaseResource =
+                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
+                    `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
 
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(programmingExercise.id).subscribe((submissionPolicy) => {
@@ -437,5 +445,24 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }
             },
         });
+    }
+
+    createStructuralSolutionEntries() {
+        this.programmingExerciseService.createStructuralSolutionEntries(this.programmingExercise.id!).subscribe({
+            next: (res) => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
+                });
+                console.log(this.buildStructuralSolutionEntriesMessage(res));
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
+    }
+
+    private buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
+        return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
     }
 }

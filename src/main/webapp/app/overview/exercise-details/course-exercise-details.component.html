@@ -148,7 +148,13 @@
                     </h4>
                 </div>
                 <div class="col text-start">
-                    <jhi-result [result]="studentParticipation!.results![0]" [participation]="studentParticipation!" [showUngradedResults]="true" [short]="true"></jhi-result>
+                    <jhi-result
+                        [exercise]="exercise"
+                        [result]="studentParticipation!.results![0]"
+                        [participation]="studentParticipation!"
+                        [showUngradedResults]="true"
+                        [short]="true"
+                    ></jhi-result>
                 </div>
                 <div class="col text-start d-none d-md-flex">
                     <h6 [ngbTooltip]="studentParticipation!.results![0].completionDate | artemisDate">
@@ -177,7 +183,13 @@
                                 </h4>
                             </div>
                             <div class="col text-start">
-                                <jhi-result [result]="result" [participation]="exercise.studentParticipations![0]" [showUngradedResults]="true" [short]="true"></jhi-result>
+                                <jhi-result
+                                    [exercise]="exercise"
+                                    [result]="result"
+                                    [participation]="exercise.studentParticipations![0]"
+                                    [showUngradedResults]="true"
+                                    [short]="true"
+                                ></jhi-result>
                             </div>
                             <div class="col text-start d-none d-md-flex">
                                 <h6 [ngbTooltip]="result.completionDate | artemisDate">({{ result.completionDate! | artemisTimeAgo }})</h6>

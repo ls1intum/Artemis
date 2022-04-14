@@ -53,6 +53,16 @@
                         <fa-icon [icon]="faListAlt"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                     </a>
+                    <!-- Teams -->
+                    <a
+                        *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor"
+                        [routerLink]="teamBaseResource + 'teams'"
+                        class="btn btn-primary btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
+                        <fa-icon [icon]="faUsers"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+                    </a>
                     <a
                         *ngIf="programmingExercise.assessmentType === assessmentType"
                         [routerLink]="shortBaseResource + 'assessment-dashboard/' + programmingExercise.id"
@@ -141,7 +151,7 @@
                 At the moment, this is only visible to admins as the actual main functionality has not yet been added on the server.
                 In the future, this feature will be available to editors and instructors as well.
                 -->
-                <div *ngIf="isAdmin">
+                <div *ngIf="isAdmin && programmingExercise.programmingLanguage == ProgrammingLanguage.JAVA">
                     <span class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -162,6 +172,17 @@
                             ngbTooltip="{{ 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesWarning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.deleteTasksAndSolutionEntriesTitle">Delete Tasks</span>
+                        </button>
+                    </span>
+                    <span class="me-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="createStructuralSolutionEntries()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.createStructuralSolutionEntriesTooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.createStructuralSolutionEntriesTitle">Create Structural Solution Entries</span>
                         </button>
                     </span>
                 </div>
