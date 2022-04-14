@@ -12,6 +12,7 @@ import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -56,7 +57,7 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      */
-    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExam> {
+    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExamWithGradeDTO> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/summary';
         return this.getStudentExamFromServer(url, courseId, examId);
     }

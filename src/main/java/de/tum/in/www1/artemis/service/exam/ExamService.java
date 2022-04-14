@@ -189,13 +189,14 @@ public class ExamService {
 
     /**
      * Deletes all elements associated with the exam but not the exam itself in order to reset it.
-     *
+     * <p>
      * The deleted elements are:
      * <ul>
      *     <li>All StudentExams</li>
      *     <li>Everything that has been submitted by students to the exercises that are part of the exam,
-           but not the exercises themself. See {@link ExerciseDeletionService#reset}</li>
+     * but not the exercises themself. See {@link ExerciseDeletionService#reset}</li>
      * </ul>
+     *
      * @param examId the ID of the exam to be reset
      */
     public void reset(@NotNull Long examId) {
@@ -263,81 +264,10 @@ public class ExamService {
         Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId); // fetched without test runs
         ObjectMapper objectMapper = new ObjectMapper();
         for (StudentExam studentExam : studentExams) {
-
-            User user = studentExam.getUser();
-            var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
-                    studentExam.isSubmitted());
-
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
-                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentResult.userId)).toList();
-
-            studentResult.overallPointsAchieved = 0.0;
-            studentResult.overallPointsAchievedInFirstCorrection = 0.0;
-            for (StudentParticipation studentParticipation : participationsOfStudent) {
-                Exercise exercise = studentParticipation.getExercise();
-
-                // Relevant Result is already calculated
-                if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                    Result relevantResult = studentParticipation.getResults().iterator().next();
-                    // Note: It is important that we round on the individual exercise level first and then sum up.
-                    // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
-                    // Let's assume that the student achieved 1.05 points in each of 5 exercises.
-                    // In the client, these are now displayed rounded as 1.1 points.
-                    // If the student adds up the displayed points, he gets a total of 5.5 points.
-                    // In order to get the same total result as the student, we have to round before summing.
-                    double achievedPoints = roundScoreSpecifiedByCourseSettings(relevantResult.getScore() / 100.0 * exercise.getMaxPoints(), exam.getCourse());
-
-                    // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
-                    if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                        studentResult.overallPointsAchieved += achievedPoints;
-                    }
-
-                    // collect points of first correction, if a second correction exists
-                    if (exam.getNumberOfCorrectionRoundsInExam() == 2 && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                        Optional<Submission> latestSubmission = studentParticipation.findLatestSubmission();
-                        if (latestSubmission.isPresent()) {
-                            Submission submission = latestSubmission.get();
-                            // Check if second correction already started
-                            if (submission.getManualResults().size() > 1) {
-                                if (!scores.hasSecondCorrectionAndStarted) {
-                                    scores.hasSecondCorrectionAndStarted = true;
-                                }
-                                Result firstManualResult = submission.getFirstManualResult();
-                                double achievedPointsInFirstCorrection = 0.0;
-                                if (firstManualResult != null) {
-                                    Double resultScore = firstManualResult.getScore();
-                                    achievedPointsInFirstCorrection = resultScore != null
-                                            ? roundScoreSpecifiedByCourseSettings(resultScore / 100.0 * exercise.getMaxPoints(), exam.getCourse())
-                                            : 0.0;
-                                }
-                                studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
-                            }
-                        }
-                    }
-
-                    // Check whether the student attempted to solve the exercise
-                    boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
-                    studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
-                            exercise.getMaxPoints(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
-                }
-
-            }
-
-            if (scores.maxPoints != null) {
-                studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
-                var overallScoreAchievedInFirstCorrection = (studentResult.overallPointsAchievedInFirstCorrection / scores.maxPoints) * 100.0;
-                // Sets grading scale related properties for exam scores
-                Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
-                if (gradingScale.isPresent()) {
-                    // Calculate current student grade
-                    GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
-                    GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
-                    studentResult.overallGrade = studentGrade.getGradeName();
-                    studentResult.overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
-                    studentResult.hasPassed = studentGrade.getIsPassingGrade();
-                }
-            }
+                    .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId())).toList();
+            ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper);
             scores.studentResults.add(studentResult);
         }
 
@@ -351,6 +281,99 @@ public class ExamService {
         }
 
         return scores;
+    }
+
+    @NotNull
+    public StudentExamWithGradeDTO calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
+        Exam exam = studentExam.getExam();
+
+        // Adding exam information to DTO
+        var scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
+        var objectMapper = new ObjectMapper();
+
+        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper);
+        var studentExamWithGradeDTO = new StudentExamWithGradeDTO(exam.getMaxPoints(), null, studentExam, studentResult);
+
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
+        gradingScale.ifPresent(scale -> studentExamWithGradeDTO.gradeType = scale.getGradeType());
+
+        return studentExamWithGradeDTO;
+    }
+
+    @NotNull
+    private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent, Exam exam,
+            ExamScoresDTO scores, ObjectMapper objectMapper) {
+        User user = studentExam.getUser();
+        var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
+                studentExam.isSubmitted());
+
+        studentResult.overallPointsAchieved = 0.0;
+        studentResult.overallPointsAchievedInFirstCorrection = 0.0;
+        for (StudentParticipation studentParticipation : participationsOfStudent) {
+            Exercise exercise = studentParticipation.getExercise();
+
+            // Relevant Result is already calculated
+            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
+                Result relevantResult = studentParticipation.getResults().iterator().next();
+                // Note: It is important that we round on the individual exercise level first and then sum up.
+                // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
+                // Let's assume that the student achieved 1.05 points in each of 5 exercises.
+                // In the client, these are now displayed rounded as 1.1 points.
+                // If the student adds up the displayed points, he gets a total of 5.5 points.
+                // In order to get the same total result as the student, we have to round before summing.
+                double achievedPoints = roundScoreSpecifiedByCourseSettings(relevantResult.getScore() / 100.0 * exercise.getMaxPoints(), exam.getCourse());
+
+                // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
+                if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
+                    studentResult.overallPointsAchieved += achievedPoints;
+                }
+
+                // collect points of first correction, if a second correction exists
+                if (exam.getNumberOfCorrectionRoundsInExam() == 2 && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
+                    Optional<Submission> latestSubmission = studentParticipation.findLatestSubmission();
+                    if (latestSubmission.isPresent()) {
+                        Submission submission = latestSubmission.get();
+                        // Check if second correction already started
+                        if (submission.getManualResults().size() > 1) {
+                            if (!scores.hasSecondCorrectionAndStarted) {
+                                scores.hasSecondCorrectionAndStarted = true;
+                            }
+                            Result firstManualResult = submission.getFirstManualResult();
+                            double achievedPointsInFirstCorrection = 0.0;
+                            if (firstManualResult != null) {
+                                Double resultScore = firstManualResult.getScore();
+                                achievedPointsInFirstCorrection = resultScore != null
+                                        ? roundScoreSpecifiedByCourseSettings(resultScore / 100.0 * exercise.getMaxPoints(), exam.getCourse())
+                                        : 0.0;
+                            }
+                            studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
+                        }
+                    }
+                }
+
+                // Check whether the student attempted to solve the exercise
+                boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
+                studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
+                        exercise.getMaxPoints(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
+            }
+
+        }
+
+        if (scores.maxPoints != null) {
+            studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
+            var overallScoreAchievedInFirstCorrection = (studentResult.overallPointsAchievedInFirstCorrection / scores.maxPoints) * 100.0;
+            // Sets grading scale related properties for exam scores
+            Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
+            if (gradingScale.isPresent()) {
+                // Calculate current student grade
+                GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
+                GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
+                studentResult.overallGrade = studentGrade.getGradeName();
+                studentResult.overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
+                studentResult.hasPassed = studentGrade.getIsPassingGrade();
+            }
+        }
+        return studentResult;
     }
 
     /**
@@ -483,7 +506,7 @@ public class ExamService {
     /**
      * Gets all statistics for the instructor checklist regarding an exam
      *
-     * @param exam the exam for which to get statistics for
+     * @param exam         the exam for which to get statistics for
      * @param isInstructor flag indicating if the requesting user is instructor
      * @return a examStatisticsDTO filled with all statistics regarding the exam
      */
@@ -670,6 +693,7 @@ public class ExamService {
 
     /**
      * Sets exam transient properties for different exercise types
+     *
      * @param exam - the exam for which we set the properties
      */
     public void setExamProperties(Exam exam) {

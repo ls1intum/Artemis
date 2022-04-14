@@ -9,6 +9,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -27,6 +28,12 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
     @Input()
+    set studentExamWithGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
+        this.studentExamWithGradeDTO = studentExamWithGrade;
+        this.studentExam = studentExamWithGrade?.studentExam;
+    }
+
+    studentExamWithGradeDTO: StudentExamWithGradeDTO;
     studentExam: StudentExam;
 
     @Input()

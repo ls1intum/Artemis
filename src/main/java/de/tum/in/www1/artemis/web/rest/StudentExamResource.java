@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -33,6 +34,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
+import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -104,7 +106,7 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<StudentExam> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
@@ -124,7 +126,9 @@ public class StudentExamResource {
         }
         studentExam.getUser().setVisibleRegistrationNumber();
 
-        return ResponseEntity.ok(studentExam);
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGrade(studentExam, participations);
+
+        return ResponseEntity.ok(studentExamWithGradeDTO);
     }
 
     /**
@@ -296,7 +300,7 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/summary")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
@@ -312,8 +316,13 @@ public class StudentExamResource {
         // 3rd fetch participations, submissions and results and connect them to the studentExam
         fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user);
 
+        List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
+                .collect(Collectors.toList());
+
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGrade(studentExam, participations);
+
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
-        return ResponseEntity.ok(studentExam);
+        return ResponseEntity.ok(studentExamWithGradeDTO);
     }
 
     @NotNull

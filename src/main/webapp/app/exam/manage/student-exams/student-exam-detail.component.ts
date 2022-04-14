@@ -145,18 +145,9 @@ export class StudentExamDetailComponent implements OnInit {
         this.maxTotalPoints += exercise.maxPoints!;
         this.bonusTotalPoints += exercise.bonusPoints!;
 
-        if (
-            exercise.studentParticipations?.length &&
-            exercise.studentParticipations.length > 0 &&
-            exercise.studentParticipations[0].results?.length &&
-            exercise.studentParticipations[0].results.length > 0
-        ) {
-            if (exercise.studentParticipations[0].submissions && exercise.studentParticipations[0].submissions.length > 0) {
-                exercise.studentParticipations[0].submissions[0].results = exercise.studentParticipations[0].results;
-                setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
-            }
-
-            this.achievedTotalPoints += roundValueSpecifiedByCourseSettings((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100, this.course);
+        if (exercise.studentParticipations?.[0]?.submissions?.[0] != undefined) {
+            exercise.studentParticipations[0].submissions[0].results = exercise.studentParticipations[0].results;
+            setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
         }
     }
 

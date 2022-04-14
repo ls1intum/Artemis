@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -1190,7 +1191,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // user tries to access exam summary
         database.changeUser(studentExam.getUser().getLogin());
-        var studentExamSummary = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/summary", HttpStatus.OK, StudentExam.class);
+        var studentExamWithGradeDTO = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
+        var studentExamSummary = studentExamWithGradeDTO.studentExam;
 
         // check that no results or other sensitive information is visible for the student
         for (final var exercise : studentExamSummary.getExercises()) {
@@ -1274,7 +1277,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // users tries to access exam summary after results are published
         database.changeUser(studentExam.getUser().getLogin());
-        var studentExamSummary = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/summary", HttpStatus.OK, StudentExam.class);
+        var studentExamWithGradeDTO = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
+        var studentExamSummary = studentExamWithGradeDTO.studentExam;
 
         // check that all relevant information is visible to the student
         for (final var exercise : studentExamSummary.getExercises()) {
