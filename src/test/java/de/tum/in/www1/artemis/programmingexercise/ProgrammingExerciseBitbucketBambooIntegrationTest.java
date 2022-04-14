@@ -376,4 +376,29 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void testAutomaticCleanupGitRepositories() {
         programmingExerciseTestService.automaticCleanupGitRepositories();
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        programmingExerciseTestService.importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetProgrammingExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetProgrammingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(false, "instructor1");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+        programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
+    }
+
 }
