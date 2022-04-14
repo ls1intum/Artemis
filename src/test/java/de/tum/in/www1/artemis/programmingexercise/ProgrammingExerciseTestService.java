@@ -11,13 +11,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -316,7 +317,7 @@ public class ProgrammingExerciseTestService {
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo) throws Exception {
         final var projectKey = exercise.getProjectKey();
         String participantRepoName = projectKey.toLowerCase() + "-" + participantName;
-        var participantRepoTestUrl = getMockFileRepositoryUrl(studentRepo);
+        var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentRepo);
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
                 true);
@@ -324,10 +325,6 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockGetRepositorySlugFromRepositoryUrl(participantRepoName, participantRepoTestUrl);
         mockDelegate.mockGetProjectKeyFromRepositoryUrl(projectKey, participantRepoTestUrl);
         mockDelegate.mockGetRepositoryPathFromRepositoryUrl(projectKey + "/" + participantRepoName, participantRepoTestUrl);
-    }
-
-    public MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws MalformedURLException {
-        return new MockFileRepositoryUrl(repository.originRepoFile);
     }
 
     // TEST
@@ -441,7 +438,7 @@ public class ProgrammingExerciseTestService {
         // TODO: make sure that the local and remote repos of the origin exercise include the correct files so that the template upgrade service is invoked correctly
     }
 
-    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) throws MalformedURLException {
+    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) throws URISyntaxException {
         AuxiliaryRepository repository = database.addAuxiliaryRepositoryToExercise(sourceExercise);
         var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
@@ -878,6 +875,8 @@ public class ProgrammingExerciseTestService {
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerParticipationBuild(participation);
 
+        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
+
         // These will be updated when triggering a build
         participation.setInitializationState(InitializationState.INACTIVE);
         participation.setBuildPlanId(null);
@@ -908,6 +907,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockTriggerFailedBuild(participation);
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerFailedBuild(participation);
+        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -944,6 +944,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockTriggerInstructorBuildAll(participation);
         // We need to mock the call again because we are triggering the build twice in order to verify that the submission isn't re-created
         mockDelegate.mockTriggerInstructorBuildAll(participation);
+
+        mockDelegate.mockDefaultBranch(participation.getProgrammingExercise());
 
         // These will be updated triggering a failed build
         participation.setInitializationState(InitializationState.INACTIVE);
@@ -999,6 +1001,19 @@ public class ProgrammingExerciseTestService {
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
+        return request.get(url, expectedStatus, String.class);
+    }
+
+    private String exportSolutionRepository(LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
+        generateProgrammingExerciseForExport();
+
+        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf("SOLUTION"));
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
+        disableAutoGC(repository);
+        createAndCommitDummyFileInLocalRepository(localRepository, "some-file.java");
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-solution-repository/";
         return request.get(url, expectedStatus, String.class);
     }
 
@@ -1253,12 +1268,12 @@ public class ProgrammingExerciseTestService {
             var team = setupTeam(user);
             participation = database.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUrl(getMockFileRepositoryUrl(studentTeamRepo).getURL().toString());
+            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentTeamRepo).getURI().toString());
         }
         else {
             participation = database.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUrl(getMockFileRepositoryUrl(studentRepo).getURL().toString());
+            participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(studentRepo).getURI().toString());
         }
 
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -1417,7 +1432,7 @@ public class ProgrammingExerciseTestService {
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
-        var participantRepoTestUrl = getMockFileRepositoryUrl(studentTeamRepo);
+        var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
         doThrow(new InterruptedException()).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
@@ -1632,5 +1647,94 @@ public class ProgrammingExerciseTestService {
                 return diffs;
             }
         }
+    }
+
+    // TEST
+    public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course1, false);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "Imported", sourceExercise, course2);
+
+        exerciseToBeImported.setExampleSolutionPublicationDate(ZonedDateTime.now());
+
+        // Mock requests
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+
+        ProgrammingExercise newProgrammingExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()),
+                exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(newProgrammingExercise.getExampleSolutionPublicationDate()).as("programming example solution publication date was correctly set to null in the response")
+                .isNull();
+
+        ProgrammingExercise newProgrammingExerciseFromDatabase = programmingExerciseRepository.findById(newProgrammingExercise.getId()).get();
+        assertThat(newProgrammingExerciseFromDatabase.getExampleSolutionPublicationDate())
+                .as("programming example solution publication date was correctly set to null in the database").isNull();
+    }
+
+    // TEST
+    public void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+
+        if (isStudent) {
+            assertEquals(studentLogin, username, "The setup is done according to studentLogin value, another username may not work as expected");
+        }
+
+        // Utility function to avoid duplication
+        Function<Course, ProgrammingExercise> programmingExerciseGetter = c -> (ProgrammingExercise) c.getExercises().stream().filter(e -> e.getId().equals(exercise.getId()))
+                .findAny().get();
+
+        // Test example solution publication date not set.
+        exercise.setExampleSolutionPublicationDate(null);
+        programmingExerciseRepository.save(exercise);
+
+        Course courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        ProgrammingExercise programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
+
+        assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
+
+        // Test example solution publication date in the past.
+        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(exercise);
+
+        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
+
+        assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
+
+        // Test example solution publication date in the future.
+        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(exercise);
+
+        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
+
+        assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
+
+    }
+
+    // TEST
+    public void exportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+
+        // Test example solution publication date not set.
+        exercise.setExampleSolutionPublicationDate(null);
+        programmingExerciseRepository.save(exercise);
+
+        exportSolutionRepository(exerciseRepo, HttpStatus.FORBIDDEN);
+
+        // Test example solution publication date in the past.
+        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(exercise);
+
+        String zip = exportSolutionRepository(exerciseRepo, HttpStatus.OK);
+        assertThat(zip).isNotNull();
+
+        // Test example solution publication date in the future.
+        exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(exercise);
+
+        exportSolutionRepository(exerciseRepo, HttpStatus.FORBIDDEN);
+
     }
 }

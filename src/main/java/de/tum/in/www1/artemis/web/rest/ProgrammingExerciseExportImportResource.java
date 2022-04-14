@@ -415,4 +415,23 @@ public class ProgrammingExerciseExportImportResource {
 
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-solution-repository : sends a solution repository as a zip file without .git directory.
+     * @param exerciseId The id of the programming exercise
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping(EXPORT_SOLUTION_REPOSITORY)
+    @PreAuthorize("hasRole('USER')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Resource> exportSolutionRepository(@PathVariable long exerciseId) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
+        long start = System.nanoTime();
+        Optional<File> zipFile = programmingExerciseExportService.exportSolutionRepositoryForExercise(programmingExercise.getId(), new ArrayList<>());
+
+        return returnZipFileForRepositoryExport(zipFile, RepositoryType.SOLUTION.getName(), programmingExercise, start);
+    }
 }
