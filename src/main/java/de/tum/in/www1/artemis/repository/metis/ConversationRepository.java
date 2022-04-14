@@ -18,21 +18,21 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
 
     @Query("""
              SELECT DISTINCT conversation FROM Conversation conversation
-             LEFT JOIN FETCH conversation.conversationParticipants conversationParticipant
+             LEFT JOIN FETCH conversation.conversationParticipants
              WHERE conversation.id = :#{#conversationId}
-             AND conversationParticipant.conversation.id = conversation.id
             """)
     Conversation findConversationByIdWithConversationParticipants(@Param("conversationId") Long conversationId);
 
+    /**
+     * we have to JOIN twice because JPA does not allow to define an ALIAS ('conversationParticipant' in our case) after JOIN FETCH
+     * see: https://stackoverflow.com/questions/5816417/how-to-properly-express-jpql-join-fetch-with-where-clause-as-jpa-2-criteriaq
+     */
     @Query("""
              SELECT DISTINCT conversation FROM Conversation conversation
-             LEFT JOIN FETCH conversation.conversationParticipants conversationParticipant
+             LEFT JOIN conversation.conversationParticipants conversationParticipant
+             LEFT JOIN FETCH conversation.conversationParticipants
              WHERE conversation.course.id = :#{#courseId}
-             AND EXISTS(
-                 SELECT conversationParticipant FROM ConversationParticipant conversationParticipant
-                 WHERE conversationParticipant.conversation.id = conversation.id
-                 AND conversationParticipant.user.id = :#{#userId}
-             )
+             AND conversationParticipant.user.id = :#{#userId}
              ORDER BY conversation.lastMessageDate DESC
             """)
     List<Conversation> findConversationsOfUserWithConversationParticipants(@Param("courseId") Long courseId, @Param("userId") Long userId);
