@@ -1,25 +1,30 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -34,14 +39,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
@@ -58,8 +61,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final GitService gitService;
 
-    private final Optional<VersionControlService> versionControlService;
-
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
 
     private final BambooBuildPlanService bambooBuildPlanService;
@@ -68,20 +69,16 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final UrlService urlService;
 
-    private final ExerciseDateService exerciseDateService;
-
-    public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
+    public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService, ExerciseDateService exerciseDateService) {
+            UrlService urlService, BuildLogEntryService buildLogService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
-        this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
         this.urlService = urlService;
-        this.exerciseDateService = exerciseDateService;
     }
 
     @Override
@@ -105,13 +102,13 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
+    public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
         final var buildPlanId = participation.getBuildPlanId();
         final var repositoryUrl = participation.getVcsRepositoryUrl();
         final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         final var planKey = participation.getBuildPlanId();
         final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, Optional.empty());
+        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, defaultBranch, Optional.empty());
         enablePlan(projectKey, planKey);
     }
 
@@ -292,7 +289,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
-        var buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()),
+        var buildLogEntries = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()),
                 programmingLanguage);
         var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
@@ -467,16 +464,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
-        try {
-            final var vcsRepoName = versionControlService.get().getRepositoryName(new VcsRepositoryUrl(newRepoUrl));
-            String defaultBranchName = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newRepoUrl));
-            continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, defaultBranchName,
-                    optionalTriggeredByRepositories);
-        }
-        catch (MalformedURLException e) {
-            throw new BambooException(e.getMessage(), e);
-        }
+            String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
+        final var vcsRepoName = urlService.getRepositorySlugFromRepositoryUrlString(newRepoUrl);
+        continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, newDefaultBranch,
+                optionalTriggeredByRepositories);
     }
 
     /**
@@ -499,70 +490,14 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
     }
 
-    /**
-     * React to a new build result from Bamboo, create the result and feedbacks and link the result to the submission and participation.
-     *
-     * @param participation The participation for which the build finished.
-     * @param requestBody   The result notification received from the CI-Server.
-     * @return the created result.
-     */
     @Override
-    public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
-        log.debug("Retrieving build result (NEW) ...");
-        try {
-            final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
-            // Filter the first build plan in case it was automatically executed when the build plan was created.
-            if (isFirstBuildForThisPlan(buildResult)) {
-                return null;
-            }
-
-            var newResult = createResultFromBuildResult(buildResult, participation);
-
-            // Fetch submission or create a fallback
-            var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult)
-                    .orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            latestSubmission.setBuildFailed(newResult.getResultString().equals("No tests found"));
-
-            // Add artifacts to submission
-            final var hasArtifact = buildResult.getBuild().isArtifact();
-            latestSubmission.setBuildArtifact(hasArtifact);
-
-            var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
-            var buildLogs = extractAndFilterBuildLogs(buildResult, programmingLanguage);
-            var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
-
-            // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-            latestSubmission.setBuildLogEntries(savedBuildLogs);
-
-            // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
-            newResult.setSubmission(latestSubmission);
-
-            newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission);
-            return newResult;
+    public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
+        final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
+        // Filter the first build plan in case it was automatically executed when the build plan was created.
+        if (isFirstBuildForThisPlan(buildResult)) {
+            return null;
         }
-        catch (Exception e) {
-            log.error("Error when creating build result from Bamboo notification", e);
-            throw new BambooException("Could not create build result from Bamboo notification", e);
-        }
-    }
-
-    private List<BuildLogEntry> extractAndFilterBuildLogs(BambooBuildResultNotificationDTO buildResult, ProgrammingLanguage programmingLanguage) {
-        List<BuildLogEntry> buildLogEntries = new ArrayList<>();
-
-        // Store logs into database. Append logs of multiple jobs.
-        for (var job : buildResult.getBuild().getJobs()) {
-            for (var bambooLog : job.getLogs()) {
-                // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog())));
-            }
-        }
-
-        if (buildLogEntries.isEmpty()) {
-            return buildLogEntries;
-        }
-
-        // Filter unwanted logs
-        return removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
+        return buildResult;
     }
 
     @Override
@@ -600,15 +535,14 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
+    // TODO: extract common parts with JenkinsService.addFeedbackToResult into a common method. If necessary provide additional (abstract) methods in
+    // AbstractBuildResultNotificationDTO. An alternative would be to first convert the two different build results (Jenkins/Bamboo) into an intermediate common representation and
+    // then apply the logic
     protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
         final var jobs = ((BambooBuildResultNotificationDTO) buildResult).getBuild().getJobs();
-        if (jobs == null) {
-            return;
-        }
-
-        final ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
-        final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        final ProjectType projectType = programmingExercise.getProjectType();
+        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+        final var programmingLanguage = programmingExercise.getProgrammingLanguage();
+        final var projectType = programmingExercise.getProjectType();
 
         for (final var job : jobs) {
             // 1) add feedback for failed test cases
@@ -622,16 +556,14 @@ public class BambooService extends AbstractContinuousIntegrationService {
             }
 
             // 3) process static code analysis feedback
-            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
-                var reports = job.getStaticCodeAnalysisReports();
-                if (reports != null) {
-                    var feedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(reports);
-                    result.addFeedbacks(feedbackList);
-                }
+            final var staticCodeAnalysisReports = job.getStaticCodeAnalysisReports();
+            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
+                var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+                result.addFeedbacks(scaFeedbackList);
             }
 
             // Relevant feedback is negative
-            result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive()));
+            result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
         }
     }
 

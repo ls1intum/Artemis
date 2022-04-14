@@ -130,9 +130,4 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
         return targetRepoUrl;
     }
-
-    @Override
-    public String getRepositoryName(VcsRepositoryUrl repositoryUrl) {
-        return urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-    }
 }

@@ -806,18 +806,150 @@ Course Info Bar
     }
 }
 
+/* Bootstrap 5 specific fix for flickering tooltips */
+.tooltip {
+    pointer-events: none;
+}
+
+/* Boostrap 5 Print Styles (https://github.com/coliff/bootstrap-print-css/) */
+@media print {
+    *,
+    *::before,
+    *::after {
+        text-shadow: none !important;
+        box-shadow: none !important;
+    }
+    a:not(.btn) {
+        text-decoration: underline;
+    }
+    abbr[title]::after {
+        content: ' (' attr(title) ')';
+    }
+    pre {
+        white-space: pre-wrap !important;
+    }
+    pre,
+    blockquote {
+        border: 1px solid #adb5bd;
+        page-break-inside: avoid;
+    }
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+    h2,
+    h3 {
+        page-break-after: avoid;
+    }
+    @page {
+        size: a3;
+    }
+    body {
+        min-width: 992px !important;
+    }
+    .container {
+        min-width: 992px !important;
+    }
+    .badge {
+        border: 1px solid #000;
+    }
+    .table {
+        border-collapse: collapse !important;
+    }
+    .table td,
+    .table th {
+        background-color: #fff !important;
+    }
+    .table-bordered th,
+    .table-bordered td {
+        border: 1px solid #dee2e6 !important;
+    }
+    .table-dark {
+        color: inherit;
+    }
+    .table-dark th,
+    .table-dark td,
+    .table-dark thead th,
+    .table-dark tbody + tbody {
+        border-color: #dee2e6;
+    }
+}
+
+/* Custom fixes for printing */
 @media print {
     .container {
         min-width: 0 !important;
     }
-    .card {
+    .card,
+    .card-header,
+    .card-footer {
         display: block !important;
+        border: 1px solid #000;
     }
-}
+    /* Print detail views with full width */
+    .row.justify-content-center > .col-8 {
+        width: 100% !important;
+    }
+    /* Hide buttons that are not part of a group */
+    :not(.btn-group) > {
+        button,
+        .btn {
+            display: none !important;
+        }
+    }
+    /* Adjust border with for button groups so they can be printed */
+    div.btn-group > .btn.selected {
+        border-width: 4px;
+    }
+    /* Hide navbar toggle */
+    [data-toggle='collapse'] {
+        display: none;
+    }
+    /* Add columns to description list to avoid long pages */
+    dl {
+        columns: 2;
+    }
+    /* Hide footer */
+    .footer,
+    .edit-quiz-footer {
+        display: none;
+    }
+    /* Hide popovers and notifications */
+    .connection-warning,
+    .popover,
+    .alert-wrap {
+        display: none;
+    }
+    /* Fix progress bars */
+    .progress {
+        position: relative;
 
-/* Bootstrap 5 specific fix for flickering tooltips */
-.tooltip {
-    pointer-events: none;
+        &:before {
+            display: block;
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 0;
+            border-bottom: 2rem solid #e9ecef;
+        }
+    }
+    .progress-bar {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
+        border-bottom: 2rem solid #5b9cd4;
+    }
 }
 
 /* ==========================================================================

@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.web.rest.ParticipationResource;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType;
@@ -47,7 +46,7 @@ import de.tum.in.www1.artemis.web.rest.repository.util.RepositoryExecutor;
  */
 public abstract class RepositoryResource {
 
-    protected final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
+    protected final Logger log = LoggerFactory.getLogger(RepositoryResource.class);
 
     protected final AuthorizationCheckService authCheckService;
 
@@ -80,9 +79,9 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repository if available.
-     * @throws IOException if the repository folder can't be accessed.
+     * @throws IOException            if the repository folder can't be accessed.
      * @throws IllegalAccessException if the user is not allowed to access the repository.
-     * @throws GitAPIException if the repository can't be checked out.
+     * @throws GitAPIException        if the repository can't be checked out.
      */
     abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout)
             throws IOException, IllegalAccessException, IllegalArgumentException, GitAPIException;
@@ -144,7 +143,7 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @param filename of the file to create.
-     * @param request to retrieve input stream from.
+     * @param request  to retrieve input stream from.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> createFile(Long domainId, String filename, HttpServletRequest request) {
@@ -161,9 +160,9 @@ public abstract class RepositoryResource {
     /**
      * Create new folder.
      *
-     * @param domainId that serves as an abstract identifier for retrieving the repository.
+     * @param domainId   that serves as an abstract identifier for retrieving the repository.
      * @param folderName of the folder to create.
-     * @param request to retrieve inputStream from.
+     * @param request    to retrieve inputStream from.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> createFolder(Long domainId, String folderName, HttpServletRequest request) {
@@ -221,9 +220,11 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
-            repositoryService.pullChanges(repository);
-            return new ResponseEntity<>(HttpStatus.OK);
+            try (Repository repository = getRepository(domainId, RepositoryActionType.READ, true)) {
+                repositoryService.pullChanges(repository);
+
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
         });
     }
 
@@ -262,8 +263,8 @@ public abstract class RepositoryResource {
      * Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
-     * @throws GitAPIException if the repository can't be checked out to retrieve the status.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
+     * @throws GitAPIException if the repository can't be checked out to retrieve the status.
      */
     public ResponseEntity<RepositoryStatusDTO> getStatus(Long domainId) throws GitAPIException {
         log.debug("REST request to get clean status for Repository for domainId : {}", domainId);
@@ -325,17 +326,17 @@ public abstract class RepositoryResource {
     }
 
     /**
-     * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store it's error in the resulting
+     * Iterate through the file submissions and try to save each one. Will continue iterating when an error is encountered on updating a file and store its error in the resulting
      * Map.
      *
      * @param submissions the file submissions (changes) that should be saved in the repository
-     * @param repository the git repository in which the file changes should be saved
+     * @param repository  the git repository in which the file changes should be saved
      * @return a map of <filename, error | null>
      */
     protected Map<String, String> saveFileSubmissions(List<FileSubmission> submissions, Repository repository) {
         // If updating the file fails due to an IOException, we send an error message for the specific file and try to update the rest
         Map<String, String> fileSaveResult = new HashMap<>();
-        submissions.forEach((submission) -> {
+        submissions.forEach(submission -> {
             try {
                 fetchAndUpdateFile(submission, repository);
                 fileSaveResult.put(submission.getFileName(), null);

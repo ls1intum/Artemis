@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -176,6 +177,10 @@ public class ModelFactory {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setFilePattern(filePattern);
         return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
+    }
+
+    public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws URISyntaxException {
+        return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
     }
 
     private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
@@ -510,6 +515,7 @@ public class ModelFactory {
 
     /**
      * Generates a TextAssessment event with the given parameters
+     *
      * @param eventType the type of the event
      * @param feedbackType the type of the feedback
      * @param segmentType the segment type of the event
@@ -537,6 +543,7 @@ public class ModelFactory {
 
     /**
      * Generates a list of different combinations of assessment events based on the given parameters
+     *
      * @param courseId the course id of the event
      * @param userId the userid of the event
      * @param exerciseId the exercise id of the event
@@ -569,33 +576,58 @@ public class ModelFactory {
         return events;
     }
 
+    /**
+     * Generates a RealExam with student review dates set
+     *
+     * @param course the associated course
+     * @return the created exam
+     */
     public static Exam generateExamWithStudentReviewDates(Course course) {
+        Exam exam = generateExamHelper(course, false);
         ZonedDateTime currentTime = ZonedDateTime.now();
-        Exam exam = new Exam();
-        exam.setTitle("Test exam 1");
-        exam.setVisibleDate(currentTime);
-        exam.setStartDate(currentTime.plusMinutes(10));
-        exam.setEndDate(currentTime.plusMinutes(60));
-        exam.setStartText("Start Text");
-        exam.setEndText("End Text");
-        exam.setConfirmationStartText("Confirmation Start Text");
-        exam.setConfirmationEndText("Confirmation End Text");
-        exam.setMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
         exam.setExamStudentReviewStart(currentTime);
         exam.setExamStudentReviewEnd(currentTime.plusMinutes(60));
-        exam.setCourse(course);
         return exam;
     }
 
+    /**
+     * Generates a RealExam without student review dates set
+     *
+     * @param course the associated course
+     * @return the created exam
+     */
     public static Exam generateExam(Course course) {
+        return generateExamHelper(course, false);
+    }
+
+    /**
+     * Generates a TestExam (TestExams have no student review dates)
+     *
+     * @param course the associated course
+     * @return the created exam
+     */
+    public static Exam generateTestExam(Course course) {
+        return generateExamHelper(course, true);
+    }
+
+    /**
+     * Helper method to create an exam
+     *
+     * @param course the associated course
+     * @param testExam Boolean flag to determine whether it is a TestExam
+     * @return the created Exam
+     */
+    private static Exam generateExamHelper(Course course, boolean testExam) {
         ZonedDateTime currentTime = ZonedDateTime.now();
         Exam exam = new Exam();
-        exam.setTitle("Test exam 1");
+        exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");
+        exam.setTestExam(testExam);
         exam.setVisibleDate(currentTime);
         exam.setStartDate(currentTime.plusMinutes(10));
-        exam.setEndDate(currentTime.plusMinutes(60));
+        exam.setEndDate(currentTime.plusMinutes(testExam ? 80 : 60));
+        exam.setWorkingTime(3000);
         exam.setStartText("Start Text");
         exam.setEndText("End Text");
         exam.setConfirmationStartText("Confirmation Start Text");
@@ -818,6 +850,7 @@ public class ModelFactory {
 
     /**
      * Generates a minimal student participation without a specific user attached.
+     *
      * @param initializationState the state of the participation
      * @param exercise the referenced exercise of the participation
      * @return the StudentParticipation created
@@ -953,7 +986,6 @@ public class ModelFactory {
 
     /**
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
-     *
      * Uses {@link #generateTestResultDTO(String, List, List, ProgrammingLanguage, boolean)} as basis.
      * Then adds a new {@link TestsuiteDTO} with name "CustomFeedbacks" to it.
      * This Testsuite has four {@link TestCaseDTO}s:
@@ -1209,6 +1241,7 @@ public class ModelFactory {
 
     /**
      * Generates example TextSubmissions
+     *
      * @param count How many submissions should be generated (max. 10)
      * @return A list containing the generated TextSubmissions
      */
@@ -1242,8 +1275,8 @@ public class ModelFactory {
     }
 
     /**
-     *
      * Generate an example organization entity
+     *
      * @param name of organization
      * @param shortName of organization
      * @param url of organization

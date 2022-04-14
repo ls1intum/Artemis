@@ -194,13 +194,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
         jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
         // Note: Step 2c) is not needed in the Jenkins setup
-
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
     }
 
     @Override
