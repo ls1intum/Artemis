@@ -84,10 +84,14 @@
     </div>
     <div class="separator"></div>
     <div class="d-flex justify-content-end">
-        <button *ngIf="exportReady" class="btn btn-primary btn-sm" (click)="exportResults()">
-            <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
-            <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Results as CSV</span>
-        </button>
+        <jhi-csv-export-button
+            *ngIf="exportReady"
+            title="instructorDashboard.exportCSV"
+            [icon]="faDownload"
+            [disabled]="!(students.length > 0)"
+            [buttonSize]="ButtonSize.SMALL"
+            (onExport)="exportResults($event)"
+        ></jhi-csv-export-button>
     </div>
     <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">

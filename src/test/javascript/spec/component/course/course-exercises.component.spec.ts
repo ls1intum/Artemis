@@ -286,6 +286,26 @@ describe('CourseExercisesComponent', () => {
         expect(component.weeklyExercisesGrouped[sundayBeforeDueDate].exercises).toEqual([newExercise]);
     });
 
+    it('should apply filters to the next relevant exercise', () => {
+        const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
+        newExercise.releaseDate = dayjs().subtract(3, 'hours');
+        newExercise.dueDate = dayjs().add(3, 'hours');
+        newExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+
+        component.course!.exercises = [newExercise];
+
+        component.ngOnChanges();
+
+        expect(component.nextRelevantExercise).toEqual({
+            exercise: newExercise,
+            dueDate: newExercise.dueDate,
+        });
+
+        component.toggleFilters([ExerciseFilter.OPTIONAL]);
+
+        expect(component.nextRelevantExercise).toBeUndefined();
+    });
+
     it('should sort upcoming exercises by ascending individual due dates', () => {
         const exerciseRegularDueDate = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
         exerciseRegularDueDate.releaseDate = dayjs().add(10, 'days');

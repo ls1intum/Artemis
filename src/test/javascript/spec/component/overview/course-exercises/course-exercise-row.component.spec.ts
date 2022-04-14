@@ -155,12 +155,14 @@ describe('CourseExerciseRowComponent', () => {
 
     it('Participation status of programming exercise should evaluate to EXERCISE_MISSED', () => {
         setupExercise(ExerciseType.PROGRAMMING, dayjs().subtract(1, 'day'));
+        comp.ngOnChanges();
         comp.ngOnInit();
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
     });
 
     it('Participation status of programming exercise should evaluate to UNINITIALIZED', () => {
         setupExercise(ExerciseType.PROGRAMMING, dayjs().add(1, 'day'));
+        comp.ngOnChanges();
         comp.ngOnInit();
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.UNINITIALIZED);
     });
@@ -175,6 +177,7 @@ describe('CourseExerciseRowComponent', () => {
         comp.exercise.studentParticipations = [studentParticipation];
 
         getAllParticipationsStub.mockReturnValue(studentParticipation);
+        comp.ngOnChanges();
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.INITIALIZED);
@@ -190,6 +193,7 @@ describe('CourseExerciseRowComponent', () => {
         comp.exercise.studentParticipations = [studentParticipation];
 
         getAllParticipationsStub.mockReturnValue(studentParticipation);
+        comp.ngOnChanges();
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
@@ -228,6 +232,7 @@ describe('CourseExerciseRowComponent', () => {
             getAllParticipationsStub.mockReturnValue(studentParticipation);
         }
 
+        comp.ngOnChanges();
         comp.ngOnInit();
     };
 
@@ -242,6 +247,7 @@ describe('CourseExerciseRowComponent', () => {
         comp.exercise.studentParticipations = [studentParticipation];
 
         getAllParticipationsStub.mockReturnValue(studentParticipation);
+        comp.ngOnChanges();
         comp.ngOnInit();
     };
 
