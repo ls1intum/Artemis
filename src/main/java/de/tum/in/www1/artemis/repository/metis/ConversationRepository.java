@@ -23,10 +23,8 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             """)
     Conversation findConversationByIdWithConversationParticipants(@Param("conversationId") Long conversationId);
 
-    /**
-     * we have to JOIN twice because JPA does not allow to define an ALIAS ('conversationParticipant' in our case) after JOIN FETCH
-     * see: https://stackoverflow.com/questions/5816417/how-to-properly-express-jpql-join-fetch-with-where-clause-as-jpa-2-criteriaq
-     */
+    // we have to JOIN twice because JPA does not allow to define an ALIAS ('conversationParticipant' in our case) after JOIN FETCH
+    // see: https://stackoverflow.com/questions/5816417/how-to-properly-express-jpql-join-fetch-with-where-clause-as-jpa-2-criteriaq
     @Query("""
              SELECT DISTINCT conversation FROM Conversation conversation
              LEFT JOIN conversation.conversationParticipants conversationParticipant
