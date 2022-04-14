@@ -62,6 +62,7 @@ public class PlagiarismCaseService {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         plagiarismCase.setVerdictBy(user);
         plagiarismCaseRepository.save(plagiarismCase);
+        // Notify the student about the verdict
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, plagiarismCase.getStudent());
         return plagiarismCase;
     }

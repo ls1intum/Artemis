@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 
 public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -37,23 +38,24 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "User")
-    public void testUpdatePlagiarismComparisonStatus_forbidden_student() {
-
+    @WithMockUser(username = "student1", roles = "User")
+    public void testUpdatePlagiarismComparisonStatus_forbidden_student() throws Exception {
+        request.put("/api/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdatePlagiarismComparisonStatus_forbidden_tutor() {
+    public void testUpdatePlagiarismComparisonStatus_forbidden_tutor() throws Exception {
+        request.put("/api/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "Editor")
+    @WithMockUser(username = "editor1", roles = "Editor")
     public void testUpdatePlagiarismComparisonStatus() throws Exception {
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "User")
+    @WithMockUser(username = "student1", roles = "User")
     public void testGetPlagiarismComparisonsFoSplitView_student() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -68,7 +70,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "User")
+    @WithMockUser(username = "editor1", roles = "Editor")
     public void testGetPlagiarismComparisonsFoSplitView_editor() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
