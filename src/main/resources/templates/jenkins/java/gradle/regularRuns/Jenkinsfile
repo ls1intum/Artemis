@@ -21,7 +21,9 @@ pipeline {
             }
             stage('Build') {
                 steps {
-                    sh './gradlew clean test'
+                    timestamps {
+                        sh './gradlew clean test'
+                    }
                 }
             }
         }
