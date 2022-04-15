@@ -361,7 +361,7 @@ public class ProgrammingPlagiarismDetectionService {
                 gitService.resetToOriginHead(repo); // start with clean state
                 downloadedRepositories.add(repo);
             }
-            catch (GitException | GitAPIException | InterruptedException | InvalidPathException ex) {
+            catch (GitException | GitAPIException | InvalidPathException ex) {
                 log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUrl(), programmingExercise.getTitle(),
                         ex.getMessage());
             }
@@ -373,7 +373,7 @@ public class ProgrammingPlagiarismDetectionService {
             gitService.resetToOriginHead(templateRepo); // start with clean state
             downloadedRepositories.add(templateRepo);
         }
-        catch (GitException | GitAPIException | InterruptedException ex) {
+        catch (GitException | GitAPIException ex) {
             log.error("Clone template repository {} in exercise '{}' did not work as expected: {}", programmingExercise.getTemplateParticipation().getVcsRepositoryUrl(),
                     programmingExercise.getTitle(), ex.getMessage());
         }

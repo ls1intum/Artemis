@@ -25,6 +25,7 @@ import javax.validation.constraints.NotNull;
 
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -1125,9 +1126,9 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void testExportCourseCannotExportSingleParticipationInterruptException() throws Exception {
+    public void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
-        testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new InterruptedException("interruptedException"));
+        testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new CanceledException("Checkout canceled"));
     }
 
     // Test
@@ -1142,7 +1143,7 @@ public class ProgrammingExerciseTestService {
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new GitException("GitException"));
     }
 
-    private void testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(Exception exceptionToThrow) throws IOException, GitAPIException, InterruptedException {
+    private void testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(Exception exceptionToThrow) throws IOException, GitAPIException {
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
         // Mock error when exporting a participation
@@ -1165,7 +1166,7 @@ public class ProgrammingExerciseTestService {
         }
     }
 
-    private Course createCourseWithProgrammingExerciseAndParticipationWithFiles() throws GitAPIException, IOException, InterruptedException {
+    private Course createCourseWithProgrammingExerciseAndParticipationWithFiles() throws GitAPIException, IOException {
         course.setEndDate(ZonedDateTime.now().minusMinutes(4));
         course.setCourseArchivePath(null);
         course.setExercises(Set.of(exercise));
@@ -1435,7 +1436,7 @@ public class ProgrammingExerciseTestService {
         var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
-        doThrow(new InterruptedException()).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
+        doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()
         assertThat(Files.exists(teamLocalPath)).isTrue();
