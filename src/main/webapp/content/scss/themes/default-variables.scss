@@ -18,6 +18,78 @@ $brighter-body-bg: lighten($body-bg, 20);
 // Border
 $border-color: #979797;
 
+// Global.scss colors
+$colored-btn-font: #fff;
+$default-btn-font: #333;
+$default-btn-background: #fff;
+$default-btn-border: #ccc;
+
+$border-lightgrey: rgba(0, 0, 0, 0.125);
+$text-lightgrey: rgba(0, 0, 0, 0.125);
+$form-control-focus-background: white;
+$browserupgrade-color: black;
+$browserupgrade-color-background: #ccc;
+$ng-valid-border: green;
+$ng-invalid-border: red;
+$gutter-background: #f1f1f1;
+$error-color: white;
+$error-background: red;
+$readonly-background: #eee;
+$jh-entity-details-dd-border: #eee;
+$editor-outline-background: #f8f9fa;
+$btn-total-score-color: #337ab7;
+
+$result-orange: orange;
+$result-late: gray;
+
+$negative-color: #c7254e;
+$negative-background: #f9f2f4;
+$positive-color: green;
+$positive-background: #f2f9f2;
+
+$pre-color: #333;
+$pre-background: #f5f5f5;
+$pre-border: #ccc;
+
+$code-success-color: green;
+$code-success-background: #f2f9f2;
+$code-error-color: #c7254e;
+$code-error-background: #f9f2f4;
+$code-warning-color: #e68a00;
+$code-warning-background: #fff5e6;
+
+$code-password: transparent;
+$code-password-background: black;
+$code-password-selection: white;
+$code-password-selection-background: #3297fd;
+$code-password-hover: white;
+
+$unreferenced-feedback-background: whitesmoke;
+$displaycolor-background: #f8f9fa;
+
+$markdown-preview-editor-background: #f8f9fa;
+$markdown-preview-red: #ca2024;
+$markdown-preview-green: #3ea119;
+$markdown-preview-white: #ffffff;
+$markdown-preview-black: #000000;
+$markdown-preview-yellow: #fffa5c;
+$markdown-preview-blue: #0d3cc2;
+$markdown-preview-lila: #b05db8;
+$markdown-preview-orange: #d86b1f;
+$markdown-preview-blockquote: #6a737d;
+$markdown-preview-blockquote-border: #dfe2e5;
+
+$connection-status-admin: green;
+$connection-status-admin-disconnected: red;
+
+$mat-autocomplete-visible-box-shadow: rgb(100 100 100);
+$mat-form-field-outline: #ccc;
+
+$connection-warning-popover-arrow-border: #f1d1d1e0;
+$connection-warning-popover-body: #600c0c;
+$connection-warning-popover-body-background: #f1d1d1e0;
+$connection-warning-popover-body-shadow: rgba(0, 0, 0, 0.55);
+
 // Footer
 $footer-bg: #fff;
 

@@ -83,7 +83,7 @@ a.disabled {
 .btn-info:hover,
 .btn-success,
 .btn-success:hover {
-    color: #fff !important;
+    color: var(--colored-btn-font) !important;
 }
 
 a.btn {
@@ -91,9 +91,9 @@ a.btn {
 }
 
 .btn-default {
-    color: #333;
-    background-color: #fff;
-    border-color: #ccc;
+    color: var(--default-btn-font);
+    background-color: var(--default-btn-background);
+    border-color: var(--default-btn-border);
 }
 
 .footer {
@@ -130,11 +130,11 @@ a.btn {
 }
 
 .border-lightgrey {
-    border-color: rgba(0, 0, 0, 0.125);
+    border-color: var(--border-lightgrey);
 }
 
 .text-lightgrey {
-    color: rgba(0, 0, 0, 0.125);
+    color: var(--text-lightgrey);
 }
 
 .form-group {
@@ -153,7 +153,7 @@ a.btn {
 .form-check-input,
 .form-control:hover,
 .form-control:focus {
-    background-color: white;
+    background-color: var(--form-control-focus-background);
 }
 
 .form-inline .form-control {
@@ -180,8 +180,8 @@ Browser Upgrade Prompt
 ========================================================================== */
 .browserupgrade {
     margin: 0.2em 0;
-    background: #ccc;
-    color: #000;
+    background: var(--browserupgrade-color-background);
+    color: var(--browserupgrade-color);
     padding: 0.2em 0;
 }
 
@@ -205,18 +205,18 @@ Generic styles
 /* Error highlight on input fields */
 .ng-valid[required],
 .ng-valid.required {
-    border-left: 5px solid green;
+    border-left: 5px solid var(--ng-valid-border);
 }
 
 .ng-invalid:not(form) {
-    border-left: 5px solid red;
+    border-left: 5px solid var(--ng-invalid-border);
 }
 
 /* other generic styles */
 
 // This class refers to the gutter inserted by split.js for its split view
 .gutter {
-    background-color: #f1f1f1;
+    background-color: var(--gutter-background);
     cursor: col-resize;
     position: relative;
     transition: background-color 0.2s;
@@ -245,8 +245,8 @@ Generic styles
 }
 
 .error {
-    color: white;
-    background-color: red;
+    color: var(--error-color);
+    background-color: var(--error-background);
 }
 
 .invalid-feedback {
@@ -271,7 +271,7 @@ Generic styles
 }
 
 .readonly {
-    background-color: #eee;
+    background-color: var(--readonly-background);
     opacity: 1;
 }
 
@@ -359,7 +359,7 @@ entity detail page css
         }
 
         dd {
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--jh-entity-details-dd-border);
             padding-left: 180px;
             margin-left: 0;
         }
@@ -367,7 +367,7 @@ entity detail page css
 }
 
 .editor-outline-background {
-    background: #f8f9fa;
+    background: var(--editor-outline-background);
     max-width: max-content;
 }
 
@@ -451,7 +451,7 @@ ui bootstrap tweaks
 }
 
 .btn-total-score {
-    color: #337ab7;
+    color: var(--btn-total-score-color);
     border-radius: 6px;
     border: none;
 }
@@ -464,19 +464,19 @@ ui bootstrap tweaks
 /* jhipster-needle-scss-add-main JHipster will add new css style */
 
 .result-orange {
-    color: orange;
+    color: var(--result-orange);
 }
 
 a.result-orange:hover {
-    color: orange;
+    color: var(--result-orange);
 }
 
 .result--late {
-    color: gray;
+    color: var(--result-late);
 }
 
 a.result--late:hover {
-    color: gray;
+    color: var(--result-late);
 }
 
 span.result {
@@ -506,13 +506,13 @@ span.bold {
 }
 
 .negative {
-    color: #c7254e;
-    background-color: #f9f2f4;
+    color: var(--negative-color);
+    background-color: var(--negative-background);
 }
 
 .positive {
-    color: green;
-    background-color: #f2f9f2;
+    color: var(--positive-color);
+    background-color: var(--positive-background);
 }
 
 table {
@@ -542,9 +542,9 @@ pre {
     white-space: pre-wrap;
     word-break: break-word;
     word-wrap: break-word;
-    color: #333;
-    background-color: #f5f5f5;
-    border: 1px solid #ccc;
+    color: var(--pre-color);
+    background-color: var(--pre-background);
+    border: 1px solid var(--pre-border);
     border-radius: 4px;
 }
 
@@ -560,34 +560,34 @@ pre {
 .code-success {
     padding: 2px 4px;
     font-size: 90%;
-    color: green;
-    background-color: #f2f9f2;
+    color: var(--code-success-color);
+    background-color: var(--code-success-background);
     border-radius: 4px;
     font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .code-error {
-    color: #c7254e;
-    background-color: #f9f2f4;
+    color: var(--code-error-color);
+    background-color: var(--code-error-background);
 }
 
 .code-warning {
-    color: #e68a00;
-    background-color: #fff5e6;
+    color: var(--code-warning-color);
+    background-color: var(--code-warning-background);
 }
 
 code.password {
-    color: transparent !important;
-    background: black;
+    color: var(--code-password) !important;
+    background: var(--code-password-background);
 }
 
 code.password::selection {
-    background: #3297fd;
-    color: white !important;
+    background: var(--code-password-selection-background);
+    color: var(--code-password-selection) !important;
 }
 
 code.password:hover {
-    color: white !important;
+    color: var(--code-password-hover) !important;
 }
 
 .apollon-editor label {
@@ -677,11 +677,11 @@ code.password:hover {
 }
 
 .unreferencedFeedback {
-    background-color: whitesmoke;
+    background-color: var(--unreferenced-feedback-background);
 }
 
 .displaycolor {
-    background: #f8f9fa;
+    background: var(--displaycolor-background);
 }
 
 // This puts the owl-datetime-picker on top of the ngbootstrap modal
@@ -715,45 +715,20 @@ Course Info Bar
 ========================================================================== */
 .markdown-preview {
     .background-editor-color {
-        background: #f8f9fa;
+        background: var(--markdown-preview-editor-background);
     }
 
-    .red {
-        color: #ca2024;
-    }
-
-    .green {
-        color: #3ea119;
-    }
-
-    .white {
-        color: #ffffff;
-    }
-
-    .black {
-        color: #000000;
-    }
-
-    .yellow {
-        color: #fffa5c;
-    }
-
-    .blue {
-        color: #0d3cc2;
-    }
-
-    .lila {
-        color: #b05db8;
-    }
-
-    .orange {
-        color: #d86b1f;
+    $color-options: 'red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange';
+    @each $col in $color-options {
+        .#{$col} {
+            color: var(--markdown-preview-#{$col});
+        }
     }
 
     blockquote {
         padding: 0 1em;
-        color: #6a737d;
-        border-left: 0.25em solid #dfe2e5;
+        color: var(--markdown-preview-blockquote);
+        border-left: 0.25em solid var(--markdown-preview-blockquote-border);
     }
 
     img {
@@ -788,10 +763,10 @@ Course Info Bar
 
 .connection-status-admin {
     font-size: 14px;
-    color: green;
+    color: var(--connection-status-admin);
 
     &.disconnected {
-        color: red;
+        color: var(--connection-status-admin-disconnected);
     }
 
     i {
@@ -1227,12 +1202,12 @@ Course Info Bar
 }
 
 .mat-autocomplete-panel.mat-autocomplete-visible {
-    box-shadow: 3px 3px 6px rgb(100 100 100);
+    box-shadow: 3px 3px 6px var(--mat-autocomplete-visible-box-shadow);
 }
 
 .mat-form-field-outline {
     top: -0.1em !important;
-    color: #ccc;
+    color: var(--mat-form-field-outline);
 }
 
 /* Connection Warning Tooltip */
@@ -1242,21 +1217,21 @@ Course Info Bar
     background-color: transparent;
 
     .popover-arrow::after {
-        border-bottom-color: #f1d1d1e0;
+        border-bottom-color: var(--connection-warning-popover-arrow-border);
     }
 
     .popover-body {
         border: none;
         max-width: 70vw;
         width: 400px;
-        background-color: #f1d1d1e0;
-        color: #600c0c;
+        background-color: var(--connection-warning-popover-body-background);
+        color: var(--connection-warning-popover-body);
         font-size: 14px;
         display: flex;
         align-items: center;
         gap: 15px;
         padding-left: 20px;
-        box-shadow: rgba(0, 0, 0, 0.55) 0 5px 15px;
+        box-shadow: var(--connection-warning-popover-body-shadow) 0 5px 15px;
     }
 }
 
