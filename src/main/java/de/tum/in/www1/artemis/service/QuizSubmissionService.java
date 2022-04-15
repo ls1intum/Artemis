@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -40,14 +41,18 @@ public class QuizSubmissionService {
 
     private final SubmissionVersionService submissionVersionService;
 
+    private final QuizBatchService quizBatchService;
+
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
-            SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService) {
+            SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService,
+            QuizBatchService quizBatchService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
         this.submissionVersionService = submissionVersionService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
+        this.quizBatchService = quizBatchService;
     }
 
     /**
@@ -109,8 +114,7 @@ public class QuizSubmissionService {
      * @return the updated quiz submission object
      * @throws QuizSubmissionException handles errors, e.g. when the live quiz has already ended, or when the quiz was already submitted before
      */
-    public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmission quizSubmission, String username, boolean submitted) throws QuizSubmissionException {
-
+    public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmission quizSubmission, User user, boolean submitted) throws QuizSubmissionException {
         // TODO: what happens if a user executes this call twice in the same moment (using 2 threads)
 
         String logText = submitted ? "submit quiz in live mode:" : "save quiz in live mode:";
@@ -123,8 +127,14 @@ public class QuizSubmissionService {
             log.info("Quiz not in QuizScheduleService cache, fetching from DB");
             quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         }
-        log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, username, exerciseId, (System.nanoTime() - start) / 1000);
-        if (!quizExercise.isSubmissionAllowed()) {
+        log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
+        if (!quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
+            throw new QuizSubmissionException("The quiz is not active");
+        }
+
+        var batch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
+
+        if (batch.isPresent() && !batch.get().isSubmissionAllowed()) {
             throw new QuizSubmissionException("The quiz is not active");
         }
 
@@ -132,10 +142,11 @@ public class QuizSubmissionService {
         // same as the user who executes this call. This prevents injecting submissions to other users
 
         // check if user already submitted for this quiz
-        Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
-        log.debug("{} Received participation for user {} in quiz {} in {} µs.", logText, username, exerciseId, (System.nanoTime() - start) / 1000);
+        Participation participation = participationService.participationForQuizWithResult(quizExercise, user.getLogin());
+        log.debug("{} Received participation for user {} in quiz {} in {} µs.", logText, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
         if (!participation.getResults().isEmpty()) {
-            log.debug("Participation for user {} in quiz {} has results", username, exerciseId);
+            log.debug("Participation for user {} in quiz {} has results", user.getLogin(), exerciseId);
+            // TODO: QQQ this assumption doesn't hold if we allow multiple attempts
             // NOTE: At this point, there can only be one Result because we already checked
             // if the quiz is active, so there is no way the student could have already practiced
             Result result = participation.getResults().iterator().next();
@@ -153,9 +164,9 @@ public class QuizSubmissionService {
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // save submission to HashMap
-        quizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
+        quizScheduleService.updateSubmission(exerciseId, user.getLogin(), quizSubmission);
 
-        log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, username, exerciseId, (System.nanoTime() - start) / 1000);
+        log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;
     }
 

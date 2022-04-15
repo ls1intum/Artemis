@@ -58,7 +58,7 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
-        return quizExercise.isPlannedToStart! && quizExercise.isOpenForPractice! && dayjs(quizExercise.dueDate!).isBefore(dayjs());
+        return quizExercise.isOpenForPractice! && quizExercise.quizEnded!;
     }
 
     /**

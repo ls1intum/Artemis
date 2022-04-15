@@ -5,6 +5,8 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,18 +16,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -69,10 +72,17 @@ public class QuizExerciseResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final QuizBatchService quizBatchService;
+
+    private final QuizBatchRepository quizBatchRepository;
+
+    private final SubmissionRepository submissionRepository;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
             ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            ExamDateService examDateService, QuizMessagingService quizMessagingService, StudentParticipationRepository studentParticipationRepository) {
+            ExamDateService examDateService, QuizMessagingService quizMessagingService, StudentParticipationRepository studentParticipationRepository,
+            QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseDeletionService = exerciseDeletionServiceService;
@@ -87,6 +97,9 @@ public class QuizExerciseResource {
         this.courseRepository = courseRepository;
         this.quizMessagingService = quizMessagingService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.quizBatchService = quizBatchService;
+        this.quizBatchRepository = quizBatchRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -114,6 +127,7 @@ public class QuizExerciseResource {
         quizExercise.validateScoreSettings();
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
@@ -163,7 +177,7 @@ public class QuizExerciseResource {
 
         // check if quiz is has already started
 
-        if (originalQuiz.isStarted()) {
+        if (false && originalQuiz.isQuizStarted()) { // TODO: QQQ this breaks editing with unset start date
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizHasStarted",
                     "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
         }
@@ -198,7 +212,14 @@ public class QuizExerciseResource {
             // not required in the returned json body
             quizExercise.setStudentParticipations(null);
             quizExercise.setCourse(null);
+            Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
+                case SYNCHRONIZED -> quizBatchRepository.findAllByQuizExercise(quizExercise);
+                case BATCHED -> quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, user.getId());
+                case INDIVIDUAL -> Set.of();
+            };
+            quizExercise.setQuizBatches(batches);
         }
+
         return quizExercises;
     }
 
@@ -267,7 +288,7 @@ public class QuizExerciseResource {
     }
 
     /**
-     * GET /quiz-exercises/:quizExerciseId/for-student : get the "id" quizExercise. (information filtered for students)
+     * GET /quiz-exercises/:quizExerciseId/for-student : get the quizExercise with a particular batch. (information filtered for students)
      *
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
@@ -277,14 +298,107 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
             throw new AccessForbiddenException();
         }
-        quizExercise.applyAppropriateFilterForStudents();
-
+        var batch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
+        quizExercise.setQuizBatches(batch.stream().collect(Collectors.toSet()));
         // filter out information depending on quiz state
-        quizExercise.filterForStudentsDuringQuiz();
+        quizExercise.applyAppropriateFilterForStudents(batch.orElse(null));
+
         return ResponseEntity.ok(quizExercise);
+    }
+
+    /**
+     * POST /quiz-exercises/:quizExerciseId/join : get the quizExercise with a particular batch. (information filtered for students)
+     *
+     * @param quizExerciseId the id of the quizExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
+     */
+    @PostMapping("/quiz-exercises/{quizExerciseId}/join")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<QuizBatch> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
+        log.debug("REST request to join Batch : {}", quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
+            throw new AccessForbiddenException();
+        }
+        if (quizScheduleService.getQuizBatchForStudent(quizExercise, user).isPresent()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchPending", "Previous submission for this quiz is still pending."))
+                    .build();
+        }
+
+        var submissions = submissionRepository.countByExerciseIdAndStudentId(quizExerciseId, user.getId());
+        if (submissions >= quizExercise.getAllowedNumberOfAttempts()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAttemptsExceeded", "Maximum number of attempts reached.")).build();
+        }
+
+        var quizBatch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password, joinRequest.batchId);
+
+        if (quizBatch.isEmpty()) {
+            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchNotFound", "Quiz batch not found or invalid."))
+                    .build();
+        }
+
+        return ResponseEntity.ok(quizBatch.get());
+    }
+
+    /**
+     * POST /quiz-exercises/:quizExerciseId/add-batch : add a new batch to the exercise for batched running
+     *
+     * @param quizExerciseId the id of the quizExercise to add the batch to
+     * @return the ResponseEntity with status 200 (OK) and with body the new batch
+     */
+    @PutMapping("/quiz-exercises/{quizExerciseId}/add-batch")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<QuizBatch> addBatch(@PathVariable Long quizExerciseId) {
+        log.debug("REST request to add batch : {}", quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, user)) {
+            throw new AccessForbiddenException();
+        }
+
+        if (!authCheckService.isAtLeastEditorForExercise(quizExercise, user)) {
+            // TODO: configuration to limit the number of batches a tutor can create
+        }
+
+        var quizBatch = quizBatchService.createBatch(quizExercise, user);
+        quizBatch = quizBatchService.save(quizBatch);
+
+        return ResponseEntity.ok(quizBatch);
+    }
+
+    /**
+     * POST /quiz-exercises/:quizBatchId/start-batch : start a particular batch of the quiz
+     *
+     * @param quizBatchId the id of the quizBatch to start
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("/quiz-exercises/{quizBatchId}/start-batch")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<QuizBatch> startBatch(@PathVariable Long quizBatchId) {
+        log.debug("REST request to start batch : {}", quizBatchId);
+        QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
+        QuizExercise quizExercise = batch.getQuizExercise();
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, user)) {
+            throw new AccessForbiddenException();
+        }
+
+        if (!user.getId().equals(batch.getCreator()) && !authCheckService.isAtLeastInstructorForExercise(quizExercise, user)) {
+            throw new AccessForbiddenException();
+        }
+
+        batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, ZonedDateTime.now()));
+        batch = quizBatchService.save(batch);
+        // TODO: QQQ send to students
+
+        return ResponseEntity.ok(batch);
     }
 
     /**
@@ -303,15 +417,35 @@ public class QuizExerciseResource {
 
         switch (action) {
             case "start-now" -> {
+                // only synchronized quiz exercises can be started like this
+                if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
+                    return ResponseEntity.badRequest()
+                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotSynchronized", "Quiz is not synchronized.")).build();
+                }
+
                 // check if quiz hasn't already started
-                if (quizExercise.isStarted()) {
+                if (quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).isStarted()) {
                     return ResponseEntity.badRequest()
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
                 // set release date to now, truncated to seconds because the database only stores seconds
-                quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
-                quizExercise.setIsPlannedToStart(true);
+                var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+                quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).setStartTime(now);
+                quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+            }
+            case "end-now" -> {
+                // only synchronized quiz exercises can be started like this
+                if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizSynchronized", "Quiz is synchronized."))
+                            .build();
+                }
+
+                // set release date to now, truncated to seconds because the database only stores seconds
+                var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+                final var exercise = quizExercise;
+                quizExercise.setDueDate(now);
+                quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(quizBatchService.quizBatchStartDate(exercise, batch.getStartTime())));
             }
             case "set-visible" -> {
                 // check if quiz is already visible
@@ -321,11 +455,11 @@ public class QuizExerciseResource {
                 }
 
                 // set quiz to visible
-                quizExercise.setIsVisibleBeforeStart(true);
+                quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
             }
             case "open-for-practice" -> {
                 // check if quiz has ended
-                if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
+                if (!quizExercise.isQuizEnded()) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
                             .build();
                 }
@@ -353,7 +487,7 @@ public class QuizExerciseResource {
         quizScheduleService.updateQuizExercise(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, action);
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, null, action);
         return new ResponseEntity<>(quizExercise, HttpStatus.OK);
     }
 
@@ -404,7 +538,7 @@ public class QuizExerciseResource {
                         "The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.")).build();
             }
         }
-        else if (!originalQuizExercise.isEnded()) {
+        else if (!originalQuizExercise.isQuizEnded()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotEnded",
                     "The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.")).build();
         }

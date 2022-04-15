@@ -202,15 +202,15 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
  */
 const participationStatusForQuizExercise = (exercise: Exercise): ParticipationStatus => {
     const quizExercise = exercise as QuizExercise;
-    if ((!quizExercise.isPlannedToStart || dayjs(quizExercise.releaseDate!).isAfter(dayjs())) && quizExercise.visibleToStudents) {
+    if (!quizExercise.quizStarted && quizExercise.visibleToStudents) {
         return ParticipationStatus.QUIZ_NOT_STARTED;
-    } else if (!hasStudentParticipations(exercise) && (!quizExercise.isPlannedToStart || dayjs(quizExercise.dueDate!).isAfter(dayjs())) && quizExercise.visibleToStudents) {
+    } else if (!hasStudentParticipations(exercise) && !quizExercise.quizEnded && quizExercise.visibleToStudents) {
         return ParticipationStatus.QUIZ_UNINITIALIZED;
     } else if (!hasStudentParticipations(exercise)) {
         return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-    } else if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED && dayjs(exercise.dueDate!).isAfter(dayjs())) {
+    } else if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED && !quizExercise.quizEnded) {
         return ParticipationStatus.QUIZ_ACTIVE;
-    } else if (exercise.studentParticipations![0].initializationState === InitializationState.FINISHED && dayjs(exercise.dueDate!).isAfter(dayjs())) {
+    } else if (exercise.studentParticipations![0].initializationState === InitializationState.FINISHED && !quizExercise.quizEnded) {
         return ParticipationStatus.QUIZ_SUBMITTED;
     } else {
         return !hasResults(exercise.studentParticipations![0]) ? ParticipationStatus.QUIZ_NOT_PARTICIPATED : ParticipationStatus.QUIZ_FINISHED;

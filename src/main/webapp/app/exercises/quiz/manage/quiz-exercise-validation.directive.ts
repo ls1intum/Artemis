@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Directive } from '@angular/core';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -15,6 +15,7 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { captureException } from '@sentry/browser';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 import { ValidationReason } from 'app/entities/exercise.model';
+import { ButtonType } from 'app/shared/components/button.component';
 
 type InvalidFlaggedQuestions = {
     [title: string]: (AnswerOption | ShortAnswerSolution | ShortAnswerMapping | ShortAnswerSpot | DropLocation | DragItem | DragAndDropMapping)[] | undefined;
@@ -26,6 +27,8 @@ export abstract class QuizExerciseValidationDirective {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly QuizMode = QuizMode;
+    readonly ButtonType = ButtonType;
 
     readonly maxLengthThreshold = 250;
     readonly explanationLengthThreshold = 500;
@@ -63,6 +66,7 @@ export abstract class QuizExerciseValidationDirective {
         if (!this.quizExercise) {
             return false;
         }
+
         const isGenerallyValid =
             this.quizExercise.title != undefined &&
             this.quizExercise.title !== '' &&
@@ -207,15 +211,16 @@ export abstract class QuizExerciseValidationDirective {
             });
         }
 
+        // TODO: QQQ
         /** We only verify the releaseDate if the checkbox is activated **/
-        if (this.quizExercise.isPlannedToStart) {
-            if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
-                invalidReasons.push({
-                    translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',
-                    translateValues: {},
-                });
-            }
-        }
+        // if (this.quizExercise.isPlannedToStart) {
+        //     if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
+        //         invalidReasons.push({
+        //             translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',
+        //             translateValues: {},
+        //         });
+        //     }
+        // }
         this.quizExercise.quizQuestions!.forEach(function (question: QuizQuestion, index: number) {
             if (!question.title || question.title === '') {
                 invalidReasons.push({

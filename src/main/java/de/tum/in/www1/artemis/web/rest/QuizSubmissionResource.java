@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
@@ -84,16 +83,17 @@ public class QuizSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/submissions/live")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission, Principal principal) {
+    public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
+        User user = userRepository.getUser();
         try {
             // we set the submitted flag to true on the server side
             quizSubmission.setSubmitted(true);
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, principal.getName(), true);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, user, true);
             return ResponseEntity.ok(updatedQuizSubmission);
         }
         catch (QuizSubmissionException e) {
-            log.warn("QuizSubmissionException: {} for user {} in quiz {}", e.getMessage(), principal.getName(), exerciseId);
+            log.warn("QuizSubmissionException: {} for user {} in quiz {}", e.getMessage(), user.getLogin(), exerciseId);
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizSubmissionError", e.getMessage())).body(null);
         }
     }
@@ -129,7 +129,7 @@ public class QuizSubmissionResource {
         }
 
         // Note that exam quiz exercises do not have an end date, so we need to check in that order
-        if (!Boolean.TRUE.equals(quizExercise.isIsOpenForPractice()) || !quizExercise.isEnded()) {
+        if (!Boolean.TRUE.equals(quizExercise.isIsOpenForPractice()) || !quizExercise.isQuizEnded()) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet."))
                     .body(null);

@@ -378,6 +378,19 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
 
     /**
+     * Calculate the number of submitted submissions for the given exercise. This query uses the participations to make sure that each student is only counted once
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of submissions belonging to the exercise and student id, which have the submitted flag set to true
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT s)
+            FROM StudentParticipation p JOIN p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.student.id = :#{#studentId}
+            """)
+    int countByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
      * @param exerciseIds the exercise ids we are interested in
      * @return the numbers of submissions belonging to each exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */

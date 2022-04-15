@@ -93,26 +93,71 @@
                             <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
                         </div>
                         <ng-container *ngIf="!isExamMode">
-                            <div class="form-check custom-control custom-checkbox">
+                            <div class="form-check custom-control">
+                                <span jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></span>
+                                <select class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
+                                    <option [value]="QuizMode.SYNCHRONIZED">{{ 'artemisApp.quizExercise.quizMode.synchronized' | artemisTranslate }}</option>
+                                    <option [value]="QuizMode.BATCHED">{{ 'artemisApp.quizExercise.quizMode.batched' | artemisTranslate }}</option>
+                                    <option [value]="QuizMode.INDIVIDUAL">{{ 'artemisApp.quizExercise.quizMode.individual' | artemisTranslate }}</option>
+                                </select>
+                            </div>
+                            <ng-container>
+                                <jhi-date-time-picker
+                                    id="release-date"
+                                    class="form-element"
+                                    labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
+                                    [(ngModel)]="quizExercise.releaseDate"
+                                    (valueChange)="cacheValidation()"
+                                    [error]="false"
+                                    name="releaseDate"
+                                ></jhi-date-time-picker>
+                            </ng-container>
+                            <ng-container *ngIf="quizExercise.quizMode !== QuizMode.SYNCHRONIZED">
+                                <jhi-date-time-picker
+                                    id="due-date"
+                                    class="form-element"
+                                    name="dueDate"
+                                    [error]="!!quizExercise.dueDateError"
+                                    labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
+                                    (valueChange)="cacheValidation()"
+                                    [(ngModel)]="quizExercise.dueDate"
+                                ></jhi-date-time-picker>
+                                <span *ngIf="quizExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
+                            </ng-container>
+                            <div class="form-check custom-control custom-checkbox" *ngIf="quizExercise.quizMode === QuizMode.SYNCHRONIZED">
                                 <input
                                     type="checkbox"
-                                    id="cbPlannedToStart"
+                                    id="cbScheduleQuizStart"
                                     class="form-check-input custom-control-input"
-                                    [(ngModel)]="quizExercise.isPlannedToStart"
+                                    [(ngModel)]="scheduleQuizStart"
                                     (ngModelChange)="cacheValidation()"
                                 />
-                                <label class="form-check-label custom-control-label" for="cbPlannedToStart" jhiTranslate="artemisApp.quizExercise.startTime"> </label>
+                                <label class="form-check-label custom-control-label" for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.startTime"> </label>
                             </div>
-                            <div class="mt-1 d-flex align-items-center" *ngIf="quizExercise.isPlannedToStart">
-                                <div class="flex-grow-1">
+                            <div class="form-check custom-control custom-checkbox" *ngIf="quizExercise.quizMode === QuizMode.BATCHED && false">
+                                <!-- no scheduled batched mode yet -->
+                                <jhi-button (click)="addQuizBatch()" [btnType]="ButtonType.DEFAULT" title="artemisApp.quizExercise.addBatch"></jhi-button>
+                            </div>
+                            <ng-container *ngIf="quizExercise.quizBatches && quizExercise.quizMode !== QuizMode.INDIVIDUAL">
+                                <div *ngFor="let quizBatch of quizExercise.quizBatches; let first = first">
                                     <jhi-date-time-picker
-                                        [disabled]="!quizExercise.isPlannedToStart"
-                                        [(ngModel)]="quizExercise.releaseDate"
-                                        (ngModelChange)="cacheValidation()"
-                                        name="releaseDate"
+                                        class="form-element"
+                                        name="dueDate"
+                                        [shouldDisplayTimeZoneWarning]="first"
+                                        [error]="quizBatch.startDateError ?? false"
+                                        (valueChange)="cacheValidation()"
+                                        [(ngModel)]="quizBatch.startTime"
                                     ></jhi-date-time-picker>
+                                    <span *ngIf="quizBatch.startDateError" class="invalid-feedback">{{ 'artemisApp.quizExercise.startDate' | artemisTranslate }}</span>
+                                    <!-- no scheduled batched mode yet -->
+                                    <jhi-button
+                                        *ngIf="quizExercise.quizMode === QuizMode.BATCHED && false"
+                                        (click)="removeQuizBatch(quizBatch)"
+                                        [btnType]="ButtonType.ERROR"
+                                        [icon]="faXmark"
+                                    ></jhi-button>
                                 </div>
-                            </div>
+                            </ng-container>
                         </ng-container>
                     </div>
                 </div>
@@ -228,7 +273,7 @@
                                     <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
                                 </option>
                             </select>
-                            <select
+                            <!--<select
                                 *ngIf="showDropdown === 'isVisibleBeforeStart'"
                                 class="form-select"
                                 [(ngModel)]="quizExercise.isVisibleBeforeStart"
@@ -239,7 +284,7 @@
                                     <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
                                     <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.hidden' | artemisTranslate }}</span>
                                 </option>
-                            </select>
+                            </select>-->
                             <select *ngIf="showDropdown === 'active'" class="form-select" title="status" disabled>
                                 <option *ngFor="let option of statusOptionsActive" [value]="option.key">
                                     {{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}

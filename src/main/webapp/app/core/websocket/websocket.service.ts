@@ -189,6 +189,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                                     channel,
                                     (data) => {
                                         if (this.listenerObservers.has(channel)) {
+                                            console.log(channel, JhiWebsocketService.parseJSON(data.body));
                                             this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
                                         }
                                     },
@@ -262,20 +263,23 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             if (channel != undefined && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
                 this.myListeners.set(channel, this.createListener(channel));
             }
-            this.subscribers.set(
-                channel,
-                this.stompClient!.subscribe(
+            if (!this.subscribers.has(channel)) {
+                this.subscribers.set(
                     channel,
-                    (data) => {
-                        if (this.listenerObservers.has(channel)) {
-                            this.listenerObservers.get(channel)!.next(JhiWebsocketService.parseJSON(data.body));
-                        }
-                    },
-                    {
-                        id: this.getSessionId() + '-' + this.subscriptionCounter++,
-                    },
-                ),
-            );
+                    this.stompClient!.subscribe(
+                        channel,
+                        (data) => {
+                            if (this.listenerObservers.has(channel)) {
+                                console.log(channel, JhiWebsocketService.parseJSON(data.body));
+                                this.listenerObservers.get(channel)!.next(JhiWebsocketService.parseJSON(data.body));
+                            }
+                        },
+                        {
+                            id: this.getSessionId() + '-' + this.subscriptionCounter++,
+                        },
+                    ),
+                );
+            }
         });
     }
 

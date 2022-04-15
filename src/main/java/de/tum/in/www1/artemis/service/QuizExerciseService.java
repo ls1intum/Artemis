@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -380,11 +381,10 @@ public class QuizExerciseService {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
 
         // for quizzes, we need to delete the statistics, and we need to reset the quiz to its original state
-        quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
-        quizExercise.setIsPlannedToStart(Boolean.FALSE);
-        quizExercise.setAllowedNumberOfAttempts(null);
         quizExercise.setIsOpenForPractice(Boolean.FALSE);
-        quizExercise.setReleaseDate(null);
+        quizExercise.setReleaseDate(ZonedDateTime.now().plusYears(1));
+        quizExercise.setDueDate(null);
+        quizExercise.setQuizBatches(Set.of());
 
         quizExercise = save(quizExercise);
 

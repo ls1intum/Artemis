@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.QUIZ;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import javax.annotation.Nullable;
@@ -18,11 +17,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -46,17 +45,18 @@ public class QuizExercise extends Exercise {
     @JsonView(QuizView.Before.class)
     private Integer allowedNumberOfAttempts;
 
-    @Column(name = "is_visible_before_start")
+    @Transient
     @JsonView(QuizView.Before.class)
-    private Boolean isVisibleBeforeStart;
+    private transient Integer remainingNumberOfAttempts;
 
     @Column(name = "is_open_for_practice")
     @JsonView(QuizView.Before.class)
     private Boolean isOpenForPractice;
 
-    @Column(name = "is_planned_to_start")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "quiz_mode")
     @JsonView(QuizView.Before.class)
-    private Boolean isPlannedToStart;
+    private QuizMode quizMode;
 
     /**
      * The duration of the quiz exercise in seconds
@@ -76,6 +76,11 @@ public class QuizExercise extends Exercise {
     @JsonView(QuizView.During.class)
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "quizExercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
+    private Set<QuizBatch> quizBatches = new HashSet<>();
+
     public Boolean isRandomizeQuestionOrder() {
         return randomizeQuestionOrder;
     }
@@ -92,12 +97,12 @@ public class QuizExercise extends Exercise {
         this.allowedNumberOfAttempts = allowedNumberOfAttempts;
     }
 
-    public Boolean isIsVisibleBeforeStart() {
-        return isVisibleBeforeStart;
+    public Integer getRemainingNumberOfAttempts() {
+        return remainingNumberOfAttempts;
     }
 
-    public void setIsVisibleBeforeStart(Boolean isVisibleBeforeStart) {
-        this.isVisibleBeforeStart = isVisibleBeforeStart;
+    public void setRemainingNumberOfAttempts(Integer remainingNumberOfAttempts) {
+        this.remainingNumberOfAttempts = remainingNumberOfAttempts;
     }
 
     public Boolean isIsOpenForPractice() {
@@ -106,19 +111,6 @@ public class QuizExercise extends Exercise {
 
     public void setIsOpenForPractice(Boolean isOpenForPractice) {
         this.isOpenForPractice = isOpenForPractice;
-    }
-
-    public boolean isIsPlannedToStart() {
-        return Boolean.TRUE.equals(isPlannedToStart);
-    }
-
-    public QuizExercise isPlannedToStart(Boolean isPlannedToStart) {
-        this.isPlannedToStart = isPlannedToStart;
-        return this;
-    }
-
-    public void setIsPlannedToStart(Boolean isPlannedToStart) {
-        this.isPlannedToStart = isPlannedToStart;
     }
 
     public Integer getDuration() {
@@ -142,55 +134,35 @@ public class QuizExercise extends Exercise {
         this.quizPointStatistic = quizPointStatistic;
     }
 
+    public Set<QuizBatch> getQuizBatches() {
+        return quizBatches;
+    }
+
+    public void setQuizBatches(Set<QuizBatch> quizBatches) {
+        this.quizBatches = quizBatches;
+    }
+
+    public QuizMode getQuizMode() {
+        return quizMode;
+    }
+
+    public void setQuizMode(QuizMode quizMode) {
+        this.quizMode = quizMode;
+    }
+
     @JsonView(QuizView.Before.class)
     public String getType() {
         return "quiz";
     }
 
-    @Override
-    @JsonView(QuizView.Before.class)
-    public ZonedDateTime getDueDate() {
-        return isIsPlannedToStart() && getReleaseDate() != null ? getReleaseDate().plusSeconds(getDuration()) : super.getDueDate();
-    }
-
     /**
-     * Get the remaining time in seconds
-     *
-     * @return null, if the quiz is not planned to start, the remaining time in seconds otherwise
-     */
-    @JsonView(QuizView.Before.class)
-    public Long getRemainingTime() {
-        return isStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
-    }
-
-    /**
-     * Get the remaining time until the quiz starts in seconds
-     *
-     * @return null, if the quiz isn't planned to start, otherwise the time until the quiz starts in seconds (negative if the quiz has already started)
-     */
-    @JsonView(QuizView.Before.class)
-    public Long getTimeUntilPlannedStart() {
-        return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getReleaseDate()) : null;
-    }
-
-    /**
-     * Check if the quiz has started
+     * Check if the quiz has started, that means quiz batches could potentially start
      *
      * @return true if quiz has started, false otherwise
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isStarted() {
-        return isIsPlannedToStart() && ZonedDateTime.now().isAfter(getReleaseDate());
-    }
-
-    /**
-     * Check if submissions for this quiz are allowed at the moment
-     *
-     * @return true if submissions are allowed, false otherwise
-     */
-    @JsonIgnore
-    public Boolean isSubmissionAllowed() {
-        return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
+    public Boolean isQuizStarted() {
+        return isVisibleToStudents();
     }
 
     /**
@@ -199,8 +171,8 @@ public class QuizExercise extends Exercise {
      * @return true if quiz has ended, false otherwise
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isEnded() {
-        return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
+    public Boolean isQuizEnded() {
+        return getDueDate() != null && ZonedDateTime.now().isAfter(getDueDate());
     }
 
     /**
@@ -210,7 +182,7 @@ public class QuizExercise extends Exercise {
      */
     @JsonIgnore
     public Boolean shouldFilterForStudents() {
-        return !isStarted() || isSubmissionAllowed();
+        return !isQuizEnded() || getExampleSolutionPublicationDate() == null || ZonedDateTime.now().isBefore(getExampleSolutionPublicationDate());
     }
 
     /**
@@ -259,16 +231,14 @@ public class QuizExercise extends Exercise {
         this.quizQuestions = quizQuestions;
     }
 
-    @Override
-    public Boolean isVisibleToStudents() {
-        return isVisibleBeforeStart || (isPlannedToStart && getReleaseDate() != null && getReleaseDate().isBefore(ZonedDateTime.now()));
-    }
-
     /**
-     * filter this quiz exercise for students depending on the quiz's current state
+     * filter this quiz exercise for students depending on the current state of the batch that the student participates in
      */
-    public void applyAppropriateFilterForStudents() {
-        if (!isStarted()) {
+    public void applyAppropriateFilterForStudents(@Nullable QuizBatch batch) {
+        if (isQuizEnded()) {
+            return; // no filtering required after the end of the quiz
+        }
+        if (batch == null || !batch.isStarted() || batch.isEnded()) {
             filterSensitiveInformation();
         }
         else if (shouldFilterForStudents()) {
@@ -660,6 +630,12 @@ public class QuizExercise extends Exercise {
                 pointCounter.setQuizPointStatistic(getQuizPointStatistic());
             }
         }
+
+        if (getQuizBatches() != null) {
+            for (QuizBatch quizBatch : getQuizBatches()) {
+                quizBatch.setQuizExercise(this);
+            }
+        }
     }
 
     /**
@@ -710,23 +686,22 @@ public class QuizExercise extends Exercise {
      */
     @JsonIgnore
     @NotNull
-    public Class<?> viewForStudentsInQuizExercise() {
-        if (!isStarted()) {
-            return QuizView.Before.class;
+    public Class<?> viewForStudentsInQuizExercise(@Nullable QuizBatch batch) {
+        if (!isQuizEnded()) {
+            return QuizView.After.class;
         }
-        else if (isSubmissionAllowed()) {
+        else if (batch != null && batch.isSubmissionAllowed()) {
             return QuizView.During.class;
         }
         else {
-            return QuizView.After.class;
+            return QuizView.Before.class;
         }
     }
 
     @Override
     public String toString() {
         return "QuizExercise{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" + ", allowedNumberOfAttempts='"
-                + getAllowedNumberOfAttempts() + "'" + ", isVisibleBeforeStart='" + isIsVisibleBeforeStart() + "'" + ", isOpenForPractice='" + isIsOpenForPractice() + "'"
-                + ", isPlannedToStart='" + isIsPlannedToStart() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", duration='" + getDuration() + "'" + ", dueDate='"
-                + getDueDate() + "'" + "}";
+                + getAllowedNumberOfAttempts() + "'" + ", isOpenForPractice='" + isIsOpenForPractice() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", duration='"
+                + getDuration() + "'" + ", dueDate='" + getDueDate() + "'" + "}";
     }
 }

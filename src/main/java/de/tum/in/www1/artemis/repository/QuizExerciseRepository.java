@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +28,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @Query("""
             SELECT DISTINCT e FROM QuizExercise e
             LEFT JOIN FETCH e.categories
+            LEFT JOIN FETCH e.quizBatches
             WHERE e.course.id = :#{#courseId}
             """)
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -39,12 +40,12 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
             """)
     List<QuizExercise> findByExamId(Long examId);
 
-    List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
+    // List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
 
     @NotNull
@@ -101,6 +102,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
      * @return the list of quiz exercises
      */
     default List<QuizExercise> findAllPlannedToStartInTheFuture() {
-        return findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
+        return new ArrayList<>();
+        // return findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
     }
 }

@@ -1,0 +1,40 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="bottbenj" id="20220402221400">
+        <createTable tableName="quiz_batch">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="quiz_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creator_id" type="BIGINT"/>
+            <column name="password" type="VARCHAR(63)"/>
+            <column name="start_time" type="DATETIME"/>
+        </createTable>
+        <addColumn tableName="exercise">
+            <column name="quiz_mode" type="VARCHAR(63)" defaultValue="SYNCHRONIZED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allowed_per_tutor_batch_count" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="submission">
+            <column name="quiz_batch" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="quiz_batch"
+                                 baseColumnNames="quiz_id"
+                                 constraintName="fk_quiz_batch_quiz_id"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="submission"
+                                 baseColumnNames="quiz_batch"
+                                 constraintName="fk_submission_quiz_batch"
+                                 referencedTableName="quiz_batch"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="quiz_batch" columnNames="quiz_id,password"/>
+    </changeSet>
+</databaseChangeLog>

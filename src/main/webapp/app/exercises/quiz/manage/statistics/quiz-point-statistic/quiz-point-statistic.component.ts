@@ -17,6 +17,7 @@ import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/qu
 import { TranslateService } from '@ngx-translate/core';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -69,6 +70,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
         protected changeDetector: ChangeDetectorRef,
+        private serverDateService: ArtemisServerDateService,
     ) {
         super(translateService);
     }
@@ -117,11 +119,11 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
     updateDisplayedTimes() {
         const translationBasePath = 'showStatistic.';
         // update remaining time
-        if (this.quizExercise && this.quizExercise.adjustedDueDate) {
-            const endDate = this.quizExercise.adjustedDueDate;
-            if (endDate.isAfter(dayjs())) {
+        if (this.quizExercise && this.quizExercise.dueDate) {
+            const endDate = this.quizExercise.dueDate;
+            if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(dayjs(), 'seconds');
+                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -185,8 +187,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
             this.router.navigate(['courses']);
         }
         this.quizExercise = quizExercise;
-        this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
-        this.waitingForQuizStart = !this.quizExercise.started;
+        this.waitingForQuizStart = !this.quizExercise.quizStarted;
         this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
         this.maxScore = calculateMaxScore(this.quizExercise);
 
