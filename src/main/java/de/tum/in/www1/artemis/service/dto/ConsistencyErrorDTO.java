@@ -51,14 +51,14 @@ public class ConsistencyErrorDTO {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) {
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
         }
-        if (object == null || getClass() != object.getClass()) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        ConsistencyErrorDTO that = (ConsistencyErrorDTO) object;
+        ConsistencyErrorDTO that = (ConsistencyErrorDTO) obj;
         return Objects.equals(getProgrammingExercise(), that.getProgrammingExercise()) && getType() == that.getType();
     }
 

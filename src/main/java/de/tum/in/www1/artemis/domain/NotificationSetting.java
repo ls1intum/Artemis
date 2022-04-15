@@ -94,19 +94,19 @@ public class NotificationSetting extends DomainObject {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) {
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
         }
-        if (object == null || getClass() != object.getClass()) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        DomainObject domainObject = (DomainObject) object;
+        DomainObject domainObject = (DomainObject) obj;
         if (domainObject.getId() == null || getId() == null) {
             return false;
         }
         boolean domainObjectCheck = Objects.equals(getId(), domainObject.getId());
-        NotificationSetting providedSetting = (NotificationSetting) object;
+        NotificationSetting providedSetting = (NotificationSetting) obj;
         boolean userCheck = checkUser(this.user, providedSetting.user);
         boolean settingIdCheck = checkSettingId(this.settingId, providedSetting.settingId);
         return domainObjectCheck && userCheck && settingIdCheck && this.webapp == providedSetting.webapp && this.email == providedSetting.email;

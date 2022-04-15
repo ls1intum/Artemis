@@ -260,6 +260,7 @@ export class ExerciseService {
             res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
             res.body.dueDate = res.body.dueDate ? dayjs(res.body.dueDate) : undefined;
             res.body.assessmentDueDate = res.body.assessmentDueDate ? dayjs(res.body.assessmentDueDate) : undefined;
+            res.body.exampleSolutionPublicationDate = res.body.exampleSolutionPublicationDate ? dayjs(res.body.exampleSolutionPublicationDate) : undefined;
             res.body.studentParticipations = ParticipationService.convertParticipationsDateFromServer(res.body.studentParticipations);
         }
         return res;

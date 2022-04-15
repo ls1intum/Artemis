@@ -5,7 +5,10 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -573,8 +576,8 @@ public class FileService implements DisposableBean {
      * <p>
      * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
      *
-     * @param startPath     the path where the start directory is located
-     * @param replacements  the replacements that should be applied
+     * @param startPath    the path where the start directory is located
+     * @param replacements the replacements that should be applied
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements) throws IOException {
@@ -825,6 +828,7 @@ public class FileService implements DisposableBean {
      * Removes illegal characters for filenames from the string.
      *
      * See: https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#15075907
+     *
      * @param string the string with the characters
      * @return stripped string
      */
@@ -850,8 +854,8 @@ public class FileService implements DisposableBean {
     /**
      * Write a given string into a file at a given path
      *
-     * @param stringToWrite     The string that will be written into a file
-     * @param path              The path where the file will be written to
+     * @param stringToWrite The string that will be written into a file
+     * @param path          The path where the file will be written to
      * @return Path to the written file
      */
     public Path writeStringToFile(String stringToWrite, Path path) {
@@ -870,9 +874,9 @@ public class FileService implements DisposableBean {
     /**
      * Serialize an object and write into file at a given path
      *
-     * @param object        The object that is serialized and written into a file
-     * @param objectMapper  The objectMapper that is used for serialization
-     * @param path          The path where the file will be written to
+     * @param object       The object that is serialized and written into a file
+     * @param objectMapper The objectMapper that is used for serialization
+     * @param path         The path where the file will be written to
      * @return Path to the written file
      */
     public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
@@ -918,6 +922,7 @@ public class FileService implements DisposableBean {
 
     /**
      * Deletes all specified files.
+     *
      * @param filePaths A list of all paths to the files that should be deleted
      */
     public void deleteFiles(List<Path> filePaths) {
