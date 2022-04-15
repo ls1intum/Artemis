@@ -219,7 +219,7 @@ public class TestwiseCoverageService {
             });
             return result;
         }
-        catch (InterruptedException | GitAPIException e) {
+        catch (GitAPIException e) {
             log.error("Exception while generating testwise coverage report", e);
             throw new InternalServerErrorException("Error while generating testwise coverage report: " + e.getMessage());
         }
