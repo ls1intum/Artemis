@@ -103,6 +103,10 @@ $navbar-breadcrumb-color: #0065bd;
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 
+// Component: course-exercise-card
+$course-exercise-card-border-color: lightgrey;
+$course-exercise-card-background: #fefefe;
+
 // Overview variables
 $overview-border-color: $border-color;
 $overview-light-border-color: lighten($overview-border-color, 30%);
