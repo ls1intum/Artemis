@@ -71,7 +71,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet) throws InterruptedException, IllegalAccessException, GitAPIException {
+    Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet) throws IllegalAccessException, GitAPIException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         // Error case 1: The participation is not from a programming exercise.
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
@@ -286,7 +286,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutConflict");
             throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
         }
-        catch (GitAPIException | InterruptedException ex) {
+        catch (GitAPIException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
@@ -337,7 +337,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws GitAPIException {
         return super.getStatus(participationId);
     }
 

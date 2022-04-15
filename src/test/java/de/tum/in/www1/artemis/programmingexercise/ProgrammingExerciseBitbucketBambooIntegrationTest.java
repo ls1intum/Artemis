@@ -343,8 +343,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExportCourseCannotExportSingleParticipationInterruptException() throws Exception {
-        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationInterruptException();
+    public void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationCanceledException();
     }
 
     @Test
