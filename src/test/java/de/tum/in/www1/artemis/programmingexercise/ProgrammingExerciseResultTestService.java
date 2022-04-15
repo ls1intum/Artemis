@@ -103,7 +103,6 @@ public class ProgrammingExerciseResultTestService {
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
         Course course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
-        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.

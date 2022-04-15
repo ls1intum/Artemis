@@ -86,7 +86,7 @@ public class ProgrammingExerciseGradingService {
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
     private final BuildLogEntryService buildLogService;
-  
+
     private final TestwiseCoverageService testwiseCoverageService;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,

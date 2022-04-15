@@ -9,5 +9,5 @@
     <h5 jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.coveredLines">Covered Lines</h5>
 </div>
 <div *ngFor="let entry of fileReportByFileName | keyvalue; trackBy: identifyCoverageFileComponent" class="mt-2">
-    <jhi-testwise-coverage-file [fileContent]="fileContentByPath.get(entry.key)" [fileName]="entry.key" [fileReport]="entry.value"> </jhi-testwise-coverage-file>
+    <jhi-testwise-coverage-file [fileContent]="fileContentByPath.get(entry.key)!" [fileName]="entry.key" [fileReport]="entry.value"> </jhi-testwise-coverage-file>
 </div>
