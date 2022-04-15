@@ -1,13 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
@@ -32,9 +35,11 @@ public class QuizExerciseService {
 
     private final QuizStatisticService quizStatisticService;
 
+    private final QuizBatchService quizBatchService;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository, ResultRepository resultRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService,
-            QuizStatisticService quizStatisticService) {
+            QuizStatisticService quizStatisticService, QuizBatchService quizBatchService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
@@ -42,6 +47,7 @@ public class QuizExerciseService {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
+        this.quizBatchService = quizBatchService;
     }
 
     /**
@@ -143,6 +149,20 @@ public class QuizExerciseService {
 
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndicesShortAnswer(saQuestion);
+            }
+        }
+
+        if (quizExercise.getQuizBatches() != null) {
+            for (QuizBatch quizBatch : quizExercise.getQuizBatches()) {
+                quizBatch.setQuizExercise(quizExercise);
+                if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+                    if (quizBatch.getStartTime() != null) {
+                        quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+                    }
+                }
+                else {
+                    quizBatch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, quizBatch.getStartTime()));
+                }
             }
         }
 
@@ -399,5 +419,15 @@ public class QuizExerciseService {
     public void cancelScheduledQuiz(Long quizExerciseId) {
         quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
         quizScheduleService.clearQuizData(quizExerciseId);
+    }
+
+    /**
+     * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required. Does not save the quiz.
+     * @param quizExercise  The quiz to end
+     * @param endDate       When the quize should end
+     */
+    public void endQuiz(QuizExercise quizExercise, ZonedDateTime endDate) {
+        quizExercise.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, batch.getStartTime())));
     }
 }

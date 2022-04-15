@@ -521,7 +521,7 @@ public class ParticipationResource {
             StudentParticipation participation = participationService.participationForQuizWithResult(quizExercise, user.getLogin());
             // avoid problems due to bidirectional associations between submission and result during serialization
             if (participation == null) {
-                participation = new StudentParticipation().exercise(quizExercise);
+                return null;
             }
             for (Result result : participation.getResults()) {
                 if (result.getSubmission() != null) {

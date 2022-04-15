@@ -853,29 +853,20 @@ public class DatabaseUtilService {
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
+        var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
         ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course);
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, course);
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, assessmentTimestamp, course);
 
         // Set assessment due dates
-        if (hasAssessmentDueDatePassed) {
-            modelingExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-            textExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-            fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-            programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-            quizExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-        }
-        else {
-            modelingExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-            textExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-            fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-            programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-            quizExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-        }
+        modelingExercise.setAssessmentDueDate(assessmentTimestamp);
+        textExercise.setAssessmentDueDate(assessmentTimestamp);
+        fileUploadExercise.setAssessmentDueDate(assessmentTimestamp);
+        programmingExercise.setAssessmentDueDate(assessmentTimestamp);
 
         // Add exercises to course
         course.addExercises(modelingExercise);
@@ -1917,7 +1908,7 @@ public class DatabaseUtilService {
     public Course addCourseWithOneQuizExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp);
-        quizExercise.setIsVisibleBeforeStart(false);
+        // quizExercise.setIsVisibleBeforeStart(false);
         quizExercise.setTitle(title);
         quizExercise.setDuration(120);
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();

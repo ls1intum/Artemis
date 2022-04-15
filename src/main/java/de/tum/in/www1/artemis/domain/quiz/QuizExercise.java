@@ -182,7 +182,7 @@ public class QuizExercise extends Exercise {
      */
     @JsonIgnore
     public Boolean shouldFilterForStudents() {
-        return !isQuizEnded() || getExampleSolutionPublicationDate() == null || ZonedDateTime.now().isBefore(getExampleSolutionPublicationDate());
+        return !isQuizEnded();
     }
 
     /**

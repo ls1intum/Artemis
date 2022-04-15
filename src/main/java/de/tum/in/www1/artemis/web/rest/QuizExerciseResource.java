@@ -176,8 +176,8 @@ public class QuizExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, originalQuiz, ENTITY_NAME);
 
         // check if quiz is has already started
-
-        if (false && originalQuiz.isQuizStarted()) { // TODO: QQQ this breaks editing with unset start date
+        var batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
+        if (batches.stream().anyMatch(QuizBatch::isStarted)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizHasStarted",
                     "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
         }
@@ -442,10 +442,7 @@ public class QuizExerciseResource {
                 }
 
                 // set release date to now, truncated to seconds because the database only stores seconds
-                var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-                final var exercise = quizExercise;
-                quizExercise.setDueDate(now);
-                quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(quizBatchService.quizBatchStartDate(exercise, batch.getStartTime())));
+                quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now());
             }
             case "set-visible" -> {
                 // check if quiz is already visible

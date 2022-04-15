@@ -84,9 +84,11 @@ public class QuizBatch extends DomainObject {
      *
      * @return null, if the batch has not started, the remaining time in seconds otherwise
      */
-    @JsonView(QuizView.Before.class)
+    @JsonIgnore
     public Long getRemainingTime() {
-        return isStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), ChronoUnit.SECONDS.addTo(getStartTime(), getQuizExercise().getDuration())) : null;
+        return isStarted()
+                ? getQuizExercise() == null ? 0 : ChronoUnit.SECONDS.between(ZonedDateTime.now(), ChronoUnit.SECONDS.addTo(getStartTime(), getQuizExercise().getDuration()))
+                : null;
     }
 
     /**

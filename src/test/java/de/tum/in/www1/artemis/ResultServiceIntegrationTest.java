@@ -281,7 +281,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     public void testGetResultsForQuizExercise() throws Exception {
         var now = ZonedDateTime.now();
 
-        QuizExercise quizExercise = database.createQuiz(course, now.minusMinutes(5), now.minusMinutes(2));
+        QuizExercise quizExercise = database.createQuiz(course, now.minusHours(5), now.minusMinutes(2));
         quizExerciseRepository.save(quizExercise);
 
         for (int i = 1; i <= 10; i++) {

@@ -285,7 +285,7 @@ public class QuizScheduleService {
                     long delay = Duration.between(ZonedDateTime.now(), quizBatch.get().getStartTime()).toMillis();
                     var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
                     // save scheduled future in HashMap
-                    quizCache.performCacheWrite(quizBatch.get().getId(), quizExerciseCache -> {
+                    quizCache.performCacheWrite(quizExerciseId, quizExerciseCache -> {
                         quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
                         return quizExerciseCache;
                     });
@@ -306,7 +306,9 @@ public class QuizScheduleService {
      * @param quizExerciseId the quiz exercise for which the quiz start should be canceled
      */
     public void cancelScheduledQuizStart(Long quizExerciseId) {
+        log.debug("try cancel schedule");
         quizCache.getReadCacheFor(quizExerciseId).getQuizStart().forEach(taskHandler -> {
+            log.debug("cancel schedule actual");
             IScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(taskHandler);
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
@@ -559,7 +561,7 @@ public class QuizScheduleService {
                         quizSubmission.setType(SubmissionType.MANUAL);
                     }
                 } // second case: the quiz or batch has ended
-                else if (quizExercise.isQuizEnded() || quizBatch.isEnded()) {
+                else if (quizExercise.isQuizEnded() || quizBatch != null && quizBatch.isEnded()) {
                     quizSubmission.setSubmitted(true);
                     quizSubmission.setType(SubmissionType.TIMEOUT);
                     quizSubmission.setSubmissionDate(ZonedDateTime.now());

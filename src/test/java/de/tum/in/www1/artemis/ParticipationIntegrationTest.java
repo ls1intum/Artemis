@@ -824,7 +824,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipation_quizExerciseNotStarted() throws Exception {
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusDays(1), course).isPlannedToStart(false);
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusDays(1), course);
         quizEx = exerciseRepo.save(quizEx);
         var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation.getExercise()).isEqualTo(quizEx);
@@ -833,7 +833,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipation_quizExerciseStartedAndNoParticipation() throws Exception {
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().plusMinutes(10), course).isPlannedToStart(true);
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().minusMinutes(1), course);
         quizEx = exerciseRepo.save(quizEx);
         request.getNullable("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.NO_CONTENT, StudentParticipation.class);
     }
@@ -841,7 +841,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipation_quizExerciseStartedAndSubmissionAllowed() throws Exception {
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), course).isPlannedToStart(true).duration(360);
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), course).duration(360);
         quizEx = exerciseRepo.save(quizEx);
         var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
@@ -852,7 +852,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void getParticipation_quizExerciseFinished() throws Exception {
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), course).isPlannedToStart(true);
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), course);
         quizEx = exerciseRepo.save(quizEx);
         var participation = database.createAndSaveParticipationForExercise(quizEx, "student1");
         var submission = database.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));
