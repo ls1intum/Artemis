@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -115,10 +116,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * This method gets called if a new commit was pushed to the VCS
      *
      * @param participationId The ID to the Participation, where the push happened
-     * @param requestBody the body of the post request by the VCS.
+     * @param requestBody     the body of the post request by the VCS.
      * @return the ProgrammingSubmission for the last commitHash
-     * @throws EntityNotFoundException if no ProgrammingExerciseParticipation could be found
-     * @throws IllegalStateException if a ProgrammingSubmission already exists
+     * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
+     * @throws IllegalStateException    if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
@@ -182,7 +183,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
         log.info("Create new programmingSubmission with commitHash: {} for participation {}", commit.getCommitHash(), participationId);
 
         programmingSubmission.setSubmitted(true);
-        programmingSubmission.setSubmissionDate(ZonedDateTime.now());
+
+        ZonedDateTime submissionDate = ZonedDateTime.now();
+        try {
+            submissionDate = versionControlService.get().getPushDate(programmingExerciseParticipation, commit.getCommitHash(), requestBody);
+        }
+        catch (VersionControlException e) {
+            log.error("Could not retrieve push date for participation " + participation.getId(), e);
+        }
+        programmingSubmission.setSubmissionDate(submissionDate);
         programmingSubmission.setType(SubmissionType.MANUAL);
 
         // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
@@ -266,7 +275,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * For every student participation of a programming exercise, try to find a pending submission.
      *
      * @param programmingExerciseId for which to search pending submissions
-     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a pending submission exists or null if not.
+     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
+     * pending submission exists or null if not.
      */
     public Map<Long, Optional<ProgrammingSubmission>> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseId(programmingExerciseId);
@@ -320,6 +330,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     /**
      * trigger the build using the batch size approach for all participations
+     *
      * @param participations the participations for which the method triggerBuild should be executed.
      */
     public void triggerBuildForParticipations(List<ProgrammingExerciseStudentParticipation> participations) {
@@ -371,7 +382,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * 4) The first build returns a result to Artemis, this result is now attached to the second submission (that was just created)
      * 5) The second build finishes and returns a result to Artemis, this result is attached to the first submission
      *
-     * @param participation to create submission for.
+     * @param participation  to create submission for.
      * @param submissionType of the submission to create.
      * @return created or reused submission.
      * @throws IllegalStateException if the last commit hash can't be retrieved.
@@ -399,11 +410,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Create a submission with SubmissionType.TEST and the provided commitHash.
      *
-     * @param programmingExerciseId     ProgrammingExercise id.
-     * @param commitHash                last commitHash of the test repository, if null will use the last commitHash of the test repository.
+     * @param programmingExerciseId ProgrammingExercise id.
+     * @param commitHash            last commitHash of the test repository, if null will use the last commitHash of the test repository.
      * @return The created solutionSubmission.
-     * @throws EntityNotFoundException  if the programming exercise for the given id does not exist.
-     * @throws IllegalStateException    If no commitHash was no provided and no commitHash could be retrieved from the test repository.
+     * @throws EntityNotFoundException if the programming exercise for the given id does not exist.
+     * @throws IllegalStateException   If no commitHash was no provided and no commitHash could be retrieved from the test repository.
      */
     public ProgrammingSubmission createSolutionParticipationSubmissionWithTypeTest(Long programmingExerciseId, @Nullable String commitHash)
             throws EntityNotFoundException, IllegalStateException {
@@ -491,10 +502,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Trigger the template repository build with the given commitHash.
      *
-     * @param programmingExerciseId     is used to retrieve the template participation.
-     * @param commitHash                the unique hash code of the git repository identifying the submission, will be used for the created submission.
-     * @param submissionType            will be used for the created submission.
-     * @throws EntityNotFoundException  if the programming exercise has no template participation (edge case).
+     * @param programmingExerciseId is used to retrieve the template participation.
+     * @param commitHash            the unique hash code of the git repository identifying the submission, will be used for the created submission.
+     * @param submissionType        will be used for the created submission.
+     * @throws EntityNotFoundException if the programming exercise has no template participation (edge case).
      */
     public void triggerTemplateBuildAndNotifyUser(long programmingExerciseId, String commitHash, SubmissionType submissionType) throws EntityNotFoundException {
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExerciseParticipationService
@@ -546,7 +557,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * see the description below
      *
-     * @param programmingExerciseId  id of a ProgrammingExercise.
+     * @param programmingExerciseId id of a ProgrammingExercise.
      * @param testCasesChanged      set to true to mark the programming exercise as dirty.
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
@@ -560,8 +571,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * This method also sends out a notification to the client if testCasesChanged = true.
      * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
      *
-     * @param programmingExercise   a ProgrammingExercise.
-     * @param testCasesChanged      set to true to mark the programming exercise as dirty.
+     * @param programmingExercise a ProgrammingExercise.
+     * @param testCasesChanged    set to true to mark the programming exercise as dirty.
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
     public void setTestCasesChanged(ProgrammingExercise programmingExercise, boolean testCasesChanged) throws EntityNotFoundException {
@@ -598,6 +609,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     /**
      * Notify user on a new programming submission.
+     *
      * @param submission ProgrammingSubmission
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
@@ -646,10 +658,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the subissions'
      * single result.
      *
-     * @param exerciseId - the id of the exercise we are looking for
+     * @param exerciseId      - the id of the exercise we are looking for
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
-     * @param tutor    - the the tutor we are interested in
-     * @param examMode - flag should be set to ignore the test run submissions
+     * @param tutor           - the the tutor we are interested in
+     * @param examMode        - flag should be set to ignore the test run submissions
      * @return a list of programming submissions
      */
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, User tutor, boolean examMode,
@@ -687,7 +699,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
-     * @param examMode - set flag to ignore test run submissions for exam exercises
+     * @param examMode      - set flag to ignore test run submissions for exam exercises
      * @return a list of programming submissions for the given exercise id
      */
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
@@ -736,8 +748,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param correctionRound     - the correction round we want our submission to have results for
+     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
@@ -752,7 +764,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Get the programming submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
      *
-     * @param submissionId the id of the programming submission
+     * @param submissionId    the id of the programming submission
      * @param correctionRound the correctionRound of the programming submission
      * @return the locked programming submission
      */
@@ -765,7 +777,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * Get a programming submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
-     * @param exercise the exercise the submission should belong to
+     * @param exercise        the exercise the submission should belong to
      * @param correctionRound - the correction round we want our submission to have results for
      * @return a locked programming submission that needs an assessment
      */
@@ -782,7 +794,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Locks the programmingSubmission submission. If the submission only has automatic results, and no manual,
      * create a new manual result. In the second correction round add a second manual result to the submission
      *
-     * @param submission the submission to lock
+     * @param submission      the submission to lock
      * @param correctionRound the correction round for the assessment
      * @return the result that is locked with the current user
      */

@@ -45,12 +45,23 @@ describe(`BrowserFingerprintInterceptor`, () => {
         testExpectedFingerprintAndInstanceID(fingerprint, instanceIdentifier);
     });
 
-    it('should use empty strings if fingerprint service returnes falsy values', () => {
+    it('should not send headers if fingerprint service returnes falsy values', () => {
         fingerprintInterceptor = new BrowserFingerprintInterceptor({
             fingerprint: of(undefined),
             instanceIdentifier: of(undefined),
         } as any as BrowserFingerprintService);
-        testExpectedFingerprintAndInstanceID('', '');
+
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const cloneSpy = jest.spyOn(requestMock, 'clone');
+        const mockHandler = {
+            handle: jest.fn(),
+        };
+
+        fingerprintInterceptor.intercept(requestMock, mockHandler);
+
+        expect(cloneSpy).toHaveBeenCalledTimes(0);
+        expect(mockHandler.handle).toHaveBeenCalledTimes(1);
+        expect(mockHandler.handle).toHaveBeenCalledWith(requestMock);
     });
 
     it('should do nothing if the request goes elsewhere', () => {

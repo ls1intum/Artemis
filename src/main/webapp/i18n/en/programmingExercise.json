@@ -273,7 +273,8 @@
                 "allowComplaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment",
                 "disallowComplaintOnAutomaticAssessmentTooltip": "Students cannot complain after receiving an automatic assessment",
                 "complaintOnAutomaticAssessmentEnabled": "Complaints are possible",
-                "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible"
+                "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible",
+                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",

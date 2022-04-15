@@ -22,6 +22,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
@@ -86,6 +87,8 @@ public class ProgrammingExerciseResultTestService {
 
     private ProgrammingExercise programmingExercise;
 
+    private ProgrammingExercise programmingExerciseWithStaticCodeAnalysis;
+
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
@@ -101,6 +104,7 @@ public class ProgrammingExerciseResultTestService {
         Course course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
+        programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
@@ -338,5 +342,13 @@ public class ProgrammingExerciseResultTestService {
 
     public ProgrammingExercise getProgrammingExercise() {
         return programmingExercise;
+    }
+
+    public ProgrammingExercise getProgrammingExerciseWithStaticCodeAnalysis() {
+        return programmingExerciseWithStaticCodeAnalysis;
+    }
+
+    public ProgrammingExerciseParticipation getSolutionParticipation() {
+        return solutionParticipation;
     }
 }

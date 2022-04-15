@@ -518,6 +518,7 @@ export class CypressExamBuilder {
         this.template.visibleDate = dayjsToString(day());
         this.template.startDate = dayjsToString(day().add(1, 'day'));
         this.template.endDate = dayjsToString(day().add(2, 'day'));
+        this.template.workingTime = 86400;
     }
 
     /**
