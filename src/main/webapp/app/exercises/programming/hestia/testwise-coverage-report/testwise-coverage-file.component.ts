@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, OnInit, OnChanges, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, Input, ViewChild, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import ace from 'brace';
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
