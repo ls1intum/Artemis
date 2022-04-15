@@ -20,7 +20,6 @@ import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
 import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import Response = Cypress.Response;
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
