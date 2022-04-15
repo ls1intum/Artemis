@@ -500,10 +500,7 @@ export class ProgrammingExerciseService {
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
-                if (res === undefined) {
-                    return undefined;
-                }
-                return new Map(Object.entries(res));
+                return res && new Map(Object.entries(res));
             }),
         );
     }

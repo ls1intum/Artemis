@@ -22,7 +22,6 @@ describe('TestwiseCoverageFile Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MatExpansionModule, AceEditorModule, NoopAnimationsModule],
             declarations: [TestwiseCoverageFileComponent],
-            providers: [],
         })
             .compileComponents()
             .then(() => {

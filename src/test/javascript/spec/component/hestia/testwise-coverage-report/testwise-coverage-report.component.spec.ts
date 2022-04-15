@@ -19,7 +19,6 @@ describe('TestwiseCoverageReport Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [TestwiseCoverageReportComponent],
-            providers: [],
         })
             .compileComponents()
             .then(() => {
@@ -85,7 +84,7 @@ describe('TestwiseCoverageReport Component', () => {
                 // file with 10 lines, 4 covered
                 fileContentByName.set(
                     'src/de/tum/in/ase/BubbleSort.java',
-                    'package de.tum.in.ase;\n' + '\n' + 'covered\n' + 'covered\n' + 'uncovered\n' + 'covered\n' + 'covered\n' + 'uncovered\n' + 'uncovered\n' + 'uncovered',
+                    'package de.tum.in.ase;\n\ncovered\ncovered\nuncovered\ncovered\ncovered\nuncovered\nuncovered\nuncovered',
                 );
                 // file with 2 lines, 2 covered
                 fileContentByName.set('src/de/tum/in/ase/MergeSort.java', 'covered\ncovered');

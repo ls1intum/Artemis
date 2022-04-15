@@ -2,7 +2,7 @@
     padding: 0;
 }
 
-::ng-deep .mat-expansion-panel-body {
+.mat-expansion-panel .mat-expansion-panel-body {
     padding: 0 !important;
     text-align: center;
 }
@@ -11,7 +11,7 @@
     flex-grow: 0;
 }
 
-::ng-deep .mat-expansion-indicator::after {
+.mat-expansion-panel .mat-expansion-indicator::after {
     margin-right: 2px !important;
     margin-left: 2px !important;
 }
