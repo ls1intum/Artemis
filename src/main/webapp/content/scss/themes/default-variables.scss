@@ -109,3 +109,24 @@ $overview-light-border-color: lighten($overview-border-color, 30%);
 $overview-light-background-color: rgba($overview-light-border-color, 0.3);
 $overview-light-primary-background-color: rgba($primary, 0.3);
 $overview-blue-border-color: $primary;
+
+// Guided tour
+$gt-tour-step-color: #ffffff;
+$gt-tour-text-color: #231f1f;
+$gt-tour-border-color: #17a2b8;
+$gt-tour-next-button-color: #17a2b8;
+$gt-tour-next-button-hover: #117a8b;
+$gt-tour-back-button-color: #17a2b8;
+$gt-tour-back-button-hover: #117a8b;
+$gt-tour-restart-button-color: #28a745;
+$gt-tour-restart-button-hover: #1e7e34;
+$gt-tour-button-color-disabled: #f2f2f2;
+$gt-tour-button-text-color: #ffffff;
+$gt-tour-button-text-disabled: #a3a3a3;
+$gt-tour-shadow-color: #4c4c4c;
+$gt-overlay-background: black;
+$gt-tour-block-after-background: #231f1f;
+$gt-tour-block-content-tt-background: #f2f2f2;
+$gt-tour-block-content-red: #ca2024;
+$gt-tour-block-step-hint-not-interaction-background: #f0f0f0;
+$gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
