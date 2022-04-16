@@ -6,8 +6,8 @@ import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lec
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
+import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 
 const routes: Routes = [
     {

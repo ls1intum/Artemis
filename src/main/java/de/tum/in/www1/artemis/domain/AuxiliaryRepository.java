@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.Objects;
 
 import javax.persistence.Column;
@@ -161,8 +161,8 @@ public class AuxiliaryRepository extends DomainObject {
         try {
             return new VcsRepositoryUrl(repositoryUrl);
         }
-        catch (MalformedURLException e) {
-            log.error("Malformed URL " + getRepositoryUrl() + " could not be used to instantiate VcsRepositoryUrl.", e);
+        catch (URISyntaxException e) {
+            log.error("Malformed URI " + getRepositoryUrl() + " could not be used to instantiate VcsRepositoryUrl.", e);
         }
         return null;
     }

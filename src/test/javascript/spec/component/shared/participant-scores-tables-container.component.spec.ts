@@ -3,8 +3,8 @@ import { MockPipe } from 'ng-mocks';
 import { Component, Input } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ParticipantScoresTablesContainerComponent } from 'app/shared/participant-scores/participant-scores-tables-container/participant-scores-tables-container.component';
-import { NgbButtonsModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { FormsModule } from '@angular/forms';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
 
@@ -36,7 +36,7 @@ describe('ParticipantScoresTablesContainer', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, NgbTooltipModule, NgbButtonsModule],
+            imports: [ReactiveFormsModule, FormsModule, NgbTooltipModule],
             declarations: [
                 ParticipantScoresTablesContainerComponent,
                 ParticipantScoresTableStubComponent,

@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -98,6 +99,8 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -105,7 +108,8 @@ public class ProgrammingExerciseService {
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
+            ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -125,6 +129,7 @@ public class ProgrammingExerciseService {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
     }
 
     /**
@@ -148,12 +153,11 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
-     * @throws InterruptedException If something during the communication with the remote Git repository went wrong
      * @throws GitAPIException      If something during the communication with the remote Git repository went wrong
      * @throws IOException          If the template files couldn't be read
      */
     @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
@@ -283,7 +287,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
      */
-    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator) throws GitAPIException, InterruptedException {
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator) throws GitAPIException {
 
         // Get URLs for repos
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
@@ -382,7 +386,7 @@ public class ProgrammingExerciseService {
         return "templates/" + programmingLanguage.name().toLowerCase();
     }
 
-    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
+    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
@@ -393,7 +397,7 @@ public class ProgrammingExerciseService {
         createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
     }
 
-    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
+    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException {
         for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
             versionControlService.get().createRepository(projectKey, repositoryName, null);
@@ -501,15 +505,23 @@ public class ProgrammingExerciseService {
             // First get files that are not dependent on the project type
             String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
 
-            String projectTemplatePath = templatePath + "/projectTemplate/**/*.*";
+            // Java both supports Gradle and Maven as a test template
+            String projectTemplatePath = templatePath;
+            ProjectType projectType = programmingExercise.getProjectType();
+            if (projectType != null && projectType.isGradle()) {
+                projectTemplatePath += "/gradle";
+            }
+            else {
+                projectTemplatePath += "/maven";
+            }
+            projectTemplatePath += "/projectTemplate/**/*.*";
             Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
-            fileService.copyResources(projectTemplate, prefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+            // keep the folder structure
+            fileService.copyResources(projectTemplate, "projectTemplate", repository.getLocalPath().toAbsolutePath().toString(), true);
 
             // These resources might override the programming language dependent resources as they are project type dependent.
-            ProjectType projectType = programmingExercise.getProjectType();
             if (projectType != null) {
                 String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
-
                 String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
 
                 try {
@@ -533,7 +545,16 @@ public class ProgrammingExerciseService {
                 sectionsMap.put("non-sequential", true);
                 sectionsMap.put("sequential", false);
 
-                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
+                // replace placeholder settings in project file
+                String projectFileFileName;
+                if (projectType != null && projectType.isGradle()) {
+                    projectFileFileName = "build.gradle";
+                }
+                else {
+                    projectFileFileName = "pom.xml";
+                }
+                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), projectFileFileName).toAbsolutePath().toString(),
+                        sectionsMap);
 
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
 
@@ -566,21 +587,34 @@ public class ProgrammingExerciseService {
                 }
             }
             else {
-                String stagePomXmlPath = templatePath + "/stagePom.xml";
-                if (new java.io.File(projectTemplatePath + "/stagePom.xml").exists()) {
-                    stagePomXmlPath = projectTemplatePath + "/stagePom.xml";
+                // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
+                boolean isMaven = projectType == null || projectType.isMaven();
+                sectionsMap.put("non-sequential", false);
+                sectionsMap.put("sequential", true);
+
+                String projectFileName;
+                if (isMaven) {
+                    projectFileName = "pom.xml";
                 }
-                Resource stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
+                else {
+                    projectFileName = "build.gradle";
+                }
+                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), projectFileName).toAbsolutePath().toString(), sectionsMap);
+
+                // staging project files are only required for maven
+                Resource stagePomXml = null;
+                if (isMaven) {
+                    String stagePomXmlPath = templatePath + "/stagePom.xml";
+                    if (new java.io.File(projectTemplatePath + "/stagePom.xml").exists()) {
+                        stagePomXmlPath = projectTemplatePath + "/stagePom.xml";
+                    }
+                    stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
+                }
 
                 // This is done to prepare for a feature where instructors/tas can add multiple build stages.
                 List<String> sequentialTestTasks = new ArrayList<>();
                 sequentialTestTasks.add("structural");
                 sequentialTestTasks.add("behavior");
-
-                sectionsMap.put("non-sequential", false);
-                sectionsMap.put("sequential", true);
-
-                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "pom.xml").toAbsolutePath().toString(), sectionsMap);
 
                 for (String buildStage : sequentialTestTasks) {
 
@@ -595,7 +629,11 @@ public class ProgrammingExerciseService {
 
                     String packagePath = Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
-                    Files.copy(stagePomXml.getInputStream(), Paths.get(buildStagePath.toAbsolutePath().toString(), "pom.xml"));
+                    // staging project files are only required for maven
+                    if (isMaven && stagePomXml != null) {
+                        Files.copy(stagePomXml.getInputStream(), buildStagePath.resolve("pom.xml"));
+                    }
+
                     fileService.copyResources(buildStageResources, prefix, packagePath, false);
 
                     // Possibly overwrite files if the project type is defined
@@ -661,7 +699,7 @@ public class ProgrammingExerciseService {
         replacements.put("${exerciseName}", programmingExercise.getTitle());
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
         replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
     }
 
     /**
@@ -738,11 +776,10 @@ public class ProgrammingExerciseService {
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException          If the URLs cannot be converted to actual {@link Path paths}
-     * @throws InterruptedException If the checkout fails
      * @throws GitAPIException      If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
-            throws IOException, GitAPIException, InterruptedException {
+            throws IOException, GitAPIException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
@@ -867,6 +904,9 @@ public class ProgrammingExerciseService {
         if (programmingExercise.getTestRepositoryUrl() != null) {
             gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
         }
+
+        programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
+        programmingExercise.setGitDiffReport(null);
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();

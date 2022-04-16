@@ -48,10 +48,6 @@ final public class LdapUserDto {
         return registrationNumber;
     }
 
-    public void setRegistrationNumber(String registrationNumber) {
-        this.registrationNumber = registrationNumber;
-    }
-
     public LdapUserDto registrationNumber(String registrationNumber) {
         this.registrationNumber = registrationNumber;
         return this;
@@ -59,10 +55,6 @@ final public class LdapUserDto {
 
     public String getFirstName() {
         return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
     }
 
     public LdapUserDto firstName(String firstName) {
@@ -74,10 +66,6 @@ final public class LdapUserDto {
         return lastName;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
     public LdapUserDto lastName(String lastName) {
         this.lastName = lastName;
         return this;
@@ -85,10 +73,6 @@ final public class LdapUserDto {
 
     public String getEmail() {
         return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public LdapUserDto email(String email) {

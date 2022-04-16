@@ -63,7 +63,7 @@
             "post": {
                 "context": "Kontext",
                 "contextTutorTooltip": "Wähle den Kontext, in dem dieser Beitrag nach der Änderung veröffentlicht werden soll. Du kannst eine konkrete Übung oder Vorlesung oder eines der kursweiten, allgemeineren Themen wählen. Wählst du eine Übung oder eine Vorlesung, wird der Beitrag im Diskussionsbereich der Übungs- bzw. Vorlesungsseite angezeigt. Wählst du ein kursweites Thema, wird der Beitrag nur in der Übersicht (Diskussion Tab) gelistet.",
-                "courseWideTopicTooltip": "Wähle eines der kursweiten, allgemeineren Themen als Kontext für deinen Beitrag. Beiträge zu einzelnen Übungen oder Vorlesungen müssen auf der enstprechenden Seite erstellt werden.",
+                "courseWideTopicTooltip": "Wähle eines der kursweiten, allgemeineren Themen als Kontext für deinen Beitrag. Beiträge zu einzelnen Übungen oder Vorlesungen müssen auf der entsprechenden Seite erstellt werden.",
                 "courseWideContext": "Kursweite Themen",
                 "exercises": "Übungen",
                 "lectures": "Vorlesungen",

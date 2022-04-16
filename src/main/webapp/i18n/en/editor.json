@@ -42,6 +42,7 @@
             "loadingFiles": "Loading files",
             "fileLoadedSuccess": "File loaded successfully",
             "fetchingParticipation": "Your participation is being loaded, please wait a moment...",
+            "tabSize": "Tab size:",
             "conflict": {
                 "resetRepository": "Reset your repository to continue with your participation",
                 "resolveConflict": "Resolve conflict",

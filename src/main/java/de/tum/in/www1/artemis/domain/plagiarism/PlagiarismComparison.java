@@ -142,17 +142,18 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
+        if (!super.equals(obj)) {
             return false;
         }
-        PlagiarismComparison<?> that = (PlagiarismComparison<?>) o;
+
+        PlagiarismComparison<?> that = (PlagiarismComparison<?>) obj;
         return Double.compare(that.similarity, similarity) == 0 && status == that.status;
     }
 

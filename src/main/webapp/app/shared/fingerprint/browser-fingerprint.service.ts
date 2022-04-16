@@ -11,9 +11,16 @@ export class BrowserFingerprintService {
     public fingerprint = new BehaviorSubject<string | undefined>(undefined);
     public instanceIdentifier = new BehaviorSubject<string | undefined>(undefined);
 
-    constructor(private localStorage: LocalStorageService) {
-        this.setFingerprint();
-        this.setInstance();
+    constructor(private localStorage: LocalStorageService) {}
+
+    public initialize(browserFingerprintsEnabled: boolean | undefined) {
+        // If undefined, still enable it to not break older configurations without the field in profile info
+        if (browserFingerprintsEnabled !== false) {
+            this.setFingerprint();
+            this.setInstance();
+        } else {
+            this.clearInstance();
+        }
     }
 
     private setFingerprint(): void {
@@ -32,5 +39,9 @@ export class BrowserFingerprintService {
             this.localStorage.store(this.BROWSER_INSTANCE_KEY, instanceIdentifier);
         }
         this.instanceIdentifier.next(instanceIdentifier);
+    }
+
+    private clearInstance(): void {
+        this.localStorage.clear(this.BROWSER_INSTANCE_KEY);
     }
 }

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { MockDirective } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -18,7 +18,7 @@ describe('StudentExamSummaryComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [StudentExamSummaryComponent, MockDirective(ExamParticipationSummaryComponent)],
+            declarations: [StudentExamSummaryComponent, MockComponent(ExamParticipationSummaryComponent)],
             providers: [{ provide: ActivatedRoute, useValue: { data: of({ studentExam: studentExamValue }) } }],
         })
             .compileComponents()

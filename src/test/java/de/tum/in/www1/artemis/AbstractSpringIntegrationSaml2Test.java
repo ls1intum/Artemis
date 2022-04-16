@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -21,7 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
@@ -44,13 +45,14 @@ public abstract class AbstractSpringIntegrationSaml2Test {
     @Autowired
     protected DatabaseUtilService database;
 
+    // NOTE: this has to be a MockBean, because the class cannot be instantiated in the tests
     @MockBean
     protected RelyingPartyRegistrationRepository relyingPartyRegistrationRepository;
 
-    @MockBean
-    protected ProgrammingLanguageFeatureService programmingMock;
+    @SpyBean
+    protected JenkinsProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
-    @MockBean
+    @SpyBean
     protected MailService mailService;
 
     @Autowired
@@ -61,15 +63,15 @@ public abstract class AbstractSpringIntegrationSaml2Test {
 
     @BeforeEach
     public void setUp() throws Exception {
-        doReturn(Map.of()).when(programmingMock).getProgrammingLanguageFeatures();
-        doReturn(null).when(programmingMock).getProgrammingLanguageFeatures(any(ProgrammingLanguage.class));
+        doReturn(Map.of()).when(programmingLanguageFeatureService).getProgrammingLanguageFeatures();
+        doReturn(null).when(programmingLanguageFeatureService).getProgrammingLanguageFeatures(any(ProgrammingLanguage.class));
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
         doNothing().when(mailService).sendSAML2SetPasswordMail(any(User.class));
     }
 
     @AfterEach
-    public void resetMockBeans() {
-        Mockito.reset(relyingPartyRegistrationRepository, programmingMock, mailService);
+    public void resetSpyBeans() {
+        Mockito.reset(relyingPartyRegistrationRepository, programmingLanguageFeatureService, mailService);
     }
 
 }

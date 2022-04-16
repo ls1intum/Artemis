@@ -32,6 +32,7 @@ import { faBan, faExclamationCircle, faQuestionCircle, faSave } from '@fortaweso
 // this will be extended with Gradle later on
 export enum JavaTestRepositoryProjectType {
     MAVEN = 'MAVEN',
+    GRADLE = 'GRADLE',
 }
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -237,7 +238,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // Automatically enable the checkout of the solution repository for Haskell exercises
         this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
 
-        // Don't override the problem statement with the template in edit mode.
+        // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(language, this.programmingExercise.projectType!);
             // Rerender the instructions as the template has changed.
@@ -259,12 +260,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         this.updateProjectTypeSettings(type);
 
-        // TODO: extend this for gradle
         if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
-            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
+            this.selectedTestRepositoryProjectType = JavaTestRepositoryProjectType.MAVEN;
+        } else if (type === ProjectType.PLAIN_GRADLE || type === ProjectType.GRADLE_GRADLE) {
+            this.selectedTestRepositoryProjectType = JavaTestRepositoryProjectType.GRADLE;
         }
 
-        // Don't override the problem statement with the template in edit mode.
+        // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, type);
             // Rerender the instructions as the template has changed.
@@ -277,8 +279,29 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     onTestRepositoryProjectTypeChange(type: JavaTestRepositoryProjectType) {
-        this.selectedTestRepositoryProjectTypeValue = type;
+        this.selectedTestRepositoryProjectType = type;
         return type;
+    }
+
+    /**
+     * Updates the test repository project type. This only applies to Java exercises with project type 'Plain Java'
+     * @param type the type to update to
+     */
+    set selectedTestRepositoryProjectType(type: JavaTestRepositoryProjectType) {
+        // this has only effect for plain java which is represented by PLAIN_MAVEN (or PLAIN_GRADLE later)
+        if (type === JavaTestRepositoryProjectType.MAVEN) {
+            // only the underlying value should be changed, not the value which is displayed in the dropdown
+            this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+        } else {
+            this.programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
+        }
+
+        // Only load problem statement template when creating a new exercise and not when importing an existing exercise
+        if (this.programmingExercise.id === undefined) {
+            this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, this.programmingExercise.projectType);
+            // Rerender the instructions as the template has changed.
+            this.rerenderSubject.next();
+        }
     }
 
     get selectedTestRepositoryProjectType() {
@@ -294,8 +317,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.disableStaticCodeAnalysis();
         } else if (ProjectType.PLAIN_MAVEN === type || ProjectType.MAVEN_MAVEN === type) {
             this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
+        } else if (ProjectType.PLAIN_GRADLE === type || ProjectType.GRADLE_GRADLE === type) {
+            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.GRADLE;
         }
-        // TODO: extend check for gradle project
     }
 
     private disableStaticCodeAnalysis() {
@@ -779,7 +803,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private validateExerciseSubmissionLimit(validationErrorReasons: ValidationReason[]): void {
         // verifying submission limit value
-        if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy !== SubmissionPolicyType.NONE) {
+        if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy.type !== SubmissionPolicyType.NONE) {
             const submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
             if (submissionLimit === undefined || typeof submissionLimit !== 'number') {
                 validationErrorReasons.push({
