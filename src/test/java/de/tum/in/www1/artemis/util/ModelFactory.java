@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.util;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,11 +27,17 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.*;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import org.apache.commons.io.FileUtils;
+import org.springframework.util.ResourceUtils;
+
+import static org.assertj.core.api.Assertions.fail;
 
 public class ModelFactory {
 
@@ -44,13 +53,24 @@ public class ModelFactory {
         return lecture;
     }
 
-    public static Attachment generateAttachment(ZonedDateTime startDate, Lecture lecture) {
+    public static Attachment generateAttachment(ZonedDateTime startDate) {
         Attachment attachment = new Attachment();
         attachment.setAttachmentType(AttachmentType.FILE);
         attachment.setReleaseDate(startDate);
         attachment.setUploadDate(startDate);
         attachment.setName("TestAttachment");
-        attachment.setLecture(lecture);
+        return attachment;
+    }
+
+    public static Attachment generateAttachmentWithFile(ZonedDateTime startDate) {
+        Attachment attachment = generateAttachment(startDate);
+        String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
+        try {
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), new File(FilePathService.getTempFilePath(), testFileName));
+        } catch (IOException ex) {
+            fail("Failed while copying test attachment files", ex);
+        }
+        attachment.setLink(Paths.get("/api/files/temp/", testFileName).toString());
         return attachment;
     }
 

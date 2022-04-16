@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.service.LectureImportService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,7 +61,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit();
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
         this.attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
         VideoUnit videoUnit = database.createVideoUnit();
         TextUnit textUnit = database.createTextUnit();

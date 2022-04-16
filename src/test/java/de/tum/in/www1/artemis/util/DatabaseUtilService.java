@@ -542,14 +542,14 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations) throws Exception {
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         VideoUnit videoUnit = createVideoUnit();
         TextUnit textUnit = createTextUnit();
-        AttachmentUnit attachmentUnit = createAttachmentUnit();
+        AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
         ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
         addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
         return courses;
@@ -569,8 +569,9 @@ public class DatabaseUtilService {
         return exerciseUnitRepository.save(exerciseUnit);
     }
 
-    public AttachmentUnit createAttachmentUnit() {
-        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+    public AttachmentUnit createAttachmentUnit(Boolean withFile) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        Attachment attachmentOfAttachmentUnit = withFile ? ModelFactory.generateAttachmentWithFile(started) : ModelFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
@@ -636,12 +637,14 @@ public class DatabaseUtilService {
         course1.addExercises(quizExercise);
 
         Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture1);
+        Attachment attachment1 = ModelFactory.generateAttachmentWithFile(pastTimestamp);
+        attachment1.setLecture(lecture1);
         lecture1.addAttachments(attachment1);
         course1.addLectures(lecture1);
 
         Lecture lecture2 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment2 = ModelFactory.generateAttachment(pastTimestamp, lecture2);
+        Attachment attachment2 = ModelFactory.generateAttachmentWithFile(pastTimestamp);
+        attachment2.setLecture(lecture2);
         lecture2.addAttachments(attachment2);
         course1.addLectures(lecture2);
 
@@ -3803,7 +3806,7 @@ public class DatabaseUtilService {
     /**
      * Update the max complaint response text limit of the course.
      * @param course course which is updated
-     * @param complaintTextLimit new complaint response text limit
+     * @param complaintResponseTextLimit new complaint response text limit
      * @return updated course
      */
     public Course updateCourseComplaintResponseTextLimit(Course course, int complaintResponseTextLimit) {
