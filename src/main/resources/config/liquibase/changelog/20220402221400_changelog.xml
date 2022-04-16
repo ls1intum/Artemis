@@ -12,15 +12,13 @@
             </column>
             <column name="creator_id" type="BIGINT"/>
             <column name="password" type="VARCHAR(63)"/>
-            <column name="start_time" type="DATETIME"/>
+            <column name="start_date" type="DATETIME"/>
         </createTable>
         <addColumn tableName="exercise">
             <column name="quiz_mode" type="VARCHAR(63)" defaultValue="SYNCHRONIZED">
                 <constraints nullable="false"/>
             </column>
-            <column name="allowed_per_tutor_batch_count" type="INT" defaultValue="0">
-                <constraints nullable="false"/>
-            </column>
+            <column name="allowed_per_tutor_batch_count" type="INT" />
         </addColumn>
         <addColumn tableName="submission">
             <column name="quiz_batch" type="BIGINT"/>
@@ -37,4 +35,21 @@
                                  referencedColumnNames="id"/>
         <addUniqueConstraint tableName="quiz_batch" columnNames="quiz_id,password"/>
     </changeSet>
+    <!--<changeSet id="20220402221401" author="bottbenj">
+        <sql>
+            INSERT INTO quiz_batch (quiz_id, start_date)
+            SELECT id, release_date FROM exercise
+            WHERE discriminator = 'Q'
+        </sql>
+        <sql>
+            UPDATE exercise
+            SET due_date = DATE_ADD(DATE_ADD(release_date, INTERVAL duration SECOND), INTERVAL 5 SECOND)
+            WHERE discriminator = 'Q'
+        </sql>
+        <sql>
+            UPDATE exercise
+            SET release_date = IF(is_visible_before_start = 1, '2000-01-01 00:00:00', '3000-01-01 00:00:00')
+            WHERE discriminator = 'Q'
+        </sql>
+    </changeSet>-->
 </databaseChangeLog>

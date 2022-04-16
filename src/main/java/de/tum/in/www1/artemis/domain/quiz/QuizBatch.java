@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 public class QuizBatch extends DomainObject {
 
     @Nullable
-    @Column(name = "start_time")
+    @Column(name = "start_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime startTime;
 
