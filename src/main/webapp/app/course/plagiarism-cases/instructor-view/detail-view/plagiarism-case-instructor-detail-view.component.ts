@@ -72,7 +72,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             .subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
                     this.plagiarismCase.verdict = res.body!.verdict;
-                    this.verdictPointDeduction = res.body!.verdictPointDeduction!;
+                    this.plagiarismCase.verdictPointDeduction = res.body!.verdictPointDeduction!;
                 },
             });
     }
@@ -90,7 +90,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             .subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
                     this.plagiarismCase.verdict = res.body!.verdict;
-                    this.verdictMessage = res.body!.verdictMessage!;
+                    this.plagiarismCase.verdictMessage = res.body!.verdictMessage!;
                 },
             });
     }
