@@ -45,7 +45,7 @@ public class LectureImportService {
     }
 
     /**
-     * Import the {@code sourceLecture} including its lecture units to the {@code course}
+     * Import the {@code importedLecture} including its lecture units to the {@code course}
      *
      * @param importedLecture The lecture to be imported
      * @param course          The course to import to
@@ -65,16 +65,15 @@ public class LectureImportService {
         lecture.setCourse(course);
 
         final Lecture result = lectureRepository.save(lecture);
+        course.addLectures(result);
 
         log.debug("Importing lecture units from lecture");
-        // Import the associated lecture units of the lecture
         result.setLectureUnits(importedLecture.getLectureUnits().stream().map(lectureUnit -> cloneLectureUnit(lectureUnit, result)).filter(Objects::nonNull)
-                .map(lectureUnit -> lectureUnitRepository.save(lectureUnit.lecture(result))).collect(Collectors.toList()));
+                .map(lectureUnitRepository::save).collect(Collectors.toList()));
 
         log.debug("Importing attachments from lecture");
-        // Import the attachments of the lecture
-        result.setAttachments(
-                importedLecture.getAttachments().stream().map(attachment -> attachmentRepository.save(cloneAttachment(attachment).lecture(result))).collect(Collectors.toSet()));
+        result.setAttachments(importedLecture.getAttachments().stream().map(attachment -> cloneAttachment(attachment).lecture(result)).map(attachmentRepository::save)
+                .collect(Collectors.toSet()));
 
         // Save again to establish the ordered list relationship
         return lectureRepository.save(result);
@@ -84,6 +83,7 @@ public class LectureImportService {
      * This helper function clones the {@code importedLectureUnit} and returns it
      *
      * @param importedLectureUnit The original lecture unit to be copied
+     * @param newLecture The new lecture to which the lecture units are appended
      * @return The cloned lecture unit
      */
     private LectureUnit cloneLectureUnit(final LectureUnit importedLectureUnit, final Lecture newLecture) {
@@ -94,6 +94,7 @@ public class LectureImportService {
             textUnit.setName(importedLectureUnit.getName());
             textUnit.setReleaseDate(importedLectureUnit.getReleaseDate());
             textUnit.setContent(((TextUnit) importedLectureUnit).getContent());
+            textUnit.setLecture(newLecture);
             return textUnit;
         }
         else if (importedLectureUnit instanceof VideoUnit) {
@@ -102,18 +103,20 @@ public class LectureImportService {
             videoUnit.setReleaseDate(importedLectureUnit.getReleaseDate());
             videoUnit.setDescription(((VideoUnit) importedLectureUnit).getDescription());
             videoUnit.setSource(((VideoUnit) importedLectureUnit).getSource());
+            videoUnit.setLecture(newLecture);
             return videoUnit;
         }
         else if (importedLectureUnit instanceof AttachmentUnit) {
+            // Create and save the attachment unit, then the attachment itself, as the id is needed for file handling
             AttachmentUnit attachmentUnit = new AttachmentUnit();
-            attachmentUnit.setLecture(newLecture);
             attachmentUnit.setDescription(((AttachmentUnit) importedLectureUnit).getDescription());
+            attachmentUnit.setLecture(newLecture);
             lectureUnitRepository.save(attachmentUnit);
 
-            // Duplicate the associated attachment
             Attachment attachment = cloneAttachment(((AttachmentUnit) importedLectureUnit).getAttachment());
             attachment.setAttachmentUnit(attachmentUnit);
             attachmentRepository.save(attachment);
+            attachmentUnit.setAttachment(attachment);
 
             return attachmentUnit;
         }
@@ -147,14 +150,13 @@ public class LectureImportService {
         try {
             log.debug("Copying attachment file from {} to {}", oldPath, tempPath);
             Files.copy(new FileInputStream(oldPath.toFile()), tempPath, StandardCopyOption.REPLACE_EXISTING);
+
+            // File was copied to a temp directory and will be moved once we persist the attachment
+            attachment.setLink(fileService.publicPathForActualPath(tempPath.toString(), null));
         }
         catch (IOException e) {
-            log.debug(e.getMessage());
-            return null;
+            log.error("Error while copying file", e);
         }
-
-        // File was copied to a temp directory and will be moved when we persist the attachment below
-        attachment.setLink(fileService.publicPathForActualPath(tempPath.toString(), null));
         return attachment;
     }
 }

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
+import static org.assertj.core.api.Assertions.fail;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -8,6 +10,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
+
+import org.apache.commons.io.FileUtils;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -28,16 +33,11 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.*;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import org.apache.commons.io.FileUtils;
-import org.springframework.util.ResourceUtils;
-
-import static org.assertj.core.api.Assertions.fail;
 
 public class ModelFactory {
 
@@ -67,7 +67,8 @@ public class ModelFactory {
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), new File(FilePathService.getTempFilePath(), testFileName));
-        } catch (IOException ex) {
+        }
+        catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
         attachment.setLink(Paths.get("/api/files/temp/", testFileName).toString());

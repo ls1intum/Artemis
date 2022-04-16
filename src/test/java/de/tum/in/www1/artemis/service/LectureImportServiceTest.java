@@ -1,5 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
@@ -8,15 +18,6 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -70,13 +71,11 @@ public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBit
 
         System.out.println(lecture2.getLectureUnits());
         // Assert that all lecture units (except exercise units) were copied
-        assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList())
-            .containsExactlyElementsOf(this.lecture1.getLectureUnits().stream()
-                .filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
-                .map(LectureUnit::getName).toList());
+        assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
+                this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
 
         assertThat(lecture2.getAttachments().stream().map(Attachment::getName).toList())
-            .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
+                .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
 
         lectureRepository.delete(lecture2);
     }
