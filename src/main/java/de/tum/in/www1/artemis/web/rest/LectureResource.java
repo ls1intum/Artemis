@@ -192,7 +192,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> importLecture(@PathVariable long sourceLectureId, @RequestParam(required = true) long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);
-        final var destinationCourse = courseRepository.findByIdElseThrow(courseId);
+        final var destinationCourse = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
 
         Course course = sourceLecture.getCourse();
         if (course == null) {
