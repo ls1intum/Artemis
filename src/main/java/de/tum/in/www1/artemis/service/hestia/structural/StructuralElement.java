@@ -32,8 +32,8 @@ public interface StructuralElement {
             return String.join("\n", structuralAnnotations) + "\n";
         }
         else {
-            return annotatedElement.getAnnotations().stream().filter(solutionAnnotation -> structuralAnnotations.contains(solutionAnnotation.getType().getSimpleName()))
-                    .map(JavaModel::getCodeBlock).collect(Collectors.joining());
+            return annotatedElement.getAnnotations().stream().filter(solutionAnnotation -> structuralAnnotations.contains(solutionAnnotation.getType().getSimpleName())
+                    || "Override".equals(solutionAnnotation.getType().getSimpleName())).map(JavaModel::getCodeBlock).collect(Collectors.joining());
         }
     }
 
