@@ -69,7 +69,6 @@ public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBit
 
         assertThat(lecture2.getTitle()).isEqualTo(this.lecture1.getTitle());
 
-        System.out.println(lecture2.getLectureUnits());
         // Assert that all lecture units (except exercise units) were copied
         assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
                 this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
