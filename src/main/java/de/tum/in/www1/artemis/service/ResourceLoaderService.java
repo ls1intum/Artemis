@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +31,7 @@ public class ResourceLoaderService {
     public ResourceLoaderService(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
 
-        allowedOverridePrefixes.add("templates/jenkins/");
+        allowedOverridePrefixes.add(Path.of("templates", "jenkins").toString());
     }
 
     /**
@@ -59,7 +61,7 @@ public class ResourceLoaderService {
      * @return the loaded resource, which might not exist ({@link Resource#exists()}.
      */
     public Resource getResource(String... pathSegments) {
-        return getResource(StringUtils.join(pathSegments, "/"));
+        return getResource(StringUtils.join(pathSegments, File.separator));
     }
 
     /**
@@ -98,7 +100,7 @@ public class ResourceLoaderService {
      * @return the loaded resources, which might be an empty array
      */
     public Resource[] getResources(String... pathSegments) {
-        return getResources(StringUtils.join(pathSegments, "/"));
+        return getResources(StringUtils.join(pathSegments, File.separator));
     }
 
     /**
@@ -112,11 +114,11 @@ public class ResourceLoaderService {
             return "";
         }
 
-        if (templateFileSystemPath.get().endsWith("/")) {
+        if (templateFileSystemPath.get().endsWith(File.separator)) {
             return templateFileSystemPath.get();
         }
         else {
-            return templateFileSystemPath.get() + "/";
+            return templateFileSystemPath.get() + File.separator;
         }
     }
 
