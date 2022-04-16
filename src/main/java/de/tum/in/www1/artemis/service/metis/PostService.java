@@ -408,6 +408,14 @@ public class PostService extends PostingService {
         return lecturePosts;
     }
 
+    /**
+     * Checks course, user and post validity,
+     * retrieves and filters posts for a plagiarism case by its id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param postContextFilter filter object
+     * @return page of posts that belong to the plagiarism case
+     */
     public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
