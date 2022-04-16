@@ -209,6 +209,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.entity.randomizeQuestionOrder = true;
             this.entity.quizQuestions = [];
             this.entity.quizMode = QuizMode.SYNCHRONIZED;
+            this.entity.allowedNumberOfAttempts = 1;
             this.quizExercise = this.entity;
         }
         this.prepareEntity(this.entity);
@@ -296,7 +297,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      * @returns {string} Name of the dropdown to show
      */
     get showDropdown(): string {
-        if (!this.quizExercise.quizStarted) {
+        if (!this.quizExercise || !this.quizExercise.quizStarted) {
             return 'isVisibleBeforeStart';
         } else if (this.quizExercise.quizEnded) {
             return 'isOpenForPractice';

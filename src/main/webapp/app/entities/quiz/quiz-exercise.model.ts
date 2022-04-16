@@ -22,8 +22,6 @@ export enum QuizMode {
 export class QuizBatch {
     id?: number;
     startTime?: dayjs.Dayjs;
-    remainingTime?: number;
-    timeUntilPlannedStart?: number;
     started?: boolean;
     ended?: boolean;
     submissionAllowed?: boolean;
@@ -35,8 +33,6 @@ export class QuizBatch {
 
 export class QuizExercise extends Exercise {
     public id?: number;
-    public remainingTime?: number; // (computed by server)
-    public timeUntilPlannedStart?: number; // (computed by server)
     public visibleToStudents?: boolean; // (computed by server)
     public allowedNumberOfAttempts?: number;
     public remainingNumberOfAttempts?: number;

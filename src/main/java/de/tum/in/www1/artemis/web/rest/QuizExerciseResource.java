@@ -332,7 +332,7 @@ public class QuizExerciseResource {
         }
 
         var submissions = submissionRepository.countByExerciseIdAndStudentId(quizExerciseId, user.getId());
-        if (submissions >= quizExercise.getAllowedNumberOfAttempts()) {
+        if (quizExercise.getAllowedNumberOfAttempts() != null && submissions >= quizExercise.getAllowedNumberOfAttempts()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAttemptsExceeded", "Maximum number of attempts reached.")).build();
         }
