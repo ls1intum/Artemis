@@ -54,6 +54,11 @@ public class ModelFactory {
         return lecture;
     }
 
+    /**
+     * Create a dummy attachment for testing
+     * @param startDate The release date to set on the attachment
+     * @return Attachment that was created
+     */
     public static Attachment generateAttachment(ZonedDateTime startDate) {
         Attachment attachment = new Attachment();
         attachment.setAttachmentType(AttachmentType.FILE);
@@ -63,6 +68,11 @@ public class ModelFactory {
         return attachment;
     }
 
+    /**
+     * Create a dummy attachment for testing with a placeholder image file on disk
+     * @param startDate The release date to set on the attachment
+     * @return Attachment that was created with its link set to a testing file on disk
+     */
     public static Attachment generateAttachmentWithFile(ZonedDateTime startDate) {
         Attachment attachment = generateAttachment(startDate);
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";

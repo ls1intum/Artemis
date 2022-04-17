@@ -58,6 +58,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             """)
     Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
 
+    @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 
     /**
