@@ -57,6 +57,19 @@ public class PlagiarismService {
      * @return the anoymized submission for the given student
      */
     public Submission anonymizeSubmissionForStudent(Submission submission, String userLogin) {
+        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submission.getId(), submission.getId());
+
+        // disallow requests from users who are not notified about this case:
+        boolean isUserNotifiedByInstructor = false;
+        if (comparisonOptional.isPresent()) {
+            var comparisons = comparisonOptional.get();
+            isUserNotifiedByInstructor = comparisons.stream()
+                    .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase().getPost() != null && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
+                            || (comparison.getSubmissionB().getPlagiarismCase().getPost() != null && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
+        }
+        if (!isUserNotifiedByInstructor) {
+            throw new AccessForbiddenException("This plagiarism submission is not related to the requesting user or the user has not been notified yet.");
+        }
         submission.setParticipation(null);
         submission.setResults(null);
         submission.setSubmissionDate(null);

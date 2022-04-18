@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository.plagiarism;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -65,6 +66,8 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
     default PlagiarismComparison<?> findByIdWithSubmissionsStudentsAndElementsBElseThrow(long comparisonId) {
         return findByIdWithSubmissionsAndElementsB(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
     }
+
+    Optional<Set<PlagiarismComparison<?>>> findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(long submissionA_submissionId, long submissionB_submissionId);
 
     // we can't simply call save() on plagiarismComparisons because the plagiarismComparisonMatches have no id
     // and would be recreated. Therefore, we need some update methods:

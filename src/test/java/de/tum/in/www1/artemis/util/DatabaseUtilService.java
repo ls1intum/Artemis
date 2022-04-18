@@ -3805,7 +3805,7 @@ public class DatabaseUtilService {
     /**
      * Update the max complaint response text limit of the course.
      * @param course course which is updated
-     * @param complaintTextLimit new complaint response text limit
+     * @param complaintResponseTextLimit new complaint response text limit
      * @return updated course
      */
     public Course updateCourseComplaintResponseTextLimit(Course course, int complaintResponseTextLimit) {
