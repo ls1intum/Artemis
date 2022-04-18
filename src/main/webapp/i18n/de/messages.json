@@ -8,7 +8,9 @@
                 "show": "Gespräch anzeigen",
                 "hide": "Gespräch ausblenden",
                 "notFound": "Keine Konversation gefunden",
-                "searchForUsers": "Benutzer innerhalb des Kurses suchen"
+                "instructionForNewConversation": "Sie können über die Suchleiste oben nach anderen Benutzern suchen und eine neue Konversation beginnen",
+                "searchForUsers": "Benutzer des Kurses suchen",
+                "minQueryLengthHint": "Mind. {{ length }} Buchstaben"
             },
             "submit": "Senden"
         }

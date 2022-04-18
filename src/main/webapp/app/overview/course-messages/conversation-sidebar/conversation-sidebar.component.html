@@ -1,20 +1,19 @@
 <div *ngIf="course" class="h-100">
-    <div *ngIf="!collapsed; else collapsedConversations" class="postings-container expanded-discussion">
+    <div *ngIf="!collapsed; else collapsedConversations" class="expanded-conversations">
         <div class="card">
             <!-- header -->
-            <div class="card-header text-white" [ngbTooltip]="'artemisApp.messages.conversation.hide' | artemisTranslate" (click)="collapsed = true">
-                <div class="row flex-grow-1">
-                    <div class="col">
-                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.messages.conversation.header">Private messages</h5>
-                    </div>
-                    <div class="col-auto">
-                        <fa-icon [icon]="faChevronLeft"></fa-icon>
-                    </div>
+            <div class="card-header d-flex bg-primary text-white" [ngbTooltip]="'artemisApp.messages.conversation.hide' | artemisTranslate" (click)="collapsed = true">
+                <h3 class="card-title">
+                    <fa-icon [icon]="faConversation"></fa-icon>
+                    <span class="ms-2" jhiTranslate="artemisApp.messages.conversation.header">Conversations</span>
+                </h3>
+                <div class="col-auto">
+                    <fa-icon [icon]="faChevronLeft"></fa-icon>
                 </div>
             </div>
             <!-- body -->
-            <div class="card-body pt-0 chat-session-sidebar">
-                <div class="my-2">
+            <div class="card-body">
+                <div class="user-searchbar">
                     <jhi-data-table
                         [showPageSizeDropdown]="false"
                         entityType="user"
@@ -29,39 +28,42 @@
                         [onAutocompleteSelectWrapper]="onAutocompleteSelect"
                         [searchTextFromEntity]="clearUserSearchBar"
                         searchPlaceholderTranslation="artemisApp.messages.conversation.searchForUsers"
+                        minQueryLengthHintTranslation="artemisApp.messages.conversation.minQueryLengthHint"
                     ></jhi-data-table>
                 </div>
-                <div class="my-2">
-                    <ul class="chat-session-list" *ngIf="conversations && conversations.length">
+                <div>
+                    <ul class="conversation-list" *ngIf="conversations && conversations.length">
                         <li
                             *ngFor="let conversation of conversations; trackBy: conversationsTrackByFn"
-                            class="chat-session-list-item"
+                            class="conversation-list-item"
                             [class.selected]="activeConversation.id === conversation.id"
                             (click)="activeConversation = conversation; selectConversation.emit(conversation)"
                         >
-                            <div class="chat-session-list-item-info">
-                                <span class="chat-session-list-item-user">
-                                    <span>{{ getNameOfConversationParticipant(conversation) }}</span>
-                                </span>
-                            </div>
+                            <span class="conversation-list-item-user">
+                                {{ getNameOfConversationParticipant(conversation) }}
+                            </span>
                         </li>
                     </ul>
                 </div>
                 <!-- no conversations -->
-                <div class="post-result-information row mt-2" *ngIf="!conversations || conversations.length === 0">
-                    <div class="col-12">
-                        {{ 'artemisApp.messages.conversation.notFound' | artemisTranslate }}
-                    </div>
+                <div class="conversation-empty" *ngIf="!isLoading && conversations.length === 0">
+                    <fa-icon size="3x" [icon]="faConversation"></fa-icon>
+                    <h5 class="mb-3 font-weight-bold">{{ 'artemisApp.messages.conversation.notFound' | artemisTranslate }}</h5>
+                    <span jhiTranslate="artemisApp.messages.conversation.instructionForNewConversation"></span>
                 </div>
             </div>
+        </div>
+        <div class="draggable-right">
+            <fa-icon [icon]="faGripLinesVertical"></fa-icon>
         </div>
     </div>
     <!-- collapsed conversations -->
     <ng-template #collapsedConversations>
-        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.messages.conversation.show' | artemisTranslate">
-            <fa-icon class="expand-postings-icon" [icon]="faChevronRight"></fa-icon>
-            <span class="h5" jhiTranslate="artemisApp.messages.conversation.header"></span>
-            <fa-icon class="expand-postings-icon" [icon]="faChevronRight"></fa-icon>
+        <div class="collapsed-conversations bg-primary text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.messages.conversation.show' | artemisTranslate">
+            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
+            <span jhiTranslate="artemisApp.messages.conversation.header">Conversation</span>
+            <fa-icon [icon]="faConversation" class="fa-rotate-270"></fa-icon>
+            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
         </div>
     </ng-template>
 </div>

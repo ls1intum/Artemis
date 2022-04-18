@@ -72,6 +72,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property showAllEntitiesTranslation Translation string if all entities should be displayed (e.g. 'artemisApp.exercise.showAll')
      * @property searchNoResultsTranslation Translation string that has the variable {{ length }} in it (default: 'artemisApp.dataTable.search.noResults')
      * @property searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
+     * @property minQueryLengthHintTranslation Translation string that is used to inform the user about the min. number of characters that must be input to trigger a search
      * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
      * @property searchEntityFilterEnabled Flag whether searching should cause a filtering of the entities (default: true)
      * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
@@ -94,6 +95,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() showAllEntitiesTranslation: string;
     @Input() searchNoResultsTranslation = 'artemisApp.dataTable.search.noResults';
     @Input() searchPlaceholderTranslation: string;
+    @Input() minQueryLengthHintTranslation = 'artemisApp.dataTable.search.minQueryLengthHint';
     @Input() searchFields: string[] = [];
     @Input() searchEntityFilterEnabled = true;
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;

@@ -33,7 +33,7 @@
                 <span class="badge bg-warning" [jhiTranslate]="searchNoResultsTranslation"> No results </span>
             </div>
             <div class="search-info" [class.active]="searchQueryTooShort">
-                <span class="badge bg-info" jhiTranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: minSearchQueryLength }">
+                <span class="badge bg-info" [jhiTranslate]="minQueryLengthHintTranslation" [translateValues]="{ length: minSearchQueryLength }">
                     Please enter at least {{ minSearchQueryLength }} characters
                 </span>
             </div>

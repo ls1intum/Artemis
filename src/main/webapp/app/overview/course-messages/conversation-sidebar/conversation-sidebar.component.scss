@@ -1,39 +1,122 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
-.chat-session-sidebar {
-    .chat-session-list {
-        flex-grow: 1;
-        overflow-y: auto;
-        list-style: none;
-        margin: 0;
-        padding: 0;
+$draggable-width: 15px;
+$conversation-section-card-min-width: 215px;
 
-        &-item {
+.expanded-conversations {
+    display: flex;
+    height: 100%;
+    margin-left: auto;
+
+    width: calc(#{$draggable-width} + #{$conversation-section-card-min-width});
+
+    .draggable-right {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: $draggable-width;
+    }
+
+    .card {
+        width: inherit;
+        min-width: $conversation-section-card-min-width;
+
+        .card-header {
+            display: inline-flex;
+            justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            display: flex;
-            padding: 0.75rem;
 
-            &-user {
-                color: grey;
-                font-size: 14px;
+            .card-title {
+                display: flex;
             }
 
-            &.selected {
-                background-color: transparentize(lightskyblue, 0.5);
+            .row > .col-auto:last-child {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+        }
+
+        .card-body {
+            padding: 0;
+
+            .user-searchbar {
+                padding: 5px 5px 0 5px;
             }
 
-            &:hover {
-                background-color: lightskyblue;
+            .conversation-list {
+                margin: 0;
+                padding: 0;
+
+                &-item {
+                    cursor: pointer;
+                    display: flex;
+                    padding: 0.2rem;
+
+                    &-user {
+                        color: grey;
+                        font-size: 14px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    &.selected {
+                        background-color: transparentize(lightskyblue, 0.5);
+                    }
+
+                    &:hover {
+                        background-color: lightskyblue;
+                    }
+                }
+            }
+
+            .conversation-empty {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                opacity: 0.75;
+                padding-top: 30px;
+                gap: 10px;
             }
         }
     }
+}
 
-    .chat-session-empty {
-        align-items: center;
-        display: flex;
-        flex-grow: 1;
-        justify-content: center;
-        opacity: 0.5;
+.collapsed-conversations {
+    display: flex;
+    width: 38px;
+    justify-content: space-between;
+    flex-flow: column;
+    cursor: pointer;
+
+    span {
+        writing-mode: vertical-lr;
+        transform: rotate(180deg);
+        margin: auto;
+    }
+
+    fa-icon {
+        padding: 5px;
+    }
+
+    .expand-conversations-icon {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        place-self: center;
+    }
+}
+
+@media screen and (max-width: 992px) {
+    .expanded-conversations {
+        width: 94vw;
+
+        .draggable-right {
+            display: none;
+        }
     }
 }

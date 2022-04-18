@@ -1,7 +1,8 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import interact from 'interactjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 
 import { CourseMessagesService } from 'app/shared/metis/course.messages.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
@@ -14,11 +15,11 @@ import { ConversationParticipant } from 'app/entities/metis/conversation/convers
 
 @Component({
     selector: 'jhi-conversation-sidebar',
-    styleUrls: ['./conversation-sidebar.component.scss', '../../discussion-section/discussion-section.component.scss'],
+    styleUrls: ['./conversation-sidebar.component.scss'],
     templateUrl: './conversation-sidebar.component.html',
     providers: [CourseMessagesService],
 })
-export class ConversationSidebarComponent implements OnInit, OnDestroy {
+export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDestroy {
     @Output() selectConversation = new EventEmitter<Conversation>();
 
     conversations: Conversation[];
@@ -40,6 +41,8 @@ export class ConversationSidebarComponent implements OnInit, OnDestroy {
     // Icons
     faChevronLeft = faChevronLeft;
     faChevronRight = faChevronRight;
+    faGripLinesVertical = faGripLinesVertical;
+    faConversation = faComments;
 
     constructor(protected courseMessagesService: CourseMessagesService, private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute) {}
 
@@ -65,6 +68,32 @@ export class ConversationSidebarComponent implements OnInit, OnDestroy {
                 }
             });
         });
+    }
+
+    ngAfterViewInit(): void {
+        // allows the conversation sidebar to be resized towards the right-hand side
+        interact('.expanded-conversations')
+            .resizable({
+                edges: { left: false, right: '.draggable-right', bottom: false, top: false },
+                modifiers: [
+                    // Set maximum width of the conversation sidebar
+                    interact.modifiers!.restrictSize({
+                        min: { width: 230, height: 0 },
+                        max: { width: 500, height: 4000 },
+                    }),
+                ],
+                inertia: true,
+            })
+            .on('resizestart', function (event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function (event: any) {
+                event.target.classList.remove('card-resizable');
+            })
+            .on('resizemove', function (event: any) {
+                const target = event.target;
+                target.style.width = event.rect.width + 'px';
+            });
     }
 
     /**
@@ -144,8 +173,8 @@ export class ConversationSidebarComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * defines a function that returns the post id as unique identifier,
-     * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
+     * defines a function that returns the conversation id as unique identifier,
+     * by this means, Angular determines which conversation in the collection of conversation has to be reloaded/destroyed on changes
      */
     conversationsTrackByFn = (index: number, conversation: Conversation): number => conversation.id!;
 
