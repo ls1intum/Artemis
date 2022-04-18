@@ -18,7 +18,7 @@
             <div class="card clickable col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-primary">
                 <jhi-course-exam-detail *ngIf="isVisible(exam)" [exam]="exam" [course]="course!" id="exam-{{ exam.id }}"></jhi-course-exam-detail>
             </div>
-            <!-- List of cards representing the individual attempts per Student and TestExam. Ordered by Id in reverse (latest StudentExam at the top -->
+            <!-- List of cards representing the individual attempts per Student and TestExam. Ordered by Id in reverse (latest StudentExam at the top) -->
             <div class="col-12 col-md-4 col-lg-4 col-xl-3">
                 <ng-container *ngFor="let studentExam of getStudentExamForExamIdOrderedByIdReverse(exam!.id!); let i = index; let cnt = count">
                     <div class="row align-items-start">

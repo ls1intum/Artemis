@@ -13,25 +13,27 @@ import { Subscription, interval } from 'rxjs';
 })
 export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy {
     @Input() studentExam: StudentExam;
-    // Both only needed for routing
+    // Both needed for routing (and for the exam.workingTime)
     @Input() exam: Exam;
     @Input() courseId: number;
     // Index used to enumerate the attempts per student
     @Input() index: number;
-    individualWorkingTime: number;
     studentExamState: Subscription;
+
+    // Helper-Variables
+    individualWorkingTime: number;
     withinWorkingTime: boolean;
 
-    // Icon
+    // Icons
     faMagnifyingGlass = faMagnifyingGlass;
     faCirclePlay = faCirclePlay;
 
     constructor(private router: Router) {}
 
     /**
-     * Calculate the individual working time for every submitted StudentExam. As the StudentExam need to be submitted, the
-     * working time cannot change. For non-submitted StudentExams, the workingTimeLeftInSeconds() will be calculated dynamically
-     * and therefore set to 0.
+     * Calculate the individual working time for every submitted StudentExam. As the StudentExam needs to be submitted, the
+     * working time cannot change.
+     * For StudentExams which are still within the allowed working time, a subscription is used to periodically check this.
      */
     ngOnInit() {
         if (this.studentExam.started && this.studentExam.submitted && this.studentExam.startedDate && this.studentExam.submissionDate) {
@@ -42,7 +44,7 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
             // A subscription is used here to limit the number of calls
             this.studentExamState = interval(1000).subscribe(() => {
                 this.isWithinWorkingTime();
-                // If the StudentExam is not within the working time, the subscription can be unsubscribed, as the state will not change any more
+                // If the StudentExam is no longer within the working time, the subscription can be unsubscribed, as the state will not change anymore
                 if (!this.withinWorkingTime) {
                     this.unsubscribeFromExamStateSubscription();
                 }
@@ -54,6 +56,9 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
         this.unsubscribeFromExamStateSubscription();
     }
 
+    /**
+     * Used to unsubscribe from the studentExamState Subscriptions
+     */
     unsubscribeFromExamStateSubscription() {
         if (this.studentExamState) {
             this.studentExamState.unsubscribe();
@@ -61,7 +66,7 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
     }
 
     /**
-     * Determines if the given StudentExam is within the working time
+     * Determines if the given StudentExam is (still) within the working time
      */
     isWithinWorkingTime() {
         if (this.studentExam.started && !this.studentExam.submitted && this.studentExam.startedDate && this.exam.workingTime) {
@@ -71,7 +76,7 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
     }
 
     /**
-     * Dynamically calculates the remaining working time of an attempt, if the attempt is started, within the working time and not submitted
+     * Dynamically calculates the remaining working time of an attempt, if the attempt is started, within the working time and not yet submitted
      */
     workingTimeLeftInSeconds(): number {
         if (this.studentExam.started && !this.studentExam.submitted && this.studentExam.startedDate && this.exam.workingTime) {

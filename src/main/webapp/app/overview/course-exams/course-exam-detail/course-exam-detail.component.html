@@ -20,7 +20,7 @@
                 <!-- Pencil as the default shown icon --->
                 <fa-icon *ngIf="examState === 'UPCOMING' || examState === 'TIMEEXTENSION' || examState === 'CLOSED'" [icon]="faPenAlt" size="2x"></fa-icon>
             </h4>
-            <!-- To highlight an imminent or conducting exam, the card is displayed in turquoise. Only for RealExams, as TestExams have a much larger working window -->
+            <!-- To highlight an imminent or conducting exam, the text is highlighted in turquoise. Only for RealExams, as TestExams have a much larger working window -->
             <div
                 class="col-8"
                 [class]="'row card-body justify-content-center ' + (!exam.testExam && (examState === 'IMMINENT' || examState === 'CONDUCTING') ? 'text-white bg-info' : '')"
@@ -60,6 +60,7 @@
     </div>
     <!-- Footer -->
     <div class="card-footer row">
+        <!-- For RealExams, the start date is shown. For TestExams, the working window is shown to the students -->
         <div *ngIf="!exam.testExam && exam.startDate" class="col-sm">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
         <div *ngIf="exam.testExam && exam.startDate && exam.endDate" class="col-12">
             {{

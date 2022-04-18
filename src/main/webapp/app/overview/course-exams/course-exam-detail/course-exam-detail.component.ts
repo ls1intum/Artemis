@@ -50,11 +50,14 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.examStateSubscription.unsubscribe();
+        if (this.examStateSubscription) {
+            this.examStateSubscription.unsubscribe();
+        }
     }
 
     /**
-     * navigate to /courses/:courseId/exams/:examId
+     * navigate to /courses/:courseId/exams/:examId for RealExams or
+     * /courses/:courseId/exams/:examId/test-exam/new for TestExams
      */
     openExam(): void {
         if (this.exam.testExam) {

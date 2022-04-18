@@ -6,7 +6,7 @@
                 "duration": "Working Time: ",
                 "maxPoints": "Attainable Points: {{points}}",
                 "upcoming": "Upcoming Exam",
-                "imminent": "The Exam will start in ",
+                "imminent": "The Exam starts in ",
                 "imminentExplanation": "You can already open the exam by clicking on the tile",
                 "conducting": "Exam in Progress",
                 "conductingExplanation": "You can open the exam by clicking on the tile",
