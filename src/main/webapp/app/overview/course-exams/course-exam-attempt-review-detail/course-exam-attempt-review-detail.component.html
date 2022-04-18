@@ -1,0 +1,35 @@
+<div *ngIf="studentExam" (click)="openStudentExam()">
+    <div [class]="'row card-body justify-content-center card-general-settings ' + (withinWorkingTime ? 'bg-primary text-white' : '')">
+        <div class="row">
+            <h4 class="col-sm-auto icon-settings">
+                <fa-icon *ngIf="withinWorkingTime" [icon]="faCirclePlay" size="2x"></fa-icon>
+                <fa-icon *ngIf="!withinWorkingTime" [icon]="faMagnifyingGlass" size="2x"></fa-icon>
+            </h4>
+            <div class="col-sm">
+                <div class="row">
+                    <div class="col">
+                        <h5 class="text-start">
+                            {{ 'artemisApp.exam.overview.testExam.' + (withinWorkingTime ? 'resumeAttempt' : 'reviewAttempt') | artemisTranslate: { attempt: index } }}
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <div *ngIf="withinWorkingTime" class="text-end">
+                            {{ 'artemisApp.exam.overview.testExam.workingTimeLeft' | artemisTranslate }} {{ workingTimeLeftInSeconds() | artemisDurationFromSeconds: true }}
+                        </div>
+                        <div *ngIf="studentExam.submitted">
+                            <div *ngIf="studentExam.submissionDate" class="text-end">
+                                {{ 'artemisApp.exam.overview.testExam.submissionDate' | artemisTranslate }} {{ studentExam.submissionDate | artemisDate }}
+                            </div>
+                            <div *ngIf="individualWorkingTime" class="text-end">
+                                {{ 'artemisApp.exam.overview.testExam.workingTimeCalculated' | artemisTranslate }} {{ individualWorkingTime | artemisDurationFromSeconds }}
+                            </div>
+                        </div>
+                        <div *ngIf="!withinWorkingTime && !studentExam.submitted">
+                            <div class="text-end">{{ 'artemisApp.exam.overview.testExam.notSubmitted' | artemisTranslate }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

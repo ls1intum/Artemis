@@ -3,8 +3,37 @@
         "exam": {
             "overview": {
                 "start": "Start: {{start}}",
-                "duration": "Duration: ",
-                "maxPoints": "Points: {{points}}"
+                "duration": "Working Time: ",
+                "maxPoints": "Attainable Points: {{points}}",
+                "upcoming": "Upcoming Exam",
+                "imminent": "The Exam will start in ",
+                "imminentExplanation": "You can already open the exam by clicking on the tile",
+                "conducting": "Exam in Progress",
+                "conductingExplanation": "You can open the exam by clicking on the tile",
+                "timeExtension": "The normal working time is over",
+                "timeExtensionExplanation": "In case you have a time extension, the exam can be opened by clicking on the tile. Otherwise, you can review your submission.",
+                "closed": "Exam Closed",
+                "closedExplanation": "You can review your submission by clicking on the tile",
+                "review": "Exam Review Open",
+                "reviewExplanation": "You can review the assessment until ",
+                "realExamsHeading": "Exams",
+                "testExamsHeading": "Test Exams",
+                "testExam": {
+                    "upcoming": "Upcoming Test Exam",
+                    "upcomingExplanation": "The Test Exam will start ",
+                    "imminentExplanation": "You can already open the test exam by clicking on the tile",
+                    "conducting": "Start New Test Exam",
+                    "conductingExplanation": "You can start a new test exam by clicking on the tile",
+                    "closed": "Test Exam Closed",
+                    "closedExplanation": "Starting a new attempt is no longer possible",
+                    "notSubmitted": "You have not submitted your Test Exam on time!",
+                    "reviewAttempt": "Attempt #{{attempt}}",
+                    "resumeAttempt": "Resume Attempt #{{attempt}}",
+                    "workingTimeLeft": "Working time left: ",
+                    "workingTimeCalculated": "Used working time: ",
+                    "submissionDate": "Submitted on: ",
+                    "available": "Available from {{startDate}} until {{endDate}}"
+                }
             },
             "examSummary": {
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",

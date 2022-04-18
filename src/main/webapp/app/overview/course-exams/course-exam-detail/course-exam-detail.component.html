@@ -1,15 +1,79 @@
 <div *ngIf="exam" (click)="openExam()" id="exam-{{ exam.id }}">
-    <div class="row card-header text-white bg-secondary">
-        <h4 class="card-title text-center">{{ exam.title }}</h4>
+    <!-- Signature colors for the header: Blue for TestExams and Green for RedExams -->
+    <div [class]="'row card-header ' + (exam.testExam ? 'bg-primary' : 'bg-success')">
+        <h5 class="text-center text-white">{{ exam.title }}</h5>
     </div>
-    <div class="row card-body justify-content-center">
-        <h4 class="col-auto"><fa-icon [icon]="faPenAlt" size="3x"></fa-icon></h4>
+    <!-- Case 7: Undefined exam state. show Pencil without further information-->
+    <div *ngIf="examState === 'UNDEFINED'" class="row card-body">
+        <h4 class="icon-settings">
+            <fa-icon [icon]="faPenAlt" size="3x"></fa-icon>
+        </h4>
     </div>
-    <div class="row card-footer">
-        <div *ngIf="exam.startDate" class="col-12">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
-        <div *ngIf="exam.startDate && exam.endDate" class="col-12">
-            {{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ examDuration | artemisDurationFromSeconds }}
+    <!-- Body of the Component. Content changes depending on the exam state-->
+    <div *ngIf="examState !== 'UNDEFINED'" class="row card-body d-flex justify-content-center">
+        <div class="row">
+            <h4 class="col-3 icon-settings">
+                <!-- Play-Button to indicate, the exam can be started -->
+                <fa-icon *ngIf="examState === 'IMMINENT' || examState === 'CONDUCTING'" [icon]="faCirclePlay" size="2x"></fa-icon>
+                <!-- Magnifying Glass to indicate, the exam can be reviewed -->
+                <fa-icon *ngIf="examState === 'STUDENTREVIEW'" [icon]="faMagnifyingGlass" size="2x"></fa-icon>
+                <!-- Pencil as the default shown icon --->
+                <fa-icon *ngIf="examState === 'UPCOMING' || examState === 'TIMEEXTENSION' || examState === 'CLOSED'" [icon]="faPenAlt" size="2x"></fa-icon>
+            </h4>
+            <!-- To highlight an imminent or conducting exam, the card is displayed in turquoise. Only for RealExams, as TestExams have a much larger working window -->
+            <div
+                class="col-8"
+                [class]="'row card-body justify-content-center ' + (!exam.testExam && (examState === 'IMMINENT' || examState === 'CONDUCTING') ? 'text-white bg-info' : '')"
+            >
+                <div *ngIf="examState === 'UPCOMING'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'upcoming' | artemisTranslate }}</h5>
+                    <div class="text-center">
+                        {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
+                        {{ timeLeftToStartInSeconds() | artemisDurationFromSeconds }}
+                    </div>
+                </div>
+                <div *ngIf="examState === 'IMMINENT'">
+                    <h5 class="text-center">
+                        {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
+                        {{ timeLeftToStartInSeconds() | artemisDurationFromSeconds }}
+                    </h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminentExplanation' | artemisTranslate }}</div>
+                </div>
+                <div *ngIf="examState === 'CONDUCTING'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'conducting' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'conductingExplanation' | artemisTranslate }}</div>
+                </div>
+                <div *ngIf="examState === 'TIMEEXTENSION'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.timeExtension' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.timeExtensionExplanation' | artemisTranslate }}</div>
+                </div>
+                <div *ngIf="examState === 'CLOSED'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'closed' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'closedExplanation' | artemisTranslate }}</div>
+                </div>
+                <div *ngIf="examState === 'STUDENTREVIEW'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.review' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.reviewExplanation' | artemisTranslate }} {{ exam.examStudentReviewEnd | artemisDate }}</div>
+                </div>
+            </div>
         </div>
-        <div *ngIf="exam.maxPoints" class="col-12">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: exam.maxPoints } }}</div>
+    </div>
+    <!-- Footer -->
+    <div class="card-footer row">
+        <div *ngIf="!exam.testExam && exam.startDate" class="col-sm">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
+        <div *ngIf="exam.testExam && exam.startDate && exam.endDate" class="col-12">
+            {{
+                'artemisApp.exam.overview.testExam.available'
+                    | artemisTranslate
+                        : {
+                              startDate: exam.startDate | artemisDate,
+                              endDate: exam.endDate | artemisDate
+                          }
+            }}
+        </div>
+        <div *ngIf="exam.startDate && exam.endDate" class="col-12">
+            {{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ exam.workingTime! | artemisDurationFromSeconds }}
+        </div>
+        <div *ngIf="exam.maxPoints" class="col-sm">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: exam.maxPoints } }}</div>
     </div>
 </div>

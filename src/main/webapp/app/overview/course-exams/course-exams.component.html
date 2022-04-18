@@ -1,11 +1,37 @@
-<div class="row">
+<h2 class="m-2" jhiTranslate="artemisApp.exam.overview.realExamsHeading">Exams</h2>
+<div class="row d-flex align-items-start">
     <ng-container *ngFor="let exam of course!.exams!">
         <jhi-course-exam-detail
-            *ngIf="isVisible(exam)"
+            *ngIf="isVisible(exam) && !isTestExam(exam)"
             [exam]="exam"
             [course]="course!"
-            class="card clickable col-xl-3 col-lg-4 col-md-4 col-sm-6 col-xs-12 m-2"
+            class="card clickable col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-success"
             id="exam-{{ exam.id }}"
         ></jhi-course-exam-detail>
+    </ng-container>
+</div>
+<hr />
+<h2 jhiTranslate="artemisApp.exam.overview.testExamsHeading">Test Exams</h2>
+<div class="row">
+    <ng-container *ngFor="let exam of course!.exams!.filter(isTestExam)">
+        <div class="row d-flex align-items-start">
+            <div class="card clickable col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-primary">
+                <jhi-course-exam-detail *ngIf="isVisible(exam)" [exam]="exam" [course]="course!" id="exam-{{ exam.id }}"></jhi-course-exam-detail>
+            </div>
+            <!-- List of cards representing the individual attempts per Student and TestExam. Ordered by Id in reverse (latest StudentExam at the top -->
+            <div class="col-12 col-md-4 col-lg-4 col-xl-3">
+                <ng-container *ngFor="let studentExam of getStudentExamForExamIdOrderedByIdReverse(exam!.id!); let i = index; let cnt = count">
+                    <div class="row align-items-start">
+                        <jhi-course-exam-attempt-review-detail
+                            [index]="cnt - i"
+                            [exam]="exam!"
+                            [courseId]="course!.id!"
+                            [studentExam]="studentExam"
+                            class="card clickable m-2 border-primary"
+                        ></jhi-course-exam-attempt-review-detail>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
     </ng-container>
 </div>

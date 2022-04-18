@@ -7,6 +7,8 @@ import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-course-exams',
@@ -17,12 +19,15 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     public course?: Course;
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
+    private studentExamTestExamUpdateSubscription?: Subscription;
+    private studentExams: StudentExam[];
 
     constructor(
         private route: ActivatedRoute,
         private courseCalculationService: CourseScoreCalculationService,
         private courseManagementService: CourseManagementService,
         private serverDateService: ArtemisServerDateService,
+        private examParticipationService: ExamParticipationService,
     ) {}
 
     /**
@@ -39,6 +44,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.courseCalculationService.updateCourse(course);
             this.course = this.courseCalculationService.getCourse(this.courseId);
         });
+
+        this.studentExamTestExamUpdateSubscription = this.examParticipationService
+            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId)
+            .subscribe((response: StudentExam[]) => {
+                this.studentExams = response!;
+            });
     }
 
     /**
@@ -51,6 +62,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (this.courseUpdatesSubscription) {
             this.courseUpdatesSubscription.unsubscribe();
         }
+        if (this.studentExamTestExamUpdateSubscription) {
+            this.studentExamTestExamUpdateSubscription.unsubscribe();
+        }
     }
 
     /**
@@ -59,5 +73,36 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      */
     isVisible(exam: Exam): boolean {
         return exam.visibleDate ? dayjs(exam.visibleDate).isBefore(this.serverDateService.now()) : false;
+    }
+
+    /**
+     * Returns if the given exam is a TestExam
+     * @param exam the exam to be checked
+     */
+    isTestExam(exam: Exam): boolean {
+        return exam.testExam ? exam.testExam : false;
+    }
+
+    /**
+     * Filters the studentExams for the examId and sorts them according to the studentExam.id in reverse order
+     * @param examId the examId for which the StudentExams should be retrieved
+     */
+    getStudentExamForExamIdOrderedByIdReverse(examId: number): StudentExam[] {
+        if (!this.studentExams) {
+            return [];
+        }
+        return this.studentExams
+            .filter(function (studentExam) {
+                return studentExam.exam?.id && studentExam.startedDate && studentExam.exam.id === examId && studentExam.startedDate;
+            })
+            .sort((se1, se2) => {
+                if (se1.id! > se2.id!) {
+                    return -1;
+                }
+                if (se1.id! < se2.id!) {
+                    return 1;
+                }
+                return 0;
+            });
     }
 }
