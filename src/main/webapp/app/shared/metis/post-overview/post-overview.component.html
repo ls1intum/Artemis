@@ -123,26 +123,24 @@
                 <fa-icon size="5x" [icon]="faEnvelope"></fa-icon>
             </div>
             <!-- list of posts -->
-            <div class="col-12" *ngIf="totalItems !== 0">
-                <div
-                    id="scrollableDiv"
-                    #container
-                    class="{{ isCourseMessagesPage ? 'posting-infinite-scroll-container' : 'col-12' }}"
-                    infinite-scroll
-                    [scrollWindow]="!isCourseMessagesPage"
-                    (scrolled)="!isCourseMessagesPage ? fetchNextPage() : null"
-                    (scrolledUp)="isCourseMessagesPage ? fetchNextPage() : null"
+            <div
+                id="scrollableDiv"
+                #container
+                class="{{ isCourseMessagesPage && totalItems !== 0 ? 'posting-infinite-scroll-container' : 'col-12' }}"
+                infinite-scroll
+                [scrollWindow]="!isCourseMessagesPage"
+                (scrolled)="!isCourseMessagesPage ? fetchNextPage() : null"
+                (scrolledUp)="isCourseMessagesPage ? fetchNextPage() : null"
+            >
+                <jhi-posting-thread
+                    #postingThread
+                    *ngFor="let post of posts; trackBy: postsTrackByFn"
+                    [post]="post"
+                    [showAnswers]="posts.length === 1"
+                    [isCourseMessagesPage]="isCourseMessagesPage"
+                    (isModalOpen)="inlineInputEnabled = !inlineInputEnabled"
                 >
-                    <jhi-posting-thread
-                        #postingThread
-                        *ngFor="let post of posts; trackBy: postsTrackByFn"
-                        [post]="post"
-                        [showAnswers]="posts.length === 1"
-                        [isCourseMessagesPage]="isCourseMessagesPage"
-                        (isModalOpen)="inlineInputEnabled = !inlineInputEnabled"
-                    >
-                    </jhi-posting-thread>
-                </div>
+                </jhi-posting-thread>
             </div>
             <jhi-message-inline-input *ngIf="isCourseMessagesPage && inlineInputEnabled && conversation" [posting]="createdPost" (onCreate)="createEmptyPost()">
             </jhi-message-inline-input>
