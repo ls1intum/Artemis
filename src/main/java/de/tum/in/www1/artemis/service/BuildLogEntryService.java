@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 
 @Service
 public class BuildLogEntryService {
@@ -149,7 +150,7 @@ public class BuildLogEntryService {
      * @param programmingLanguage the programming language
      * @return filtered build logs
      */
-    public List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+    private List<BuildLogEntry> removeUnnecessaryLogs(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
         List<BuildLogEntry> filteredLogs = new ArrayList<>();
         for (BuildLogEntry buildLog : buildLogEntries) {
 
@@ -184,5 +185,18 @@ public class BuildLogEntryService {
 
     private boolean isBuildFailure(String log) {
         return log.contains("BUILD FAILURE");
+    }
+
+    /**
+     * Filter the given list of unfiltered build log entries and return A NEW list only including the filtered build logs.
+     *
+     * @param buildLogEntries     the original, unfiltered list
+     * @param programmingLanguage the programming language for filtering out language-specific logs
+     * @return the filtered list
+     */
+    public List<BuildLogEntry> removeUnnecessaryLogsForProgrammingLanguage(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
+        List<BuildLogEntry> buildLogs = removeUnnecessaryLogs(buildLogEntries, programmingLanguage);
+        // Replace some unnecessary information and hide complex details to make it easier to read the important information
+        return buildLogs.stream().peek(buildLog -> buildLog.setLog(ContinuousIntegrationService.ASSIGNMENT_PATH.matcher(buildLog.getLog()).replaceAll(""))).toList();
     }
 }

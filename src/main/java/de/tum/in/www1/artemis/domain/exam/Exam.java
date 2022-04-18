@@ -30,6 +30,12 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
+     * This boolean indicates weather it is a RealExam (false) or TestExams (true)
+     */
+    @Column(name = "test_exam")
+    private boolean testExam;
+
+    /**
      * student can see the exam in the UI from this date onwards
      */
     @Column(name = "visible_date", nullable = false)
@@ -61,6 +67,13 @@ public class Exam extends DomainObject {
      */
     @Column(name = "grace_period", columnDefinition = "integer default 180")
     private Integer gracePeriod = 180;
+
+    /**
+     * The default working time for an exam in seconds.
+     * (The individual working time of a student is stored in {@link StudentExam})
+     */
+    @Column(name = "working_time")
+    private int workingTime;
 
     @Column(name = "start_text")
     @Lob
@@ -138,6 +151,14 @@ public class Exam extends DomainObject {
         this.title = title;
     }
 
+    public boolean isTestExam() {
+        return testExam;
+    }
+
+    public void setTestExam(boolean testExam) {
+        this.testExam = testExam;
+    }
+
     @NotNull
     public ZonedDateTime getVisibleDate() {
         return visibleDate;
@@ -193,8 +214,16 @@ public class Exam extends DomainObject {
         return gracePeriod;
     }
 
-    public void setGracePeriod(Integer gracePeriod) {
+    public void setGracePeriod(int gracePeriod) {
         this.gracePeriod = gracePeriod;
+    }
+
+    public int getWorkingTime() {
+        return workingTime;
+    }
+
+    public void setWorkingTime(int workingTime) {
+        this.workingTime = workingTime;
     }
 
     public String getStartText() {
