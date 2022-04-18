@@ -52,8 +52,14 @@ public class PostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         Post createdPost = postService.createPost(courseId, post);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + createdPost.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, postService.getEntityName(), createdPost.getId().toString())).body(createdPost);
+
+        HttpHeaders headers = null;
+        // creation of conversation posts should not trigger entity creation alert
+        if (createdPost.getConversation() == null) {
+            HeaderUtil.createEntityCreationAlert(applicationName, true, postService.getEntityName(), createdPost.getId().toString());
+        }
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + createdPost.getId())).headers(headers).body(createdPost);
     }
 
     /**
@@ -133,8 +139,15 @@ public class PostResource {
     @DeleteMapping("courses/{courseId}/posts/{postId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deletePost(@PathVariable Long courseId, @PathVariable Long postId) {
-        postService.deletePostById(courseId, postId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString())).build();
+        Post deletedPost = postService.deletePostById(courseId, postId);
+
+        HttpHeaders headers = null;
+        // deletion of conversation posts should not trigger entity deletion alert
+        if (deletedPost.getConversation() == null) {
+            HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString());
+        }
+
+        return ResponseEntity.ok().headers(headers).build();
     }
 
     /**
