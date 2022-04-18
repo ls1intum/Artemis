@@ -142,8 +142,9 @@ public class AnswerPostService extends PostingService {
      *
      * @param courseId     id of the course the answer post belongs to
      * @param answerPostId id of the answer post to delete
+     * @return answerPost  deleted answerPost to check if an entity deletion alert must be created
      */
-    public void deleteAnswerPostById(Long courseId, Long answerPostId) {
+    public AnswerPost deleteAnswerPostById(Long courseId, Long answerPostId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -158,6 +159,7 @@ public class AnswerPostService extends PostingService {
         Post updatedPost = answerPost.getPost();
         updatedPost.removeAnswerPost(answerPost);
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        return answerPost;
     }
 
     /**

@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,9 +42,14 @@ public class AnswerPostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<AnswerPost> createAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerPost) throws URISyntaxException {
         AnswerPost createdAnswerPost = answerPostService.createAnswerPost(courseId, answerPost);
-        return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, answerPostService.getEntityName(), createdAnswerPost.getId().toString()))
-                .body(createdAnswerPost);
+
+        HttpHeaders headers = null;
+        // creation of answerPosts for conversations should not trigger entity creation alert
+        if (createdAnswerPost.getPost().getConversation() == null) {
+            headers = HeaderUtil.createEntityCreationAlert(applicationName, true, answerPostService.getEntityName(), createdAnswerPost.getId().toString());
+        }
+
+        return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).headers(headers).body(createdAnswerPost);
     }
 
     /**
@@ -73,7 +79,14 @@ public class AnswerPostResource {
     @DeleteMapping("courses/{courseId}/answer-posts/{answerPostId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId) {
-        answerPostService.deleteAnswerPostById(courseId, answerPostId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, answerPostService.getEntityName(), answerPostId.toString())).build();
+        AnswerPost deletedAnswerPost = answerPostService.deleteAnswerPostById(courseId, answerPostId);
+
+        HttpHeaders headers = null;
+        // creation of answerPosts for conversations should not trigger entity creation alert
+        if (deletedAnswerPost.getPost().getConversation() == null) {
+            headers = HeaderUtil.createEntityDeletionAlert(applicationName, true, answerPostService.getEntityName(), answerPostId.toString());
+        }
+
+        return ResponseEntity.ok().headers(headers).build();
     }
 }

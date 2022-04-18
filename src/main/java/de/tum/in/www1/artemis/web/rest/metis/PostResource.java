@@ -56,7 +56,7 @@ public class PostResource {
         HttpHeaders headers = null;
         // creation of conversation posts should not trigger entity creation alert
         if (createdPost.getConversation() == null) {
-            HeaderUtil.createEntityCreationAlert(applicationName, true, postService.getEntityName(), createdPost.getId().toString());
+            headers = HeaderUtil.createEntityCreationAlert(applicationName, true, postService.getEntityName(), createdPost.getId().toString());
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + createdPost.getId())).headers(headers).body(createdPost);
@@ -144,7 +144,7 @@ public class PostResource {
         HttpHeaders headers = null;
         // deletion of conversation posts should not trigger entity deletion alert
         if (deletedPost.getConversation() == null) {
-            HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString());
+            headers = HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString());
         }
 
         return ResponseEntity.ok().headers(headers).build();
