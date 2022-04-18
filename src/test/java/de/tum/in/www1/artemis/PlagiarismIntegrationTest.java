@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
@@ -27,9 +28,34 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private TextExerciseRepository textExerciseRepository;
 
+    private static Course course;
+
+    private static TextExercise textExercise;
+
+    private static TextPlagiarismResult textPlagiarismResult;
+
+    private static PlagiarismComparison<TextSubmissionElement> plagiarismComparison;
+
+    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionA;
+
+    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionB;
+
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1, 1);
+        database.addUsers(2, 1, 1, 1);
+        course = database.addCourseWithOneFinishedTextExercise();
+        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+        plagiarismComparison = new PlagiarismComparison<>();
+        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
+        plagiarismComparison.setStatus(PlagiarismStatus.NONE);
+        plagiarismSubmissionA = new PlagiarismSubmission<>();
+        plagiarismSubmissionA.setStudentLogin("student1");
+        plagiarismSubmissionB = new PlagiarismSubmission<>();
+        plagiarismSubmissionB.setStudentLogin("student2");
+        plagiarismComparison.setSubmissionA(plagiarismSubmissionA);
+        plagiarismComparison.setSubmissionB(plagiarismSubmissionB);
+        plagiarismComparison = plagiarismComparisonRepository.save(plagiarismComparison);
     }
 
     @AfterEach
@@ -38,7 +64,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "User")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testUpdatePlagiarismComparisonStatus_forbidden_student() throws Exception {
         request.put("/api/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
@@ -50,15 +76,8 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "Editor")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testUpdatePlagiarismComparisonStatus() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison.setStatus(PlagiarismStatus.NONE);
-        plagiarismComparisonRepository.save(plagiarismComparison);
         var plagiarismComparisonStatusDTO = new PlagiarismComparisonStatusDTO();
         plagiarismComparisonStatusDTO.setStatus(PlagiarismStatus.CONFIRMED);
 
@@ -68,33 +87,18 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "User")
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
-        plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
-        var savedComparison = plagiarismComparisonRepository.save(plagiarismComparison1);
-        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + savedComparison.getId() + "/for-split-view", HttpStatus.OK,
-                plagiarismComparison1.getClass());
+        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/for-split-view", HttpStatus.OK,
+                plagiarismComparison.getClass());
         assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "Editor")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
-        plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
-        var savedComparison = plagiarismComparisonRepository.save(plagiarismComparison1);
-
-        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + savedComparison.getId() + "/for-split-view", HttpStatus.OK,
-                plagiarismComparison1.getClass());
+        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/for-split-view", HttpStatus.OK,
+                plagiarismComparison.getClass());
         assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
     }
 }
