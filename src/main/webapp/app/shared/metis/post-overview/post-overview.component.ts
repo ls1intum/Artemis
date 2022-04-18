@@ -11,7 +11,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { ButtonType } from 'app/shared/components/button.component';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
@@ -84,6 +84,7 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     faSearch = faSearch;
     faLongArrowAltUp = faLongArrowAltUp;
     faLongArrowAltDown = faLongArrowAltDown;
+    faEnvelope = faEnvelope;
 
     constructor(
         protected metisService: MetisService,
@@ -184,7 +185,8 @@ export class PostOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
      * fetches next page of posts on user scroll event
      */
     fetchNextPage() {
-        if (this.posts.length < this.totalItems) {
+        if (!this.isLoading && this.posts.length < this.totalItems) {
+            this.isLoading = true;
             this.page += 1;
             this.onSelectPage();
         }

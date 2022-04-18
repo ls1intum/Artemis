@@ -12,6 +12,7 @@
                 "searchForUsers": "Benutzer des Kurses suchen",
                 "minQueryLengthHint": "Mind. {{ length }} Buchstaben"
             },
+            "searchBarPlaceholder": "Suchen Sie in der aktuellen Konversation nach einer Nachricht",
             "submit": "Senden"
         }
     }

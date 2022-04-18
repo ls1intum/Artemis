@@ -12,7 +12,7 @@
         [colorCommands]="[]"
     ></jhi-markdown-editor>
 </div>
-<div class="col text-end">
+<div class="col text-end" *ngIf="isInputLengthDisplayed">
     <p class="small my-0 ms-2" [ngStyle]="{ color: content?.length! > maxContentLength || content?.length! == 0 ? 'red' : 'black' }">
         {{ content?.length }} / {{ maxContentLength }}
     </p>

@@ -12,6 +12,7 @@
                 "searchForUsers": "Search users within course",
                 "minQueryLengthHint": "Type min. {{ length }} letters"
             },
+            "searchBarPlaceholder": "Search for a message within the current conversation",
             "submit": "Send"
         }
     }
