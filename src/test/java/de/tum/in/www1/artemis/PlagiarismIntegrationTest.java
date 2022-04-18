@@ -52,11 +52,24 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "editor1", roles = "Editor")
     public void testUpdatePlagiarismComparisonStatus() throws Exception {
+        Course course = database.addCourseWithOneFinishedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
+        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
+        plagiarismComparison.setStatus(PlagiarismStatus.NONE);
+        plagiarismComparisonRepository.save(plagiarismComparison);
+        var plagiarismComparisonStatusDTO = new PlagiarismComparisonStatusDTO();
+        plagiarismComparisonStatusDTO.setStatus(PlagiarismStatus.CONFIRMED);
+
+        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/status", plagiarismComparisonStatusDTO, HttpStatus.OK);
+        var updatedComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
+        assertThat(updatedComparison.getStatus()).as("should update plagiarism comparison status").isEqualTo(PlagiarismStatus.CONFIRMED);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "User")
-    public void testGetPlagiarismComparisonsFoSplitView_student() throws Exception {
+    public void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
@@ -71,7 +84,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "editor1", roles = "Editor")
-    public void testGetPlagiarismComparisonsFoSplitView_editor() throws Exception {
+    public void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
         Course course = database.addCourseWithOneFinishedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);

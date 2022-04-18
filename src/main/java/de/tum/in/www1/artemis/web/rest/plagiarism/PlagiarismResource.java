@@ -63,7 +63,8 @@ public class PlagiarismResource {
             @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
         log.info("REST request to update the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // TODO: this check can take up to a few seconds in the worst case, we should do it directly in the database
         var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);

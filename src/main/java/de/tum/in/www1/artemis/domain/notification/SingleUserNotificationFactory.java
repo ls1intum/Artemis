@@ -97,7 +97,7 @@ public class SingleUserNotificationFactory {
             case NEW_PLAGIARISM_CASE_STUDENT -> {
                 title = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
                 notificationText = "New plagiarism case concerning the " + affectedExercise.getExerciseType().toString().toLowerCase() + " exercise \""
-                        + affectedExercise.getTitle();
+                        + affectedExercise.getTitle() + "\".";
             }
             case PLAGIARISM_CASE_VERDICT_STUDENT -> {
                 title = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;

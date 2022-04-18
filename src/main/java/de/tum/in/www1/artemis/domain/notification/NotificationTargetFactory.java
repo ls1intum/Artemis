@@ -186,9 +186,9 @@ public class NotificationTargetFactory {
     // Plagiarism related targets
 
     /**
-     * Create a NotificationTarget for plagiarism related notifications
+     * Create a NotificationTarget for plagiarism case related notifications
      *
-     * @param plagiarismCaseId is the id of the PlagiarismComparison
+     * @param plagiarismCaseId is the id of the PlagiarismCase
      * @param courseId of the Course
      * @return the final NotificationTarget
      */

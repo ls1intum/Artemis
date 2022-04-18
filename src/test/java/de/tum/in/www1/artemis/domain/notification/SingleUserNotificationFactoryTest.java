@@ -7,6 +7,9 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeCo
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +72,8 @@ public class SingleUserNotificationFactoryTest {
 
     private static PlagiarismSubmission plagiarismSubmission;
 
+    private static Set<PlagiarismSubmission<?>> plagiarismSubmissionSet;
+
     private static PlagiarismCase plagiarismCase;
 
     /**
@@ -105,11 +110,17 @@ public class SingleUserNotificationFactoryTest {
         plagiarismSubmission = new PlagiarismSubmission();
         plagiarismSubmission.setStudentLogin(USER_LOGIN);
 
+        plagiarismSubmissionSet = new HashSet<>();
+        plagiarismSubmissionSet.add(plagiarismSubmission);
+
         plagiarismComparison = new PlagiarismComparison();
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
 
         plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase.setStudent(cheatingUser);
+        plagiarismCase.setPlagiarismSubmissions(plagiarismSubmissionSet);
     }
 
     /// Test for Notifications based on Posts
@@ -224,30 +235,32 @@ public class SingleUserNotificationFactoryTest {
     /// Test for Notifications based on Plagiarism
 
     /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT.
-     * I.e. notifications that originate when an instructor sets his statement concerning the plagiarism comparison for one of both student sides.
+     * Tests the functionality that deals with notifications that have the notification type of NEW_PLAGIARISM_CASE_STUDENT.
+     * I.e. notifications that originate when an instructor sets his statement concerning the plagiarism case for the student.
      */
     @Test
-    public void createNotification_withNotificationType_NewPossiblePlagiarismCaseStudent() {
+    public void createNotification_withNotificationType_NewPlagiarismCaseStudent() {
         notificationType = NEW_PLAGIARISM_CASE_STUDENT;
         expectedTitle = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
+        expectedText = "New plagiarism case concerning the " + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
+                + plagiarismCase.getExercise().getTitle() + "\".";
         expectedPriority = HIGH;
-        expectedTransientTarget = createPlagiarismCaseTarget(plagiarismComparison.getId(), COURSE_ID);
+        expectedTransientTarget = createPlagiarismCaseTarget(plagiarismCase.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();
     }
 
     /**
-     * Tests the functionality that deals with notifications that have the notification type of PLAGIARISM_CASE_FINAL_STATE_STUDENT.
-     * I.e. notifications that originate when an instructor sets the final state of a plagiarism comparison.
+     * Tests the functionality that deals with notifications that have the notification type of PLAGIARISM_CASE_VERDICT_STUDENT.
+     * I.e. notifications that originate when an instructor sets the verdict of a plagiarism case.
      */
     @Test
-    public void createNotification_withNotificationType_PlagiarismCaseFinalStateStudent() {
+    public void createNotification_withNotificationType_PlagiarismCaseVerdictStudent() {
         notificationType = PLAGIARISM_CASE_VERDICT_STUDENT;
         expectedTitle = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
-        expectedText = "Your plagiarism case concerning the " + plagiarismResult.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
-                + plagiarismResult.getExercise().getTitle() + "\"" + " has a verdict.";
+        expectedText = "Your plagiarism case concerning the " + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
+                + plagiarismCase.getExercise().getTitle() + "\"" + " has a verdict.";
         expectedPriority = HIGH;
-        expectedTransientTarget = createPlagiarismCaseTarget(plagiarismComparison.getId(), COURSE_ID);
+        expectedTransientTarget = createPlagiarismCaseTarget(plagiarismCase.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();
     }
 }

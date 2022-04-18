@@ -407,6 +407,8 @@ public class ModelingExerciseResource {
         if (plagiarismResult != null) {
             for (var comparison : plagiarismResult.getComparisons()) {
                 comparison.setPlagiarismResult(null);
+                comparison.getSubmissionA().setPlagiarismComparison(null);
+                comparison.getSubmissionB().setPlagiarismComparison(null);
             }
         }
         return ResponseEntity.ok((ModelingPlagiarismResult) plagiarismResult);
