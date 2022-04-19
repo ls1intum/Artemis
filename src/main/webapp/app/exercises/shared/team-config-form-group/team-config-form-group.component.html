@@ -6,7 +6,12 @@
                 <jhi-help-icon placement="top auto" text="artemisApp.exercise.modeTooltip"></jhi-help-icon>
             </div>
             <div>
-                <jhi-mode-picker [exercise]="exercise" (ngModelChange)="onExerciseModeChange($event)" [disabled]="changeExerciseModeDisabled"></jhi-mode-picker>
+                <jhi-mode-picker
+                    [options]="modePickerOptions"
+                    [value]="exercise.mode"
+                    (valueChange)="onExerciseModeChange($event!)"
+                    [disabled]="changeExerciseModeDisabled"
+                ></jhi-mode-picker>
             </div>
         </div>
         <div class="col-auto" *ngIf="exercise.mode === TEAM">

@@ -810,7 +810,7 @@ public class ExamService {
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
                 log.debug("Finished combination of template commits for programming exercise {}", programmingExerciseWithTemplateParticipation);
             }
-            catch (InterruptedException | GitAPIException e) {
+            catch (GitAPIException e) {
                 log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
             }
         }));
