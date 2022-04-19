@@ -42,7 +42,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private PostRepository postRepository;
 
-    private List<Post> existingPostsAndChats;
+    private List<Post> existingPostsAndConversations;
 
     private List<Post> existingPosts;
 
@@ -80,12 +80,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
-        existingPostsAndChats = database.createPostsWithinCourse();
+        existingPostsAndConversations = database.createPostsWithinCourse();
 
-        existingPosts = existingPostsAndChats.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
+        existingPosts = existingPostsAndConversations.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
 
         // filters existing posts with conversation
-        existingConversationPosts = existingPostsAndChats.stream().filter(post -> post.getConversation() != null).toList();
+        existingConversationPosts = existingPostsAndConversations.stream().filter(post -> post.getConversation() != null).toList();
 
         // filter existing posts with exercise context
         existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList());
@@ -215,7 +215,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
-        assertThat(existingPostsAndChats).hasSize((int) postRepository.count());
+        assertThat(existingPostsAndConversations).hasSize((int) postRepository.count());
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewAnnouncement(any(), any());
     }
 
@@ -225,7 +225,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post existingPostToSave = existingPosts.get(0);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingPostsAndChats).hasSize((int) postRepository.count());
+        assertThat(existingPostsAndConversations).hasSize((int) postRepository.count());
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 
@@ -560,6 +560,56 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "student1")
+    public void testEditConversationPost() throws Exception {
+        // conversation post of student1 must be editable by them
+        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        conversationPostToUpdate.setContent("User changes one of their conversation posts");
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
+                HttpStatus.OK);
+
+        assertThat(conversationPostToUpdate).isEqualTo(updatedPost);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditConversationPost_forbidden() throws Exception {
+        // conversation post of student1 must not be editable by tutors
+        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        conversationPostToUpdate.setContent("Tutor attempts to change some other user's conversation post");
+
+        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
+                HttpStatus.FORBIDDEN);
+
+        assertThat(notUpdatedPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testDeleteConversationPost() throws Exception {
+        // conversation post of student1 must be editable by them
+        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        conversationPostToUpdate.setContent("User changes one of their conversation posts");
+
+        request.delete("/api/courses/" + courseId + "/posts/" + conversationPostToUpdate.getId(), HttpStatus.OK);
+
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversations.size() - 1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteConversationPost_forbidden() throws Exception {
+        // conversation post of student1 must not be deletable by tutors
+        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        conversationPostToUpdate.setContent("Tutor attempts to change a conversation post of another user");
+
+        request.delete("/api/courses/" + courseId + "/posts/" + conversationPostToUpdate.getId(), HttpStatus.FORBIDDEN);
+
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversations.size());
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "USER")
     public void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
         // request param courseWideContext will fetch all course posts that match this context filter
@@ -698,7 +748,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToDelete = existingPosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size() - 1);
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversations.size() - 1);
     }
 
     @Test
@@ -708,7 +758,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToNotDelete = existingPosts.get(1);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size());
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversations.size());
     }
 
     @Test
@@ -720,7 +770,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postRepository.save(postToNotDelete);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size());
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversations.size());
     }
 
     @Test
@@ -730,17 +780,17 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
         assertThat(postRepository.findById(postToDelete.getId())).isEmpty();
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size() - 1);
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversations.size() - 1);
 
         postToDelete = existingExercisePosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size() - 2);
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversations.size() - 2);
 
         postToDelete = existingCourseWidePosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndChats.size() - 3);
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversations.size() - 3);
     }
 
     @Test

@@ -138,7 +138,7 @@ public class PostService extends PostingService {
 
         Post existingPost = postRepository.findByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
-        mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
+        mayUpdateOrDeletePostElseThrow(existingPost, user, course);
 
         boolean contextHasChanged = !existingPost.hasSameContext(post);
         // depending on if there is a context change we need to broadcast different information
@@ -182,6 +182,15 @@ public class PostService extends PostingService {
             broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
         }
         return updatedPost;
+    }
+
+    private void mayUpdateOrDeletePostElseThrow(Post existingPost, User user, Course course) {
+        mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
+
+        // only the author of a post with conversation context should edit or delete the entity
+        if (existingPost.getConversation() != null && !existingPost.getAuthor().getId().equals(user.getId())) {
+            throw new AccessForbiddenException("Post", existingPost.getId());
+        }
     }
 
     /**
@@ -416,7 +425,7 @@ public class PostService extends PostingService {
         Post post = postRepository.findByIdElseThrow(postId);
         mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
-        mayUpdateOrDeletePostingElseThrow(post, user, course);
+        mayUpdateOrDeletePostElseThrow(post, user, course);
 
         // delete
         postRepository.deleteById(postId);
