@@ -408,9 +408,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 gitService.combineAllCommitsOfRepositoryIntoOne(programmingExerciseWithTemplateParticipation.getTemplateParticipation().getVcsRepositoryUrl());
                 log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
             }
-            catch (InterruptedException e) {
-                log.error("Failed to schedule combining of template commits of exercise " + exercise.getId(), e);
-            }
             catch (GitAPIException e) {
                 log.error("Failed to communicate with GitAPI for combining template commits of exercise " + exercise.getId(), e);
             }
@@ -604,7 +601,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     // the scheduler would execute the lock operation immediately, making to unlock obsolete, therefore we filter out all individual due dates in the past
                     // one use case is to unlock all operation is invoked directly after exam start
                     Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
-                            .filter(tuple -> tuple.x != null && ZonedDateTime.now().isBefore(tuple.x)).collect(Collectors.toSet());
+                            .filter(tuple -> tuple.x() != null && ZonedDateTime.now().isBefore(tuple.x())).collect(Collectors.toSet());
                     scheduleIndividualRepositoryLockTasks(exercise, futureIndividualDueDates);
                 }
             }
@@ -621,8 +618,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     private void scheduleIndividualRepositoryLockTasks(ProgrammingExercise exercise, Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> individualDueDates) {
         // 1. Group all participations by due date (TODO use student exams for safety if some participations are not pre-generated)
-        var participationsGroupedByDueDate = individualDueDates.stream().filter(tuple -> tuple.getX() != null)
-                .collect(Collectors.groupingBy(Tuple::getX, Collectors.mapping(Tuple::getY, Collectors.toSet())));
+        var participationsGroupedByDueDate = individualDueDates.stream().filter(tuple -> tuple.x() != null)
+                .collect(Collectors.groupingBy(Tuple::x, Collectors.mapping(Tuple::y, Collectors.toSet())));
         // 2. Transform those groups into lock-repository tasks with times
         var tasks = participationsGroupedByDueDate.entrySet().stream().map(entry -> {
             Predicate<ProgrammingExerciseStudentParticipation> lockingCondition = participation -> entry.getValue().contains(participation);

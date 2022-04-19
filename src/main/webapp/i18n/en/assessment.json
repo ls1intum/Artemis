@@ -36,7 +36,8 @@
                 "overrideAssessment": "Override Assessment",
                 "nextSubmission": "Assess Next Submission",
                 "resolveConflict": "Resolve Conflicts",
-                "useAsExampleSubmission": "Use as Example Submission"
+                "useAsExampleSubmission": "Use as Example Submission",
+                "control": "Ctrl"
             },
             "detail": {
                 "feedback": "Feedback",
