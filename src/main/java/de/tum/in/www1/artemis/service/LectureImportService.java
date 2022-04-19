@@ -45,7 +45,7 @@ public class LectureImportService {
     }
 
     /**
-     * Import the {@code importedLecture} including its lecture units to the {@code course}
+     * Import the {@code importedLecture} including its lecture units and attachments to the {@code course}
      *
      * @param importedLecture The lecture to be imported
      * @param course          The course to import to
@@ -53,11 +53,10 @@ public class LectureImportService {
      */
     @Transactional
     public Lecture importLecture(final Lecture importedLecture, final Course course) {
-        log.debug("Creating a new Lecture based on on lecture {}", importedLecture);
+        log.debug("Creating a new Lecture based on lecture {}", importedLecture);
 
         // Copy the lecture itself to the new course
         Lecture lecture = new Lecture();
-        lecture.setCourse(importedLecture.getCourse());
         lecture.setTitle(importedLecture.getTitle());
         lecture.setDescription(importedLecture.getDescription());
         lecture.setStartDate(importedLecture.getStartDate());
@@ -87,7 +86,7 @@ public class LectureImportService {
      * @return The cloned lecture unit
      */
     private LectureUnit cloneLectureUnit(final LectureUnit importedLectureUnit, final Lecture newLecture) {
-        log.debug("Creating new LectureUnit from lecture unit {}", importedLectureUnit);
+        log.debug("Creating a new LectureUnit from lecture unit {}", importedLectureUnit);
 
         if (importedLectureUnit instanceof TextUnit) {
             TextUnit textUnit = new TextUnit();
@@ -135,7 +134,7 @@ public class LectureImportService {
      * @return The cloned attachment with the file also duplicated to the temp directory on disk
      */
     private Attachment cloneAttachment(final Attachment importedAttachment) {
-        log.debug("Creating new Attachment from attachment {}", importedAttachment);
+        log.debug("Creating a new Attachment from attachment {}", importedAttachment);
 
         Attachment attachment = new Attachment();
         attachment.setName(importedAttachment.getName());

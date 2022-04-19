@@ -13,7 +13,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -62,7 +61,8 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 
     /**
-     * Query which fetches all lectures for which the user is instructor in the course and matching the search criteria.
+     * Query which fetches all lectures for which the user is editor or instructor in the course and
+     * matching the search criteria.
      *
      * @param partialTitle       lecture title search term
      * @param partialCourseTitle course title search term
@@ -77,7 +77,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
               WHERE (courseL.course.instructorGroupName IN :groups OR courseL.course.editorGroupName IN :groups)
               AND (courseL.title LIKE %:partialTitle% OR courseL.course.title LIKE %:partialCourseTitle%))
               """)
-    Page<ModelingExercise> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
+    Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
 
     /**

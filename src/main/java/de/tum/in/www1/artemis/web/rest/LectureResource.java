@@ -122,15 +122,14 @@ public class LectureResource {
     }
 
     /**
-     * Search for all modeling exercises by title and course title. The result is pageable since there might be hundreds
-     * of exercises in the DB.
+     * Search for all lectures by title and course title. The result is pageable.
      *
      * @param search The pageable search containing the page size, page number and query string
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<Lecture>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<Lecture>> getAllLecturesOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(lectureService.getAllOnPageWithSize(search, user));
     }
@@ -179,12 +178,12 @@ public class LectureResource {
     /**
      * POST /lectures/import: Imports an existing lecture into an existing course
      * <p>
-     * This will import the whole lecture. Referenced lectureUnits will get cloned and assigned a new id.
+     * This will clone and import the whole lecture with associated lectureUnits and attachments.
      *
      * @param sourceLectureId The ID of the original lecture which should get imported
-     * @param courseId        The new lecture containing values that should get overwritten in the imported lecture
+     * @param courseId        The ID of the course to import the lecture to
      * @return The imported lecture (200), a not found error (404) if the lecture does not exist,
-     * or a forbidden error (403) if the user is not at least an instructor in the target course.
+     * or a forbidden error (403) if the user is not at least an editor in the source or target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("/lectures/import/{sourceLectureId}")
@@ -192,7 +191,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> importLecture(@PathVariable long sourceLectureId, @RequestParam(required = true) long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);
-        final var destinationCourse = courseRepository.findByIdWithExercisesAndLecturesElseThrow(courseId);
+        final var destinationCourse = courseRepository.findByIdElseThrow(courseId);
 
         Course course = sourceLecture.getCourse();
         if (course == null) {
