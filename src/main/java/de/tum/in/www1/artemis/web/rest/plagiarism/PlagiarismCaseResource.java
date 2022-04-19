@@ -128,7 +128,6 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
         }
-        // TODO: anonymize submissions
         var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesForStudentForCourse(user.getId(), courseId);
         return getPlagiarismCasesResponseEntity(plagiarismCases);
     }
