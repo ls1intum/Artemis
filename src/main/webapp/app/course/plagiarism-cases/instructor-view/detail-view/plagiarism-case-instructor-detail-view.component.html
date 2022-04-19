@@ -32,7 +32,7 @@
         <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}</h2>
         <div class="row justify-content-between">
             <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.text' | artemisTranslate }}</p>
-            <div class="col-3">
+            <div class="col-3 d-flex flex-column">
                 <div class="row justify-content-center">
                     <input
                         class="col-auto"
@@ -56,7 +56,7 @@
                     ></jhi-confirm-button>
                 </div>
             </div>
-            <div class="col-3">
+            <div class="col-3 d-flex flex-column">
                 <div class="row justify-content-center">
                     <textarea class="col" [(ngModel)]="verdictMessage" [disabled]="!!plagiarismCase.verdict"></textarea>
                 </div>
@@ -72,7 +72,7 @@
                     ></jhi-confirm-button>
                 </div>
             </div>
-            <div class="col-3">
+            <div class="col-3 d-flex flex-column">
                 <jhi-confirm-button
                     title="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"
                     confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"

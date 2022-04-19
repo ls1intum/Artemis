@@ -6,7 +6,8 @@
                 <jhi-plagiarism-split-view
                     [comparison]="submission.plagiarismComparison!"
                     [exercise]="plagiarismCase.exercise!"
-                    [sortByStudentLogin]="plagiarismCase.student!.login!"
+                    [studentLogin]="plagiarismCase.student!.login!"
+                    [sortByStudentLogin]="'Your submission'"
                     [splitControlSubject]="splitControlSubject"
                 ></jhi-plagiarism-split-view>
             </ng-template>

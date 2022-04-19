@@ -1,6 +1,6 @@
 <div *ngIf="plagiarismCases" class="row">
     <div class="col-4 clickable mt-3" *ngFor="let plagiarismCase of plagiarismCases" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCase.id]">
-        <div class="card mb-3 clickable">
+        <div class="card mb-3 h-100 clickable">
             <div class="card-header">
                 <h5 class="mb-0">
                     <fa-icon *ngIf="plagiarismCase.exercise!.type" [icon]="getIcon(plagiarismCase.exercise!.type)"></fa-icon>
