@@ -21,11 +21,15 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -53,6 +57,12 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     private TextExercise finishedTextExercise;
 
@@ -124,6 +134,17 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         submissionA.setStudentLogin("student1");
         submissionA.setSubmissionId(this.textSubmission.getId());
         plagiarismComparison.setSubmissionA(submissionA);
+        PlagiarismCase plagiarismCase = new PlagiarismCase();
+        Post post = new Post();
+        post.setAuthor(userRepository.getUserByLoginElseThrow("instructor1"));
+        post.setTitle("Title Plagiarism Case Post");
+        post.setContent("Content Plagiarism Case Post");
+        post.setVisibleForStudents(true);
+        post.setExercise(finishedTextExercise);
+        post = postRepository.save(post);
+        plagiarismCase.setPost(post);
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        submissionA.setPlagiarismCase(plagiarismCase);
         plagiarismComparisonRepository.save(plagiarismComparison);
 
         var submission = request.get("/api/text-submissions/" + this.textSubmission.getId(), HttpStatus.OK, TextSubmission.class);

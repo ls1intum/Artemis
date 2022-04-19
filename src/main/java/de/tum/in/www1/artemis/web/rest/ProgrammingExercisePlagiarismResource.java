@@ -121,6 +121,8 @@ public class ProgrammingExercisePlagiarismResource {
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         for (var comparison : result.getComparisons()) {
             comparison.setPlagiarismResult(null);
+            comparison.getSubmissionA().setPlagiarismComparison(null);
+            comparison.getSubmissionB().setPlagiarismComparison(null);
         }
         return ResponseEntity.ok(result);
     }
