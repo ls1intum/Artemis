@@ -1,10 +1,9 @@
 {
     "export": {
+        "dialogTitle": "Export Optionen",
         "csvFile": {
-            "options": {
-                "dialogTitle": "CSV-Export Optionen",
-                "introText": "Wähle die Optionen, die beim Erstellen der .csv Datei angewendet werden sollen."
-            },
+            "introText": "Wähle die Optionen, die beim Erstellen der .csv Datei angewendet werden sollen.",
+            "buttonText": "Als CSV exportieren",
             "fieldSeparator": {
                 "label": "Trennzeichen",
                 "comma": "Komma",
@@ -19,6 +18,10 @@
                 "quotes_double": "\"",
                 "none": "Kein"
             }
+        },
+        "excelFile": {
+            "introText": "Export der Kursergebnisse als Excel Datei (.xlsx).",
+            "buttonText": "Als Excel exportieren"
         }
     }
 }

@@ -1,14 +1,15 @@
-import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
+import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
 
 describe('The CourseScoresCsvRowBuilder', () => {
     const localizer = (value: number): string => `${value}l`;
     const percentageLocalizer = (value: number): string => `${value}%`;
 
-    let csvRow: CourseScoresCsvRowBuilder;
+    let csvRow: CourseScoresRowBuilder;
 
     beforeEach(() => {
         csvRow = new CourseScoresCsvRowBuilder(localizer, percentageLocalizer);

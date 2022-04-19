@@ -19,12 +19,16 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CourseScoresCsvRow, CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
+import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 import { CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
+import * as XLSX from 'xlsx';
+import { VERSION } from 'app/app.constants';
+import { CourseScoresExcelRowBuilder } from 'app/course/course-scores/course-scores-excel-row-builder';
+import { CourseScoresRowBuilder, CourseScoresExportRow } from 'app/course/course-scores/course-scores-row-builder';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -515,27 +519,52 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Method for exporting the csv with the needed data
      */
-    exportResults(customOptions: CsvExportOptions) {
+    exportResults(customCsvOptions?: CsvExportOptions) {
         if (!this.exportReady || this.students.length === 0) {
             return;
         }
 
-        const rows: CourseScoresCsvRow[] = [];
-        const keys = this.generateCsvColumnNames();
-        // required because the currently used library for exporting to csv does not quote the header fields (keys)
-        const quotedKeys = keys.map((key) => customOptions.quoteStrings + key + customOptions.quoteStrings);
+        const exportToCSV = !!customCsvOptions;
 
-        this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student)));
+        const rows: CourseScoresExportRow[] = [];
+        const keys = this.generateCsvColumnNames();
+
+        this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student, exportToCSV)));
 
         // empty row as separator
-        rows.push(this.prepareEmptyCsvRow('').build());
+        rows.push(this.prepareEmptyCsvRow('', exportToCSV).build());
 
-        rows.push(this.generateCsvRowMaxValues());
-        rows.push(this.generateCsvRowAverageValues());
-        rows.push(this.generateCsvRowParticipation());
-        rows.push(this.generateCsvRowSuccessfulParticipation());
+        rows.push(this.generateCsvRowMaxValues(exportToCSV));
+        rows.push(this.generateCsvRowAverageValues(exportToCSV));
+        rows.push(this.generateCsvRowParticipation(exportToCSV));
+        rows.push(this.generateCsvRowSuccessfulParticipation(exportToCSV));
 
-        this.exportAsCsv(quotedKeys, rows, customOptions);
+        // todo remove log
+        console.log(keys);
+        console.log(rows);
+        if (exportToCSV) {
+            // required because the currently used library for exporting to csv does not quote the header fields (keys)
+            const quotedKeys = keys.map((key) => customCsvOptions.quoteStrings + key + customCsvOptions.quoteStrings);
+            this.exportAsCsv(quotedKeys, rows, customCsvOptions);
+        } else {
+            this.exportAsExcel(keys, rows);
+        }
+    }
+
+    exportAsExcel(keys: string[], rows: CourseScoresExportRow[]) {
+        const workbook = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows, { header: keys });
+        // todo remove log
+        console.log(ws);
+        const worksheetName = `${this.course.title} Scores`;
+        XLSX.utils.book_append_sheet(workbook, ws, worksheetName);
+
+        const workbookProps = {
+            Title: `{this.course.title} Scores`,
+            Author: `Artemis ${VERSION ? VERSION : ''}`,
+        };
+        const fileName = `Artemis Course ${this.course.title} Scores.xlsx`;
+        XLSX.writeFile(workbook, fileName, { Props: workbookProps });
     }
 
     /**
@@ -544,7 +573,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @param rows The data rows that should be part of the CSV.
      * @param customOptions Custom csv options that should be used for export
      */
-    exportAsCsv(keys: string[], rows: CourseScoresCsvRow[], customOptions: CsvExportOptions) {
+    exportAsCsv(keys: string[], rows: CourseScoresExportRow[], customOptions: CsvExportOptions) {
         const generalExportOptions = {
             decimalSeparator: 'locale',
             showLabels: true,
@@ -564,10 +593,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Constructs a new builder for a new CSV row.
      * @private
      */
-    private newCsvRowBuilder(): CourseScoresCsvRowBuilder {
+    private newRowBuilder(exportToCsv: boolean): CourseScoresRowBuilder {
         const localizer = this.localize.bind(this);
         const percentageLocalizer = this.localizePercent.bind(this);
-        return new CourseScoresCsvRowBuilder(localizer, percentageLocalizer);
+        if (exportToCsv) {
+            return new CourseScoresCsvRowBuilder(localizer, percentageLocalizer, this.course.accuracyOfScores);
+        } else {
+            return new CourseScoresExcelRowBuilder(this.course.accuracyOfScores);
+        }
     }
 
     /**
@@ -599,10 +632,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported csv with the statistics for the given student.
      * @param student The student for which a row in the CSV should be created.
+     * @param exportToCsv
      * @private
      */
-    private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics): CourseScoresCsvRow {
-        const rowData = this.newCsvRowBuilder();
+    private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics, exportToCsv: boolean): CourseScoresExportRow {
+        const rowData = this.newRowBuilder(exportToCsv);
         rowData.setUserInformation(student);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
@@ -640,10 +674,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the maximum values of the various statistics.
+     * @param exportToCsv
      * @private
      */
-    private generateCsvRowMaxValues(): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Max');
+    private generateCsvRowMaxValues(exportToCsv: boolean): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Max', exportToCsv);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -668,10 +703,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the average values of the various statistics.
+     * @param exportToCsv
      * @private
      */
-    private generateCsvRowAverageValues(): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Average');
+    private generateCsvRowAverageValues(exportToCsv: boolean): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Average', exportToCsv);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -704,10 +740,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of participants.
+     * @param exportToCsv
      * @private
      */
-    private generateCsvRowParticipation(): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Number of Participations');
+    private generateCsvRowParticipation(exportToCsv: boolean): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Number of Participations', exportToCsv);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -724,10 +761,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of successful participants.
+     * @param exportToCsv
      * @private
      */
-    private generateCsvRowSuccessfulParticipation(): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Number of Successful Participations');
+    private generateCsvRowSuccessfulParticipation(exportToCsv: boolean): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Number of Successful Participations', exportToCsv);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -745,9 +783,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Prepares an empty row (except for the first column) with an empty column for each exercise type.
      * @param firstValue The value that should be placed in the first column of the row.
+     * @param exportToCsv
      */
-    private prepareEmptyCsvRow(firstValue: string): CourseScoresCsvRowBuilder {
-        const emptyLine = this.newCsvRowBuilder();
+    private prepareEmptyCsvRow(firstValue: string, exportToCsv: boolean): CourseScoresCsvRowBuilder | CourseScoresExcelRowBuilder {
+        const emptyLine = this.newRowBuilder(exportToCsv);
 
         emptyLine.set(NAME_KEY, firstValue);
         emptyLine.set(USERNAME_KEY, '');
@@ -780,7 +819,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @param value The value that should be stored in the row.
      * @private
      */
-    private setCsvRowGradeValue(csvRow: CourseScoresCsvRowBuilder, value: string | number | undefined) {
+    private setCsvRowGradeValue(csvRow: CourseScoresCsvRowBuilder | CourseScoresExcelRowBuilder, value: string | number | undefined) {
         if (this.gradingScaleExists) {
             if (this.isBonus) {
                 csvRow.set(BONUS_KEY, value);

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -15,6 +15,7 @@ describe('CsvExportModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [NgbNavModule],
             declarations: [CsvExportModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
             providers: [MockProvider(NgbActiveModal), MockProvider(TranslateService)],
         })
@@ -53,12 +54,20 @@ describe('CsvExportModalComponent', () => {
         expect(component.options.quoteStrings).toBe(CsvQuoteStrings.NONE);
     });
 
-    it('should return the export options on finish', () => {
+    it('should return empty on finish when excel export is active', () => {
+        component.active = 1;
+        const activeModalStub = jest.spyOn(ngbActiveModal, 'close');
+        component.onFinish();
+        expect(activeModalStub).toHaveBeenCalledWith();
+    });
+
+    it('should return the csv export options on finish when csv export is active', () => {
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
             quoteStrings: CsvQuoteStrings.QUOTES_SINGLE,
         };
         component.options = testOptions;
+        component.active = 2;
         const activeModalStub = jest.spyOn(ngbActiveModal, 'close');
         component.onFinish();
         expect(activeModalStub).toHaveBeenCalledWith(testOptions);

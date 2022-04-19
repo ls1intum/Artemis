@@ -31,6 +31,7 @@ export class CsvExportModalComponent implements OnInit {
     readonly CsvFieldSeparator = CsvFieldSeparator;
     readonly CsvQuoteStrings = CsvQuoteStrings;
 
+    active = 1;
     options: CsvExportOptions;
 
     // Icons
@@ -80,9 +81,15 @@ export class CsvExportModalComponent implements OnInit {
     }
 
     /**
-     * Closes the csv export modal and passes the selected options back
+     * Closes the csv export modal and passes the selected csv options back
      */
     onFinish() {
-        this.activeModal.close(this.options);
+        if (this.active === 1) {
+            // Excel export
+            this.activeModal.close();
+        } else {
+            // CSV export
+            this.activeModal.close(this.options);
+        }
     }
 }
