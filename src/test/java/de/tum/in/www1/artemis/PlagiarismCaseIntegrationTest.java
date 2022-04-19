@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,9 +14,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 
@@ -26,9 +31,13 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
-    private static Course course;
+    @Autowired
+    private PostRepository postRepository;
 
-    private static TextExercise textExercise;
+    @Autowired
+    private UserRepository userRepository;
+
+    private static Course course;
 
     private static PlagiarismCase plagiarismCase1;
 
@@ -36,19 +45,11 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     private static PlagiarismCase plagiarismCase3;
 
-    /*
-     * private List<Post> createBasicPosts(PlagiarismCase plagiarismCaseContext) { List<Post> posts = new ArrayList<>(); Post postToAdd = new Post();
-     * postToAdd.setTitle("Title Plagiarism Case Post"); postToAdd.setContent("Content Plagiarism Case Post"); postToAdd.setVisibleForStudents(true);
-     * postToAdd.setDisplayPriority(DisplayPriority.NONE); postToAdd.setAuthor(getUserByLoginWithoutAuthorities("instructor1")); postToAdd.setCreationDate(ZonedDateTime.of(2015,
-     * 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC"))); postToAdd.setPlagiarismCase(plagiarismCaseContext); postRepository.save(postToAdd); posts.add(postToAdd); dayCount =
-     * (dayCount % 25) + 1; return posts; }
-     */
-
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(4, 1, 1, 1);
+        database.addUsers(3, 1, 1, 1);
         course = database.addCourseWithOneFinishedTextExercise();
-        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         plagiarismCase1 = new PlagiarismCase();
         plagiarismCase1.setExercise(textExercise);
         User student1 = database.getUserByLogin("student1");
@@ -94,24 +95,29 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismCasesForCourseForInstructor() throws Exception {
         var plagiarismCases = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK, PlagiarismCase.class);
+        var plagiarismCasesList = new ArrayList<PlagiarismCase>();
+        plagiarismCasesList.add(plagiarismCase1);
+        plagiarismCasesList.add(plagiarismCase2);
+        plagiarismCasesList.add(plagiarismCase3);
+        assertThat(plagiarismCases).as("should get plagiarism cases for instructor").isEqualTo(plagiarismCasesList);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPlagiarismCaseForInstructor_forbidden_student() throws Exception {
-        request.getList("/api/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.get("/api/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetPlagiarismCaseForInstructor_forbidden_tutor() throws Exception {
-        request.getList("/api/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.get("/api/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR ")
     public void testGetPlagiarismCaseForInstructor_forbidden_editor() throws Exception {
-        request.getList("/api/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.get("/api/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
@@ -156,8 +162,19 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPlagiarismCasesForStudent() throws Exception {
-        var plagiarismCases = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-student", HttpStatus.OK, PlagiarismCase.class);
+        Post post = new Post();
+        post.setAuthor(userRepository.getUserByLoginElseThrow("instructor1"));
+        post.setTitle("Title Plagiarism Case Post");
+        post.setContent("Content Plagiarism Case Post");
+        post.setVisibleForStudents(true);
+        post.setPlagiarismCase(plagiarismCase1);
+        post = postRepository.save(post);
+        plagiarismCase1.setPost(post);
+        plagiarismCaseRepository.save(plagiarismCase1);
 
+        var plagiarismCases = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-student", HttpStatus.OK, PlagiarismCase.class);
+        plagiarismCases.get(0).getPost().setPlagiarismCase(null);
+        assertThat(plagiarismCases.get(0)).as("should get plagiarism cases for student").isEqualTo(plagiarismCase1);
     }
 
     @Test

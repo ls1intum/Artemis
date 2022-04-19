@@ -64,8 +64,10 @@ public class PlagiarismService {
         if (comparisonOptional.isPresent()) {
             var comparisons = comparisonOptional.get();
             isUserNotifiedByInstructor = comparisons.stream()
-                    .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase().getPost() != null && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
-                            || (comparison.getSubmissionB().getPlagiarismCase().getPost() != null && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
+                    .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null && comparison.getSubmissionA().getPlagiarismCase().getPost() != null
+                            && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
+                            || (comparison.getSubmissionB().getPlagiarismCase() != null && comparison.getSubmissionB().getPlagiarismCase().getPost() != null
+                                    && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
         }
         if (!isUserNotifiedByInstructor) {
             throw new AccessForbiddenException("This plagiarism submission is not related to the requesting user or the user has not been notified yet.");

@@ -135,6 +135,9 @@ public class PlagiarismCaseResource {
 
     private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {
         for (var plagiarismCase : plagiarismCases) {
+            if (plagiarismCase.getPost() != null) {
+                plagiarismCase.getPost().setPlagiarismCase(null);
+            }
             for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
                 submission.setPlagiarismCase(null);
                 submission.getPlagiarismComparison().getPlagiarismResult().setExercise(null);
