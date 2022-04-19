@@ -112,7 +112,7 @@ public class ProgrammingExerciseGitDiffReportService {
 
             return fullReport;
         }
-        catch (InterruptedException | GitAPIException e) {
+        catch (GitAPIException e) {
             log.error("Exception while generating full git diff report", e);
             throw new InternalServerErrorException("Error while generating full git-diff: " + e.getMessage());
         }
@@ -199,7 +199,7 @@ public class ProgrammingExerciseGitDiffReportService {
             programmingExerciseRepository.save(programmingExercise);
             return newReport;
         }
-        catch (InterruptedException | GitAPIException | IOException e) {
+        catch (GitAPIException | IOException e) {
             log.error("Exception while generating git diff report", e);
             throw new InternalServerErrorException("Error while generating git-diff: " + e.getMessage());
         }
@@ -215,7 +215,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws GitAPIException If there was an issue with JGit
      */
     private ProgrammingExerciseGitDiffReport generateReport(TemplateProgrammingExerciseParticipation templateParticipation,
-            SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, InterruptedException, IOException {
+            SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, IOException {
         var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
         var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
 
@@ -227,8 +227,7 @@ public class ProgrammingExerciseGitDiffReportService {
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(solutionRepo);
 
-        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream()) {
-            Git git = Git.wrap(templateRepo);
+        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(templateRepo)) {
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
             var programmingExerciseGitDiffEntries = extractDiffEntries(diff);

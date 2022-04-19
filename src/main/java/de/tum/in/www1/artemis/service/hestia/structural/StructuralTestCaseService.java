@@ -89,7 +89,7 @@ public class StructuralTestCaseService {
             gitService.resetToOriginHead(testRepository);
             gitService.pullIgnoreConflicts(testRepository);
         }
-        catch (InterruptedException | GitAPIException e) {
+        catch (GitAPIException e) {
             var error = "Error while checking out repositories";
             log.error(error, e);
             throw new StructuralSolutionEntryGenerationException(error, e);

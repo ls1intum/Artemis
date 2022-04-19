@@ -1566,7 +1566,7 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(comparison.getMatches()).hasSize(1);
     }
 
-    private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, InterruptedException, GitAPIException {
+    private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
         var participationStudent1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         var participationStudent2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
         var submissionStudent1 = database.createProgrammingSubmission(participationStudent1, false);
