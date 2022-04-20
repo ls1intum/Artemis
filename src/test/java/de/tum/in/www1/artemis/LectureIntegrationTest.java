@@ -49,7 +49,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(10, 10, 0, 10);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true, true);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
         this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
@@ -60,13 +60,18 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
         this.attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
         VideoUnit videoUnit = database.createVideoUnit();
         TextUnit textUnit = database.createTextUnit();
         addAttachmentToLecture();
 
         this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(exerciseUnit, attachmentUnit, videoUnit, textUnit));
+    }
+
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
     }
 
     private void addAttachmentToLecture() {
@@ -83,6 +88,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.putWithResponseBody("/api/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
         request.getList("/api/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -95,11 +101,6 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = "student1", roles = "USER")
     public void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
-    }
-
-    @AfterEach
-    public void resetDatabase() {
-        database.resetDatabase();
     }
 
     @Test
@@ -341,6 +342,12 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
+    @WithMockUser(username = "user1", roles = "USER")
+    public void testGetLectureTitleForNonExistingLecture() throws Exception {
+        request.get("/api/lectures/123124123123/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
@@ -357,8 +364,17 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
-    public void testGetLectureTitleForNonExistingLecture() throws Exception {
-        request.get("/api/lectures/123124123123/title", HttpStatus.NOT_FOUND, String.class);
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImport() throws Exception {
+        Course course2 = this.database.addEmptyCourse();
+
+        Lecture lecture2 = request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null, Lecture.class, HttpStatus.CREATED);
+
+        // Assert that all lecture units (except exercise units) were copied
+        assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
+                this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
+
+        assertThat(lecture2.getAttachments().stream().map(Attachment::getName).toList())
+                .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
     }
 }
