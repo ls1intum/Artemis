@@ -1,7 +1,10 @@
-package de.tum.in.www1.artemis.service.hestia.behavioral;
+package de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource;
 
 import java.util.TreeSet;
 import java.util.stream.IntStream;
+
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
 public class CreateCommonChangeBlocks extends BehavioralKnowledgeSource {
 
@@ -16,7 +19,7 @@ public class CreateCommonChangeBlocks extends BehavioralKnowledgeSource {
     }
 
     @Override
-    public boolean executeAction() throws BehavioralSolutionEntryGenerationException {
+    public boolean executeAction() {
         boolean didChanges = false;
 
         for (GroupedFile groupedFile : blackboard.getGroupedFiles()) {
@@ -37,6 +40,10 @@ public class CreateCommonChangeBlocks extends BehavioralKnowledgeSource {
                 }
                 lineCount++;
                 previousLine = currentLine;
+            }
+
+            if (startLine != null) {
+                changeBlocks.add(new GroupedFile.ChangeBlock(IntStream.range(startLine, startLine + lineCount).boxed().toList()));
             }
 
             if (!changeBlocks.equals(groupedFile.getCommonChanges())) {

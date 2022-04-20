@@ -1,9 +1,12 @@
-package de.tum.in.www1.artemis.service.hestia.behavioral;
+package de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource;
 
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-class ExtractCoveredLines extends BehavioralKnowledgeSource {
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
+
+public class ExtractCoveredLines extends BehavioralKnowledgeSource {
 
     public ExtractCoveredLines(BehavioralBlackboard blackboard) {
         super(blackboard);
@@ -17,8 +20,9 @@ class ExtractCoveredLines extends BehavioralKnowledgeSource {
     @Override
     public boolean executeAction() {
         for (GroupedFile groupedFile : blackboard.getGroupedFiles()) {
-            groupedFile.setCoveredLines(groupedFile.getCoverageReportEntries().stream().flatMapToInt(
-                    coverageReportEntry -> IntStream.rangeClosed(coverageReportEntry.getStartLine(), coverageReportEntry.getStartLine() + coverageReportEntry.getLineCount()))
+            groupedFile.setCoveredLines(groupedFile.getCoverageReportEntries().stream()
+                    .flatMapToInt(
+                            coverageReportEntry -> IntStream.range(coverageReportEntry.getStartLine(), coverageReportEntry.getStartLine() + coverageReportEntry.getLineCount()))
                     .boxed().collect(Collectors.toSet()));
         }
         return !blackboard.getGroupedFiles().stream().allMatch(groupedFile -> groupedFile.getCoveredLines().isEmpty());

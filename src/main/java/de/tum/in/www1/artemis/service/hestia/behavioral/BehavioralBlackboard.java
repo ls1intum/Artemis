@@ -2,16 +2,11 @@ package de.tum.in.www1.artemis.service.hestia.behavioral;
 
 import java.util.*;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 
-class BehavioralBlackboard {
-
-    private final ProgrammingExercise programmingExercise;
-
-    private final Set<ProgrammingExerciseTestCase> testCases;
+public class BehavioralBlackboard {
 
     private final ProgrammingExerciseGitDiffReport gitDiffReport;
 
@@ -21,23 +16,12 @@ class BehavioralBlackboard {
 
     private List<GroupedFile> groupedFiles;
 
-    private List<BehavioralSolutionEntry> solutionEntries;
+    private List<ProgrammingExerciseSolutionEntry> solutionEntries;
 
-    public BehavioralBlackboard(ProgrammingExercise programmingExercise, Set<ProgrammingExerciseTestCase> testCases, ProgrammingExerciseGitDiffReport gitDiffReport,
-            CoverageReport coverageReport, Map<String, String> solutionRepoFiles) {
-        this.programmingExercise = programmingExercise;
-        this.testCases = testCases;
+    public BehavioralBlackboard(ProgrammingExerciseGitDiffReport gitDiffReport, CoverageReport coverageReport, Map<String, String> solutionRepoFiles) {
         this.gitDiffReport = gitDiffReport;
         this.coverageReport = coverageReport;
         this.solutionRepoFiles = solutionRepoFiles;
-    }
-
-    public ProgrammingExercise getProgrammingExercise() {
-        return programmingExercise;
-    }
-
-    public Set<ProgrammingExerciseTestCase> getTestCases() {
-        return testCases;
     }
 
     public ProgrammingExerciseGitDiffReport getGitDiffReport() {
@@ -52,11 +36,11 @@ class BehavioralBlackboard {
         return solutionRepoFiles;
     }
 
-    public List<BehavioralSolutionEntry> getSolutionEntries() {
+    public List<ProgrammingExerciseSolutionEntry> getSolutionEntries() {
         return solutionEntries;
     }
 
-    public void setSolutionEntries(List<BehavioralSolutionEntry> solutionEntries) {
+    public void setSolutionEntries(List<ProgrammingExerciseSolutionEntry> solutionEntries) {
         this.solutionEntries = solutionEntries;
     }
 

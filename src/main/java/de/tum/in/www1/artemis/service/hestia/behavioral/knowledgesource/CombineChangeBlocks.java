@@ -1,7 +1,11 @@
-package de.tum.in.www1.artemis.service.hestia.behavioral;
+package de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource;
 
 import java.util.ArrayList;
 import java.util.TreeSet;
+
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
+import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
 public class CombineChangeBlocks extends BehavioralKnowledgeSource {
 

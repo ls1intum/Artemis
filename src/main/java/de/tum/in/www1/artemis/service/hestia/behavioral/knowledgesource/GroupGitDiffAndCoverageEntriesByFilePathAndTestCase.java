@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.hestia.behavioral;
+package de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -6,10 +6,12 @@ import java.util.stream.Collectors;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
-class GroupGitDiffAndCoverageEntriesByFilePath extends BehavioralKnowledgeSource {
+public class GroupGitDiffAndCoverageEntriesByFilePathAndTestCase extends BehavioralKnowledgeSource {
 
-    public GroupGitDiffAndCoverageEntriesByFilePath(BehavioralBlackboard blackboard) {
+    public GroupGitDiffAndCoverageEntriesByFilePathAndTestCase(BehavioralBlackboard blackboard) {
         super(blackboard);
     }
 
@@ -27,11 +29,7 @@ class GroupGitDiffAndCoverageEntriesByFilePath extends BehavioralKnowledgeSource
                     return entries;
                 }));
         var coverageEntriesPerFile = blackboard.getCoverageReport().getFileReports().stream()
-                .collect(Collectors.toMap(CoverageFileReport::getFilePath, CoverageFileReport::getTestwiseCoverageEntries, (set1, set2) -> {
-                    var entries = new HashSet<>(set1);
-                    entries.addAll(set2);
-                    return entries;
-                }));
+                .collect(Collectors.toMap(CoverageFileReport::getFilePath, CoverageFileReport::getTestwiseCoverageEntries));
 
         var commonFilePaths = new TreeSet<>(gitDiffEntriesPerFile.keySet());
         commonFilePaths.retainAll(coverageEntriesPerFile.keySet());

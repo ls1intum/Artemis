@@ -1,9 +1,12 @@
-package de.tum.in.www1.artemis.service.hestia.behavioral;
+package de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class FindCommonLines extends BehavioralKnowledgeSource {
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
+
+public class FindCommonLines extends BehavioralKnowledgeSource {
 
     public FindCommonLines(BehavioralBlackboard blackboard) {
         super(blackboard);

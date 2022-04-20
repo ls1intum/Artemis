@@ -1,6 +1,9 @@
-package de.tum.in.www1.artemis.service.hestia.behavioral;
+package de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource;
 
-abstract class BehavioralKnowledgeSource {
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
+
+public abstract class BehavioralKnowledgeSource {
 
     protected BehavioralBlackboard blackboard;
 

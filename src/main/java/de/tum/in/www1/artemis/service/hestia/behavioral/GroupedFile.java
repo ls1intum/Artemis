@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
 
-class GroupedFile {
+public class GroupedFile {
 
     private final String filePath;
 
@@ -90,6 +90,19 @@ class GroupedFile {
         this.commonChanges = new TreeSet<>(commonChanges);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        GroupedFile that = (GroupedFile) o;
+        return Objects.equals(filePath, that.filePath) && Objects.equals(testCase, that.testCase) && Objects.equals(gitDiffEntries, that.gitDiffEntries)
+                && Objects.equals(coverageReportEntries, that.coverageReportEntries) && Objects.equals(fileContent, that.fileContent)
+                && Objects.equals(changedLines, that.changedLines) && Objects.equals(coveredLines, that.coveredLines) && Objects.equals(commonLines, that.commonLines)
+                && Objects.equals(commonChanges, that.commonChanges);
+    }
+
     public static class ChangeBlock implements Comparable<ChangeBlock> {
 
         private SortedSet<Integer> lines;
@@ -131,12 +144,12 @@ class GroupedFile {
             return Objects.hash(lines, isPotential);
         }
 
-        public void setLines(Collection<Integer> lines) {
-            this.lines = new TreeSet<>(lines);
-        }
-
         public SortedSet<Integer> getLines() {
             return lines;
+        }
+
+        public void setLines(Collection<Integer> lines) {
+            this.lines = new TreeSet<>(lines);
         }
 
         public boolean isPotential() {

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.hestia.behavioral;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.stereotype.Service;
@@ -14,6 +13,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntry
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.*;
 
 /**
  * Service for handling Solution Entries of behavioral Test Cases.
@@ -62,14 +62,12 @@ public class BehavioralTestCaseService {
         }
         var solutionRepoFiles = readSolutionRepo(programmingExercise);
 
-        var blackboard = new BehavioralBlackboard(programmingExercise, testCases, gitDiffReport, coverageReport, solutionRepoFiles);
+        var blackboard = new BehavioralBlackboard(gitDiffReport, coverageReport, solutionRepoFiles);
         applyKnowledgeSources(blackboard);
-        var behavioralSolutionEntries = blackboard.getSolutionEntries();
-        if (behavioralSolutionEntries == null || behavioralSolutionEntries.isEmpty()) {
+        var solutionEntries = blackboard.getSolutionEntries();
+        if (solutionEntries == null || solutionEntries.isEmpty()) {
             throw new BehavioralSolutionEntryGenerationException("No solution entry was generated");
         }
-
-        var solutionEntries = convertSolutionEntries(programmingExercise, behavioralSolutionEntries);
         solutionEntryRepository.saveAll(solutionEntries);
         return solutionEntries;
     }
@@ -78,15 +76,15 @@ public class BehavioralTestCaseService {
         // Create knowledge sources (Turning the formatter off to make the code more readable)
         // @formatter:off
         List<BehavioralKnowledgeSource> behavioralKnowledgeSources = Arrays.asList(
-            new GroupGitDiffAndCoverageEntriesByFilePath(blackboard),
+            new GroupGitDiffAndCoverageEntriesByFilePathAndTestCase(blackboard),
             new ExtractCoveredLines(blackboard),
             new ExtractChangedLines(blackboard),
             new FindCommonLines(blackboard),
             new CreateCommonChangeBlocks(blackboard),
             new InsertFileContents(blackboard),
-            new AddUnimportantLinesAsPotentialCodeBlocks(blackboard),
+            new AddUncoveredLinesAsPotentialCodeBlocks(blackboard),
             new CombineChangeBlocks(blackboard),
-            new CreateBehavioralSolutionEntries(blackboard)
+            new CreateSolutionEntries(blackboard)
         );
         // @formatter:on
 
@@ -100,12 +98,6 @@ public class BehavioralTestCaseService {
             }
             done = !didChanges;
         }
-    }
-
-    private List<ProgrammingExerciseSolutionEntry> convertSolutionEntries(ProgrammingExercise programmingExercise, List<BehavioralSolutionEntry> behavioralSolutionEntries)
-            throws BehavioralSolutionEntryGenerationException {
-        var solutionRepoFiles = readSolutionRepo(programmingExercise);
-        return behavioralSolutionEntries.stream().map(behavioralSolutionEntry -> convertSolutionEntry(behavioralSolutionEntry, solutionRepoFiles)).toList();
     }
 
     private Map<String, String> readSolutionRepo(ProgrammingExercise programmingExercise) throws BehavioralSolutionEntryGenerationException {
@@ -125,25 +117,5 @@ public class BehavioralTestCaseService {
         catch (GitAPIException e) {
             throw new BehavioralSolutionEntryGenerationException("Error while reading solution repository", e);
         }
-    }
-
-    /**
-     * Converts a temporary behavioral solution entry to a normal solution entry containing the actual code block of the change it represents.
-     *
-     * @param behavioralSolutionEntry The temporary solution entry
-     * @param solutionRepoFiles The files of the solution repository
-     * @return The normal solution entry
-     */
-    private ProgrammingExerciseSolutionEntry convertSolutionEntry(BehavioralSolutionEntry behavioralSolutionEntry, Map<String, String> solutionRepoFiles) {
-        var fullEntry = new ProgrammingExerciseSolutionEntry();
-        fullEntry.setLine(behavioralSolutionEntry.startLine());
-        fullEntry.setFilePath(behavioralSolutionEntry.filePath());
-        var fileContent = solutionRepoFiles.get(behavioralSolutionEntry.filePath());
-        if (fileContent != null) {
-            var code = Arrays.stream(fileContent.split("\n")).skip(behavioralSolutionEntry.startLine() - 1).limit(behavioralSolutionEntry.lineCount())
-                    .collect(Collectors.joining("\n"));
-            fullEntry.setCode(code);
-        }
-        return fullEntry;
     }
 }

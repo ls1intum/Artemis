@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
+import java.util.Objects;
+
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -118,6 +120,18 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
 
     public void setTestCase(ProgrammingExerciseTestCase testCase) {
         this.testCase = testCase;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        ProgrammingExerciseSolutionEntry that = (ProgrammingExerciseSolutionEntry) o;
+        return Objects.equals(filePath, that.filePath) && Objects.equals(previousLine, that.previousLine) && Objects.equals(line, that.line)
+                && Objects.equals(previousCode, that.previousCode) && Objects.equals(code, that.code) && Objects.equals(codeHint, that.codeHint)
+                && Objects.equals(testCase, that.testCase);
     }
 
     @Override
