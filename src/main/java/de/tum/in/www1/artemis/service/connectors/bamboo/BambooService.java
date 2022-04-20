@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.BuildLogStatisticsEntryService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
@@ -70,10 +71,12 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final ExerciseDateService exerciseDateService;
 
+    private final BuildLogStatisticsEntryService buildLogStatisticsEntryService;
+
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService, ExerciseDateService exerciseDateService) {
+            UrlService urlService, BuildLogEntryService buildLogService, ExerciseDateService exerciseDateService, BuildLogStatisticsEntryService buildLogStatisticsEntryService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -82,6 +85,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         this.mapper = mapper;
         this.urlService = urlService;
         this.exerciseDateService = exerciseDateService;
+        this.buildLogStatisticsEntryService = buildLogStatisticsEntryService;
     }
 
     @Override
@@ -293,7 +297,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
 
         var buildLogEntries = retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId());
-        getBuildLogStats(buildLogEntries);
+        extractBuildLogStatistics(programmingSubmission, buildLogEntries);
         buildLogEntries = removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
         var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
@@ -304,16 +308,16 @@ public class BambooService extends AbstractContinuousIntegrationService {
         return buildLogEntries;
     }
 
-    public void getBuildLogStats(List<BuildLogEntry> buildLogEntries) {
+    public void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, List<BuildLogEntry> buildLogEntries) {
         log.warn("Extracting build log stats");
-        var jobStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("started building on agent")).findFirst();
-        var dockerSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("Executing build")).findFirst();
-        var testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Tests'")).findFirst();
-        var testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Tests' with result")).findFirst();
-        var scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Static Code Analysis'")).findFirst();
-        var scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Static Code Analysis'")).findFirst();
+        var jobStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("started building on agent")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+        var dockerSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("Executing build")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+        var testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Tests'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+        var testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Tests' with result")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+        var scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Static Code Analysis'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+        var scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Static Code Analysis'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+        var jobFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished building")).findFirst().map(BuildLogEntry::getTime).orElse(null);
         var dependenciesDownloadedCount = buildLogEntries.stream().filter(b -> b.getLog().contains("Downloaded from central")).count();
-        var jobFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished building")).findFirst();
 
         log.warn("jobStarted {}", jobStarted);
         log.warn("dockerSetupCompleted {}", dockerSetupCompleted);
@@ -321,8 +325,11 @@ public class BambooService extends AbstractContinuousIntegrationService {
         log.warn("testsFinished {}", testsFinished);
         log.warn("scaStarted {}", scaStarted);
         log.warn("scaFinished {}", scaFinished);
-        log.warn("dependenciesDownloadedCount {}", dependenciesDownloadedCount);
         log.warn("jobFinished {}", jobFinished);
+        log.warn("dependenciesDownloadedCount {}", dependenciesDownloadedCount);
+
+        buildLogStatisticsEntryService.saveBuildLogStatisticsEntry(programmingSubmission, jobStarted, dockerSetupCompleted, testsStarted, testsFinished, scaStarted, scaFinished,
+                jobFinished, dependenciesDownloadedCount);
     }
 
     /**
@@ -550,7 +557,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             latestSubmission.setBuildArtifact(hasArtifact);
 
             var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
-            var buildLogs = extractAndFilterBuildLogs(buildResult, programmingLanguage);
+            var buildLogs = extractAndFilterBuildLogs(latestSubmission, buildResult, programmingLanguage);
             var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
             // Set the received logs in order to avoid duplicate entries (this removes existing logs)
@@ -568,7 +575,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
     }
 
-    private List<BuildLogEntry> extractAndFilterBuildLogs(BambooBuildResultNotificationDTO buildResult, ProgrammingLanguage programmingLanguage) {
+    private List<BuildLogEntry> extractAndFilterBuildLogs(ProgrammingSubmission programmingSubmission, BambooBuildResultNotificationDTO buildResult,
+            ProgrammingLanguage programmingLanguage) {
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
         // Store logs into database. Append logs of multiple jobs.
@@ -579,11 +587,12 @@ public class BambooService extends AbstractContinuousIntegrationService {
             }
         }
 
-        if (buildLogEntries.isEmpty()) {
-            return buildLogEntries;
-        }
+        extractBuildLogStatistics(programmingSubmission, buildLogEntries);
 
-        getBuildLogStats(buildLogEntries);
+        if (buildResult.isBuildSuccessful()) {
+            // If the build was successful -> Do not store any build logs (build logs were only )
+            return new ArrayList<>();
+        }
 
         // Filter unwanted logs
         return removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
