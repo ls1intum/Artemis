@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.time.ZonedDateTime;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -76,6 +77,16 @@ public interface VersionControlService {
     Commit getLastCommitDetails(Object requestBody) throws VersionControlException;
 
     /**
+     * Retrieves the date at which the push event was received by the VCS instance.
+     *
+     * @param participation The participation we need the date for
+     * @param commitHash The commit hash we want to find the event for
+     * @param eventObject The object provided by the VCS on a push event. null if not available
+     * @return The build queue date
+     */
+    ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject);
+
+    /**
      * Creates a project on the VCS.
      *
      * @param programmingExercise for which a project should be created
@@ -92,14 +103,6 @@ public interface VersionControlService {
      * @throws VersionControlException if the repository could not be created
      */
     void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException;
-
-    /**
-     * Gets the repository name of a given repository url
-     *
-     * @param repositoryUrl The repository url
-     * @return The repository name
-     */
-    String getRepositoryName(VcsRepositoryUrl repositoryUrl);
 
     /**
      * Checks if the project with the given projectKey already exists
@@ -171,7 +174,7 @@ public interface VersionControlService {
      * Unprotects a branch from the repository, so that the history can be changed (important for combine template commits).
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
-     * @param branch            The name of the branch to unprotect (e.g "master")
+     * @param branch            The name of the branch to unprotect (e.g "main")
      * @throws VersionControlException      If the communication with the VCS fails.
      */
     void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException;

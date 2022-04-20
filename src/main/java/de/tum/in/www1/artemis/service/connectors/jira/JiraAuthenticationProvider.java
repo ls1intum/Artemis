@@ -100,7 +100,10 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         User user = getOrCreateUser(authentication, false);
-        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
+        if (user != null) {
+            return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
+        }
+        return null;
     }
 
     @Override
@@ -112,6 +115,15 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     private User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
+
+        final var optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
+        if (optionalUser.isPresent() && optionalUser.get().isInternal()) {
+            // User found but is internal. Skip external authentication.
+            return null;
+        }
+
+        // User is either not yet existent or an external user
+
         ResponseEntity<JiraUserDTO> authenticationResponse = null;
         try {
             final var path = jiraUrl + "/rest/api/2/user?username=" + username + "&expand=groups";
@@ -148,19 +160,13 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
         if (authenticationResponse != null && authenticationResponse.getBody() != null) {
             final var jiraUserDTO = authenticationResponse.getBody();
-            username = jiraUserDTO.getName();
-            User user;
-            final var optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
-            if (optionalUser.isPresent()) {
-                user = optionalUser.get();
-            }
-            else {
-                // the user does not exist yet, we have to create it in the Artemis database
-                // Note: we use an empty password, so that we don't store the credentials of Jira users in the Artemis DB (Spring enforces a non null password)
-                user = userCreationService.createUser(username, "", null, jiraUserDTO.getDisplayName(), "", jiraUserDTO.getEmailAddress(), null, null, "en", false);
-                // load additional details if the ldap service is available and the user follows the allowed username pattern (if specified)
-                ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
-            }
+            // If the user has already existed, the check has already been completed and we can continue
+            // Otherwise, we have to create it in the Artemis database
+            User user = optionalUser.orElseGet(() -> userCreationService.createUser(jiraUserDTO.getName(), null, null, jiraUserDTO.getDisplayName(), "",
+                    jiraUserDTO.getEmailAddress(), null, null, "en", false));
+            // load additional details if the ldap service is available and the user follows the allowed username pattern (if specified)
+            ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
+
             final var groups = jiraUserDTO.getGroups().getItems().stream().map(JiraUserGroupDTO::getName).collect(Collectors.toSet());
             user.setGroups(groups);
             user.setAuthorities(authorityService.buildAuthorities(user));

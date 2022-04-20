@@ -31,7 +31,7 @@
             "buildStatus": {
                 "headline": "Buildstatus",
                 "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen, wie hoch der Anteil an bestandenen Tests ist und somit welche (Teil-)Aufgaben erfolgreich gelöst wurden und welche nicht.",
-                "hint": "Es können zusätzliche Tests nach der Einreichungsfrist ausgeführt werden. Das heißt, auch wenn alle aktuell angezeigten Tests erfolgreich durchgelaufen sind, wird die Aufgabe nicht zwangsläufig mit voller Puznktzahl bewertet. Überprüfe deine Implementierung daher genau, bevor du sie final einreichst."
+                "hint": "Es können zusätzliche Tests nach der Einreichungsfrist ausgeführt werden. Das heißt, auch wenn alle aktuell angezeigten Tests erfolgreich durchgelaufen sind, wird die Aufgabe nicht zwangsläufig mit voller Punktzahl bewertet. Überprüfe deine Implementierung daher genau, bevor du sie final einreichst."
             },
             "testCases": {
                 "headline": "Feedback",

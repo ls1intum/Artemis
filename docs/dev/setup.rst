@@ -4,7 +4,7 @@ Setup Guide
 In this guide you learn how to setup the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
-development on the application server using Java 16, and TypeScript
+development on the application server using Java 17, and TypeScript
 development on the application client in the browser using
 `Angular <https://angular.io>`__ and Webpack. To get an overview of the
 used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
@@ -21,7 +21,7 @@ following dependencies/tools on your machine:
 
 1. `Java
    JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__:
-   We use Java (JDK 16) to develop and run the Artemis application
+   We use Java (JDK 17) to develop and run the Artemis application
    server which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__:
@@ -95,7 +95,9 @@ You can override the following configuration options in this file.
    artemis:
        repo-clone-path: ./repos/
        repo-download-clone-path: ./repos-download/
-       encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
+       encryption-password: <encrypt-password>      # LEGACY: arbitrary password for encrypting database values
+       bcrypt-salt-rounds: 11   # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+                                # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
        user-management:
            use-external: true
            password-reset:
@@ -207,6 +209,7 @@ Run the server via a service configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This setup is recommended for production instances as it registers Artemis as a service and e.g. enables auto-restarting of Artemis after the VM running Artemis has been restarted.
+As alternative you could take a look at the section below about `deploying artemis as docker container <#run-the-server-via-docker>`__.
 For development setups, see the other guides below.
 
 This is a service file that works on Debian/Ubuntu (using systemd):
@@ -254,6 +257,126 @@ The file should be placed at ``/etc/systemd/system/artemis.service`` and after r
 You can stop the service using ``sudo service artemis stop`` and restart it using ``sudo service artemis restart``.
 
 Logs can be fetched using ``sudo journalctl -u artemis -f -n 200``.
+
+Run the server via Docker
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Artemis provides a Docker image named ``ghcr.io/ls1intum/artemis:<VERSION>``.
+The current develop branch will be deployed as ``latest`` version.
+Releases like ``5.7.1`` are deployed as ``ghcr.io/ls1intum/artemis:5.7.1``.
+The easiest way to configure a local deployment via Docker is a deployment with a docker-compose file.
+You could use a compose file similar to this (as an example this deployment uses the Gitlab+Jenkins configuration of Artemis:
+
+.. code:: yaml
+
+    version: '3'
+
+    services:
+      gitlab:
+        image: gitlab/gitlab-ce
+        restart: unless-stopped
+        volumes:
+          - ./data/gitlab/config:/etc/gitlab
+          - ./data/gitlab/logs:/var/log/gitlab
+          # - $BACKUP_DIR/gitlab:/var/opt/gitlab/backups # Optional but useful
+          - ./data/gitlab/data:/var/opt/gitlab
+        environment:
+          - GITLAB_OMNIBUS_CONFIG: |
+              external_url "https://${GIT_SERVER_NAME}"
+              nginx['listen_port'] = 80
+              nginx['listen_https'] = false
+              nginx['hsts_max_age'] = 0
+              prometheus_monitoring['enable'] = false
+              gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
+              gitlab_rails['gitlab_username_changing_enabled'] = false
+              gitlab_rails['gitlab_default_can_create_group'] = false
+              gitlab_rails['gitlab_default_projects_features_issues'] = false
+              gitlab_rails['gitlab_default_projects_features_merge_requests'] = false
+              gitlab_rails['gitlab_default_projects_features_wiki'] = false
+              gitlab_rails['gitlab_default_projects_features_snippets'] = false
+              gitlab_rails['gitlab_default_projects_features_builds'] = false
+              gitlab_rails['gitlab_default_projects_features_container_registry'] = false
+              gitlab_rails['backup_keep_time'] = 604800
+        ports:
+          - "${GITLAB_SSH_PORT}:22"
+          - "${GITLAB_HTTP_PORT}:80"
+        networks:
+          - artemis-net
+
+      jenkins:
+        image: jenkins/jenkins:lts
+        restart: unless-stopped
+        user: root
+        volumes:
+          # - $BACKUP_DIR/jenkins:/var/jenkins_backup # Optional but useful
+          - ./data/jenkins/home:/var/jenkins_home
+          - /var/run/docker.sock:/var/run/docker.sock
+          - /usr/bin/docker:/usr/bin/docker:ro
+        ports:
+          - "${JENKINS_HTTP_PORT}:8080"
+          - "50000:50000"
+        networks:
+          - artemis-net
+
+      artemis:
+        image: ghcr.io/ls1intum/artemis:${ARTEMIS_VERSION:-latest}
+        restart: unless-stopped
+        depends_on:
+          - artemis-db
+          - gitlab
+          - jenkins
+        volumes:
+          - ./data/artemis/config:/opt/artemis/config
+          - ./data/artemis/data:/opt/artemis/data
+          - ./branding:/opt/artemis/public/content:ro
+        environment:
+          - spring.profiles.active=prod,jenkins,gitlab,artemis,scheduling
+        ports:
+          - "${ARTEMIS_HTTP_PORT:-8080}:8080"
+        networks:
+          - artemis-net
+
+      artemis-db:
+        image: mysql:8.0.23
+        restart: unless-stopped
+        volumes:
+          - ./data/artemis-db:/var/lib/mysql
+        environment:
+          - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+          - MYSQL_DATABASE=Artemis
+        command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
+        networks:
+          - artemis-net
+        cap_add:
+          - SYS_NICE
+
+    networks:
+      artemis-net:
+        ipam:
+          driver: default
+          config:
+            - subnet: 10.1.0.0/16 # Arbitrary, but set this to the IPs your department defines for local docker networks
+
+
+You can find the latest Dockerfile with additional information `here <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/Dockerfile>`__.
+
+
+* The Dockerfile defines three Docker volumes
+
+    * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files. If this directory is empty, the default configuration of Artemis will be copied upon container start.
+    * ``/opt/artemis/data``: This directory should be used for any data (e.g., local clone of repositories). Therefore, configure Artemis to store this files into this directory. In order to do that, you have to change some properties in configuration files (i.e., ``artemis.repo-clone-path``, ``artemis.repo-download-clone-path``, ``artemis.course-archives-path``, ``artemis.submission-export-path``, and ``artemis.file-upload-path``). Otherwise you'll get permission failures.
+    * ``/opt/artemis/public/content``: This directory will be used for branding. You can specify a favicon, ``imprint.html``, and ``privacy_statement.html`` here.
+
+* The Dockerfile sets the correct permissions to the folders that are mounted to the volumes on startup (not recursive).
+
+* The startup script is located `here <https://github.com/ls1intum/Artemis/blob/develop/bootstrap.sh>`__.
+
+* The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
+
+    * LC_ALL ``en_US.UTF-8``
+    * LANG ``en_US.UTF-8``
+    * LANGUAGE ``en_US.UTF-8``
+
 
 Run the server via a run configuration in IntelliJ
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

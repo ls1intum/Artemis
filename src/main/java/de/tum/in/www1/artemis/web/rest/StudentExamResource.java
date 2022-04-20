@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;
@@ -70,6 +71,9 @@ public class StudentExamResource {
     private final AuthorizationCheckService authorizationCheckService;
 
     private final ExamService examService;
+
+    @Value("${info.browser-fingerprints-enabled:#{true}}")
+    private boolean fingerprintingEnabled;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
@@ -461,9 +465,9 @@ public class StudentExamResource {
 
         // 4th create new exam session
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
-        final String browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
+        final String browserFingerprint = !fingerprintingEnabled ? null : request.getHeader("X-Artemis-Client-Fingerprint");
+        final String instanceId = !fingerprintingEnabled ? null : request.getHeader("X-Artemis-Client-Instance-ID");
         final String userAgent = request.getHeader("User-Agent");
-        final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
         ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
         examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));

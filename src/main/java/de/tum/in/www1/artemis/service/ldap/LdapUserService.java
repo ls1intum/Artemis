@@ -37,12 +37,11 @@ public class LdapUserService {
     }
 
     public Optional<LdapUserDto> findByUsername(final String username) {
-        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).attributes("cn").where("cn").is(username));
+        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where("cn").is(username));
     }
 
     public Optional<LdapUserDto> findByRegistrationNumber(final String registrationNumber) {
-        return ldapUserRepository
-                .findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).attributes(TUM_LDAP_MATRIKEL_NUMBER).where(TUM_LDAP_MATRIKEL_NUMBER).is(registrationNumber));
+        return ldapUserRepository.findOne(query().base(ldapBase).searchScope(SearchScope.SUBTREE).where(TUM_LDAP_MATRIKEL_NUMBER).is(registrationNumber));
     }
 
     /**
@@ -57,7 +56,7 @@ public class LdapUserService {
             Optional<LdapUserDto> ldapUserOptional = findByUsername(login);
             if (ldapUserOptional.isPresent()) {
                 LdapUserDto ldapUser = ldapUserOptional.get();
-                log.info("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
+                log.debug("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
                 return ldapUserOptional.get();
             }
             else {
@@ -81,10 +80,18 @@ public class LdapUserService {
         if (allowedLdapUsernamePattern.isEmpty() || allowedLdapUsernamePattern.get().matcher(user.getLogin()).matches()) {
             LdapUserDto ldapUserDto = loadUserDetailsFromLdap(user.getLogin());
             if (ldapUserDto != null) {
-                user.setFirstName(ldapUserDto.getFirstName());
-                user.setLastName(ldapUserDto.getLastName());
-                user.setEmail(ldapUserDto.getEmail());
-                user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
+                if (ldapUserDto.getFirstName() != null) {
+                    user.setFirstName(ldapUserDto.getFirstName());
+                }
+                if (ldapUserDto.getLastName() != null) {
+                    user.setLastName(ldapUserDto.getLastName());
+                }
+                if (ldapUserDto.getEmail() != null) {
+                    user.setEmail(ldapUserDto.getEmail());
+                }
+                if (ldapUserDto.getRegistrationNumber() != null) {
+                    user.setRegistrationNumber(ldapUserDto.getRegistrationNumber());
+                }
             }
         }
     }

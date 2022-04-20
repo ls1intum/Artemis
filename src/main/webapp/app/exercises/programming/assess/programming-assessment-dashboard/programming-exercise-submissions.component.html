@@ -25,7 +25,7 @@
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.result">Result</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="participation.submissions.length">
+                    <th jhiSortBy="participation.submissionCount">
                         <a class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
@@ -67,7 +67,7 @@
                     </td>
                     <td>{{ submission.submissionDate | artemisDate }}</td>
                     <td>
-                        <jhi-result *ngIf="submission.participation" [participation]="submission.participation" [showTestDetails]="true"></jhi-result>
+                        <jhi-result *ngIf="submission.participation" [exercise]="exercise" [participation]="submission.participation" [showTestDetails]="true"></jhi-result>
                     </td>
                     <td>
                         <ng-container *ngIf="submission.participation?.submissionCount">

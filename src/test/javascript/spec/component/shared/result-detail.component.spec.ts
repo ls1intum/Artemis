@@ -3,7 +3,7 @@ import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FeedbackItem, FeedbackItemType, ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -22,6 +22,9 @@ import { FeedbackCollapseComponent } from 'app/exercises/shared/result/feedback-
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { Course } from 'app/entities/course.model';
 
 describe('ResultDetailComponent', () => {
     let comp: ResultDetailComponent;
@@ -170,11 +173,17 @@ describe('ResultDetailComponent', () => {
                     projectKey: 'somekey',
                 } as ProgrammingExercise;
 
+                const course = new Course();
+                course.id = 3;
+                course.title = 'Testcourse';
+                exercise.course = course;
+
+                comp.exercise = exercise;
+
                 comp.result = {
                     id: 89,
                     participation: {
                         id: 55,
-                        exercise,
                         type: ParticipationType.PROGRAMMING,
                         participantIdentifier: 'student42',
                         repositoryUrl: 'https://bitbucket.ase.in.tum.de/projects/somekey/repos/somekey-student42',
@@ -199,6 +208,36 @@ describe('ResultDetailComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should set the exercise from the participation if available', () => {
+        comp.exercise = undefined;
+        comp.result.participation!.exercise = exercise;
+
+        comp.ngOnInit();
+
+        expect(comp.exercise).toEqual(exercise);
+        expect(comp.course).toEqual(exercise.course);
+    });
+
+    it('should set the exercise type from the exercise if not available otherwise', () => {
+        comp.exerciseType = undefined as any;
+        exercise.type = ExerciseType.MODELING;
+        comp.exercise = exercise;
+
+        comp.ngOnInit();
+
+        expect(comp.exerciseType).toBe(ExerciseType.MODELING);
+    });
+
+    it('should set the exercise type from a programming participation if not available otherwise', () => {
+        comp.exerciseType = undefined as any;
+        comp.exercise = undefined;
+        comp.result.participation!.type = ParticipationType.PROGRAMMING;
+
+        comp.ngOnInit();
+
+        expect(comp.exerciseType).toBe(ExerciseType.PROGRAMMING);
     });
 
     it('should generate commit link for programming exercise result with submission, participation and exercise', () => {
@@ -324,6 +363,229 @@ describe('ResultDetailComponent', () => {
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
         expect(comp.isLoading).toBe(false);
     });
+
+    it('should show a replacement title if automatic feedback is neither positive nor negative', () => {
+        const feedback = new Feedback();
+        feedback.type = FeedbackType.AUTOMATIC;
+        feedback.text = 'automaticTestCase1';
+        feedback.positive = undefined;
+        feedback.credits = 0.3;
+
+        const expectedFeedbackItem = {
+            category: 'Test Case',
+            credits: 0.3,
+            title: 'No result information for automaticTestCase1',
+            type: FeedbackItemType.Test,
+            text: undefined,
+            previewText: undefined,
+        };
+
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
+    });
+
+    it('should show both the grading instruction feedback and the tutor feedback', () => {
+        const gradingInstruction = new GradingInstruction();
+        gradingInstruction.feedback = 'Grading Instruction Feedback';
+
+        const feedback = new Feedback();
+        feedback.type = FeedbackType.MANUAL;
+        feedback.gradingInstruction = gradingInstruction;
+        feedback.text = 'Feedback Title';
+        feedback.detailText = 'Manual tutor feedback';
+
+        const expectedFeedbackItem = {
+            type: FeedbackItemType.Feedback,
+            category: 'Tutor',
+            title: feedback.text,
+            text: 'Grading Instruction Feedback\nManual tutor feedback',
+            credits: 0,
+            positive: undefined,
+            previewText: undefined,
+        };
+
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
+
+        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
+
+        // subsequent feedback is shown differently
+        feedback.isSubsequent = true;
+        expectedFeedbackItem.type = FeedbackItemType.Subsequent;
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
+
+        // only grading instruction feedback should be shown if no detail text is available
+        feedback.detailText = undefined;
+        expectedFeedbackItem.text = 'Grading Instruction Feedback';
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
+    });
+
+    it('should hide grading instruction information if no details are shown', () => {
+        const gradingInstruction = new GradingInstruction();
+        gradingInstruction.feedback = 'Grading Instruction Feedback';
+
+        const feedback = new Feedback();
+        feedback.type = FeedbackType.MANUAL;
+        feedback.gradingInstruction = gradingInstruction;
+        feedback.text = 'Feedback Title';
+        feedback.detailText = 'Manual tutor feedback';
+
+        const expectedFeedbackItem = {
+            type: FeedbackItemType.Feedback,
+            category: 'Feedback',
+            title: feedback.text,
+            text: 'Grading Instruction Feedback\nManual tutor feedback',
+            credits: 0,
+            positive: undefined,
+            previewText: undefined,
+        };
+
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.PROGRAMMING, false);
+    });
+
+    it('should show feedback generated from submission policies', () => {
+        const feedback = new Feedback();
+        feedback.type = FeedbackType.AUTOMATIC;
+        feedback.text = `${SUBMISSION_POLICY_FEEDBACK_IDENTIFIER}Submission Penalty Policy`;
+        feedback.detailText = 'You have submitted 2 more times than the submission limit of 10. This results in a deduction of 0.1 points!';
+        feedback.positive = false;
+        feedback.credits = -0.1;
+
+        const expectedFeedbackItem = {
+            type: FeedbackItemType.Policy,
+            category: 'Submission Policy',
+            title: 'Submission Penalty Policy',
+            text: feedback.detailText,
+            previewText: undefined,
+            positive: false,
+            credits: feedback.credits,
+            appliedCredits: feedback.credits,
+        };
+
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
+    });
+
+    it('should only show the first line of feedback as preview', () => {
+        const feedback = new Feedback();
+        feedback.text = 'Summary';
+        feedback.detailText = 'Multi\nLine\nText';
+
+        const expectedFeedbackItem = {
+            type: FeedbackItemType.Feedback,
+            category: 'Feedback',
+            title: feedback.text,
+            text: feedback.detailText,
+            previewText: 'Multi',
+            positive: undefined,
+            credits: 0,
+        };
+
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.QUIZ);
+    });
+
+    it('should shorten the preview text if it is long', () => {
+        const feedback = new Feedback();
+        feedback.text = 'Summary';
+        feedback.detailText = '0'.repeat(400);
+
+        const expectedFeedbackItem = {
+            type: FeedbackItemType.Feedback,
+            category: 'Feedback',
+            title: feedback.text,
+            text: feedback.detailText,
+            previewText: '0'.repeat(300),
+            positive: undefined,
+            credits: 0,
+        };
+
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.MODELING);
+
+        // the first line should also be shortened if there is more feedback afterwards
+        feedback.detailText = '0'.repeat(400) + '\nAdditional Line\n' + '1'.repeat(400);
+        expectedFeedbackItem.text = feedback.detailText;
+        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.MODELING);
+    });
+
+    describe('static code analysis feedback formatting', () => {
+        let baseScaIssue: StaticCodeAnalysisIssue;
+        let baseExpectedFeedbackItem: FeedbackItem;
+
+        beforeEach(() => {
+            baseScaIssue = {
+                filePath: 'src/Main.java',
+                startLine: 1,
+                endLine: 1,
+                category: 'Formatting',
+                message: 'SCA Message',
+                priority: 'low',
+                rule: 'Checkstyle',
+            };
+            baseExpectedFeedbackItem = {
+                category: 'Code Issue',
+                type: FeedbackItemType.Issue,
+                appliedCredits: 0,
+                credits: 0,
+                positive: false,
+                previewText: undefined,
+                text: 'Checkstyle: SCA Message',
+            };
+        });
+
+        it('should show start and end lines', () => {
+            baseScaIssue.endLine = 4;
+            const feedback = createScaFeedback('SCA Rule', baseScaIssue);
+            baseExpectedFeedbackItem.title = 'SCA Rule Issue in file src/Main.java at lines 1-4';
+
+            shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
+        });
+
+        it('should only show start line if end line is identical', () => {
+            baseScaIssue.endLine = baseScaIssue.startLine;
+            const feedback = createScaFeedback('SCA Rule', baseScaIssue);
+            baseExpectedFeedbackItem.title = 'SCA Rule Issue in file src/Main.java at line 1';
+
+            shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
+        });
+
+        it('should show start and end columns if available', () => {
+            baseScaIssue.endLine = 4;
+            baseScaIssue.startColumn = 3;
+            baseScaIssue.endColumn = 40;
+            const feedback = createScaFeedback('SCA Rule', baseScaIssue);
+            baseExpectedFeedbackItem.title = 'SCA Rule Issue in file src/Main.java at lines 1-4 columns 3-40';
+
+            shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
+        });
+
+        it('should only show start column if end column is identical', () => {
+            baseScaIssue.endLine = baseScaIssue.startLine;
+            baseScaIssue.startColumn = 45;
+            baseScaIssue.endColumn = 45;
+            const feedback = createScaFeedback('SCA Rule', baseScaIssue);
+            baseExpectedFeedbackItem.title = 'SCA Rule Issue in file src/Main.java at line 1 column 45';
+
+            shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
+        });
+
+        const createScaFeedback = (text: string, scaIssue: StaticCodeAnalysisIssue): Feedback => {
+            const feedback = new Feedback();
+            feedback.type = FeedbackType.AUTOMATIC;
+            feedback.text = `${STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER}${text}`;
+            feedback.detailText = JSON.stringify(scaIssue);
+            return feedback;
+        };
+    });
+
+    const shouldGenerateFeedbackItem = (feedback: Feedback, expectedFeedbackItem: FeedbackItem, exerciseType: ExerciseType = ExerciseType.PROGRAMMING, showTestDetails = true) => {
+        comp.exerciseType = exerciseType;
+        comp.result.feedbacks = [feedback];
+        comp.showTestDetails = showTestDetails;
+
+        comp.ngOnInit();
+
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
+        expect(comp.filteredFeedbackList).toEqual([expectedFeedbackItem]);
+        expect(comp.isLoading).toBe(false);
+    };
 
     it('should filter the correct feedbacks when a filter is set', () => {
         const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();

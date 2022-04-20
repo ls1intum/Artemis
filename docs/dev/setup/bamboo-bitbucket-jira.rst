@@ -35,9 +35,9 @@ Docker-Compose
 Before you start the docker-compose, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
 equal to the bamboo version number in the docker compose in
-``src/main/docker/atlassian.yml`` 
-If the version number is not equal, adjust the version number. Further details about the docker-compose setup can be found in 
-``src/main/docker`` 
+``src/main/docker/atlassian.yml``
+If the version number is not equal, adjust the version number. Further details about the docker-compose setup can be found in
+``src/main/docker``
 
 Execute the docker-compose file e.g. with
 ``docker-compose -f src/main/docker/atlassian.yml up -d``.
@@ -50,8 +50,8 @@ command ``docker network prune`` to resolve this issue.
 Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings -> Resources``
 
 
-In case you want to enable Swift or C programming exercises, refer to the readme in 
-``src/main/docker`` 
+In case you want to enable Swift or C programming exercises, refer to the readme in
+``src/main/docker``
 
 
 Configure Bamboo, Bitbucket and Jira
@@ -250,17 +250,6 @@ under ``localhost:7990``.
                   password: <password>
                   token: #insert the token here
 
-#. Disable XSRF checking
-    Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
-    sending the required headers.
-
-    - Log in as the admin user go to Bamboo -> Overview -> Security Settings
-
-       Edit the settings and disable XSRF checking:
-
-        .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
-           :align: center
-
 #. Add a SSH key for the admin user
 
     Artemis can clone/push the repositories during setup and for the online code editor using SSH.
@@ -293,7 +282,9 @@ Configure Artemis
 
            repo-clone-path: ./repos/
            repo-download-clone-path: ./repos-download/
-           encryption-password: artemis-encrypt   # arbitrary password for encrypting database values
+           encryption-password: artemis-encrypt         # LEGACY: arbitrary password for encrypting database values
+           bcrypt-salt-rounds: 11   # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+                                    # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
            user-management:
                use-external: true
                external:

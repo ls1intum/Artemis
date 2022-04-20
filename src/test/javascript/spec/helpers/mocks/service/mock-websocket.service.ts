@@ -1,9 +1,7 @@
 import { Observable, of } from 'rxjs';
-import { IWebsocketService } from 'app/core/websocket/websocket.service';
+import { ConnectionState, IWebsocketService } from 'app/core/websocket/websocket.service';
 
 export class MockWebsocketService implements IWebsocketService {
-    bind(event: string, callback: () => void): void {}
-
     connect = () => {};
 
     disableReconnect(): void {}
@@ -16,11 +14,16 @@ export class MockWebsocketService implements IWebsocketService {
         return of();
     }
 
+    send(path: string, data: any): void {}
+
     stompFailureCallback(): void {}
 
     subscribe(): void {}
 
-    unbind(event: string, callback: () => void): void {}
-
     unsubscribe(): void {}
+
+    state = of(new ConnectionState(true, true, false));
+    get connectionState(): Observable<ConnectionState> {
+        return this.state;
+    }
 }
