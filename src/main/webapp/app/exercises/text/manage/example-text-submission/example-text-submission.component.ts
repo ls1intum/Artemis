@@ -154,6 +154,10 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                     if (result) {
                         this.result = result;
                         this.exampleSubmission.submission = this.submission = result.submission;
+                    } else {
+                        this.result = new Result();
+                        this.result.submission = this.submission;
+                        this.submission!.results = [this.result];
                     }
                     this.prepareTextBlocksAndFeedbacks();
                     this.areNewAssessments = this.assessments.length <= 0;
