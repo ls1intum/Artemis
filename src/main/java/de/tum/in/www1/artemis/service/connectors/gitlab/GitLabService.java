@@ -472,6 +472,11 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public ConnectorHealth health() {
+        // Referring to static method, as GitLabCIService requires the same method.
+        return health(gitlabServerUrl, shortTimeoutRestTemplate);
+    }
+
+    public static ConnectorHealth health(URL gitlabServerUrl, RestTemplate shortTimeoutRestTemplate) {
         try {
             final var uri = Endpoints.HEALTH.buildEndpoint(gitlabServerUrl.toString()).build().toUri();
             final var healthResponse = shortTimeoutRestTemplate.getForObject(uri, JsonNode.class);
