@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../course-management.service';
@@ -7,14 +7,16 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import { Course } from 'app/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import * as shape from 'd3-shape';
-import { GraphColors } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
+import { Subscription } from 'rxjs';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
 })
-export class CourseDetailLineChartComponent implements OnChanges {
+export class CourseDetailLineChartComponent implements OnChanges, OnDestroy {
     @Input()
     course: Course;
     @Input()
@@ -41,7 +43,7 @@ export class CourseDetailLineChartComponent implements OnChanges {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.DARK_BLUE],
+        domain: [],
     };
     legend = false;
     xAxis = true;
@@ -65,12 +67,18 @@ export class CourseDetailLineChartComponent implements OnChanges {
     average = { name: 'Average', value: 0 };
     showAverage = true;
 
+    themeSubscription: Subscription;
+
     // Icons
     faSpinner = faSpinner;
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(private service: CourseManagementService, private translateService: TranslateService) {}
+    constructor(private service: CourseManagementService, private translateService: TranslateService, private themeService: ThemeService) {
+        this.themeSubscription = this.themeService
+            .getCurrentThemeObservable()
+            .subscribe((theme) => (this.chartColor = { ...this.chartColor, domain: [getGraphColorForTheme(theme, GraphColors.DARK_BLUE)] }));
+    }
 
     ngOnChanges() {
         this.loading = true;
@@ -83,6 +91,10 @@ export class CourseDetailLineChartComponent implements OnChanges {
         this.createLabels();
         this.processDataAndCreateChart(this.initialStats);
         this.data = this.dataCopy;
+    }
+
+    ngOnDestroy() {
+        this.themeSubscription?.unsubscribe();
     }
 
     /**

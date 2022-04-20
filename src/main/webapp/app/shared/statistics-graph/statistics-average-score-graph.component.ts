@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { GraphColors, SpanType } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
@@ -8,6 +8,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { ChartExerciseTypeFilterDirective } from 'app/shared/chart/chart-exercise-type-filter.directive';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 interface ExerciseStatisticsEntry extends NgxChartsSingleSeriesDataEntry {
     exerciseType: ExerciseType;
@@ -74,7 +75,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     faArrowRight = faArrowRight;
     faFilter = faFilter;
 
-    constructor(private router: Router) {
+    constructor(private router: Router, private themeService: ThemeService) {
         super();
     }
 
@@ -106,13 +107,15 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      * @private
      */
     private determineColor(score: number): string {
+        let baseColor: GraphColors;
         if (score > this.bestThirdLowerBoundary) {
-            return GraphColors.GREEN;
+            baseColor = GraphColors.GREEN;
         } else if (score < this.weakestThirdUpperBoundary) {
-            return GraphColors.RED;
+            baseColor = GraphColors.RED;
         } else {
-            return GraphColors.GREY;
+            baseColor = GraphColors.GREY;
         }
+        return getGraphColorForTheme(this.themeService.getCurrentTheme(), baseColor);
     }
 
     /**

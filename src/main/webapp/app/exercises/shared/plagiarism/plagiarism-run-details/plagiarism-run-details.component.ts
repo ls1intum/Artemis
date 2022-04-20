@@ -1,12 +1,14 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
-import { GraphColors } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
 import { round } from 'app/shared/util/utils';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { Subscription } from 'rxjs';
 
 export interface SimilarityRange {
     minimumSimilarity: number;
@@ -24,7 +26,7 @@ interface SimilarityRangeComparisonStateDTO {
     styleUrls: ['./plagiarism-run-details.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
     templateUrl: './plagiarism-run-details.component.html',
 })
-export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective implements OnChanges {
+export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective implements OnChanges, OnDestroy {
     /**
      * Result of the automated plagiarism detection
      */
@@ -37,13 +39,20 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
 
     readonly round = round;
 
-    constructor(private inspectorService: PlagiarismInspectorService) {
+    themeSubscription: Subscription;
+
+    constructor(private inspectorService: PlagiarismInspectorService, private themeService: ThemeService) {
         super();
         /**
          * The labels of the chart are fixed and represent the 10 intervals we group the similarities into.
          */
         this.ngxChartLabels = ['[0%-10%)', '[10%-20%)', '[20%-30%)', '[30%-40%)', '[40%-50%)', '[50%-60%)', '[60%-70%)', '[70%-80%)', '[80%-90%)', '[90%-100%]'];
-        this.ngxColor.domain = [...Array(8).fill(GraphColors.LIGHT_BLUE), ...Array(2).fill(GraphColors.RED)];
+
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
+            const lightBlue = getGraphColorForTheme(theme, GraphColors.LIGHT_BLUE);
+            const red = getGraphColorForTheme(theme, GraphColors.RED);
+            this.ngxColor.domain = [...Array(8).fill(lightBlue), ...Array(2).fill(red)];
+        });
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -51,6 +60,10 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
             this.setBucketDTOs(changes.plagiarismResult.currentValue.comparisons || []);
             this.updateChartDataSet(changes.plagiarismResult.currentValue.similarityDistribution || []);
         }
+    }
+
+    ngOnDestroy() {
+        this.themeSubscription?.unsubscribe();
     }
 
     /**

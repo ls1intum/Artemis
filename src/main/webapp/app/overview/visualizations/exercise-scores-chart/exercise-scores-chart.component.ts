@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy } from '@angular/core';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -12,14 +12,16 @@ import { round } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ChartExerciseTypeFilterDirective } from 'app/shared/chart/chart-exercise-type-filter.directive';
-import { GraphColors } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
-export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirective implements AfterViewInit, OnChanges {
+export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirective implements AfterViewInit, OnChanges, OnDestroy {
     @Input()
     filteredExerciseIDs: number[];
 
@@ -45,13 +47,15 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
         name: 'Performance in Exercises',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.BLUE, GraphColors.YELLOW, GraphColors.GREEN],
+        domain: [],
     } as Color; // colors: blue, red, green
-    backUpColor = cloneDeep(this.ngxColor);
+    colorBase = [GraphColors.BLUE, GraphColors.YELLOW, GraphColors.GREEN];
     yourScoreLabel: string;
     averageScoreLabel: string;
     maximumScoreLabel: string;
     maxScale = 101;
+
+    themeSubscription: Subscription;
 
     constructor(
         private router: Router,
@@ -59,10 +63,24 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
         private alertService: AlertService,
         private exerciseScoresChartService: ExerciseScoresChartService,
         private translateService: TranslateService,
+        private themeService: ThemeService,
     ) {
         super();
         this.translateService.onLangChange.subscribe(() => {
             this.setTranslations();
+        });
+
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
+            const base = this.colorBase.map((color) => getGraphColorForTheme(theme, color));
+            if (!this.ngxColor.domain || this.ngxColor.domain.length === 0) {
+                this.ngxColor.domain = base;
+            } else {
+                for (let i = 0; i < base.length; ++i) {
+                    if (this.ngxColor.domain[i] !== 'rgba(255,255,255,0)') {
+                        this.ngxColor.domain[i] = base[i];
+                    }
+                }
+            }
         });
     }
 
@@ -77,6 +95,10 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
 
     ngOnChanges(): void {
         this.initializeChart();
+    }
+
+    ngOnDestroy() {
+        this.themeSubscription?.unsubscribe();
     }
 
     private loadDataAndInitializeChart(): void {
@@ -177,7 +199,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
                 this.ngxColor.domain[index] = 'rgba(255,255,255,0)';
             } else {
                 // if the line is currently hidden, the color and the values are reset
-                this.ngxColor.domain[index] = this.backUpColor.domain[index];
+                this.ngxColor.domain[index] = getGraphColorForTheme(this.themeService.getCurrentTheme(), this.colorBase[index]);
                 this.ngxData[index] = this.backUpData[index];
             }
             // trigger a chart update

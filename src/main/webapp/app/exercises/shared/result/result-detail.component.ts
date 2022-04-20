@@ -1,15 +1,15 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { of, throwError } from 'rxjs';
+import { of, Subscription, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import {
+    checkSubsequentFeedbackInAssessment,
     Feedback,
     FeedbackType,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
-    checkSubsequentFeedbackInAssessment,
 } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -31,10 +31,11 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { GraphColors } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 export enum FeedbackItemType {
     Issue,
@@ -63,7 +64,7 @@ export const feedbackPreviewCharacterLimit = 300;
     templateUrl: './result-detail.component.html',
     styleUrls: ['./result-detail.scss'],
 })
-export class ResultDetailComponent implements OnInit {
+export class ResultDetailComponent implements OnInit, OnDestroy {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -110,7 +111,7 @@ export class ResultDetailComponent implements OnInit {
         name: 'Feedback Detail',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED],
+        domain: [],
     } as Color;
     xScaleMax = 100;
     legendPosition = LegendPosition.Below;
@@ -118,6 +119,8 @@ export class ResultDetailComponent implements OnInit {
     showOnlyNegativeFeedback = false;
 
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
+
+    themeSubscription: Subscription;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -129,10 +132,24 @@ export class ResultDetailComponent implements OnInit {
         private buildLogService: BuildLogService,
         translateService: TranslateService,
         private profileService: ProfileService,
+        private themeService: ThemeService,
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
         this.labels = [pointsLabel, deductionsLabel];
+
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
+            const base = [getGraphColorForTheme(theme, GraphColors.GREEN), getGraphColorForTheme(theme, GraphColors.RED)];
+            if (!this.ngxColors.domain || this.ngxColors.domain.length === 0) {
+                this.ngxColors.domain = base;
+            } else {
+                for (let i = 0; i < base.length; ++i) {
+                    if (this.ngxColors.domain[i] !== 'rgba(255,255,255,0)') {
+                        this.ngxColors.domain[i] = base[i];
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -153,6 +170,10 @@ export class ResultDetailComponent implements OnInit {
             this.commitHashURLTemplate = info?.commitHashURLTemplate;
             this.commitUrl = this.getCommitUrl();
         });
+    }
+
+    ngOnDestroy() {
+        this.themeSubscription?.unsubscribe();
     }
 
     /**
@@ -644,7 +665,7 @@ export class ResultDetailComponent implements OnInit {
                     if (color !== 'rgba(255,255,255,0)') {
                         this.ngxColors.domain[index] = 'rgba(255,255,255,0)';
                     } else {
-                        this.ngxColors.domain[index] = index === 0 ? GraphColors.GREEN : GraphColors.RED;
+                        this.ngxColors.domain[index] = getGraphColorForTheme(this.themeService.getCurrentTheme(), index === 0 ? GraphColors.GREEN : GraphColors.RED);
                     }
 
                     // update is necessary for the colors to change

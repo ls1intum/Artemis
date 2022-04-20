@@ -7,8 +7,9 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { median } from 'simple-statistics';
-import { GraphColors } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
 import { round } from 'app/shared/util/utils';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;
@@ -49,6 +50,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         private route: ActivatedRoute,
         private translateService: TranslateService,
         private router: Router,
+        private themeService: ThemeService,
     ) {
         super();
         this.translateService.onLangChange.subscribe(() => {
@@ -59,7 +61,8 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     ngOnInit(): void {
         this.translateLabels();
         this.ngxChartLabels = ['[0-10)', '[10-20)', '[20-30)', '[30-40)', '[40-50)', '[50-60)', '[60-70)', '[70-80)', '[80-90)', '[90-100)', '[100-110)', '[110-120)', '120+'];
-        this.ngxColor.domain = Array(13).fill(GraphColors.LIGHT_BLUE);
+        const lightBlue = getGraphColorForTheme(this.themeService.getCurrentTheme(), GraphColors.LIGHT_BLUE);
+        this.ngxColor.domain = Array(13).fill(lightBlue);
         this.route.params.subscribe((params) => {
             this.currentExerciseId = Number(params['exerciseId']);
             this.currentCourseId = Number(params['courseId']);
@@ -193,7 +196,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     private highlightMedian(medianValue: number) {
         const index = this.determineIndex(medianValue);
         if (this.ngxData[index].value > 0) {
-            this.ngxColor.domain[index] = GraphColors.BLUE;
+            this.ngxColor.domain[index] = getGraphColorForTheme(this.themeService.getCurrentTheme(), GraphColors.BLUE);
             this.showMedianLegend = true;
         } else {
             this.showMedianLegend = false;

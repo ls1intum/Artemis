@@ -1,4 +1,4 @@
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Theme } from 'app/core/theme/theme.service';
 
 export enum SpanType {
     DAY = 'DAY',
@@ -38,21 +38,72 @@ export enum StatisticsView {
     EXAM = 'EXAM',
 }
 
+/**
+ * Graph colors, defined as colors to use in the default theme.
+ */
 export enum GraphColors {
-    LIGHT_GREY = 'rgba(153,153,153,1)',
-    GREY = 'rgba(127,127,127,255)',
-    DARK_BLUE = 'rgba(53,61,71,1)',
-    BLUE = 'rgba(93,138,201,1)',
-    LIGHT_BLUE = 'rgba(135, 206, 250, 1)',
-    TRANSPARENT = 'rgba(93,138,201,0)',
-    GREEN = 'rgba(40,164,40,1)',
-    RED = 'rgba(204,0,0,1)',
-    YELLOW = 'rgba(230, 174, 6, 1)',
+    LIGHT_GREY = 'LIGHT_GREY',
+    GREY = 'GREY',
+    DARK_BLUE = 'DARK_BLUE',
+    BLUE = 'BLUE',
+    LIGHT_BLUE = 'LIGHT_BLUE',
+    GREEN = 'GREEN',
+    RED = 'RED',
+    YELLOW = 'YELLOW',
+    BLACK = 'BLACK',
 }
 
-export const ngxColor = {
-    name: 'Statistics',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: [GraphColors.DARK_BLUE],
-} as Color;
+/**
+ * Returns the correct color to use in a graph.
+ * Might return a different color definition than the GraphColors name might suggest to fit the theme, especially the background color of the page.
+ * @param theme the current theme
+ * @param color the default color
+ */
+export function getGraphColorForTheme(theme: Theme, color: GraphColors): string {
+    switch (theme) {
+        case Theme.LIGHT:
+            switch (color) {
+                case 'LIGHT_GREY':
+                    return 'rgba(153,153,153,1)';
+                case 'GREY':
+                    return 'rgba(127,127,127,255)';
+                case 'DARK_BLUE':
+                    return 'rgba(53,61,71,1)';
+                case 'BLUE':
+                    return 'rgba(93,138,201,1)';
+                case 'LIGHT_BLUE':
+                    return 'rgba(135, 206, 250, 1)';
+                case 'GREEN':
+                    return 'rgba(40,164,40,1)';
+                case 'RED':
+                    return 'rgba(204,0,0,1)';
+                case 'YELLOW':
+                    return 'rgba(230, 174, 6, 1)';
+                case 'BLACK':
+                    return 'rgba(53,61,71,1)';
+            }
+            break;
+        case Theme.DARK:
+            switch (color) {
+                case 'LIGHT_GREY':
+                    return 'rgb(182,182,182)';
+                case 'GREY':
+                    return 'rgb(150,150,150)';
+                case 'DARK_BLUE':
+                    return 'rgb(85,133,222)';
+                case 'BLUE':
+                    return 'rgba(93,138,201,1)';
+                case 'LIGHT_BLUE':
+                    return 'rgba(135, 206, 250, 1)';
+                case 'GREEN':
+                    return 'rgba(40,164,40,1)';
+                case 'RED':
+                    return 'rgba(204,0,0,1)';
+                case 'YELLOW':
+                    return 'rgba(230, 174, 6, 1)';
+                case 'BLACK':
+                    return 'rgb(229,229,229)';
+            }
+    }
+    throw new Error(`Unknown combination of theme and color: ${theme?.identifier} ${color}`);
+}

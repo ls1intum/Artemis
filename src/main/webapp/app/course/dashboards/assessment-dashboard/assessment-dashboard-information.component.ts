@@ -1,8 +1,10 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
-import { GraphColors } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { Subscription } from 'rxjs';
 
 export class AssessmentDashboardInformationEntry {
     constructor(public total: number, public tutor: number, public done?: number) {}
@@ -28,7 +30,7 @@ export class AssessmentDashboardInformationEntry {
     templateUrl: './assessment-dashboard-information.component.html',
     styleUrls: ['./assessment-dashboard-information.component.scss'],
 })
-export class AssessmentDashboardInformationComponent implements OnInit, OnChanges {
+export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isExamMode: boolean;
     @Input() courseId: number;
     @Input() examId?: number;
@@ -64,9 +66,24 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     assessmentLocksLink: any[];
     ratingsLink: any[];
 
-    constructor(private translateService: TranslateService) {}
+    themeSubscription: Subscription;
+
+    constructor(private translateService: TranslateService, private themeService: ThemeService) {}
 
     ngOnInit(): void {
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe(
+            (theme) =>
+                (this.customColors = [
+                    {
+                        name: this.openedAssessmentsTitle,
+                        value: getGraphColorForTheme(theme, GraphColors.RED),
+                    },
+                    {
+                        name: this.completedAssessmentsTitle,
+                        value: getGraphColorForTheme(theme, GraphColors.BLUE),
+                    },
+                ]),
+        );
         this.setup();
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
@@ -75,6 +92,10 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
 
     ngOnChanges(): void {
         this.setup();
+    }
+
+    ngOnDestroy(): void {
+        this.themeSubscription?.unsubscribe();
     }
 
     setup() {
@@ -94,17 +115,6 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     setupGraph() {
         this.completedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.closedAssessments');
         this.openedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.openAssessments');
-
-        this.customColors = [
-            {
-                name: this.openedAssessmentsTitle,
-                value: GraphColors.RED,
-            },
-            {
-                name: this.completedAssessmentsTitle,
-                value: GraphColors.BLUE,
-            },
-        ];
 
         this.assessments = [
             {

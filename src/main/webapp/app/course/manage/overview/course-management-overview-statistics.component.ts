@@ -1,12 +1,12 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { Graphs } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors, Graphs } from 'app/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import * as shape from 'd3-shape';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { Subject, Subscription } from 'rxjs';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { map, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
@@ -46,16 +46,11 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
     constructor(private translateService: TranslateService, private themeService: ThemeService) {}
 
     ngOnInit() {
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme: Theme) => {
-            switch (theme) {
-                case Theme.DARK:
-                    this.chartColor = { ...this.chartColor, domain: ['rgba(255,255,255,1)'] };
-                    break;
-                case Theme.LIGHT:
-                default:
-                    this.chartColor = { ...this.chartColor, domain: ['rgba(53,61,71,1)'] };
-            }
-        });
+        this.themeSubscription = this.themeService
+            .getCurrentThemeObservable()
+            .pipe(map((theme) => getGraphColorForTheme(theme, GraphColors.BLACK)))
+            .subscribe((color) => (this.chartColor = { ...this.chartColor, domain: [color] }));
+
         for (let i = 0; i < 4; i++) {
             this.lineChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
         }

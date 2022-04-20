@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
-import { GraphColors } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -12,6 +12,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 type NameToValueMap = { [name: string]: any };
 
@@ -44,6 +45,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         private translateService: TranslateService,
         private localeConversionService: LocaleConversionService,
         private courseService: CourseManagementService,
+        private themeService: ThemeService,
     ) {}
 
     ngOnInit(): void {
@@ -124,12 +126,14 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      * @private
      */
     private determineColor(isExerciseGroup: boolean, score: number): string {
+        let baseColor: GraphColors;
         if (score >= 50) {
-            return isExerciseGroup ? GraphColors.BLUE : GraphColors.DARK_BLUE;
+            baseColor = isExerciseGroup ? GraphColors.BLUE : GraphColors.DARK_BLUE;
         } else if (score > 25) {
-            return GraphColors.YELLOW;
+            baseColor = GraphColors.YELLOW;
         } else {
-            return GraphColors.RED;
+            baseColor = GraphColors.RED;
         }
+        return getGraphColorForTheme(this.themeService.getCurrentTheme(), baseColor);
     }
 }
