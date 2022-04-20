@@ -149,10 +149,12 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         return new Promise((resolve) => {
             this.assessmentsService
                 .getExampleResult(this.exerciseId, this.submission?.id!)
-                .pipe(filter((value) => value != undefined))
+                .pipe(filter(notUndefined))
                 .subscribe((result) => {
-                    this.result = result;
-                    this.exampleSubmission.submission = this.submission = result.submission;
+                    if (result) {
+                        this.result = result;
+                        this.exampleSubmission.submission = this.submission = result.submission;
+                    }
                     this.prepareTextBlocksAndFeedbacks();
                     this.areNewAssessments = this.assessments.length <= 0;
                     this.validateFeedback();
