@@ -20,7 +20,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     @ManyToOne(targetEntity = User.class)
     private User student;
 
-    @OneToOne()
+    @OneToOne
     @JoinColumn(name = "post_id")
     private Post post;
 
