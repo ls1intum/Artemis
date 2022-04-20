@@ -75,7 +75,7 @@ public class LectureService {
     /**
      * Search for all lectures fitting a {@link PageableSearchDTO search query}. The result is paged.
      * @param search The search query defining the search term and the size of the returned page
-     * @param user   The user for whom to fetch all available exercises
+     * @param user   The user for whom to fetch all available lectures
      * @return A wrapper object containing a list of all found lectures and the total number of pages
      */
     public SearchResultPageDTO<Lecture> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {

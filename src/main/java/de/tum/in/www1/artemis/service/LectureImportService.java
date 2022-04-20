@@ -62,33 +62,33 @@ public class LectureImportService {
         lecture.setEndDate(importedLecture.getEndDate());
         lecture.setCourse(course);
 
-        final Lecture result = lectureRepository.save(lecture);
-        course.addLectures(result);
+        lecture = lectureRepository.save(lecture);
+        course.addLectures(lecture);
 
         log.debug("Importing lecture units from lecture");
         List<LectureUnit> lectureUnits = new ArrayList<>();
         for (LectureUnit lectureUnit : importedLecture.getLectureUnits()) {
-            LectureUnit clonedLectureUnit = cloneLectureUnit(lectureUnit, result);
+            LectureUnit clonedLectureUnit = cloneLectureUnit(lectureUnit, lecture);
             if (clonedLectureUnit != null) {
-                clonedLectureUnit.setLecture(result);
+                clonedLectureUnit.setLecture(lecture);
                 lectureUnits.add(clonedLectureUnit);
             }
         }
-        result.setLectureUnits(lectureUnits);
+        lecture.setLectureUnits(lectureUnits);
         lectureUnitRepository.saveAll(lectureUnits);
 
         log.debug("Importing attachments from lecture");
         Set<Attachment> attachments = new HashSet<>();
         for (Attachment attachment : importedLecture.getAttachments()) {
             Attachment clonedAttachment = cloneAttachment(attachment);
-            clonedAttachment.setLecture(result);
+            clonedAttachment.setLecture(lecture);
             attachments.add(clonedAttachment);
         }
-        result.setAttachments(attachments);
+        lecture.setAttachments(attachments);
         attachmentRepository.saveAll(attachments);
 
         // Save again to establish the ordered list relationship
-        return lectureRepository.save(result);
+        return lectureRepository.save(lecture);
     }
 
     /**
