@@ -1,17 +1,19 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Graphs } from 'app/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import * as shape from 'd3-shape';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { Subject, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
 })
-export class CourseManagementOverviewStatisticsComponent implements OnInit, OnChanges {
+export class CourseManagementOverviewStatisticsComponent implements OnInit, OnChanges, OnDestroy {
     @Input()
     amountOfStudentsInCourse: number;
 
@@ -32,21 +34,31 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['rgba(53,61,71,1)'], // color: black
+        domain: [],
     };
     curve: any = shape.curveMonotoneX;
+
+    themeSubscription: Subscription;
 
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private translateService: TranslateService) {}
+    constructor(private translateService: TranslateService, private themeService: ThemeService) {}
 
     ngOnInit() {
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme: Theme) => {
+            switch (theme) {
+                case Theme.DARK:
+                    this.chartColor = { ...this.chartColor, domain: ['rgba(255,255,255,1)'] };
+                    break;
+                case Theme.LIGHT:
+                default:
+                    this.chartColor = { ...this.chartColor, domain: ['rgba(53,61,71,1)'] };
+            }
+        });
         for (let i = 0; i < 4; i++) {
             this.lineChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
         }
-
-        this.createChartData();
     }
 
     ngOnChanges() {
@@ -54,6 +66,10 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
             this.loading = false;
             this.createChartData();
         }
+    }
+
+    ngOnDestroy(): void {
+        this.themeSubscription?.unsubscribe();
     }
 
     /**

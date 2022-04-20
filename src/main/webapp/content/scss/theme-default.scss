@@ -1,10 +1,10 @@
 @use 'sass:meta';
-@use '../generate-css-vars';
+@use 'generate-css-vars';
 
-@import 'default-variables';
+@import 'themes/default-variables';
 
 html {
     @include generate-css-vars.generate('default-variables');
 }
 
-@import '../global';
+@import 'global';

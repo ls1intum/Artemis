@@ -15,7 +15,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(70, 70, 70, 0.5);
+    background-color: rgba(0, 0, 0, 0.2);
     &.show {
         display: block;
     }
@@ -30,8 +30,8 @@
     z-index: 999;
     transition: 0.3s;
     overflow-y: hidden;
-    background-color: #ffffff;
-    box-shadow: 0 0 4px 0 rgba(136, 136, 136, 1);
+    background-color: var(--brighter-body-bg);
+    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.5);
     &.show {
         right: 0;
         transition: 0.3s;
@@ -64,6 +64,6 @@
     }
 
     .ng-fa-icon {
-        color: var(--artemis-dark);
+        color: var(--bs-body-color);
     }
 }

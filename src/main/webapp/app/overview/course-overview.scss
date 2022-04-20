@@ -16,7 +16,7 @@ Course Info Bar
         margin: 0 0.5em;
 
         &.active {
-            box-shadow: 0 2px 0 var(--artemis-dark);
+            box-shadow: 0 2px 0 var(--overview-tab-active-border-color);
         }
     }
 }

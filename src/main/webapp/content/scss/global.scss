@@ -13,6 +13,11 @@
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 
+// Smooth transition between themes
+* {
+    transition: background-color 0.2s, color 0.2s, background 0.2s;
+}
+
 /* ==============================================================
 Bootstrap tweaks
 ===============================================================*/
@@ -32,8 +37,8 @@ h4 {
 
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
-a:not(.btn):hover {
-    color: var(--primary);
+a:not(.btn):not(.dropdown-item):hover {
+    color: var(--artemis-link-color);
     font-weight: bold;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
@@ -51,6 +56,10 @@ a:not(.btn):hover {
 a.disabled {
     pointer-events: none;
     cursor: default;
+}
+
+.text-normal {
+    color: var(--bs-body-color) !important;
 }
 
 .clickable {
@@ -154,6 +163,7 @@ a.btn {
 .form-control:hover,
 .form-control:focus {
     background-color: var(--form-control-focus-background);
+    color: var(--form-control-color);
 }
 
 .form-inline .form-control {
@@ -1195,7 +1205,7 @@ Course Info Bar
 }
 
 .accordion-body {
-    background: var(--body-bg);
+    background: var(--brighter-body-bg);
     max-height: 50vh;
     overflow: scroll;
     padding: 0 0.5rem;

@@ -1,5 +1,6 @@
 @use 'sass:meta';
 @use 'themes/default-variables';
+@use 'themes/dark-variables';
 
 @mixin generate($theme) {
     @each $name, $value in meta.module-variables($theme) {

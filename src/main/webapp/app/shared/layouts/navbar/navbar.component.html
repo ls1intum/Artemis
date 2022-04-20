@@ -194,6 +194,22 @@
                             <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{ language | findLanguageFromKey }}</a>
                         </li>
                     </div>
+                    <div class="dropdown-divider"></div>
+                    <li>
+                        <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.theme">Theme</h6>
+                    </li>
+                    <div>
+                        <li *ngFor="let theme of Themes.all">
+                            <a
+                                class="dropdown-item"
+                                [ngClass]="{ active: themeService.getCurrentTheme().identifier === theme.identifier }"
+                                (click)="this.themeService.applyTheme(theme); collapseNavbar()"
+                            >
+                                <fa-icon [icon]="theme.icon"></fa-icon>
+                                {{ theme.displayTranslationKey | artemisTranslate }}
+                            </a>
+                        </li>
+                    </div>
                     <ng-template [ngIf]="isTourAvailable">
                         <div class="dropdown-divider"></div>
                         <li>

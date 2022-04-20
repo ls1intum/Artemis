@@ -1,22 +1,30 @@
+@import 'darkly_variables';
+
 // Boostrap
-$primary: #3e8acc;
-$success: #28a745;
-$info: #17a2b8;
-$warning: #ffc107;
-$danger: #dc3545;
+// $primary: #3e8acc;
+// $success: #28a745;
+// $info: #17a2b8;
+// $warning: #ffc107;
+// $danger: #dc3545;
+$table-striped-bg: rgba($white, 0.05);
 
 // Global colors
 $artemis-dark: #353d47;
 $artemis-lighter-dark: saturate(lighten($artemis-dark, 10%), 15%);
+$artemis-link-color: #3e8acc;
+$neutral-dark: rgb(24, 26, 24);
 
 // Backgrounds
-$body-bg: #e4e5e6;
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
-$brighter-body-bg: lighten($body-bg, 20);
+$brighter-body-bg: lighten($body-bg, 10);
+
+$dropdown-bg: $neutral-dark;
+$popover-bg: $neutral-dark;
+$modal-content-bg: $neutral-dark;
 
 // Border
-$border-color: #dee2e6;
+$border-color: lighten($body-bg, 10);
 
 // Global.scss colors
 $colored-btn-font: #fff;
@@ -26,7 +34,8 @@ $default-btn-border: #ccc;
 
 $border-lightgrey: rgba(0, 0, 0, 0.125);
 $text-lightgrey: rgba(0, 0, 0, 0.125);
-$form-control-focus-background: white;
+$form-control-focus-background: $body-bg;
+$form-control-color: $white;
 $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;
 $ng-valid-border: green;
@@ -91,32 +100,56 @@ $connection-warning-popover-body-background: #f1d1d1e0;
 $connection-warning-popover-body-shadow: rgba(0, 0, 0, 0.55);
 
 // Footer
-$footer-bg: #fff;
+$footer-bg: $neutral-dark;
+
+// Cards
+$card-bg: $neutral-dark;
+$card-cap-bg: lighten($neutral-dark, 5%);
+$card-border-color: $border-color;
 
 // Navbar
-$navbar-foreground: #ccc;
+$navbar-foreground: $body-color;
 $navbar-bg: $artemis-dark;
 $navbar-item-active-hover-bg: $artemis-dark;
-$navbar-breadcrumb-background: #e4e5e6;
-$navbar-breadcrumb-color: #0065bd;
+$navbar-breadcrumb-background: $body-bg;
+$navbar-breadcrumb-color: $primary;
+
+// Metis
+$metis-light-gray: #979797;
+$metis-gray: #6a737d;
+$metis-blue: $artemis-link-color;
+$metis-light-blue: #e3ecf3;
+$metis-green: #33cd32;
+
+$reaction-button-default-color: $gray-800;
+$reaction-button-hover-color: $gray-700;
+$reaction-button-reacted-color: $gray-800;
+$reaction-button-reacted-accent-color: $metis-blue;
 
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 
 // Component: course-exercise-card
-$course-exercise-card-border-color: lightgrey;
-$course-exercise-card-background: #fefefe;
+$course-exercise-card-border-color: $border-color;
+$course-exercise-card-background: $gray-800;
 
 // Overview variables
 $overview-border-color: $border-color;
-$overview-light-border-color: lighten($overview-border-color, 30%);
+$overview-light-border-color: lighten($overview-border-color, 5%);
 $overview-light-background-color: rgba($overview-light-border-color, 0.3);
 $overview-light-primary-background-color: rgba($primary, 0.3);
 $overview-blue-border-color: $primary;
+$overview-tab-active-border-color: $body-color;
+
+// Text Editor
+$text-editor-background: $gray-900;
+$text-editor-focus-background: $gray-900;
+$text-editor-color: $white;
+$text-editor-border-color: $gray-800;
 
 // Guided tour
-$gt-tour-step-color: #ffffff;
-$gt-tour-text-color: #231f1f;
+$gt-tour-step-bg-color: $gray-700;
+$gt-tour-text-color: $white;
 $gt-tour-border-color: #17a2b8;
 $gt-tour-next-button-color: #17a2b8;
 $gt-tour-next-button-hover: #117a8b;
@@ -124,13 +157,84 @@ $gt-tour-back-button-color: #17a2b8;
 $gt-tour-back-button-hover: #117a8b;
 $gt-tour-restart-button-color: #28a745;
 $gt-tour-restart-button-hover: #1e7e34;
-$gt-tour-button-color-disabled: #f2f2f2;
+$gt-tour-button-color-disabled: #808080;
 $gt-tour-button-text-color: #ffffff;
-$gt-tour-button-text-disabled: #a3a3a3;
-$gt-tour-shadow-color: #4c4c4c;
+$gt-tour-button-text-disabled: #c2c2c2;
+$gt-tour-shadow-color: $black;
 $gt-overlay-background: black;
 $gt-tour-block-after-background: #231f1f;
-$gt-tour-block-content-tt-background: #f2f2f2;
+$gt-tour-block-content-tt-background: $gray-600;
 $gt-tour-block-content-red: #ca2024;
-$gt-tour-block-step-hint-not-interaction-background: #f0f0f0;
+$gt-tour-block-step-hint-not-interaction-background: $gray-800;
 $gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
+
+// ==================
+// NGX CHARTS STYLING
+// ==================
+.ngx-charts text {
+    fill: #a0aabe;
+}
+.ngx-charts .tooltip-anchor {
+    fill: #fff;
+}
+.ngx-charts .gridline-path {
+    stroke: #2f3646;
+}
+.ngx-charts .refline-path {
+    stroke: #455066;
+}
+.ngx-charts .reference-area {
+    fill: #fff;
+}
+.ngx-charts .grid-panel.odd rect {
+    fill: #ffffff0d;
+}
+.ngx-charts .number-card p {
+    color: #f0f1f6;
+}
+.ngx-charts .gauge .background-arc path {
+    fill: #2f3646;
+}
+.ngx-charts .gauge .gauge-tick path {
+    stroke: #a0aabe;
+}
+.ngx-charts .gauge .gauge-tick text {
+    fill: #a0aabe;
+}
+.ngx-charts .linear-gauge .background-bar path {
+    fill: #2f3646;
+}
+.ngx-charts .linear-gauge .units {
+    fill: #72809b;
+}
+.ngx-charts .timeline .brush-background {
+    fill: #ffffff0d;
+}
+.ngx-charts .timeline .brush .selection {
+    fill: #ffffff1a;
+    stroke: #aaa;
+}
+.ngx-charts .polar-chart .polar-chart-background {
+    fill: #1e222e;
+}
+.chart-legend .legend-labels {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+.chart-legend .legend-item:hover {
+    color: #fff;
+}
+.chart-legend .legend-label:hover,
+.chart-legend .legend-label .active .legend-label-text {
+    color: #fff !important;
+}
+.chart-legend .scale-legend-label,
+.advanced-pie-legend {
+    color: #a0aabe;
+}
+.advanced-pie-legend .legend-item:hover {
+    color: #fff !important;
+}
+.number-card .number-card-label {
+    font-size: 0.8em;
+    color: #a0aabe;
+}

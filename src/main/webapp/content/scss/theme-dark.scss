@@ -1,0 +1,15 @@
+@use 'sass:meta';
+@use 'generate-css-vars';
+
+@import 'themes/dark-variables';
+
+html {
+    @include generate-css-vars.generate('dark-variables');
+}
+
+@import 'global';
+@import 'themes/darkly_bs_dependent';
+
+.btn-outline-primary:not(.list-group-item) {
+    color: $artemis-link-color;
+}

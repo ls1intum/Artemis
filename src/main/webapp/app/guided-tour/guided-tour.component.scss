@@ -162,7 +162,7 @@ jhi-guided-tour {
         }
 
         .tour-block {
-            background-color: var(--gt-tour-step-color);
+            background-color: var(--gt-tour-step-bg-color);
             box-shadow: 0 0.4rem 0.6rem var(--gt-tour-shadow-color);
             color: var(--gt-tour-text-color);
             padding: 20px;
@@ -340,7 +340,7 @@ jhi-guided-tour {
         &.tour-bottom-right,
         &.tour-bottom-left {
             .tour-arrow::before {
-                @include tour-triangle(top, var(--gt-tour-step-color));
+                @include tour-triangle(top, var(--gt-tour-step-bg-color));
                 position: absolute;
             }
             .tour-block {
@@ -352,7 +352,7 @@ jhi-guided-tour {
         &.tour-top-right,
         &.tour-top-left {
             .tour-arrow::before {
-                @include tour-triangle(bottom, var(--gt-tour-step-color));
+                @include tour-triangle(bottom, var(--gt-tour-step-bg-color));
                 position: absolute;
                 bottom: 0;
             }
@@ -386,7 +386,7 @@ jhi-guided-tour {
 
         &.tour-left {
             .tour-arrow::before {
-                @include tour-triangle(right, var(--gt-tour-step-color));
+                @include tour-triangle(right, var(--gt-tour-step-bg-color));
                 position: absolute;
                 left: 100%;
                 transform: translateX(-100%);
@@ -399,7 +399,7 @@ jhi-guided-tour {
 
         &.tour-right {
             .tour-arrow::before {
-                @include tour-triangle(left, var(--gt-tour-step-color));
+                @include tour-triangle(left, var(--gt-tour-step-bg-color));
                 position: absolute;
                 left: 0;
                 top: 15px;

@@ -2,7 +2,7 @@
     <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="togglePreview($event)">
         <!-- editor -->
         <ng-container ngbNavItem="editor_edit">
-            <a ngbNavLink class="btn-sm text-dark" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
+            <a ngbNavLink class="btn-sm text-normal" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <div class="height-100 border-0 markdown-editor d-flex flex-column">
                     <jhi-ace-editor
@@ -36,7 +36,7 @@
         </ng-container>
         <!-- preview -->
         <ng-container ngbNavItem="editor_preview">
-            <a ngbNavLink class="btn-sm text-dark" *ngIf="showPreviewButton">{{ 'entity.action.preview' | artemisTranslate }}</a>
+            <a ngbNavLink class="btn-sm text-normal" *ngIf="showPreviewButton">{{ 'entity.action.preview' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <ng-content></ng-content>
                 <div class="pt-1 background-editor-high markdown-preview" *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">Preview</div>
