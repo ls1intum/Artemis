@@ -34,8 +34,6 @@ describe('LectureImportComponent', () => {
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
             ],
-            providers: [],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
@@ -50,11 +48,6 @@ describe('LectureImportComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(LectureImportComponent).not.toBeNull();
     });
 
     beforeEach(() => {
