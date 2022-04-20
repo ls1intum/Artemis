@@ -38,6 +38,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
+import { CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
+import { CsvExportButtonComponent } from 'app/shared/export/csv-export-button.component';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -238,6 +240,7 @@ describe('CourseScoresComponent', () => {
             declarations: [
                 CourseScoresComponent,
                 MockComponent(ParticipantScoresDistributionComponent),
+                MockComponent(CsvExportButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(OrionFilterDirective),
@@ -401,7 +404,11 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         fixture.detectChanges();
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
-        component.exportResults();
+        const testOptions: CsvExportOptions = {
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+        };
+        component.exportResults(testOptions);
         const generatedRows = exportAsCsvStub.mock.calls[0][1];
         const user1Row = generatedRows[0];
         validateUserRow(

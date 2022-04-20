@@ -11,6 +11,8 @@ import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util'
 import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/assessment.service';
+import { Course } from 'app/entities/course.model';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
@@ -35,6 +37,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     showLockDuration = false;
     showRemoveLockButton = false;
     isLockedForLoggedInUser = false;
+    course?: Course;
 
     constructor(
         private alertService: AlertService,
@@ -45,10 +48,11 @@ export class ComplaintsForTutorComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.course = getCourseFromExercise(this.exercise!);
+
         if (this.complaint) {
             this.complaintText = this.complaint.complaintText;
             this.handled = this.complaint.accepted !== undefined;
-
             if (this.handled) {
                 this.complaintResponse = this.complaint.complaintResponse!;
                 this.showRemoveLockButton = false;
@@ -142,6 +146,12 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.alertService.error('artemisApp.complaintResponse.noText');
             return;
         }
+        if (this.complaintResponse.responseText.length > this.course?.maxComplaintResponseTextLimit!) {
+            this.alertService.error('artemisApp.complaint.exceededComplaintResponseTextLimit', {
+                maxComplaintRespondTextLimit: this.course?.maxComplaintResponseTextLimit,
+            });
+            return;
+        }
         if (!this.isAllowedToRespond) {
             return;
         }
@@ -210,5 +220,13 @@ export class ComplaintsForTutorComponent implements OnInit {
      */
     get isAllowedToRespond(): boolean {
         return isAllowedToRespondToComplaintAction(this.exercise?.isAtLeastInstructor ?? false, this.isTestRun, this.isAssessor, this.complaint, this.exercise);
+    }
+
+    /**
+     * Calculates and returns the length of the entered text.
+     */
+    complaintResponseTextLength(): number {
+        const textArea: HTMLTextAreaElement = document.querySelector('#responseTextArea') as HTMLTextAreaElement;
+        return textArea.value.length;
     }
 }

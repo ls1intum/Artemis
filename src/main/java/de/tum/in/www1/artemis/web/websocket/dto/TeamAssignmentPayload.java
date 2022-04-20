@@ -60,12 +60,14 @@ public class TeamAssignmentPayload {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
-        TeamAssignmentPayload that = (TeamAssignmentPayload) o;
+        }
+        TeamAssignmentPayload that = (TeamAssignmentPayload) obj;
         return exercise.equals(that.exercise) && Objects.equals(team, that.team) && studentParticipations.equals(that.studentParticipations);
     }
 }
