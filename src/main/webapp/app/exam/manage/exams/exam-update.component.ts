@@ -11,6 +11,8 @@ import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { AccountService } from 'app/core/auth/account.service';
+
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
@@ -19,6 +21,12 @@ export class ExamUpdateComponent implements OnInit {
     exam: Exam;
     course: Course;
     isSaving: boolean;
+    // The exam.workingTime is stored in seconds, but the working time should be displayed in minutes to the user
+    workingTimeInMinutes: number;
+    // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
+    maxWorkingTimeInMinutes: number;
+    // Interims-boolean to hide the option to create an TestExam in production, as the feature is not yet fully implemented
+    isAdmin: boolean;
 
     // Icons
     faSave = faSave;
@@ -31,6 +39,7 @@ export class ExamUpdateComponent implements OnInit {
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private accountService: AccountService,
     ) {}
 
     ngOnInit(): void {
@@ -50,6 +59,10 @@ export class ExamUpdateComponent implements OnInit {
                 this.exam.numberOfCorrectionRoundsInExam = 1;
             }
         });
+        // Initialize helper attributes
+        this.workingTimeInMinutes = this.exam.workingTime! / 60;
+        this.calculateMaxWorkingTime();
+        this.isAdmin = this.accountService.isAdmin();
     }
 
     /**
@@ -92,7 +105,8 @@ export class ExamUpdateComponent implements OnInit {
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
-        return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid && examMaxPointsValid;
+        const examValidWorkingTime = this.validateWorkingTime;
+        return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid && examMaxPointsValid && examValidWorkingTime;
     }
 
     get isValidVisibleDate(): boolean {
@@ -107,12 +121,87 @@ export class ExamUpdateComponent implements OnInit {
         return this.exam?.maxPoints !== undefined && this.exam?.maxPoints > 0;
     }
 
+    /**
+     * Validates the given StartDate.
+     * For RealExams, the visibleDate has to be strictly prior the startDate.
+     * For TestExams, the visibleDate has to be prior or equal to the startDate.
+     */
     get isValidStartDate(): boolean {
-        return this.exam.startDate !== undefined && dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
+        if (this.exam.startDate === undefined) {
+            return false;
+        }
+        if (this.exam.testExam) {
+            return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
+        } else {
+            return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
+        }
     }
 
+    /**
+     * Validates the EndDate inputted by the user.
+     */
     get isValidEndDate(): boolean {
         return this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
+    }
+
+    /**
+     * Calculates the WorkingTime for RealExams based on the start- and end-time.
+     */
+    get calculateWorkingTime(): number {
+        if (!this.exam.testExam) {
+            if (this.exam.startDate && this.exam.endDate) {
+                this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+            } else {
+                this.exam.workingTime = 0;
+            }
+            this.workingTimeInMinutes = this.exam.workingTime / 60;
+        }
+        return this.workingTimeInMinutes;
+    }
+
+    /**
+     * Validates the WorkingTime.
+     * For TestExams, the WorkingTime should be at least 1 and smaller / equal to the working window
+     * For RealExams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference.
+     */
+    get validateWorkingTime(): boolean {
+        if (this.exam.testExam) {
+            if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
+                return false;
+            }
+            if (this.exam.startDate && this.exam.endDate) {
+                return this.exam.workingTime <= dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+            }
+            return false;
+        }
+        if (this.exam.workingTime && this.exam.startDate && this.exam.endDate) {
+            return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
+        }
+        return false;
+    }
+
+    /**
+     * Used to convert workingTimeInMinutes into exam.workingTime (in seconds) every time, the user inputs a new
+     * working time for a TestExam
+     * @param event when the user inputs a new working time
+     */
+    convertWorkingTimeFromMinutesToSeconds(event: any) {
+        this.workingTimeInMinutes = event.target.value;
+        this.exam.workingTime = this.workingTimeInMinutes * 60;
+    }
+
+    /**
+     * Used to determine the maximum working time every time, the user changes the start- or endDate.
+     * Used to show a graphical warning at the working time input field
+     */
+    calculateMaxWorkingTime() {
+        if (this.exam.testExam) {
+            if (this.exam.startDate && this.exam.endDate) {
+                this.maxWorkingTimeInMinutes = dayjs(this.exam.endDate).diff(this.exam.startDate, 's') / 60;
+            } else {
+                this.maxWorkingTimeInMinutes = 0;
+            }
+        }
     }
 
     get isValidPublishResultsDate(): boolean {

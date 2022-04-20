@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
+import { DetailedGradingSystemComponent } from 'app/grading-system/detailed-grading-system/detailed-grading-system.component';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ArtemisTestModule } from '../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -29,15 +29,15 @@ jest.mock('export-to-csv', () => ({
     })),
 }));
 
-describe('Grading System Component', () => {
-    let comp: GradingSystemComponent;
-    let fixture: ComponentFixture<GradingSystemComponent>;
+describe('Detailed Grading System Component', () => {
+    let comp: DetailedGradingSystemComponent;
+    let fixture: ComponentFixture<DetailedGradingSystemComponent>;
     let gradingSystemService: GradingSystemService;
     let translateService: TranslateService;
     let translateStub: jest.SpyInstance;
     let examService: ExamManagementService;
 
-    const route = { params: of({ courseId: 1, examId: 1 }) } as any as ActivatedRoute;
+    const route = { parent: { params: of({ courseId: 1, examId: 1 }) } } as any as ActivatedRoute;
 
     const gradeStep1: GradeStep = {
         gradeName: 'Fail',
@@ -76,7 +76,7 @@ describe('Grading System Component', () => {
             declarations: [
                 MockDirective(NgModel),
                 MockDirective(NgSelectOption),
-                GradingSystemComponent,
+                DetailedGradingSystemComponent,
                 MockComponent(GradingSystemInfoModalComponent),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
@@ -89,7 +89,7 @@ describe('Grading System Component', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(GradingSystemComponent);
+                fixture = TestBed.createComponent(DetailedGradingSystemComponent);
                 comp = fixture.componentInstance;
 
                 gradingSystemService = TestBed.inject(GradingSystemService);
@@ -228,7 +228,7 @@ describe('Grading System Component', () => {
     it('should set inclusivity correctly', () => {
         comp.lowerBoundInclusivity = false;
 
-        comp.setInclusivity(comp.gradingScale.gradeSteps);
+        comp.setInclusivity();
 
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
             expect(gradeStep.upperBoundInclusive).toBe(true);
@@ -252,7 +252,7 @@ describe('Grading System Component', () => {
             isPassingGrade: true,
         });
 
-        comp.setInclusivity(comp.gradingScale.gradeSteps);
+        comp.setInclusivity();
 
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
             expect(gradeStep.upperBoundInclusive).toBe(true);

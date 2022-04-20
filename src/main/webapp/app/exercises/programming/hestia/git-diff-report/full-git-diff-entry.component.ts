@@ -13,12 +13,16 @@ export class FullGitDiffEntryComponent implements OnInit {
     editorNow: AceEditorComponent;
     @Input()
     diffEntry: ProgrammingExerciseFullGitDiffEntry;
+    addedLineCount: number;
+    removedLineCount: number;
 
     constructor() {}
 
     ngOnInit(): void {
         this.setupEditor(this.editorPrevious, this.diffEntry.previousLine, this.diffEntry.previousCode ?? '', 'rgba(248, 81, 73, 0.5)');
         this.setupEditor(this.editorNow, this.diffEntry.line, this.diffEntry.code ?? '', 'rgba(63, 185, 80, 0.5)');
+        this.addedLineCount = this.diffEntry.code?.split('\n').filter((line) => line && line.trim().length !== 0).length ?? 0;
+        this.removedLineCount = this.diffEntry.previousCode?.split('\n').filter((line) => line && line.trim().length !== 0).length ?? 0;
     }
 
     /**

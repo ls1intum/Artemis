@@ -99,8 +99,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
         Map<String, String> replacements = new HashMap<>();
-        replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURL().toString());
-        replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURL().toString());
+        replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURI().toString());
+        replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURI().toString());
         replacements.put(REPLACE_GIT_CREDENTIALS, gitCredentialsKey);
         replacements.put(REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH);
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);

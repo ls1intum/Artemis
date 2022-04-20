@@ -37,6 +37,8 @@ public class BambooAuthorizationInterceptor implements ClientHttpRequestIntercep
             request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         }
 
+        request.getHeaders().set("X-Atlassian-Token", "no-check");
+
         // certain Bamboo requests do not support token based authentication, we have to use basic auth then or we need to use cookie authentication
         String uri = request.getURI().toString();
         if (uri.contains(".action") || uri.contains("/artifact/")) {
