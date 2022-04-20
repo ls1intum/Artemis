@@ -184,15 +184,6 @@ public class PostService extends PostingService {
         return updatedPost;
     }
 
-    private void mayUpdateOrDeletePostElseThrow(Post existingPost, User user, Course course) {
-        mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
-
-        // only the author of a post with conversation context should edit or delete the entity
-        if (existingPost.getConversation() != null && !existingPost.getAuthor().getId().equals(user.getId())) {
-            throw new AccessForbiddenException("Post", existingPost.getId());
-        }
-    }
-
     /**
      * Invokes the updatePost method to persist the change of displayPriority
      *
@@ -603,6 +594,15 @@ public class PostService extends PostingService {
         if (conversation == null
                 || conversation.getConversationParticipants().stream().noneMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))) {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
+        }
+    }
+
+    private void mayUpdateOrDeletePostElseThrow(Post existingPost, User user, Course course) {
+        mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
+
+        // only the author of a post with conversation context should edit or delete the entity
+        if (existingPost.getConversation() != null && !existingPost.getAuthor().getId().equals(user.getId())) {
+            throw new AccessForbiddenException("Post", existingPost.getId());
         }
     }
 

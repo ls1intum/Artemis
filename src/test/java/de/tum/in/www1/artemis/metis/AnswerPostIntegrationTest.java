@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +19,10 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 
 public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -26,7 +30,11 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private AnswerPostRepository answerPostRepository;
 
+    private List<Post> existingPostsAndConversationPostsWithAnswers;
+
     private List<Post> existingPostsWithAnswers;
+
+    private List<Post> existingConversationPostsWithAnswers;
 
     private List<Post> existingPostsWithAnswersInExercise;
 
@@ -48,12 +56,16 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.addUsers(5, 5, 0, 1);
         student1 = database.getUserByLogin("student1");
 
-        // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
+        // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream().filter(coursePost -> (coursePost.getAnswers() != null)).toList();
+        existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream().filter(coursePost -> (coursePost.getAnswers() != null)).toList();
+
+        existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
+
+        existingConversationPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() != null).collect(Collectors.toList());
 
         // get all answerPosts
-        existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
+        existingAnswerPosts = existingPostsAndConversationPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
         // get all existing posts with answers in exercise context
         existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getExercise() != null).toList();
@@ -519,6 +531,52 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
                 AnswerPost.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testEditConversationAnswerPost() throws Exception {
+        // conversation answerPost of student1 must be editable by them
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
+
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + conversationAnswerPostToUpdate.getId(),
+                conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.OK);
+
+        assertThat(conversationAnswerPostToUpdate).isEqualTo(updatedAnswerPost);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditConversationAnswerPost_forbidden() throws Exception {
+        // conversation answerPost of student1 must not be editable by tutors
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        conversationAnswerPostToUpdate.setContent("Tutor attempts to change some other user's conversation answerPost");
+
+        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + conversationAnswerPostToUpdate.getId(),
+                conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.FORBIDDEN);
+
+        assertThat(notUpdatedAnswerPost).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testDeleteConversationPost() throws Exception {
+        // conversation post of student1 must be deletable by them
+        AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + conversationAnswerPostToDelete.getId(), HttpStatus.OK);
+
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteConversationPost_forbidden() throws Exception {
+        // conversation post of student1 must not be deletable by tutors
+        AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + conversationAnswerPostToDelete.getId(), HttpStatus.FORBIDDEN);
+
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
     @Test

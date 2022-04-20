@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -114,12 +115,21 @@ public class AnswerPostService extends PostingService {
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
-            mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
+            mayUpdateOrDeleteAnswerPostElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setContent(answerPost.getContent());
         }
         updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         this.preparePostAndBroadcast(updatedAnswerPost, course);
         return updatedAnswerPost;
+    }
+
+    private void mayUpdateOrDeleteAnswerPostElseThrow(AnswerPost existingAnswerPost, User user, Course course) {
+        mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
+
+        // only the author of an answerPost having post with conversation context should edit or delete the entity
+        if (existingAnswerPost.getPost().getConversation() != null && !existingAnswerPost.getAuthor().getId().equals(user.getId())) {
+            throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
+        }
     }
 
     /**
@@ -150,7 +160,7 @@ public class AnswerPostService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
-        mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
+        mayUpdateOrDeleteAnswerPostElseThrow(answerPost, user, course);
 
         // delete
         answerPostRepository.deleteById(answerPostId);

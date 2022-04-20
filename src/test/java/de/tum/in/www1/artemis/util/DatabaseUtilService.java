@@ -770,10 +770,7 @@ public class DatabaseUtilService {
     public List<Post> createPostsWithAnswerPostsWithinCourse() {
         List<Post> posts = createPostsWithinCourse();
 
-        // remove chats
-        posts = posts.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
-
-        // add answer for one post in each context (lecture, exercise, course-wide)
+        // add answer for one post in each context (lecture, exercise, course-wide, conversation)
         Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
         lecturePost.setAnswers(createBasicAnswers(lecturePost));
         postRepository.save(lecturePost);
@@ -786,6 +783,10 @@ public class DatabaseUtilService {
         Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).findFirst().orElseThrow();
         courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost));
         postRepository.save(courseWidePost);
+
+        Post conversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() != null).findFirst().orElseThrow();
+        conversationPost.setAnswers(createBasicAnswers(conversationPost));
+        postRepository.save(conversationPost);
 
         return posts;
     }
