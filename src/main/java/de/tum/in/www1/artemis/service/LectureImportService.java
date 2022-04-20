@@ -8,8 +8,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-import javax.transaction.Transactional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -50,7 +48,6 @@ public class LectureImportService {
      * @param course          The course to import to
      * @return The lecture in the new course
      */
-    @Transactional
     public Lecture importLecture(final Lecture importedLecture, final Course course) {
         log.debug("Creating a new Lecture based on lecture {}", importedLecture);
 
@@ -60,7 +57,6 @@ public class LectureImportService {
         lecture.setDescription(importedLecture.getDescription());
         lecture.setStartDate(importedLecture.getStartDate());
         lecture.setEndDate(importedLecture.getEndDate());
-        lecture.setCourse(course);
 
         lecture = lectureRepository.save(lecture);
         course.addLectures(lecture);

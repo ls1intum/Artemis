@@ -42,6 +42,11 @@ public abstract class LectureUnit extends DomainObject {
     @Column(name = "release_date")
     private ZonedDateTime releaseDate;
 
+    // This is explicitly required by Hibernate for the indexed collection
+    // https://docs.jboss.org/hibernate/stable/annotations/reference/en/html_single/#entity-hibspec-collection-extratype-indexbidir
+    @Column(name = "lecture_unit_order")
+    private int order;
+
     @ManyToOne
     @JoinColumn(name = "lecture_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
