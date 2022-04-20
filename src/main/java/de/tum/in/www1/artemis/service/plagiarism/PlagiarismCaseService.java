@@ -90,7 +90,7 @@ public class PlagiarismCaseService {
      *
      * @param plagiarismComparisonId    the ID of the plagiarism comparison
      */
-    public void createOrAddPlagiarismCasesForComparison(long plagiarismComparisonId) {
+    public void createOrAddToPlagiarismCasesForComparison(long plagiarismComparisonId) {
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
         // handle student A
         var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseId(plagiarismComparison.getSubmissionA().getStudentLogin(),
