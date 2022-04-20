@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "plagiarismSubmissions" })
-    Optional<PlagiarismCase> findWithEagerSubmissionsById(Long aLong);
+    Optional<PlagiarismCase> findByIdWithSubmissions(Long aLong);
 
     @Query("""
                 SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
