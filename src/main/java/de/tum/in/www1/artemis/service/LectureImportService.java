@@ -6,8 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import javax.transaction.Transactional;
 
@@ -67,12 +66,26 @@ public class LectureImportService {
         course.addLectures(result);
 
         log.debug("Importing lecture units from lecture");
-        result.setLectureUnits(importedLecture.getLectureUnits().stream().map(lectureUnit -> cloneLectureUnit(lectureUnit, result)).filter(Objects::nonNull)
-                .map(lectureUnitRepository::save).collect(Collectors.toList()));
+        List<LectureUnit> lectureUnits = new ArrayList<>();
+        for (LectureUnit lectureUnit : importedLecture.getLectureUnits()) {
+            LectureUnit clonedLectureUnit = cloneLectureUnit(lectureUnit, result);
+            if (clonedLectureUnit != null) {
+                clonedLectureUnit.setLecture(result);
+                lectureUnits.add(clonedLectureUnit);
+            }
+        }
+        result.setLectureUnits(lectureUnits);
+        lectureUnitRepository.saveAll(lectureUnits);
 
         log.debug("Importing attachments from lecture");
-        result.setAttachments(importedLecture.getAttachments().stream().map(attachment -> cloneAttachment(attachment).lecture(result)).map(attachmentRepository::save)
-                .collect(Collectors.toSet()));
+        Set<Attachment> attachments = new HashSet<>();
+        for (Attachment attachment : importedLecture.getAttachments()) {
+            Attachment clonedAttachment = cloneAttachment(attachment);
+            clonedAttachment.setLecture(result);
+            attachments.add(clonedAttachment);
+        }
+        result.setAttachments(attachments);
+        attachmentRepository.saveAll(attachments);
 
         // Save again to establish the ordered list relationship
         return lectureRepository.save(result);
@@ -93,7 +106,6 @@ public class LectureImportService {
             textUnit.setName(importedLectureUnit.getName());
             textUnit.setReleaseDate(importedLectureUnit.getReleaseDate());
             textUnit.setContent(((TextUnit) importedLectureUnit).getContent());
-            textUnit.setLecture(newLecture);
             return textUnit;
         }
         else if (importedLectureUnit instanceof VideoUnit) {
@@ -102,7 +114,6 @@ public class LectureImportService {
             videoUnit.setReleaseDate(importedLectureUnit.getReleaseDate());
             videoUnit.setDescription(((VideoUnit) importedLectureUnit).getDescription());
             videoUnit.setSource(((VideoUnit) importedLectureUnit).getSource());
-            videoUnit.setLecture(newLecture);
             return videoUnit;
         }
         else if (importedLectureUnit instanceof AttachmentUnit) {

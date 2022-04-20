@@ -56,14 +56,16 @@ public class ModelFactory {
 
     /**
      * Create a dummy attachment for testing
-     * @param startDate The release date to set on the attachment
+     * @param date The optional upload and release date to set on the attachment
      * @return Attachment that was created
      */
-    public static Attachment generateAttachment(ZonedDateTime startDate) {
+    public static Attachment generateAttachment(ZonedDateTime date) {
         Attachment attachment = new Attachment();
         attachment.setAttachmentType(AttachmentType.FILE);
-        attachment.setReleaseDate(startDate);
-        attachment.setUploadDate(startDate);
+        if (date != null) {
+            attachment.setReleaseDate(date);
+            attachment.setUploadDate(date);
+        }
         attachment.setName("TestAttachment");
         return attachment;
     }

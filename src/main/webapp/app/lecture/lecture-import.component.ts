@@ -26,7 +26,7 @@ export class LectureImportComponent implements OnInit {
     content: SearchResult<Lecture>;
     total = 0;
     state: PageableSearch = {
-        page: 1,
+        page: 0,
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
@@ -52,7 +52,8 @@ export class LectureImportComponent implements OnInit {
         return this.state.sortingOrder === SortingOrder.ASCENDING;
     }
 
-    /** Set the list sorting direction
+    /**
+     * Set the list sorting direction
      *
      * @param ascending {boolean} Ascending order set
      */
@@ -121,7 +122,8 @@ export class LectureImportComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
-    /** Callback function when the user navigates through the page results
+    /**
+     * Callback function when the user navigates through the page results
      *
      * @param pagenumber The current page number
      */
@@ -131,7 +133,8 @@ export class LectureImportComponent implements OnInit {
         }
     }
 
-    /** Method to perform the search based on a search subject
+    /**
+     * Method to perform the search based on a search subject
      *
      * @param searchSubject The search subject which we use to search.
      * @param debounce The delay we apply to deley the feedback / wait for input

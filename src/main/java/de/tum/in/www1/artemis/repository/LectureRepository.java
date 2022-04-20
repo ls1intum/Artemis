@@ -72,11 +72,9 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      */
     @Query("""
             SELECT l FROM Lecture l
-            WHERE l.id IN
-             (SELECT courseL.id FROM Lecture courseL
-              WHERE (courseL.course.instructorGroupName IN :groups OR courseL.course.editorGroupName IN :groups)
-              AND (courseL.title LIKE %:partialTitle% OR courseL.course.title LIKE %:partialCourseTitle%))
-              """)
+            WHERE (l.course.instructorGroupName IN :groups OR l.course.editorGroupName IN :groups)
+            AND (l.title LIKE %:partialTitle% OR l.course.title LIKE %:partialCourseTitle%)
+            """)
     Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
 

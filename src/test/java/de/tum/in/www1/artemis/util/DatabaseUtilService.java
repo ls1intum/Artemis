@@ -543,7 +543,7 @@ public class DatabaseUtilService {
     }
 
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
@@ -595,6 +595,10 @@ public class DatabaseUtilService {
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
+        return createCoursesWithExercisesAndLectures(withParticipations, false);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations, boolean withFiles) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -637,13 +641,13 @@ public class DatabaseUtilService {
         course1.addExercises(quizExercise);
 
         Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment1 = ModelFactory.generateAttachmentWithFile(pastTimestamp);
+        Attachment attachment1 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
         attachment1.setLecture(lecture1);
         lecture1.addAttachments(attachment1);
         course1.addLectures(lecture1);
 
         Lecture lecture2 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment2 = ModelFactory.generateAttachmentWithFile(pastTimestamp);
+        Attachment attachment2 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
         attachment2.setLecture(lecture2);
         lecture2.addAttachments(attachment2);
         course1.addLectures(lecture2);
@@ -3500,7 +3504,17 @@ public class DatabaseUtilService {
         return search;
     }
 
-    public LinkedMultiValueMap<String, String> exerciseSearchMapping(PageableSearchDTO<String> search) {
+    public PageableSearchDTO<String> configureLectureSearch(String searchTerm) {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(Lecture.LectureSearchColumn.COURSE_TITLE.name());
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        return search;
+    }
+
+    public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
         final var mapType = new TypeToken<Map<String, String>>() {
         }.getType();
         final var gson = new Gson();

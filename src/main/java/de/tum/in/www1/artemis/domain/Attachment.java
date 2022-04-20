@@ -159,22 +159,12 @@ public class Attachment extends DomainObject implements Serializable {
         return name;
     }
 
-    public Attachment name(String name) {
-        this.name = name;
-        return this;
-    }
-
     public void setName(String name) {
         this.name = name;
     }
 
     public String getLink() {
         return link;
-    }
-
-    public Attachment link(String link) {
-        this.link = link;
-        return this;
     }
 
     public void setLink(String link) {
@@ -209,11 +199,6 @@ public class Attachment extends DomainObject implements Serializable {
         return attachmentType;
     }
 
-    public Attachment attachmentType(AttachmentType attachmentType) {
-        this.attachmentType = attachmentType;
-        return this;
-    }
-
     public void setAttachmentType(AttachmentType attachmentType) {
         this.attachmentType = attachmentType;
     }
@@ -232,11 +217,6 @@ public class Attachment extends DomainObject implements Serializable {
 
     public void setLecture(Lecture lecture) {
         this.lecture = lecture;
-    }
-
-    public Attachment lecture(Lecture lecture) {
-        this.lecture = lecture;
-        return this;
     }
 
     public AttachmentUnit getAttachmentUnit() {

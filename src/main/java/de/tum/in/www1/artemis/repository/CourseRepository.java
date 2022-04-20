@@ -93,6 +93,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures" })
     Optional<Course> findWithEagerExercisesAndLecturesById(long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
+    Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals" })
     Course findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
@@ -270,6 +273,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findByIdWithExercisesAndLecturesElseThrow(long courseId) {
         return findWithEagerExercisesAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findByIdWithLecturesAndLectureUnitsElseThrow(long courseId) {
+        return findWithEagerLecturesAndLectureUnitsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

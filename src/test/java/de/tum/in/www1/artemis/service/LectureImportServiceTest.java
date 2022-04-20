@@ -56,7 +56,7 @@ public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportLectureToCourse() throws Exception {
+    public void testImportLectureToCourse() {
         int lectureCount = this.course2.getLectures().size();
 
         lectureImportService.importLecture(this.lecture1, this.course2);

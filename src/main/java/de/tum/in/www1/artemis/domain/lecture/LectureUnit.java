@@ -68,11 +68,6 @@ public abstract class LectureUnit extends DomainObject {
         this.lecture = lecture;
     }
 
-    public LectureUnit lecture(Lecture lecture) {
-        this.lecture = lecture;
-        return this;
-    }
-
     public ZonedDateTime getReleaseDate() {
         return releaseDate;
     }

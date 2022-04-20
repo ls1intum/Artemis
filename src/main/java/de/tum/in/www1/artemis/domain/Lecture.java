@@ -63,22 +63,12 @@ public class Lecture extends DomainObject {
         return title;
     }
 
-    public Lecture title(String title) {
-        this.title = title;
-        return this;
-    }
-
     public void setTitle(String title) {
         this.title = title;
     }
 
     public String getDescription() {
         return description;
-    }
-
-    public Lecture description(String description) {
-        this.description = description;
-        return this;
     }
 
     public void setDescription(String description) {
@@ -137,11 +127,6 @@ public class Lecture extends DomainObject {
 
     public Course getCourse() {
         return course;
-    }
-
-    public Lecture course(Course course) {
-        this.course = course;
-        return this;
     }
 
     public void setCourse(Course course) {

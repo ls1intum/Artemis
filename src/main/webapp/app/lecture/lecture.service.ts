@@ -84,6 +84,12 @@ export class LectureService {
             );
     }
 
+    /**
+     * Clones and imports the lecture to the course
+     *
+     * @param courseId Course to import the lecture into
+     * @param lectureId Lecture to be cloned and imported
+     */
     import(courseId: number, lectureId: number): Observable<EntityResponseType> {
         const params = new HttpParams().set('courseId', courseId);
         return this.http
