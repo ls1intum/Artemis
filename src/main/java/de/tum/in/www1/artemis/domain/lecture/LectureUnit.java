@@ -44,6 +44,7 @@ public abstract class LectureUnit extends DomainObject {
 
     // This is explicitly required by Hibernate for the indexed collection
     // https://docs.jboss.org/hibernate/stable/annotations/reference/en/html_single/#entity-hibspec-collection-extratype-indexbidir
+    @SuppressWarnings("unused")
     @Column(name = "lecture_unit_order")
     private int order;
 
