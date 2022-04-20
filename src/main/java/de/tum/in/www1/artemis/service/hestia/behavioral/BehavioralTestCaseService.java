@@ -60,8 +60,9 @@ public class BehavioralTestCaseService {
         if (coverageReport == null) {
             throw new BehavioralSolutionEntryGenerationException("Testwise coverage report has not been generated");
         }
+        var solutionRepoFiles = readSolutionRepo(programmingExercise);
 
-        var blackboard = new BehavioralBlackboard(programmingExercise, testCases, gitDiffReport, coverageReport);
+        var blackboard = new BehavioralBlackboard(programmingExercise, testCases, gitDiffReport, coverageReport, solutionRepoFiles);
         applyKnowledgeSources(blackboard);
         var behavioralSolutionEntries = blackboard.getSolutionEntries();
         if (behavioralSolutionEntries == null || behavioralSolutionEntries.isEmpty()) {
@@ -74,9 +75,20 @@ public class BehavioralTestCaseService {
     }
 
     private void applyKnowledgeSources(BehavioralBlackboard blackboard) throws BehavioralSolutionEntryGenerationException {
-        // Create knowledge sources
-        List<BehavioralKnowledgeSource> behavioralKnowledgeSources = Arrays.asList(new GroupGitDiffAndCoverageEntriesByFilePath(blackboard), new ExtractCoveredLines(blackboard),
-                new ExtractChangedLines(blackboard), new FindCommonLines(blackboard), new CreateBehavioralSolutionEntries(blackboard));
+        // Create knowledge sources (Turning the formatter off to make the code more readable)
+        // @formatter:off
+        List<BehavioralKnowledgeSource> behavioralKnowledgeSources = Arrays.asList(
+            new GroupGitDiffAndCoverageEntriesByFilePath(blackboard),
+            new ExtractCoveredLines(blackboard),
+            new ExtractChangedLines(blackboard),
+            new FindCommonLines(blackboard),
+            new CreateCommonChangeBlocks(blackboard),
+            new InsertFileContents(blackboard),
+            new AddUnimportantLinesAsPotentialCodeBlocks(blackboard),
+            new CombineChangeBlocks(blackboard),
+            new CreateBehavioralSolutionEntries(blackboard)
+        );
+        // @formatter:on
 
         boolean done = false;
         while (!done) {

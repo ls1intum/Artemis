@@ -17,16 +17,19 @@ class BehavioralBlackboard {
 
     private final CoverageReport coverageReport;
 
+    private final Map<String, String> solutionRepoFiles;
+
     private List<GroupedFile> groupedFiles;
 
     private List<BehavioralSolutionEntry> solutionEntries;
 
     public BehavioralBlackboard(ProgrammingExercise programmingExercise, Set<ProgrammingExerciseTestCase> testCases, ProgrammingExerciseGitDiffReport gitDiffReport,
-            CoverageReport coverageReport) {
+            CoverageReport coverageReport, Map<String, String> solutionRepoFiles) {
         this.programmingExercise = programmingExercise;
         this.testCases = testCases;
         this.gitDiffReport = gitDiffReport;
         this.coverageReport = coverageReport;
+        this.solutionRepoFiles = solutionRepoFiles;
     }
 
     public ProgrammingExercise getProgrammingExercise() {
@@ -43,6 +46,10 @@ class BehavioralBlackboard {
 
     public CoverageReport getCoverageReport() {
         return coverageReport;
+    }
+
+    public Map<String, String> getSolutionRepoFiles() {
+        return solutionRepoFiles;
     }
 
     public List<BehavioralSolutionEntry> getSolutionEntries() {

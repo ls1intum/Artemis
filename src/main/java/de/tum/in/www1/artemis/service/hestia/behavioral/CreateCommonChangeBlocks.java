@@ -1,0 +1,50 @@
+package de.tum.in.www1.artemis.service.hestia.behavioral;
+
+import java.util.TreeSet;
+import java.util.stream.IntStream;
+
+public class CreateCommonChangeBlocks extends BehavioralKnowledgeSource {
+
+    public CreateCommonChangeBlocks(BehavioralBlackboard blackboard) {
+        super(blackboard);
+    }
+
+    @Override
+    public boolean executeCondition() {
+        return blackboard.getGroupedFiles() != null && blackboard.getGroupedFiles().stream().noneMatch(groupedFile -> groupedFile.getCommonLines() == null)
+                && blackboard.getGroupedFiles().stream().anyMatch(groupedFile -> groupedFile.getCommonChanges() == null);
+    }
+
+    @Override
+    public boolean executeAction() throws BehavioralSolutionEntryGenerationException {
+        boolean didChanges = false;
+
+        for (GroupedFile groupedFile : blackboard.getGroupedFiles()) {
+            var changeBlocks = new TreeSet<GroupedFile.ChangeBlock>();
+
+            Integer previousLine = null;
+            Integer startLine = null;
+            int lineCount = 0;
+
+            for (Integer currentLine : groupedFile.getCommonLines()) {
+                if (startLine == null) {
+                    startLine = currentLine;
+                }
+                if (previousLine != null && currentLine - 1 > previousLine) {
+                    changeBlocks.add(new GroupedFile.ChangeBlock(IntStream.range(startLine, startLine + lineCount).boxed().toList()));
+                    lineCount = 0;
+                    startLine = currentLine;
+                }
+                lineCount++;
+                previousLine = currentLine;
+            }
+
+            if (!changeBlocks.equals(groupedFile.getCommonChanges())) {
+                groupedFile.setCommonChanges(changeBlocks);
+                didChanges = true;
+            }
+        }
+
+        return didChanges;
+    }
+}

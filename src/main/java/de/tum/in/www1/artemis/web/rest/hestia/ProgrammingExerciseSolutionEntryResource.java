@@ -22,9 +22,12 @@ import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
+import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralTestCaseService;
 import de.tum.in.www1.artemis.service.hestia.structural.StructuralSolutionEntryGenerationException;
 import de.tum.in.www1.artemis.service.hestia.structural.StructuralTestCaseService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
@@ -53,16 +56,19 @@ public class ProgrammingExerciseSolutionEntryResource {
 
     private final StructuralTestCaseService structuralTestCaseService;
 
+    private final BehavioralTestCaseService behavioralTestCaseService;
+
     public ProgrammingExerciseSolutionEntryResource(ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, CodeHintRepository codeHintRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, AuthorizationCheckService authCheckService,
-            StructuralTestCaseService structuralTestCaseService) {
+            StructuralTestCaseService structuralTestCaseService, BehavioralTestCaseService behavioralTestCaseService) {
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.codeHintRepository = codeHintRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.authCheckService = authCheckService;
         this.structuralTestCaseService = structuralTestCaseService;
+        this.behavioralTestCaseService = behavioralTestCaseService;
     }
 
     /**
@@ -236,6 +242,29 @@ public class ProgrammingExerciseSolutionEntryResource {
         catch (StructuralSolutionEntryGenerationException e) {
             log.error("Unable to create structural solution entries", e);
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * POST programming-exercises/:exerciseId/behavioral-solution-entries : Create the behavioral solution entries for a programming exercise
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200} and with body the created solution entry,
+     */
+    @PostMapping("programming-exercises/{exerciseId}/behavioral-solution-entries")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<List<ProgrammingExerciseSolutionEntry>> createBehavioralSolutionEntries(@PathVariable Long exerciseId) {
+        log.debug("REST request to create behavioral solution entries");
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        try {
+            var solutionEntries = behavioralTestCaseService.generateBehavioralSolutionEntries(exercise);
+            return ResponseEntity.ok(solutionEntries);
+        }
+        catch (BehavioralSolutionEntryGenerationException e) {
+            log.error("Unable to create behavioral solution entries", e);
+            throw new InternalServerErrorException(e.getMessage());
         }
     }
 

@@ -12,7 +12,8 @@ class FindCommonLines extends BehavioralKnowledgeSource {
     @Override
     public boolean executeCondition() {
         return blackboard.getGroupedFiles() != null && blackboard.getGroupedFiles().stream().noneMatch(groupedFile -> groupedFile.getChangedLines() == null)
-                && blackboard.getGroupedFiles().stream().noneMatch(groupedFile -> groupedFile.getCoveredLines() == null);
+                && blackboard.getGroupedFiles().stream().noneMatch(groupedFile -> groupedFile.getCoveredLines() == null)
+                && blackboard.getGroupedFiles().stream().anyMatch(groupedFile -> groupedFile.getCommonLines() == null);
     }
 
     @Override
