@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
  * It will NEVER be available in prod OR when bamboo OR jenkins is used.
  */
 @Service
-@Profile("dev & !bamboo & !jenkins")
+@Profile("dev & !bamboo & !jenkins & !gitlabci")
 public class DevProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
     public DevProgrammingLanguageFeatureService() {

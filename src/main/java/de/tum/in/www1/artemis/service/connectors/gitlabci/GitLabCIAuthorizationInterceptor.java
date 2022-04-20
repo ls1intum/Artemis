@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.gitlab;
+package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
 import java.io.IOException;
 
@@ -12,9 +12,9 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
-@Profile("gitlab")
+@Profile("gitlabci")
 @Component
-public class GitLabAuthorizationInterceptor implements ClientHttpRequestInterceptor {
+public class GitLabCIAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.version-control.token}")
     private String gitlabPrivateToken;
@@ -22,12 +22,6 @@ public class GitLabAuthorizationInterceptor implements ClientHttpRequestIntercep
     @NotNull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution) throws IOException {
-        return intercept(request, body, execution, gitlabPrivateToken);
-    }
-
-    public static ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution, String gitlabPrivateToken)
-            throws IOException {
-        request.getHeaders().add("Private-Token", gitlabPrivateToken);
-        return execution.execute(request, body);
+        return de.tum.in.www1.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor.intercept(request, body, execution, gitlabPrivateToken);
     }
 }
