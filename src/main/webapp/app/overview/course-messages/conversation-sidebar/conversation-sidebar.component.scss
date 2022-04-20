@@ -6,9 +6,8 @@ $conversation-section-card-min-width: 215px;
 .expanded-conversations {
     display: flex;
     height: 100%;
-    margin-left: auto;
-
     width: calc(#{$draggable-width} + #{$conversation-section-card-min-width});
+    margin-left: auto;
 
     .draggable-right {
         display: flex;

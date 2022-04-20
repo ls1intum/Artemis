@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 
 public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -185,8 +184,20 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         checkCreatedPost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
         assertThat(postRepository.findPostsByConversationId(createdPost.getConversation().getId())).hasSize(1);
-        // checks if members of the created conversation were notified via broadcast
-        verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ConversationDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = "student3", roles = "USER")
+    public void testCreateConversationPost_forbidden() throws Exception {
+        // only participants of a conversation can create posts for it
+
+        Post postToSave = createPostWithConversation();
+        // attempt to save new post under someone elses conversation
+        postToSave.setConversation(existingConversationPosts.get(0).getConversation());
+
+        Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
+        assertThat(notCreatedPost).isNull();
+        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
     }
 
     @Test

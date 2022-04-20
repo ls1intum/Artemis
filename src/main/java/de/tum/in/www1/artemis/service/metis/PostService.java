@@ -60,14 +60,14 @@ public class PostService extends PostingService {
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
-            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, ConversationService conversationService) {
+            ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
+            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
+        this.conversationService = conversationService;
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
-        this.conversationService = conversationService;
     }
 
     /**
@@ -104,9 +104,12 @@ public class PostService extends PostingService {
             return savedPost;
         }
 
-        // persist conversation for post if provided
-        if (post.getConversation() != null && post.getConversation().getId() == null) {
-            post.setConversation(conversationService.createConversation(courseId, post.getConversation()));
+        if (post.getConversation() != null) {
+            if (post.getConversation().getId() == null) {
+                // persist conversation for post if provided
+                post.setConversation(conversationService.createConversation(courseId, post.getConversation()));
+            }
+            conversationService.mayInteractWithConversationElseThrow(post.getConversation().getId(), user);
         }
 
         Post savedPost = postRepository.save(post);
@@ -549,7 +552,10 @@ public class PostService extends PostingService {
      * @return                  retrieved posts
      */
     public List<Post> getPostsByConversation(Long conversationId) {
-        mayInteractWithConversationElseThrow(conversationId);
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        Conversation conversation = conversationService.getConversationById(conversationId);
+
+        conversationService.mayInteractWithConversationElseThrow(conversation.getId(), user);
 
         List<Post> conversationPosts = postRepository.findPostsByConversationId(conversationId);
 
@@ -584,16 +590,6 @@ public class PostService extends PostingService {
     private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-        }
-    }
-
-    private void mayInteractWithConversationElseThrow(Long conversationId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        Conversation conversation = conversationService.getConversationById(conversationId);
-
-        if (conversation == null
-                || conversation.getConversationParticipants().stream().noneMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))) {
-            throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
     }
 

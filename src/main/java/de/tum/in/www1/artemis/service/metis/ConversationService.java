@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -131,6 +132,15 @@ public class ConversationService {
 
         conversationDTO.getConversation().getConversationParticipants().forEach(
                 conversationParticipant -> messagingTemplate.convertAndSend(conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationDTO));
+    }
+
+    void mayInteractWithConversationElseThrow(Long conversationId, User user) {
+        // use object fetched from database
+        Conversation conversation = conversationRepository.findConversationByIdWithConversationParticipants(conversationId);
+        if (conversation == null
+                || conversation.getConversationParticipants().stream().noneMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))) {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
+        }
     }
 
     /**

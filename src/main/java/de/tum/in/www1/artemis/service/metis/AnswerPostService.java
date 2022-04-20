@@ -36,17 +36,21 @@ public class AnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final ConversationService conversationService;
+
     private final GroupNotificationService groupNotificationService;
 
     private final SingleUserNotificationService singleUserNotificationService;
 
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, SimpMessageSendingOperations messagingTemplate) {
+            AnswerPostRepository answerPostRepository, PostRepository postRepository, ConversationService conversationService, ExerciseRepository exerciseRepository,
+            LectureRepository lectureRepository, GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService,
+            SimpMessageSendingOperations messagingTemplate) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
+        this.conversationService = conversationService;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
     }
@@ -71,6 +75,10 @@ public class AnswerPostService extends PostingService {
 
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
+
+        if (answerPost.getPost().getConversation() != null) {
+            conversationService.mayInteractWithConversationElseThrow(answerPost.getPost().getConversation().getId(), user);
+        }
 
         // use post from database rather than user input
         answerPost.setPost(post);

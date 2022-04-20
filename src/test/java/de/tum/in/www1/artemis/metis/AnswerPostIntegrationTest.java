@@ -30,8 +30,6 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private AnswerPostRepository answerPostRepository;
 
-    private List<Post> existingPostsAndConversationPostsWithAnswers;
-
     private List<Post> existingPostsWithAnswers;
 
     private List<Post> existingConversationPostsWithAnswers;
@@ -58,7 +56,8 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream().filter(coursePost -> (coursePost.getAnswers() != null)).toList();
+        List<Post> existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream().filter(coursePost -> (coursePost.getAnswers() != null))
+                .toList();
 
         existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
 
@@ -166,6 +165,19 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
         assertThat(existingAnswerPosts.size()).isEqualTo(answerPostRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = "student3", roles = "USER")
+    public void testCreateConversationAnswerPost_forbidden() throws Exception {
+        // only participants of a conversation can create posts for it
+
+        // attempt to save new answerPost under someone elses conversation
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.FORBIDDEN);
+
+        assertThat(notCreatedAnswerPost).isNull();
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
     // GET
