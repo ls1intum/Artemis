@@ -117,6 +117,23 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.state.constructor.name).toBe('EditState');
     }));
 
+    it('should not fail while fetching submission with null result for existing example submission in tutorial submission mode', fakeAsync(() => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = { toComplete: 'true' };
+        jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        // @ts-ignore
+        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
+
+        // WHEN
+        comp.ngOnInit();
+        tick();
+
+        // THEN
+        expect(comp.result).not.toBeNull();
+        expect(comp.result!.submission).toBe(comp.submission);
+    }));
+
     it('should only fetch exercise for new example submission and stay in new state', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
