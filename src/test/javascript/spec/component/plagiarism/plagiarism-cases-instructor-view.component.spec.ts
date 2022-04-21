@@ -88,8 +88,18 @@ describe('Plagiarism Cases Student View Component', () => {
         expect(component.numberOfCasesWithVerdict(plagiarismCases)).toBe(3);
     });
 
+    it('should calculate percentage of plagiarism cases with verdict', () => {
+        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
+        expect(component.percentageOfCasesWithVerdict(plagiarismCases)).toBe(75);
+    });
+
     it('should calculate number of plagiarism cases with post', () => {
         const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
         expect(component.numberOfCasesWithPost(plagiarismCases)).toBe(2);
+    });
+
+    it('should calculate percentage of plagiarism cases with post', () => {
+        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
+        expect(component.percentageOfCasesWithPost(plagiarismCases)).toBe(50);
     });
 });

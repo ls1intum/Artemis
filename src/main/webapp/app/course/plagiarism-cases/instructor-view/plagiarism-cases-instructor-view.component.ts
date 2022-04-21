@@ -56,8 +56,28 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
         return plagiarismCases.filter((plagiarismCase) => !!plagiarismCase.verdict).length;
     }
 
+    /**
+     * calculate the percentage of plagiarism cases with a verdict
+     * @return percentage of plagiarism cases with a verdict in course
+     */
+    percentageOfCasesWithVerdict(plagiarismCases: PlagiarismCase[]): number {
+        return (this.numberOfCasesWithVerdict(plagiarismCases) / this.numberOfCases(plagiarismCases)) * 100 || 0;
+    }
+
+    /**
+     * calculate the number of plagiarism cases with a post
+     * @return number of plagiarism cases with a post in course
+     */
     numberOfCasesWithPost(plagiarismCases: PlagiarismCase[]): number {
         return plagiarismCases.filter((plagiarismCase) => !!plagiarismCase.post).length;
+    }
+
+    /**
+     * calculate the percentage of plagiarism cases with a post
+     * @return percentage of plagiarism cases with a post in course
+     */
+    percentageOfCasesWithPost(plagiarismCases: PlagiarismCase[]): number {
+        return (this.numberOfCasesWithPost(plagiarismCases) / this.numberOfCases(plagiarismCases)) * 100 || 0;
     }
 
     /**

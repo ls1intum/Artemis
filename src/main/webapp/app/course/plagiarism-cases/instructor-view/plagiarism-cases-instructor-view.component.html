@@ -20,7 +20,7 @@
                     <jhi-progress-bar
                         [denominator]="numberOfCases(groupedPlagiarismCases[exercise!.id!])"
                         [numerator]="numberOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
-                        [percentage]="(numberOfCasesWithPost(groupedPlagiarismCases[exercise!.id!]) / numberOfCases(groupedPlagiarismCases[exercise!.id!])) * 100 || 0"
+                        [percentage]="percentageOfCasesWithPost(groupedPlagiarismCases[exercise!.id!])"
                         [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithPost' | artemisTranslate"
                     >
                     </jhi-progress-bar>
@@ -29,7 +29,7 @@
                     <jhi-progress-bar
                         [denominator]="numberOfCases(groupedPlagiarismCases[exercise!.id!])"
                         [numerator]="numberOfCasesWithVerdict(groupedPlagiarismCases[exercise!.id!])"
-                        [percentage]="(numberOfCasesWithVerdict(groupedPlagiarismCases[exercise!.id!]) / numberOfCases(groupedPlagiarismCases[exercise!.id!])) * 100 || 0"
+                        [percentage]="percentageOfCasesWithVerdict(groupedPlagiarismCases[exercise!.id!])"
                         [tooltip]="'artemisApp.plagiarism.plagiarismCases.casesWithVerdict' | artemisTranslate"
                     >
                     </jhi-progress-bar>
