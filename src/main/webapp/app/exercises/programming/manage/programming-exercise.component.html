@@ -2,7 +2,9 @@
     <h4 class="d-flex mb-3 flex-wrap justify-content-end">
         <span class="mb-1 me-auto">
             <span *ngIf="course && !showHeading"> {{ course.title }} - </span>
-            <span *ngIf="programmingExercises && showHeading && !filter.isEmpty()">{{ getAmountOfExercisesString(filteredProgrammingExercises) }} / </span>
+            <span *ngIf="programmingExercises && showHeading && !filter.isEmpty() && programmingExercises.length">
+                {{ getAmountOfExercisesString(filteredProgrammingExercises) }} /
+            </span>
             <span *ngIf="programmingExercises && showHeading">{{ getAmountOfExercisesString(programmingExercises) }} </span>
             <span jhiTranslate="artemisApp.programmingExercise.home.title">Programming Exercises</span>
         </span>

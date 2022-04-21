@@ -2,7 +2,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -43,6 +42,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -75,7 +78,8 @@ describe('ExamParticipationComponent', () => {
                 MockComponent(ExamParticipationSummaryComponent),
             ],
             providers: [
-                MockProvider(JhiWebsocketService),
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
                 {
                     provide: ActivatedRoute,
                     useValue: {

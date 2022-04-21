@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
@@ -182,45 +181,49 @@ public class CourseTestService {
     }
 
     // Test
-    public void testCreateCourseWithNegativeMaxComplainNumber() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
+    private void testCreateCourseWithNegativeValue(Course course) throws Exception {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        course.setMaxComplaints(-1);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent).as("Course has not been stored").isEmpty();
+    }
+
+    // Test
+    public void testCreateCourseWithNegativeMaxComplainNumber() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxComplaints(-1);
+        testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxComplainTimeDays() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxComplaintTimeDays(-1);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent).as("Course has not been stored").isEmpty();
+        testCreateCourseWithNegativeValue(course);
     }
 
     // Test
     public void testCreateCourseWithNegativeMaxTeamComplainNumber() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course.setMaxTeamComplaints(-1);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent).as("Course has not been stored").isEmpty();
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithNegativeMaxComplaintTextLimit() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxComplaintTextLimit(-1);
+        testCreateCourseWithNegativeValue(course);
+    }
+
+    // Test
+    public void testCreateCourseWithNegativeMaxComplaintResponseTextLimit() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setMaxComplaintResponseTextLimit(-1);
+        testCreateCourseWithNegativeValue(course);
     }
 
     // Test
@@ -269,7 +272,7 @@ public class CourseTestService {
     // Test
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, postsEnabled = false
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, false, 0);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, null, 5, 5, 14, 2000, 2000, false, 0);
 
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
@@ -1315,8 +1318,9 @@ public class CourseTestService {
         zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
         String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
 
-        return Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip"))
-                .collect(Collectors.toList());
+        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+            return files.filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip")).toList();
+        }
     }
 
     public void testExportCourse_cannotCreateTmpDir() throws Exception {
@@ -1416,7 +1420,10 @@ public class CourseTestService {
 
         // We test for the filenames of the submissions since it's the easiest way.
         // We don't test the directory structure
-        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        List<Path> filenames;
+        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+            filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+        }
 
         var submissions = submissionRepository.findAll();
 

@@ -1,0 +1,160 @@
+plugins {
+    id 'java'
+    // %static-code-analysis-start%
+    id 'checkstyle'
+    id 'pmd'
+    id 'com.github.spotbugs' version '5.0.6'
+    // %static-code-analysis-stop%
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.9.2'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+}
+
+def assignmentSrcDir = "assignment/src"
+def studentOutputDir = sourceSets.main.java.destinationDirectory.get()
+// %static-code-analysis-start%
+def scaConfigDirectory = "$projectDir/staticCodeAnalysisConfig"
+// %static-code-analysis-stop%
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+sourceSets {
+    // %non-sequential-start%
+    test {
+        java {
+            srcDir "test"
+        }
+        resources {
+            srcDir "test"
+        }
+    }
+    // %non-sequential-stop%
+
+    // %sequential-start%
+    structuralTest {
+        java {
+            srcDir 'structural/test'
+        }
+        resources {
+            srcDir 'structural/test'
+        }
+    }
+
+    behaviorTest {
+        java {
+            srcDir 'behavior/test'
+            compileClasspath += sourceSets.main.runtimeClasspath
+        }
+        resources {
+            srcDir 'behavior/test'
+        }
+    }
+    // %sequential-stop%
+
+    main {
+        java {
+            srcDirs = [assignmentSrcDir]
+        }
+        resources {
+            srcDirs = []
+        }
+    }
+}
+
+def forbiddenPackageFolders = [ //(2)
+                                "$studentOutputDir/ch/qos/logback/",
+                                "$studentOutputDir/com/intellij/",
+                                "$studentOutputDir/com/sun/",
+                                "$studentOutputDir/de/tum/in/test/api/",
+                                "$studentOutputDir/java/",
+                                "$studentOutputDir/javax/",
+                                "$studentOutputDir/jdk/",
+                                "$studentOutputDir/net/jqwik/",
+                                "$studentOutputDir/org/assertj/",
+                                "$studentOutputDir/org/apache/",
+                                "$studentOutputDir/org/eclipse/",
+                                "$studentOutputDir/org/gradle/",
+                                "$studentOutputDir/org/jacoco/",
+                                "$studentOutputDir/org/json/",
+                                "$studentOutputDir/org/junit/",
+                                "$studentOutputDir/org/opentest4j/",
+                                "$studentOutputDir/sun/",
+                                "$studentOutputDir/worker/org/gradle/"
+]
+test {
+    doFirst { //(1)
+        for (String packageFolder in forbiddenPackageFolders) {
+            assert !file(packageFolder).exists(): "$packageFolder must not exist within the submission."
+        }
+    }
+    useJUnitPlatform()
+}
+
+// %sequential-start%
+configurations {
+    structuralTestImplementation.extendsFrom testImplementation
+    structuralTestRuntime.extendsFrom testRuntime
+    behaviorTestImplementation.extendsFrom testImplementation
+    behaviorTestRuntime.extendsFrom testRuntime
+}
+
+task structuralTests(type: Test) {
+    testClassesDirs = sourceSets.structuralTest.output.classesDirs
+    classpath += sourceSets.structuralTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+
+task behaviorTests(type: Test) {
+    testClassesDirs = sourceSets.behaviorTest.output.classesDirs
+    classpath += sourceSets.behaviorTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+// %sequential-stop%
+
+// %static-code-analysis-start%
+checkstyle {
+    configFile = file("$scaConfigDirectory/checkstyle-configuration.xml")
+    ignoreFailures = true
+    // exclude the test files
+    checkstyleTest.enabled = false
+    checkstyleMain.reports {
+        xml.outputLocation = file('target/checkstyle-result.xml')
+    }
+}
+
+spotbugs {
+    excludeFilter = file("$scaConfigDirectory/spotbugs-exclusions.xml")
+    ignoreFailures = true
+    // exclude the test files
+    spotbugsTest.enabled = false
+    spotbugsMain.reports {
+        xml {
+            enabled = true
+            outputLocation = file('target/spotbugsXml.xml')
+        }
+        html.enabled = false
+    }
+}
+
+pmd {
+    ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
+    rulesMinimumPriority = 5
+    ignoreFailures = true
+    // exclude the test files
+    pmdTest.enabled = false
+    pmdMain.reports {
+        xml.outputLocation = file('target/pmd.xml')
+    }
+}
+// %static-code-analysis-stop%

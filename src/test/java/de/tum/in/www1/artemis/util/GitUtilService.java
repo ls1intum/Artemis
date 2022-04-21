@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,6 +14,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ReflogEntry;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
@@ -23,8 +23,11 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 @Service
 public class GitUtilService {
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
     // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
-    private final Path localPath = Paths.get("./repos/server-integration-test").resolve("test-repository").normalize();
+    private final Path localPath = Paths.get(".", "repos", "server-integration-test").resolve("test-repository").normalize();
 
     private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
 
@@ -51,7 +54,7 @@ public class GitUtilService {
      * Initializes the repository with three dummy files
      */
     public void initRepo() {
-        initRepo("main");
+        initRepo(defaultBranch);
     }
 
     /**
@@ -62,7 +65,7 @@ public class GitUtilService {
         try {
             deleteRepos();
 
-            remoteGit = Git.init().setInitialBranch(defaultBranch).setDirectory(remotePath.toFile()).call();
+            remoteGit = LocalRepository.initialize(remotePath.toFile(), defaultBranch);
             // create some files in the remote repository
             remotePath.resolve(FILES.FILE1.toString()).toFile().createNewFile();
             remotePath.resolve(FILES.FILE2.toString()).toFile().createNewFile();
@@ -239,18 +242,13 @@ public class GitUtilService {
     }
 
     public VcsRepositoryUrl getRepoUrlByType(REPOS repo) {
-        try {
-            return new VcsRepositoryUrl("file://" + getCompleteRepoPathStringByType(repo));
-        }
-        catch (MalformedURLException ignored) {
-        }
-        return null;
+        return new VcsRepositoryUrl(new File(getCompleteRepoPathStringByType(repo)));
     }
 
     public static final class MockFileRepositoryUrl extends VcsRepositoryUrl {
 
-        public MockFileRepositoryUrl(File file) throws MalformedURLException {
-            super(file.toURI().toURL().toString());
+        public MockFileRepositoryUrl(File file) {
+            super(file);
         }
 
         @Override
@@ -258,6 +256,7 @@ public class GitUtilService {
             // the mocked url should already include the user specific part
             return this;
         }
+
     }
 
     public void writeEmptyJsonFileToPath(Path path) throws Exception {

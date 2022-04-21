@@ -150,7 +150,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test
 
         // Change Password
         User student = userRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).get();
-        student.setPassword(passwordService.encryptPassword(STUDENT_PASSWORD));
+        student.setPassword(passwordService.hashPassword(STUDENT_PASSWORD));
         userRepository.saveAndFlush(student);
 
         // Try to login ..

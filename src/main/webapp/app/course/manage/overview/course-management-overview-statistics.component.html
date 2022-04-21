@@ -25,7 +25,9 @@
             <span>{{ model.name }}</span>
         </ng-template>
         <ng-template #seriesTooltipTemplate let-model="model">
-            <span> {{ model[0].name }}: {{ model[0].absoluteValue }} </span>
+            <ng-container *ngIf="model.length">
+                <span> {{ model[0].name }}: {{ model[0].absoluteValue }} </span>
+            </ng-container>
         </ng-template>
     </ngx-charts-line-chart>
     <div *ngIf="loading" class="overview-spinner">

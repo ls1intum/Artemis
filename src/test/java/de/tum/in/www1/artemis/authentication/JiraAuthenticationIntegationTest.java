@@ -31,8 +31,6 @@ import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
-import de.tum.in.www1.artemis.service.user.PasswordService;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
@@ -59,12 +57,6 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
 
     @Autowired
     private TokenProvider tokenProvider;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private PasswordService passwordService;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
@@ -129,7 +121,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
 
         ltiLaunchRequest.setCustom_lookup_user_by_email(true);
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
-        final var user = userRepository.findAll().get(0);
+        final var user = userRepository.findOneByLogin(username).orElseThrow();
         final var ltiUser = ltiUserIdRepository.findAll().get(0);
         final var ltiOutcome = ltiOutcomeUrlRepository.findAll().get(0);
         assertThat(ltiUser.getUser()).isEqualTo(user);
@@ -146,8 +138,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         assertThat(mrrobotUser.getGroups()).contains(course.getStudentGroupName());
         assertThat(mrrobotUser.getAuthorities()).containsAll(authorityRepository.findAll());
 
-        final var password = passwordService.decryptPassword(mrrobotUser.getPassword());
-        final var auth = new TestingAuthenticationToken(username, password);
+        final var auth = new TestingAuthenticationToken(username, "");
         final var responseAuth = jiraAuthenticationProvider.authenticate(auth);
 
         assertThat(responseAuth.getPrincipal()).isEqualTo(username);

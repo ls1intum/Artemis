@@ -43,7 +43,9 @@
                         <b class="tooltip-header">{{ findAbsoluteValue(model) }} ({{ model.value }}%)</b>
                     </ng-template>
                     <ng-template #seriesTooltipTemplate let-model="model">
-                        <span> {{ model[0].name }}: {{ findAbsoluteValue(model[0]) }} </span>
+                        <ng-container *ngIf="model.length">
+                            <span> {{ model[0].name }}: {{ findAbsoluteValue(model[0]) }} </span>
+                        </ng-container>
                     </ng-template>
                 </ngx-charts-line-chart>
             </div>

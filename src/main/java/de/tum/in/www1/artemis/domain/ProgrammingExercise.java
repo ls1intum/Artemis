@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.PROGRAMMING;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -120,6 +121,12 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
 
+    // Should be lazily loaded, but Hibernate does not support lazy loading for OneToOne relations
+    // Therefore we need JsonIgnore here
+    @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private ProgrammingExerciseGitDiffReport gitDiffReport;
+
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
      * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
@@ -163,7 +170,7 @@ public class ProgrammingExercise extends Exercise {
         return null;
     }
 
-    private void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
+    public void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
         if (solutionParticipation != null && Hibernate.isInitialized(solutionParticipation)) {
             this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
         }
@@ -421,7 +428,7 @@ public class ProgrammingExercise extends Exercise {
         try {
             return new VcsRepositoryUrl(templateRepositoryUrl);
         }
-        catch (MalformedURLException e) {
+        catch (URISyntaxException e) {
             e.printStackTrace();
         }
         return null;
@@ -442,7 +449,7 @@ public class ProgrammingExercise extends Exercise {
         try {
             return new VcsRepositoryUrl(solutionRepositoryUrl);
         }
-        catch (MalformedURLException e) {
+        catch (URISyntaxException e) {
             e.printStackTrace();
         }
         return null;
@@ -462,8 +469,8 @@ public class ProgrammingExercise extends Exercise {
         try {
             return new VcsRepositoryUrl(testRepositoryUrl);
         }
-        catch (MalformedURLException e) {
-            log.warn("Cannot create URL for testRepositoryUrl: {} due to the following error: {}", testRepositoryUrl, e.getMessage());
+        catch (URISyntaxException e) {
+            log.warn("Cannot create URI for testRepositoryUrl: {} due to the following error: {}", testRepositoryUrl, e.getMessage());
         }
         return null;
     }
@@ -734,5 +741,13 @@ public class ProgrammingExercise extends Exercise {
         if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
             throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
         }
+    }
+
+    public ProgrammingExerciseGitDiffReport getGitDiffReport() {
+        return gitDiffReport;
+    }
+
+    public void setGitDiffReport(ProgrammingExerciseGitDiffReport programmingExerciseGitDiffReport) {
+        this.gitDiffReport = programmingExerciseGitDiffReport;
     }
 }

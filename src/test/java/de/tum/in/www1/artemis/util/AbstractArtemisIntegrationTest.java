@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.util;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import javax.mail.internet.MimeMessage;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +37,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Value("${server.url}")
     protected String artemisServerUrl;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
+
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @SpyBean
     protected LtiService ltiService;
@@ -54,6 +61,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected JavaMailSender javaMailSender;
+
+    @SpyBean
+    protected MailService mailService;
 
     @SpyBean
     protected WebsocketMessagingService websocketMessagingService;
@@ -94,15 +104,22 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Autowired
     protected RequestUtilService request;
 
+    @BeforeEach
+    public void mockMailService() {
+        doNothing().when(javaMailSender).send(any(MimeMessage.class));
+    }
+
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, programmingSubmissionService,
                 examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService,
-                scheduleService, javaMailSender);
+                scheduleService, javaMailSender, mailService);
     }
 
     @Override
     public void mockGetRepositorySlugFromRepositoryUrl(String repositorySlug, VcsRepositoryUrl repositoryUrl) {
+        // mock both versions to be independent
         doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrl(repositoryUrl);
+        doReturn(repositorySlug).when(urlService).getRepositorySlugFromRepositoryUrlString(repositoryUrl.toString());
     }
 
     @Override
