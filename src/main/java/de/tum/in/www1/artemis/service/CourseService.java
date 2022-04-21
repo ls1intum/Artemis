@@ -703,11 +703,6 @@ public class CourseService {
     public int determineTimeSpanSizeForActiveStudents(Course course, ZonedDateTime endDate, int maximalSize) {
         var spanTime = maximalSize;
         if (course.getStartDate() != null) {
-            /*
-             * var startDateIsoWeek = statisticsRepository.getWeekOfDate(course.getStartDate()); var endDateIsoWeek = statisticsRepository.getWeekOfDate(endDate); int weeksInYear =
-             * Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(course.getStartDate()).getMaximum()); int amountOfWeeksBetween = (endDateIsoWeek - startDateIsoWeek
-             * + weeksInYear) % weeksInYear;
-             */
             var amountOfWeeksBetween = course.getStartDate().until(endDate.plusWeeks(1), ChronoUnit.WEEKS);
             spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
         }

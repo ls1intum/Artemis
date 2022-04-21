@@ -180,7 +180,7 @@
                 "averageStudentScoreTitle": "Average Student Score"
             },
             "activeStudents": "Active students: {{ students }}",
-            "notStartedYet": "The course has not officially started yet"
+            "notStartedYet": "The course has not officially started yet. Official course start:"
         },
         "courseStatistics": {
             "statistics": "Statistics",
