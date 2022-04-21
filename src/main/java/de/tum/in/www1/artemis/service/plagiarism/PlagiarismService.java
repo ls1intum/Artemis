@@ -87,7 +87,7 @@ public class PlagiarismService {
     public void updatePlagiarismComparisonStatus(long plagiarismComparisonId, PlagiarismStatus plagiarismStatus) {
         plagiarismComparisonRepository.updatePlagiarismComparisonStatus(plagiarismComparisonId, plagiarismStatus);
         if (plagiarismStatus.equals(PlagiarismStatus.CONFIRMED)) {
-            plagiarismCaseService.createOrAddPlagiarismCasesForComparison(plagiarismComparisonId);
+            plagiarismCaseService.createOrAddToPlagiarismCasesForComparison(plagiarismComparisonId);
         }
         else if (plagiarismStatus.equals(PlagiarismStatus.DENIED)) {
             plagiarismCaseService.removeSubmissionsInPlagiarismCasesForComparison(plagiarismComparisonId);
