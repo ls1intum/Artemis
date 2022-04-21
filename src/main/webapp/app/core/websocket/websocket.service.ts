@@ -189,7 +189,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                                     channel,
                                     (data) => {
                                         if (this.listenerObservers.has(channel)) {
-                                            console.log(channel, JhiWebsocketService.parseJSON(data.body));
                                             this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
                                         }
                                     },
@@ -270,7 +269,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                         channel,
                         (data) => {
                             if (this.listenerObservers.has(channel)) {
-                                console.log(channel, JhiWebsocketService.parseJSON(data.body));
                                 this.listenerObservers.get(channel)!.next(JhiWebsocketService.parseJSON(data.body));
                             }
                         },

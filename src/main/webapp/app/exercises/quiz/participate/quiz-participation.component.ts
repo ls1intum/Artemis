@@ -342,14 +342,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             });
         }
 
-        // tslint:disable:no-console
         if (!this.quizExerciseChannel) {
             this.quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
-            console.debug('channel', this.quizExerciseChannel);
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
             this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
-                console.debug('quiz update', quiz);
                 if (this.waitingForQuizStart && this.quizId === quiz.id) {
                     this.applyQuizFull(quiz);
                 }
