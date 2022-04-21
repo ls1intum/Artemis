@@ -3546,7 +3546,7 @@ public class DatabaseUtilService {
             studentParticipation = addTeamParticipationForExercise(textExercise, team.getId());
         }
         else {
-            throw new RuntimeException("unsupported participant!");
+            throw new RuntimeException("Unsupported participant!");
         }
         studentParticipation.addSubmission(textSubmission);
 
