@@ -145,7 +145,7 @@
         "test": "ng test --coverage --log-heap-usage -w=4",
         "test-only": "ng test",
         "test-only:ci": "ng test --ci --reporters=default --reporters=jest-junit",
-        "test-diff": "ng test --log-heap-usage -w=4 --pass-with-no-tests --changed-since=origin/develop",
+        "test-diff": "ng test --log-heap-usage -w=4 --pass-with-no-tests --changed-since=origin/develop --coverage",
         "test:ci": "ng test --coverage --log-heap-usage -w=4 --ci --reporters=default --reporters=jest-junit",
         "test-diff:ci": "git fetch origin develop && ng test --log-heap-usage -w=4 --ci --reporters=default --reporters=jest-junit --pass-with-no-tests --changed-since=origin/develop",
         "test:leaks": "ng test --log-heap-usage --detect-leaks",
