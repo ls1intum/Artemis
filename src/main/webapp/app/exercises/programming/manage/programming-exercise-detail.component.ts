@@ -284,7 +284,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     translationParams: {
                         numberTasks: res.length,
                         numberTestCases: numberTests,
-                        detailedResult: this.buildTaskCreationMessage(res),
+                        detailedResult: ProgrammingExerciseDetailComponent.buildTaskCreationMessage(res),
                     },
                     timeout: 0,
                 });
@@ -293,7 +293,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    private buildTaskCreationMessage(tasks: Task[]): string {
+    private static buildTaskCreationMessage(tasks: Task[]): string {
         return tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
     }
 
@@ -470,7 +470,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
-                console.log(this.buildStructuralSolutionEntriesMessage(res));
+                console.log(ProgrammingExerciseDetailComponent.buildStructuralSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
@@ -478,7 +478,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    private buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
+    private static buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
         return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
     }
 }
