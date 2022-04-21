@@ -26,21 +26,21 @@ public abstract class TempIdObject extends DomainObject {
 
     /**
      * checks the tempId first and then the database id
-     * @param o another object
+     * @param obj another object
      * @return true when the tempIds are equal or the ids are equal
      */
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        TempIdObject tempIdObject = (TempIdObject) o;
+        TempIdObject tempIdObject = (TempIdObject) obj;
         if (tempIdObject.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), tempIdObject.getTempID())) {
             return true;
         }
-        return super.equals(o);
+        return super.equals(obj);
     }
 }

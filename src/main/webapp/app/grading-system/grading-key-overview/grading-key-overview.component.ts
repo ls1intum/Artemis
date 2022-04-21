@@ -3,10 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { round } from 'app/shared/util/utils';
 import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -15,8 +16,10 @@ import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 })
 export class GradingKeyOverviewComponent implements OnInit {
     // Icons
-    faChevronLeft = faChevronLeft;
-    faPrint = faPrint;
+    readonly faChevronLeft = faChevronLeft;
+    readonly faPrint = faPrint;
+
+    readonly GradeEditMode = GradeEditMode;
 
     constructor(
         private route: ActivatedRoute,
@@ -101,14 +104,9 @@ export class GradingKeyOverviewComponent implements OnInit {
     }
 
     /**
-     * Rounds a number to two decimal places
-     *
-     * @param num the number to be rounded
+     * @see GradeStepBoundsPipe.round
      */
     round(num?: number) {
-        if (num == undefined) {
-            return;
-        }
-        return round(num, 2);
+        return GradeStepBoundsPipe.round(num);
     }
 }

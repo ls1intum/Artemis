@@ -94,6 +94,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
     public exampleSolutionUML?: UMLModel;
+    public isProgrammingExerciseExampleSolutionPublished = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -250,6 +251,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.modelingExercise = undefined;
         this.exampleSolution = undefined;
         this.exampleSolutionUML = undefined;
+        this.isProgrammingExerciseExampleSolutionPublished = false;
 
         if (newExercise.type === ExerciseType.MODELING) {
             this.modelingExercise = newExercise as ModelingExercise;
@@ -261,6 +263,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (exercise.exampleSolution) {
                 this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
             }
+        } else if (newExercise.type === ExerciseType.PROGRAMMING) {
+            const exercise = newExercise as ProgrammingExercise;
+            this.isProgrammingExerciseExampleSolutionPublished = exercise.exampleSolutionPublished || false;
         }
     }
 
