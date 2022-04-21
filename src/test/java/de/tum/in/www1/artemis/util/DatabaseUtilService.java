@@ -1944,7 +1944,7 @@ public class DatabaseUtilService {
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, false, programmingLanguage);
+        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage);
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
