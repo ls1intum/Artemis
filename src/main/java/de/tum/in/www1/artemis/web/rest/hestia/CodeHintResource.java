@@ -28,8 +28,6 @@ public class CodeHintResource {
 
     private final Logger log = LoggerFactory.getLogger(CodeHintResource.class);
 
-    private static final String ENTITY_NAME = "codeHint";
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
