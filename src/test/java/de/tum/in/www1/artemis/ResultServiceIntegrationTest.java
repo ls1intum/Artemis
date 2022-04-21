@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -506,8 +507,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isNotNull();
-        assertThat(returnedResult).isEqualTo(result);
+        assertThat(returnedResult).isNotNull().isEqualTo(result);
     }
 
     @Test
@@ -596,8 +596,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         database.addSampleFeedbackToResults(result);
         latestResult = database.addSampleFeedbackToResults(latestResult);
         Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isNotNull();
-        assertThat(returnedResult).isEqualTo(latestResult);
+        assertThat(returnedResult).isNotNull().isEqualTo(latestResult);
     }
 
     @Test
@@ -702,13 +701,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createResultForExternalSubmission_programmingExercise() throws Exception {
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bambooRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.enableMockingOfRequests();
         var studentLogin = "student1";
         User user = userRepository.findOneByLogin(studentLogin).orElseThrow();
-        mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
         final var repositorySlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
-        bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, programmingExercise.getProjectKey(), Set.of(user));
+        bitbucketRequestMockProvider.mockSetStudentRepositoryPermission(repositorySlug, programmingExercise.getProjectKey(), studentLogin,
+                VersionControlRepositoryPermission.REPO_READ);
+        mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
         Result result = new Result().rated(false);
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(5));
         programmingExerciseRepository.save(programmingExercise);

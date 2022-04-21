@@ -175,7 +175,7 @@ public class ExerciseTest {
         when(studentParticipationInitialized.getSubmissions()).thenReturn(null);
 
         exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
-        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(null);
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isNull();
     }
 
     @Test
@@ -248,7 +248,7 @@ public class ExerciseTest {
         Exercise examExercise = mock(Exercise.class, CALLS_REAL_METHODS);
         when(examExercise.isExamExercise()).thenReturn(false);
         Exam result = examExercise.getExamViaExerciseGroupOrCourseMember();
-        assertThat(result).isEqualTo(null);
+        assertThat(result).isNull();
     }
 
     private List<StudentParticipation> filterForCourseDashboard_prepareParticipations() {

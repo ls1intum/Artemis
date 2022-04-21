@@ -78,10 +78,10 @@ public class JiraRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockRemoveUserFromGroup(Set<String> groups, String username, boolean shouldFail) {
+    public void mockRemoveUserFromGroup(Set<String> groups, String username, boolean shouldFail, boolean found) {
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=(" + regexGroups + ")&username=" + username);
-        var status = shouldFail ? HttpStatus.NOT_FOUND : HttpStatus.OK;
+        var status = shouldFail ? HttpStatus.INTERNAL_SERVER_ERROR : (found ? HttpStatus.OK : HttpStatus.NOT_FOUND);
         mockServer.expect(ExpectedCount.twice(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(status));
     }
 

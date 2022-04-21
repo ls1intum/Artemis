@@ -127,7 +127,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Assert that the results have been created successfully.
         resultsWithFeedback = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
-        assertThat(resultsWithFeedback.size()).isEqualTo(3);
+        assertThat(resultsWithFeedback).hasSize(3);
         assertThat(resultsWithFeedback.get(0).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(resultsWithFeedback.get(1).getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
@@ -138,7 +138,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Retrieve updated results
         var updatedResults = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
-        assertThat(updatedResults.size()).isEqualTo(3);
+        assertThat(updatedResults).hasSize(3);
 
         // Assert that the result order stays the same
         assertThat(updatedResults.get(0).getId()).isEqualTo(resultsWithFeedback.get(0).getId());
@@ -149,7 +149,7 @@ public class ProgrammingExerciseResultTestService {
         semiAutoResult = updatedResults.get(2);
         assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
-        assertThat(semiAutoResult.getFeedbacks().size()).isEqualTo(2);
+        assertThat(semiAutoResult.getFeedbacks()).hasSize(2);
         assertThat(semiAutoResult.getFeedbacks().get(0).getType()).isEqualTo(FeedbackType.MANUAL);
         assertThat(semiAutoResult.getFeedbacks().get(1).getType()).isEqualTo(FeedbackType.AUTOMATIC);
     }
@@ -199,7 +199,7 @@ public class ProgrammingExerciseResultTestService {
         gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         var latestSubmissions = programmingSubmissionRepository.findAll();
         // One submission from the student participation and the other from solution participation
-        assertThat(latestSubmissions.size()).isEqualTo(2);
+        assertThat(latestSubmissions).hasSize(2);
     }
 
     // Test
@@ -209,7 +209,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
         var submissions = programmingSubmissionRepository.findAll();
-        assertThat(submissions.size()).isEqualTo(1);
+        assertThat(submissions).hasSize(1);
 
         // Create comparator to explicitly compare feedback attributes (equals only compares id)
         Comparator<? super Feedback> scaFeedbackComparator = (Comparator<Feedback>) (fb1, fb2) -> {
@@ -230,7 +230,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and shouln't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(submissions.size());
+        assertThat(programmingSubmissionRepository.findAll()).hasSameSizeAs(submissions);
     }
 
     // Test
@@ -245,7 +245,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(1);
+        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
     }
 
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
@@ -255,13 +255,13 @@ public class ProgrammingExerciseResultTestService {
         var savedBuildLogs = buildLogEntryRepository.findAll();
         var expectedBuildLogs = getNumberOfBuildLogs(resultNotification) - 3; // 3 of those should be filtered
 
-        assertThat(savedBuildLogs.size()).isEqualTo(expectedBuildLogs);
+        assertThat(savedBuildLogs).hasSize(expectedBuildLogs);
         savedBuildLogs.forEach(
                 buildLogEntry -> assertThat(buildLogEntry.getProgrammingSubmission().getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId()));
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(1);
+        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
     }
 
     // Test
@@ -287,7 +287,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and shouln't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll().size()).isEqualTo(1);
+        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {

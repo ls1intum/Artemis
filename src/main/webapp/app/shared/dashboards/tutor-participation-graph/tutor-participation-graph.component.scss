@@ -39,16 +39,9 @@ jhi-tutor-participation-graph {
         background: green;
     }
 
+    .active + .tooltip + li,
     .active + li {
         background: red;
-
-        & + li {
-            background: red;
-        }
-
-        & + li::before {
-            background: red;
-        }
     }
 
     .not_participated {

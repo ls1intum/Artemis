@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
@@ -122,7 +122,7 @@ describe('User Management Update Component', () => {
                 translateService.use('en');
 
                 // THEN
-                expect(languageHelper.language).toStrictEqual(new BehaviorSubject<string>(translateService.currentLang).asObservable());
+                languageHelper.language.subscribe((res) => expect(res).toEqual(translateService.currentLang));
             }),
         ));
 

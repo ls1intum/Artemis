@@ -291,11 +291,11 @@ export class PlagiarismInspectorComponent implements OnInit {
 
         if (result?.comparisons) {
             this.sortComparisonsForResult(result);
+            this.showRunDetails = true;
         }
 
         this.plagiarismResult = result;
-        this.selectedComparisonId = this.plagiarismResult.comparisons[0].id;
-        this.visibleComparisons = result.comparisons;
+        this.visibleComparisons = result?.comparisons;
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {
