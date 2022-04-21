@@ -248,16 +248,12 @@ describe('QuizExercise Management Component', () => {
     });
 
     it('Should return quiz is over', () => {
-        quizExercise.isPlannedToStart = true;
-        quizExercise.releaseDate = dayjs().add(-20, 'seconds');
-        quizExercise.duration = 10;
+        quizExercise.quizEnded = true;
         expect(comp.quizIsOver(quizExercise)).toBe(true);
     });
 
     it('Should return quiz is not over', () => {
-        quizExercise.isPlannedToStart = false;
-        quizExercise.releaseDate = dayjs().add(20, 'seconds');
-        quizExercise.duration = 10;
+        quizExercise.quizEnded = false;
         expect(comp.quizIsOver(quizExercise)).toBe(false);
     });
 

@@ -30,10 +30,9 @@ const pointCounters = [
 ];
 let quizExercise = {
     id: 42,
-    started: true,
+    quizStarted: true,
     course,
     quizQuestions: [question],
-    adjustedDueDate: undefined,
 } as QuizExercise;
 
 describe('QuizExercise Point Statistic Component', () => {
@@ -75,7 +74,7 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     afterEach(() => {
-        quizExercise = { id: 42, started: true, course, quizQuestions: [question], adjustedDueDate: undefined } as QuizExercise;
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
     });
 
     describe('OnInit', () => {
@@ -122,7 +121,7 @@ describe('QuizExercise Point Statistic Component', () => {
     describe('updateDisplayedTimes', () => {
         it('should update remaining time ', () => {
             // setup
-            quizExercise.adjustedDueDate = dayjs();
+            quizExercise.dueDate = dayjs();
             comp.quizExercise = quizExercise;
 
             // call

@@ -15,7 +15,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizBatch } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -59,6 +59,7 @@ describe('QuizExercise Management Detail Component', () => {
 
     const course: Course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
+    const quizBatch = new QuizBatch();
     const mcQuestion = new MultipleChoiceQuestion();
     const answerOption = new AnswerOption();
     const exam = new Exam();
@@ -73,7 +74,7 @@ describe('QuizExercise Management Detail Component', () => {
         mcQuestion.points = 10;
         mcQuestion.answerOptions = [answerOption];
         quizExercise.quizQuestions = [mcQuestion];
-        quizExercise.isPlannedToStart = false;
+        quizExercise.quizBatches = [];
         quizExercise.releaseDate = undefined;
     };
 
@@ -416,7 +417,7 @@ describe('QuizExercise Management Detail Component', () => {
             const resetQuizExerciseAndSet = () => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
-                comp.quizExercise.isPlannedToStart = true;
+                quizExercise.quizBatches = [quizBatch];
             };
 
             it('should return isVisibleBeforeStart if no quizExercise', () => {
@@ -426,21 +427,21 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should return isVisibleBeforeStart if quizExercise not planned to start', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.isPlannedToStart = false;
+                quizExercise.quizBatches = [];
                 expect(comp.showDropdown).toBe('isVisibleBeforeStart');
             });
 
             it('should return if end of exercise is in the past', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.releaseDate = dayjs().subtract(20, 's');
-                comp.quizExercise.duration = 10;
+                comp.quizExercise.quizStarted = true;
+                comp.quizExercise.quizEnded = true;
                 expect(comp.showDropdown).toBe('isOpenForPractice');
             });
 
             it('should return if end of exercise is in the future but release date is in the past', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.releaseDate = dayjs().subtract(20, 's');
-                comp.quizExercise.duration = 50;
+                comp.quizExercise.quizStarted = true;
+                comp.quizExercise.quizEnded = false;
                 expect(comp.showDropdown).toBe('active');
             });
         });
@@ -602,6 +603,7 @@ describe('QuizExercise Management Detail Component', () => {
                 const { question: shortQuestion } = createValidSAQuestion();
 
                 beforeEach(() => {
+                    comp.quizExercise = quizExercise;
                     comp.allExistingQuestions = [multiChoiceQuestion, dndQuestion, shortQuestion];
                     comp.mcqFilterEnabled = false;
                     comp.dndFilterEnabled = false;
@@ -1327,6 +1329,7 @@ describe('QuizExercise Management Detail Component', () => {
             const control = { ...element, value: 'test' };
             beforeEach(() => {
                 comp.importFile = fakeFile;
+                comp.quizExercise = quizExercise;
                 verifyStub = jest.spyOn(comp, 'verifyAndImportQuestions').mockImplementation();
                 readAsText = jest.fn();
                 reader = new FileReader();
@@ -1453,18 +1456,6 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should put reason for no questions', () => {
                     quizExercise.quizQuestions = [];
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.noQuestion');
-                });
-
-                it('should put reason for invalid release time', () => {
-                    quizExercise.isPlannedToStart = true;
-                    quizExercise.releaseDate = undefined;
-                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.invalidStartTime');
-                });
-
-                it('should put reason if release time is before now', () => {
-                    quizExercise.isPlannedToStart = true;
-                    quizExercise.releaseDate = dayjs().subtract(1500, 's');
-                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.startTimeInPast');
                 });
             });
 
