@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.User;
 public class Reaction extends DomainObject {
 
     @ManyToOne
+    // Avoid to leak too much information, only the name (for display) and the id (for comparison) is needed)
     @JsonIncludeProperties({ "id", "name" })
     private User user;
 

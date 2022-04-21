@@ -6,10 +6,11 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -46,9 +47,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -572,7 +571,7 @@ public class DatabaseUtilService {
     }
 
     public AttachmentUnit createAttachmentUnit() {
-        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link(Paths.get("files", "temp", "example.txt").toString()).name("example");
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
@@ -1440,7 +1439,7 @@ public class DatabaseUtilService {
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
-    public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URL localRepoPath) {
+    public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URI localRepoPath) {
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
@@ -3788,5 +3787,51 @@ public class DatabaseUtilService {
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
                 exerciseId, participationId, submissionId);
+    }
+
+    /**
+     * Update the max complaint text limit of the course.
+     * @param course course which is updated
+     * @param complaintTextLimit new complaint text limit
+     * @return updated course
+     */
+    public Course updateCourseComplaintTextLimit(Course course, int complaintTextLimit) {
+        course.setMaxComplaintTextLimit(complaintTextLimit);
+        assertThat(course.getMaxComplaintTextLimit()).as("course contains the correct complaint text limit").isEqualTo(complaintTextLimit);
+        return courseRepo.save(course);
+    }
+
+    /**
+     * Update the max complaint response text limit of the course.
+     * @param course course which is updated
+     * @param complaintTextLimit new complaint response text limit
+     * @return updated course
+     */
+    public Course updateCourseComplaintResponseTextLimit(Course course, int complaintResponseTextLimit) {
+        course.setMaxComplaintResponseTextLimit(complaintResponseTextLimit);
+        assertThat(course.getMaxComplaintResponseTextLimit()).as("course contains the correct complaint response text limit").isEqualTo(complaintResponseTextLimit);
+        return courseRepo.save(course);
+    }
+
+    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
+        for (Posting posting : postings) {
+            assertSensitiveInformationHidden(posting);
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Posting posting) {
+        if (posting.getAuthor() != null) {
+            assertThat(posting.getAuthor().getEmail()).isNull();
+            assertThat(posting.getAuthor().getLogin()).isNull();
+            assertThat(posting.getAuthor().getRegistrationNumber()).isNull();
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Reaction reaction) {
+        if (reaction.getUser() != null) {
+            assertThat(reaction.getUser().getEmail()).isNull();
+            assertThat(reaction.getUser().getLogin()).isNull();
+            assertThat(reaction.getUser().getRegistrationNumber()).isNull();
+        }
     }
 }

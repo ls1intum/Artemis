@@ -102,7 +102,7 @@ describe('Team Owner Search Component', () => {
         const searchFailedSpy = jest.spyOn(comp.searchFailed, 'emit');
 
         const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseGroup');
-        courseServiceSpy.mockReturnValue(throwError(new Error('getAllUsersInCourseGroup failed')));
+        courseServiceSpy.mockReturnValue(throwError(() => new Error('getAllUsersInCourseGroup failed')));
 
         comp.course = { id: 1 };
 

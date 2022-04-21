@@ -80,17 +80,17 @@ public class ProgrammingExerciseTask extends DomainObject {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (this == other) {
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
         }
-        if (other == null || getClass() != other.getClass()) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        if (!super.equals(other)) {
+        if (!super.equals(obj)) {
             return false;
         }
-        ProgrammingExerciseTask that = (ProgrammingExerciseTask) other;
+        ProgrammingExerciseTask that = (ProgrammingExerciseTask) obj;
         return Objects.equals(taskName, that.taskName) && Objects.equals(testCases, that.testCases);
     }
 }

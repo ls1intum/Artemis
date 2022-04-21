@@ -109,7 +109,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // copy by pushing the source's content to the target's repo
             gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, getDefaultBranchOfRepository(sourceRepoUrl));
         }
-        catch (InterruptedException | GitAPIException e) {
+        catch (GitAPIException e) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
             try {
                 if (targetRepo != null) {
@@ -129,10 +129,5 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         }
 
         return targetRepoUrl;
-    }
-
-    @Override
-    public String getRepositoryName(VcsRepositoryUrl repositoryUrl) {
-        return urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
     }
 }

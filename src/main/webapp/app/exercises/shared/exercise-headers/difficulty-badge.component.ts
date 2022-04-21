@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
@@ -7,7 +7,7 @@ import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
     selector: 'jhi-difficulty-badge',
     templateUrl: './difficulty-badge.component.html',
 })
-export class DifficultyBadgeComponent implements OnInit, OnDestroy {
+export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
     @Input() exercise: Exercise;
     @Input() showNoLevel: boolean;
     public translatedDifficulty: string;
@@ -23,6 +23,9 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.setBadgeAttributes();
         });
+    }
+
+    ngOnChanges(): void {
         this.setBadgeAttributes();
     }
 
