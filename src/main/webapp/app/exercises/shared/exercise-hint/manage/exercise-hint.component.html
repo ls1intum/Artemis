@@ -26,7 +26,12 @@
                     <td>
                         <a [routerLink]="[exerciseHint.id]">{{ exerciseHint.id }}</a>
                     </td>
-                    <td>{{ exerciseHint.title }}</td>
+                    <td>
+                        {{ exerciseHint.title }}
+                        <br />
+                        <span *ngIf="exerciseHint.solutionEntries; else textHint" class="badge"> <fa-icon [icon]="faCode"></fa-icon> Code Hint </span>
+                        <ng-template #textHint> <fa-icon [icon]="faText"></fa-icon> Code Hint </ng-template>
+                    </td>
                     <td [innerHTML]="exerciseHint.content | htmlForMarkdown"></td>
                     <td>
                         <span>{{ exerciseHint.exercise?.id }}</span>
