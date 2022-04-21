@@ -24,7 +24,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
                 WHERE plagiarismCase.student.login = :studentLogin
                 AND plagiarismCase.exercise.id = :exerciseId
             """)
-    Optional<PlagiarismCase> findByStudentLoginAndExerciseId(@Param("studentLogin") String studentLogin, @Param("exerciseId") Long exerciseId);
+    Optional<PlagiarismCase> findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(@Param("studentLogin") String studentLogin, @Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
@@ -35,7 +35,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             LEFT JOIN FETCH plagiarismComparison.submissionB submissionB
             WHERE plagiarismCase.exercise.course.id = :courseId
             """)
-    List<PlagiarismCase> findPlagiarismCasesForCourse(@Param("courseId") Long courseId);
+    List<PlagiarismCase> findByCourseIdWithPlagiarismSubmissionsAndComparison(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
@@ -48,17 +48,17 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             AND plagiarismCase.student.id = :userId
             AND (plagiarismCase.post IS NOT NULL OR plagiarismCase.verdict IS NOT NULL)
             """)
-    List<PlagiarismCase> findPlagiarismCasesForStudentForCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    List<PlagiarismCase> findByStudentIdAndCourseIdWithPlagiarismSubmissionsAndComparison(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             WHERE plagiarismCase.id = :plagiarismCaseId
             """)
-    Optional<PlagiarismCase> findByIdWithExerciseAndPlagiarismSubmissions(@Param("plagiarismCaseId") long plagiarismCaseId);
+    Optional<PlagiarismCase> findByIdWithPlagiarismSubmissions(@Param("plagiarismCaseId") long plagiarismCaseId);
 
-    default PlagiarismCase findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(long plagiarismCaseId) {
-        return findByIdWithExerciseAndPlagiarismSubmissions(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
+    default PlagiarismCase findByIdWithPlagiarismSubmissionsElseThrow(long plagiarismCaseId) {
+        return findByIdWithPlagiarismSubmissions(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
     }
 
     default PlagiarismCase findByIdElseThrow(long plagiarismCaseId) {

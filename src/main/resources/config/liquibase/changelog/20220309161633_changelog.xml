@@ -5,8 +5,12 @@
             <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" primaryKeyName="plagiarism_casePK"/>
             </column>
-            <column name="exercise_id" type="BIGINT"/>
-            <column name="student_id" type="BIGINT"/>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="student_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
             <column name="post_id" type="BIGINT"/>
             <column name="created_by" type="VARCHAR(50)">
                 <constraints nullable="false"/>

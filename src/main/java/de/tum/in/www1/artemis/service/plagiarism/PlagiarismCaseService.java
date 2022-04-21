@@ -68,7 +68,7 @@ public class PlagiarismCaseService {
      * @param post              the post which belongs to the plagiarism case
      */
     public void savePostForPlagiarismCaseAndNotifyStudent(long plagiarismCaseId, Post post) {
-        PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+        PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         plagiarismCase.setPost(post);
         plagiarismCaseRepository.save(plagiarismCase);
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, plagiarismCase.getStudent());
@@ -87,7 +87,7 @@ public class PlagiarismCaseService {
     public void createOrAddToPlagiarismCasesForComparison(long plagiarismComparisonId) {
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
         // handle student A
-        var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseId(plagiarismComparison.getSubmissionA().getStudentLogin(),
+        var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionA().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseA.isPresent()) {
             // add submission to existing PlagiarismCase for student A
@@ -105,7 +105,7 @@ public class PlagiarismCaseService {
             plagiarismComparisonRepository.save(plagiarismComparison);
         }
         // handle student B
-        var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseId(plagiarismComparison.getSubmissionB().getStudentLogin(),
+        var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionB().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseB.isPresent()) {
             // add submission to existing PlagiarismCase for student B
@@ -137,13 +137,13 @@ public class PlagiarismCaseService {
         plagiarismComparison.getSubmissionB().setPlagiarismCase(null);
         plagiarismComparisonRepository.save(plagiarismComparison);
         // delete plagiarism case of Student A if it doesn't contain any submissions now
-        var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseId(plagiarismComparison.getSubmissionA().getStudentLogin(),
+        var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionA().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseA.isPresent() && plagiarismCaseA.get().getPlagiarismSubmissions().isEmpty()) {
             plagiarismCaseRepository.delete(plagiarismCaseA.get());
         }
         // delete plagiarism case of Student B if it doesn't contain any submissions now
-        var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseId(plagiarismComparison.getSubmissionB().getStudentLogin(),
+        var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionB().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseB.isPresent() && plagiarismCaseB.get().getPlagiarismSubmissions().isEmpty()) {
             plagiarismCaseRepository.delete(plagiarismCaseB.get());

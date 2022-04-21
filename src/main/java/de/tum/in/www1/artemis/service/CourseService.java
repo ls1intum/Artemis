@@ -169,7 +169,7 @@ public class CourseService {
      */
     public void fetchPlagiarismCasesForCourses(List<Course> courses, User user) {
         for (Course course : courses) {
-            var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesForStudentForCourse(user.getId(), course.getId());
+            var plagiarismCases = plagiarismCaseRepository.findByStudentIdAndCourseIdWithPlagiarismSubmissionsAndComparison(user.getId(), course.getId());
             for (var plagiarismCase : plagiarismCases) {
                 for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
                     submission.setPlagiarismCase(null);

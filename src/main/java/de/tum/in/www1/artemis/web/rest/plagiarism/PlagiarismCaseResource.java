@@ -60,7 +60,7 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesForCourse(courseId);
+        var plagiarismCases = plagiarismCaseRepository.findByCourseIdWithPlagiarismSubmissionsAndComparison(courseId);
         return getPlagiarismCasesResponseEntity(plagiarismCases);
     }
 
@@ -79,7 +79,7 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         return getPlagiarismCaseResponseEntity(plagiarismCase);
     }
 
@@ -129,7 +129,7 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
         }
-        var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesForStudentForCourse(user.getId(), courseId);
+        var plagiarismCases = plagiarismCaseRepository.findByStudentIdAndCourseIdWithPlagiarismSubmissionsAndComparison(user.getId(), courseId);
         for (var plagiarismCase : plagiarismCases) {
             if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
                 throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
@@ -169,7 +169,7 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
         }
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
             throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
         }

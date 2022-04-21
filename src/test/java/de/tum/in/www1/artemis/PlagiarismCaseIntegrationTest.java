@@ -154,7 +154,7 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
         plagiarismVerdictDTO.setVerdictMessage("This is a warning!");
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO, HttpStatus.OK);
-        var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
+        var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
         assertThat(updatedPlagiarismCase.getVerdict()).as("should update plagiarism case verdict").isEqualTo(PlagiarismVerdict.WARNING);
         assertThat(updatedPlagiarismCase.getVerdictMessage()).as("should update plagiarism case verdict message").isEqualTo("This is a warning!");
     }
