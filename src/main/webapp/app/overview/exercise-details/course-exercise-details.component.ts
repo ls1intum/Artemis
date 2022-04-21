@@ -47,7 +47,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { SafeHtml } from '@angular/platform-browser';
-import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
@@ -90,6 +90,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isExamExercise: boolean;
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
+    exampleSolutionCollapsed: boolean;
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
@@ -115,6 +116,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faSignal = faSignal;
     faExternalLinkAlt = faExternalLinkAlt;
     faFileSignature = faFileSignature;
+    faAngleDown = faAngleDown;
+    faAngleUp = faAngleUp;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -267,6 +270,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const exercise = newExercise as ProgrammingExercise;
             this.isProgrammingExerciseExampleSolutionPublished = exercise.exampleSolutionPublished || false;
         }
+        // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
+        this.exampleSolutionCollapsed = !!this.exercise?.isAtLeastTutor;
     }
 
     /**
@@ -556,6 +561,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.alertService.error('artemisApp.exercise.resultCreationUnsuccessful');
             },
         });
+    }
+
+    /**
+     * Used to change the boolean value for the example solution dropdown menu
+     */
+    changeExampleSolution() {
+        this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
