@@ -79,11 +79,11 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        return getPlagiarismCaseResponseEntity(plagiarismCaseId);
+        var plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+        return getPlagiarismCaseResponseEntity(plagiarismCase);
     }
 
-    private ResponseEntity<PlagiarismCase> getPlagiarismCaseResponseEntity(long plagiarismCaseId) {
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+    private ResponseEntity<PlagiarismCase> getPlagiarismCaseResponseEntity(PlagiarismCase plagiarismCase) {
         for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
             submission.setPlagiarismCase(null);
             submission.getPlagiarismComparison().getPlagiarismResult().setExercise(null);
@@ -130,6 +130,11 @@ public class PlagiarismCaseResource {
             throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
         }
         var plagiarismCases = plagiarismCaseRepository.findPlagiarismCasesForStudentForCourse(user.getId(), courseId);
+        for (var plagiarismCase : plagiarismCases) {
+            if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
+                throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
+            }
+        }
         return getPlagiarismCasesResponseEntity(plagiarismCases);
     }
 
@@ -164,6 +169,10 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
         }
-        return getPlagiarismCaseResponseEntity(plagiarismCaseId);
+        var plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+        if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
+            throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
+        }
+        return getPlagiarismCaseResponseEntity(plagiarismCase);
     }
 }
