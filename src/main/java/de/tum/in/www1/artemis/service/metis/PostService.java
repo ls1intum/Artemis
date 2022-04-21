@@ -428,20 +428,21 @@ public class PostService extends PostingService {
         final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.getPlagiarismCaseId());
 
         // checks
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember(), user)
-                || !plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
+        if (authorizationCheckService.isAtLeastInstructorInCourse(plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember(), user)
+                || plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
+            // retrieve posts
+            List<Post> plagiarismCasePosts;
+            plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.getPlagiarismCaseId(), postContextFilter.getFilterToUnresolved(),
+                    postContextFilter.getFilterToOwn(), postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+
+            // protect sample solution, grading instructions, etc.
+            plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+            return plagiarismCasePosts;
+        }
+        else {
             throw new ForbiddenException("Only instructors in the course or the students affected by the plagiarism case are allowed to view its post");
         }
-
-        // retrieve posts
-        List<Post> plagiarismCasePosts;
-        plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.getPlagiarismCaseId(), postContextFilter.getFilterToUnresolved(),
-                postContextFilter.getFilterToOwn(), postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
-
-        // protect sample solution, grading instructions, etc.
-        plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return plagiarismCasePosts;
     }
 
     /**

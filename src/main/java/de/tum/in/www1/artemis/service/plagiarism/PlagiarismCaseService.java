@@ -96,7 +96,7 @@ public class PlagiarismCaseService {
      *      *     <li>Create a new plagiarism case if the student isn't already part of a plagiarism case in the exercise</li>
      *      *     <li>Add the submission of the student to existing plagiarism case otherwise</li>
      *      * </ul>
-     * 
+     *
      * @param plagiarismComparison  the plagiarism comparison for which to create the plagiarism case
      * @param plagiarismSubmission  the plagiarism submission of the student for which to create the plagiarism case
      */

@@ -8,6 +8,7 @@ import { Subject } from 'rxjs';
 })
 export class PlagiarismCaseReviewComponent {
     @Input() plagiarismCase: PlagiarismCase;
+    @Input() forStudent = true;
 
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
