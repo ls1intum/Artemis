@@ -111,7 +111,7 @@ public class LearningGoalResource {
     @DeleteMapping("/courses/{courseId}/goals/{learningGoalId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
-        log.info("REST request to remove a LearningGoal : {}", learningGoalId);
+        log.info("REST request to delete a LearningGoal : {}", learningGoalId);
         var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId);
         learningGoalRepository.deleteById(learningGoal.getId());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
@@ -165,6 +165,17 @@ public class LearningGoalResource {
         if (!learningGoal.getCourse().getId().equals(courseId)) {
             throw new ConflictException("The learning goal does not belong to the correct course", "LearningGoal", "learningGoalWrongCourse");
         }
+
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, learningGoal.getCourse(), null);
+        return learningGoal;
+    }
+
+    private LearningGoal findPrerequisite(Role role, Long learningGoalId, Long courseId) {
+        var learningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectionalElseThrow(learningGoalId);
+        if (!learningGoal.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
+            throw new ConflictException("The learning goal is not a prerequisite of the given course", "LearningGoal", "prerequisiteWrongCourse");
+        }
+
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, learningGoal.getCourse(), null);
         return learningGoal;
     }
@@ -249,6 +260,40 @@ public class LearningGoalResource {
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/goals/" + persistedLearningGoal.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedLearningGoal);
 
+    }
+
+    /**
+     * POST /courses/:courseId/prerequisites/:learningGoalId
+     * @param courseId the id of the course for which the learning goal should be a prerequisite
+     * @param learningGoalId the id of the prerequisite (learning goal) to add
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/courses/{courseId}/prerequisites/{learningGoalId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> addPrerequisite(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+        log.info("REST request to add a prerequisite: {}", learningGoalId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var learningGoal = findPrerequisite(Role.INSTRUCTOR, learningGoalId, courseId);
+        course.addPrerequisite(learningGoal);
+        courseRepository.save(course);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
+    }
+
+    /**
+     * DELETE /courses/:courseId/prerequisites/:learningGoalId
+     * @param courseId the id of the course for which the learning goal is a prerequisite
+     * @param learningGoalId the id of the prerequisite (learning goal) to remove
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("/courses/{courseId}/prerequisites/{learningGoalId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> removePrerequisite(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+        log.info("REST request to remove a prerequisite: {}", learningGoalId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var learningGoal = findPrerequisite(Role.INSTRUCTOR, learningGoalId, courseId);
+        course.removePrerequisite(learningGoal);
+        courseRepository.save(course);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
     }
 
     private Set<LectureUnit> getLectureUnitsFromDatabase(Set<LectureUnit> lectureUnitsFromClient) {
