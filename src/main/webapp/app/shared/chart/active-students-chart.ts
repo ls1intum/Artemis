@@ -1,9 +1,7 @@
-import { Directive } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 
-@Directive()
-export class ActiveStudentsChartDirective {
+export abstract class ActiveStudentsChart {
     startDateAlreadyPassed = true;
     currentOffsetToEndDate = 0; // the number of weeks between the end date of the course and the current date
     currentSpanSize: number;

@@ -8,14 +8,14 @@ import { Course } from 'app/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import * as shape from 'd3-shape';
 import { GraphColors } from 'app/entities/statistics.model';
-import { ActiveStudentsChartDirective } from 'app/shared/chart/active-students-chart.directive';
+import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
 })
-export class CourseDetailLineChartComponent extends ActiveStudentsChartDirective implements OnChanges {
+export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnChanges {
     @Input()
     course: Course;
     @Input()

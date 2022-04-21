@@ -5,14 +5,14 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import * as shape from 'd3-shape';
-import { ActiveStudentsChartDirective } from 'app/shared/chart/active-students-chart.directive';
+import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
 })
-export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChartDirective implements OnInit, OnChanges {
+export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart implements OnInit, OnChanges {
     @Input()
     amountOfStudentsInCourse: number;
 
