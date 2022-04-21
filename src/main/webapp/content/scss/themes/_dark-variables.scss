@@ -193,7 +193,7 @@ $code-editor-file-browser-input-color: white;
 // Overview variables
 $overview-border-color: $border-color;
 $overview-light-border-color: darken($overview-border-color, 5%);
-$overview-light-background-color: lighten($neutral-dark, 10%);
+$overview-light-background-color: rgba($overview-light-border-color, 0.3);
 $overview-light-primary-background-color: rgba($primary, 0.3);
 $overview-blue-border-color: $primary;
 $overview-tab-active-border-color: $body-color;
