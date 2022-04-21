@@ -223,16 +223,13 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteCodeHintShouldFail() throws Exception {
+    public void deleteCodeHintAsInstructor() throws Exception {
         CodeHint codeHint = new CodeHint();
         codeHint.setTitle("Hint 1");
         codeHint.setExercise(exercise);
         exerciseHintRepository.save(codeHint);
 
-        int sizeBefore = exerciseHintRepository.findAll().size();
-        request.delete("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/" + codeHint.getId(), HttpStatus.BAD_REQUEST);
-        int sizeAfter = exerciseHintRepository.findAll().size();
-        assertThat(sizeAfter).isEqualTo(sizeBefore);
+        request.delete("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/" + codeHint.getId(), HttpStatus.NO_CONTENT);
     }
 
     @Test
