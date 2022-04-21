@@ -87,6 +87,10 @@ public class BehavioralTestCaseService {
         if (solutionEntries == null || solutionEntries.isEmpty()) {
             throw new BehavioralSolutionEntryGenerationException("No solution entry was generated");
         }
+        // Remove temporary id before saving
+        for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
+            solutionEntry.setId(null);
+        }
         solutionEntries = solutionEntryRepository.saveAll(solutionEntries);
         log.info("{} behavioral solution entries for programming exercise {} have been generated", solutionEntries.size(), programmingExercise.getId());
         return solutionEntries;

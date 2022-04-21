@@ -58,6 +58,7 @@ public class CreateSolutionEntriesTest {
         assertThat(createSolutionEntries.executeCondition()).isTrue();
         assertThat(createSolutionEntries.executeAction()).isTrue();
         var expected = new ProgrammingExerciseSolutionEntry();
+        expected.setId(0L);
         expected.setFilePath("test.java");
         expected.setTestCase(groupedFile.getTestCase());
         expected.setLine(2);
@@ -73,6 +74,7 @@ public class CreateSolutionEntriesTest {
         assertThat(createSolutionEntries.executeCondition()).isTrue();
         assertThat(createSolutionEntries.executeAction()).isTrue();
         var expected = new ProgrammingExerciseSolutionEntry();
+        expected.setId(0L);
         expected.setFilePath("test.java");
         expected.setTestCase(groupedFile.getTestCase());
         expected.setLine(2);
@@ -88,11 +90,13 @@ public class CreateSolutionEntriesTest {
         assertThat(createSolutionEntries.executeCondition()).isTrue();
         assertThat(createSolutionEntries.executeAction()).isTrue();
         var expected1 = new ProgrammingExerciseSolutionEntry();
+        expected1.setId(0L);
         expected1.setFilePath("test.java");
         expected1.setTestCase(groupedFile.getTestCase());
         expected1.setLine(2);
         expected1.setCode("B\nC");
         var expected2 = new ProgrammingExerciseSolutionEntry();
+        expected2.setId(0L);
         expected2.setFilePath("test.java");
         expected2.setTestCase(groupedFile.getTestCase());
         expected2.setLine(4);
