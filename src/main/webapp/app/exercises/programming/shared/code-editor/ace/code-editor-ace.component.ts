@@ -14,6 +14,7 @@ import 'brace/mode/kotlin';
 import 'brace/mode/assembly_x86';
 import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
+import 'brace/theme/dracula';
 import { AceEditorComponent, MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
@@ -29,6 +30,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faGear, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
@@ -98,20 +100,36 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     markerIds: number[] = [];
     tabSize = 4;
 
+    themeSubscription: Subscription;
+
     // Icons
     farFileAlt = faFileAlt;
     faPlusSquare = faPlusSquare;
     faCircleNotch = faCircleNotch;
     faGear = faGear;
 
-    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
+    constructor(
+        private repositoryFileService: CodeEditorRepositoryFileService,
+        private fileService: CodeEditorFileService,
+        protected localStorageService: LocalStorageService,
+        private themeService: ThemeService,
+    ) {}
 
     /**
      * @function ngAfterViewInit
      * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
-        this.editor.setTheme('dreamweaver');
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
+            switch (theme) {
+                case Theme.DARK:
+                    this.editor.setTheme('monokai');
+                    break;
+                case Theme.LIGHT:
+                default:
+                    this.editor.setTheme('dreamweaver');
+            }
+        });
         this.editor.getEditor().setOptions({
             animatedScroll: true,
             enableBasicAutocompletion: true,
@@ -277,6 +295,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
+        this.themeSubscription?.unsubscribe();
     }
 
     /**

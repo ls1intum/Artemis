@@ -137,9 +137,45 @@ $stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
 $stat-av-sc-legend-median: rgba(127, 127, 127, 255);
 $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
 
-// Programming Exercise Form (scss)
+// Programming Exercise Form
 $update-programming-exercise-footer-background: white;
 $update-programming-exercise-footer-box-shadow: rgba(0, 0, 0, 0.7);
+
+// Edit Quiz
+$edit-quiz-footer-background: white;
+$edit-quiz-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$quiz-exercise-detail-max-score-background: whitesmoke;
+$quiz-exercise-detail-max-score-color: black;
+$quiz-edit-question-border: lightgrey;
+$quiz-edit-question-background: #fefefe;
+
+$edit-quiz-q-dnd-drop-location-background: white;
+$edit-quiz-q-dnd-drop-location-color: black;
+$edit-quiz-q-dnd-drop-location-hover-bg: rgba(255, 255, 255, 0.8);
+
+// Quiz Exercises
+$quiz-drag-items-background: white;
+$quiz-drag-item-background: #fafafa;
+$quiz-drag-item-border: #696969;
+$quiz-drag-item-color: black;
+
+// Programming Exercises
+$programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;
+$programming-exercise-instruction-step-wizard-card-header-border: #ddd;
+$programming-exercise-instruction-step-wizard-row-before-background: #ccc;
+$programming-exercise-instruction-step-wizard-btn-circle-light-border-color: #ccc;
+$programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
+
+// SGI
+$edit-sqi-grading-instructions-update-border: lightgray;
+$edit-sqi-criterion-title-row-background: rgb(242 242 242);
+
+// Code Editor
+$code-editor-file-browser-header-background: #f5f5f5;
+$code-editor-file-browser-header-border: #ddd;
+$code-editor-file-browser-tree-hover: #f5f5f5;
+$code-editor-file-browser-input-background: white;
+$code-editor-file-browser-input-color: black;
 
 // Overview variables
 $overview-border-color: $border-color;
@@ -150,6 +186,12 @@ $overview-blue-border-color: $primary;
 $overview-tab-active-border-color: $artemis-dark;
 $overview-refresh-overlay-bg-color: rgba(255, 255, 255, 0.6);
 $overview-refresh-overlay-color: $artemis-dark;
+
+// Lecture Unit
+$lecture-unit-card-body-background: white;
+$lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
+$lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
+$lecture-unit-card-hover-shadow: $primary;
 
 // Notification sidebar
 $notification-sb-background: $brighter-body-bg;

@@ -232,7 +232,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
             }
             switch (theme) {
                 case Theme.DARK:
-                    this.aceEditorContainer.setTheme('ambiance');
+                    this.aceEditorContainer.setTheme('monokai');
                     break;
                 case Theme.LIGHT:
                 default:

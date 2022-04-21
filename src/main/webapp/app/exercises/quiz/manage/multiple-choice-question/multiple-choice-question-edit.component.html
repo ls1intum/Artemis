@@ -1,7 +1,7 @@
 <div class="edit-mc-question">
     <div class="question-options card-header question-card-header" [hidden]="showPreview">
         <button
-            class="btn btn-light question-collapse"
+            class="btn question-collapse"
             (click)="isQuestionCollapsed = !isQuestionCollapsed"
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex"

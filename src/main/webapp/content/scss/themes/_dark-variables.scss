@@ -6,7 +6,7 @@
 // $info: #17a2b8;
 // $warning: #ffc107;
 // $danger: #dc3545;
-$table-striped-bg: rgba($white, 0.05);
+$table-striped-bg: rgba($white, 0.02);
 
 // Global colors
 $artemis-dark: #353d47;
@@ -76,7 +76,7 @@ $code-password-hover: white;
 $unreferenced-feedback-background: whitesmoke;
 $displaycolor-background: #f8f9fa;
 
-$markdown-preview-editor-background: #f8f9fa;
+$markdown-preview-editor-background: transparent;
 $markdown-preview-red: #ca2024;
 $markdown-preview-green: #3ea119;
 $markdown-preview-white: #ffffff;
@@ -154,15 +154,57 @@ $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
 $update-programming-exercise-footer-background: $brighter-body-bg;
 $update-programming-exercise-footer-box-shadow: rgba(0, 0, 0, 0.7);
 
+// Edit Quiz
+$edit-quiz-footer-background: $brighter-body-bg;
+$edit-quiz-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$quiz-exercise-detail-max-score-background: $artemis-dark;
+$quiz-exercise-detail-max-score-color: white;
+$quiz-edit-question-border: lighten($neutral-dark, 10%);
+$quiz-edit-question-background: $neutral-dark;
+
+$edit-quiz-q-dnd-drop-location-background: white;
+$edit-quiz-q-dnd-drop-location-color: black;
+$edit-quiz-q-dnd-drop-location-hover-bg: rgba(255, 255, 255, 0.8);
+
+// Quiz Exercises
+$quiz-drag-items-background: lighten($neutral-dark, 5%);
+$quiz-drag-item-background: lighten($neutral-dark, 10%);
+$quiz-drag-item-border: lighten($neutral-dark, 20%);
+$quiz-drag-item-color: white;
+
+// Programming Exercises
+$programming-exercise-instruction-step-wizard-card-header-background: lighten($neutral-dark, 5%);
+$programming-exercise-instruction-step-wizard-card-header-border: lighten($neutral-dark, 10%);
+$programming-exercise-instruction-step-wizard-row-before-background: #ccc;
+$programming-exercise-instruction-step-wizard-btn-circle-light-border-color: #ccc;
+$programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
+
+// SGI
+$edit-sqi-grading-instructions-update-border: $border-color;
+$edit-sqi-criterion-title-row-background: lighten($neutral-dark, 5%);
+
+// Code Editor
+$code-editor-file-browser-header-background: lighten($neutral-dark, 5%);
+$code-editor-file-browser-header-border: lighten($neutral-dark, 10%);
+$code-editor-file-browser-tree-hover: lighten($neutral-dark, 5%);
+$code-editor-file-browser-input-background: darken($neutral-dark, 10%);
+$code-editor-file-browser-input-color: white;
+
 // Overview variables
 $overview-border-color: $border-color;
 $overview-light-border-color: darken($overview-border-color, 5%);
-$overview-light-background-color: rgba($overview-light-border-color, 0.3);
+$overview-light-background-color: lighten($neutral-dark, 10%);
 $overview-light-primary-background-color: rgba($primary, 0.3);
 $overview-blue-border-color: $primary;
 $overview-tab-active-border-color: $body-color;
 $overview-refresh-overlay-bg-color: transparentize($neutral-dark, 0.5);
 $overview-refresh-overlay-color: $gray-400;
+
+// Lecture Unit
+$lecture-unit-card-body-background: $neutral-dark;
+$lecture-unit-card-header-background: lighten($neutral-dark, 5%);
+$lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
+$lecture-unit-card-hover-shadow: $primary;
 
 // Notification sidebar
 $notification-sb-background: $body-bg;

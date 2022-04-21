@@ -160,14 +160,10 @@ a.btn {
 .form-control,
 .form-select,
 .form-check-input,
-.form-control:hover,
+.form-control:not(.ace_editor):hover,
 .form-control:focus {
     background-color: var(--form-control-focus-background);
     color: var(--form-control-color);
-}
-
-.form-control.ace_editor.ace-monokai {
-    background-color: var(--form-control-focus-background);
 }
 
 .form-inline .form-control {

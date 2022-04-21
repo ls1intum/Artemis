@@ -14,6 +14,19 @@ html {
     color: $artemis-link-color;
 }
 
+.btn-outline-secondary:not(.list-group-item) {
+    color: $gray-400;
+}
+
+.btn-outline-dark:not(.list-group-item) {
+    color: $gray-200;
+    border-color: $gray-300;
+}
+
+.mat-form-field-outline {
+    color: $border-color;
+}
+
 .form-control:disabled,
 .form-control[readonly],
 .form-select:disabled,
@@ -22,6 +35,11 @@ html {
 .form-check-input[readonly] {
     background: $gray-700 !important;
     color: $gray-400;
+}
+
+.form-control,
+.form-select {
+    border-color: lighten($neutral-dark, 10%);
 }
 
 .text-lightgrey {

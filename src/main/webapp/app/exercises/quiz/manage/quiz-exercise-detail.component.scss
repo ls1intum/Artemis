@@ -10,6 +10,11 @@
     & > span {
         margin-bottom: 10px;
     }
+
+    .badge.max-score {
+        background: var(--quiz-exercise-detail-max-score-background);
+        color: var(--quiz-exercise-detail-max-score-color);
+    }
 }
 
 .btn-block {
@@ -27,9 +32,9 @@
     .question {
         width: 100%;
         box-sizing: border-box;
-        border: 1px solid lightgrey;
+        border: 1px solid var(--quiz-edit-question-border);
         margin-bottom: 18px;
-        background: #fefefe;
+        background: var(--quiz-edit-question-background);
 
         &:first-of-type {
             margin-top: 18px;
@@ -131,8 +136,8 @@
         left: 0;
         right: 0;
         z-index: 10;
-        box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-        background: white;
+        box-shadow: 0 0 3px var(--edit-quiz-footer-box-shadow);
+        background: var(--edit-quiz-footer-background);
         padding-top: 10px;
 
         .container {

@@ -41,7 +41,6 @@
 
 .alert {
     color: $white;
-    border: none;
 
     a,
     .alert-link {
@@ -50,12 +49,10 @@
     }
 
     @each $color, $value in $theme-colors {
+        $blackened: darken($value, 20%);
         &-#{$color} {
-            @if $enable-gradients {
-                background: $value linear-gradient(180deg, mix($white, $value, 15%), $value) repeat-x;
-            } @else {
-                background-color: $value;
-            }
+            background: $blackened;
+            border-color: $value;
         }
     }
 }
