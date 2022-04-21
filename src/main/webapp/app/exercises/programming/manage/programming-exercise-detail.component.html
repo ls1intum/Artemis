@@ -559,6 +559,16 @@
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
                     </a>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
+                <dd>
+                    <div *ngIf="programmingExercise?.gitDiffReport" class="d-flex align-items-center fw-bold">
+                        <jhi-git-diff-line-stat
+                            [addedLineCount]="addedLineCount"
+                            [removedLineCount]="removedLineCount"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
+                        ></jhi-git-diff-line-stat>
+                    </div>
+                </dd>
                 <div *ngIf="programmingExercise.isAtLeastTutor && programmingExercise?.testwiseCoverageEnabled">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.coveredLineRatio">Covered Line Ratio</span></dt>
                     <dd>
