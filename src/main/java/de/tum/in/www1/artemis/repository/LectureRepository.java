@@ -71,9 +71,9 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT l FROM Lecture l
-            WHERE (l.course.instructorGroupName IN :groups OR l.course.editorGroupName IN :groups)
-            AND (l.title LIKE %:partialTitle% OR l.course.title LIKE %:partialCourseTitle%)
+            SELECT lecture FROM Lecture lecture
+            WHERE (lecture.course.instructorGroupName IN :groups OR lecture.course.editorGroupName IN :groups)
+            AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%)
             """)
     Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
@@ -85,9 +85,9 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * @return the name/title of the lecture or null if the lecture does not exist
      */
     @Query("""
-            SELECT l.title
-            FROM Lecture l
-            WHERE l.id = :lectureId
+            SELECT lecture.title
+            FROM Lecture lecture
+            WHERE lecture.id = :lectureId
             """)
     String getLectureTitle(@Param("lectureId") Long lectureId);
 

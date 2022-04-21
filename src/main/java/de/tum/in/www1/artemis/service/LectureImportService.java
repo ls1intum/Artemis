@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
@@ -150,12 +148,12 @@ public class LectureImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath = Paths.get(fileService.actualPathForPublicPath(importedAttachment.getLink()));
-        Path tempPath = Paths.get(FilePathService.getTempFilePath(), oldPath.getFileName().toString());
+        Path oldPath = Path.of(fileService.actualPathForPublicPath(importedAttachment.getLink()));
+        Path tempPath = Path.of(FilePathService.getTempFilePath(), oldPath.getFileName().toString());
 
         try {
             log.debug("Copying attachment file from {} to {}", oldPath, tempPath);
-            Files.copy(new FileInputStream(oldPath.toFile()), tempPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(oldPath, tempPath, StandardCopyOption.REPLACE_EXISTING);
 
             // File was copied to a temp directory and will be moved once we persist the attachment
             attachment.setLink(fileService.publicPathForActualPath(tempPath.toString(), null));
