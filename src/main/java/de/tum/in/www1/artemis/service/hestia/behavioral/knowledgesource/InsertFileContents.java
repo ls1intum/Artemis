@@ -4,6 +4,10 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
+/**
+ * For each {@link GroupedFile}:
+ * Inserts the contents of the file into the GroupedFile using the filePath.
+ */
 public class InsertFileContents extends BehavioralKnowledgeSource {
 
     public InsertFileContents(BehavioralBlackboard blackboard) {

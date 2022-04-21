@@ -226,7 +226,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      * POST programming-exercises/:exerciseId/structural-solution-entries : Create the structural solution entries for a programming exercise
      *
      * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200} and with body the created solution entry,
+     * @return the {@link ResponseEntity} with status {@code 200} and with body the created solution entries,
      */
     @PostMapping("programming-exercises/{exerciseId}/structural-solution-entries")
     @PreAuthorize("hasRole('EDITOR')")
@@ -249,7 +249,7 @@ public class ProgrammingExerciseSolutionEntryResource {
      * POST programming-exercises/:exerciseId/behavioral-solution-entries : Create the behavioral solution entries for a programming exercise
      *
      * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200} and with body the created solution entry,
+     * @return the {@link ResponseEntity} with status {@code 200} and with body the created solution entries,
      */
     @PostMapping("programming-exercises/{exerciseId}/behavioral-solution-entries")
     @PreAuthorize("hasRole('EDITOR')")

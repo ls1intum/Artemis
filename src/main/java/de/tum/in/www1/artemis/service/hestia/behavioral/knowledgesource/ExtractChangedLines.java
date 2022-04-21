@@ -6,6 +6,11 @@ import java.util.stream.IntStream;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
+/**
+ * For each {@link GroupedFile}:
+ * Extracts the lines that were changed in the file (of the GroupedFile) from the
+ * {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry}s
+ */
 public class ExtractChangedLines extends BehavioralKnowledgeSource {
 
     public ExtractChangedLines(BehavioralBlackboard blackboard) {

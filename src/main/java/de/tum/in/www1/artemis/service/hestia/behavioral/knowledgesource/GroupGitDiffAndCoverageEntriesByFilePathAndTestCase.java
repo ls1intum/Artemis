@@ -9,6 +9,10 @@ import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
+/**
+ * Knowledge source that takes care of creating the {@link GroupedFile}s used by all other knowledge sources.
+ * These GroupedFiles are created by grouping all coverage entries and git-diff entries together that belong the same file and test case.
+ */
 public class GroupGitDiffAndCoverageEntriesByFilePathAndTestCase extends BehavioralKnowledgeSource {
 
     public GroupGitDiffAndCoverageEntriesByFilePathAndTestCase(BehavioralBlackboard blackboard) {

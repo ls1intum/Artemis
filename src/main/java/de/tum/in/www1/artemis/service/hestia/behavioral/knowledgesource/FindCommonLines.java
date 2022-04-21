@@ -6,6 +6,10 @@ import java.util.List;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
+/**
+ * For each {@link GroupedFile}:
+ * Creates the intersection of the changed lines and the covered lines.
+ */
 public class FindCommonLines extends BehavioralKnowledgeSource {
 
     public FindCommonLines(BehavioralBlackboard blackboard) {

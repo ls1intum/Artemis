@@ -6,24 +6,37 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
 
+/**
+ * One GroupedFile groups the {@link ProgrammingExerciseGitDiffEntry}s and {@link TestwiseCoverageReportEntry}s together
+ * that belong to the same file. For each {@link ProgrammingExerciseTestCase} that covered the file a separate GroupedFile exists.
+ */
 public class GroupedFile {
 
+    // The path of the file
     private final String filePath;
 
+    // The test case that covered something in this file
     private final ProgrammingExerciseTestCase testCase;
 
+    // All changes between the template and solution repositories in this file
     private final Set<ProgrammingExerciseGitDiffEntry> gitDiffEntries;
 
+    // All coverage entries of the test case in this file
     private final Set<TestwiseCoverageReportEntry> coverageReportEntries;
 
+    // The content of this file
     private String fileContent;
 
+    // The lines of this file that were changed
     private Set<Integer> changedLines;
 
+    // The lines of this file that were covered by the test case
     private Set<Integer> coveredLines;
 
+    // The lines in this file that were both covered and changed
     private SortedSet<Integer> commonLines;
 
+    // The changes in this file that should be included in the solution entries
     private SortedSet<ChangeBlock> commonChanges;
 
     public GroupedFile(String filePath, ProgrammingExerciseTestCase testCase, Set<ProgrammingExerciseGitDiffEntry> gitDiffEntries,

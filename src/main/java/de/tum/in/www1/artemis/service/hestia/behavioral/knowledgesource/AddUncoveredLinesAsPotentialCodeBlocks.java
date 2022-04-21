@@ -7,6 +7,14 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile.ChangeBlock;
 
+/**
+ * For each {@link GroupedFile}:
+ * There are certain lines that are not covered by Jacoco (which is used for the testwise coverage) that may still be
+ * relevant to the code. This includes for example the `else` expression and curly braces.
+ * For each {@link ChangeBlock}:
+ * Check if there are such lines before or after the ChangeBlock. If there are add the entire prefix/postfix as a
+ * potential ChangeBlock to the GroupedFile.
+ */
 public class AddUncoveredLinesAsPotentialCodeBlocks extends BehavioralKnowledgeSource {
 
     private static final Pattern curlyBracesPattern = Pattern.compile("\\s*[}{]\\s*");

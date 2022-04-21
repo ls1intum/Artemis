@@ -6,6 +6,11 @@ import java.util.stream.IntStream;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
+/**
+ * For each {@link GroupedFile}:
+ * Takes the common lines (intersection of covered and changed lines) and creates {@link de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile.ChangeBlock}s
+ * from them. Each ChangeBlock represents one continuous block of common lines.
+ */
 public class CreateCommonChangeBlocks extends BehavioralKnowledgeSource {
 
     public CreateCommonChangeBlocks(BehavioralBlackboard blackboard) {

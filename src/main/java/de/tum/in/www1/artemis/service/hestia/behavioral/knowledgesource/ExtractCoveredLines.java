@@ -6,6 +6,11 @@ import java.util.stream.IntStream;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
+/**
+ * For each {@link GroupedFile}:
+ * Extracts the lines that were covered by the test case in the file (both of the GroupedFile) from the
+ * {@link de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry}s
+ */
 public class ExtractCoveredLines extends BehavioralKnowledgeSource {
 
     public ExtractCoveredLines(BehavioralBlackboard blackboard) {

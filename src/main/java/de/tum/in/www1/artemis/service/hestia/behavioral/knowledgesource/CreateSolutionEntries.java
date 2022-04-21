@@ -8,6 +8,10 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 
+/**
+ * For each {@link GroupedFile}:
+ * Creates one {@link ProgrammingExerciseSolutionEntry} for each non-potential {@link GroupedFile.ChangeBlock}
+ */
 public class CreateSolutionEntries extends BehavioralKnowledgeSource {
 
     public CreateSolutionEntries(BehavioralBlackboard blackboard) {

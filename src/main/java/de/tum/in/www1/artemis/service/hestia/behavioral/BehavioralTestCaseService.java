@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.service.hestia.behavioral;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -20,6 +25,8 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.*;
  */
 @Service
 public class BehavioralTestCaseService {
+
+    private final Logger log = LoggerFactory.getLogger(BehavioralTestCaseService.class);
 
     private final GitService gitService;
 
@@ -44,6 +51,16 @@ public class BehavioralTestCaseService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
+    /**
+     * Generates the solution entries for all behavioral test cases of a programming exercise.
+     * This uses the git-diff report, the testwise coverage, and the test cases of the programming exercise and
+     * requires them to exist.
+     * Therefore, this method also requires the exercise to have testwiseCoverageEnabled set to true.
+     *
+     * @param programmingExercise The programming exercise
+     * @return The new behavioral solution entries
+     * @throws BehavioralSolutionEntryGenerationException If there was an error while generating the solution entries
+     */
     public List<ProgrammingExerciseSolutionEntry> generateBehavioralSolutionEntries(ProgrammingExercise programmingExercise) throws BehavioralSolutionEntryGenerationException {
         if (!programmingExercise.isTestwiseCoverageEnabled()) {
             throw new BehavioralSolutionEntryGenerationException("This feature is only supported for Java Exercises with active Testwise Coverage");
@@ -60,6 +77,8 @@ public class BehavioralTestCaseService {
         if (coverageReport == null) {
             throw new BehavioralSolutionEntryGenerationException("Testwise coverage report has not been generated");
         }
+        log.info("Generating the behavioral solution entries for programming exercise {}", programmingExercise.getId());
+
         var solutionRepoFiles = readSolutionRepo(programmingExercise);
 
         var blackboard = new BehavioralBlackboard(gitDiffReport, coverageReport, solutionRepoFiles);
@@ -68,10 +87,18 @@ public class BehavioralTestCaseService {
         if (solutionEntries == null || solutionEntries.isEmpty()) {
             throw new BehavioralSolutionEntryGenerationException("No solution entry was generated");
         }
-        solutionEntryRepository.saveAll(solutionEntries);
+        solutionEntries = solutionEntryRepository.saveAll(solutionEntries);
+        log.info("{} behavioral solution entries for programming exercise {} have been generated", solutionEntries.size(), programmingExercise.getId());
         return solutionEntries;
     }
 
+    /**
+     * Utilizing the blackboard pattern this method creates the behavioral solution entries step by step.
+     * Look at the specific KnowledgeSources to learn more.
+     *
+     * @param blackboard The blackboard containing the base information
+     * @throws BehavioralSolutionEntryGenerationException If there was an error while generating the solution entries
+     */
     private void applyKnowledgeSources(BehavioralBlackboard blackboard) throws BehavioralSolutionEntryGenerationException {
         // Create knowledge sources (Turning the formatter off to make the code more readable)
         // @formatter:off
@@ -89,19 +116,34 @@ public class BehavioralTestCaseService {
         // @formatter:on
 
         boolean done = false;
+        int iterations = 0;
         while (!done) {
             boolean didChanges = false;
             for (BehavioralKnowledgeSource behavioralKnowledgeSource : behavioralKnowledgeSources) {
                 if (behavioralKnowledgeSource.executeCondition()) {
+                    log.debug("Executing knowledge source {}", behavioralKnowledgeSource.getClass().getSimpleName());
                     didChanges = behavioralKnowledgeSource.executeAction() || didChanges;
                 }
             }
             done = !didChanges;
+            iterations++;
+            // Safeguard to prevent an infinite loop
+            if (iterations >= 200) {
+                throw new BehavioralSolutionEntryGenerationException("The creation of the solution entries got stuck and was cancelled");
+            }
         }
     }
 
+    /**
+     * Reads the contents of all files in the solution repository and returns them mapped with the file path as the key.
+     *
+     * @param programmingExercise The programming exercise
+     * @return The file path of each file mapped to their contents
+     * @throws BehavioralSolutionEntryGenerationException If there was an error while reading the solution repository
+     */
     private Map<String, String> readSolutionRepo(ProgrammingExercise programmingExercise) throws BehavioralSolutionEntryGenerationException {
         try {
+            log.debug("Reading the contents of the solution repository");
             var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
             if (solutionParticipationOptional.isEmpty()) {
                 return Collections.emptyMap();
