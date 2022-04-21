@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -75,51 +77,45 @@ public class PlagiarismCaseService {
     }
 
     /**
-     * Create or add a plagiarism case for both students involved in a plagiarism comparison if it is determined to be plagiarism.
-     * For each student the following logic applies:
-     * <ul>
-     *     <li>Create a new plagiarism case if the student isn't already part of a plagiarism case in the exercise</li>
-     *     <li>Add the submission of the student to existing plagiarism case otherwise</li>
-     * </ul>
+     * Create or add to plagiarism cases for both students involved in a plagiarism comparison if it is determined to be plagiarism.
      *
      * @param plagiarismComparisonId    the ID of the plagiarism comparison
      */
     public void createOrAddToPlagiarismCasesForComparison(long plagiarismComparisonId) {
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
         // handle student A
-        var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionA().getStudentLogin(),
-                plagiarismComparison.getPlagiarismResult().getExercise().getId());
-        if (plagiarismCaseA.isPresent()) {
-            // add submission to existing PlagiarismCase for student A
-            plagiarismComparison.getSubmissionA().setPlagiarismCase(plagiarismCaseA.get());
-            plagiarismComparisonRepository.save(plagiarismComparison);
-        }
-        else {
-            // create new PlagiarismCase for student A
-            var student = userRepository.getUserByLoginElseThrow(plagiarismComparison.getSubmissionA().getStudentLogin());
-            PlagiarismCase plagiarismCase = new PlagiarismCase();
-            plagiarismCase.setExercise(plagiarismComparison.getPlagiarismResult().getExercise());
-            plagiarismCase.setStudent(student);
-            var savedPlagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
-            plagiarismComparison.getSubmissionA().setPlagiarismCase(savedPlagiarismCase);
-            plagiarismComparisonRepository.save(plagiarismComparison);
-        }
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA());
         // handle student B
-        var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionB().getStudentLogin(),
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB());
+    }
+
+    /**
+     * Create or add to a plagiarism case for a student defined via the submission involved in a plagiarism comparison.
+     * The following logic applies:
+     *      * <ul>
+     *      *     <li>Create a new plagiarism case if the student isn't already part of a plagiarism case in the exercise</li>
+     *      *     <li>Add the submission of the student to existing plagiarism case otherwise</li>
+     *      * </ul>
+     * 
+     * @param plagiarismComparison  the plagiarism comparison for which to create the plagiarism case
+     * @param plagiarismSubmission  the plagiarism submission of the student for which to create the plagiarism case
+     */
+    public void createOrAddToPlagiarismCaseForStudent(PlagiarismComparison<?> plagiarismComparison, PlagiarismSubmission<?> plagiarismSubmission) {
+        var plagiarismCase = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismSubmission.getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
-        if (plagiarismCaseB.isPresent()) {
+        if (plagiarismCase.isPresent()) {
             // add submission to existing PlagiarismCase for student B
-            plagiarismComparison.getSubmissionB().setPlagiarismCase(plagiarismCaseB.get());
+            plagiarismSubmission.setPlagiarismCase(plagiarismCase.get());
             plagiarismComparisonRepository.save(plagiarismComparison);
         }
         else {
             // create new PlagiarismCase for student B
-            var student = userRepository.getUserByLoginElseThrow(plagiarismComparison.getSubmissionB().getStudentLogin());
-            PlagiarismCase plagiarismCase = new PlagiarismCase();
-            plagiarismCase.setExercise(plagiarismComparison.getPlagiarismResult().getExercise());
-            plagiarismCase.setStudent(student);
-            var savedPlagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
-            plagiarismComparison.getSubmissionB().setPlagiarismCase(savedPlagiarismCase);
+            var student = userRepository.getUserByLoginElseThrow(plagiarismSubmission.getStudentLogin());
+            PlagiarismCase newPlagiarismCase = new PlagiarismCase();
+            newPlagiarismCase.setExercise(plagiarismComparison.getPlagiarismResult().getExercise());
+            newPlagiarismCase.setStudent(student);
+            var savedPlagiarismCase = plagiarismCaseRepository.save(newPlagiarismCase);
+            plagiarismSubmission.setPlagiarismCase(savedPlagiarismCase);
             plagiarismComparisonRepository.save(plagiarismComparison);
         }
     }

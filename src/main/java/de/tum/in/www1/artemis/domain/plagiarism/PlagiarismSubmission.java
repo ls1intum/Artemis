@@ -52,7 +52,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     @ManyToOne
     private PlagiarismCase plagiarismCase;
 
-    @OneToOne
+    @OneToOne(targetEntity = PlagiarismComparison.class)
     @JoinColumn(name = "plagiarism_comparison_id")
     private PlagiarismComparison<E> plagiarismComparison;
 
