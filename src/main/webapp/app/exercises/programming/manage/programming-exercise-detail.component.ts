@@ -44,6 +44,7 @@ import {
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/manage/code-hint.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -107,6 +108,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private statisticsService: StatisticsService,
         private sortService: SortService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
+        private codeHintService: CodeHintService,
         private router: Router,
     ) {}
 
@@ -471,6 +473,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
                 console.log(ProgrammingExerciseDetailComponent.buildStructuralSolutionEntriesMessage(res));
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
+    }
+
+    generateCodeHints() {
+        this.codeHintService.generateCodeHintsForExercise(this.programmingExercise.id!, true).subscribe({
+            next: () => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.generateCodeHintsSuccess',
+                });
             },
             error: (err) => {
                 this.onError(err);

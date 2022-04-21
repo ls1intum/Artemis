@@ -9,13 +9,16 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faEye, faPlus, faTimes, faWrench, faFont, faCode } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exercise-hint',
     templateUrl: './exercise-hint.component.html',
 })
 export class ExerciseHintComponent implements OnInit, OnDestroy {
+    HintType = HintType;
+    ExerciseType = ExerciseType;
     exerciseId: number;
     exerciseHints: ExerciseHint[];
     eventSubscriber: Subscription;

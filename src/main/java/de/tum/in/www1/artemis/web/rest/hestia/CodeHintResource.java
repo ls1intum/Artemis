@@ -2,9 +2,6 @@ package de.tum.in.www1.artemis.web.rest.hestia;
 
 import java.util.List;
 
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +47,7 @@ public class CodeHintResource {
     @PostMapping("programming-exercises/{exerciseId}/code-hints")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<CodeHint>> generateCodeHintsForExercise(@PathVariable Long exerciseId,
-            @QueryParam("deleteOldCodeHints") @DefaultValue("true") boolean deleteOldCodeHints) {
+            @RequestParam(value = "deleteOldCodeHints", defaultValue = "true") boolean deleteOldCodeHints) {
         log.debug("REST request to generate CodeHints for ProgrammingExercise: {}", exerciseId);
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);

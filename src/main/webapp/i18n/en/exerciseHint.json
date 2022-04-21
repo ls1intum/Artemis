@@ -1,6 +1,8 @@
 {
     "artemisApp": {
         "exerciseHint": {
+            "textHint": "Text hint",
+            "codeHint": "Code hint",
             "home": {
                 "title": "Exercise Hints",
                 "createLabel": "Create a new Exercise Hint",

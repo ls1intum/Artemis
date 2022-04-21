@@ -29,8 +29,12 @@
                     <td>
                         {{ exerciseHint.title }}
                         <br />
-                        <span *ngIf="exerciseHint.solutionEntries; else textHint" class="badge"> <fa-icon [icon]="faCode"></fa-icon> Code Hint </span>
-                        <ng-template #textHint> <fa-icon [icon]="faText"></fa-icon> Code Hint </ng-template>
+                        <span *ngIf="exerciseHint.type === HintType.CODE && exerciseHint.exercise?.type === ExerciseType.PROGRAMMING" class="badge bg-info"
+                            ><fa-icon [icon]="faCode"></fa-icon> {{ 'artemisApp.exerciseHint.codeHint' | artemisTranslate }}</span
+                        >
+                        <span *ngIf="exerciseHint.type === HintType.TEXT && exerciseHint.exercise?.type === ExerciseType.PROGRAMMING" class="badge bg-info"
+                            ><fa-icon [icon]="faText"></fa-icon> {{ 'artemisApp.exerciseHint.textHint' | artemisTranslate }}</span
+                        >
                     </td>
                     <td [innerHTML]="exerciseHint.content | htmlForMarkdown"></td>
                     <td>
@@ -42,7 +46,7 @@
                                 <fa-icon [icon]="faEye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </a>
-                            <a [routerLink]="[exerciseHint.id, 'edit']" class="btn btn-warning btn-sm me-1">
+                            <a *ngIf="exerciseHint.type === HintType.TEXT" [routerLink]="[exerciseHint.id, 'edit']" class="btn btn-warning btn-sm me-1">
                                 <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>

@@ -185,6 +185,17 @@
                             <span jhiTranslate="artemisApp.programmingExercise.createStructuralSolutionEntriesTitle">Create Structural Solution Entries</span>
                         </button>
                     </span>
+                    <span class="me-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="generateCodeHints()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.generateCodeHintsTooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.generateCodeHintsTitle">Generate Code Hints</span>
+                        </button>
+                    </span>
                 </div>
                 <div *ngIf="programmingExercise.isAtLeastEditor">
                     <span class="mr-1">
