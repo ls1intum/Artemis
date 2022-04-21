@@ -159,15 +159,19 @@ public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBamb
         var solutionEntries = behavioralTestCaseService.generateBehavioralSolutionEntries(exercise);
 
         var expected1 = new ProgrammingExerciseSolutionEntry();
+        expected1.setId(0L);
         expected1.setFilePath("Test.java");
         expected1.setTestCase(testCase);
         expected1.setLine(2);
         expected1.setCode("B\nC");
         var expected2 = new ProgrammingExerciseSolutionEntry();
+        expected2.setId(0L);
         expected2.setFilePath("Test.java");
         expected2.setTestCase(testCase);
         expected2.setLine(5);
         expected2.setCode("E\nF");
+        assertThat(solutionEntries).isNotNull();
+        solutionEntries.forEach(solutionEntry -> solutionEntry.setId(0L));
         assertThat(solutionEntries).containsExactlyInAnyOrder(expected1, expected2);
     }
 }

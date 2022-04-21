@@ -140,7 +140,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
 
     @Override
     public String toString() {
-        return "ProgrammingExerciseSolutionEntry{" + "filePath='" + filePath + '\'' + ", previousLine=" + previousLine + ", line=" + line + ", previousCode='" + previousCode + '\''
-                + ", code='" + code + '\'' + '}';
+        return "ProgrammingExerciseSolutionEntry{" + "id=" + getId() + '\'' + ", filePath='" + filePath + '\'' + ", previousLine=" + previousLine + ", line=" + line
+                + ", previousCode='" + previousCode + '\'' + ", code='" + code + '\'' + '}';
     }
 }
