@@ -102,12 +102,21 @@ $navbar-item-active-hover-bg: $artemis-dark;
 $navbar-breadcrumb-background: #e4e5e6;
 $navbar-breadcrumb-color: #0065bd;
 
+// Markdown Editor
+$md-wrapper-body-bg: white;
+$md-wrapper-color: $artemis-dark;
+$md-tab-list-bg: white;
+$md-editor-background: white;
+$md-file-input-border-color: $border-color;
+$md-resize-icon-color: rgba(0, 0, 0, 0.125);
+
 // Metis
 $metis-light-gray: #979797;
 $metis-gray: #6a737d;
 $metis-blue: $artemis-link-color;
 $metis-light-blue: #e3ecf3;
 $metis-green: #33cd32;
+$metis-course-discussion-select-bg: white;
 
 $reaction-button-default-color: rgba(242, 242, 242);
 $reaction-button-hover-color: rgba(255, 255, 255);
@@ -121,13 +130,34 @@ $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 $course-exercise-card-border-color: lightgrey;
 $course-exercise-card-background: #fefefe;
 
+// Component: Statistics average score graph
+$stat-av-sc-legend-background: whitesmoke;
+// These are from graph colors
+$stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
+$stat-av-sc-legend-median: rgba(127, 127, 127, 255);
+$stat-av-sc-legend-best: rgba(40, 164, 40, 1);
+
+// Programming Exercise Form (scss)
+$update-programming-exercise-footer-background: white;
+$update-programming-exercise-footer-box-shadow: rgba(0, 0, 0, 0.7);
+
 // Overview variables
 $overview-border-color: $border-color;
-$overview-light-border-color: lighten($overview-border-color, 30%);
+$overview-light-border-color: lighten($overview-border-color, 5%);
 $overview-light-background-color: rgba($overview-light-border-color, 0.3);
 $overview-light-primary-background-color: rgba($primary, 0.3);
 $overview-blue-border-color: $primary;
 $overview-tab-active-border-color: $artemis-dark;
+$overview-refresh-overlay-bg-color: rgba(255, 255, 255, 0.6);
+$overview-refresh-overlay-color: $artemis-dark;
+
+// Notification sidebar
+$notification-sb-background: $brighter-body-bg;
+$notification-sb-overlay-bg: rgba(0, 0, 0, 0.2);
+$notification-sb-box-shadow: rgba(0, 0, 0, 0.5);
+$notification-sb-even-child-bg: #f1f1f1;
+$notification-sb-hover-child-bg: rgba(62, 138, 204, 0.2);
+$notification-sb-icon-color: var(--bs-body-color);
 
 // Text Editor
 $text-editor-background: #f9f9f9;

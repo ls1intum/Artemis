@@ -90,7 +90,7 @@ export function getGraphColorForTheme(theme: Theme, color: GraphColors): string 
                 case 'GREY':
                     return 'rgb(150,150,150)';
                 case 'DARK_BLUE':
-                    return 'rgb(85,133,222)';
+                    return 'rgb(159,186,248)';
                 case 'BLUE':
                     return 'rgba(93,138,201,1)';
                 case 'LIGHT_BLUE':

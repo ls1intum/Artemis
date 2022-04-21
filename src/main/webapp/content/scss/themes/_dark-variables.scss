@@ -28,9 +28,9 @@ $border-color: lighten($body-bg, 10);
 
 // Global.scss colors
 $colored-btn-font: #fff;
-$default-btn-font: #333;
-$default-btn-background: #fff;
-$default-btn-border: #ccc;
+$default-btn-font: white;
+$default-btn-background: $artemis-dark;
+$default-btn-border: lighten($artemis-dark, 20%);
 
 $border-lightgrey: rgba(0, 0, 0, 0.125);
 $text-lightgrey: rgba(0, 0, 0, 0.125);
@@ -114,15 +114,25 @@ $navbar-item-active-hover-bg: $artemis-dark;
 $navbar-breadcrumb-background: $body-bg;
 $navbar-breadcrumb-color: $primary;
 
+// Markdown Editor
+$md-wrapper-body-bg: $body-bg;
+$md-wrapper-color: white;
+$md-tab-list-bg: $body-bg;
+$md-editor-background: $body-bg;
+$md-file-input-border-color: $border-color;
+$md-resize-icon-color: $gray-400;
+
 // Metis
 $metis-light-gray: #979797;
 $metis-gray: #6a737d;
 $metis-blue: $artemis-link-color;
 $metis-light-blue: #e3ecf3;
 $metis-green: #33cd32;
+$metis-course-discussion-select-bg: $neutral-dark;
 
 $reaction-button-default-color: $gray-800;
 $reaction-button-hover-color: $gray-700;
+$reaction-button-reacted-color: $gray-800;
 $reaction-button-reacted-color: $gray-800;
 $reaction-button-reacted-accent-color: $metis-blue;
 
@@ -131,15 +141,36 @@ $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 
 // Component: course-exercise-card
 $course-exercise-card-border-color: $border-color;
-$course-exercise-card-background: $gray-800;
+$course-exercise-card-background: $neutral-dark;
+
+// Component: Statistics average score graph
+$stat-av-sc-legend-background: $brighter-body-bg;
+// These are from graph colors
+$stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
+$stat-av-sc-legend-median: rgba(127, 127, 127, 255);
+$stat-av-sc-legend-best: rgba(40, 164, 40, 1);
+
+// Programming Exercise Form (scss)
+$update-programming-exercise-footer-background: $brighter-body-bg;
+$update-programming-exercise-footer-box-shadow: rgba(0, 0, 0, 0.7);
 
 // Overview variables
 $overview-border-color: $border-color;
-$overview-light-border-color: lighten($overview-border-color, 5%);
+$overview-light-border-color: darken($overview-border-color, 5%);
 $overview-light-background-color: rgba($overview-light-border-color, 0.3);
 $overview-light-primary-background-color: rgba($primary, 0.3);
 $overview-blue-border-color: $primary;
 $overview-tab-active-border-color: $body-color;
+$overview-refresh-overlay-bg-color: transparentize($neutral-dark, 0.5);
+$overview-refresh-overlay-color: $gray-400;
+
+// Notification sidebar
+$notification-sb-background: $body-bg;
+$notification-sb-overlay-bg: rgba(0, 0, 0, 0.2);
+$notification-sb-box-shadow: rgba(0, 0, 0, 0.5);
+$notification-sb-even-child-bg: $brighter-body-bg;
+$notification-sb-hover-child-bg: rgba(62, 138, 204, 0.2);
+$notification-sb-icon-color: var(--bs-body-color);
 
 // Text Editor
 $text-editor-background: $gray-900;
@@ -167,74 +198,3 @@ $gt-tour-block-content-tt-background: $gray-600;
 $gt-tour-block-content-red: #ca2024;
 $gt-tour-block-step-hint-not-interaction-background: $gray-800;
 $gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
-
-// ==================
-// NGX CHARTS STYLING
-// ==================
-.ngx-charts text {
-    fill: #a0aabe;
-}
-.ngx-charts .tooltip-anchor {
-    fill: #fff;
-}
-.ngx-charts .gridline-path {
-    stroke: #2f3646;
-}
-.ngx-charts .refline-path {
-    stroke: #455066;
-}
-.ngx-charts .reference-area {
-    fill: #fff;
-}
-.ngx-charts .grid-panel.odd rect {
-    fill: #ffffff0d;
-}
-.ngx-charts .number-card p {
-    color: #f0f1f6;
-}
-.ngx-charts .gauge .background-arc path {
-    fill: #2f3646;
-}
-.ngx-charts .gauge .gauge-tick path {
-    stroke: #a0aabe;
-}
-.ngx-charts .gauge .gauge-tick text {
-    fill: #a0aabe;
-}
-.ngx-charts .linear-gauge .background-bar path {
-    fill: #2f3646;
-}
-.ngx-charts .linear-gauge .units {
-    fill: #72809b;
-}
-.ngx-charts .timeline .brush-background {
-    fill: #ffffff0d;
-}
-.ngx-charts .timeline .brush .selection {
-    fill: #ffffff1a;
-    stroke: #aaa;
-}
-.ngx-charts .polar-chart .polar-chart-background {
-    fill: #1e222e;
-}
-.chart-legend .legend-labels {
-    background: rgba(255, 255, 255, 0.05) !important;
-}
-.chart-legend .legend-item:hover {
-    color: #fff;
-}
-.chart-legend .legend-label:hover,
-.chart-legend .legend-label .active .legend-label-text {
-    color: #fff !important;
-}
-.chart-legend .scale-legend-label,
-.advanced-pie-legend {
-    color: #a0aabe;
-}
-.advanced-pie-legend .legend-item:hover {
-    color: #fff !important;
-}
-.number-card .number-card-label {
-    font-size: 0.8em;
-    color: #a0aabe;
-}

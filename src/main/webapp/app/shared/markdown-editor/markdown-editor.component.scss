@@ -3,8 +3,8 @@
     flex-flow: column nowrap;
     flex: 1 1 auto;
     height: inherit;
-    background-color: var(--form-control-focus-background);
-    color: var(--form-control-color);
+    background-color: var(--md-wrapper-body-bg);
+    color: var(--md-wrapper-color);
 
     // This is a fix for using the fullscreen mode on Safari.
     &:-webkit-full-screen {
@@ -12,8 +12,12 @@
         height: 100%;
     }
 
+    .md-resize-icon {
+        color: var(--md-resize-icon-color);
+    }
+
     .tab-list {
-        background: var(--brigher-body-bg);
+        background: var(--md-tab-list-bg);
     }
     .tab-content,
     .tab-content > .active {
@@ -31,7 +35,7 @@
         min-height: 200px;
 
         // Fix for full screen mode, otherwise the color is black.
-        background-color: var(--brighter-body-bg);
+        background-color: var(--md-editor-background);
 
         &__content {
             height: 100% !important;
@@ -41,7 +45,7 @@
         }
 
         .file-input {
-            border-bottom: 1px dotted var(--border-color);
+            border-bottom: 1px dotted var(--md-file-input-border-color);
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
         }

@@ -35,7 +35,7 @@
                         <div class="col-auto p-0">
                             <select
                                 formControlName="context"
-                                class="form-select bg-transparent"
+                                class="form-select course-discussion-select"
                                 [compareWith]="compareContextFilterOptionFn"
                                 (change)="onSelectContext()"
                                 name="context"
@@ -85,7 +85,13 @@
                             <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto p-0">
-                            <select formControlName="sortBy" class="form-select bg-transparent" [compareWith]="comparePostSortOptionFn" (change)="onSelectContext()" name="sortBy">
+                            <select
+                                formControlName="sortBy"
+                                class="form-select course-discussion-select"
+                                [compareWith]="comparePostSortOptionFn"
+                                (change)="onSelectContext()"
+                                name="sortBy"
+                            >
                                 <option *ngFor="let sortByOption of SortBy | keyvalue" [ngValue]="sortByOption.value">
                                     {{ 'artemisApp.metis.overview.' + sortByOption.value | artemisTranslate }}
                                 </option>

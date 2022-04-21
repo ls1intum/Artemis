@@ -13,3 +13,88 @@ html {
 .btn-outline-primary:not(.list-group-item) {
     color: $artemis-link-color;
 }
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled,
+.form-select[readonly],
+.form-check-input:disabled,
+.form-check-input[readonly] {
+    background: $gray-700 !important;
+    color: $gray-400;
+}
+
+.text-lightgrey {
+    color: $gray-400;
+}
+
+// ==================
+// NGX CHARTS STYLING
+// ==================
+.ngx-charts text {
+    fill: #a0aabe;
+}
+.ngx-charts .tooltip-anchor {
+    fill: #fff;
+}
+.ngx-charts .gridline-path {
+    stroke: #2f3646 !important;
+}
+.ngx-charts .refline-path {
+    stroke: #455066;
+}
+.ngx-charts .reference-area {
+    fill: #fff;
+}
+.ngx-charts .grid-panel.odd rect {
+    fill: #ffffff0d;
+}
+.ngx-charts .number-card p {
+    color: #f0f1f6;
+}
+.ngx-charts .gauge .background-arc path {
+    fill: #2f3646;
+}
+.ngx-charts .gauge .gauge-tick path {
+    stroke: #a0aabe;
+}
+.ngx-charts .gauge .gauge-tick text {
+    fill: #a0aabe;
+}
+.ngx-charts .linear-gauge .background-bar path {
+    fill: #2f3646;
+}
+.ngx-charts .linear-gauge .units {
+    fill: #72809b;
+}
+.ngx-charts .timeline .brush-background {
+    fill: #ffffff0d;
+}
+.ngx-charts .timeline .brush .selection {
+    fill: #ffffff1a;
+    stroke: #aaa;
+}
+.ngx-charts .polar-chart .polar-chart-background {
+    fill: #1e222e;
+}
+.chart-legend .legend-labels {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+.chart-legend .legend-item:hover {
+    color: #fff;
+}
+.chart-legend .legend-label:hover,
+.chart-legend .legend-label .legend-label-text {
+    color: #fff !important;
+}
+.chart-legend .scale-legend-label,
+.advanced-pie-legend {
+    color: #a0aabe;
+}
+.advanced-pie-legend .legend-item:hover {
+    color: #fff !important;
+}
+.number-card .number-card-label {
+    font-size: 0.8em;
+    color: #a0aabe;
+}
