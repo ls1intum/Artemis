@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.repository.plagiarism;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,13 +17,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "plagiarismSubmissions" })
-    Optional<PlagiarismCase> findWithEagerSubmissionsById(Long aLong);
-
     @Query("""
                 SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.student
-                LEFT JOIN FETCH plagiarismCase.exercise
                 LEFT JOIN FETCH plagiarismCase.post
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
                 WHERE plagiarismCase.student.login = :studentLogin
@@ -36,7 +28,6 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.exercise exercise
             LEFT JOIN FETCH plagiarismCase.post
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
@@ -48,7 +39,6 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.exercise exercise
             LEFT JOIN FETCH plagiarismCase.post
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
@@ -62,7 +52,6 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.exercise exercise
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             WHERE plagiarismCase.id = :plagiarismCaseId
             """)
@@ -72,4 +61,7 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
         return findByIdWithExerciseAndPlagiarismSubmissions(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
     }
 
+    default PlagiarismCase findByIdElseThrow(long plagiarismCaseId) {
+        return findById(plagiarismCaseId).orElseThrow(() -> new EntityNotFoundException("PlagiarismCase", plagiarismCaseId));
+    }
 }

@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -81,7 +82,7 @@ public class PlagiarismCaseResource {
         return getPlagiarismCaseResponseEntity(plagiarismCaseId);
     }
 
-    private ResponseEntity<PlagiarismCase> getPlagiarismCaseResponseEntity(@PathVariable long plagiarismCaseId) {
+    private ResponseEntity<PlagiarismCase> getPlagiarismCaseResponseEntity(long plagiarismCaseId) {
         var plagiarismCase = plagiarismCaseRepository.findByIdWithExerciseAndPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
             submission.setPlagiarismCase(null);
@@ -159,8 +160,9 @@ public class PlagiarismCaseResource {
     public ResponseEntity<PlagiarismCase> getPlagiarismCaseForStudent(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
         log.debug("REST request to get plagiarism case for student with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastStudentInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
-            throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
+            throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
         }
         return getPlagiarismCaseResponseEntity(plagiarismCaseId);
     }

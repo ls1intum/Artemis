@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -13,7 +12,6 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class PlagiarismCaseService {
@@ -46,11 +44,7 @@ public class PlagiarismCaseService {
      * @return                      the plagiarism case with the verdict
      */
     public PlagiarismCase updatePlagiarismCaseVerdict(long plagiarismCaseId, PlagiarismVerdictDTO plagiarismVerdictDTO) {
-        Optional<PlagiarismCase> optionalPlagiarismCase = plagiarismCaseRepository.findById(plagiarismCaseId);
-        if (optionalPlagiarismCase.isEmpty()) {
-            throw new EntityNotFoundException("Plagiarism Case", plagiarismCaseId);
-        }
-        PlagiarismCase plagiarismCase = optionalPlagiarismCase.get();
+        PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(plagiarismCaseId);
         plagiarismCase.setVerdict(plagiarismVerdictDTO.getVerdict());
         if (plagiarismVerdictDTO.getVerdict().equals(PlagiarismVerdict.POINT_DEDUCTION)) {
             plagiarismCase.setVerdictPointDeduction(plagiarismVerdictDTO.getVerdictPointDeduction());

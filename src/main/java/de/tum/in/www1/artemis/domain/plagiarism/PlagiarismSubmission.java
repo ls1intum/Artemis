@@ -49,10 +49,10 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     @JoinTable(name = "plagiarism_submission_elements", joinColumns = @JoinColumn(name = "plagiarism_submission_id"), inverseJoinColumns = @JoinColumn(name = "plagiarism_submission_element_id"))
     private List<E> elements;
 
-    @ManyToOne(targetEntity = PlagiarismCase.class)
+    @ManyToOne
     private PlagiarismCase plagiarismCase;
 
-    @ManyToOne(targetEntity = PlagiarismComparison.class)
+    @ManyToOne
     private PlagiarismComparison<E> plagiarismComparison;
 
     /**

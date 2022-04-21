@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
+import javax.ws.rs.ForbiddenException;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
@@ -30,11 +31,13 @@ import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
@@ -56,6 +59,8 @@ public class PostService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final PlagiarismCaseRepository plagiarismCaseRepository;
+
     private final GroupNotificationService groupNotificationService;
 
     private final PlagiarismCaseService plagiarismCaseService;
@@ -64,10 +69,12 @@ public class PostService extends PostingService {
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService) {
+            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService,
+            PlagiarismCaseRepository plagiarismCaseRepository) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
+        this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
         this.plagiarismCaseService = plagiarismCaseService;
@@ -418,10 +425,13 @@ public class PostService extends PostingService {
      */
     public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.getPlagiarismCaseId());
 
         // checks
-        preCheckUserAndCourse(user, postContextFilter.getCourseId());
-        // TODO: add check for plagiarism case
+        if (!authorizationCheckService.isAtLeastInstructorInCourse(plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember(), user)
+                || !plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
+            throw new ForbiddenException("Only instructors in the course or the students affected by the plagiarism case are allowed to view its post");
+        }
 
         // retrieve posts
         List<Post> plagiarismCasePosts;

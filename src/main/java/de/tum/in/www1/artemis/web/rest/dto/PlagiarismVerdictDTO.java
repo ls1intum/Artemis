@@ -1,9 +1,15 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismVerdictDTO {
 
+    @NotNull
     private PlagiarismVerdict verdict;
 
     private String verdictMessage;

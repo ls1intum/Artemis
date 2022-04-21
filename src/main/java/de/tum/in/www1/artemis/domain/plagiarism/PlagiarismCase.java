@@ -14,10 +14,10 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 @Table(name = "plagiarism_case")
 public class PlagiarismCase extends AbstractAuditingEntity {
 
-    @ManyToOne(targetEntity = Exercise.class)
+    @ManyToOne
     private Exercise exercise;
 
-    @ManyToOne(targetEntity = User.class)
+    @ManyToOne
     private User student;
 
     @OneToOne
@@ -35,7 +35,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     @Column(name = "verdict_message")
     private String verdictMessage;
 
-    @ManyToOne(targetEntity = User.class)
+    @ManyToOne
     private User verdictBy;
 
     @Column(name = "verdict_date")
