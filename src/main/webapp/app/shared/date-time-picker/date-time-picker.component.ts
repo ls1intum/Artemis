@@ -1,43 +1,12 @@
 import { Component, ElementRef, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faCalendarAlt, faClock, faGlobe } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-date-time-picker',
-    template: `
-        <label class="form-control-label" *ngIf="labelName">
-            {{ labelName }}
-        </label>
-        <fa-stack
-            *ngIf="shouldDisplayTimeZoneWarning"
-            placement="top"
-            ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}"
-            style="height: 1em; width: 1em;"
-        >
-            <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey"></fa-icon>
-            <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
-        </fa-stack>
-        <div class="d-flex">
-            <input
-                #dateInput="ngModel"
-                class="form-control position-relative ps-5"
-                id="date-input-field"
-                [ngClass]="{ 'is-invalid': error }"
-                [ngModel]="value"
-                [disabled]="disabled"
-                [min]="convert(min)"
-                [max]="convert(max)"
-                (ngModelChange)="updateField($event)"
-                [owlDateTime]="dt"
-                name="datePicker"
-            />
-            <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
-                <fa-icon [icon]="faCalendarAlt"></fa-icon>
-            </button>
-            <owl-date-time [startAt]="convert(startAt)" #dt></owl-date-time>
-        </div>
-    `,
+    templateUrl: `./date-time-picker.component.html`,
+    styleUrls: [`./date-time-picker.component.scss`],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -49,6 +18,7 @@ import dayjs from 'dayjs/esm';
 export class FormDateTimePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: ElementRef;
     @Input() labelName: string;
+    @Input() labelTooltip: string;
     @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
@@ -62,6 +32,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     faCalendarAlt = faCalendarAlt;
     faGlobe = faGlobe;
     faClock = faClock;
+    faQuestionCircle = faQuestionCircle;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (val: dayjs.Dayjs) => {};

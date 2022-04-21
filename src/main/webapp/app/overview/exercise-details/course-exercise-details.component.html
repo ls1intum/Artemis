@@ -216,7 +216,7 @@
                 </div>
             </div>
             <!-- RESULTS END -->
-            <ng-container *ngIf="exampleSolutionUML || exampleSolution">
+            <ng-container *ngIf="exampleSolutionUML || exampleSolution || isProgrammingExerciseExampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="col-auto">
                         <h3>{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</h3>
@@ -233,6 +233,9 @@
                         ></jhi-modeling-editor>
                     </dd>
                     <dd *ngIf="exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolution"></dd>
+                    <dd *ngIf="isProgrammingExerciseExampleSolutionPublished" class="editor-outline-background">
+                        <jhi-programming-exercise-example-solution-repo-download class="ms-2" [exerciseId]="exercise.id!"></jhi-programming-exercise-example-solution-repo-download>
+                    </dd>
                 </dl>
             </ng-container>
             <jhi-complaint-student-view
