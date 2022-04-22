@@ -4,7 +4,7 @@ import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
 import { AlertService } from 'app/core/util/alert.service';
 import { BehaviorSubject, fromEvent, Observable, Subject } from 'rxjs';
-import { filter, mergeMap, map, switchMap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
@@ -685,11 +685,7 @@ export class GuidedTourService {
      */
     private handleWaitForSelectorEvent(currentStep: UserInterActionTourStep, nextStep: TourStep | undefined, afterNextStep: TourStep | undefined) {
         if (nextStep && nextStep.highlightSelector) {
-            if (afterNextStep && afterNextStep.highlightSelector) {
-                this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector, currentStep.triggerNextStep);
-            } else {
-                this.waitForElement(nextStep.highlightSelector, undefined, currentStep.triggerNextStep);
-            }
+            this.waitForElement(nextStep.highlightSelector, afterNextStep?.highlightSelector, currentStep.triggerNextStep);
         } else {
             this.enableNextStepClick();
         }
