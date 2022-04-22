@@ -608,16 +608,17 @@ public class GitService {
     /**
      * Commits with the given message into the repository and pushes it to the remote.
      *
-     * @param repo    Local Repository Object.
-     * @param message Commit Message
-     * @param user    The user who should initiate the commit. If the user is null, the artemis user will be used
+     * @param repo        Local Repository Object.
+     * @param message     Commit Message
+     * @param emptyCommit whether the git service should also produce an empty commit
+     * @param user        The user who should initiate the commit. If the user is null, the artemis user will be used
      * @throws GitAPIException if the commit failed.
      */
-    public void commitAndPush(Repository repo, String message, @Nullable User user) throws GitAPIException {
+    public void commitAndPush(Repository repo, String message, boolean emptyCommit, @Nullable User user) throws GitAPIException {
         String name = user != null ? user.getName() : artemisGitName;
         String email = user != null ? user.getEmail() : artemisGitEmail;
         try (Git git = new Git(repo)) {
-            git.commit().setMessage(message).setAllowEmpty(true).setCommitter(name, email).call();
+            git.commit().setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
             log.debug("commitAndPush -> Push {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pushCommand(git).call();
