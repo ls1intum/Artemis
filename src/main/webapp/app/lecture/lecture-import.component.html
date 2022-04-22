@@ -1,0 +1,60 @@
+<form>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.lecture.home.importLabel">Import Lecture</h4>
+        <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group form-inline">
+            <span jhiTranslate="artemisApp.lecture.import.searchLecture">Search for lecture:</span>
+            <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLecture" type="text" />
+            <span *ngIf="loading" class="ms-3" jhiTranslate="artemisApp.lecture.import.loading">Loading...</span>
+        </div>
+        <table class="table table-striped align-middle flex">
+            <thead class="thead-dark">
+                <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
+                    <th class="col-1" jhiSortBy="{{ column.ID }}">
+                        <span>#</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-4" jhiSortBy="{{ column.TITLE }}">
+                        <span jhiTranslate="artemisApp.lecture.import.table.title">Title</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-4" jhiSortBy="{{ column.COURSE_TITLE }}">
+                        <span jhiTranslate="artemisApp.lecture.import.table.course">Course</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-2" jhiSortBy="{{ column.SEMESTER }}">
+                        <span jhiTranslate="artemisApp.lecture.import.table.semester">Semester</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let lecture of content.resultsOnPage; trackBy: trackId" class="flex-row">
+                    <td class="col-1">
+                        <span>{{ lecture.id }}</span>
+                    </td>
+                    <td class="text-break col-4">
+                        <ngb-highlight (click)="openLectureInNewTab(lecture)" [result]="lecture.title" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td class="text-break col-4">
+                        <ngb-highlight [result]="lecture.course?.title" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td class="col-2">
+                        <span>{{ lecture.course?.semester || '' }}</span>
+                    </td>
+                    <td class="col-1">
+                        <jhi-button (onClick)="selectImport(lecture)" [title]="'artemisApp.lecture.import.table.doImport'"></jhi-button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-between p-2">
+            <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="10" [pageSize]="state.pageSize" [rotate]="true">
+            </ngb-pagination>
+        </div>
+    </div>
+</form>

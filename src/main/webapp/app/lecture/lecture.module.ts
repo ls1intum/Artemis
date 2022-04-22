@@ -12,6 +12,7 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { lectureRoute } from 'app/lecture/lecture.route';
 import { ArtemisLectureUnitManagementModule } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -25,6 +26,6 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
     ],
-    declarations: [LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureAttachmentsComponent],
+    declarations: [LectureComponent, LectureDetailComponent, LectureImportComponent, LectureUpdateComponent, LectureAttachmentsComponent],
 })
 export class ArtemisLectureModule {}
