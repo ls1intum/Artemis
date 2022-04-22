@@ -90,6 +90,8 @@ describe('The CourseScoresCsvRowBuilder', () => {
             expect(csvRow.build()['n']).toBe('5.123%');
             csvRow.setLocalizedPercent('n', 99.9999);
             expect(csvRow.build()['n']).toBe('100%');
+            csvRow.setLocalizedPercent('n', 51.9999);
+            expect(csvRow.build()['n']).toBe('52%');
             csvRow.setLocalizedPercent('n', 25.5678);
             expect(csvRow.build()['n']).toBe('25.568%');
         });

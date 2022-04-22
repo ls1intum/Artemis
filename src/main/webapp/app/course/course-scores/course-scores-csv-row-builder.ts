@@ -7,11 +7,9 @@ import { round } from 'app/shared/util/utils';
  */
 export class CourseScoresCsvRowBuilder extends CourseScoresRowBuilder {
     private readonly decimalSeparator: CsvDecimalSeparator;
-    private readonly accuracyOfScores: number;
 
     /**
      * Creates a new empty CSV row.
-     * @param localizer The function that should be used to convert numbers into their localized representations.
      * @param decimalSeparator The separator that should be used for numbers.
      * @param accuracyOfScores The accuracy of fraction digits that should be used for numbers.
      */

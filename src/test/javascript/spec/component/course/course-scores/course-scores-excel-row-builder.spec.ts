@@ -25,6 +25,52 @@ describe('The CourseScoresExcelRowBuilder', () => {
         expect(rowObject['z']).toBe('0%');
     });
 
+    describe('Test the CourseScoresExcelRowBuilder with a specific accuracyOfScores', () => {
+        beforeEach(() => {
+            excelRowBuilder = new CourseScoresExcelRowBuilder(3);
+        });
+
+        it('should convert numbers to their localized format respecting the accuracyOfScores', () => {
+            excelRowBuilder.setLocalized('n', 100.12345);
+            expect(excelRowBuilder.build()['n']['t']).toBe('n');
+            expect(excelRowBuilder.build()['n']['v']).toBe(100.123);
+
+            excelRowBuilder.setLocalized('n', 99.9999);
+            expect(excelRowBuilder.build()['n']['t']).toBe('n');
+            expect(excelRowBuilder.build()['n']['v']).toBe(100);
+
+            excelRowBuilder.setLocalized('n', 25.5678);
+            expect(excelRowBuilder.build()['n']['t']).toBe('n');
+            expect(excelRowBuilder.build()['n']['v']).toBe(25.568);
+
+            excelRowBuilder.setLocalized('n', 1000.2345);
+            expect(excelRowBuilder.build()['n']['t']).toBe('n');
+            expect(excelRowBuilder.build()['n']['v']).toBe(1000.235);
+        });
+
+        it('should convert percentage numbers to their localized format', () => {
+            excelRowBuilder.setLocalizedPercent('n', 5.12345);
+            expect(excelRowBuilder.build()['n']['t']).toBe('n');
+            expect(excelRowBuilder.build()['n']['v']).toBe(0.05123);
+            expect(excelRowBuilder.build()['n']['z']).toBe('0.000%');
+
+            excelRowBuilder.setLocalizedPercent('n', 99.9999);
+            expect(excelRowBuilder.build()['n']['t']).toBe('n');
+            expect(excelRowBuilder.build()['n']['v']).toBe(1);
+            expect(excelRowBuilder.build()['n']['z']).toBe('0%');
+
+            excelRowBuilder.setLocalizedPercent('n', 51.9999);
+            expect(excelRowBuilder.build()['n']['t']).toBe('n');
+            expect(excelRowBuilder.build()['n']['v']).toBe(0.52);
+            expect(excelRowBuilder.build()['n']['z']).toBe('0%');
+
+            excelRowBuilder.setLocalizedPercent('n', 25.5678);
+            expect(excelRowBuilder.build()['n']['t']).toBe('n');
+            expect(excelRowBuilder.build()['n']['v']).toBe(0.25568);
+            expect(excelRowBuilder.build()['n']['z']).toBe('0.000%');
+        });
+    });
+
     it('should set the exercise type points', () => {
         const exerciseType = ExerciseType.PROGRAMMING;
         const key = `Programming ${POINTS_KEY}`;

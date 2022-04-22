@@ -42,7 +42,7 @@ export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
             const percentageFormat = Number.isInteger(roundedScore) ? '0%' : '0.' + Array(this.accuracyOfScores + 1).join('0') + '%';
             const percentageCell = {
                 t: 'n',
-                v: roundedScore / 100,
+                v: round(roundedScore / 100, this.accuracyOfScores + 3),
                 z: percentageFormat,
             };
             this.set(key, percentageCell);
