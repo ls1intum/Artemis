@@ -238,7 +238,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // Automatically enable the checkout of the solution repository for Haskell exercises
         this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
 
-        // Don't override the problem statement with the template in edit mode.
+        // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(language, this.programmingExercise.projectType!);
             // Rerender the instructions as the template has changed.
@@ -266,7 +266,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.selectedTestRepositoryProjectType = JavaTestRepositoryProjectType.GRADLE;
         }
 
-        // Don't override the problem statement with the template in edit mode.
+        // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, type);
             // Rerender the instructions as the template has changed.
@@ -294,6 +294,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
         } else {
             this.programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
+        }
+
+        // Only load problem statement template when creating a new exercise and not when importing an existing exercise
+        if (this.programmingExercise.id === undefined) {
+            this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, this.programmingExercise.projectType);
+            // Rerender the instructions as the template has changed.
+            this.rerenderSubject.next();
         }
     }
 
@@ -352,6 +359,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.courseService.find(courseId).subscribe((res) => {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
+                                if (this.programmingExercise.course?.defaultProgrammingLanguage) {
+                                    this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
+                                }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
                                 this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe({
                                     next: (categoryRes: HttpResponse<string[]>) => {

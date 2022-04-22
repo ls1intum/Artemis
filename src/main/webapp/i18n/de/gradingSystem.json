@@ -30,6 +30,7 @@
             "deleteQuestion": "Willst Du den Notenschlüssel wirklich löschen?",
             "add": "Notenstufe hinzufügen",
             "save": "Speichern",
+            "stickyGradeStep": "Der letzte Notenschritt ist immer offen, um Punkte zu verarbeiten, die das Maximum überschreiten. Es klebt am Boden.",
             "info": {
                 "title": "Hilfe zum Notenschlüssel",
                 "general": {
@@ -78,6 +79,15 @@
                     "leftExclusiveRightInclusive": "Die linke Schranke ist vom Intervall ausgeschlossen und die rechte ist darin enthalten",
                     "bothInclusive": "Beide Schranken sind im Intervall enthalten"
                 }
+            },
+            "intervalTab": {
+                "title": "Intervall",
+                "mode": "Modus",
+                "pointsMode": "Punkte",
+                "percentageMode": "Prozentsatz"
+            },
+            "detailedTab": {
+                "title": "Ausführlich"
             }
         },
         "gradingScale": {

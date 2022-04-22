@@ -33,9 +33,9 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     filteredProgrammingExercises: ProgrammingExercise[];
+    selectedProgrammingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
     FeatureToggle = FeatureToggle;
-    selectedProgrammingExercises: ProgrammingExercise[];
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
     allChecked = false;
@@ -112,6 +112,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                             );
                         }
                     }
+                    this.selectedProgrammingExercises = [];
                 });
                 this.applyFilter();
                 this.emitExerciseCount(this.programmingExercises.length);

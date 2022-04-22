@@ -1,0 +1,52 @@
+version: "3.6"
+services:
+    gitlab:
+        build: gitlab
+        container_name: gitlab
+        volumes:
+            - artemis-gitlab-data:/var/opt/gitlab
+            - artemis-gitlab-logs:/var/log/gitlab
+            - artemis-gitlab-config:/etc/gitlab
+        environment:
+            GITLAB_OMNIBUS_CONFIG: |
+                external_url "${GIT_SERVER_NAME}"
+                prometheus_monitoring['enable'] = false
+                gitlab_rails['gitlab_shell_ssh_port'] = 2222
+                gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
+                letsencrypt['enable'] = ${SSL_ENABLED}
+                letsencrypt['auto_renew_hour'] = "12"
+                letsencrypt['auto_renew_minute'] = "30"
+                letsencrypt['auto_renew_day_of_month'] = "*/7"
+        ports:
+            - '2222:22'
+            - '80:80'
+            - '443:443'
+        shm_size: '256m'
+        networks:
+            gitlab:
+                ipv4_address: 172.20.0.2
+    gitlab-runner:
+        image: gitlab/gitlab-runner:latest
+        container_name: gitlab-runner
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /usr/local/bin/docker:/usr/bin/docker
+            - artemis-gitlabci-runner-config:/etc/gitlab-runner
+        hostname: 'gitlab-runner'
+        networks:
+            gitlab:
+                ipv4_address: 172.20.0.3
+
+networks:
+  gitlab:
+      driver: "bridge"
+      ipam:
+        driver: default
+        config:
+            - subnet: 172.20.0.0/24
+
+volumes:
+    artemis-gitlab-data:
+    artemis-gitlab-logs:
+    artemis-gitlab-config:
+    artemis-gitlabci-runner-config:

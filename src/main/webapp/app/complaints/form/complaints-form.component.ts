@@ -7,6 +7,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -24,6 +26,7 @@ export class ComplaintsFormComponent implements OnInit {
     maxComplaintsPerCourse = 1;
     complaintText?: string;
     ComplaintType = ComplaintType;
+    course?: Course;
 
     // Icons
     faInfoCircle = faInfoCircle;
@@ -31,6 +34,7 @@ export class ComplaintsFormComponent implements OnInit {
     constructor(private complaintService: ComplaintService, private alertService: AlertService) {}
 
     ngOnInit(): void {
+        this.course = getCourseFromExercise(this.exercise);
         if (this.exercise.course) {
             this.maxComplaintsPerCourse = this.exercise.teamMode ? this.exercise.course.maxTeamComplaints! : this.exercise.course.maxComplaints!;
         }
@@ -46,6 +50,12 @@ export class ComplaintsFormComponent implements OnInit {
         complaint.result.id = this.resultId;
         complaint.complaintType = this.complaintType;
 
+        // TODO: Rethink global client error handling and adapt this line accordingly
+        if (complaint.complaintText !== undefined && this.course!.maxComplaintTextLimit! < complaint.complaintText!.length) {
+            this.alertService.error('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: this.course!.maxComplaintTextLimit! });
+            return;
+        }
+
         this.complaintService.create(complaint, this.examId).subscribe({
             next: () => {
                 this.submit.emit();
@@ -58,5 +68,13 @@ export class ComplaintsFormComponent implements OnInit {
                 }
             },
         });
+    }
+
+    /**
+     * Calculates and returns the length of the entered text.
+     */
+    complaintTextLength(): number {
+        const textArea: HTMLTextAreaElement = document.querySelector('#complainTextArea') as HTMLTextAreaElement;
+        return textArea.value.length;
     }
 }

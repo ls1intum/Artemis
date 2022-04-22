@@ -11,9 +11,13 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.lecture.service.messaging.LectureServiceProducer;
+import de.tum.in.www1.artemis.lecture.web.rest.util.PageUtil;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,6 +86,25 @@ public class LectureService {
             lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
         }
         return lecturesWithFilteredAttachments;
+    }
+
+    /**
+     * Search for all lectures fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user   The user for whom to fetch all available lectures
+     * @return A wrapper object containing a list of all found lectures and the total number of pages
+     */
+    public SearchResultPageDTO<Lecture> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createLecturePageRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        final Page<Lecture> lecturePage;
+        if (authCheckService.isAdmin(user)) {
+            lecturePage = lectureRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
+        }
+        else {
+            lecturePage = lectureRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+        }
+        return new SearchResultPageDTO<>(lecturePage.getContent(), lecturePage.getTotalPages());
     }
 
     /**

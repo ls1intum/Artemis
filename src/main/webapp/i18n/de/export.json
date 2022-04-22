@@ -1,0 +1,29 @@
+{
+    "export": {
+        "csvFile": {
+            "options": {
+                "dialogTitle": "CSV-Export Optionen",
+                "introText": "Wähle die Optionen, die beim Erstellen der .csv Datei angewendet werden sollen."
+            },
+            "fieldSeparator": {
+                "label": "Trennzeichen",
+                "comma": "Komma",
+                "period": "Punkt",
+                "semicolon": "Semikolon",
+                "tab": "Tabstopp",
+                "space": "Leerzeichen"
+            },
+            "quoteStrings": {
+                "label": "Textqualifizierer",
+                "quotes_single": "'",
+                "quotes_double": "\"",
+                "none": "Kein"
+            },
+            "decimalSeparator": {
+                "label": "Dezimaltrennzeichen",
+                "comma": "Komma (1,42)",
+                "period": "Punkt (1.42)"
+            }
+        }
+    }
+}

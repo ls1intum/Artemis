@@ -146,7 +146,7 @@ public class PostResource {
      */
     @PostMapping("courses/{courseId}/posts/similarity-check")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) throws URISyntaxException {
+    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) {
         List<Post> similarPosts = postService.getSimilarPosts(courseId, post);
         return ResponseEntity.ok().body(similarPosts);
     }

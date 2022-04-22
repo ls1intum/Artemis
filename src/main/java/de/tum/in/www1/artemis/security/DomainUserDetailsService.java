@@ -30,8 +30,12 @@ public class DomainUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(final String login) {
         log.debug("Authenticating {}", login);
         String lowercaseLogin = login.toLowerCase(Locale.ENGLISH);
-        return userRepository.findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(lowercaseLogin, true).map(user -> createSpringSecurityUser(lowercaseLogin, user))
+        User user = userRepository.findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(lowercaseLogin, true)
                 .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLogin + " was not found in the database"));
+        if (!user.isInternal()) {
+            throw new UsernameNotFoundException("User " + lowercaseLogin + " is an external user and thus was not found as an internal user.");
+        }
+        return createSpringSecurityUser(lowercaseLogin, user);
     }
 
     private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, User user) {

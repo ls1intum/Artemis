@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,9 +46,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -544,14 +542,14 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations) throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         VideoUnit videoUnit = createVideoUnit();
         TextUnit textUnit = createTextUnit();
-        AttachmentUnit attachmentUnit = createAttachmentUnit();
+        AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
         ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
         addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
         return courses;
@@ -571,8 +569,9 @@ public class DatabaseUtilService {
         return exerciseUnitRepository.save(exerciseUnit);
     }
 
-    public AttachmentUnit createAttachmentUnit() {
-        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+    public AttachmentUnit createAttachmentUnit(Boolean withFile) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        Attachment attachmentOfAttachmentUnit = withFile ? ModelFactory.generateAttachmentWithFile(started) : ModelFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
@@ -596,6 +595,10 @@ public class DatabaseUtilService {
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
+        return createCoursesWithExercisesAndLectures(withParticipations, false);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations, boolean withFiles) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -638,12 +641,14 @@ public class DatabaseUtilService {
         course1.addExercises(quizExercise);
 
         Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture1);
+        Attachment attachment1 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
+        attachment1.setLecture(lecture1);
         lecture1.addAttachments(attachment1);
         course1.addLectures(lecture1);
 
         Lecture lecture2 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment2 = ModelFactory.generateAttachment(pastTimestamp, lecture2);
+        Attachment attachment2 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
+        attachment2.setLecture(lecture2);
         lecture2.addAttachments(attachment2);
         course1.addLectures(lecture2);
 
@@ -1440,7 +1445,7 @@ public class DatabaseUtilService {
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).get();
     }
 
-    public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URL localRepoPath) {
+    public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URI localRepoPath) {
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
@@ -3499,7 +3504,17 @@ public class DatabaseUtilService {
         return search;
     }
 
-    public LinkedMultiValueMap<String, String> exerciseSearchMapping(PageableSearchDTO<String> search) {
+    public PageableSearchDTO<String> configureLectureSearch(String searchTerm) {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(Lecture.LectureSearchColumn.COURSE_TITLE.name());
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        return search;
+    }
+
+    public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
         final var mapType = new TypeToken<Map<String, String>>() {
         }.getType();
         final var gson = new Gson();
@@ -3535,11 +3550,20 @@ public class DatabaseUtilService {
         storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));
     }
 
-    public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
+    public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, Participant participant, String text) {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
         textSubmission = textSubmissionRepo.save(textSubmission);
 
-        var studentParticipation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        StudentParticipation studentParticipation;
+        if (participant instanceof User user) {
+            studentParticipation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        }
+        else if (participant instanceof Team team) {
+            studentParticipation = addTeamParticipationForExercise(textExercise, team.getId());
+        }
+        else {
+            throw new RuntimeException("Unsupported participant!");
+        }
         studentParticipation.addSubmission(textSubmission);
 
         studentParticipationRepo.save(studentParticipation);
@@ -3788,5 +3812,51 @@ public class DatabaseUtilService {
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         return ModelFactory.generateTextAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
                 exerciseId, participationId, submissionId);
+    }
+
+    /**
+     * Update the max complaint text limit of the course.
+     * @param course course which is updated
+     * @param complaintTextLimit new complaint text limit
+     * @return updated course
+     */
+    public Course updateCourseComplaintTextLimit(Course course, int complaintTextLimit) {
+        course.setMaxComplaintTextLimit(complaintTextLimit);
+        assertThat(course.getMaxComplaintTextLimit()).as("course contains the correct complaint text limit").isEqualTo(complaintTextLimit);
+        return courseRepo.save(course);
+    }
+
+    /**
+     * Update the max complaint response text limit of the course.
+     * @param course course which is updated
+     * @param complaintResponseTextLimit new complaint response text limit
+     * @return updated course
+     */
+    public Course updateCourseComplaintResponseTextLimit(Course course, int complaintResponseTextLimit) {
+        course.setMaxComplaintResponseTextLimit(complaintResponseTextLimit);
+        assertThat(course.getMaxComplaintResponseTextLimit()).as("course contains the correct complaint response text limit").isEqualTo(complaintResponseTextLimit);
+        return courseRepo.save(course);
+    }
+
+    public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
+        for (Posting posting : postings) {
+            assertSensitiveInformationHidden(posting);
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Posting posting) {
+        if (posting.getAuthor() != null) {
+            assertThat(posting.getAuthor().getEmail()).isNull();
+            assertThat(posting.getAuthor().getLogin()).isNull();
+            assertThat(posting.getAuthor().getRegistrationNumber()).isNull();
+        }
+    }
+
+    public void assertSensitiveInformationHidden(@NotNull Reaction reaction) {
+        if (reaction.getUser() != null) {
+            assertThat(reaction.getUser().getEmail()).isNull();
+            assertThat(reaction.getUser().getLogin()).isNull();
+            assertThat(reaction.getUser().getRegistrationNumber()).isNull();
+        }
     }
 }

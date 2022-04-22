@@ -28,7 +28,10 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -51,6 +54,8 @@ public class LectureResource {
 
     private final LectureService lectureService;
 
+    private final LectureImportService lectureImportService;
+
     private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -59,10 +64,11 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
-    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
+    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
+        this.lectureImportService = lectureImportService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -117,6 +123,19 @@ public class LectureResource {
     }
 
     /**
+     * Search for all lectures by title and course title. The result is pageable.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("lectures")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<Lecture>> getAllLecturesOnPage(PageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(lectureService.getAllOnPageWithSize(search, user));
+    }
+
+    /**
      * GET /courses/:courseId/lectures : get all the lectures of a course for the course administration page
      *
      * @param withLectureUnits if set associated lecture units will also be loaded
@@ -155,6 +174,38 @@ public class LectureResource {
         Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
         return ResponseEntity.ok(lecture);
+    }
+
+    /**
+     * POST /lectures/import: Imports an existing lecture into an existing course
+     * <p>
+     * This will clone and import the whole lecture with associated lectureUnits and attachments.
+     *
+     * @param sourceLectureId The ID of the original lecture which should get imported
+     * @param courseId        The ID of the course to import the lecture to
+     * @return The imported lecture (200), a not found error (404) if the lecture does not exist,
+     * or a forbidden error (403) if the user is not at least an editor in the source or target course.
+     * @throws URISyntaxException When the URI of the response entity is invalid
+     */
+    @PostMapping("/lectures/import/{sourceLectureId}")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Lecture> importLecture(@PathVariable long sourceLectureId, @RequestParam(required = true) long courseId) throws URISyntaxException {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);
+        final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
+
+        Course course = sourceLecture.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Check that the user is an editor in both the source and target course
+        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, sourceLecture, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
+
+        final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
+        return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**

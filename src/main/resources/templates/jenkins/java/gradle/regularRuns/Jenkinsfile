@@ -1,0 +1,39 @@
+// ARTEMIS: JenkinsPipeline
+
+pipeline {
+        options {
+            timeout(time: #jenkinsTimeout, unit: 'MINUTES')
+        }
+        agent {
+            docker {
+                image '#dockerImage'
+                label 'docker'
+            }
+        }
+        stages {
+            stage('Checkout') {
+                steps {
+                    checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
+                    dir('#assignmentCheckoutPath') {
+                        checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
+                    }
+                }
+            }
+            stage('Build') {
+                steps {
+                    timestamps {
+                        sh './gradlew clean test'
+                    }
+                }
+            }
+        }
+        post {
+            cleanup {
+                sh 'rm -rf results'
+                sh 'mkdir results'
+                sh 'cp build/test-results/test/*.xml $WORKSPACE/results/ || true'
+                sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
+                cleanWs()
+            }
+        }
+}

@@ -146,10 +146,13 @@ sourceSets {
             include "java/de/tum/in/www1/artemis/util/ModelFactory.*"
             include "java/de/tum/in/www1/artemis/util/DatabaseCleanupService.*"
             include "java/de/tum/in/www1/artemis/util/TestConstants.*"
+            include "java/de/tum/in/www1/artemis/util/LocalRepository.*"
+            include "java/de/tum/in/www1/artemis/util/GitUtilService.*"
 
             srcDir file("../src/main/java")
             include "de/tum/in/www1/artemis/service/connectors/bamboo/dto/**"
             include "de/tum/in/www1/artemis/service/connectors/jenkins/dto/**"
+            include "de/tum/in/www1/artemis/service/connectors/jenkins/JenkinsBuildLogParseUtils.*"
         }
     }
     main {

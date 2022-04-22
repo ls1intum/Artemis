@@ -7,6 +7,7 @@
 /src/test/javascript/coverage/
 /src/test/javascript/PhantomJS*/
 /uploads
+/lecture/uploads
 /test-results.xml
 
 ######################

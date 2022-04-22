@@ -177,7 +177,6 @@ public abstract class BaseExercise extends DomainObject {
      *
      * @return true if example solution publication date is in the past, false otherwise (including null case).
      */
-    @JsonIgnore
     public boolean isExampleSolutionPublished() {
         if (this.isExamExercise()) {
             // This feature is currently not available for exam exercises, this should return false

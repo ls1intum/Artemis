@@ -5,6 +5,10 @@
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="lectureApp.lecture.home.createLabel">Create Lecture</span>
         </a>
+        <button (click)="openImportModal()" class="btn btn-primary float-end jh-create-entity import-lecture text-truncate mb-1 me-1" id="lecture-import-button">
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <span jhiTranslate="lectureApp.lecture.home.importLabel">Import Lecture</span>
+        </button>
     </h2>
     <br />
     <div class="table-responsive" *ngIf="lectures">

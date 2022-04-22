@@ -1,6 +1,11 @@
 package de.tum.in.www1.artemis.domain.lecture;
 
-import javax.persistence.*;
+import java.time.ZonedDateTime;
+
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -38,5 +43,25 @@ public class ExerciseUnit extends LectureUnit {
         else {
             return exercise.isVisibleToStudents();
         }
+    }
+
+    @Override
+    public String getName() {
+        return exercise == null ? null : exercise.getTitle();
+    }
+
+    @Override
+    public void setName(String name) {
+        // Should be set in associated exercise
+    }
+
+    @Override
+    public ZonedDateTime getReleaseDate() {
+        return exercise == null ? null : exercise.getReleaseDate();
+    }
+
+    @Override
+    public void setReleaseDate(ZonedDateTime releaseDate) {
+        // Should be set in associated exercise
     }
 }

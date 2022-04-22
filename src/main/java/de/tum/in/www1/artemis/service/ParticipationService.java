@@ -393,7 +393,8 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             try {
-                continuousIntegrationService.get().configureBuildPlan(participation);
+                String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
+                continuousIntegrationService.get().configureBuildPlan(participation, defaultBranch);
             }
             catch (ContinuousIntegrationException ex) {
                 // this means something with the configuration of the build plan is wrong.
