@@ -209,7 +209,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         lecture.setDescription("Test");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
-        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now(), lecture);
+        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now());
+        attachment.setLecture(lecture);
 
         // create file
         MockMultipartFile file = new MockMultipartFile("file", filename, "application/json", "some data".getBytes());
@@ -378,7 +379,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
         Lecture lecture = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).get();
 
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit();
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
 
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);

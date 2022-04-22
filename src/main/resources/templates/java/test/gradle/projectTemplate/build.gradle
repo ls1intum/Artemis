@@ -1,11 +1,16 @@
+// %static-code-analysis-start%
 plugins {
-    id 'java'
-    // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
     id 'com.github.spotbugs' version '5.0.6'
-    // %static-code-analysis-stop%
 }
+// %static-code-analysis-stop%
+
+apply plugin: 'java'
+sourceCompatibility = 17
+version = '1.0.0'
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
 
 repositories {
     mavenCentral()
@@ -23,18 +28,14 @@ def studentOutputDir = sourceSets.main.java.destinationDirectory.get()
 def scaConfigDirectory = "$projectDir/staticCodeAnalysisConfig"
 // %static-code-analysis-stop%
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-}
-
 sourceSets {
     // %non-sequential-start%
     test {
         java {
-            srcDir "test"
+            srcDir 'test'
         }
         resources {
-            srcDir "test"
+            srcDir 'test'
         }
     }
     // %non-sequential-stop%
@@ -96,6 +97,7 @@ test {
             assert !file(packageFolder).exists(): "$packageFolder must not exist within the submission."
         }
     }
+    defaultCharacterEncoding = 'UTF-8'
     useJUnitPlatform()
 }
 
