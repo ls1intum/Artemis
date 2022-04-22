@@ -12,29 +12,10 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse } from 'papaparse';
 import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 
-const csvColumns = Object.freeze({
-    registrationNumber: 'registrationnumber',
-    matrikelNummer: 'matrikelnummer',
-    matriculationNumber: 'matriculationnumber',
-    number: 'number',
-    firstNameOfStudent: 'firstnameofstudent',
-    firstName: 'firstname',
-    vorname: 'vorname',
-    givenName: 'givenname',
-    forename: 'forename',
-    familyNameOfStudent: 'familynameofstudent',
-    familyName: 'familyname',
-    familienName: 'familienname',
-    lastName: 'lastname',
-    surname: 'surname',
-    nachName: 'nachname',
-    name: 'name',
-    login: 'login',
-    username: 'username',
-    user: 'user',
-    benutzer: 'benutzer',
-    benutzerName: 'benutzername',
-});
+const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
+const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
+const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
+const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
 
 type CsvUser = object;
 
@@ -119,42 +100,23 @@ export class UsersImportDialogComponent implements OnDestroy {
             event.target.value = ''; // remove selected file so user can fix the file and select it again
             return [];
         }
-        return csvUsers
-            .map(
-                (users) =>
-                    ({
-                        registrationNumber:
-                            users[csvColumns.registrationNumber] || users[csvColumns.matrikelNummer] || users[csvColumns.matriculationNumber] || users[csvColumns.number] || '',
-                        login:
-                            users[csvColumns.login] || users[csvColumns.username] || users[csvColumns.user] || users[csvColumns.benutzer] || users[csvColumns.benutzerName] || '',
-                        firstName:
-                            users[csvColumns.firstName] ||
-                            users[csvColumns.firstNameOfStudent] ||
-                            users[csvColumns.vorname] ||
-                            users[csvColumns.givenName] ||
-                            users[csvColumns.forename] ||
-                            '',
-                        lastName:
-                            users[csvColumns.lastName] ||
-                            users[csvColumns.familyNameOfStudent] ||
-                            users[csvColumns.familyName] ||
-                            users[csvColumns.surname] ||
-                            users[csvColumns.name] ||
-                            users[csvColumns.familienName] ||
-                            users[csvColumns.nachName] ||
-                            '',
-                    } as StudentDTO),
-            )
-            .map(
-                (studentDto) =>
-                    ({
-                        // make sure that there are no leading and trailing whitespaces
-                        registrationNumber: studentDto.registrationNumber.trim(),
-                        login: studentDto.login.trim(),
-                        firstName: studentDto.firstName.trim(),
-                        lastName: studentDto.lastName.trim(),
-                    } as StudentDTO),
-            );
+
+        const usedHeaders = Object.keys(csvUsers.first() || []);
+
+        const registrationNumberHeader = usedHeaders.find((value) => POSSIBLE_REGISTRATION_NUMBER_HEADERS.includes(value)) || '';
+        const loginHeader = usedHeaders.find((value) => POSSIBLE_LOGIN_HEADERS.includes(value)) || '';
+        const firstNameHeader = usedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
+        const lastNameHeader = usedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
+
+        return csvUsers.map(
+            (users) =>
+                ({
+                    registrationNumber: users[registrationNumberHeader]?.trim() || '',
+                    login: users[loginHeader]?.trim() || '',
+                    firstName: users[firstNameHeader]?.trim() || '',
+                    lastName: users[lastNameHeader]?.trim() || '',
+                } as StudentDTO),
+        );
     }
 
     /**
@@ -173,23 +135,29 @@ export class UsersImportDialogComponent implements OnDestroy {
     }
 
     /**
+     * Checks if the csv entry contains one of the supplied keys.
+     * @param entry which should be checked if it contains one of the keys.
+     * @param keys that should be checked for in the entry.
+     */
+    checkIfEntryContainsKey(entry: CsvUser, keys: string[]): boolean {
+        for (const key of keys) {
+            if (entry[key] !== undefined && entry[key] !== '') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns a comma separated list of row numbers that contains invalid student entries
      * @param csvUsers Parsed list of users
      */
     computeInvalidUserEntries(csvUsers: CsvUser[]): string | undefined {
         const invalidList: number[] = [];
         for (const [i, user] of csvUsers.entries()) {
-            if (
-                !user[csvColumns.registrationNumber] &&
-                !user[csvColumns.matrikelNummer] &&
-                !user[csvColumns.matriculationNumber] &&
-                !user[csvColumns.number] &&
-                !user[csvColumns.login] &&
-                !user[csvColumns.user] &&
-                !user[csvColumns.username] &&
-                !user[csvColumns.benutzer] &&
-                !user[csvColumns.benutzerName]
-            ) {
+            const hasLogin = this.checkIfEntryContainsKey(user, POSSIBLE_LOGIN_HEADERS);
+            const hasRegistrationNumber = this.checkIfEntryContainsKey(user, POSSIBLE_REGISTRATION_NUMBER_HEADERS);
+            if (!hasLogin && !hasRegistrationNumber) {
                 // '+ 2' instead of '+ 1' due to the header column in the csv file
                 invalidList.push(i + 2);
             }
