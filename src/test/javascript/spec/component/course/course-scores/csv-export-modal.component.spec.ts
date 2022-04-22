@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { CsvExportModalComponent, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
+import { CsvDecimalSeparator, CsvExportModalComponent, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CsvExportModalComponent', () => {
@@ -38,6 +38,7 @@ describe('CsvExportModalComponent', () => {
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.COMMA);
         expect(component.options.quoteStrings).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
+        expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
     it('should init with german default options', () => {
@@ -45,13 +46,16 @@ describe('CsvExportModalComponent', () => {
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SEMICOLON);
         expect(component.options.quoteStrings).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
+        expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.COMMA);
     });
 
     it('should set csv options', () => {
         component.setCsvFieldSeparator(CsvFieldSeparator.SPACE);
         component.setCsvQuoteString(CsvQuoteStrings.NONE);
+        component.setCsvDecimalSeparator(CsvDecimalSeparator.PERIOD);
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SPACE);
         expect(component.options.quoteStrings).toBe(CsvQuoteStrings.NONE);
+        expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
     it('should return empty on finish when excel export is active', () => {
@@ -65,6 +69,7 @@ describe('CsvExportModalComponent', () => {
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
             quoteStrings: CsvQuoteStrings.QUOTES_SINGLE,
+            decimalSeparator: CsvDecimalSeparator.COMMA,
         };
         component.options = testOptions;
         component.active = 2;

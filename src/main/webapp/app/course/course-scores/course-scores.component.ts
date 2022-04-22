@@ -23,7 +23,7 @@ import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-score
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
-import { CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
+import { CsvDecimalSeparator, CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
@@ -510,13 +510,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Localizes a percent number, e.g. switching the decimal separator
-     */
-    localizePercent(numberToLocalize: number): string {
-        return this.localeConversionService.toLocalePercentageString(numberToLocalize, this.course.accuracyOfScores);
-    }
-
-    /**
      * Method for exporting the csv with the needed data
      */
     exportResults(customCsvOptions?: CsvExportOptions) {
@@ -529,15 +522,15 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const rows: CourseScoresExportRow[] = [];
         const keys = this.generateCsvColumnNames();
 
-        this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student, exportToCSV)));
+        this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student, exportToCSV, customOptions.decimalSeparator)));
 
         // empty row as separator
-        rows.push(this.prepareEmptyCsvRow('', exportToCSV).build());
+        rows.push(this.prepareEmptyCsvRow('', exportToCSV, customOptions.decimalSeparator).build());
 
-        rows.push(this.generateCsvRowMaxValues(exportToCSV));
-        rows.push(this.generateCsvRowAverageValues(exportToCSV));
-        rows.push(this.generateCsvRowParticipation(exportToCSV));
-        rows.push(this.generateCsvRowSuccessfulParticipation(exportToCSV));
+        rows.push(this.generateCsvRowMaxValues(exportToCSV, customOptions.decimalSeparator));
+        rows.push(this.generateCsvRowAverageValues(exportToCSV, customOptions.decimalSeparator));
+        rows.push(this.generateCsvRowParticipation(exportToCSV, customOptions.decimalSeparator));
+        rows.push(this.generateCsvRowSuccessfulParticipation(exportToCSV, customOptions.decimalSeparator));
 
         // todo remove log
         console.log(keys);
@@ -575,7 +568,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     exportAsCsv(keys: string[], rows: CourseScoresExportRow[], customOptions: CsvExportOptions) {
         const generalExportOptions = {
-            decimalSeparator: 'locale',
             showLabels: true,
             showTitle: false,
             filename: 'Artemis Course ' + this.course.title + ' Scores',
@@ -591,13 +583,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Constructs a new builder for a new CSV row.
+     * @param decimalSeparator that is used for number values
      * @private
      */
-    private newRowBuilder(exportToCsv: boolean): CourseScoresRowBuilder {
-        const localizer = this.localize.bind(this);
-        const percentageLocalizer = this.localizePercent.bind(this);
+    private newRowBuilder(exportToCsv: boolean, decimalSeparator: CsvDecimalSeparator): CourseScoresRowBuilder {
         if (exportToCsv) {
-            return new CourseScoresCsvRowBuilder(localizer, percentageLocalizer, this.course.accuracyOfScores);
+            return new CourseScoresCsvRowBuilder(decimalSeparator, this.course.accuracyOfScores);
         } else {
             return new CourseScoresExcelRowBuilder(this.course.accuracyOfScores);
         }
@@ -632,11 +623,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported csv with the statistics for the given student.
      * @param student The student for which a row in the CSV should be created.
+     * @param decimalSeparator that is used for number values
      * @param exportToCsv
      * @private
      */
-    private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics, exportToCsv: boolean): CourseScoresExportRow {
-        const rowData = this.newRowBuilder(exportToCsv);
+    private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics, exportToCsv: boolean, decimalSeparator: CsvDecimalSeparator): CourseScoresExportRow {
+        const rowData = this.newRowBuilder(exportToCsv, decimalSeparator);
+      
         rowData.setUserInformation(student);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
@@ -674,11 +667,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the maximum values of the various statistics.
+     * @param decimalSeparator that is used for number values
      * @param exportToCsv
      * @private
      */
-    private generateCsvRowMaxValues(exportToCsv: boolean): CourseScoresExportRow {
-        const rowData = this.prepareEmptyCsvRow('Max', exportToCsv);
+    private generateCsvRowMaxValues(exportToCsv: boolean, decimalSeparator: CsvDecimalSeparator): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Max', exportToCsv, decimalSeparator);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -703,11 +697,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the average values of the various statistics.
+     * @param decimalSeparator that is used for number values
      * @param exportToCsv
      * @private
      */
-    private generateCsvRowAverageValues(exportToCsv: boolean): CourseScoresExportRow {
-        const rowData = this.prepareEmptyCsvRow('Average', exportToCsv);
+    private generateCsvRowAverageValues(exportToCsv: boolean, decimalSeparator: CsvDecimalSeparator): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Average', exportToCsv, decimalSeparator);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -740,11 +735,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of participants.
+     * @param decimalSeparator that is used for number values
      * @param exportToCsv
      * @private
      */
-    private generateCsvRowParticipation(exportToCsv: boolean): CourseScoresExportRow {
-        const rowData = this.prepareEmptyCsvRow('Number of Participations', exportToCsv);
+    private generateCsvRowParticipation(exportToCsv: boolean, decimalSeparator: CsvDecimalSeparator): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Number of Participations', exportToCsv, decimalSeparator);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -761,11 +757,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of successful participants.
+     * @param decimalSeparator that is used for number values
      * @param exportToCsv
      * @private
      */
-    private generateCsvRowSuccessfulParticipation(exportToCsv: boolean): CourseScoresExportRow {
-        const rowData = this.prepareEmptyCsvRow('Number of Successful Participations', exportToCsv);
+    private generateCsvRowSuccessfulParticipation(exportToCsv: boolean, decimalSeparator: CsvDecimalSeparator): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Number of Successful Participations', exportToCsv, decimalSeparator);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -783,10 +780,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Prepares an empty row (except for the first column) with an empty column for each exercise type.
      * @param firstValue The value that should be placed in the first column of the row.
+     * @param decimalSeparator that is used for number values
      * @param exportToCsv
      */
-    private prepareEmptyCsvRow(firstValue: string, exportToCsv: boolean): CourseScoresCsvRowBuilder | CourseScoresExcelRowBuilder {
-        const emptyLine = this.newRowBuilder(exportToCsv);
+    private prepareEmptyCsvRow(firstValue: string, exportToCsv: boolean, decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRowBuilder | CourseScoresExcelRowBuilder {
+        const emptyLine = this.newRowBuilder(exportToCsv, decimalSeparator);
 
         emptyLine.set(NAME_KEY, firstValue);
         emptyLine.set(USERNAME_KEY, '');

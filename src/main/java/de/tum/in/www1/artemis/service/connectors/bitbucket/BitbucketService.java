@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.bitbucket;
 
-import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +28,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -467,14 +474,14 @@ public class BitbucketService extends AbstractVersionControlService {
 
         try {
             var response = restTemplate.exchange(getDefaultBranchUrl, HttpMethod.GET, null, BitbucketDefaultBranchDTO.class);
-            var body = response.getBody();
+            var defaultBranchDTO = response.getBody();
 
-            if (body == null) {
+            if (defaultBranchDTO == null) {
                 log.error("Unable to get default branch for repository " + repositorySlug);
                 throw new BitbucketException("Unable to get default branch for repository " + repositorySlug);
             }
 
-            return body.getDisplayId();
+            return defaultBranchDTO.getDisplayId();
         }
         catch (HttpClientErrorException e) {
             log.error("Unable to get default branch for repository " + repositorySlug, e);
@@ -518,7 +525,7 @@ public class BitbucketService extends AbstractVersionControlService {
      */
     private void setStudentRepositoryPermission(VcsRepositoryUrl repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
             throws BitbucketException {
-        String repositorySlug = getRepositoryName(repositoryUrl);
+        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
         String url = baseUrl + username + "&permission=" + repositoryPermission;
         try {
@@ -538,7 +545,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param username      The username of the user whom to remove access
      */
     private void removeStudentRepositoryAccess(VcsRepositoryUrl repositoryUrl, String projectKey, String username) throws BitbucketException {
-        String repositorySlug = getRepositoryName(repositoryUrl);
+        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
         String url = baseUrl + username;
         try {
@@ -744,7 +751,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl) {
-        if (repositoryUrl == null || repositoryUrl.getURL() == null) {
+        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
             return false;
         }
         String projectKey;
@@ -807,6 +814,51 @@ public class BitbucketService extends AbstractVersionControlService {
         return commit;
     }
 
+    @Override
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {
+        // If the event object is supplied we try to retrieve the push date from there to save one call
+        if (eventObject != null) {
+            JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
+            String dateString = node.get("date").asText(null);
+            if (dateString != null) {
+                try {
+                    return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+                }
+                catch (DateTimeParseException e) {
+                    // If parsing fails for some reason we ignore the exception and try to get it via the direct request.
+                }
+            }
+        }
+
+        boolean isLastPage = false;
+        final int perPage = 40;
+        int start = 0;
+        while (!isLastPage) {
+            try {
+                UriComponents builder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
+                        .pathSegment("rest", "api", "latest", "projects", participation.getProgrammingExercise().getProjectKey(), "repos",
+                                urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()), "ref-change-activities")
+                        .queryParam("start", start).queryParam("limit", perPage).queryParam("ref", "refs/heads/" + defaultBranch).build();
+                final var response = restTemplate.exchange(builder.toUri(), HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
+                if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+                    throw new BitbucketException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
+                }
+                final var changeActivities = response.getBody().getValues();
+
+                final var activityOfPush = changeActivities.stream().filter(activity -> commitHash.equals(activity.getRefChange().getToHash())).findFirst();
+                if (activityOfPush.isPresent()) {
+                    return Instant.ofEpochMilli(activityOfPush.get().getCreatedDate()).atZone(ZoneOffset.UTC);
+                }
+                isLastPage = response.getBody().getLastPage();
+                start += perPage;
+            }
+            catch (URISyntaxException e) {
+                throw new BitbucketException("Unable to get push date for participation " + participation.getId(), e);
+            }
+        }
+        throw new BitbucketException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash);
+    }
+
     @Nullable
     private JsonNode fetchCommitInfo(JsonNode commitData, String hash) {
         try {
@@ -848,18 +900,18 @@ public class BitbucketService extends AbstractVersionControlService {
         public BitbucketRepositoryUrl(String projectKey, String repositorySlug) {
             final var urlString = bitbucketServerUrl.getProtocol() + "://" + bitbucketServerUrl.getAuthority() + buildRepositoryPath(projectKey, repositorySlug);
             try {
-                this.url = new URL(urlString);
+                this.uri = new URI(urlString);
             }
-            catch (MalformedURLException e) {
+            catch (URISyntaxException e) {
                 throw new BitbucketException("Could not Bitbucket Repository URL", e);
             }
         }
 
         private BitbucketRepositoryUrl(String urlString) {
             try {
-                this.url = new URL(urlString);
+                this.uri = new URI(urlString);
             }
-            catch (MalformedURLException e) {
+            catch (URISyntaxException e) {
                 throw new BitbucketException("Could not Bitbucket Repository URL", e);
             }
         }
@@ -867,7 +919,7 @@ public class BitbucketService extends AbstractVersionControlService {
         @Override
         public VcsRepositoryUrl withUser(String username) {
             this.username = username;
-            return new BitbucketRepositoryUrl(url.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
+            return new BitbucketRepositoryUrl(uri.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
         }
 
         private String buildRepositoryPath(String projectKey, String repositorySlug) {

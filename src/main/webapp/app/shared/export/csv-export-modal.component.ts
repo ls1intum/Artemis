@@ -17,9 +17,15 @@ export enum CsvQuoteStrings {
     NONE = '',
 }
 
+export enum CsvDecimalSeparator {
+    COMMA = ',',
+    PERIOD = '.',
+}
+
 export interface CsvExportOptions {
     fieldSeparator: CsvFieldSeparator;
     quoteStrings: CsvQuoteStrings;
+    decimalSeparator: CsvDecimalSeparator;
 }
 
 @Component({
@@ -30,6 +36,7 @@ export interface CsvExportOptions {
 export class CsvExportModalComponent implements OnInit {
     readonly CsvFieldSeparator = CsvFieldSeparator;
     readonly CsvQuoteStrings = CsvQuoteStrings;
+    readonly CsvDecimalSeparator = CsvDecimalSeparator;
 
     active = 1;
     options: CsvExportOptions;
@@ -47,12 +54,14 @@ export class CsvExportModalComponent implements OnInit {
                 this.options = {
                     fieldSeparator: CsvFieldSeparator.SEMICOLON,
                     quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+                    decimalSeparator: CsvDecimalSeparator.COMMA,
                 };
                 break;
             default:
                 this.options = {
                     fieldSeparator: CsvFieldSeparator.COMMA,
                     quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+                    decimalSeparator: CsvDecimalSeparator.PERIOD,
                 };
         }
     }
@@ -71,6 +80,14 @@ export class CsvExportModalComponent implements OnInit {
      */
     setCsvQuoteString(quoteString: CsvQuoteStrings) {
         this.options.quoteStrings = quoteString;
+    }
+
+    /**
+     * Sets the decimal separator for the csv export options
+     * @param separator chosen decimal separator which is used in the generated csv file
+     */
+    setCsvDecimalSeparator(separator: CsvDecimalSeparator) {
+        this.options.decimalSeparator = separator;
     }
 
     /**

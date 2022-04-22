@@ -52,6 +52,22 @@
                         </div>
                     </div>
                 </div>
+              
+                <div class="form-group">
+                  <label class="form-control-label" jhiTranslate="export.csvFile.decimalSeparator.label">Decimal Separator</label>
+                  <div>
+                      <div class="btn-group">
+                          <div
+                              *ngFor="let separator of CsvDecimalSeparator | keyvalue"
+                              class="btn"
+                              [ngClass]="{ 'btn-primary': options.decimalSeparator === separator.value, 'btn-default': options.decimalSeparator !== separator.value }"
+                              (click)="setCsvDecimalSeparator(separator.value)"
+                          >
+                              {{ 'export.csvFile.decimalSeparator.' + separator.key.toLowerCase() | artemisTranslate }}
+                          </div>
+                      </div>
+                  </div>
+              </div>
             </ng-template>
         </ng-container>
     </nav>

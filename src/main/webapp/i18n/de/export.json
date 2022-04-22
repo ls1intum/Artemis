@@ -17,6 +17,11 @@
                 "quotes_single": "'",
                 "quotes_double": "\"",
                 "none": "Kein"
+            },
+            "decimalSeparator": {
+                "label": "Dezimaltrennzeichen",
+                "comma": "Komma (1,42)",
+                "period": "Punkt (1.42)"
             }
         },
         "excelFile": {
