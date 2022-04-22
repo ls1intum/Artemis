@@ -38,29 +38,29 @@ Instructors can still use those templates to generate programming exercises and 
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
   The table below provides an overview of the supported features:
 
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout |
-  +======================+======================+======================+==================+==============+==============+==============================+
-  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Python               | yes                  | no                   | yes              | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | C                    | no                   | yes                  | yes              | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | C (FACT framework)   | no                   | no                   | no               | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Haskell              | yes                  | no                   | no               | no           | no           | yes                          |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | VHDL                 | no                   | no                   | no               | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Assembler            | no                   | no                   | no               | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Swift                | no                   | no                   | no               | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | OCaml                | no                   | no                   | no               | no           | no           | yes                          |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout | Testwise Coverage Analysis |
+  +======================+======================+======================+==================+==============+==============+==============================+============================+
+  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           | yes (only for Gradle)      |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | Python               | yes                  | no                   | yes              | no           | no           | no                           | no                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | C                    | no                   | yes                  | yes              | no           | no           | no                           | no                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | C (FACT framework)   | no                   | no                   | no               | no           | no           | no                           | no                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | Haskell              | yes                  | no                   | no               | no           | no           | yes                          | no                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           | no                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | VHDL                 | no                   | no                   | no               | no           | no           | no                           | no                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | Assembler            | no                   | no                   | no               | no           | no           | no                           | no                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | Swift                | no                   | no                   | no               | no           | no           | no                           | no                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
+  | OCaml                | no                   | no                   | no               | no           | no           | yes                          | no                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+----------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.
   - *Static Code Analysis*: ``Artemis`` can generate a build plan which additionally executes static code analysis tools.
@@ -68,12 +68,17 @@ Instructors can still use those templates to generate programming exercises and 
   - *Plagiarism Checks*: ``Artemis`` is able to automatically calculate the similarity between student submissions. A side-by-side view of similar submissions is available to confirm the plagiarism suspicion.
   - *Package Name*: A package name has to be provided
   - *Solution Repository Checkout*: Instructors are able to compare a student submission against a sample solution in the solution repository
+  - *Testwise Coverage Analysis*: ``Artemis`` can generate a build plan which additionally executes a testwise coverage analysis.
+    ``Artemis`` aggregates the recorded data into different metrics. This feature allows instructors to check which code in the solution submission is how often executed by the test cases.
 
 .. note::
   Only some ``templates`` for ``Bamboo`` support ``Sequential Test Runs`` at the moment.
 
 .. note::
   Static Code Analysis for ``C`` exercises is only supported for ``Bamboo`` at the moment.
+
+.. note::
+  Testwise Coverage Analysis is only supported for ``Bamboo`` and exercises with regular test runs at the moment.
 
 .. note::
   Instructors are still able to extend the generated programming exercises with additional features that are not available in one specific template.
@@ -252,6 +257,8 @@ Exercise Creation
       This option is useful to compare the student's submission with the sample solution. This option is not available for all programming languages.
     - **Allow Offline IDE:** Allow students to clone their personal repository and work on the exercise with their preferred IDE.
     - **Allow Online Editor:** Allow students to work on the exercise using the Artemis Online Code Editor.
+    - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
+      This option is only available for Java-Gradle-projects with non-sequential test runs.
 
       .. note::
         At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active
