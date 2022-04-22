@@ -202,7 +202,7 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
  */
 const participationStatusForQuizExercise = (exercise: Exercise): ParticipationStatus => {
     const quizExercise = exercise as QuizExercise;
-    if (!quizExercise.quizStarted && quizExercise.visibleToStudents) {
+    if (!quizExercise?.quizBatches?.some((batch) => batch.started) && quizExercise.visibleToStudents) {
         return ParticipationStatus.QUIZ_NOT_STARTED;
     } else if (!hasStudentParticipations(exercise) && !quizExercise.quizEnded && quizExercise.visibleToStudents) {
         return ParticipationStatus.QUIZ_UNINITIALIZED;
