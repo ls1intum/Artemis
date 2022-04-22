@@ -107,8 +107,9 @@ public class QuizBatchService {
                 return password;
             }
         }
-        // this should never happen if there are a resonable number of batches
-        throw new RuntimeException("failed to generate a new batch password");
+        // this should never happen if there are a reasonable number of batches
+        log.error("Unable to create unused batch password; {} batches exist", quizExercise.getQuizBatches().size());
+        throw new IllegalStateException("failed to generate a new batch password");
     }
 
     /**

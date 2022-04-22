@@ -364,9 +364,7 @@ public class QuizExerciseResource {
             throw new AccessForbiddenException();
         }
 
-        if (!authCheckService.isAtLeastEditorForExercise(quizExercise, user)) {
-            // TODO: configuration to limit the number of batches a tutor can create
-        }
+        // TODO: QQQ configuration to limit the number of batches a tutor can create
 
         var quizBatch = quizBatchService.createBatch(quizExercise, user);
         quizBatch = quizBatchService.save(quizBatch);

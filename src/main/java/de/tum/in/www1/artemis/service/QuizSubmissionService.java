@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -43,9 +45,11 @@ public class QuizSubmissionService {
 
     private final QuizBatchService quizBatchService;
 
+    private final SubmissionRepository submissionRepository;
+
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
             SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService,
-            QuizBatchService quizBatchService) {
+            QuizBatchService quizBatchService, SubmissionRepository submissionRepository) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
@@ -53,6 +57,7 @@ public class QuizSubmissionService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.quizBatchService = quizBatchService;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -134,25 +139,18 @@ public class QuizSubmissionService {
 
         var batch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
 
-        if (batch.isPresent() && !batch.get().isSubmissionAllowed()) {
+        if (batch.stream().noneMatch(QuizBatch::isSubmissionAllowed)) {
             throw new QuizSubmissionException("The quiz is not active");
         }
 
         // TODO: add one additional check: fetch quizSubmission.getId() with the corresponding participation and check that the user of participation is the
         // same as the user who executes this call. This prevents injecting submissions to other users
 
-        // check if user already submitted for this quiz
-        Participation participation = participationService.participationForQuizWithResult(quizExercise, user.getLogin());
-        log.debug("{} Received participation for user {} in quiz {} in {} µs.", logText, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
-        if (!participation.getResults().isEmpty()) {
-            log.debug("Participation for user {} in quiz {} has results", user.getLogin(), exerciseId);
-            // TODO: QQQ this assumption doesn't hold if we allow multiple attempts
-            // NOTE: At this point, there can only be one Result because we already checked
-            // if the quiz is active, so there is no way the student could have already practiced
-            Result result = participation.getResults().iterator().next();
-            if (result.getSubmission().isSubmitted()) {
-                throw new QuizSubmissionException("You have already submitted the quiz");
-            }
+        // check if user has attempts left for this quiz
+        int submissionCount = submissionRepository.countByExerciseIdAndStudentId(exerciseId, user.getId());
+        log.debug("{} Counted {} submissions for user {} in quiz {} in {} µs.", logText, submissionCount, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
+        if (submissionCount >= quizExercise.getAllowedNumberOfAttempts()) {
+            throw new QuizSubmissionException("You have already submitted the quiz");
         }
 
         // recreate pointers back to submission in each submitted answer
