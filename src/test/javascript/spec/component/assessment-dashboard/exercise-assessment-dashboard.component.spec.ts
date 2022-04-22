@@ -376,10 +376,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('should call readInstruction', () => {
         const tutorParticipationServiceCreateStub = jest.spyOn(tutorParticipationService, 'create');
         const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
-        tutorParticipationServiceCreateStub.mockReturnValue(of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() })));
+        tutorParticipationServiceCreateStub.mockImplementation(() => {
+            expect(comp.isLoading).toBe(true);
+            return of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() }));
+        });
 
         expect(comp.tutorParticipation).toBe(undefined);
+        expect(comp.isLoading).toBe(false);
+
         comp.readInstruction();
+
+        expect(comp.isLoading).toBe(false);
 
         expect(comp.tutorParticipation).toEqual(tutorParticipation);
         expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
