@@ -37,6 +37,7 @@ public class QuizMessagingService {
     /**
      * Sends a QuizExercise to all subscribed clients and creates notification if quiz has started.
      * @param quizExercise the QuizExercise which will be sent
+     * @param quizBatch the batch that has been started
      * @param quizChange the change that was applied to the quiz, which decides to which topic subscriptions the quiz exercise is sent
      */
     public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise, @Nullable QuizBatch quizBatch, String quizChange) {

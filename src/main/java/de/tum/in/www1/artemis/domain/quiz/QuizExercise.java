@@ -233,12 +233,14 @@ public class QuizExercise extends Exercise {
 
     /**
      * filter this quiz exercise for students depending on the current state of the batch that the student participates in
+     *
+     * @param batch The batch that the student that should be filtered for is currrently in
      */
     public void applyAppropriateFilterForStudents(@Nullable QuizBatch batch) {
         if (isQuizEnded()) {
             return; // no filtering required after the end of the quiz
         }
-        if (batch == null || !batch.isStarted() || batch.isEnded()) {
+        if (batch == null || !batch.isSubmissionAllowed()) {
             filterSensitiveInformation();
         }
         else if (shouldFilterForStudents()) {
@@ -682,6 +684,7 @@ public class QuizExercise extends Exercise {
     /**
      * get the view for students in the given quiz
      *
+     * @param batch The batch that the student that the view is for is currently a part of
      * @return the view depending on the current state of the quiz
      */
     @JsonIgnore

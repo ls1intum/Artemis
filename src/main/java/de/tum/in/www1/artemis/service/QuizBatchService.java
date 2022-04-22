@@ -10,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
@@ -43,6 +41,7 @@ public class QuizBatchService {
         return quizBatchRepository.saveAndFlush(quizBatch);
     }
 
+    // TODO: QQQ attempt at lazy loading batches but doesn't work with how lazy loading actually works
     public void loadBatchesIfMissing(QuizExercise quizExercise) {
         if (quizExercise.getQuizBatches() == null) {
             quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExercise(quizExercise));
@@ -53,9 +52,9 @@ public class QuizBatchService {
      * Get or create the batch for synchronized quiz exercises. If it was created it will not have been saved to the database yet.
      * Only valid to call for synchronized quiz exercises
      *
+     * @param quizExercise the quiz for which to get the batch
      * @return the single batch of the exercise
      */
-    @JsonIgnore
     public QuizBatch getOrCreateSynchronizedQuizBatch(QuizExercise quizExercise) {
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
             throw new IllegalStateException();
@@ -74,6 +73,16 @@ public class QuizBatchService {
         return quizBatch;
     }
 
+    /**
+     * join a student to a batch
+     * does not check of the user is already part of a batch
+     * does not apply to quizzes in SYNCHRONIZED mode
+     * @param quizExercise the quiz of the batch to join
+     * @param user the user to join
+     * @param password the password of the batch to join; unused for INDIVIDUAL mode
+     * @param batchId the id of the batch to join without a password; currently not implemented; unused for INDIVIDUAL mode
+     * @return the batch that was joined, or empty if the batch could not be found
+     */
     public Optional<QuizBatch> joinBatch(QuizExercise quizExercise, User user, @Nullable String password, @Nullable Long batchId) {
         Optional<QuizBatch> quizBatch = switch (quizExercise.getQuizMode()) {
             case SYNCHRONIZED -> Optional.empty();
@@ -85,6 +94,11 @@ public class QuizBatchService {
         return quizBatch;
     }
 
+    /**
+     * create a password for a new batch that was not yet used by another batch
+     * @param quizExercise the quiz where the password should not already be in use
+     * @return a new unused password
+     */
     public String createBatchPassword(QuizExercise quizExercise) {
         loadBatchesIfMissing(quizExercise);
         for (int i = 0; i < 1000; i++) {
@@ -93,14 +107,15 @@ public class QuizBatchService {
                 return password;
             }
         }
+        // this should never happen if there are a resonable number of batches
         throw new RuntimeException("failed to generate a new batch password");
     }
 
     /**
-     * create and save a batch a batched run
-     * @param quizExercise
-     * @param user
-     * @return
+     * create and save a batch a batched run with a new random password
+     * @param quizExercise the quiz where a new batch should be created
+     * @param user the user that created the batch
+     * @return the newly created batch
      */
     public QuizBatch createBatch(QuizExercise quizExercise, User user) {
         var batch = new QuizBatch();
@@ -112,9 +127,9 @@ public class QuizBatchService {
 
     /**
      * create and save a batch an individual run
-     * @param quizExercise
-     * @param user
-     * @return
+     * @param quizExercise the quiz where a new batch should be created
+     * @param user the user that created the batch
+     * @return the newly created batch
      */
     public QuizBatch createIndividualBatch(QuizExercise quizExercise, User user) {
         var batch = new QuizBatch();
@@ -126,9 +141,9 @@ public class QuizBatchService {
 
     /**
      * Returns the start time for a batch, given some target start date, that ensures that the batch does not overrun the quiz due date.
-     * @param quizExercise
-     * @param targetTime
-     * @return
+     * @param quizExercise the quiz exercise to which the batch belongs
+     * @param targetTime the time when the batch should start if possible
+     * @return the minimum of targetTime and the last moment a batch can be started to not overrun the quiz due date; null iff targetTime is null
      */
     public ZonedDateTime quizBatchStartDate(QuizExercise quizExercise, ZonedDateTime targetTime) {
         if (quizExercise.getDueDate() == null || targetTime == null) {
@@ -141,6 +156,12 @@ public class QuizBatchService {
         return targetTime;
     }
 
+    /**
+     * Return the batch that a user the currently participating in for a given exercise
+     * @param quizExercise the quiz for that the batch should be look up for
+     * @param user the user that the batch should be looked up for
+     * @return the batch that the user currently takes part in or empty
+     */
     public Optional<QuizBatch> getQuizBatchForStudent(QuizExercise quizExercise, User user) {
         var batch = quizScheduleService.getQuizBatchForStudent(quizExercise, user);
         if (batch.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {

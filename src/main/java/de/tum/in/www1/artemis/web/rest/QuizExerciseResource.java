@@ -311,10 +311,11 @@ public class QuizExerciseResource {
     }
 
     /**
-     * POST /quiz-exercises/:quizExerciseId/join : get the quizExercise with a particular batch. (information filtered for students)
+     * POST /quiz-exercises/:quizExerciseId/join : add a student to a particular batch for participating in it and if in INDIVIDUAL mode create the batch to join
      *
-     * @param quizExerciseId the id of the quizExercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
+     * @param quizExerciseId the id of the quizExercise to which the batch to join belongs
+     * @param joinRequest DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
+     * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined
      */
     @PostMapping("/quiz-exercises/{quizExerciseId}/join")
     @PreAuthorize("hasRole('USER')")
