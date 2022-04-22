@@ -17,7 +17,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
     templateUrl: './exercise-hint.component.html',
 })
 export class ExerciseHintComponent implements OnInit, OnDestroy {
-    HintType = HintType;
+    readonly HintType = HintType;
     ExerciseType = ExerciseType;
     exerciseId: number;
     exerciseHints: ExerciseHint[];
@@ -73,6 +73,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
+                    console.log(res);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
