@@ -372,9 +372,9 @@ public class ProgrammingExerciseService {
             // if any exception occurs, try to at least push an empty commit, so that the
             // repositories can be used by the build plans
             log.warn("An exception occurred while setting up the repositories", ex);
-            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", exerciseCreator);
-            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", exerciseCreator);
-            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", exerciseCreator);
+            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", true, exerciseCreator);
+            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", true, exerciseCreator);
+            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", true, exerciseCreator);
         }
     }
 
@@ -403,7 +403,7 @@ public class ProgrammingExerciseService {
             versionControlService.get().createRepository(projectKey, repositoryName, null);
             repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
             Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
-            gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, null);
+            gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
     }
 
@@ -482,7 +482,7 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", user);
+            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
         }
     }
 
@@ -653,7 +653,7 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", user);
+            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
@@ -708,14 +708,15 @@ public class ProgrammingExerciseService {
     /**
      * Stage, commit and push.
      *
-     * @param repository The repository to which the changes should get pushed
-     * @param message    The commit message
-     * @param user       the user who has initiated the generation of the programming exercise
+     * @param repository  The repository to which the changes should get pushed
+     * @param message     The commit message
+     * @param emptyCommit whether an empty commit should be created or not
+     * @param user        the user who has initiated the generation of the programming exercise
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
-    public void commitAndPushRepository(Repository repository, String message, User user) throws GitAPIException {
+    public void commitAndPushRepository(Repository repository, String message, boolean emptyCommit, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, message, user);
+        gitService.commitAndPush(repository, message, emptyCommit, user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
@@ -811,7 +812,7 @@ public class ProgrammingExerciseService {
             try {
                 Files.write(structureOraclePath, structureOracleJSON.getBytes());
                 gitService.stageAllChanges(testRepository);
-                gitService.commitAndPush(testRepository, "Generate the structure oracle file.", user);
+                gitService.commitAndPush(testRepository, "Generate the structure oracle file.", true, user);
                 return true;
             }
             catch (GitAPIException e) {
@@ -831,7 +832,7 @@ public class ProgrammingExerciseService {
                 try {
                     Files.write(structureOraclePath, structureOracleJSON.getBytes());
                     gitService.stageAllChanges(testRepository);
-                    gitService.commitAndPush(testRepository, "Update the structure oracle file.", user);
+                    gitService.commitAndPush(testRepository, "Update the structure oracle file.", true, user);
                     return true;
                 }
                 catch (GitAPIException e) {
