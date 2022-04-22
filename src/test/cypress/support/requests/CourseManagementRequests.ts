@@ -3,7 +3,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
@@ -51,7 +51,6 @@ export class CourseManagementRequests {
      * @param courseShortName the short name (will generate default name if not provided)
      * @param start the start date of the course (default: now() - 2 hours)
      * @param end the end date of the course (default: now() + 2 hours)
-     * @param defaultProgrammingLanguage the default programming language for programming exercises (default: Python)
      * @returns <Chainable> request response
      */
     createCourse(
@@ -60,7 +59,6 @@ export class CourseManagementRequests {
         courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
-        defaultProgrammingLanguage = ProgrammingLanguage.PYTHON,
     ): Cypress.Chainable<Cypress.Response<Course>> {
         const course = new Course();
         course.title = courseName;
@@ -68,7 +66,6 @@ export class CourseManagementRequests {
         course.testCourse = true;
         course.startDate = start;
         course.endDate = end;
-        course.defaultProgrammingLanguage = defaultProgrammingLanguage;
 
         const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
         if (customizeGroups && allowGroupCustomization) {

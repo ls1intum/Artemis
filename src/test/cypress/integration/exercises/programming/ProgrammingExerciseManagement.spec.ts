@@ -1,5 +1,5 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { DELETE } from '../../../support/constants';
 import { artemis } from '../../../support/ArtemisTesting';
@@ -75,7 +75,6 @@ describe('Programming Exercise Management', () => {
             const exerciseTitle = 'Cypress programming exercise ' + generateUUID();
             programmingCreation.setTitle(exerciseTitle);
             programmingCreation.setShortName('cypress' + generateUUID());
-            programmingCreation.setProgrammingLanguage(ProgrammingLanguage.JAVA);
             programmingCreation.setPackageName('de.test');
             programmingCreation.setPoints(100);
             programmingCreation.checkAllowOnlineEditor();
@@ -84,15 +83,6 @@ describe('Programming Exercise Management', () => {
                 cy.url().should('include', '/exercises');
                 courseExercises.shouldContainExerciseWithName(exercise.id);
             });
-        });
-
-        it('Sets course default programming language', function () {
-            cy.login(admin, '/');
-            navigationBar.openCourseManagement();
-            courseManagementPage.openExercisesOfCourse(course.shortName!);
-            courseExercises.clickCreateProgrammingExerciseButton();
-            cy.url().should('include', '/programming-exercises/new');
-            cy.get('#field_programmingLanguage').should('have.value', course.defaultProgrammingLanguage);
         });
     });
 
