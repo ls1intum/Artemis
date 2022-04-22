@@ -17,11 +17,11 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile.ChangeBlock;
  */
 public class AddUncoveredLinesAsPotentialCodeBlocks extends BehavioralKnowledgeSource {
 
-    private static final Pattern curlyBracesPattern = Pattern.compile("\\s*[}{]\\s*");
+    private static final Pattern CURLY_BRACES_PATTERN = Pattern.compile("\\s*[}{]\\s*");
 
-    private static final Pattern elsePattern = Pattern.compile("\\s*}?\\s*else\\s*\\{?\\s*");
+    private static final Pattern ELSE_PATTERN = Pattern.compile("\\s*}?\\s*else\\s*\\{?\\s*");
 
-    private static final Pattern emptyLinePattern = Pattern.compile("\\s*");
+    private static final Pattern EMPTY_LINE_PATTERN = Pattern.compile("\\s*");
 
     public AddUncoveredLinesAsPotentialCodeBlocks(BehavioralBlackboard blackboard) {
         super(blackboard);
@@ -103,6 +103,6 @@ public class AddUncoveredLinesAsPotentialCodeBlocks extends BehavioralKnowledgeS
     }
 
     private boolean doesLineMatch(String lineContent) {
-        return curlyBracesPattern.matcher(lineContent).matches() || elsePattern.matcher(lineContent).matches() || emptyLinePattern.matcher(lineContent).matches();
+        return CURLY_BRACES_PATTERN.matcher(lineContent).matches() || ELSE_PATTERN.matcher(lineContent).matches() || EMPTY_LINE_PATTERN.matcher(lineContent).matches();
     }
 }

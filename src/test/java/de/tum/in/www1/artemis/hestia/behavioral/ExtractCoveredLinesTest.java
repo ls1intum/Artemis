@@ -17,8 +17,6 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.ExtractC
 
 public class ExtractCoveredLinesTest {
 
-    private BehavioralBlackboard blackboard;
-
     private ExtractCoveredLines extractCoveredLines;
 
     private GroupedFile groupedFile;
@@ -27,7 +25,7 @@ public class ExtractCoveredLinesTest {
 
     @BeforeEach
     public void initBlackboard() {
-        blackboard = new BehavioralBlackboard(null, null, null);
+        BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
         coverageReportEntries = new HashSet<>();

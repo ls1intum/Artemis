@@ -42,9 +42,6 @@ public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
-
-    @Autowired
     private ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
     @Autowired
@@ -103,9 +100,9 @@ public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBamb
         gitDiffEntry.setLineCount(lineCount);
         gitDiffEntry.setGitDiffReport(gitDiffReport);
         gitDiffReport.getEntries().add(gitDiffEntry);
-        gitDiffReport = programmingExerciseGitDiffReportRepository.save(gitDiffReport);
-        exercise.setGitDiffReport(gitDiffReport);
-        return gitDiffReport;
+        var savedGitDiffReport = programmingExerciseGitDiffReportRepository.save(gitDiffReport);
+        exercise.setGitDiffReport(savedGitDiffReport);
+        return savedGitDiffReport;
     }
 
     private CoverageReport newCoverageReport() {

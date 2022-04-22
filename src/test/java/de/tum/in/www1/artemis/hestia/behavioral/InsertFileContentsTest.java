@@ -17,8 +17,6 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.InsertFi
 
 public class InsertFileContentsTest {
 
-    private BehavioralBlackboard blackboard;
-
     private InsertFileContents insertFileContents;
 
     private GroupedFile groupedFile;
@@ -28,7 +26,7 @@ public class InsertFileContentsTest {
     @BeforeEach
     public void initBlackboard() {
         solutionRepoFiles = new HashMap<>();
-        blackboard = new BehavioralBlackboard(null, null, solutionRepoFiles);
+        BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, solutionRepoFiles);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
         groupedFile = new GroupedFile("test.java", null, null, null);

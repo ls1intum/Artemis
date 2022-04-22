@@ -49,7 +49,7 @@ public class GroupGitDiffAndCoverageEntriesByFilePathAndTestCase extends Behavio
     }
 
     private List<GroupedFile> createGroupedFiles(Map<String, Set<ProgrammingExerciseGitDiffEntry>> gitDiffEntriesPerFile,
-            Map<String, Set<TestwiseCoverageReportEntry>> coverageEntriesPerFile, TreeSet<String> commonFilePaths) {
+            Map<String, Set<TestwiseCoverageReportEntry>> coverageEntriesPerFile, SortedSet<String> commonFilePaths) {
         return commonFilePaths.stream().flatMap(filePath -> {
             var gitDiffEntries = gitDiffEntriesPerFile.get(filePath);
             var coverageReportEntries = coverageEntriesPerFile.get(filePath);

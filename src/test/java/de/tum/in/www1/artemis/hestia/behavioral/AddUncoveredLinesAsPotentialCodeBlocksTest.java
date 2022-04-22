@@ -14,15 +14,13 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.AddUncov
 
 public class AddUncoveredLinesAsPotentialCodeBlocksTest {
 
-    private BehavioralBlackboard blackboard;
-
     private AddUncoveredLinesAsPotentialCodeBlocks addPotentialCodeBlocks;
 
     private GroupedFile groupedFile;
 
     @BeforeEach
     public void initBlackboard() {
-        blackboard = new BehavioralBlackboard(null, null, null);
+        BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
         groupedFile = new GroupedFile("test.java", null, null, null);

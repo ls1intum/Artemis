@@ -16,15 +16,13 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.CreateCo
 
 public class CreateCommonChangeBlocksTest {
 
-    private BehavioralBlackboard blackboard;
-
     private CreateCommonChangeBlocks createCommonChangeBlocks;
 
     private GroupedFile groupedFile;
 
     @BeforeEach
     public void initBlackboard() {
-        blackboard = new BehavioralBlackboard(null, null, null);
+        BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
         groupedFile = new GroupedFile("test.java", null, null, null);

@@ -104,12 +104,14 @@ public class GroupedFile {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
-        GroupedFile that = (GroupedFile) o;
+        }
+        GroupedFile that = (GroupedFile) obj;
         return Objects.equals(filePath, that.filePath) && Objects.equals(testCase, that.testCase) && Objects.equals(gitDiffEntries, that.gitDiffEntries)
                 && Objects.equals(coverageReportEntries, that.coverageReportEntries) && Objects.equals(fileContent, that.fileContent)
                 && Objects.equals(changedLines, that.changedLines) && Objects.equals(coveredLines, that.coveredLines) && Objects.equals(commonLines, that.commonLines)
