@@ -201,8 +201,8 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             component.quizExercise.quizStarted = false;
-            component.quizBatch.started = false;
-            component.quizBatch.startTime = undefined;
+            component.quizBatch!.started = false;
+            component.quizBatch!.startTime = undefined;
 
             // Returns the started exercise
             const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
