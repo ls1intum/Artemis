@@ -3,15 +3,13 @@ import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-s
 import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { CsvDecimalSeparator } from 'app/shared/export/csv-export-modal.component';
 
 describe('The CourseScoresCsvRowBuilder', () => {
-    const localizer = (value: number): string => `${value}l`;
-    const percentageLocalizer = (value: number): string => `${value}%`;
-
     let csvRow: CourseScoresCsvRowBuilder;
 
     beforeEach(() => {
-        csvRow = new CourseScoresCsvRowBuilder(localizer, percentageLocalizer);
+        csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.PERIOD);
     });
 
     it('should set a string', () => {
@@ -27,12 +25,73 @@ describe('The CourseScoresCsvRowBuilder', () => {
 
     it('should convert numbers to their localized format', () => {
         csvRow.setLocalized('n', 100);
-        expect(csvRow.build()['n']).toBe('100l');
+        expect(csvRow.build()['n']).toBe('100');
+        csvRow.setLocalized('n', 25.5);
+        expect(csvRow.build()['n']).toBe('25.5');
+        csvRow.setLocalized('n', 1000.23);
+        expect(csvRow.build()['n']).toBe('1000.2');
     });
 
     it('should convert percentage numbers to their localized format', () => {
         csvRow.setLocalizedPercent('n', 5);
         expect(csvRow.build()['n']).toBe('5%');
+        csvRow.setLocalizedPercent('n', 5.5);
+        expect(csvRow.build()['n']).toBe('5.5%');
+    });
+
+    it('should return a hyphen for NaN values', () => {
+        csvRow.setLocalized('n', NaN);
+        expect(csvRow.build()['n']).toBe('-');
+        csvRow.setLocalizedPercent('p', NaN);
+        expect(csvRow.build()['p']).toBe('-');
+    });
+
+    describe('Test the CourseScoresCsvRowBuilder with a comma as a decimal separator', () => {
+        beforeEach(() => {
+            csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.COMMA);
+        });
+
+        it('should convert numbers to their localized format', () => {
+            csvRow.setLocalized('n', 100);
+            expect(csvRow.build()['n']).toBe('100');
+            csvRow.setLocalized('n', 25.5);
+            expect(csvRow.build()['n']).toBe('25,5');
+            csvRow.setLocalized('n', 1000.23);
+            expect(csvRow.build()['n']).toBe('1000,2');
+        });
+
+        it('should convert percentage numbers to their localized format', () => {
+            csvRow.setLocalizedPercent('n', 5);
+            expect(csvRow.build()['n']).toBe('5%');
+            csvRow.setLocalizedPercent('n', 5.5);
+            expect(csvRow.build()['n']).toBe('5,5%');
+        });
+    });
+
+    describe('Test the CourseScoresCsvRowBuilder with a specific accuracyOfScores', () => {
+        beforeEach(() => {
+            csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.PERIOD, 3);
+        });
+
+        it('should convert numbers to their localized format respecting the accuracyOfScores', () => {
+            csvRow.setLocalized('n', 100.12345);
+            expect(csvRow.build()['n']).toBe('100.123');
+            csvRow.setLocalized('n', 99.9999);
+            expect(csvRow.build()['n']).toBe('100');
+            csvRow.setLocalized('n', 25.5678);
+            expect(csvRow.build()['n']).toBe('25.568');
+            csvRow.setLocalized('n', 1000.2345);
+            expect(csvRow.build()['n']).toBe('1000.235');
+        });
+
+        it('should convert percentage numbers to their localized format', () => {
+            csvRow.setLocalizedPercent('n', 5.12345);
+            expect(csvRow.build()['n']).toBe('5.123%');
+            csvRow.setLocalizedPercent('n', 99.9999);
+            expect(csvRow.build()['n']).toBe('100%');
+            csvRow.setLocalizedPercent('n', 25.5678);
+            expect(csvRow.build()['n']).toBe('25.568%');
+        });
     });
 
     it('should trim all user values when storing them', () => {
@@ -70,7 +129,7 @@ describe('The CourseScoresCsvRowBuilder', () => {
         const key = `Programming ${POINTS_KEY}`;
 
         csvRow.setExerciseTypePoints(exerciseType, 100);
-        expect(csvRow.build()[key]).toBe('100l');
+        expect(csvRow.build()[key]).toBe('100');
 
         // should take the value as is if it is a string
         csvRow.setExerciseTypePoints(exerciseType, '');

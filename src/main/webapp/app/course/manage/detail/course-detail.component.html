@@ -205,6 +205,11 @@
                 <span *ngIf="course.semester && course.semester !== ''">{{ course.semester }}</span>
                 <span *ngIf="!course.semester || course.semester === ''">{{ 'global.generic.unset' | artemisTranslate }}</span>
             </dd>
+            <dt><span jhiTranslate="artemisApp.course.defaultProgrammingLanguage">Default Programming Language</span></dt>
+            <dd>
+                <span *ngIf="course.defaultProgrammingLanguage">{{ course.defaultProgrammingLanguage }}</span>
+                <span *ngIf="!course.defaultProgrammingLanguage">{{ 'global.generic.unset' | artemisTranslate }}</span>
+            </dd>
             <dt><span jhiTranslate="artemisApp.course.testCourse.title">Test Course</span></dt>
             <dd>
                 <span *ngIf="course.testCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>

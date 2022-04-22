@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -114,6 +115,9 @@ public class CourseTestService {
 
     @Autowired
     private GroupNotificationService groupNotificationService;
+
+    @Autowired
+    private ParticipationService participationService;
 
     private final static int numberOfStudents = 8;
 
@@ -530,7 +534,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
@@ -566,7 +570,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboard() throws Exception {
-        database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
+        database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
 
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
@@ -1574,9 +1578,11 @@ public class CourseTestService {
         instructor.setGroups(groups);
         userRepo.save(instructor);
 
-        // Get a student
+        // Get two students
         var student = ModelFactory.generateActivatedUser("user1");
         userRepo.save(student);
+        var student2 = ModelFactory.generateActivatedUser("user2");
+        userRepo.save(student2);
 
         // Add a team exercise which was just released but not due
         var releaseDate = ZonedDateTime.now().minusDays(4);
@@ -1590,8 +1596,7 @@ public class CourseTestService {
         var teamStudents = new HashSet<User>();
         teamStudents.add(student);
         var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded, "team");
-        database.addTeamParticipationForExercise(teamExerciseNotEnded, team.getId());
-
+        database.createSubmissionForTextExercise(teamExerciseNotEnded, team, "Team Text");
         instructorsCourse.addExercises(teamExerciseNotEnded);
 
         // Create an exercise which has passed the due and assessment due date
@@ -1612,11 +1617,17 @@ public class CourseTestService {
         exerciseInAssessment.setMaxPoints(15.0);
         exerciseInAssessment = exerciseRepo.save(exerciseInAssessment);
 
-        // Add a single participation to that exercise
+        // Add a participation and submission to that exercise
         final var exerciseIdInAssessment = exerciseInAssessment.getId();
         var resultToSetAssessorFor = database.createParticipationSubmissionAndResult(exerciseIdInAssessment, student, 15.0, 0.0, 30, true);
+        resultToSetAssessorFor.getSubmission().setSubmissionDate(dueDate.minusHours(1));
+        resultToSetAssessorFor.getSubmission().setSubmitted(true);
         resultToSetAssessorFor.setAssessor(instructor);
         resultRepo.saveAndFlush(resultToSetAssessorFor);
+        submissionRepository.saveAndFlush(resultToSetAssessorFor.getSubmission());
+
+        // Add a participation without submission to that exercise (just starting)
+        participationService.startExercise(exerciseInAssessment, student2, false);
 
         instructorsCourse.addExercises(exerciseInAssessment);
 

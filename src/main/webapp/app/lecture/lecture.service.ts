@@ -84,6 +84,28 @@ export class LectureService {
             );
     }
 
+    /**
+     * Clones and imports the lecture to the course
+     *
+     * @param courseId Course to import the lecture into
+     * @param lectureId Lecture to be cloned and imported
+     */
+    import(courseId: number, lectureId: number): Observable<EntityResponseType> {
+        const params = new HttpParams().set('courseId', courseId);
+        return this.http
+            .post<Lecture>(`${this.resourceUrl}/import/${lectureId}`, null, {
+                params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res: EntityResponseType) => {
+                    this.convertDateFromServer(res);
+                    this.setAccessRightsLecture(res.body);
+                    return res;
+                }),
+            );
+    }
+
     delete(lectureId: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
     }

@@ -231,6 +231,31 @@ describe('ProgrammingExercise Management Update Component', () => {
         }));
     });
 
+    describe('default programming language', () => {
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: new ProgrammingExercise(course, undefined) });
+            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        });
+
+        it('Should set default programming language', fakeAsync(() => {
+            // GIVEN
+            const testProgrammingLanguage = ProgrammingLanguage.SWIFT;
+            expect(new ProgrammingExercise(undefined, undefined).programmingLanguage).not.toBe(testProgrammingLanguage);
+            course.defaultProgrammingLanguage = testProgrammingLanguage;
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(testProgrammingLanguage));
+
+            // WHEN
+            comp.ngOnInit();
+            tick();
+
+            // THEN
+            expect(comp.programmingExercise.programmingLanguage).toBe(testProgrammingLanguage);
+        }));
+    });
+
     describe('programming language change and features', () => {
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
