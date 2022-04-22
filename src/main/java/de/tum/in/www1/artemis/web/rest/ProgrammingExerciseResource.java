@@ -84,7 +84,7 @@ public class ProgrammingExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
     private final CourseRepository courseRepository;
 
@@ -117,7 +117,7 @@ public class ProgrammingExerciseResource {
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -178,7 +178,8 @@ public class ProgrammingExerciseResource {
      * @param programmingExercise exercise to validate
      */
     private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
@@ -207,7 +208,8 @@ public class ProgrammingExerciseResource {
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
         // Check if package name is set
         if (programmingLanguageFeature.isPackageNameRequired()) {

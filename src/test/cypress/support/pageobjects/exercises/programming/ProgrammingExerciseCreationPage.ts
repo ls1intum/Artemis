@@ -1,5 +1,6 @@
 import { PROGRAMMING_EXERCISE_BASE } from '../../../requests/CourseManagementRequests';
 import { POST } from '../../../constants';
+
 /**
  * A class which encapsulates UI selectors and actions for the programming exercise creation page.
  */
@@ -16,6 +17,13 @@ export class ProgrammingExerciseCreationPage {
      */
     setShortName(shortName: string) {
         cy.get('#field_shortName').clear().type(shortName);
+    }
+
+    /**
+     * @param programmingLanguage the programming language of the programming exercise
+     */
+    setProgrammingLanguage(programmingLanguage: string) {
+        cy.get('#field_programmingLanguage').select(programmingLanguage);
     }
 
     /**
