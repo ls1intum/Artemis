@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -120,7 +121,8 @@ public class MailService {
             log.info("Sent email with subject '{}' to User '{}'", subject, recipient);
         }
         catch (MailException | MessagingException e) {
-            log.warn("Email could not be sent to user '{}'", recipient, e);
+            log.error("Email could not be sent to user '{}'", recipient, e);
+            throw new ArtemisMailException("Email could not be sent to user", e);
         }
     }
 
