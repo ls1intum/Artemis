@@ -4,6 +4,7 @@
             "home": {
                 "title": "Lectures",
                 "createLabel": "Create Lecture",
+                "importLabel": "Import Lecture",
                 "createOrEditLabel": "Create or Edit Lecture"
             },
             "created": "Created new lecture with identifier {{ param }}",
@@ -39,6 +40,16 @@
                 "notificationText": "Notification Text",
                 "notificationPlaceholder": "Optional: Notification about changes",
                 "error": "The file {{ fileName }} is too large. The maximum filesize is 10MB"
+            },
+            "import": {
+                "table": {
+                    "title": "Titel",
+                    "course": "Course",
+                    "semester": "Semester",
+                    "doImport": "Import"
+                },
+                "searchLecture": "Search for lecture:",
+                "loading": "Loading..."
             }
         },
         "attachment": {
