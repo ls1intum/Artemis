@@ -81,7 +81,9 @@ under ``localhost:7990``.
 
    - Bitbucket: Do not connect Bitbucket with Jira yet
 
-#. Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the following script.
+#. Make sure that Jira, Bitbucket and Bamboo have finished starting up.
+
+    (Only Linux & Windows) Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the following script.
 
     .. raw:: html
 
@@ -93,12 +95,12 @@ under ``localhost:7990``.
        Make sure to execute the script from the subsystem.
        </details>
 
-   Make sure that Jira, Bitbucket and Bamboo have finished starting up.
 
    Execute the shell script ``atlassian-setup.sh`` in the
    ``src/main/docker`` directory (e.g. with
    ``src/main/docker/./atlassian-setup.sh``). This script creates
-   groups, users and disabled application links between the 3 applications.
+   groups, users and assigns the user to their respective group.
+   In addition, it configures disabled application links between the 3 applications.
 
 
 #. Enable the created `application
@@ -151,9 +153,9 @@ under ``localhost:7990``.
 
            Jira → Bitbucket
 
-#. The script *(step 3)* has already created users and groups but you need to
-   manually assign the users into their respective group in Jira. In our
-   test setup, users 1-5 are students, 6-10 are tutors, 11-15 are
+#. The script *(step 3)* has already created the required users and assigned them to their respective group in Jira.
+   Now, make sure that they are assigned correctly according to the following test setup:
+   users 1-5 are students, 6-10 are tutors, 11-15 are
    editors and 16-20 are instructors. The usernames are \artemis_test_user_{1-20}
    and the password is again the username. When you create a course in artemis
    you have to manually choose the created groups (students, tutors, editors,
