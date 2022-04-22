@@ -17,6 +17,7 @@ import { Task } from 'app/exercises/programming/shared/instructions-render/task/
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
@@ -484,6 +485,35 @@ export class ProgrammingExerciseService {
      */
     getFullDiffReport(exerciseId: number): Observable<ProgrammingExerciseFullGitDiffReport> {
         return this.http.get<ProgrammingExerciseFullGitDiffReport>(`${this.resourceUrl}/${exerciseId}/full-diff-report`);
+    }
+
+    /**
+     * Gets the testwise coverage report of a programming exercise for the latest solution submission with all descending reports
+     * @param exerciseId The id of a programming exercise
+     */
+    getLatestFullTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
+        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
+    }
+
+    /**
+     * Gets the testwise coverage report of a programming exercise for the latest solution submission without the actual reports
+     * @param exerciseId The id of a programming exercise
+     */
+    getLatestTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
+        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
+    }
+
+    /**
+     * Gets all files from the last solution participation repository
+     */
+    getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                return res && new Map(Object.entries(res));
+            }),
+        );
     }
 
     createStructuralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {

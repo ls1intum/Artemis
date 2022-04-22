@@ -98,6 +98,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
 
     public inProductionEnvironment: boolean;
+    public isBamboo: boolean;
 
     public supportsJava = true;
     public supportsPython = false;
@@ -397,6 +398,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
+                this.isBamboo = profileInfo.activeProfiles.includes('bamboo');
             }
         });
 
