@@ -538,7 +538,14 @@
                 </label>
             </div>
         </div>
-        <div class="form-group mb-0" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
+        <div
+            class="form-group mb-0"
+            *ngIf="
+                isBamboo &&
+                programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA &&
+                (programmingExercise.projectType === ProjectType.PLAIN_GRADLE || programmingExercise.projectType === ProjectType.GRADLE_GRADLE)
+            "
+        >
             <div class="form-check">
                 <label class="form-check-label" for="field_testwiseCoverageEnabled">
                     <input
@@ -546,10 +553,7 @@
                         type="checkbox"
                         name="testwiseCoverageEnabled"
                         id="field_testwiseCoverageEnabled"
-                        [disabled]="
-                            !!programmingExercise.sequentialTestRuns ||
-                            (programmingExercise.projectType !== ProjectType.PLAIN_GRADLE && programmingExercise.projectType !== ProjectType.GRADLE_GRADLE)
-                        "
+                        [disabled]="!!programmingExercise.sequentialTestRuns"
                         [(ngModel)]="programmingExercise.testwiseCoverageEnabled"
                         checked
                     />
