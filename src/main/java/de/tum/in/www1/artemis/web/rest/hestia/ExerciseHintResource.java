@@ -206,6 +206,25 @@ public class ExerciseHintResource {
     }
 
     /**
+     * {@code GET  exercises/:exerciseId/full-exercise-hints} : get the exercise hints of a provided exercise.
+     * Fetches all relevant relations as well. This currently only includes the solution entries of a code hint.
+     *
+     * @param exerciseId the exercise id of which to retrieve the exercise hints.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exerciseHint,
+     * or with status {@code 404 (Not Found)},
+     * or with status {@code 409 (Conflict)} if the exerciseId is not valid.
+     */
+    @GetMapping("exercises/{exerciseId}/full-exercise-hints")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Set<ExerciseHint>> getExerciseHintsWithRelationsForExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get ExerciseHints for Exercise: {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
+        Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseIdWithRelations(exerciseId);
+        return ResponseEntity.ok(exerciseHints);
+    }
+
+    /**
      * {@code DELETE  exercises/:exerciseId/exercise-hints/:exerciseHintId} : delete the exerciseHint with given id.
      *
      * @param exerciseHintId the id of the exerciseHint to delete

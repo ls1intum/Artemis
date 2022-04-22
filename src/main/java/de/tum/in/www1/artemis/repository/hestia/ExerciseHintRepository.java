@@ -26,6 +26,14 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
 
     Set<ExerciseHint> findByExerciseId(Long exerciseId);
 
+    @Query("""
+            SELECT h
+            FROM ExerciseHint h
+            LEFT JOIN FETCH h.solutionEntries tc
+            WHERE h.exercise.id = :exerciseId
+            """)
+    Set<ExerciseHint> findByExerciseIdWithRelations(Long exerciseId);
+
     @NotNull
     default ExerciseHint findByIdElseThrow(long exerciseHintId) throws EntityNotFoundException {
         return findById(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Exercise Hint", exerciseHintId));

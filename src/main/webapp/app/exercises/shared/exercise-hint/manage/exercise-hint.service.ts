@@ -36,6 +36,13 @@ export interface IExerciseHintService {
     findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>>;
 
     /**
+     * Finds all exercise hints by exercise id
+     * Also fetches any relations. This currently only includes the submission entries of a code hint
+     * @param exerciseId Id of exercise
+     */
+    findByExerciseIdWithRelations(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>>;
+
+    /**
      * Deletes an exercise hint
      * @param exerciseId Id of the exercise of which to delete the hint
      * @param exerciseHintId Id of exercise hint to delete
@@ -89,6 +96,15 @@ export class ExerciseHintService implements IExerciseHintService {
      */
     findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
         return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`, { observe: 'response' });
+    }
+
+    /**
+     * Finds all exercise hints by exercise id
+     * Also fetches any relations. This currently only includes the submission entries of a code hint
+     * @param exerciseId Id of exercise
+     */
+    findByExerciseIdWithRelations(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
+        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/full-exercise-hints`, { observe: 'response' });
     }
 
     /**

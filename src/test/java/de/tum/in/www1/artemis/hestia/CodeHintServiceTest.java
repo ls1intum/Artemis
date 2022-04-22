@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,12 +14,11 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
+import de.tum.in.www1.artemis.domain.hestia.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
@@ -35,6 +31,9 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private CodeHintRepository codeHintRepository;
+
+    @Autowired
+    private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
     private ProgrammingExerciseTaskRepository taskRepository;
