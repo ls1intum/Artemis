@@ -121,14 +121,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     ngAfterViewInit(): void {
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
-            switch (theme) {
-                case Theme.DARK:
-                    this.editor.setTheme('monokai');
-                    break;
-                case Theme.LIGHT:
-                default:
-                    this.editor.setTheme('dreamweaver');
-            }
+            this.editor.setTheme(theme.codeAceTheme);
         });
         this.editor.getEditor().setOptions({
             animatedScroll: true,

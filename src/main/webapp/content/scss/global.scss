@@ -161,7 +161,8 @@ a.btn {
 .form-select,
 .form-check-input,
 .form-control:not(.ace_editor):hover,
-.form-control:focus {
+.form-control:focus,
+textarea {
     background-color: var(--form-control-focus-background);
     color: var(--form-control-color);
 }
@@ -771,12 +772,12 @@ Course Info Bar
     line-height: normal;
 }
 
-.connection-status-admin {
+.connection-status {
     font-size: 14px;
-    color: var(--connection-status-admin);
+    color: var(--connection-status);
 
     &.disconnected {
-        color: var(--connection-status-admin-disconnected);
+        color: var(--connection-status-disconnected);
     }
 
     i {

@@ -1,7 +1,7 @@
 .questionCorrect {
-    color: green;
+    color: var(--quiz-scoring-info-student-modal-question-correct);
 }
 
 .questionWrong {
-    color: orange;
+    color: var(--quiz-scoring-info-student-modal-question-wrong);
 }

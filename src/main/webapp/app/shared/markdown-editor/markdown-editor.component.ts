@@ -230,14 +230,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
             if (!this.aceEditorContainer) {
                 return;
             }
-            switch (theme) {
-                case Theme.DARK:
-                    this.aceEditorContainer.setTheme('monokai');
-                    break;
-                case Theme.LIGHT:
-                default:
-                    this.aceEditorContainer.setTheme('chrome');
-            }
+            this.aceEditorContainer.setTheme(theme.markdownAceTheme);
         });
 
         const selectedAceMode = getAceMode(this.editorMode);

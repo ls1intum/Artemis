@@ -10,7 +10,7 @@ textarea.form-control:focus,
 input.form-control,
 input.form-control:focus {
     width: 100%;
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--form-control-focus-background);
 }
 
 textarea {
@@ -59,16 +59,16 @@ label {
 
     &.positive-feedback {
         text-decoration-style: double;
-        text-decoration-color: #25537a;
-        color: #25537a;
+        text-decoration-color: var(--textblock-feedback-editor-feedback-positive-color);
+        color: var(--textblock-feedback-editor-feedback-positive-color);
         background-color: #d8e8f5;
     }
 
     &.neutral-feedback {
         text-decoration-style: solid;
-        text-decoration-color: #1a1a1a;
-        background-color: #f2f2f2;
-        color: #1a1a1a;
+        text-decoration-color: var(--textblock-feedback-editor-feedback-neutral-color);
+        background-color: var(--textblock-feedback-editor-feedback-neutral-background-color);
+        color: var(--textblock-feedback-editor-feedback-neutral-color);
     }
 
     b {
@@ -85,7 +85,7 @@ label {
 }
 
 .reused-feedback-preview {
-    border: 2px solid rgba(228, 228, 228, 0.87);
+    border: 2px solid var(--textblock-feedback-editor-reused-feedback-preview-border);
     border-radius: 2px;
     padding: 10px;
 }

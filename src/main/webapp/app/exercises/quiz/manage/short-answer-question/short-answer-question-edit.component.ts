@@ -194,14 +194,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             if (!this.questionEditor) {
                 return;
             }
-            switch (theme) {
-                case Theme.DARK:
-                    this.questionEditor.setTheme('monokai');
-                    break;
-                case Theme.LIGHT:
-                default:
-                    this.questionEditor.setTheme('chrome');
-            }
+            this.questionEditor.setTheme(theme.markdownAceTheme);
         });
         this.questionEditor.getEditor().renderer.setShowGutter(false);
         this.questionEditor.getEditor().renderer.setPadding(10);

@@ -7,15 +7,25 @@ const THEME_LOCAL_STORAGE_KEY = 'artmisApp.theme.current';
 const THEME_OVERRIDE_ID = 'artemis-theme-override';
 
 export class Theme {
-    public static readonly LIGHT = new Theme('LIGHT', true, undefined, 'artemisApp.themes.light', faSun);
-    public static readonly DARK = new Theme('DARK', false, 'theme-dark.css', 'artemisApp.themes.dark', faMoon);
+    public static readonly LIGHT = new Theme('LIGHT', true, undefined, 'artemisApp.themes.light', faSun, 'chrome', 'dreamweaver');
+    public static readonly DARK = new Theme('DARK', false, 'theme-dark.css', 'artemisApp.themes.dark', faMoon, 'monokai', 'monokai');
 
-    private constructor(identifier: string, isDefault: boolean, fileName: string | undefined, displayTranslationKey: string, icon: IconDefinition) {
+    private constructor(
+        identifier: string,
+        isDefault: boolean,
+        fileName: string | undefined,
+        displayTranslationKey: string,
+        icon: IconDefinition,
+        markdownAceTheme: string,
+        codeAceTheme: string,
+    ) {
         this.identifier = identifier;
         this.isDefault = isDefault;
         this.fileName = fileName;
         this.displayTranslationKey = displayTranslationKey;
         this.icon = icon;
+        this.markdownAceTheme = markdownAceTheme;
+        this.codeAceTheme = codeAceTheme;
     }
 
     public readonly identifier: string;
@@ -23,6 +33,8 @@ export class Theme {
     public readonly fileName: string | undefined;
     public readonly displayTranslationKey: string;
     public readonly icon: IconDefinition;
+    public readonly markdownAceTheme: string;
+    public readonly codeAceTheme: string;
 
     public static get all(): Theme[] {
         return [this.LIGHT, this.DARK];

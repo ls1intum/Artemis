@@ -1,9 +1,39 @@
-// Boostrap
-$primary: #3e8acc;
-$success: #28a745;
-$info: #17a2b8;
-$warning: #ffc107;
-$danger: #dc3545;
+// === BOOTSTRAP ===
+// Mostly default values, including them here for completeness and comparison
+$white: #fff;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d;
+$gray-700: #495057;
+$gray-800: #343a40;
+$gray-900: #212529;
+$black: #000;
+
+$blue: #3e8acc;
+$indigo: #6610f2;
+$purple: #6f42c1;
+$pink: #d63384;
+$red: #dc3545;
+$orange: #fd7e14;
+$yellow: #ffc107;
+$green: #28a745;
+$teal: #20c997;
+$cyan: #17a2b8;
+
+$primary: $blue;
+$secondary: $gray-600;
+$success: $green;
+$info: $cyan;
+$warning: $yellow;
+$danger: $red;
+$light: $gray-100;
+$dark: $gray-900;
+
+$body-bg: #e4e5e6;
+// === END BOOTSTRAP ===
 
 // Global colors
 $artemis-dark: #353d47;
@@ -11,7 +41,6 @@ $artemis-lighter-dark: saturate(lighten($artemis-dark, 10%), 15%);
 $artemis-link-color: $primary;
 
 // Backgrounds
-$body-bg: #e4e5e6;
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 20);
@@ -81,8 +110,8 @@ $markdown-preview-orange: #d86b1f;
 $markdown-preview-blockquote: #6a737d;
 $markdown-preview-blockquote-border: #dfe2e5;
 
-$connection-status-admin: green;
-$connection-status-admin-disconnected: red;
+$connection-status: $success;
+$connection-status-disconnected: $danger;
 
 $mat-autocomplete-visible-box-shadow: rgb(100 100 100);
 $mat-form-field-outline: #ccc;
@@ -142,6 +171,8 @@ $update-programming-exercise-footer-background: white;
 $update-programming-exercise-footer-box-shadow: rgba(0, 0, 0, 0.7);
 
 // Edit Quiz
+$quiz-mapping-letter-number-mixin-color: white;
+
 $edit-quiz-footer-background: white;
 $edit-quiz-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $quiz-exercise-detail-max-score-background: whitesmoke;
@@ -158,6 +189,48 @@ $quiz-drag-items-background: white;
 $quiz-drag-item-background: #fafafa;
 $quiz-drag-item-border: #696969;
 $quiz-drag-item-color: black;
+
+$quiz-participation-footer-background: white;
+$quiz-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$quiz-participation-footer-dnd-background: #86ccd5;
+$quiz-participation-footer-mc-background: #eee066;
+$quiz-participation-footer-sa-background: #d8956c;
+$quiz-participation-footer-changed-background: #527cd7;
+$quiz-participation-footer-content-quiz-score-color: $success;
+$quiz-participation-footer-content-quiz-score-incorrect-color: black;
+$quiz-participation-footer-content-time-warning-color: $warning;
+$quiz-participation-footer-content-time-critical-color: $danger;
+$quiz-participation-quiz-is-over-border-color: #3c763d;
+$quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
+$quiz-participation-btn-circle-light-border-color: white;
+
+$quiz-participation-question-disabled-color: #696969;
+$quiz-participation-question-disabled-background: #fafafa;
+$quiz-participation-question-result-border-color: $success;
+$quiz-participation-question-result-incorrect-border-color: $warning;
+$quiz-participation-question-h2-span-color: grey;
+$quiz-participation-question-score-result: $success;
+$quiz-participation-question-score-incorrect-result: $warning;
+
+$quiz-scoring-info-student-modal-question-correct: $success;
+$quiz-scoring-info-student-modal-question-wrong: $warning;
+
+$dnd-question-background: #fefefe;
+$dnd-question-border-color: lightgrey;
+$dnd-question-drop-location-background: white;
+$dnd-question-drop-location-border-color: black;
+$dnd-question-drop-location-results-border-color: $success;
+$dnd-question-drop-location-results-background: rgb(170, 255, 170);
+$dnd-question-drop-location-results-incorrect-border-color: $danger;
+$dnd-question-drop-location-results-incorrect-background: rgb(255, 170, 170);
+$dnd-question-drop-location-results-sample-border-color: black;
+$dnd-question-drop-location-results-sample-background: white;
+$dnd-question-drop-location-result-symbol-color: $warning;
+$dnd-question-drop-location-result-invalid-color: $danger;
+$dnd-question-drop-location-drag-item-background: white;
+$dnd-question-dnd-items-drag-items-background: #eee;
+$dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
+$dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;
@@ -206,6 +279,69 @@ $text-editor-background: #f9f9f9;
 $text-editor-focus-background: #fbfbfb;
 $text-editor-color: black;
 $text-editor-border-color: #d5d5d5;
+
+// Exam (Manage)
+$exam-checklist-exercise-group-table-background: white;
+
+$exercise-group-border-color: #cccccc;
+$exercise-group-header-background: #e1e1e1;
+$exercise-group-header-badge-color: $warning;
+
+// Grading system
+$base-grading-system-input-color: black;
+$base-grading-system-input-background: white;
+
+// Exam students
+$exam-students-dropdown-item-active: $success;
+$exam-students-dropdown-item-already-registered-color: #212529;
+$exam-students-dropdown-item-already-registered-background-color: #e9f6ec;
+$exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
+$exam-students-datatable-row-newly-registered-background-color: #c4e7cc;
+
+// Data table
+$data-table-icon-right: white;
+$data-table-transitioning-container-active-background-color: rgba(255, 255, 255, 0.5);
+$data-table-dropdown-item-selected-background-color: $primary;
+
+// Exam
+$exam-navigation-bar-background-color: #ecebe7;
+$exam-navigation-bar-synced-color: white;
+$exam-navigation-bar-synced-background-color: #3e8acc;
+$exam-navigation-bar-not-synced-color: #1a1a1a;
+$exam-navigation-bar-not-synced-background-color: #e8bf48;
+$exam-navigation-bar-inactive-background: gray;
+$exam-navigation-bar-active-background: #276091;
+$exam-navigation-bar-exercise-index-color: black;
+$exam-timer-label-color: #212529;
+$exam-timer-remaining-time-background: white;
+$exam-timer-critical-background: $warning;
+$exam-exercise-overview-table-background: white;
+$exam-participation-footer-background: white;
+$exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$exam-participation-footer-connected-background: #d1ecf1;
+$exam-participation-footer-disconnected-background: #fff2cc;
+$exam-text-exam-summary-background: #f8f9fa;
+
+// Assessment
+$textblock-assessment-span-hover-background: $gray-300;
+$textblock-assessment-text-feedback-positive-color: $success;
+$textblock-assessment-text-feedback-positive-background: $gray-100;
+$textblock-assessment-text-feedback-positive-active-decoration: $success;
+$textblock-assessment-text-feedback-negative-color: $danger;
+$textblock-assessment-text-feedback-negative-background: $gray-100;
+$textblock-assessment-text-feedback-negative-active-decoration: $danger;
+$textblock-assessment-text-feedback-neutral-color: $gray-900;
+$textblock-assessment-text-feedback-neutral-background: $gray-100;
+$textblock-assessment-text-feedback-neutral-active-decoration: $gray-900;
+$textblock-assessment-text-feedback-conflicting-color: $gray-900;
+$textblock-assessment-text-feedback-conflicting-background: $warning;
+$textblock-assessment-text-feedback-conflicting-active-decoration: $gray-900;
+$textblock-assessment-textblock-feedback-editor-active-border: $gray-500;
+$textblock-feedback-editor-feedback-positive-color: #25537a;
+$textblock-feedback-editor-feedback-positive-background-color: #d8e8f5;
+$textblock-feedback-editor-feedback-neutral-color: $gray-900;
+$textblock-feedback-editor-feedback-neutral-background-color: $gray-100;
+$textblock-feedback-editor-reused-feedback-preview-border: rgba(228, 228, 228, 0.87);
 
 // Guided tour
 $gt-tour-step-bg-color: #ffffff;
