@@ -79,6 +79,8 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     private Long idOfCourse;
 
+    private Long idOfCourseTwo;
+
     private Long idOfLearningGoal;
 
     private Long idOfLectureOne;
@@ -125,6 +127,9 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         Course course = this.database.createCourse();
         idOfCourse = course.getId();
 
+        Course courseTwo = this.database.createCourse();
+        idOfCourseTwo = courseTwo.getId();
+
         User student1 = userRepository.findOneByLogin("student1").get();
 
         createLectureOne(course);
@@ -144,11 +149,11 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         creatingLectureUnitsOfLectureOne();
         creatingLectureUnitsOfLectureTwo();
         createLearningGoal();
+        createPrerequisite();
     }
 
     private void createLearningGoal() {
-        Course course;
-        course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
+        Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("LearningGoalOne");
         learningGoal.setDescription("This is an example learning goal");
@@ -158,6 +163,14 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         learningGoal.setLectureUnits(connectedLectureUnits);
         learningGoal = learningGoalRepository.save(learningGoal);
         idOfLearningGoal = learningGoal.getId();
+    }
+
+    private void createPrerequisite() {
+        // Add the first learning goal as a prerequisite to the other course
+        LearningGoal learningGoal = learningGoalRepository.findByIdWithConsecutiveCourses(idOfLearningGoal).get();
+        Course course2 = courseRepository.findWithEagerLearningGoalsById(idOfCourseTwo).get();
+        course2.addPrerequisite(learningGoal);
+        courseRepository.save(course2);
     }
 
     private void creatingLectureUnitsOfLectureOne() {
@@ -618,6 +631,62 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
         learningGoal.setLectureUnits(connectedLectureUnits);
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getPrerequisites() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        List<LearningGoal> prerequisites = request.getList("/api/courses/" + idOfCourseTwo + "/prerequisites", HttpStatus.OK, LearningGoal.class);
+        assertThat(prerequisites).containsExactly(learningGoal);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void addPrerequisite() throws Exception {
+        Course courseTwo = courseRepository.findById(idOfCourseTwo).get();
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("LearningGoalTwo");
+        learningGoal.setDescription("This is an example learning goal");
+        learningGoal.setCourse(courseTwo);
+        learningGoal = learningGoalRepository.save(learningGoal);
+
+        LearningGoal prerequisite = request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/" + learningGoal.getId(), learningGoal, LearningGoal.class,
+                HttpStatus.OK);
+
+        assertThat(prerequisite).isNotNull();
+        Course course = courseRepository.findById(idOfCourse).get();
+        assertThat(prerequisite.getConsecutiveCourses()).contains(course);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void addPrerequisite_unauthorized() throws Exception {
+        request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/99", null, LearningGoal.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void removePrerequisite() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        request.delete("/api/courses/" + idOfCourseTwo + "/prerequisites/" + idOfLearningGoal, HttpStatus.OK);
+
+        Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourseTwo).orElseThrow();
+        assertThat(course.getPrerequisites()).doesNotContain(learningGoal);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void removePrerequisite_unauthorized() throws Exception {
+        request.delete("/api/courses/" + idOfCourseTwo + "/prerequisites/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void addPrerequisite_doNotAllowCycle() throws Exception {
+        // Test that a learning goal of a course can not be a prerequisite to the same course
+        LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/" + idOfLearningGoal, learningGoal, LearningGoal.class, HttpStatus.CONFLICT);
     }
 
 }

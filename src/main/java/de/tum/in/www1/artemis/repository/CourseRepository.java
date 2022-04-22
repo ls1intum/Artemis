@@ -87,13 +87,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "learningGoals" })
+    @EntityGraph(type = LOAD, attributePaths = { "learningGoals", "prerequisites" })
     Optional<Course> findWithEagerLearningGoalsById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures" })
     Optional<Course> findWithEagerExercisesAndLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
     Course findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
     @Query("select distinct course from Course course left join fetch course.organizations co where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")

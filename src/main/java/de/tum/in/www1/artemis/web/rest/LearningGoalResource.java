@@ -171,7 +171,7 @@ public class LearningGoalResource {
     }
 
     private LearningGoal findPrerequisite(Role role, Long learningGoalId, Long courseId) {
-        var learningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectionalElseThrow(learningGoalId);
+        var learningGoal = learningGoalRepository.findByIdWithConsecutiveCoursesElseThrow(learningGoalId);
         if (!learningGoal.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
             throw new ConflictException("The learning goal is not a prerequisite of the given course", "LearningGoal", "prerequisiteWrongCourse");
         }
@@ -263,6 +263,28 @@ public class LearningGoalResource {
     }
 
     /**
+     * GET /courses/:courseId/prerequisites
+     * @param courseId the id of the course for which the learning goals should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
+     */
+    @GetMapping("/courses/{courseId}/prerequisites")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<LearningGoal>> getPrerequisites(@PathVariable Long courseId) {
+        log.debug("REST request to get prerequisites for course with id: {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        Set<LearningGoal> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(courseId);
+        // Remove all lecture units as
+        for (LearningGoal prerequisite : prerequisites) {
+            prerequisite.setLectureUnits(Collections.emptySet());
+        }
+
+        return ResponseEntity.ok(new ArrayList<>(prerequisites));
+    }
+
+    /**
      * POST /courses/:courseId/prerequisites/:learningGoalId
      * @param courseId the id of the course for which the learning goal should be a prerequisite
      * @param learningGoalId the id of the prerequisite (learning goal) to add
@@ -270,13 +292,18 @@ public class LearningGoalResource {
      */
     @PostMapping("/courses/{courseId}/prerequisites/{learningGoalId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> addPrerequisite(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+    public ResponseEntity<LearningGoal> addPrerequisite(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.info("REST request to add a prerequisite: {}", learningGoalId);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var learningGoal = findPrerequisite(Role.INSTRUCTOR, learningGoalId, courseId);
+        var course = courseRepository.findWithEagerLearningGoalsById(courseId).orElseThrow();
+        var learningGoal = learningGoalRepository.findByIdWithConsecutiveCourses(learningGoalId).orElseThrow();
+
+        if (learningGoal.getCourse().getId().equals(courseId)) {
+            throw new ConflictException("The learning goal of a course can not be a prerequisite to the same course", "LearningGoal", "learningGoalCycle");
+        }
+
         course.addPrerequisite(learningGoal);
         courseRepository.save(course);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).body(learningGoal);
     }
 
     /**
@@ -289,7 +316,7 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removePrerequisite(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.info("REST request to remove a prerequisite: {}", learningGoalId);
-        var course = courseRepository.findByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerLearningGoalsById(courseId).orElseThrow();
         var learningGoal = findPrerequisite(Role.INSTRUCTOR, learningGoalId, courseId);
         course.removePrerequisite(learningGoal);
         courseRepository.save(course);

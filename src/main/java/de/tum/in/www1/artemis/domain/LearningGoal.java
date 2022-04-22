@@ -43,7 +43,7 @@ public class LearningGoal extends DomainObject {
 
     @ManyToMany
     @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties("learningGoals")
+    @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Course> consecutiveCourses = new HashSet<>();
 

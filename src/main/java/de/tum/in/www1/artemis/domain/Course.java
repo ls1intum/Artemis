@@ -188,7 +188,7 @@ public class Course extends DomainObject {
     @ManyToMany
     @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("course")
+    @JsonIgnoreProperties("consecutiveCourses")
     private Set<LearningGoal> prerequisites = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
