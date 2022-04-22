@@ -171,7 +171,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             // exampleSubmissionSource$ should set the umlModel before exerciseSource$ sets the exercise in order
             // to prevent ModelingAssessmentComponent from displaying the model as empty due to race condition between
             // two requests.
-            exerciseSource$ = forkJoin([exerciseSource$, exampleSubmissionSource$]).pipe(map(([exercise, exampleSubmission]) => exercise));
+            exerciseSource$ = forkJoin([exerciseSource$, exampleSubmissionSource$]).pipe(map(([exercise]) => exercise));
         }
 
         exerciseSource$.subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
