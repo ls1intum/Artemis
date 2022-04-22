@@ -2,6 +2,16 @@ import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-r
 import { round } from 'app/shared/util/utils';
 
 /**
+ * This interface represents a cell object, which conforms to the Common Spreadsheet Format (CSF).
+ * https://github.com/sheetjs/sheetjs#common-spreadsheet-format
+ */
+export interface CommonSpreadsheetCellObject {
+    t: string;
+    v: number;
+    z?: string;
+}
+
+/**
  * Builds Excel rows for the course scores export.
  */
 export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
@@ -13,7 +23,7 @@ export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized format.
+     * Stores the given value under the key in the row after converting it to the localized format stored in the Common Spreadsheet Format (CSF).
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
@@ -21,7 +31,7 @@ export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
         if (isNaN(value)) {
             this.set(key, '-');
         } else {
-            const numberCell = {
+            const numberCell: CommonSpreadsheetCellObject = {
                 t: 'n',
                 v: round(value, this.accuracyOfScores),
             };
@@ -30,7 +40,7 @@ export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized percentage format.
+     * Stores the given value under the key in the row after converting it to the localized percentage format stored in the Common Spreadsheet Format (CSF).
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
@@ -40,7 +50,7 @@ export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
         } else {
             const roundedScore = round(value, this.accuracyOfScores);
             const percentageFormat = Number.isInteger(roundedScore) ? '0%' : '0.' + Array(this.accuracyOfScores + 1).join('0') + '%';
-            const percentageCell = {
+            const percentageCell: CommonSpreadsheetCellObject = {
                 t: 'n',
                 v: round(roundedScore / 100, this.accuracyOfScores + 3),
                 z: percentageFormat,

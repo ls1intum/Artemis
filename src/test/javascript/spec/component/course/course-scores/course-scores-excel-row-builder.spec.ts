@@ -25,6 +25,13 @@ describe('The CourseScoresExcelRowBuilder', () => {
         expect(rowObject['z']).toBe('0%');
     });
 
+    it('should return a hyphen for NaN values', () => {
+        excelRowBuilder.setLocalized('n', NaN);
+        expect(excelRowBuilder.build()['n']).toBe('-');
+        excelRowBuilder.setLocalizedPercent('p', NaN);
+        expect(excelRowBuilder.build()['p']).toBe('-');
+    });
+
     describe('Test the CourseScoresExcelRowBuilder with a specific accuracyOfScores', () => {
         beforeEach(() => {
             excelRowBuilder = new CourseScoresExcelRowBuilder(3);
