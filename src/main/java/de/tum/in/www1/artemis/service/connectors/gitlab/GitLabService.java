@@ -2,16 +2,21 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import static org.gitlab4j.api.models.AccessLevel.*;
 
-import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
 import org.apache.http.HttpStatus;
+import org.gitlab4j.api.Constants;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.*;
@@ -151,7 +156,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     private String getPathIDFromRepositoryURL(VcsRepositoryUrl repositoryUrl) {
-        final var namespaces = repositoryUrl.getURL().toString().split("/");
+        final var namespaces = repositoryUrl.getURI().toString().split("/");
         final var last = namespaces.length - 1;
         return namespaces[last - 1] + "/" + namespaces[last].replace(".git", "");
     }
@@ -175,10 +180,10 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Protects the branch but delays the execution.
      *
-     * @param repositoryPath  The id of the repository
-     * @param branch        The branch to protect
-     * @param delayTime     Time until the call is executed
-     * @param delayTimeUnit The unit of the time (e.g seconds, minutes)
+     * @param repositoryPath The id of the repository
+     * @param branch         The branch to protect
+     * @param delayTime      Time until the call is executed
+     * @param delayTimeUnit  The unit of the time (e.g seconds, minutes)
      */
     private void protectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
@@ -202,10 +207,10 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Unprotect the branch but delays the execution.
      *
-     * @param repositoryPath  The id of the repository
-     * @param branch        The branch to unprotect
-     * @param delayTime     Time until the call is executed
-     * @param delayTimeUnit The unit of the time (e.g seconds, minutes)
+     * @param repositoryPath The id of the repository
+     * @param branch         The branch to unprotect
+     * @param delayTime      Time until the call is executed
+     * @param delayTimeUnit  The unit of the time (e.g seconds, minutes)
      */
     private void unprotectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
@@ -300,7 +305,7 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public Boolean repositoryUrlIsValid(@Nullable VcsRepositoryUrl repositoryUrl) {
-        if (repositoryUrl == null || repositoryUrl.getURL() == null) {
+        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
             return false;
         }
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
@@ -329,6 +334,24 @@ public class GitLabService extends AbstractVersionControlService {
         commit.setCommitHash(gitLabCommit.getHash());
 
         return commit;
+    }
+
+    @Override
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {
+        // Gitlab never provides the push date initially so we can ignore the eventObject
+        try {
+            String repositoryUrl = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+            Stream<Event> eventStream = gitlab.getEventsApi().getProjectEventsStream(repositoryUrl, Constants.ActionType.PUSHED, null, null, null, Constants.SortOrder.DESC);
+            var eventOptional = eventStream.filter(event -> commitHash.equals(event.getPushData().getCommitTo())).findFirst();
+
+            if (eventOptional.isPresent()) {
+                return eventOptional.get().getCreatedAt().toInstant().atZone(ZoneOffset.UTC);
+            }
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException(e);
+        }
+        throw new GitLabException("Could not find build queue date for participation " + participation.getId());
     }
 
     @Override
@@ -379,8 +402,8 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Adds the users to the exercise's group with the specified access level.
      *
-     * @param users The users to add
-     * @param exercise the exercise
+     * @param users       The users to add
+     * @param exercise    the exercise
      * @param accessLevel the access level to give
      */
     private void addUsersToExerciseGroup(List<User> users, ProgrammingExercise exercise, AccessLevel accessLevel) {
@@ -431,9 +454,10 @@ public class GitLabService extends AbstractVersionControlService {
 
     /**
      * Updates the acess level of the user if it's a member of the repository.
+     *
      * @param repositoryUrl The url of the repository
-     * @param username the username of the gitlab user
-     * @param accessLevel the new access level for the user
+     * @param username      the username of the gitlab user
+     * @param accessLevel   the new access level for the user
      */
     private void updateMemberPermissionInRepository(VcsRepositoryUrl repositoryUrl, String username, AccessLevel accessLevel) {
         final var userId = gitLabUserManagementService.getUserId(username);
@@ -505,9 +529,9 @@ public class GitLabService extends AbstractVersionControlService {
 
         private void stringToURL(String urlString) {
             try {
-                this.url = new URL(urlString);
+                this.uri = new URI(urlString);
             }
-            catch (MalformedURLException e) {
+            catch (URISyntaxException e) {
                 throw new GitLabException("Could not build GitLab URL", e);
             }
         }
@@ -515,7 +539,7 @@ public class GitLabService extends AbstractVersionControlService {
         @Override
         public VcsRepositoryUrl withUser(String username) {
             this.username = username;
-            return new GitLabRepositoryUrl(url.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
+            return new GitLabRepositoryUrl(uri.toString().replaceAll("(https?://)(.*)", "$1" + username + "@$2"));
         }
     }
 }

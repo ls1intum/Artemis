@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription, of, Observable } from 'rxjs';
-import { tap, map, switchMap, filter } from 'rxjs/operators';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Observable, of, Subscription } from 'rxjs';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
@@ -11,7 +11,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
-import { Router, NavigationEnd, ActivatedRoute, RouterEvent } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -51,6 +51,7 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-navbar',
@@ -71,6 +72,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isRegistrationEnabled = false;
     passwordResetEnabled = false;
     breadcrumbs: Breadcrumb[];
+    isCollapsed: boolean;
+
     // Icons
     faBars = faBars;
     faThLarge = faThLarge;
@@ -126,6 +129,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
         this.getExamId();
+        this.onResize();
+    }
+
+    @HostListener('window:resize', ['$event'])
+    onResize() {
+        this.isCollapsed = window.innerWidth < 1200;
     }
 
     ngOnInit() {
@@ -249,6 +258,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutor_effort_statistics: 'artemisApp.textExercise.tutorEffortStatistics.title',
         text_cluster_statistics: 'artemisApp.textExercise.clusterStatistics.title',
         user_settings: 'artemisApp.userSettings.title',
+        detailed: 'artemisApp.gradingSystem.detailedTab.title',
+        interval: 'artemisApp.gradingSystem.intervalTab.title',
     };
 
     /**
@@ -312,6 +323,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addResolvedTitleAsCrumb(this.courseManagementService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'exercises':
+                // Special case: A raw /course-management/XXX/exercises/XXX doesn't work, we need to add the exercise type
+                // For example /course-management/XXX/programming-exercises/XXX
+                this.addExerciseCrumb(Number(segment), currentPath);
+                break;
             case 'text-exercises':
             case 'modeling-exercises':
             case 'file-upload-exercises':
@@ -434,9 +449,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param uri the uri/path for the breadcrumb
      * @param label the displayed label for the breadcrumb
      * @param translate if the label should be translated
+     * @return the created breadcrumb object
      */
-    private addBreadcrumb(uri: string, label: string, translate: boolean): void {
-        this.setBreadcrumb(uri, label, translate, this.breadcrumbs.length);
+    private addBreadcrumb(uri: string, label: string, translate: boolean): Breadcrumb {
+        return this.setBreadcrumb(uri, label, translate, this.breadcrumbs.length);
     }
 
     /**
@@ -446,13 +462,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param label the displayed label for the breadcrumb
      * @param translate if the label should be translated
      * @param index the index of the breadcrumbs array to set the breadcrumb at
+     * @return the created breadcrumb object
      */
-    private setBreadcrumb(uri: string, label: string, translate: boolean, index: number): void {
+    private setBreadcrumb(uri: string, label: string, translate: boolean, index: number): Breadcrumb {
         const crumb = new Breadcrumb();
         crumb.label = label;
         crumb.translate = translate;
         crumb.uri = uri;
         this.breadcrumbs[index] = crumb;
+        return crumb;
     }
 
     /**
@@ -465,16 +483,40 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private addResolvedTitleAsCrumb(observable: Observable<HttpResponse<string>>, uri: string, segment: string): void {
         // Insert the segment until we fetched a title from the server to insert at the correct index
-        const index = this.breadcrumbs.length;
-        this.addBreadcrumb(uri, segment, false);
+        const crumb = this.addBreadcrumb(uri, segment, false);
 
         observable.subscribe({
             next: (response: HttpResponse<string>) => {
                 // Fall back to the segment in case there is no body returned
                 const title = response.body ?? segment;
-                this.setBreadcrumb(uri, title, false, index);
+                this.setBreadcrumb(uri, title, false, this.breadcrumbs.indexOf(crumb));
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    /**
+     * Adds a link to an exercise to the breadcrumbs array. The link depends on the type of the exercise, so we need to fetch it first
+     * @param exerciseId the id of the exercise
+     * @param currentPath the initial path for the breadcrumb
+     * @private
+     */
+    private addExerciseCrumb(exerciseId: number, currentPath: string): void {
+        // Add dummy breadcrumb
+        const crumb = this.addBreadcrumb('', '', false);
+
+        this.exerciseService.find(exerciseId).subscribe({
+            next: (response: HttpResponse<Exercise>) => {
+                // If the response doesn't contain the needed data, remove the breadcrumb as we can not successfully link to it
+                if (!response?.body?.title || !response?.body?.type) {
+                    this.breadcrumbs.splice(this.breadcrumbs.indexOf(crumb), 1);
+                } else {
+                    // If all data is there, overwrite the breadcrumb with the correct link
+                    this.setBreadcrumb(currentPath.replace('/exercises/', `/${response.body.type}-exercises/`), response.body.title, false, this.breadcrumbs.indexOf(crumb));
+                }
+            },
+            // Same as if data isn't available
+            error: () => this.breadcrumbs.splice(this.breadcrumbs.indexOf(crumb), 1),
         });
     }
 

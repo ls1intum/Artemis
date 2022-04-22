@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
-import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
+import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
 
@@ -448,7 +448,7 @@ public class UserService {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
             String currentPasswordHash = user.getPassword();
             if (!passwordService.checkPasswordMatch(currentClearTextPassword, currentPasswordHash)) {
-                throw new InvalidPasswordException();
+                throw new PasswordViolatesRequirementsException();
             }
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);

@@ -188,7 +188,6 @@ public class PostService extends PostingService {
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
         Post post = postRepository.findByIdElseThrow(postId);
         post.setDisplayPriority(displayPriority);
-
         return updatePost(courseId, postId, post);
     }
 
@@ -278,7 +277,7 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        List<Post> coursePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null);
+        List<Post> coursePosts = postRepository.findPostsForCourse(courseId, null, false, false, false, null);
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 

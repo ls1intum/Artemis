@@ -16,9 +16,9 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.2.0"
+    id "com.google.cloud.tools.jib" version "3.2.1"
     id "com.github.node-gradle.node" version "3.2.1"
-    id "com.diffplug.spotless" version "6.4.0"
+    id "com.diffplug.spotless" version "6.4.2"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.7.1"
+    version = "5.7.3"
     description = "Interactive Learning with Individual Feedback"
 }
 
@@ -74,10 +74,6 @@ defaultTasks "bootRun"
 
 springBoot {
     mainClass = "de.tum.in.www1.artemis.ArtemisApp"
-}
-
-bootRun {
-    jvmArgs = ["--illegal-access=warn"]
 }
 
 modernizer {
@@ -193,7 +189,6 @@ dependencies {
     testImplementation "com.h2database:h2:${h2_database_version}"
     testImplementation "com.opencsv:opencsv:${opencsv_version}"
     testImplementation "org.gradle:gradle-tooling-api:${gradle_tooling_api}"
-
 }
 
 task executeTests (type: Exec) {
@@ -202,7 +197,7 @@ task executeTests (type: Exec) {
 
 allprojects {
     wrapper {
-        gradleVersion = "7.4.1"
+        gradleVersion = "7.4.2"
     }
 }
 

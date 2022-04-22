@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import dayjs from 'dayjs/esm';
@@ -18,7 +18,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
     templateUrl: './course-exercise-row.component.html',
     styleUrls: ['./course-exercise-row.scss'],
 })
-export class CourseExerciseRowComponent implements OnInit, OnDestroy {
+export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -51,12 +51,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id!);
-        if (cachedParticipation) {
-            this.exercise.studentParticipations = [cachedParticipation];
-        }
-        this.dueDate = getExerciseDueDate(this.exercise, cachedParticipation);
-
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise!.id === this.exercise.id) {
                 this.exercise.studentParticipations =
@@ -69,6 +63,14 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
                 this.dueDate = getExerciseDueDate(this.exercise, changedParticipation);
             }
         });
+    }
+
+    ngOnChanges(): void {
+        const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id!);
+        if (cachedParticipation) {
+            this.exercise.studentParticipations = [cachedParticipation];
+        }
+        this.dueDate = getExerciseDueDate(this.exercise, cachedParticipation);
         this.exercise.participationStatus = participationStatus(this.exercise);
         if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             this.exercise.studentParticipations[0].exercise = this.exercise;

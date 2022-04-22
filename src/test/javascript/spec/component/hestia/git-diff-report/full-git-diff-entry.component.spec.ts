@@ -1,15 +1,10 @@
 import { ArtemisTestModule } from '../../../test.module';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { FullGitDiffEntryComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-entry.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe } from 'ng-mocks';
 
 describe('ProgrammingExerciseFullGitDiffEntry Component', () => {
     let comp: FullGitDiffEntryComponent;
@@ -17,14 +12,9 @@ describe('ProgrammingExerciseFullGitDiffEntry Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot()],
-            declarations: [FullGitDiffEntryComponent, AceEditorComponent],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                { provide: ProfileService, useValue: new MockProfileService() },
-            ],
+            imports: [ArtemisTestModule],
+            declarations: [FullGitDiffEntryComponent, AceEditorComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(FullGitDiffEntryComponent);
         comp = fixture.componentInstance;

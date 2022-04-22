@@ -15,7 +15,6 @@ test {
     }
     testLogging.showStandardStreams = true
     reports.html.required = false
-    jvmArgs "--illegal-access=warn"
 }
 
 task testReport(type: TestReport) {
@@ -24,7 +23,7 @@ task testReport(type: TestReport) {
 }
 
 jacoco {
-    toolVersion = "0.8.7"
+    toolVersion = "0.8.8"
 }
 
 jacocoTestReport {
@@ -45,7 +44,7 @@ jacocoTestCoverageVerification {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 20
-                maximum = 22
+                maximum = 23
             }
         }
     }

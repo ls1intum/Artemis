@@ -83,7 +83,7 @@ public class ProgrammingExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
     private final CourseRepository courseRepository;
 
@@ -114,7 +114,7 @@ public class ProgrammingExerciseResource {
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -173,7 +173,8 @@ public class ProgrammingExerciseResource {
      * @param programmingExercise exercise to validate
      */
     private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
@@ -202,7 +203,8 @@ public class ProgrammingExerciseResource {
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
         // Check if package name is set
         if (programmingLanguageFeature.isPackageNameRequired()) {
@@ -262,7 +264,7 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
-        catch (IOException | URISyntaxException | InterruptedException | GitAPIException | ContinuousIntegrationException e) {
+        catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
             log.error("Error while setting up programming exercise", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
@@ -521,7 +523,7 @@ public class ProgrammingExerciseResource {
             gitService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
             return new ResponseEntity<>(HttpStatus.OK);
         }
-        catch (IllegalStateException | InterruptedException | GitAPIException ex) {
+        catch (IllegalStateException | GitAPIException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
