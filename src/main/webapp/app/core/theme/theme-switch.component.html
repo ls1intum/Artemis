@@ -17,7 +17,16 @@
         }}</a>
     </div>
 </ng-template>
-<li class="wrapper nav-item" (click)="toggle()" [ngbPopover]="popContent" [triggers]="'hover'" #popover="ngbPopover" [autoClose]="false" [animation]="animate">
+<li
+    class="wrapper nav-item"
+    (click)="toggle()"
+    [ngbPopover]="popContent"
+    [triggers]="'hover'"
+    #popover="ngbPopover"
+    [autoClose]="false"
+    [animation]="animate"
+    placement="bottom-right"
+>
     <div class="theme-toggle" [ngClass]="{ dark: isDark }" id="theme-toggle">
         <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
             <circle class="sun" cx="12" cy="12" r="6" mask="url(#moon-mask)" fill="currentColor" />
