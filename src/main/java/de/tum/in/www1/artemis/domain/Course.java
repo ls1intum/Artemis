@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
@@ -94,6 +95,11 @@ public class Course extends DomainObject {
     @Column(name = "language")
     @JsonView(QuizView.Before.class)
     private Language language;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_programming_language")
+    @JsonView(QuizView.Before.class)
+    private ProgrammingLanguage defaultProgrammingLanguage;
 
     @Column(name = "online_course")
     @JsonView(QuizView.Before.class)
@@ -317,6 +323,14 @@ public class Course extends DomainObject {
 
     public void setLanguage(Language language) {
         this.language = language;
+    }
+
+    public ProgrammingLanguage getDefaultProgrammingLanguage() {
+        return defaultProgrammingLanguage;
+    }
+
+    public void setDefaultProgrammingLanguage(ProgrammingLanguage defaultProgrammingLanguage) {
+        this.defaultProgrammingLanguage = defaultProgrammingLanguage;
     }
 
     public Boolean isOnlineCourse() {

@@ -10,7 +10,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -544,14 +543,14 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations) throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations);
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         Lecture lecture1 = course1.getLectures().stream().findFirst().get();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         VideoUnit videoUnit = createVideoUnit();
         TextUnit textUnit = createTextUnit();
-        AttachmentUnit attachmentUnit = createAttachmentUnit();
+        AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
         ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
         addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
         return courses;
@@ -571,8 +570,9 @@ public class DatabaseUtilService {
         return exerciseUnitRepository.save(exerciseUnit);
     }
 
-    public AttachmentUnit createAttachmentUnit() {
-        Attachment attachmentOfAttachmentUnit = new Attachment().attachmentType(AttachmentType.FILE).link(Paths.get("files", "temp", "example.txt").toString()).name("example");
+    public AttachmentUnit createAttachmentUnit(Boolean withFile) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        Attachment attachmentOfAttachmentUnit = withFile ? ModelFactory.generateAttachmentWithFile(started) : ModelFactory.generateAttachment(started);
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
@@ -596,6 +596,10 @@ public class DatabaseUtilService {
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
+        return createCoursesWithExercisesAndLectures(withParticipations, false);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations, boolean withFiles) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -638,12 +642,14 @@ public class DatabaseUtilService {
         course1.addExercises(quizExercise);
 
         Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture1);
+        Attachment attachment1 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
+        attachment1.setLecture(lecture1);
         lecture1.addAttachments(attachment1);
         course1.addLectures(lecture1);
 
         Lecture lecture2 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment2 = ModelFactory.generateAttachment(pastTimestamp, lecture2);
+        Attachment attachment2 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
+        attachment2.setLecture(lecture2);
         lecture2.addAttachments(attachment2);
         course1.addLectures(lecture2);
 
@@ -1939,24 +1945,25 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
-        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
+        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
-    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage);
+        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage);
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis) {
-        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
-    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
+            ProgrammingLanguage programmingLanguage) {
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-        populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", enableStaticCodeAnalysis, programmingLanguage);
+        populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -1992,11 +1999,11 @@ public class DatabaseUtilService {
     }
 
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
-        populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
+        populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis,
-            ProgrammingLanguage programmingLanguage) {
+            boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();
@@ -2025,6 +2032,7 @@ public class DatabaseUtilService {
         if (enableStaticCodeAnalysis) {
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
         }
+        programmingExercise.setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
         // Note: no separators are allowed for Swift package names
         if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setPackageName("swiftTest");
@@ -2115,7 +2123,7 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) {
-        Course course = addCourseWithOneProgrammingExercise(true, programmingLanguage);
+        Course course = addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -3499,7 +3507,17 @@ public class DatabaseUtilService {
         return search;
     }
 
-    public LinkedMultiValueMap<String, String> exerciseSearchMapping(PageableSearchDTO<String> search) {
+    public PageableSearchDTO<String> configureLectureSearch(String searchTerm) {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(Lecture.LectureSearchColumn.COURSE_TITLE.name());
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        return search;
+    }
+
+    public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
         final var mapType = new TypeToken<Map<String, String>>() {
         }.getType();
         final var gson = new Gson();
@@ -3535,11 +3553,20 @@ public class DatabaseUtilService {
         storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));
     }
 
-    public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, User user, String text) {
+    public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, Participant participant, String text) {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission(text, Language.ENGLISH, true);
         textSubmission = textSubmissionRepo.save(textSubmission);
 
-        var studentParticipation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        StudentParticipation studentParticipation;
+        if (participant instanceof User user) {
+            studentParticipation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        }
+        else if (participant instanceof Team team) {
+            studentParticipation = addTeamParticipationForExercise(textExercise, team.getId());
+        }
+        else {
+            throw new RuntimeException("Unsupported participant!");
+        }
         studentParticipation.addSubmission(textSubmission);
 
         studentParticipationRepo.save(studentParticipation);

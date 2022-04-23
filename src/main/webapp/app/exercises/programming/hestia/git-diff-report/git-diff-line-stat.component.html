@@ -1,0 +1,6 @@
+<span class="text-success">+{{ addedLineCount }}</span>
+<span class="text-danger">-{{ removedLineCount }}</span>
+<span class="diff-block-bar">
+    <span *ngFor="let i of [].constructor(addedSquareCount)" class="diff-block bg-success"></span>
+    <span *ngFor="let i of [].constructor(removedSquareCount)" class="diff-block bg-danger"></span>
+</span>

@@ -10,6 +10,7 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 export class Course implements BaseEntity {
     public id?: number;
@@ -25,6 +26,7 @@ export class Course implements BaseEntity {
     public semester?: string;
     public testCourse?: boolean;
     public language?: Language;
+    public defaultProgrammingLanguage?: ProgrammingLanguage;
     public color?: string;
     public courseIcon?: string;
     public onlineCourse?: boolean;
