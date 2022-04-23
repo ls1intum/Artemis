@@ -42,7 +42,8 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringDevelopmentTest
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(1, 1, 0, 1);
-        this.attachment = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        this.attachment = ModelFactory.generateAttachment(null);
+        this.attachment.setLink("files/temp/example.txt");
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");

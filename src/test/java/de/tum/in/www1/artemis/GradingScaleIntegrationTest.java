@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 
 public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -27,6 +28,9 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private GradingScale courseGradingScale;
 
@@ -387,6 +391,7 @@ public class GradingScaleIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDeleteCourseDeletesGradingScale() throws Exception {
+        jmsMessageMockProvider.mockDeleteLectures();
         gradingScaleRepository.save(courseGradingScale);
 
         request.delete("/api/courses/" + course.getId(), HttpStatus.OK);

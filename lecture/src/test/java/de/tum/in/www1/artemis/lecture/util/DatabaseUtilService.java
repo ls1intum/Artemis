@@ -5,38 +5,63 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.VideoUnitRepository;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.util.DatabaseCleanupService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 
 /**
  * Service responsible for initializing the database with specific testdata for a testscenario
@@ -45,6 +70,8 @@ import org.springframework.stereotype.Service;
 public class DatabaseUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
+
+    private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
@@ -99,6 +126,20 @@ public class DatabaseUtilService {
     private ResultRepository resultRepo;
 
     @Autowired
+    private AttachmentUnitRepository attachmentUnitRepository;
+
+    @Autowired
+    private ExerciseUnitRepository exerciseUnitRepository;
+
+    @Autowired
+    private TextUnitRepository textUnitRepository;
+
+    @Autowired
+    private VideoUnitRepository videoUnitRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+    @Autowired
     private DatabaseCleanupService databaseCleanupService;
 
     /**
@@ -135,6 +176,15 @@ public class DatabaseUtilService {
         return users;
     }
 
+    public Course createCourse() {
+        return createCourse(null);
+    }
+
+    public Course createCourse(Long id) {
+        Course course = ModelFactory.generateCourse(id, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return courseRepo.save(course);
+    }
+
     /**
      * Create a course and create a lecture assigned to the course.
      *
@@ -153,7 +203,10 @@ public class DatabaseUtilService {
         return lecture;
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) {
+    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
+        return createCoursesWithExercisesAndLectures(withParticipations, false);
+    }
+    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations, boolean withFiles) {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -186,12 +239,14 @@ public class DatabaseUtilService {
         course1.addExercises(quizExercise);
 
         Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture1);
+        Attachment attachment1 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
+        attachment1.setLecture(lecture1);
         lecture1.addAttachments(attachment1);
         course1.addLectures(lecture1);
 
         Lecture lecture2 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment2 = ModelFactory.generateAttachment(pastTimestamp, lecture2);
+        Attachment attachment2 = withFiles ? ModelFactory.generateAttachmentWithFile(pastTimestamp) : ModelFactory.generateAttachment(pastTimestamp);
+        attachment2.setLecture(lecture2);
         lecture2.addAttachments(attachment2);
         course1.addLectures(lecture2);
 
@@ -271,6 +326,114 @@ public class DatabaseUtilService {
 
     public User getUserByLogin(String login) {
         return userRepo.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+    }
+
+    public ExerciseUnit createExerciseUnit(de.tum.in.www1.artemis.domain.Exercise exercise) {
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+        exerciseUnit.setExercise(exercise);
+        return exerciseUnitRepository.save(exerciseUnit);
+    }
+
+    public AttachmentUnit createAttachmentUnit(Boolean withFile) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        Attachment attachmentOfAttachmentUnit = withFile ? ModelFactory.generateAttachmentWithFile(started) : ModelFactory.generateAttachment(started);
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit = attachmentRepo.save(attachmentOfAttachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnitRepository.save(attachmentUnit);
+    }
+
+    public TextUnit createTextUnit() {
+        TextUnit textUnit = new TextUnit();
+        textUnit.setContent("Lorem Ipsum");
+        return textUnitRepository.save(textUnit);
+    }
+
+    public VideoUnit createVideoUnit() {
+        VideoUnit videoUnit = new VideoUnit();
+        videoUnit.setDescription("Lorem Ipsum");
+        videoUnit.setSource("Some URL");
+        return videoUnitRepository.save(videoUnit);
+    }
+
+    public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
+        Lecture lecture1 = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        for (LectureUnit lectureUnit : lectureUnits) {
+            lecture1.addLectureUnit(lectureUnit);
+        }
+        return lectureRepo.save(lecture1);
+    }
+
+    public void changeUser(String username) {
+        User user = getUserByLogin(username);
+        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+        for (Authority authority : user.getAuthorities()) {
+            grantedAuthorities.add(new SimpleGrantedAuthority(authority.getName()));
+        }
+        org.springframework.security.core.userdetails.User securityContextUser = new org.springframework.security.core.userdetails.User(user.getLogin(), user.getPassword(),
+            grantedAuthorities);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(securityContextUser, securityContextUser.getPassword(), grantedAuthorities);
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        TestSecurityContextHolder.setContext(context);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
+        Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
+        Lecture lecture1 = course1.getLectures().stream().findFirst().get();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
+        VideoUnit videoUnit = createVideoUnit();
+        TextUnit textUnit = createTextUnit();
+        AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
+        ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
+        addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
+        return courses;
+    }
+
+    public PageableSearchDTO<String> configureLectureSearch(String searchTerm) {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(Lecture.LectureSearchColumn.COURSE_TITLE.name());
+        search.setSortingOrder(de.tum.in.www1.artemis.domain.enumeration.SortingOrder.DESCENDING);
+        return search;
+    }
+
+    public PageableSearchDTO<String> configureSearch(String searchTerm) {
+        final var search = new PageableSearchDTO<String>();
+        search.setPage(1);
+        search.setPageSize(10);
+        search.setSearchTerm(searchTerm);
+        search.setSortedColumn(Exercise.ExerciseSearchColumn.ID.name());
+        if ("".equals(searchTerm)) {
+            search.setSortingOrder(SortingOrder.ASCENDING);
+        }
+        else {
+            search.setSortingOrder(SortingOrder.DESCENDING);
+        }
+        return search;
+    }
+
+    public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
+        final var mapType = new TypeToken<Map<String, String>>() {
+        }.getType();
+        final var gson = new Gson();
+        final Map<String, String> params = new Gson().fromJson(gson.toJson(search), mapType);
+        final var paramMap = new LinkedMultiValueMap<String, String>();
+        params.forEach(paramMap::add);
+        return paramMap;
+    }
+
+    public Course addEmptyCourse() {
+        Course course = ModelFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        courseRepo.save(course);
+        assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
+        return course;
     }
 
     public void resetDatabase() {

@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
+// Moved to Lecture microservice. To be deleted
 public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired

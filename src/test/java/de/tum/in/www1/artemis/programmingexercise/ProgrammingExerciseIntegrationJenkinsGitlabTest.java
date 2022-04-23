@@ -22,6 +22,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 
 public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -30,6 +31,9 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
 
     @Autowired
     private ProgrammingExerciseService programmingExerciseService;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -124,6 +128,7 @@ public class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpr
         }
 
         jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, false);
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         request.delete(path, HttpStatus.OK, params);
     }
 

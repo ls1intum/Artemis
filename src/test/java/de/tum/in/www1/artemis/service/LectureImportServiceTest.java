@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 
+// Moved to Lecture microservice. To be deleted.
 public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired

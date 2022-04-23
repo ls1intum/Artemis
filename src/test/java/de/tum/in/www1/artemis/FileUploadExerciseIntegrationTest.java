@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -42,6 +43,9 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private List<GradingCriterion> gradingCriteria;
 
@@ -288,6 +292,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteFileUploadExercise_asInstructor() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         Course course = database.addCourseWithThreeFileUploadExercise();
         for (var exercise : course.getExercises()) {
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
@@ -328,8 +333,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteExamFileUploadExercise() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
-
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
         assertThat(exerciseRepo.findAll()).isEmpty();
     }

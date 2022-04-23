@@ -19,7 +19,7 @@ function inferVersion() {
 
         let data = fs.readFileSync(buildGradleFile, 'UTF-8');
 
-        version = data.match(/\nversion\s=\s"(.*)"/);
+        version = data.match(/version\s=\s"(.*)"/);
 
         version = version[1] ?? 'DEV';
     } catch (error) {

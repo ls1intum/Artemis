@@ -223,7 +223,9 @@ jobs:
           }
 
     - name: Install OpenVPN
-      run: sudo apt-get --assume-yes --no-install-recommends install openvpn
+      run: |
+          sudo apt-get update
+          sudo apt-get --assume-yes --no-install-recommends install openvpn
 
     # Fill config from Secret (https://tum.eduvpn.lrz.de/vpn-user-portal/configurations)
     - name: Configure LRZ eduVPN

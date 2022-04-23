@@ -39,7 +39,7 @@ export const lectureRoute: Routes = [
         },
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lecture.home.title',
+            pageTitle: 'lectureApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -67,7 +67,7 @@ export const lectureRoute: Routes = [
                 },
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.lecture.home.title',
+                    pageTitle: 'lectureApp.lecture.home.title',
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -82,7 +82,7 @@ export const lectureRoute: Routes = [
                         component: LectureAttachmentsComponent,
                         data: {
                             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'artemisApp.lecture.attachments.title',
+                            pageTitle: 'lectureApp.lecture.attachments.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },

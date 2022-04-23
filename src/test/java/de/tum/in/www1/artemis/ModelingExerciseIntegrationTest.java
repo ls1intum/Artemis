@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -60,6 +61,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private ModelingExercise classExercise;
 
@@ -295,6 +299,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteModelingExercise_asInstructor() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.NOT_FOUND);
     }

@@ -1,13 +1,13 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.lecture.home.importLabel">Import Lecture</h4>
+        <h4 class="modal-title" jhiTranslate="lectureApp.lecture.home.importLabel">Import Lecture</h4>
         <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
     </div>
     <div class="modal-body">
         <div class="form-group form-inline">
-            <span jhiTranslate="artemisApp.lecture.import.searchLecture">Search for lecture:</span>
+            <span jhiTranslate="lectureApp.lecture.import.searchLecture">Search for lecture:</span>
             <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLecture" type="text" />
-            <span *ngIf="loading" class="ms-3" jhiTranslate="artemisApp.lecture.import.loading">Loading...</span>
+            <span *ngIf="loading" class="ms-3" jhiTranslate="lectureApp.lecture.import.loading">Loading...</span>
         </div>
         <table class="table table-striped align-middle flex">
             <thead class="thead-dark">
@@ -17,15 +17,15 @@
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.TITLE }}">
-                        <span jhiTranslate="artemisApp.lecture.import.table.title">Title</span>
+                        <span jhiTranslate="lectureApp.lecture.import.table.title">Title</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.COURSE_TITLE }}">
-                        <span jhiTranslate="artemisApp.lecture.import.table.course">Course</span>
+                        <span jhiTranslate="lectureApp.lecture.import.table.course">Course</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-2" jhiSortBy="{{ column.SEMESTER }}">
-                        <span jhiTranslate="artemisApp.lecture.import.table.semester">Semester</span>
+                        <span jhiTranslate="lectureApp.lecture.import.table.semester">Semester</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-1"></th>
@@ -46,7 +46,7 @@
                         <span>{{ lecture.course?.semester || '' }}</span>
                     </td>
                     <td class="col-1">
-                        <jhi-button (onClick)="selectImport(lecture)" [title]="'artemisApp.lecture.import.table.doImport'"></jhi-button>
+                        <jhi-button (onClick)="selectImport(lecture)" [title]="'lectureApp.lecture.import.table.doImport'"></jhi-button>
                     </td>
                 </tr>
             </tbody>

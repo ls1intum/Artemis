@@ -460,7 +460,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({ label: 'artemisApp.lecture.home.title', translate: true, uri: '/course-management/1/lectures/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[2]).toEqual({ label: 'lectureApp.lecture.home.title', translate: true, uri: '/course-management/1/lectures/' } as MockBreadcrumb);
             expect(component.breadcrumbs[3]).toEqual({ label: 'Test Lecture', translate: false, uri: '/course-management/1/lectures/2/' } as MockBreadcrumb);
             expect(component.breadcrumbs[4]).toEqual(unitManagementCrumb);
             expect(component.breadcrumbs[5]).toEqual(createCrumb);

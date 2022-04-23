@@ -14,12 +14,12 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.messaging.services.LectureServiceProducer;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 
 /**
@@ -44,15 +44,13 @@ public class ExerciseDeletionService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExerciseUnitRepository exerciseUnitRepository;
-
     private final ExerciseRepository exerciseRepository;
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    private final LectureUnitService lectureUnitService;
+    private final LectureServiceProducer lectureServiceProducer;
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
@@ -64,11 +62,11 @@ public class ExerciseDeletionService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            ExamRepository examRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService,
-            TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository, TextAssessmentKnowledgeService textAssessmentKnowledgeService,
+    public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationService participationService, ProgrammingExerciseService programmingExerciseService,
+            ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
+            ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository, ExamRepository examRepository,
+            ParticipantScoreRepository participantScoreRepository, LectureServiceProducer lectureServiceProducer, TextExerciseRepository textExerciseRepository,
+            PlagiarismResultRepository plagiarismResultRepository, TextAssessmentKnowledgeService textAssessmentKnowledgeService,
             ModelingExerciseRepository modelingExerciseRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
@@ -79,9 +77,8 @@ public class ExerciseDeletionService {
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;
         this.studentExamRepository = studentExamRepository;
-        this.exerciseUnitRepository = exerciseUnitRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.lectureUnitService = lectureUnitService;
+        this.lectureServiceProducer = lectureServiceProducer;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
         this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
@@ -140,10 +137,7 @@ public class ExerciseDeletionService {
 
         participantScoreRepository.deleteAllByExerciseIdTransactional(exerciseId);
         // delete all exercise units linking to the exercise
-        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
-        for (ExerciseUnit exerciseUnit : exerciseUnits) {
-            this.lectureUnitService.removeLectureUnit(exerciseUnit);
-        }
+        lectureServiceProducer.removeExerciseUnits(exerciseId);
 
         // delete all plagiarism results belonging to this exercise
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);

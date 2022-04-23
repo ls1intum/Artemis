@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
@@ -62,6 +63,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private CourseRepository courseRepo;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private QuizExercise quizExercise;
 
@@ -552,6 +556,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteQuizExercise() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
 
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
@@ -562,6 +567,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteQuizExerciseWithSubmittedAnswers() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
 
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
 

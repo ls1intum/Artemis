@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
+@Deprecated // Moved to Lecture microservice. To be deleted.
 @Service
 public class LectureService {
 

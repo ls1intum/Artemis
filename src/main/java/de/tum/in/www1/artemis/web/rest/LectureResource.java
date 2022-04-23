@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 /**
  * REST controller for managing Lecture.
  */
+@Deprecated // Moved to Lecture microservice. To be deleted.
 @RestController
 @RequestMapping("/api")
 public class LectureResource {

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -55,6 +56,9 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     private QuizExercise quizExercise;
 
@@ -171,6 +175,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         studentExamRepository.deleteAll();
 
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 
@@ -220,6 +225,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         studentExamRepository.deleteAll();
 
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 
@@ -274,6 +280,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         studentExamRepository.deleteAll();
 
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 
@@ -327,6 +334,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
         studentExamRepository.deleteAll();
 
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 

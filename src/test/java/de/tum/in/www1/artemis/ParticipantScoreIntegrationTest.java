@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
+import de.tum.in.www1.artemis.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
@@ -71,6 +72,9 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
+
+    @Autowired
+    private JmsMessageMockProvider jmsMessageMockProvider;
 
     @AfterEach
     public void resetDatabase() {
@@ -167,6 +171,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
         request.delete("/api/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(lectureUnitRepository.existsById(idOfExerciseUnit)).isFalse();
@@ -175,6 +180,8 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void deleteCourse_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
+        jmsMessageMockProvider.mockRemoveExerciseUnits();
+        jmsMessageMockProvider.mockDeleteLectures();
         request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
         assertThat(courseRepository.existsById(idOfCourse)).isFalse();
     }

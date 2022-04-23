@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.lecture.service;
 
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
+/**
+ * Service for managing lecture units.
+ */
 @Service
 public class LectureUnitService {
 
@@ -17,9 +22,12 @@ public class LectureUnitService {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    public LectureUnitService(LectureRepository lectureRepository, LearningGoalRepository learningGoalRepository) {
+    private final ExerciseUnitRepository exerciseUnitRepository;
+
+    public LectureUnitService(LectureRepository lectureRepository, LearningGoalRepository learningGoalRepository, ExerciseUnitRepository exerciseUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.learningGoalRepository = learningGoalRepository;
+        this.exerciseUnitRepository = exerciseUnitRepository;
     }
 
     /**
@@ -48,6 +56,19 @@ public class LectureUnitService {
         lecture.getLectureUnits().clear();
         lecture.getLectureUnits().addAll(lectureUnitsUpdated);
         lectureRepository.save(lecture);
+    }
+
+    /**
+     * Deletes exercise units from the database
+     *
+     * @param exerciseId the id of the exercise
+     */
+    @Transactional
+    public void removeExerciseUnitsByExerciseId(long exerciseId) {
+        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
+        for (ExerciseUnit exerciseUnit : exerciseUnits) {
+            removeLectureUnit(exerciseUnit);
+        }
     }
 
     /**

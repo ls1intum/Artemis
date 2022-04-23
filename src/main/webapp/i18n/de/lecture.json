@@ -1,5 +1,5 @@
 {
-    "artemisApp": {
+    "lectureApp": {
         "lecture": {
             "home": {
                 "title": "Vorlesungen",
@@ -51,7 +51,9 @@
                 "searchLecture": "Nach Vorlesung suchen:",
                 "loading": "Lade..."
             }
-        },
+        }
+    },
+    "artemisApp": {
         "attachment": {
             "deleteQuestion": "Soll der Anhang wirklich gelöscht werden?",
             "created": "Anhang erstellt mit ID {{ param }}",

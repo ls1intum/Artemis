@@ -1,5 +1,5 @@
 {
-    "artemisApp": {
+    "lectureApp": {
         "lecture": {
             "home": {
                 "title": "Lectures",
@@ -51,7 +51,9 @@
                 "searchLecture": "Search for lecture:",
                 "loading": "Loading..."
             }
-        },
+        }
+    },
+    "artemisApp": {
         "attachment": {
             "deleteQuestion": "Do you really want to delete the attachment?",
             "created": "Created new attachment with identifier {{ param }}",
