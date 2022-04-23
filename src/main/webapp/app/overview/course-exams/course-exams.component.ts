@@ -9,10 +9,12 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
+    styleUrls: ['./course-exams.component.scss'],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId: number;
@@ -21,6 +23,11 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private courseUpdatesSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
     private studentExams: StudentExam[];
+    public expandAttemptsMap = new Map<number, boolean>();
+
+    // Icons
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
 
     constructor(
         private route: ActivatedRoute,
@@ -50,6 +57,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             .subscribe((response: StudentExam[]) => {
                 this.studentExams = response!;
             });
+
+        if (this.course!.exams) {
+            this.expandAttemptsMap = new Map(this.course!.exams!.filter((exam) => exam.testExam).map((exam) => [exam.id!, false]));
+        }
     }
 
     /**
@@ -104,5 +115,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
                 }
                 return 0;
             });
+    }
+
+    changeExpandAttemptList(examId: number) {
+        const newValue = !this.expandAttemptsMap.get(examId);
+        this.expandAttemptsMap.set(examId, newValue);
     }
 }

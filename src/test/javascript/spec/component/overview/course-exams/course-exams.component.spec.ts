@@ -13,6 +13,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
@@ -28,6 +29,18 @@ describe('CourseExamsComponent', () => {
         id: 2,
         visibleDate: dayjs().add(2, 'days'),
         testExam: false,
+    } as Exam;
+
+    const visibleTestExam1 = {
+        id: 3,
+        visibleDate: dayjs().subtract(1, 'days'),
+        testExam: true,
+    } as Exam;
+
+    const visibleTestExam2 = {
+        id: 4,
+        visibleDate: dayjs().subtract(4, 'days'),
+        testExam: true,
     } as Exam;
 
     const TestExam3ForTesting = {
@@ -67,7 +80,7 @@ describe('CourseExamsComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [CourseExamsComponent, MockComponent(CourseExamDetailComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseExamsComponent, MockComponent(CourseExamDetailComponent), MockComponent(CourseExamAttemptReviewDetailComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } },
                 MockProvider(CourseScoreCalculationService),
@@ -82,7 +95,9 @@ describe('CourseExamsComponent', () => {
                 component = componentFixture.componentInstance;
 
                 jest.spyOn(TestBed.inject(CourseManagementService), 'getCourseUpdates').mockReturnValue(of());
-                jest.spyOn(TestBed.inject(CourseScoreCalculationService), 'getCourse').mockReturnValue({ exams: [visibleRealExam, notVisibleRealExam] });
+                jest.spyOn(TestBed.inject(CourseScoreCalculationService), 'getCourse').mockReturnValue({
+                    exams: [visibleRealExam, notVisibleRealExam, visibleTestExam1, visibleTestExam2],
+                });
                 jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
                     of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,
                 );
@@ -113,5 +128,28 @@ describe('CourseExamsComponent', () => {
         componentFixture.detectChanges();
         const resultArray = [studentExamForExam3AndNotSubmitted, studentExamForExam3AndSubmitted];
         expect(component.getStudentExamForExamIdOrderedByIdReverse(3)).toEqual(resultArray);
+    });
+
+    it('should correctly initialize the expandAttemptsMap', () => {
+        const expectedMap = new Map<number, boolean>();
+        expectedMap.set(visibleTestExam1.id!, false);
+        expectedMap.set(visibleTestExam2.id!, false);
+
+        // Map gets initialized in OnInit-Method
+        component.ngOnInit();
+
+        expect(component.expandAttemptsMap).toEqual(expectedMap);
+    });
+
+    it('should correctly switch boolean value in expandAttemptsMap', () => {
+        const expectedMap = new Map<number, boolean>();
+        expectedMap.set(visibleTestExam1.id!, true);
+        expectedMap.set(visibleTestExam2.id!, false);
+
+        // Map gets initialized in OnInit-Method
+        component.ngOnInit();
+        component.changeExpandAttemptList(visibleTestExam1.id!);
+
+        expect(component.expandAttemptsMap).toEqual(expectedMap);
     });
 });

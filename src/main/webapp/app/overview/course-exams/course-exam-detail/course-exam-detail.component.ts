@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { faPenAlt, faCirclePlay, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faPenAlt, faCirclePlay, faMagnifyingGlass, faCalendarDay, faPlay, faUserClock, faBook, faCircleStop } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, interval } from 'rxjs';
 
 // Enum to dynamically change the template-content
@@ -39,6 +39,11 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     faPenAlt = faPenAlt;
     faCirclePlay = faCirclePlay;
     faMagnifyingGlass = faMagnifyingGlass;
+    faCalendarDay = faCalendarDay;
+    faPlay = faPlay;
+    faUserClock = faUserClock;
+    faBook = faBook;
+    faCircleStop = faCircleStop;
 
     constructor(private router: Router) {}
 

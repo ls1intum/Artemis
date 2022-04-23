@@ -32,7 +32,9 @@
                     "workingTimeLeft": "Verbleibende Arbeitszeit: ",
                     "workingTimeCalculated": "Genutzte Arbeitszeit: ",
                     "submissionDate": "Eingereicht am: ",
-                    "available": "Verfügbar von {{startDate}} bis {{endDate}}"
+                    "available": "Verfügbar von {{startDate}} bis {{endDate}}",
+                    "showMoreAttempts": "Zeige alle Versuche",
+                    "showLessAttempts": "Zeige aktuellste Versuche"
                 }
             },
             "examSummary": {

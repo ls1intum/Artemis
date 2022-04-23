@@ -32,7 +32,9 @@
                     "workingTimeLeft": "Working time left: ",
                     "workingTimeCalculated": "Used working time: ",
                     "submissionDate": "Submitted on: ",
-                    "available": "Available from {{startDate}} until {{endDate}}"
+                    "available": "Available from {{startDate}} until {{endDate}}",
+                    "showMoreAttempts": "Show all attempts",
+                    "showLessAttempts": "Show latest attempts"
                 }
             },
             "examSummary": {

@@ -13,17 +13,27 @@
     <div *ngIf="examState !== 'UNDEFINED'" class="row card-body d-flex justify-content-center">
         <div class="row">
             <h4 class="col-3 icon-settings">
+                <!-- Calender to indicate an upcoming exam -->
+                <fa-icon *ngIf="examState === 'UPCOMING'" [icon]="faCalendarDay" size="2x"></fa-icon>
+                <!-- Play Button without circle to indicate, the exam starts shortly -->
+                <fa-icon *ngIf="examState === 'IMMINENT'" [icon]="faPlay" size="2x"></fa-icon>
                 <!-- Play-Button to indicate, the exam can be started -->
-                <fa-icon *ngIf="examState === 'IMMINENT' || examState === 'CONDUCTING'" [icon]="faCirclePlay" size="2x"></fa-icon>
+                <fa-icon *ngIf="examState === 'CONDUCTING'" [icon]="faCirclePlay" size="2x"></fa-icon>
+                <!-- User with a clock to indicate indivial time extensions -->
+                <fa-icon *ngIf="examState === 'TIMEEXTENSION'" [icon]="faUserClock" size="2x"></fa-icon>
                 <!-- Magnifying Glass to indicate, the exam can be reviewed -->
                 <fa-icon *ngIf="examState === 'STUDENTREVIEW'" [icon]="faMagnifyingGlass" size="2x"></fa-icon>
-                <!-- Pencil as the default shown icon --->
-                <fa-icon *ngIf="examState === 'UPCOMING' || examState === 'TIMEEXTENSION' || examState === 'CLOSED'" [icon]="faPenAlt" size="2x"></fa-icon>
+                <!-- Book to indicate, the exam is closed -->
+                <fa-icon *ngIf="examState === 'CLOSED'" [icon]="faBook" size="2x"></fa-icon>
             </h4>
             <!-- To highlight an imminent or conducting exam, the text is highlighted in turquoise. Only for RealExams, as TestExams have a much larger working window -->
             <div
                 class="col-8"
-                [class]="'row card-body justify-content-center ' + (!exam.testExam && (examState === 'IMMINENT' || examState === 'CONDUCTING') ? 'text-white bg-info' : '')"
+                [class]="
+                    'row card-body justify-content-center ' +
+                    (!exam.testExam && examState === 'IMMINENT' ? 'text-white bg-success' : '') +
+                    (!exam.testExam && examState === 'CONDUCTING' ? 'text-white bg-primary' : '')
+                "
             >
                 <div *ngIf="examState === 'UPCOMING'">
                     <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'upcoming' | artemisTranslate }}</h5>
