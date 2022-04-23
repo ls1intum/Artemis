@@ -10,10 +10,20 @@ Otherwise during the test run Gradle will not be able to find the imported class
 In order to use classes from the template or solution repository in a test case, you have to add the respective repository
 files as a dependency to the test project. Follow this description for IntelliJ:
 
-"File" -> "Project Structure..." -> "Modules" -> "&lt;ProjectName>-Tests" -> Sub-Option "test" -> "Dependencies" -> Button
-"+" -> "3. Module Dependency" -> Select the respective repository name with an appended ".main".
+1. Open the Test-Project first
+2. Select `File` -> `New` -> `Module from Existing Source`. Then choose the template project
+root folder. Select the option `Import module from external model` and `Gradle` and press `Finish`.
+3. Repeat the previous step for the Solution-Project.
+4. Add the following line to `settings.gradle` inside the Test-Project:
+`includeBuild '<template-project-root-path'>` or `includeBuild '<solution-project-root-path>'` depending on which project you
+want to use the source files for executing the test cases.
+5. Inside the `plugin`-block in the `build.gradle` inside the Test-Project, add the following line:
+`testImplementation(':${exerciseNamePomXml}-Exercise')` or
+`testImplementation(':${exerciseNamePomXml}-Solution')` depending on which project you want to use the source files for executing
+the test cases.
 
-**Note**: For sequential test projects, you have to perform these steps for both Sub-Options "structural" and "behavior".
+**Note**: Changes made in step 4 and step 5 must not be pushed to the remote repository as it can only be used
+for editing all three projects in the local IDE.
 
 #### Sequential test runs
 If you have decided to use the sequential test runs feature for this exercise, read the following instructions:
