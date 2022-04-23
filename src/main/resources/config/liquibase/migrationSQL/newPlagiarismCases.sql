@@ -44,9 +44,22 @@ FROM
 group by student_id, exercise_id;
 
 -- CREATE PLAGIARISM CASES
-INSERT INTO plagiarism_case (exercise_id, student_id, verdict, created_by,  verdict_date, verdict_point_deduction)
-SELECT exercise_id, student_id, verdict, 'artemis_admin' as created_by, verdict_date, verdict_point_deduction
-FROM new_plagiarism_case;
+INSERT INTO plagiarism_case (exercise_id, student_id, verdict, created_by, verdict_date, verdict_point_deduction)
+WITH instructor AS (
+    (
+        SELECT e.id as exercise_id, min(ju.login) as instructor_login
+        FROM exercise e
+                 LEFT JOIN exercise_group eg on e.exercise_group_id = eg.id
+                 LEFT JOIN exam on eg.exam_id = exam.id
+                 LEFT JOIN course c on e.course_id = c.id or exam.course_id = c.id
+                 LEFT JOIN user_groups ug on c.instructor_group_name = ug.groups
+                 LEFT JOIN jhi_user ju on ug.user_id = ju.id
+        group by e.id
+    )
+)
+SELECT npc.exercise_id, student_id, verdict, instructor_login as created_by, verdict_date, verdict_point_deduction
+FROM new_plagiarism_case npc
+    LEFT JOIN instructor i on i.exercise_id = npc.exercise_id;
 
 -- UPDATE PLAGIARISM SUBMISSIONS WITH RELATION TO PLAGIARISM CASE
 UPDATE plagiarism_submission as dest,
@@ -66,9 +79,10 @@ WHERE dest.id = src.id;
 
 -- MIGRATE OLD INSTRUCTOR STATEMENTS TO POSTS
 INSERT INTO post (title, plagiarism_case_id, content, author_id, visible_for_students, display_priority, creation_date)
-SELECT 'Plagiarism Case' as title, pc.id as plagiarism_case_id, npc.post as content, 1 as author_id, true as visibile_for_students, 'NONE' as display_priotity, current_date as creation_date
+SELECT 'Plagiarism Case' as title, pc.id as plagiarism_case_id, npc.post as content, u.id as author_id, true as visibile_for_students, 'NONE' as display_priotity, current_date as creation_date
 FROM plagiarism_case pc
          LEFT JOIN new_plagiarism_case npc on pc.exercise_id = npc.exercise_id AND pc.student_id = npc.student_id
+         LEFT JOIN jhi_user u on pc.created_by = u.login
 WHERE npc.post IS NOT NULL;
 
 -- UPDATE PLAGIARISM CASES WITH RELATION TO POSTS
