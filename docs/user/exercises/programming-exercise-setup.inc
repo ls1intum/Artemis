@@ -465,7 +465,7 @@ Exercise Creation
 
 .. note::
   Instructors are able to completely disable the usage of a specific static code analysis tool by removing the plugin/dependency from the execution mechanism.
-  In case of Maven plugins, instructors can remove the unwanted tools from the *pom.xml* pr *build.gradle*.
+  In case of Maven plugins, instructors can remove the unwanted tools from the *pom.xml* or *build.gradle*.
   Alternatively, instructors can alter the task/script that executes the tools in the build plan.
   PMD and PMD CPD are a special case as both tools share a common plugin. To disable one or the other, instructors must delete the execution of a tool from the build plan.
 
