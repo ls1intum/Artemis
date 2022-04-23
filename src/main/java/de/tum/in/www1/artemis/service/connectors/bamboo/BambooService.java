@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Service
 @Profile("bamboo")
@@ -69,16 +70,19 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final UrlService urlService;
 
+    private final TestwiseCoverageService testwiseCoverageService;
+
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService) {
+            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
         this.urlService = urlService;
+        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     @Override
@@ -123,7 +127,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
                 // notifyPush in ProgrammingSubmissionService
-                gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, null);
+                gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, true, null);
 
                 if (exercise == null) {
                     log.warn("Cannot access exercise in 'configureBuildPlan' to determine if deleting the repo after cloning make sense. Will decide to delete the repo");
@@ -560,6 +564,16 @@ public class BambooService extends AbstractContinuousIntegrationService {
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
                 var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
                 result.addFeedbacks(scaFeedbackList);
+            }
+
+            // 4) process testwise coverage analysis report
+            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
+                var report = job.getTestwiseCoverageReports();
+                if (report != null) {
+                    // since the test cases are not saved to the database yet, the test case is null for the entries
+                    var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
+                    result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
+                }
             }
 
             // Relevant feedback is negative
