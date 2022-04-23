@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { faMoon, faSun, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 
 const THEME_LOCAL_STORAGE_KEY = 'artmisApp.theme.current';
 const THEME_OVERRIDE_ID = 'artemis-theme-override';
@@ -47,7 +47,8 @@ export class Theme {
 export class ThemeService {
     private currentTheme: Theme = Theme.LIGHT;
     private currentThemeSubject: BehaviorSubject<Theme> = new BehaviorSubject<Theme>(Theme.LIGHT);
-    private overrideTag?: HTMLLinkElement;
+
+    isAutoDetected = true;
 
     constructor(private localStorageService: LocalStorageService) {}
 
@@ -75,20 +76,39 @@ export class ThemeService {
         // Did not find a stored theme!
         // Let's check if the user prefers dark mode on the OS level / globally
         if (window.matchMedia('(prefers-color-scheme)').media !== 'not all' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            this.applyTheme(Theme.DARK);
-        }
-
-        // The default LIGHT theme is always applied automatically; no need for fallback handling here.
-    }
-
-    applyTheme(theme: Theme) {
-        if (this.currentTheme === theme || !theme) {
+            this.applyThemeInternal(Theme.DARK, true);
             return;
         }
 
+        // The default LIGHT theme is always applied automatically; no need for fallback handling here.
+        // Anyways, be "detected" that the user prefers the light mode, so lets set the flag
+        this.isAutoDetected = true;
+    }
+
+    public applyTheme(theme: Theme) {
+        this.applyThemeInternal(theme, false);
+    }
+
+    private applyThemeInternal(theme: Theme, byAutoDetection: boolean) {
+        if (!theme) {
+            return;
+        }
+
+        if (this.currentTheme === theme) {
+            // The theme has been explicitly set. Store it even if it's already applied
+            this.localStorageService.store(THEME_LOCAL_STORAGE_KEY, theme.identifier);
+            this.isAutoDetected = byAutoDetection;
+            return;
+        }
+
+        const overrideTag = document.getElementById(THEME_OVERRIDE_ID);
+
         if (theme.isDefault) {
-            this.overrideTag?.remove();
-            this.overrideTag = undefined;
+            overrideTag?.remove();
+
+            this.isAutoDetected = byAutoDetection;
+            this.currentTheme = theme;
+            this.currentThemeSubject.next(theme);
         } else {
             const head = document.getElementsByTagName('head')[0];
 
@@ -97,22 +117,18 @@ export class ThemeService {
             newTag.rel = 'stylesheet';
             newTag.href = theme.fileName!;
 
-            const oldTag = this.overrideTag;
-            if (oldTag) {
-                newTag.onload = () => {
-                    oldTag!.remove();
-                };
-            }
-
-            this.overrideTag = newTag;
+            newTag.onload = () => {
+                overrideTag?.remove();
+                this.isAutoDetected = byAutoDetection;
+                this.currentTheme = theme;
+                this.currentThemeSubject.next(theme);
+            };
 
             const existingLinkTags = head.getElementsByTagName('link');
             const lastLinkTag = existingLinkTags[existingLinkTags.length - 1];
             head.insertBefore(newTag, lastLinkTag?.nextSibling);
         }
 
-        this.currentTheme = theme;
-        this.currentThemeSubject.next(theme);
         this.localStorageService.store(THEME_LOCAL_STORAGE_KEY, theme.identifier);
     }
 }

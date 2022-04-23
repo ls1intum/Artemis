@@ -15,7 +15,7 @@
 
 // Smooth transition between themes
 * {
-    transition: background-color 0.2s, color 0.2s, background 0.2s;
+    transition: background-color 0.2s, background 0.2s;
 }
 
 /* ==============================================================
@@ -38,7 +38,7 @@ h4 {
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
 a:not(.btn):not(.dropdown-item):not(.page-link):hover {
-    color: var(--artemis-link-color);
+    color: var(--link-color);
     font-weight: bold;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;

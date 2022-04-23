@@ -33,12 +33,14 @@ $light: $gray-100;
 $dark: $gray-900;
 
 $body-bg: #e4e5e6;
+
+$navbar-dark-color: rgba($white, 0.6);
+$navbar-dark-hover-color: $white;
 // === END BOOTSTRAP ===
 
 // Global colors
 $artemis-dark: #353d47;
-$artemis-lighter-dark: saturate(lighten($artemis-dark, 10%), 15%);
-$artemis-link-color: $primary;
+$link-color: $primary;
 
 // Backgrounds
 $darker-body-bg: darken($body-bg, 20);
@@ -124,6 +126,9 @@ $connection-warning-popover-body-shadow: rgba(0, 0, 0, 0.55);
 // Footer
 $footer-bg: #fff;
 
+// Header Participation
+$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
+
 // Navbar
 $navbar-foreground: #ccc;
 $navbar-bg: $artemis-dark;
@@ -142,7 +147,7 @@ $md-resize-icon-color: rgba(0, 0, 0, 0.125);
 // Metis
 $metis-light-gray: #979797;
 $metis-gray: #6a737d;
-$metis-blue: $artemis-link-color;
+$metis-blue: $link-color;
 $metis-light-blue: #e3ecf3;
 $metis-green: #33cd32;
 $metis-course-discussion-select-bg: white;

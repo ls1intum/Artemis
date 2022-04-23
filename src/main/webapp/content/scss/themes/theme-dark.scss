@@ -1,17 +1,67 @@
 @use 'sass:meta';
 @use 'generate-css-vars';
 
-@import 'themes/dark-variables';
+@import 'dark-variables';
 
 html {
     @include generate-css-vars.generate('dark-variables');
 }
 
-@import 'global';
-@import 'themes/darkly_bs_dependent';
+@import '../global';
+
+.blockquote {
+    &-footer {
+        color: $gray-600;
+    }
+}
+
+.input-group-addon {
+    color: $white;
+}
+
+.form-floating > label {
+    color: $gray-700;
+}
+
+.nav-tabs,
+.nav-pills {
+    .nav-link,
+    .nav-link.active,
+    .nav-link.active:focus,
+    .nav-link.active:hover,
+    .nav-item.open .nav-link,
+    .nav-item.open .nav-link:focus,
+    .nav-item.open .nav-link:hover {
+        color: $white;
+    }
+}
+
+.pagination {
+    a:hover {
+        text-decoration: none;
+    }
+}
+
+.alert {
+    color: $white;
+
+    a,
+    .alert-link {
+        color: $white;
+        text-decoration: underline;
+    }
+
+    @each $color, $value in $theme-colors {
+        $blackened: darken($value, 20%);
+        &-#{$color} {
+            background: $blackened;
+            border-color: $value;
+        }
+    }
+}
 
 .btn-outline-primary:not(.list-group-item) {
-    color: $artemis-link-color;
+    color: $link-color;
 }
 
 .btn-outline-secondary:not(.list-group-item) {
@@ -44,6 +94,10 @@ html {
 
 .text-lightgrey {
     color: $gray-400;
+}
+
+.text-primary {
+    color: lighten($primary, 30) !important;
 }
 
 .owl-dt-control-button {

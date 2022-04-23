@@ -109,9 +109,9 @@ $table-striped-bg: rgba($white, 0.02);
 
 // Global colors
 $artemis-dark: #353d47;
-$artemis-lighter-dark: saturate(lighten($artemis-dark, 10%), 15%);
-$artemis-link-color: #3e8acc;
-$link-color: $artemis-link-color;
+$link-color: #3e8acc;
+
+// Base for dark spaces
 $neutral-dark: rgb(24, 26, 24);
 
 // Backgrounds
@@ -120,7 +120,7 @@ $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 10);
 
 $dropdown-bg: $neutral-dark;
-$popover-bg: $neutral-dark;
+$popover-bg: lighten($neutral-dark, 5);
 $popover-header-bg: $gray-700;
 $modal-content-bg: $neutral-dark;
 
@@ -203,6 +203,9 @@ $connection-warning-popover-body-shadow: rgba(0, 0, 0, 0.55);
 // Footer
 $footer-bg: $neutral-dark;
 
+// Header Participation
+$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
+
 // Cards
 $card-bg: $neutral-dark;
 $card-cap-bg: lighten($neutral-dark, 5%);
@@ -226,7 +229,7 @@ $md-resize-icon-color: $gray-400;
 // Metis
 $metis-light-gray: #979797;
 $metis-gray: #6a737d;
-$metis-blue: $artemis-link-color;
+$metis-blue: $link-color;
 $metis-light-blue: #e3ecf3;
 $metis-green: #33cd32;
 $metis-course-discussion-select-bg: $neutral-dark;

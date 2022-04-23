@@ -70,10 +70,10 @@
               { "glob": "**/*", "input": "src/main/webapp/swagger-ui/", "output": "swagger-ui" }
             ],
             "styles": [
-              "src/main/webapp/content/scss/theme-default.scss",
+              "src/main/webapp/content/scss/themes/theme-default.scss",
               {
                 "bundleName": "theme-dark",
-                "input": "src/main/webapp/content/scss/theme-dark.scss",
+                "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
                 "inject": false
               }
             ],

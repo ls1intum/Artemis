@@ -102,7 +102,7 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
-            "theme": "Theme",
+            "themeToggle": "Wechselt zwischen hellem und dunklem Theme",
             "settings": "Einstellungen",
             "guidedTutorial": "Guided Tutorial",
             "startTutorial": "Tutorial starten",
