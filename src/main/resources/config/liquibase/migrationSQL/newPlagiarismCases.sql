@@ -8,10 +8,10 @@ SELECT
     CASE
         WHEN MAX(status) > 0 THEN 'PLAGIARISM'
         WHEN MAX(status) = 0 THEN 'WARNING'
-        END as verdict
+        END as verdict,
     CASE
         WHEN MAX(status) >= 0 THEN CURRENT_DATE
-    END as verdict_date
+    END as verdict_date,
     CASE
         WHEN MAX(status) >= 0 THEN 0
     END as verdict_point_deduction
