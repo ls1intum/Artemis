@@ -583,7 +583,10 @@
                 </label>
             </div>
         </div>
-        <div *ngIf="isImport" class="form-group mb-0">
+        <div
+            class="form-group mb-0"
+            *ngIf="isImport && programmingExercise.projectType !== ProjectType.PLAIN_GRADLE && programmingExercise.projectType !== ProjectType.GRADLE_GRADLE"
+        >
             <div class="form-check">
                 <label class="form-check-label" for="field_updateTemplateFiles">
                     <input
