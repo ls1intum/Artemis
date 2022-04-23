@@ -6,10 +6,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { ActivatedRoute, Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faFile, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 
 @Component({
     selector: 'jhi-lecture',
@@ -38,6 +40,7 @@ export class LectureComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         protected eventManager: EventManager,
         protected accountService: AccountService,
+        private modalService: NgbModal,
     ) {}
 
     loadAll() {
@@ -75,6 +78,27 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     registerChangeInLectures() {
         this.eventSubscriber = this.eventManager.subscribe('lectureListModification', () => this.loadAll());
+    }
+
+    openImportModal() {
+        const modalRef = this.modalService.open(LectureImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.result.then(
+            (result: Lecture) => {
+                this.lectureService
+                    .import(this.courseId, result.id!)
+                    .pipe(
+                        filter((res: HttpResponse<Lecture>) => res.ok),
+                        map((res: HttpResponse<Lecture>) => res.body),
+                    )
+                    .subscribe({
+                        next: (res: Lecture) => {
+                            this.lectures.push(res);
+                        },
+                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                    });
+            },
+            () => {},
+        );
     }
 
     /**
