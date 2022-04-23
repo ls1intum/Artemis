@@ -403,7 +403,19 @@
                 "GCC": "GCC"
             },
             "withDependencies": "Mit Abhängigkeiten",
-            "withDependenciesTooltip": "Das aktive Projekt wird mit einer beispielhaften Abhängigkeit erstellt."
+            "withDependenciesTooltip": "Das aktive Projekt wird mit einer beispielhaften Abhängigkeit erstellt.",
+            "recordTestwiseCoverage": "Testweise Test-Abdeckung aufzeichnen",
+            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testweise Test-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java-Gradle-Projekte mit nicht-sequentiellen Testläufen verfügbar.",
+            "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
+            "testwiseCoverageReport": {
+                "button": "Testweise Test-Abdeckung anzeigen",
+                "tooltip": "Zeigt die testwise Test-Abdeckung für das Lösungs-Repository.",
+                "title": "Testweise Test-Abdeckung",
+                "404": "Testweise Test-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
+                "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
+                "filePath": "Datei-Pfad",
+                "coveredLines": "Abgedeckte Zeilen"
+            }
         },
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."

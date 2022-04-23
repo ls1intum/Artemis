@@ -404,7 +404,19 @@
                 "GCC": "GCC"
             },
             "withDependencies": "With Dependencies",
-            "withDependenciesTooltip": "The active project will be created with an exemplary dependency."
+            "withDependenciesTooltip": "The active project will be created with an exemplary dependency.",
+            "recordTestwiseCoverage": "Record Testwise Coverage",
+            "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java-Gradle-projects with non-sequential test runs.",
+            "coveredLineRatio": "Ratio Test-Covered Lines",
+            "testwiseCoverageReport": {
+                "button": "Show testwise coverage",
+                "tooltip": "Shows the testwise coverage for the solution repository.",
+                "title": "Testwise Coverage",
+                "404": "Testwise Coverage has not been generated yet. Please do a push to the solution or test repository to generate the report.",
+                "selectTests": "Select the tests for which the covered lines are marked:",
+                "filePath": "File Path",
+                "coveredLines": "Covered Lines"
+            }
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."
