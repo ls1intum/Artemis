@@ -51,12 +51,15 @@ FROM new_plagiarism_case;
 -- UPDATE PLAGIARISM SUBMISSIONS WITH RELATION TO PLAGIARISM CASE
 UPDATE plagiarism_submission as dest,
     (
-    SELECT DISTINCT ps.id, plagiarism_case_id, plagiarism_comparison_id
-    FROM plagiarism_submission ps
-    LEFT JOIN plagiarism_comparison pc on ps.id = pc.submission_a_id OR ps.id = pc.submission_b_id
-    LEFT JOIN plagiarism_result pr on pc.plagiarism_result_id = pr.id
-    LEFT JOIN jhi_user us on student_login = us.login
-    LEFT JOIN plagiarism_case pp on us.id = pp.student_id
+        SELECT DISTINCT
+            ps.id,
+            pp.id as plagiarism_case_id,
+            pc.id as plagiarism_comparison_id
+        FROM plagiarism_submission ps
+                 LEFT JOIN plagiarism_comparison pc on ps.id = pc.submission_a_id or ps.id = pc.submission_b_id
+                 LEFT JOIN jhi_user us on student_login = us.login
+                 LEFT JOIN plagiarism_result pr on pc.plagiarism_result_id = pr.id
+                 LEFT JOIN plagiarism_case pp on us.id = pp.student_id AND pr.exercise_id = pp.exercise_id
     ) as src
 SET dest.plagiarism_case_id = src.plagiarism_case_id, dest.plagiarism_comparison_id = src.plagiarism_comparison_id
 WHERE dest.id = src.id;
@@ -81,4 +84,3 @@ FROM plagiarism_case pc
          JOIN new_plagiarism_case npc on pc.exercise_id = npc.exercise_id AND pc.student_id = npc.student_id
          JOIN post p on pc.id = p.plagiarism_case_id
 WHERE answer IS NOT NULL;
-
