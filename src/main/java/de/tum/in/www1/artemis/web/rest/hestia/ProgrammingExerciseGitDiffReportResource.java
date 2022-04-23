@@ -54,7 +54,7 @@ public class ProgrammingExerciseGitDiffReportResource {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
-        var report = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(exercise.getId());
+        var report = gitDiffReportService.getReportOfExercise(exercise);
 
         return ResponseEntity.ok(report);
     }

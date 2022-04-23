@@ -57,7 +57,12 @@ export class ProgrammingExercise extends Exercise {
 
     public projectType?: ProjectType;
 
+    public testwiseCoverageEnabled?: boolean;
+
     // helper attributes
+
+    // this attribute is used to display the covered lines ratio
+    public coveredLinesRatio?: number;
 
     /**
      * This attribute is used to generate a programming exercise with no connection to the VCS and CI.
@@ -81,5 +86,6 @@ export class ProgrammingExercise extends Exercise {
         this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.PLAIN_MAVEN; // default value
         this.showTestNamesToStudents = false; // default value
+        this.testwiseCoverageEnabled = false; // default value
     }
 }
