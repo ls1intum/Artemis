@@ -14,9 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
+import de.tum.in.www1.artemis.domain.hestia.*;
 
 /**
  * A ProgrammingExerciseTestCase.
@@ -62,6 +60,10 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "test_case_type")
     private ProgrammingExerciseTestCaseType type;
+
+    @OneToMany(mappedBy = "testCase", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("testCase")
+    private Set<TestwiseCoverageReportEntry> coverageEntries;
 
     public ProgrammingExerciseTestCase id(Long id) {
         setId(id);
@@ -193,6 +195,14 @@ public class ProgrammingExerciseTestCase extends DomainObject {
 
     public void setType(ProgrammingExerciseTestCaseType programmingExerciseTestCaseType) {
         this.type = programmingExerciseTestCaseType;
+    }
+
+    public Set<TestwiseCoverageReportEntry> getCoverageEntries() {
+        return coverageEntries;
+    }
+
+    public void setCoverageEntries(Set<TestwiseCoverageReportEntry> coverageEntries) {
+        this.coverageEntries = coverageEntries;
     }
 
     /**

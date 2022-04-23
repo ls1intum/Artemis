@@ -36,7 +36,7 @@ public class TextExerciseService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<TextExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createPageRequest(search);
+        final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
         final Page<TextExercise> exercisePage;
         if (authCheckService.isAdmin(user)) {

@@ -98,6 +98,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
 
     public inProductionEnvironment: boolean;
+    public isBamboo: boolean;
 
     public supportsJava = true;
     public supportsPython = false;
@@ -359,6 +360,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.courseService.find(courseId).subscribe((res) => {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
+                                if (this.programmingExercise.course?.defaultProgrammingLanguage) {
+                                    this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
+                                }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
                                 this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe({
                                     next: (categoryRes: HttpResponse<string[]>) => {
@@ -394,6 +398,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
+                this.isBamboo = profileInfo.activeProfiles.includes('bamboo');
             }
         });
 

@@ -75,7 +75,7 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
-    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
     private final TemplateUpgradePolicy templateUpgradePolicy;
 
@@ -86,7 +86,7 @@ public class ProgrammingExerciseExportImportResource {
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
@@ -107,7 +107,8 @@ public class ProgrammingExerciseExportImportResource {
      * @param programmingExercise exercise to validate
      */
     private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
