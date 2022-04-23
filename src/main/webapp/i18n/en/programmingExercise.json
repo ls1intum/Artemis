@@ -394,7 +394,17 @@
                 "lineStatTooltipDetailPage": "Unfiltered lines that were added and removed when comparing the template and solution repositories",
                 "lineStatTooltipFullReport": "Filtered lines that were added and removed when comparing the template and solution repositories. This excludes empty lines.",
                 "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file. This excludes empty lines."
-            }
+            },
+            "projectTypes": {
+                "PLAIN_MAVEN": "Maven",
+                "PLAIN_GRADLE": "Gradle",
+                "PLAIN": "Plain",
+                "XCODE": "Xcode",
+                "FACT": "FACT",
+                "GCC": "GCC"
+            },
+            "withDependencies": "With Dependencies",
+            "withDependenciesTooltip": "The active project will be created with an exemplary dependency."
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."
