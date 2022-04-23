@@ -252,14 +252,56 @@ public class StudentExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction : Find the specified student exam for the user.
+     * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
+     * and with the student participation and with the submissions.
+     * NOTE: when this is called it will also mark the student exam as started
+     *
+     * @param courseId      the course to which the student exam belongs to
+     * @param examId        the exam to which the student exam belongs to
+     * @param studentExamId the studentExam which should be loaded
+     * @param request       the http request, used to extract headers
+     * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<StudentExam> getStudentExamForTestExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+            HttpServletRequest request) {
+        long start = System.currentTimeMillis();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
+        StudentExam studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExamId, false)
+                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + studentExamId + "does not exist"));
+        ;
+
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
+
+        // students can not fetch the exam until 5 minutes before the exam start, we use the same constant in the client
+        if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
+            throw new AccessForbiddenException();
+        }
+
+        if (!user.getId().equals(studentExam.getUser().getId())) {
+            throw new AccessForbiddenException("The requested exam does not belong to the requesting user");
+        }
+
+        studentExam = studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
+        prepareStudentExamForConduction(request, user, studentExam);
+
+        log.info("getStudentExamForTestExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
+                user.getLogin());
+        return ResponseEntity.ok(studentExam);
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction : Find a specific test run for conduction.
      * This will be used for the actual conduction of the test run. The test run will be returned with the exercises
      * and with the student participation and with the submissions.
      * NOTE: when this is called it will also mark the test run as started
      *
-     * @param courseId the course to which the test run belongs to
-     * @param examId   the exam to which the test run belongs to
-     * @param request  the http request, used to extract headers
+     * @param courseId  the course to which the test run belongs to
+     * @param examId    the exam to which the test run belongs to
+     * @param request   the http request, used to extract headers
      * @param testRunId the id of the student exam of the test run
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
@@ -286,12 +328,12 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/student-exams/summary : Find a student exam for the summary.
+     * GET /courses/{courseId}/exams/{examId}/student-exams/summary : Find a student exam for the summary of an RealExam.
      * This will be used to display the summary of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
      *
-     * @param courseId  the course to which the student exam belongs to
-     * @param examId    the exam to which the student exam belongs to
+     * @param courseId the course to which the student exam belongs to
+     * @param examId   the exam to which the student exam belongs to
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/summary")
@@ -304,6 +346,11 @@ public class StudentExamResource {
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
         if (!studentExam.isSubmitted()) {
+            throw new AccessForbiddenException();
+        }
+
+        // For TestExams, /student-exams/{studentExamId}/summary must be used, as multiple StudentExams per User exist.
+        if (studentExam.getExam().isTestExam()) {
             throw new AccessForbiddenException();
         }
 
@@ -325,9 +372,67 @@ public class StudentExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}summary
+     * Find a specified student exam for the summary of an TestExam. This will be used to display the summary of the exam.
+     * The student exam will be returned with the exercises and with the student participation and with the submissions.
+     *
+     * @param courseId the course to which the student exam belongs to
+     * @param examId   the exam to which the student exam belongs to
+     * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<StudentExam> getStudentExamForTestExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        long start = System.currentTimeMillis();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the student exam of user {} for TestExam {}", user.getLogin(), examId);
+
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
+
+        // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
+        if (!studentExam.isSubmitted()) {
+            throw new AccessForbiddenException();
+        }
+
+        // For RealExams, /student-exams/summary must be used, as exactly one StudentExams exists per student.
+        if (!studentExam.getExam().isTestExam()) {
+            throw new AccessForbiddenException();
+        }
+
+        loadExercisesForStudentExam(studentExam);
+
+        // 3rd fetch participations, submissions and results and connect them to the studentExam
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user);
+
+        log.info("getStudentExamForTestExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
+                user.getLogin());
+        return ResponseEntity.ok(studentExam);
+    }
+
+    /**
+     * GET /courses/{courseId}/test-exams-per-user
+     * Retrieves all StudentExams for TestExams of one Course for the specified user
+     *
+     * @param courseId the course to which the student exam belongs to
+     * @return all StudentExams for TestExam for the specified course and user
+     */
+    @GetMapping("courses/{courseId}/test-exams-per-user")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<StudentExam>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
+
+        List<StudentExam> studentExamList = studentExamRepository.findStudentExamForTestExamsByUserIdAndCourseId(user.getId(), courseId);
+
+        return ResponseEntity.ok(studentExamList);
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId}/test-runs : Find all test runs for the exam
+     *
      * @param courseId the id of the course
-     * @param examId the id of the exam
+     * @param examId   the id of the exam
      * @return the list of test runs
      */
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs")
@@ -343,8 +448,9 @@ public class StudentExamResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/test-run : Create a test run
-     * @param courseId the id of the course
-     * @param examId the id of the exam
+     *
+     * @param courseId             the id of the course
+     * @param examId               the id of the exam
      * @param testRunConfiguration the desired student exam configuration for the test run
      * @return the created test run student exam
      */
@@ -370,7 +476,7 @@ public class StudentExamResource {
      * NOTE: A result with 0 points is only added if no other result is present for the latest submission of a relevant StudentParticipation.
      *
      * @param courseId the id of the course
-     * @param examId the id of the exam
+     * @param examId   the id of the exam
      * @return {@link HttpStatus#BAD_REQUEST} if the exam is not over yet | {@link HttpStatus#FORBIDDEN} if the user is not an instructor
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams")
@@ -402,8 +508,9 @@ public class StudentExamResource {
 
     /**
      * DELETE /courses/{courseId}/exams/{examId}/test-run/{testRunId} : Delete a test run
-     * @param courseId the id of the course
-     * @param examId the id of the exam
+     *
+     * @param courseId  the id of the course
+     * @param examId    the id of the exam
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
@@ -446,7 +553,8 @@ public class StudentExamResource {
      * Calls {@link StudentExamResource#fetchParticipationsSubmissionsAndResultsForStudentExam} to set up the exercises.
      * Starts an exam session for the request
      * Filters out unnecessary attributes.
-     * @param request the http request for the conduction
+     *
+     * @param request     the http request for the conduction
      * @param currentUser the current user
      * @param studentExam the student exam to be prepared
      */
@@ -502,9 +610,10 @@ public class StudentExamResource {
      * This ensures all relevant associations are available.
      * Handles setting the participation results using {@link StudentExamResource#setResultIfNecessary(StudentExam, StudentParticipation, boolean)}.
      * Filters sensitive information using {@link Exercise#filterSensitiveInformation()} and {@link QuizSubmission#filterForExam(boolean, boolean)} for quiz exercises.
-     * @param studentExam the given student exam
-     * @param exercise the exercise for which the user participation should be filtered
-     * @param participations the set of participations, wherein to search for the relevant participation
+     *
+     * @param studentExam         the given student exam
+     * @param exercise            the exercise for which the user participation should be filtered
+     * @param participations      the set of participations, wherein to search for the relevant participation
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     private void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
@@ -552,8 +661,9 @@ public class StudentExamResource {
      * Helper method which attaches the result to its participation.
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
      * We also attach the result if the results are already published for the exam. See {@link StudentExam#areResultsPublishedYet}
-     * @param studentExam the given studentExam
-     * @param participation the given participation of the student
+     *
+     * @param studentExam         the given studentExam
+     * @param participation       the given participation of the student
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     private void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {

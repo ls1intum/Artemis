@@ -55,7 +55,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     courseId: number;
     examId: number;
     testRunId: number;
+    testExam: boolean;
+    studentExamId: number;
     testRunStartTime?: dayjs.Dayjs;
+    testExamStartTime?: dayjs.Dayjs;
 
     // determines if component was once drawn visited
     pageComponentVisited: boolean[];
@@ -136,6 +139,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
+            // As a student can have multiple TestExams, the studentExamId is passed as a parameter.
+            // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
+            if (params[`studentExamId`] !== 'new') {
+                this.testExam = true;
+                this.studentExamId = parseInt(params['studentExamId'], 10);
+            } else {
+                this.testExam = true;
+            }
 
             this.loadingExam = true;
             if (!!this.testRunId) {
@@ -148,6 +159,68 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.testRunStartTime = dayjs();
                         this.initIndividualEndDates(this.testRunStartTime);
                         this.loadingExam = false;
+                    },
+                    error: () => (this.loadingExam = false),
+                });
+            } else if (this.testExam && !this.studentExamId) {
+                // Case "new" test exam - the latest studentExam will be fetched from the server
+                this.examParticipationService.loadStudentExamForTestExam(this.courseId, this.examId).subscribe({
+                    next: (studentExam) => {
+                        this.studentExam = studentExam;
+                        this.exam = studentExam.exam!;
+                        this.testExamStartTime = dayjs();
+                        this.initIndividualEndDates(this.testExamStartTime);
+
+                        /* // only show the summary if the student was able to submit on time.
+                        console.log(this.isOver());
+                        if (this.isOver() && this.studentExam.submitted) {
+                            this.examParticipationService
+                                .loadStudentExamForTestExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!)
+                                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
+                        }
+
+                        // Directly start the exam when we continue from a failed save
+                        if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
+                            this.examParticipationService
+                                .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
+                                .subscribe((localExam: StudentExam) => {
+                                    this.studentExam = localExam;
+                                    this.loadingExam = false;
+                                    this.examStarted(this.studentExam);
+                                });
+                        } else {
+                            this.loadingExam = false;
+                        } */
+                    },
+                    error: () => (this.loadingExam = false),
+                });
+            } else if (this.testExam && this.studentExamId) {
+                // Case existing studentExam for TestExam -> fetch with ID from server
+                this.examParticipationService.loadStudentExamForTestExamById(this.courseId, this.examId, this.studentExamId).subscribe({
+                    next: (studentExam) => {
+                        this.studentExam = studentExam;
+                        this.testExamStartTime = dayjs();
+                        this.initIndividualEndDates(this.testExamStartTime);
+
+                        // only show the summary if the student was able to submit on time.
+                        if (this.isOver() && this.studentExam.submitted) {
+                            this.examParticipationService
+                                .loadStudentExamForTestExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!)
+                                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
+                        }
+
+                        // Directly start the exam when we continue from a failed save
+                        if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
+                            this.examParticipationService
+                                .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
+                                .subscribe((localExam: StudentExam) => {
+                                    this.studentExam = localExam;
+                                    this.loadingExam = false;
+                                    this.examStarted(this.studentExam);
+                                });
+                        } else {
+                            this.loadingExam = false;
+                        }
                     },
                     error: () => (this.loadingExam = false),
                 });
@@ -233,6 +306,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // set endDate with workingTime
             if (!!this.testRunId) {
                 this.individualStudentEndDate = this.testRunStartTime!.add(this.studentExam.workingTime!, 'seconds');
+            } else if (this.testExam) {
+                this.individualStudentEndDate = this.testExamStartTime!.add(this.studentExam.workingTime!, 'seconds');
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
@@ -334,7 +409,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
                         exercise.exerciseHints = [];
                     });
-                    this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.studentExam.submitSuccessful', timeout: 20000 });
+                    this.alertService.addAlert({
+                        type: AlertType.SUCCESS,
+                        message: 'artemisApp.studentExam.submitSuccessful',
+                        timeout: 20000,
+                    });
                 },
                 error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible

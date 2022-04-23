@@ -25,6 +25,16 @@ export const examParticipationRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        path: 'test-exam/:studentExamId',
+        component: ExamParticipationComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.exam.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
 ];
 
 const EXAM_PARTICIPATION_ROUTES = [...examParticipationRoute];

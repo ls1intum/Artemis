@@ -837,6 +837,63 @@ public class ExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams/{examId}/start-test-exam : Get a {@Link StudentExam} for an TestExam for the exam start.
+     * Note: The Access control, if the requested StudentExam is a TestExam, is performed when generating the {@Link StudentExam}
+     * in {@Link StudentExamService} (in order to limit the number of Database-Calls)
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the (Test) Exams
+     * @return the ResponseEntity with status 200 (OK) and with the found / generated student exams (without exercises)
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/start-test-exam")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<StudentExam> getStudentExamForTestExamForStart(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to get TestExam {} for conduction", examId);
+
+        StudentExam exam = examAccessService.generateTestExamElseThrow(courseId, examId);
+
+        return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/test-exam/{studentExamId}start : Get a {@Link StudentExam} for the specified Id for an TestExam for the exam start.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the (Test) Exams
+     * @param studentExamId the id of the studentExam
+     * @return the ResponseEntity with status 200 (OK) and with the found / generated student exams (without exercises)
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/test-exam/{studentExamId}/start")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<StudentExam> getStudentExamForTestExamForStart(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        log.debug("REST request to get StudentExam {}for TestExam {} for conduction", studentExamId, examId);
+
+        StudentExam exam = examAccessService.getStudentExamForTestExamElseThrow(courseId, examId, studentExamId);
+
+        return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/student-exam/{studentExamId}/start: Get a specified {@link StudentExam} for an TestExam for the exam start.
+     * Note: The Access control, if the requested StudentExam is a TestExam, is performed when generating the {@link StudentExam}
+     * in {@link ExamAccessService} (in order to limit the number of Database-Calls)
+     *
+     * @param courseId      the id of the course
+     * @param examId        the id of the (Test) Exams
+     * @param studentExamId the id of the studentExam
+     * @return the ResponseEntity with status 200 (OK) and with the found / generated student exams (without exercises)
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exam/{studentExamId]/start")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<StudentExam> getStudentExamForTestExamForStartById(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        log.debug("REST request to get the studentExam {} for the TestExam {} for conduction", studentExamId, examId);
+
+        StudentExam exam = examAccessService.getStudentExamForTestExamElseThrow(courseId, examId, studentExamId);
+
+        return ResponseEntity.ok(exam);
+    }
+
+    /**
      * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If the received
      * exercise groups do not belong to the exam the operation is aborted.
      *

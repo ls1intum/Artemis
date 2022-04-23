@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { faMagnifyingGlass, faCirclePlay } from '@fortawesome/free-solid-svg-icons';
+import { faMagnifyingGlass, faCirclePlay, faFileCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
@@ -27,6 +27,7 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
     // Icons
     faMagnifyingGlass = faMagnifyingGlass;
     faCirclePlay = faCirclePlay;
+    faFileCircleXmark = faFileCircleXmark;
 
     constructor(private router: Router) {}
 
@@ -90,6 +91,8 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
      * Used to open the corresponding studentExam
      */
     openStudentExam(): void {
-        this.router.navigate(['courses', this.courseId, 'exams', this.exam.id, 'test-exam', this.studentExam.id]);
+        if (this.studentExam.submitted) {
+            this.router.navigate(['courses', this.courseId, 'exams', this.exam.id, 'test-exam', this.studentExam.id]);
+        }
     }
 }

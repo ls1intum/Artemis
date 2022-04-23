@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { catchError, map } from 'rxjs/operators';
@@ -41,6 +41,17 @@ export class ExamParticipationService {
     }
 
     /**
+     * Retrieves a {@link StudentExam} from server or localstorage. Will also mark the student exam as started
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     * @param studentExamId the id of the student Exam which should be loaded
+     */
+    public loadStudentExamWithExercisesForConductionOfTestExam(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction';
+        return this.getStudentExamFromServer(url, courseId, examId);
+    }
+
+    /**
      * Retrieves a {@link StudentExam} from the localstorage. Will also mark the student exam as started
      *
      * @param courseId the id of the course the exam is created in
@@ -58,6 +69,18 @@ export class ExamParticipationService {
      */
     public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/summary';
+        return this.getStudentExamFromServer(url, courseId, examId);
+    }
+
+    /**
+     * Retrieves a {@link StudentExam} from server or localstorage for display of the summary.
+     * Needed to display the summary for TestExams, as one student can have multiple studentExams.
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     * @param studentExamId the id of the studentExam
+     */
+    public loadStudentExamForTestExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/summary';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
 
@@ -95,6 +118,39 @@ export class ExamParticipationService {
         );
     }
 
+    /**
+     * Loads {@link StudentExam} object for a TestExam from server
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     */
+    public loadStudentExamForTestExam(courseId: number, examId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/start-test-exam';
+        return this.httpClient.get<StudentExam>(url).pipe(
+            map((studentExam: StudentExam) => {
+                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
+                this.currentlyLoadedStudentExam.next(convertedStudentExam);
+                return convertedStudentExam;
+            }),
+        );
+    }
+
+    /**
+     * Loads {@link StudentExam} object for a TestExam from server
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
+     * @param studentExamId the id of the studentExam we want to fetch
+     */
+    public loadStudentExamForTestExamById(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/test-exam/' + studentExamId + '/start';
+        return this.httpClient.get<StudentExam>(url).pipe(
+            map((studentExam: StudentExam) => {
+                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
+                this.currentlyLoadedStudentExam.next(convertedStudentExam);
+                return convertedStudentExam;
+            }),
+        );
+    }
+
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
         return this.httpClient.get<StudentExam>(url).pipe(
@@ -104,6 +160,24 @@ export class ExamParticipationService {
                 return convertedStudentExam;
             }),
         );
+    }
+
+    /**
+     * Loads {@link StudentExam} objects linked to a TestExam per user and per course from server
+     * @param courseId the id of the course we are interested
+     */
+    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
+        const url = `${SERVER_API_URL}api/courses/${courseId}/test-exams-per-user`;
+        return this.httpClient
+            .get<StudentExam[]>(url, { observe: 'response' })
+            .pipe(map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)));
+    }
+
+    private processListOfStudentExamsFromServer(studentExamsResponse: HttpResponse<StudentExam[]>) {
+        studentExamsResponse.body!.forEach((studentExam) => {
+            return ExamParticipationService.convertStudentExamDateFromServer(studentExam);
+        });
+        return studentExamsResponse.body!;
     }
 
     /**
@@ -228,6 +302,8 @@ export class ExamParticipationService {
 
     private static convertStudentExamDateFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
+        studentExam.submissionDate = studentExam.submissionDate ? dayjs(studentExam.submissionDate) : undefined;
+        studentExam.startedDate = studentExam.startedDate ? dayjs(studentExam.startedDate) : undefined;
         return studentExam;
     }
 

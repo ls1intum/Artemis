@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -68,9 +69,9 @@ public class ExamRegistrationService {
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId      the id of the course
-     * @param examId        the id of the exam
-     * @param studentDTOs   the list of students (with at least registration number) who should get access to the exam
+     * @param courseId    the id of the course
+     * @param examId      the id of the exam
+     * @param studentDTOs the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDTOs) {
@@ -139,6 +140,10 @@ public class ExamRegistrationService {
      * @param student the student to be registered to the exam
      */
     public void registerStudentToExam(Course course, Exam exam, User student) {
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Registration of students is only allowed for RealExams");
+        }
+
         exam.addRegisteredUser(student);
 
         if (!student.getGroups().contains(course.getStudentGroupName())) {
@@ -153,10 +158,48 @@ public class ExamRegistrationService {
     }
 
     /**
+     * Enables self-registration to an TestExam.
+     * The calling user must be registered in the respective course
      *
-     * @param examId the exam for which a student should be unregistered
+     * @param course the course containing the exam
+     * @param examId the examId for which we want to register a student
+     */
+    public void selfRegisterToTestExam(Course course, long examId) {
+        Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
+
+        if (!exam.isTestExam()) {
+            throw new AccessForbiddenException("Self-Registration is only allowed for TestExams");
+        }
+
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+
+        if (!currentUser.getGroups().contains(course.getStudentGroupName())) {
+            throw new AccessForbiddenException("Students need to be registered in the corresponding course to self-register for a TestExam");
+        }
+
+        exam.addRegisteredUser(currentUser);
+        examRepository.save(exam);
+
+        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User {} has self-registered to the TestExam {} with id {}", currentUser.getLogin(), exam.getTitle(), exam.getId());
+    }
+
+    /**
+     * Helper method to register a student to an exam
+     *
+     * @param exam    the exam for which we want to register a student
+     * @param student the student to be registered to the exam
+     */
+    private void registerStudentToExam(Exam exam, User student) {
+        exam.addRegisteredUser(student);
+        examRepository.save(exam);
+    }
+
+    /**
+     * @param examId                            the exam for which a student should be unregistered
      * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
-     * @param student the user object that should be unregistered
+     * @param student                           the user object that should be unregistered
      */
     public void unregisterStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission, User student) {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
@@ -194,7 +237,7 @@ public class ExamRegistrationService {
     /**
      * Unregisters all students from the exam
      *
-     * @param examId the exam for which a student should be unregistered
+     * @param examId                            the exam for which a student should be unregistered
      * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
      */
     public void unregisterAllStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission) {
@@ -222,7 +265,7 @@ public class ExamRegistrationService {
      * Adds all students registered in the course to the given exam
      *
      * @param courseId Id of the course
-     * @param examId Id of the exam
+     * @param examId   Id of the exam
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
