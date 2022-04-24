@@ -34,16 +34,18 @@
             <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.text' | artemisTranslate }}</p>
             <div class="col-3 d-flex flex-column">
                 <div class="row justify-content-center">
-                    <input
-                        class="col-auto mr-1"
-                        type="number"
-                        [(ngModel)]="verdictPointDeduction"
-                        min="0"
-                        max="100"
-                        [readonly]="!!plagiarismCase.verdict"
-                        [disabled]="!!plagiarismCase.verdict"
-                    />
-                    <div class="col-auto">%</div>
+                    <div class="input-group w-auto">
+                        <input
+                            class="form-control"
+                            type="number"
+                            [(ngModel)]="verdictPointDeduction"
+                            min="0"
+                            max="100"
+                            [readonly]="!!plagiarismCase.verdict"
+                            [disabled]="!!plagiarismCase.verdict"
+                        />
+                        <span class="input-group-text">%</span>
+                    </div>
                 </div>
                 <div class="row justify-content-center mt-2">
                     <jhi-confirm-button

@@ -73,6 +73,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 next: (res: HttpResponse<PlagiarismCase>) => {
                     this.plagiarismCase.verdict = res.body!.verdict;
                     this.plagiarismCase.verdictPointDeduction = res.body!.verdictPointDeduction!;
+                    this.plagiarismCase.verdictBy = res.body!.verdictBy;
+                    this.plagiarismCase.verdictDate = res.body!.verdictDate;
                 },
             });
     }
@@ -91,6 +93,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 next: (res: HttpResponse<PlagiarismCase>) => {
                     this.plagiarismCase.verdict = res.body!.verdict;
                     this.plagiarismCase.verdictMessage = res.body!.verdictMessage!;
+                    this.plagiarismCase.verdictBy = res.body!.verdictBy;
+                    this.plagiarismCase.verdictDate = res.body!.verdictDate;
                 },
             });
     }
@@ -102,6 +106,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.plagiarismCasesService.savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase.verdict = res.body!.verdict;
+                this.plagiarismCase.verdictBy = res.body!.verdictBy;
+                this.plagiarismCase.verdictDate = res.body!.verdictDate;
             },
         });
     }

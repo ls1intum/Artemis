@@ -22,6 +22,8 @@ describe('Plagiarism Case Verdict Component', () => {
     });
 
     it('should return correct translation string', () => {
+        comp.plagiarismCase = {} as PlagiarismCase;
+        expect(comp.verdictTranslationString).toBe('artemisApp.plagiarism.plagiarismCases.verdict.none');
         comp.plagiarismCase = {
             verdict: PlagiarismVerdict.PLAGIARISM,
         } as PlagiarismCase;
