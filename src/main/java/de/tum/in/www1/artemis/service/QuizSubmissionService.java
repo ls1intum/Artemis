@@ -149,7 +149,7 @@ public class QuizSubmissionService {
         // check if user has attempts left for this quiz
         int submissionCount = submissionRepository.countByExerciseIdAndStudentId(exerciseId, user.getId());
         log.debug("{} Counted {} submissions for user {} in quiz {} in {} µs.", logText, submissionCount, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
-        if (submissionCount >= quizExercise.getAllowedNumberOfAttempts()) {
+        if (quizExercise.getAllowedNumberOfAttempts() != null && submissionCount >= quizExercise.getAllowedNumberOfAttempts()) {
             throw new QuizSubmissionException("You have already submitted the quiz");
         }
 
