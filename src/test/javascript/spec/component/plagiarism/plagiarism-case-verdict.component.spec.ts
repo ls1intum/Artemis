@@ -31,4 +31,13 @@ describe('Plagiarism Case Verdict Component', () => {
         comp.plagiarismCase.verdict = PlagiarismVerdict.WARNING;
         expect(comp.verdictTranslationString).toBe('artemisApp.plagiarism.plagiarismCases.verdict.warning');
     });
+
+    it('should return correct verdict badge class', () => {
+        comp.plagiarismCase = {} as PlagiarismCase;
+        expect(comp.verdictBadgeClass).toEqual(['bg-secondary']);
+        comp.plagiarismCase = {
+            verdict: PlagiarismVerdict.PLAGIARISM,
+        } as PlagiarismCase;
+        expect(comp.verdictBadgeClass).toEqual(['bg-primary']);
+    });
 });
