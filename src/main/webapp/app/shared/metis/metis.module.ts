@@ -34,7 +34,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { PostOverviewComponent } from 'app/shared/metis/post-overview/post-overview.component';
 import { MessageInlineInputComponent } from './posting-inline-input/message-inline-input.component';
 
 @NgModule({
@@ -75,7 +74,6 @@ import { MessageInlineInputComponent } from './posting-inline-input/message-inli
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
-        PostOverviewComponent,
         MessageInlineInputComponent,
         HtmlForPostingMarkdownPipe,
         ReactingUsersOnPostingPipe,
@@ -97,7 +95,6 @@ import { MessageInlineInputComponent } from './posting-inline-input/message-inli
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
-        PostOverviewComponent,
         MessageInlineInputComponent,
         HtmlForPostingMarkdownPipe,
     ],

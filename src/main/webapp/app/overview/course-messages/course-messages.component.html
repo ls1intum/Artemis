@@ -3,6 +3,6 @@
         <jhi-conversation-sidebar (selectConversation)="selectConversation($event)"></jhi-conversation-sidebar>
     </div>
     <div class="col pe-0 flex-grow-1">
-        <jhi-post-overview [isCourseMessagesPage]="true" [activeConversation]="selectedConversation"></jhi-post-overview>
+        <jhi-messages [activeConversation]="selectedConversation"></jhi-messages>
     </div>
 </div>

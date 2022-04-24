@@ -2,8 +2,7 @@ import { Component } from '@angular/core';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
-    selector: 'jhi-messages',
-    styleUrls: ['../discussion-section/discussion-section.component.scss'],
+    selector: 'jhi-course-messages',
     templateUrl: './course-messages.component.html',
 })
 export class CourseMessagesComponent {

@@ -31,7 +31,7 @@ describe('CourseMessagesComponent', () => {
         expect(component).not.toBeNull();
         expect(component.selectedConversation).toBeUndefined();
 
-        const postOverviewComponent = getElement(fixture.debugElement, 'jhi-post-overview');
+        const postOverviewComponent = getElement(fixture.debugElement, 'jhi-messages');
         expect(postOverviewComponent.isCourseMessagesPage).toBeTrue();
         expect(postOverviewComponent.activeConversation).toBe(component.selectedConversation);
     });
