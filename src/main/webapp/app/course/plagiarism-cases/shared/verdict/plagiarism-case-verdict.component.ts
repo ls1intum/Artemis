@@ -28,4 +28,8 @@ export class PlagiarismCaseVerdictComponent {
             }
         }
     }
+
+    get verdictBadgeClass(): string[] {
+        return [`bg-${this.plagiarismCase.verdict ? 'primary' : 'secondary'}`];
+    }
 }

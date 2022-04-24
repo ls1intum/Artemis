@@ -55,7 +55,8 @@
                     "warning": "Warnung",
                     "pointDeduction": "Punktabzug",
                     "confirmationTitle": "Bestätige das Urteil",
-                    "confirmationText": "Are you sure you want to set this verdict? Dies kann nicht rückgängig gemacht werden."
+                    "confirmationText": "Bist du sicher, dass du dieses Urteil fällen willst? Dies kann nicht rückgängig gemacht werden.",
+                    "tooltip": "Dieses Urteil fällen?"
                 },
                 "exercise": "Betroffene Übung",
                 "comparisons": "Vergleiche",
