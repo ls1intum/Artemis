@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { delay, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
@@ -152,11 +152,15 @@ describe('Example Modeling Submission Component', () => {
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.saveSuccessful');
     });
 
-    it('should upsert an existing modeling submission', () => {
+    it('should upsert an existing modeling submission', fakeAsync(() => {
         // GIVEN
         jest.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
         const alertSpy = jest.spyOn(alertService, 'success');
-        const serviceSpy = jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        const serviceSpy = jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })).pipe(delay(1)));
+
+        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const modelingAssessmentServiceSpy = jest.spyOn(modelingAssessmentService, 'saveExampleAssessment');
+
         comp.isNewSubmission = false;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
@@ -165,12 +169,21 @@ describe('Example Modeling Submission Component', () => {
         fixture.detectChanges();
         comp.upsertExampleModelingSubmission();
 
+        // Ensure calls are not concurrent, new one should start after first one ends.
+        expect(serviceSpy).toHaveBeenCalledTimes(1);
+        tick(1);
+
+        // This service request should also start after the previous one ends.
+        expect(modelingAssessmentServiceSpy).toHaveBeenCalledTimes(0);
+        tick(1);
+
         // THEN
         expect(comp.isNewSubmission).toBe(false);
         expect(serviceSpy).toHaveBeenCalledTimes(2);
+        expect(modelingAssessmentServiceSpy).toHaveBeenCalledTimes(1);
         expect(alertSpy).toHaveBeenCalledTimes(1);
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.saveSuccessful');
-    });
+    }));
 
     it('should check assessment', () => {
         // GIVEN
