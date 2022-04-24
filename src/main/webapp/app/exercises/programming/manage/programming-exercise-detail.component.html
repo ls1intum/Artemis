@@ -198,6 +198,17 @@
                             <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
                         </button>
                     </span>
+                    <span class="mr-1" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.testwiseCoverageEnabled">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="getAndShowTestwiseCoverage()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.testwiseCoverageReport.tooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
+                        </button>
+                    </span>
                 </div>
                 <div>
                     <button
@@ -474,6 +485,10 @@
                 <dd>
                     <span>{{ programmingExercise.showTestNamesToStudents }}</span>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage">Record testwise coverage</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.testwiseCoverageEnabled }}</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.programmingLanguage">Programming Language</span></dt>
                 <dd>
                     <span jhiTranslate="{{ 'artemisApp.ProgrammingLanguage.' + programmingExercise.programmingLanguage }}">{{ programmingExercise.programmingLanguage }}</span>
@@ -544,6 +559,22 @@
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
                     </a>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
+                <dd>
+                    <div *ngIf="programmingExercise?.gitDiffReport" class="d-flex align-items-center fw-bold">
+                        <jhi-git-diff-line-stat
+                            [addedLineCount]="addedLineCount"
+                            [removedLineCount]="removedLineCount"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
+                        ></jhi-git-diff-line-stat>
+                    </div>
+                </dd>
+                <div *ngIf="programmingExercise.isAtLeastTutor && programmingExercise?.testwiseCoverageEnabled">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.coveredLineRatio">Covered Line Ratio</span></dt>
+                    <dd>
+                        <span>{{ programmingExercise?.coveredLinesRatio ? (programmingExercise?.coveredLinesRatio! * 100).toFixed(1) + ' %' : 'n.a.' }}</span>
+                    </dd>
+                </div>
             </dl>
         </div>
     </div>

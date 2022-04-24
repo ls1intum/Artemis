@@ -84,9 +84,10 @@ export class CourseManagementRequests {
     /**
      * Creates a course with the specified title and short name.
      * @param body an object containing either the course or exercise group the exercise will be added to
-     * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
-     * @param dueDate when the programming exercise should be due (default is now + 1 day)
+     * @param scaMaxPenalty? the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
+     * @param recordTestwiseCoverage enable testwise coverage analysis for this exercise (default is false)
      * @param releaseDate when the programming exercise should be available (default is now)
+     * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
@@ -97,6 +98,7 @@ export class CourseManagementRequests {
     createProgrammingExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         scaMaxPenalty?: number,
+        recordTestwiseCoverage = false,
         releaseDate = day(),
         dueDate = day().add(1, 'day'),
         title = 'Cypress programming exercise ' + generateUUID(),
@@ -124,6 +126,9 @@ export class CourseManagementRequests {
             exercise.staticCodeAnalysisEnabled = true;
             exercise.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
         }
+
+        exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
+
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,

@@ -1,6 +1,7 @@
-plugins {
-    id 'java'
-}
+apply plugin: 'java'
+sourceCompatibility = 17
+version = '1.0.0'
+compileJava.options.encoding = 'UTF-8'
 
 repositories {
     mavenCentral()
@@ -10,16 +11,10 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.12.0'
 }
 
-def assignmentSrcDir = "src"
-
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-}
-
 sourceSets {
     main {
         java {
-            srcDir assignmentSrcDir
+            srcDir 'src'
         }
     }
     test {

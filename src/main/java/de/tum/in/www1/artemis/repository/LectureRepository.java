@@ -5,6 +5,8 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -55,6 +57,27 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             """)
     Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
 
+    @SuppressWarnings("PMD.MethodNamingConventions")
+    Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
+
+    /**
+     * Query which fetches all lectures for which the user is editor or instructor in the course and
+     * matching the search criteria.
+     *
+     * @param partialTitle       lecture title search term
+     * @param partialCourseTitle course title search term
+     * @param groups             user groups
+     * @param pageable           Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT lecture FROM Lecture lecture
+            WHERE (lecture.course.instructorGroupName IN :groups OR lecture.course.editorGroupName IN :groups)
+            AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%)
+            """)
+    Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
+            @Param("groups") Set<String> groups, Pageable pageable);
+
     /**
      * Returns the title of the lecture with the given id
      *
@@ -62,9 +85,9 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * @return the name/title of the lecture or null if the lecture does not exist
      */
     @Query("""
-            SELECT l.title
-            FROM Lecture l
-            WHERE l.id = :lectureId
+            SELECT lecture.title
+            FROM Lecture lecture
+            WHERE lecture.id = :lectureId
             """)
     String getLectureTitle(@Param("lectureId") Long lectureId);
 

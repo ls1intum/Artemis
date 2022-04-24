@@ -1,11 +1,19 @@
 package de.tum.in.www1.artemis.util;
 
+import static org.assertj.core.api.Assertions.fail;
+
+import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
+
+import org.apache.commons.io.FileUtils;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -25,6 +33,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
@@ -45,13 +54,37 @@ public class ModelFactory {
         return lecture;
     }
 
-    public static Attachment generateAttachment(ZonedDateTime startDate, Lecture lecture) {
+    /**
+     * Create a dummy attachment for testing
+     * @param date The optional upload and release date to set on the attachment
+     * @return Attachment that was created
+     */
+    public static Attachment generateAttachment(ZonedDateTime date) {
         Attachment attachment = new Attachment();
         attachment.setAttachmentType(AttachmentType.FILE);
-        attachment.setReleaseDate(startDate);
-        attachment.setUploadDate(startDate);
+        if (date != null) {
+            attachment.setReleaseDate(date);
+            attachment.setUploadDate(date);
+        }
         attachment.setName("TestAttachment");
-        attachment.setLecture(lecture);
+        return attachment;
+    }
+
+    /**
+     * Create a dummy attachment for testing with a placeholder image file on disk
+     * @param startDate The release date to set on the attachment
+     * @return Attachment that was created with its link set to a testing file on disk
+     */
+    public static Attachment generateAttachmentWithFile(ZonedDateTime startDate) {
+        Attachment attachment = generateAttachment(startDate);
+        String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
+        try {
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), new File(FilePathService.getTempFilePath(), testFileName));
+        }
+        catch (IOException ex) {
+            fail("Failed while copying test attachment files", ex);
+        }
+        attachment.setLink(Paths.get("/api/files/temp/", testFileName).toString());
         return attachment;
     }
 
@@ -124,6 +157,7 @@ public class ModelFactory {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
@@ -825,6 +859,7 @@ public class ModelFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
+        toBeImported.setTestwiseCoverageEnabled(template.isTestwiseCoverageEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
