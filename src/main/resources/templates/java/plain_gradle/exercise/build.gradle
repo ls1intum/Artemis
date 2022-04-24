@@ -1,0 +1,21 @@
+apply plugin: 'java'
+sourceCompatibility = 17
+version = '1.0.0'
+compileJava.options.encoding = 'UTF-8'
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+    test {
+        java {
+            srcDirs = []
+        }
+    }
+}

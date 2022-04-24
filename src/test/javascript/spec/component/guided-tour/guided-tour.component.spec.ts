@@ -99,7 +99,6 @@ describe('GuidedTourComponent', () => {
 
     describe('Keydown Element', () => {
         const expectedTourStepEntries = {
-            alreadyExecutedTranslateKey: 'tour.stepAlreadyExecutedHint.text',
             contentTranslateKey: '',
             headlineTranslateKey: '',
         };
