@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,6 +20,7 @@ import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -69,20 +68,20 @@ public class LectureUnitResource {
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Specified lecture is not part of a course", "LectureUnit", "courseMissing");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // Ensure that exactly as many lecture units have been received as are currently related to the lecture
         if (orderedLectureUnits.size() != lecture.getLectureUnits().size()) {
-            return conflict();
+            throw new ConflictException("Received wrong number of lecture units", "LectureUnit", "lectureUnitsSizeMismatch");
         }
 
         // Ensure that all received lecture units are already related to the lecture
         for (LectureUnit lectureUnit : orderedLectureUnits) {
             if (!lecture.getLectureUnits().contains(lectureUnit)) {
-                return conflict();
+                throw new ConflictException("Received lecture unit is not part of the lecture", "LectureUnit", "lectureMismatch");
             }
             // Set the lecture manually as it won't be included in orderedLectureUnits
             lectureUnit.setLecture(lecture);
@@ -112,10 +111,10 @@ public class LectureUnitResource {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "LectureUnit", "lectureOrCourseMissing");
         }
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "LectureUnit", "lectureIdMismatch");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture().getCourse(), null);
