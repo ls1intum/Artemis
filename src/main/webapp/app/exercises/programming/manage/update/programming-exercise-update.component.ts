@@ -334,7 +334,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise = programmingExercise;
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
-            this.selectedProjectTypeValue = this.programmingExercise.projectType!;
+            if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
+                this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
+            } else if (this.programmingExercise.projectType === ProjectType.GRADLE_GRADLE) {
+                this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
+            } else {
+                this.selectedProjectTypeValue = this.programmingExercise.projectType!;
+            }
         });
 
         // If it is an import, just get the course, otherwise handle the edit and new cases
