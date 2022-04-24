@@ -12,9 +12,7 @@ SELECT
     CASE
         WHEN MAX(status) >= 0 THEN CURRENT_DATE
     END as verdict_date,
-    CASE
-        WHEN MAX(status) >= 0 THEN 0
-    END as verdict_point_deduction
+    0 as verdict_point_deduction
 FROM
     (
         SELECT
@@ -44,7 +42,7 @@ FROM
 group by student_id, exercise_id;
 
 -- CREATE PLAGIARISM CASES
-INSERT INTO plagiarism_case (exercise_id, student_id, verdict, created_by, verdict_date, verdict_point_deduction)
+INSERT INTO plagiarism_case (exercise_id, student_id, verdict, created_by, verdict_date, verdict_point_deduction, verdict_by_id)
 WITH instructor AS (
     (
         SELECT e.id as exercise_id, min(ju.login) as instructor_login
@@ -57,9 +55,10 @@ WITH instructor AS (
         group by e.id
     )
 )
-SELECT npc.exercise_id, student_id, verdict, instructor_login as created_by, verdict_date, verdict_point_deduction
+SELECT npc.exercise_id, student_id, verdict, instructor_login as created_by, verdict_date, verdict_point_deduction, u.id as verdict_by_id
 FROM new_plagiarism_case npc
-    LEFT JOIN instructor i on i.exercise_id = npc.exercise_id;
+    LEFT JOIN instructor i on i.exercise_id = npc.exercise_id
+    LEFT JOIN jhi_user u on u.login = instructor_login;
 
 -- UPDATE PLAGIARISM SUBMISSIONS WITH RELATION TO PLAGIARISM CASE
 UPDATE plagiarism_submission as dest,

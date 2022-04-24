@@ -432,8 +432,7 @@ public class PostService extends PostingService {
                 || plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
             // retrieve posts
             List<Post> plagiarismCasePosts;
-            plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.getPlagiarismCaseId(), postContextFilter.getFilterToUnresolved(),
-                    postContextFilter.getFilterToOwn(), postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+            plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.getPlagiarismCaseId());
 
             // protect sample solution, grading instructions, etc.
             plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);

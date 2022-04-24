@@ -35,20 +35,22 @@
             <div class="col-3 d-flex flex-column">
                 <div class="row justify-content-center">
                     <input
-                        class="col-auto"
+                        class="col-auto mr-1"
                         type="number"
                         [(ngModel)]="verdictPointDeduction"
                         min="0"
                         max="100"
                         [readonly]="!!plagiarismCase.verdict"
                         [disabled]="!!plagiarismCase.verdict"
-                    />%
+                    />
+                    <div class="col-auto">%</div>
                 </div>
                 <div class="row justify-content-center mt-2">
                     <jhi-confirm-button
                         title="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"
                         confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
                         confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                        tooltip="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
                         class="col-auto"
                         [translateText]="true"
                         [disabled]="!!plagiarismCase.verdict"
@@ -65,6 +67,7 @@
                         title="artemisApp.plagiarism.plagiarismCases.verdict.warning"
                         confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
                         confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                        tooltip="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
                         class="col-auto"
                         [translateText]="true"
                         [disabled]="!!plagiarismCase.verdict"
@@ -77,6 +80,7 @@
                     title="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"
                     confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
                     confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                    tooltip="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
                     [translateText]="true"
                     [disabled]="!!plagiarismCase.verdict"
                     (onConfirm)="saveVerdict()"

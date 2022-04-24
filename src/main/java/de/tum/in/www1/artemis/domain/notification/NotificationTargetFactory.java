@@ -34,7 +34,7 @@ public class NotificationTargetFactory {
 
     public static final String EXAM_ARCHIVE_UPDATED_TEXT = "examArchiveUpdated";
 
-    public static final String PLAGIARISM_TEXT = "plagiarism";
+    public static final String PLAGIARISM_TEXT = "plagiarism-cases";
 
     public static final String PLAGIARISM_DETECTED_TEXT = "plagiarismDetected";
 
