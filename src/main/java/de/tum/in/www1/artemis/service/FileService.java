@@ -58,8 +58,6 @@ public class FileService implements DisposableBean {
         Map.entry("git.ignore.file", ".gitignore"),
         Map.entry("git.attributes.file", ".gitattributes"),
         Map.entry("Makefile.file", "Makefile"),
-        Map.entry("project.file", ".project"),
-        Map.entry("classpath.file", ".classpath"),
         Map.entry("dune.file", "dune"),
         Map.entry("Fast.file", "Fastfile"),
         Map.entry("App.file", "Appfile"),
