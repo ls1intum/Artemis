@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -36,12 +37,15 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermission;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
@@ -148,6 +152,24 @@ public class JenkinsBuildPlanService {
         final var templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
         updateBuildPlanRepositories(projectKey, planKey, ASSIGNMENT_REPO_NAME, participation.getRepositoryUrl(), templateRepoUrl);
         enablePlan(projectKey, planKey);
+
+        // allow student or team access to the build plan in case this option was specified (only available for course exercises)
+        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && programmingExercise.isCourseExercise()) {
+            grantReadPermission(planKey, participation.getParticipant(), List.of(CIPermission.READ));
+        }
+    }
+
+    private void grantReadPermission(String planKey, Participant participant, List<CIPermission> permissions) {
+
+        participant.getParticipants().forEach(user -> {
+            try {
+                // TODO: is planKey the same as job name?
+                jenkinsJobPermissionsService.addPermissionsForUserToFolder(user.getLogin(), planKey, JenkinsJobPermission.getStudentPermissions());
+            }
+            catch (Exception ex) {
+                log.error("Cannot grant permissions {} to user {} for build plan {}", permissions, user.getLogin(), planKey, ex);
+            }
+        });
     }
 
     /**

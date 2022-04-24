@@ -35,6 +35,8 @@ public interface ParticipationInterface {
 
     Exercise getExercise();
 
+    Participant getParticipant();
+
     void setExercise(Exercise exercise);
 
     <T extends Submission> Optional<T> findLatestSubmission();

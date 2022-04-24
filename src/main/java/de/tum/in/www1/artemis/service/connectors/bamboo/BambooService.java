@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
@@ -114,6 +115,30 @@ public class BambooService extends AbstractContinuousIntegrationService {
         final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, defaultBranch, Optional.empty());
         enablePlan(projectKey, planKey);
+
+        // allow student or team access to the build plan in case this option was specified (only available for course exercises)
+        var programmingExercise = participation.getProgrammingExercise();
+        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && programmingExercise.isCourseExercise()) {
+            grantReadPermission(buildPlanId, participation.getParticipant(), List.of(CIPermission.READ));
+        }
+    }
+
+    private void grantReadPermission(String buildPlanId, Participant participant, List<CIPermission> permissions) {
+        final var permissionData = permissions.stream().map(this::permissionToBambooPermission).collect(Collectors.toList());
+        final var entity = new HttpEntity<>(permissionData, null);
+
+        participant.getParticipants().forEach(user -> {
+            try {
+                final var url = serverUrl + "/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin();
+                final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+                if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
+                    log.warn("Cannot grant permissions {} to user {} for build plan {}", permissions, user.getLogin(), buildPlanId);
+                }
+            }
+            catch (Exception ex) {
+                log.error("Cannot grant permissions {} to user {} for build plan {}", permissions, user.getLogin(), buildPlanId, ex);
+            }
+        });
     }
 
     @Override
