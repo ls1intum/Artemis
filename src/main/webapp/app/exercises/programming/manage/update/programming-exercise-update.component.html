@@ -172,7 +172,7 @@
                 name="projectType"
                 id="field_projectType"
             ></jhi-mode-picker>
-            <div class="form-check mt-2" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
+            <div class="form-check mt-2" *ngIf="!isImport && !programmingExercise.id && programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
                 <input class="form-check-input" type="checkbox" name="withDependencies" id="field_with_dependencies" [(ngModel)]="withDependencies" checked />
                 <span jhiTranslate="artemisApp.programmingExercise.withDependencies">With Dependencies</span>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip"></jhi-help-icon>
