@@ -101,6 +101,9 @@ public class VideoUnitResource {
             return conflict();
         }
 
+        VideoUnit existingUnit = videoUnitRepository.findById(videoUnit.getId()).orElseThrow();
+        videoUnit.setOrder(existingUnit.getOrder());
+
         VideoUnit result = videoUnitRepository.save(videoUnit);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, videoUnit.getId().toString())).body(result);
     }
