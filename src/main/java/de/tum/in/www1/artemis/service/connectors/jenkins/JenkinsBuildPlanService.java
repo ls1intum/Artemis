@@ -5,8 +5,8 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
@@ -42,7 +42,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermission;
@@ -155,18 +154,19 @@ public class JenkinsBuildPlanService {
 
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)
         if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && programmingExercise.isCourseExercise()) {
-            grantReadPermission(planKey, participation.getParticipant(), List.of(CIPermission.READ));
+            grantReadPermission(planKey, participation.getParticipant());
         }
     }
 
-    private void grantReadPermission(String planKey, Participant participant, List<CIPermission> permissions) {
+    private void grantReadPermission(String planKey, Participant participant) {
+        Set<JenkinsJobPermission> studentPermissions = JenkinsJobPermission.getStudentPermissions();
         participant.getParticipants().forEach(user -> {
             try {
                 // TODO: is planKey the same as job name?
-                jenkinsJobPermissionsService.addPermissionsForUserToFolder(user.getLogin(), planKey, JenkinsJobPermission.getStudentPermissions());
+                jenkinsJobPermissionsService.addPermissionsForUserToFolder(user.getLogin(), planKey, studentPermissions);
             }
             catch (IOException ex) {
-                log.error("Cannot grant permissions {} to user {} for build plan {}", permissions, user.getLogin(), planKey, ex);
+                log.error("Cannot grant permissions {} to user {} for build plan {}", studentPermissions, user.getLogin(), planKey, ex);
             }
         });
     }

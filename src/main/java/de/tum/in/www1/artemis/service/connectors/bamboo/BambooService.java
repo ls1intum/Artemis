@@ -111,29 +111,36 @@ public class BambooService extends AbstractContinuousIntegrationService {
         String buildPlanId = participation.getBuildPlanId();
         VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
         String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
-        String planKey = participation.getBuildPlanId();
         String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, defaultBranch, Optional.empty());
-        enablePlan(projectKey, planKey);
+        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, defaultBranch,
+                Optional.empty());
+        enablePlan(projectKey, buildPlanId);
 
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)
-        var programmingExercise = participation.getProgrammingExercise();
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && programmingExercise.isCourseExercise()) {
-            grantReadPermission(buildPlanId, participation.getParticipant(), List.of(CIPermission.READ));
+            grantReadPermission(buildPlanId, projectKey, participation.getParticipant(), List.of(CIPermission.READ));
         }
     }
 
-    private void grantReadPermission(String buildPlanId, Participant participant, List<CIPermission> permissions) {
+    private void grantReadPermission(String buildPlanId, String projectKey, Participant participant, List<CIPermission> permissions) {
         List<String> permissionData = permissions.stream().map(this::permissionToBambooPermission).toList();
         HttpEntity<List<String>> entity = new HttpEntity<>(permissionData, null);
 
         participant.getParticipants().forEach(user -> {
             String url = serverUrl + "/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin();
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
-            if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
-                log.warn("Cannot grant permissions {} to user {} for build plan {}", permissions, user.getLogin(), buildPlanId);
-            }
+            granReadPermissionRESTCall(url, entity, user, buildPlanId);
+            // Access to a single buildplan also needs access to the project
+            url = serverUrl + "/rest/api/latest/permissions/projectplan/" + projectKey + "/users/" + user.getLogin();
+            granReadPermissionRESTCall(url, entity, user, buildPlanId);
         });
+    }
+
+    private void granReadPermissionRESTCall(String url, HttpEntity<List<String>> entity, User user, String buildPlanId) {
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+        if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
+            log.warn("Cannot grant read permissions to student {} for build plan {}", user.getLogin(), buildPlanId);
+        }
     }
 
     @Override
