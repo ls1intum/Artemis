@@ -1,6 +1,6 @@
 <div class="row justify-content-center">
     <div *ngIf="course" class="col-12">
-        <div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
+        <div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }" id="course-detail-info-bar">
             <div class="row">
                 <div class="col general-info">
                     <h3>{{ course.title }}</h3>
@@ -204,6 +204,11 @@
             <dd>
                 <span *ngIf="course.semester && course.semester !== ''">{{ course.semester }}</span>
                 <span *ngIf="!course.semester || course.semester === ''">{{ 'global.generic.unset' | artemisTranslate }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.defaultProgrammingLanguage">Default Programming Language</span></dt>
+            <dd>
+                <span *ngIf="course.defaultProgrammingLanguage">{{ course.defaultProgrammingLanguage }}</span>
+                <span *ngIf="!course.defaultProgrammingLanguage">{{ 'global.generic.unset' | artemisTranslate }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.course.testCourse.title">Test Course</span></dt>
             <dd>

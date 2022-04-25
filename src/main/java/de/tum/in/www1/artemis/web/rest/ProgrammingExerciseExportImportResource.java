@@ -75,7 +75,7 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
-    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
     private final TemplateUpgradePolicy templateUpgradePolicy;
 
@@ -86,7 +86,7 @@ public class ProgrammingExerciseExportImportResource {
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
@@ -107,7 +107,8 @@ public class ProgrammingExerciseExportImportResource {
      * @param programmingExercise exercise to validate
      */
     private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
@@ -414,5 +415,24 @@ public class ProgrammingExerciseExportImportResource {
                 programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));
 
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/export-solution-repository : sends a solution repository as a zip file without .git directory.
+     * @param exerciseId The id of the programming exercise
+     * @return ResponseEntity with status
+     * @throws IOException if something during the zip process went wrong
+     */
+    @GetMapping(EXPORT_SOLUTION_REPOSITORY)
+    @PreAuthorize("hasRole('USER')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Resource> exportSolutionRepository(@PathVariable long exerciseId) throws IOException {
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
+        long start = System.nanoTime();
+        Optional<File> zipFile = programmingExerciseExportService.exportSolutionRepositoryForExercise(programmingExercise.getId(), new ArrayList<>());
+
+        return returnZipFileForRepositoryExport(zipFile, RepositoryType.SOLUTION.getName(), programmingExercise, start);
     }
 }

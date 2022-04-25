@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -78,7 +77,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void testGetDefaultBranch(String defaultBranch) throws IOException, GitLabApiException {
+    public void testGetDefaultBranch(String defaultBranch) throws URISyntaxException, GitLabApiException {
         VcsRepositoryUrl repoURL = new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoURL);

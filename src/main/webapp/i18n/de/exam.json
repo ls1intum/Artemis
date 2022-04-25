@@ -257,6 +257,13 @@
         "examManagement": {
             "reviewDatesInvalidWarning": "Das Ende der Klausureinsicht ist falsch definiert oder fehlt",
             "reviewDatesInvalidExplanation": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden. Zusätzlich muss das Ende der Klausureinsicht immer nach dem Beginn datiert sein.",
+            "sections": {
+                "configuration": "Klausurkonfiguration",
+                "conduction": "Klausurdurchführung",
+                "assessment": "Klausurbewertung und Klausureinsicht",
+                "exercises": "Klausuraufgaben",
+                "text": "Klausurtexte"
+            },
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
             "editExam": "Bearbeite eine existierende Klausur",
@@ -264,10 +271,16 @@
             "examId": "Klausur ID",
             "examTitle": "Klausurname",
             "visibleDate": "Sichtbar ab",
+            "visibleDateTooltip": "Studierende sehen die Klausur und können die Startseite ab diesem Zeitpunkt aufrufen, haben aber noch keinen Zugriff auf die Aufgaben",
             "startDate": "Bearbeitungszeit ab",
+            "startDateTooltip": "Studierende können ab diesem Zeitpunkt an der Klausur teilnehmen",
             "endDate": "Bearbeitungszeit bis",
+            "endDateTooltip": "Studierende können bis zu diesem Zeitpunkt an der Klausur teilnehmen",
+            "workingTime": "Bearbeitungszeit (Minuten)",
+            "workingTimeTooltip": "Die Bearbeitungszeit wird aus dem Start- und Enddatum der Klausur errechnet",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
             "gracePeriod": "Karenzzeit (Sekunden)",
+            "gracePeriodTooltip": "Die Karenzzeit wird den Studierenden nach dem Ende der Bearbeitungszeit zur Abgabe der Klausur eingeräumt. Innerhalb dieser Zeit können keine neuen Abgaben hochgeladen werden",
             "examiner": "Prüfer:in",
             "moduleNumber": "Modulnummer",
             "courseName": "Kursname",
@@ -291,6 +304,15 @@
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
             "gradingSystem": "Notenschlüssel",
+            "testExam": {
+                "realExam": "Klausur",
+                "testExam": "Testklausur",
+                "examMode": "Exammodus",
+                "examModeTooltip": "Testklausuren können von Studierenden mehrmals innerhalb des Bearbeitungsfensters durchgeführt werden und erhalten nach jedem Durchlauf automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
+                "startDate": "Beginn Bearbeitungsfenster",
+                "endDate": "Ende Bearbeitungsfenster",
+                "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
+            },
             "testRun": {
                 "testRun": "Testlauf",
                 "title": "Testlaufverwaltung: ",

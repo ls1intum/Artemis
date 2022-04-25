@@ -1,14 +1,13 @@
 <div class="d-flex align-items-start">
-    <div class="btn-group" [ngClass]="{ disabled: disabled }">
+    <div class="btn-group" [ngClass]="{ disabled }">
         <div
+            *ngFor="let option of options"
             class="btn"
-            [ngClass]="{ 'btn-secondary': exercise.mode === INDIVIDUAL, 'btn-default': exercise.mode !== INDIVIDUAL, disabled: disabled }"
-            (click)="setMode(INDIVIDUAL)"
+            [class.disabled]="disabled"
+            [ngClass]="value === option.value ? option.btnClass : 'btn-default'"
+            (click)="setMode(option.value)"
         >
-            {{ 'artemisApp.exercise.modes.individual' | artemisTranslate }}
-        </div>
-        <div class="btn btn-default" [ngClass]="{ 'btn-info': exercise.mode === TEAM, 'btn-default': exercise.mode !== TEAM, disabled: disabled }" (click)="setMode(TEAM)">
-            {{ 'artemisApp.exercise.modes.team' | artemisTranslate }}
+            {{ option.labelKey | artemisTranslate }}
         </div>
     </div>
 </div>
