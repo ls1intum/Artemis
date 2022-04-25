@@ -5,7 +5,7 @@ import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-s
 export type CourseScoresExportRow = any;
 
 /**
- * Builds CSV rows for the course scores export.
+ * Builds rows for the course scores export.
  */
 export abstract class CourseScoresRowBuilder {
     private exportRow = {};
@@ -16,7 +16,7 @@ export abstract class CourseScoresRowBuilder {
      * Creates a new row builder.
      * @param accuracyOfScores The accuracy of fraction digits that should be used for numbers.
      */
-    constructor(accuracyOfScores = 1) {
+    protected constructor(accuracyOfScores = 1) {
         this.accuracyOfScores = accuracyOfScores;
     }
 

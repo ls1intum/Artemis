@@ -6,6 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { CsvDecimalSeparator, CsvExportModalComponent, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { By } from '@angular/platform-browser';
 
 describe('CsvExportModalComponent', () => {
     let component: CsvExportModalComponent;
@@ -56,6 +57,19 @@ describe('CsvExportModalComponent', () => {
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SPACE);
         expect(component.options.quoteStrings).toBe(CsvQuoteStrings.NONE);
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
+    });
+
+    it('should dismiss modal if close or cancel button are clicked', () => {
+        const dismissSpy = jest.spyOn(ngbActiveModal, 'dismiss');
+        const closeButton = fixture.debugElement.query(By.css('button.btn-close'));
+        expect(closeButton).not.toBeNull();
+        closeButton.nativeElement.click();
+        expect(dismissSpy).toHaveBeenCalledTimes(1);
+
+        const cancelButton = fixture.debugElement.query(By.css('button.cancel'));
+        expect(cancelButton).not.toBeNull();
+        cancelButton.nativeElement.click();
+        expect(dismissSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should return empty on finish when excel export is active', () => {

@@ -530,9 +530,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         rows.push(this.generateCsvRowParticipation(customCsvOptions));
         rows.push(this.generateCsvRowSuccessfulParticipation(customCsvOptions));
 
-        // todo remove log
-        console.log(keys);
-        console.log(rows);
         if (!!customCsvOptions) {
             // required because the currently used library for exporting to csv does not quote the header fields (keys)
             const quotedKeys = keys.map((key) => customCsvOptions.quoteStrings + key + customCsvOptions.quoteStrings);
@@ -584,7 +581,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Constructs a new builder for a new CSV row.
-     * @param csvExportOptions If present, construct a CSV row builder with these options, otherwise an Excel row builder is returned.
+     * @param csvExportOptions If present, constructs a CSV row builder with these options, otherwise an Excel row builder is returned.
      * @private
      */
     private newRowBuilder(csvExportOptions?: CsvExportOptions): CourseScoresRowBuilder {
@@ -624,7 +621,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported csv with the statistics for the given student.
      * @param student The student for which a row in the CSV should be created.
-     * @param csvExportOptions If present, generate a CSV row with these options, otherwise an Excel row is generated.
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
     private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics, csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
@@ -667,7 +664,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the maximum values of the various statistics.
-     * @param csvExportOptions If present, generate a CSV row with these options, otherwise an Excel row is generated.
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
     private generateCsvRowMaxValues(csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
@@ -696,7 +693,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the average values of the various statistics.
-     * @param csvExportOptions If present, generate a CSV row with these options, otherwise an Excel row is generated.
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
     private generateCsvRowAverageValues(csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
@@ -733,7 +730,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of participants.
-     * @param csvExportOptions If present, generate a CSV row with these options, otherwise an Excel row is generated.
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
     private generateCsvRowParticipation(csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
@@ -754,7 +751,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of successful participants.
-     * @param csvExportOptions If present, generate a CSV row with these options, otherwise an Excel row is generated.
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
     private generateCsvRowSuccessfulParticipation(csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
@@ -776,7 +773,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Prepares an empty row (except for the first column) with an empty column for each exercise type.
      * @param firstValue The value that should be placed in the first column of the row.
-     * @param csvExportOptions If present, generate a CSV row with these options, otherwise an Excel row is generated.
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      */
     private prepareEmptyCsvRow(firstValue: string, csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
         const emptyLine = this.newRowBuilder(csvExportOptions);
