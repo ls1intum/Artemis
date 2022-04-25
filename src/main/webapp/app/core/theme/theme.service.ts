@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { faMoon, faSun, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
-const THEME_LOCAL_STORAGE_KEY = 'artmisApp.theme.current';
-const THEME_OVERRIDE_ID = 'artemis-theme-override';
+export const THEME_LOCAL_STORAGE_KEY = 'artmisApp.theme.current';
+export const THEME_OVERRIDE_ID = 'artemis-theme-override';
 
 export class Theme {
     public static readonly LIGHT = new Theme('LIGHT', true, undefined, 'artemisApp.themes.light', faSun, 'chrome', 'dreamweaver');

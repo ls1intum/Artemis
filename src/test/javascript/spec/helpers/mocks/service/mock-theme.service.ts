@@ -5,6 +5,8 @@ export class MockThemeService {
     private currentTheme: Theme = Theme.LIGHT;
     private currentThemeSubject: BehaviorSubject<Theme> = new BehaviorSubject<Theme>(Theme.LIGHT);
 
+    public isByAutoDetection = false;
+
     public getCurrentTheme(): Theme {
         return this.currentTheme;
     }
