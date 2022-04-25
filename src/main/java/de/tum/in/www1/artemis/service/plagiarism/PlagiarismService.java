@@ -64,9 +64,11 @@ public class PlagiarismService {
         if (comparisonOptional.isPresent()) {
             var comparisons = comparisonOptional.get();
             isUserNotifiedByInstructor = comparisons.stream()
-                    .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null && comparison.getSubmissionA().getPlagiarismCase().getPost() != null
+                    .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null
+                            && (comparison.getSubmissionA().getPlagiarismCase().getPost() != null || comparison.getSubmissionA().getPlagiarismCase().getVerdict() != null)
                             && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
-                            || (comparison.getSubmissionB().getPlagiarismCase() != null && comparison.getSubmissionB().getPlagiarismCase().getPost() != null
+                            || (comparison.getSubmissionB().getPlagiarismCase() != null
+                                    && (comparison.getSubmissionB().getPlagiarismCase().getPost() != null || comparison.getSubmissionB().getPlagiarismCase().getVerdict() != null)
                                     && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
         }
         if (!isUserNotifiedByInstructor) {

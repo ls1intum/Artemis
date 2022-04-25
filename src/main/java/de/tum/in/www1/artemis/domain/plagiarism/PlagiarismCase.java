@@ -20,7 +20,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     @ManyToOne
     private User student;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "post_id")
     private Post post;
 
