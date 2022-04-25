@@ -24,7 +24,6 @@ import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-s
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
-import { CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
 import { CsvDecimalSeparator, CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 
