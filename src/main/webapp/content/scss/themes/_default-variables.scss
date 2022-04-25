@@ -1,5 +1,6 @@
 // === BOOTSTRAP ===
 // Mostly default values, including them here for completeness and comparison
+
 $white: #fff;
 $gray-100: #f8f9fa;
 $gray-200: #e9ecef;
@@ -36,19 +37,30 @@ $body-bg: #e4e5e6;
 
 $navbar-dark-color: rgba($white, 0.6);
 $navbar-dark-hover-color: $white;
-// === END BOOTSTRAP ===
 
 // Global colors
-$artemis-dark: #353d47;
+$artemis-dark: #353d47; // (not bootstrap)
 $link-color: $primary;
+
+// Border
+$border-color: #dee2e6;
+
+// Footer
+$footer-bg: #fff;
+
+// Navbar
+$navbar-foreground: #ccc;
+$navbar-bg: $artemis-dark;
+$navbar-item-active-hover-bg: $artemis-dark;
+$navbar-breadcrumb-background: #e4e5e6;
+$navbar-breadcrumb-color: #0065bd;
+
+// === END BOOTSTRAP ===
 
 // Backgrounds
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 20);
-
-// Border
-$border-color: #dee2e6;
 
 // Global.scss colors
 $colored-btn-font: #fff;
@@ -123,18 +135,8 @@ $connection-warning-popover-body: #600c0c;
 $connection-warning-popover-body-background: #f1d1d1e0;
 $connection-warning-popover-body-shadow: rgba(0, 0, 0, 0.55);
 
-// Footer
-$footer-bg: #fff;
-
 // Header Participation
 $header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
-
-// Navbar
-$navbar-foreground: #ccc;
-$navbar-bg: $artemis-dark;
-$navbar-item-active-hover-bg: $artemis-dark;
-$navbar-breadcrumb-background: #e4e5e6;
-$navbar-breadcrumb-color: #0065bd;
 
 // Markdown Editor
 $md-wrapper-body-bg: white;

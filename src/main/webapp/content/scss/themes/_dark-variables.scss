@@ -1,5 +1,6 @@
 // === BOOTSTRAP ===
 // Mostly stolen from Bootswatch Darkly 5.1.3
+
 $white: #fff;
 $gray-100: #f8f9fa;
 $gray-200: #ebebeb;
@@ -105,14 +106,32 @@ $table-bg-scale: 0;
 $table-border-color: $gray-700;
 $table-striped-bg: rgba($white, 0.02);
 
-// === END BOOTSTRAP ===
-
 // Global colors
-$artemis-dark: #353d47;
+$artemis-dark: #353d47; // (not bootstrap)
 $link-color: #3e8acc;
 
+// Border
+$border-color: lighten($body-bg, 10);
+
 // Base for dark spaces
-$neutral-dark: rgb(24, 26, 24);
+$neutral-dark: rgb(24, 26, 24); // (not bootstrap)
+
+// Footer
+$footer-bg: $neutral-dark;
+
+// Cards
+$card-bg: $neutral-dark;
+$card-cap-bg: lighten($neutral-dark, 5%);
+$card-border-color: $border-color;
+
+// Navbar
+$navbar-foreground: $body-color;
+$navbar-bg: $artemis-dark;
+$navbar-item-active-hover-bg: $artemis-dark;
+$navbar-breadcrumb-background: $body-bg;
+$navbar-breadcrumb-color: $primary;
+
+// === END BOOTSTRAP ===
 
 // Backgrounds
 $darker-body-bg: darken($body-bg, 20);
@@ -123,9 +142,6 @@ $dropdown-bg: $neutral-dark;
 $popover-bg: lighten($neutral-dark, 5);
 $popover-header-bg: $gray-700;
 $modal-content-bg: $neutral-dark;
-
-// Border
-$border-color: lighten($body-bg, 10);
 
 // Global.scss colors
 $colored-btn-font: #fff;
@@ -200,23 +216,8 @@ $connection-warning-popover-body: #600c0c;
 $connection-warning-popover-body-background: #f1d1d1e0;
 $connection-warning-popover-body-shadow: rgba(0, 0, 0, 0.55);
 
-// Footer
-$footer-bg: $neutral-dark;
-
 // Header Participation
 $header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
-
-// Cards
-$card-bg: $neutral-dark;
-$card-cap-bg: lighten($neutral-dark, 5%);
-$card-border-color: $border-color;
-
-// Navbar
-$navbar-foreground: $body-color;
-$navbar-bg: $artemis-dark;
-$navbar-item-active-hover-bg: $artemis-dark;
-$navbar-breadcrumb-background: $body-bg;
-$navbar-breadcrumb-color: $primary;
 
 // Markdown Editor
 $md-wrapper-body-bg: $body-bg;

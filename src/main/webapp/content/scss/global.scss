@@ -38,7 +38,7 @@ h4 {
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
 a:not(.btn):not(.dropdown-item):not(.page-link):hover {
-    color: var(--link-color);
+    color: $link-color;
     font-weight: bold;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
@@ -59,7 +59,7 @@ a.disabled {
 }
 
 .text-normal {
-    color: var(--bs-body-color) !important;
+    color: $body-color !important;
 }
 
 .clickable {
@@ -92,7 +92,7 @@ a.disabled {
 .btn-info:hover,
 .btn-success,
 .btn-success:hover {
-    color: var(--colored-btn-font) !important;
+    color: $colored-btn-font !important;
 }
 
 a.btn {
@@ -100,9 +100,9 @@ a.btn {
 }
 
 .btn-default {
-    color: var(--default-btn-font);
-    background-color: var(--default-btn-background);
-    border-color: var(--default-btn-border);
+    color: $default-btn-font;
+    background-color: $default-btn-background;
+    border-color: $default-btn-border;
 }
 
 .footer {
@@ -111,7 +111,7 @@ a.btn {
         left: 15px;
         right: 15px;
         bottom: 0;
-        background-color: var(--footer-bg);
+        background-color: $footer-bg;
         padding: 5px 0;
     }
 
@@ -139,11 +139,11 @@ a.btn {
 }
 
 .border-lightgrey {
-    border-color: var(--border-lightgrey);
+    border-color: $border-lightgrey;
 }
 
 .text-lightgrey {
-    color: var(--text-lightgrey);
+    color: $text-lightgrey;
 }
 
 .form-group {
@@ -163,8 +163,8 @@ a.btn {
 .form-control:not(.ace_editor):hover,
 .form-control:focus,
 textarea {
-    background-color: var(--form-control-focus-background);
-    color: var(--form-control-color);
+    background-color: $form-control-focus-background;
+    color: $form-control-color;
 }
 
 .form-inline .form-control {
@@ -173,7 +173,7 @@ textarea {
 }
 
 .form-check-input:checked {
-    background-color: var(--primary);
+    background-color: $primary;
 }
 
 .btn-primary input,
@@ -191,8 +191,8 @@ Browser Upgrade Prompt
 ========================================================================== */
 .browserupgrade {
     margin: 0.2em 0;
-    background: var(--browserupgrade-color-background);
-    color: var(--browserupgrade-color);
+    background: $browserupgrade-color-background;
+    color: $browserupgrade-color;
     padding: 0.2em 0;
 }
 
@@ -216,24 +216,24 @@ Generic styles
 /* Error highlight on input fields */
 .ng-valid[required],
 .ng-valid.required {
-    border-left: 5px solid var(--ng-valid-border);
+    border-left: 5px solid $ng-valid-border;
 }
 
 .ng-invalid:not(form) {
-    border-left: 5px solid var(--ng-invalid-border);
+    border-left: 5px solid $ng-invalid-border;
 }
 
 /* other generic styles */
 
 // This class refers to the gutter inserted by split.js for its split view
 .gutter {
-    background-color: var(--gutter-background);
+    background-color: $gutter-background;
     cursor: col-resize;
     position: relative;
     transition: background-color 0.2s;
 
     &::before {
-        background-color: var(--slightly-darker-body-bg);
+        background-color: $slightly-darker-body-bg;
         border-radius: 1px;
         content: '';
         height: 24px;
@@ -247,17 +247,17 @@ Generic styles
 
     &:active,
     &:hover {
-        background-color: var(--body-bg);
+        background-color: $body-bg;
 
         &::before {
-            background-color: var(--darker-body-bg);
+            background-color: $darker-body-bg;
         }
     }
 }
 
 .error {
-    color: var(--error-color);
-    background-color: var(--error-background);
+    color: $error-color;
+    background-color: $error-background;
 }
 
 .invalid-feedback {
@@ -282,7 +282,7 @@ Generic styles
 }
 
 .readonly {
-    background-color: var(--readonly-background);
+    background-color: $readonly-background;
     opacity: 1;
 }
 
@@ -370,7 +370,7 @@ entity detail page css
         }
 
         dd {
-            border-bottom: 1px solid var(--jh-entity-details-dd-border);
+            border-bottom: 1px solid $jh-entity-details-dd-border;
             padding-left: 180px;
             margin-left: 0;
         }
@@ -378,7 +378,7 @@ entity detail page css
 }
 
 .editor-outline-background {
-    background: var(--editor-outline-background);
+    background: $editor-outline-background;
     max-width: max-content;
 }
 
@@ -462,7 +462,7 @@ ui bootstrap tweaks
 }
 
 .btn-total-score {
-    color: var(--btn-total-score-color);
+    color: $btn-total-score-color;
     border-radius: 6px;
     border: none;
 }
@@ -475,19 +475,19 @@ ui bootstrap tweaks
 /* jhipster-needle-scss-add-main JHipster will add new css style */
 
 .result-orange {
-    color: var(--result-orange);
+    color: $result-orange;
 }
 
 a.result-orange:hover {
-    color: var(--result-orange);
+    color: $result-orange;
 }
 
 .result--late {
-    color: var(--result-late);
+    color: $result-late;
 }
 
 a.result--late:hover {
-    color: var(--result-late);
+    color: $result-late;
 }
 
 span.result {
@@ -517,13 +517,13 @@ span.bold {
 }
 
 .negative {
-    color: var(--negative-color);
-    background-color: var(--negative-background);
+    color: $negative-color;
+    background-color: $negative-background;
 }
 
 .positive {
-    color: var(--positive-color);
-    background-color: var(--positive-background);
+    color: $positive-color;
+    background-color: $positive-background;
 }
 
 table {
@@ -553,9 +553,9 @@ pre {
     white-space: pre-wrap;
     word-break: break-word;
     word-wrap: break-word;
-    color: var(--artemis-pre-color);
-    background-color: var(--artemis-pre-background);
-    border: 1px solid var(--artemis-pre-border);
+    color: $artemis-pre-color;
+    background-color: $artemis-pre-background;
+    border: 1px solid $artemis-pre-border;
     border-radius: 4px;
 }
 
@@ -571,34 +571,34 @@ pre {
 .code-success {
     padding: 2px 4px;
     font-size: 90%;
-    color: var(--code-success-color);
-    background-color: var(--code-success-background);
+    color: $code-success-color;
+    background-color: $code-success-background;
     border-radius: 4px;
     font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .code-error {
-    color: var(--code-error-color);
-    background-color: var(--code-error-background);
+    color: $code-error-color;
+    background-color: $code-error-background;
 }
 
 .code-warning {
-    color: var(--code-warning-color);
-    background-color: var(--code-warning-background);
+    color: $code-warning-color;
+    background-color: $code-warning-background;
 }
 
 code.password {
-    color: var(--code-password) !important;
-    background: var(--code-password-background);
+    color: $code-password !important;
+    background: $code-password-background;
 }
 
 code.password::selection {
-    background: var(--code-password-selection-background);
-    color: var(--code-password-selection) !important;
+    background: $code-password-selection-background;
+    color: $code-password-selection !important;
 }
 
 code.password:hover {
-    color: var(--code-password-hover) !important;
+    color: $code-password-hover !important;
 }
 
 .apollon-editor label {
@@ -657,7 +657,7 @@ code.password:hover {
             }
 
             .fa-check {
-                color: var(--success);
+                color: $success;
 
                 &.half {
                     &:after {
@@ -671,7 +671,7 @@ code.password:hover {
             }
 
             .fa-times {
-                color: var(--danger);
+                color: $danger;
 
                 &.half {
                     &:after {
@@ -688,11 +688,11 @@ code.password:hover {
 }
 
 .unreferencedFeedback {
-    background-color: var(--unreferenced-feedback-background);
+    background-color: $unreferenced-feedback-background;
 }
 
 .displaycolor {
-    background: var(--displaycolor-background);
+    background: $displaycolor-background;
 }
 
 // This puts the owl-datetime-picker on top of the ngbootstrap modal
@@ -712,11 +712,11 @@ code.password:hover {
 Course Info Bar
 ========================================================================== */
 .course-info-bar {
-    background-color: var(--artemis-dark);
+    background-color: $artemis-dark;
     padding: 1em 1em;
     margin: -1.25rem -1.25rem 0 -1.25rem;
     display: flex;
-    color: var(--bs-white);
+    color: $white;
     flex-direction: column;
     justify-content: center;
 }
@@ -726,7 +726,7 @@ Course Info Bar
 ========================================================================== */
 .markdown-preview {
     .background-editor-color {
-        background: var(--markdown-preview-editor-background);
+        background: $markdown-preview-editor-background;
     }
 
     $color-options: 'red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange';
@@ -738,8 +738,8 @@ Course Info Bar
 
     blockquote {
         padding: 0 1em;
-        color: var(--markdown-preview-blockquote);
-        border-left: 0.25em solid var(--markdown-preview-blockquote-border);
+        color: $markdown-preview-blockquote;
+        border-left: 0.25em solid $markdown-preview-blockquote-border;
     }
 
     img {
@@ -774,10 +774,10 @@ Course Info Bar
 
 .connection-status {
     font-size: 14px;
-    color: var(--connection-status);
+    color: $connection-status;
 
     &.disconnected {
-        color: var(--connection-status-disconnected);
+        color: $connection-status-disconnected;
     }
 
     i {
@@ -1206,19 +1206,19 @@ Course Info Bar
 }
 
 .accordion-body {
-    background: var(--brighter-body-bg);
+    background: $brighter-body-bg;
     max-height: 50vh;
     overflow: scroll;
     padding: 0 0.5rem;
 }
 
 .mat-autocomplete-panel.mat-autocomplete-visible {
-    box-shadow: 3px 3px 6px var(--mat-autocomplete-visible-box-shadow);
+    box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
 }
 
 .mat-form-field-outline {
     top: -0.1em !important;
-    color: var(--mat-form-field-outline);
+    color: $mat-form-field-outline;
 }
 
 /* Connection Warning Tooltip */
@@ -1228,21 +1228,21 @@ Course Info Bar
     background-color: transparent;
 
     .popover-arrow::after {
-        border-bottom-color: var(--connection-warning-popover-arrow-border);
+        border-bottom-color: $connection-warning-popover-arrow-border;
     }
 
     .popover-body {
         border: none;
         max-width: 70vw;
         width: 400px;
-        background-color: var(--connection-warning-popover-body-background);
-        color: var(--connection-warning-popover-body);
+        background-color: $connection-warning-popover-body-background;
+        color: $connection-warning-popover-body;
         font-size: 14px;
         display: flex;
         align-items: center;
         gap: 15px;
         padding-left: 20px;
-        box-shadow: var(--connection-warning-popover-body-shadow) 0 5px 15px;
+        box-shadow: $connection-warning-popover-body-shadow 0 5px 15px;
     }
 }
 
