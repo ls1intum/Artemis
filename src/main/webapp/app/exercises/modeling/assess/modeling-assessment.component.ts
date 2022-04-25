@@ -6,6 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
+import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -172,28 +173,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * This method is called before initializing Apollon and when the feedback or model is updated.
      */
     private handleFeedback(): void {
-        this.referencedFeedbacks = this.removeInvalidFeedback(this.feedbacks);
+        this.referencedFeedbacks = filterInvalidFeedback(this.feedbacks, this.umlModel);
         this.updateElementFeedbackMapping(this.referencedFeedbacks);
         this.updateApollonAssessments(this.referencedFeedbacks);
-    }
-
-    /**
-     * Removes feedback elements for which the corresponding model element does not exist in the model anymore.
-     * @param feedbacks the list of feedback to filter
-     */
-    private removeInvalidFeedback(feedbacks: Feedback[]): Feedback[] {
-        if (!feedbacks) {
-            return feedbacks;
-        }
-        if (!this.umlModel || !this.umlModel.elements) {
-            return [];
-        }
-
-        let availableIds: string[] = this.umlModel.elements.map((element) => element.id);
-        if (this.umlModel.relationships) {
-            availableIds = availableIds.concat(this.umlModel.relationships.map((relationship) => relationship.id));
-        }
-        return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
     }
 
     /**

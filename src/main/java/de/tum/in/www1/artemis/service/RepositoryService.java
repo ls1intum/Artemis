@@ -284,7 +284,7 @@ public class RepositoryService {
      */
     public void commitChanges(Repository repository, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, "Changes by Online Editor", user);
+        gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
     }
 
     /**

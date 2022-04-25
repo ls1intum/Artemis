@@ -1944,24 +1944,25 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis) {
-        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
+        return addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
-    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
+    public Course addCourseWithOneProgrammingExercise(boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
-        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, programmingLanguage);
+        var programmingExercise = addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage);
         assertThat(programmingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
     public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis) {
-        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
+        return addProgrammingExerciseToCourse(course, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
-    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, ProgrammingLanguage programmingLanguage) {
+    public ProgrammingExercise addProgrammingExerciseToCourse(Course course, boolean enableStaticCodeAnalysis, boolean enableTestwiseCoverageAnalysis,
+            ProgrammingLanguage programmingLanguage) {
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-        populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", enableStaticCodeAnalysis, programmingLanguage);
+        populateProgrammingExercise(programmingExercise, "TSTEXC", "Programming", enableStaticCodeAnalysis, enableTestwiseCoverageAnalysis, programmingLanguage);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -1997,11 +1998,11 @@ public class DatabaseUtilService {
     }
 
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis) {
-        populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, ProgrammingLanguage.JAVA);
+        populateProgrammingExercise(programmingExercise, shortName, title, enableStaticCodeAnalysis, false, ProgrammingLanguage.JAVA);
     }
 
     private void populateProgrammingExercise(ProgrammingExercise programmingExercise, String shortName, String title, boolean enableStaticCodeAnalysis,
-            ProgrammingLanguage programmingLanguage) {
+            boolean enableTestwiseCoverageAnalysis, ProgrammingLanguage programmingLanguage) {
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();
@@ -2030,6 +2031,7 @@ public class DatabaseUtilService {
         if (enableStaticCodeAnalysis) {
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
         }
+        programmingExercise.setTestwiseCoverageEnabled(enableTestwiseCoverageAnalysis);
         // Note: no separators are allowed for Swift package names
         if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setPackageName("swiftTest");
@@ -2120,7 +2122,7 @@ public class DatabaseUtilService {
     }
 
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) {
-        Course course = addCourseWithOneProgrammingExercise(true, programmingLanguage);
+        Course course = addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
