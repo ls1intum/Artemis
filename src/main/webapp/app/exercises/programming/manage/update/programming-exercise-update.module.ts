@@ -17,6 +17,7 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
+import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 
 @NgModule({
     imports: [
@@ -34,6 +35,7 @@ import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-po
         NgxDatatableModule,
         ArtemisTableModule,
         SubmissionPolicyUpdateModule,
+        ArtemisModePickerModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,
