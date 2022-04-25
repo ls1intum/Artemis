@@ -71,6 +71,11 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     constructor(private translateService: TranslateService, private themeService: ThemeService) {}
 
     ngOnInit(): void {
+        this.setup();
+        this.translateService.onLangChange.subscribe(() => {
+            this.setupGraph();
+        });
+
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe(
             (theme) =>
                 (this.customColors = [
@@ -84,10 +89,6 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
                     },
                 ]),
         );
-        this.setup();
-        this.translateService.onLangChange.subscribe(() => {
-            this.setupGraph();
-        });
     }
 
     ngOnChanges(): void {

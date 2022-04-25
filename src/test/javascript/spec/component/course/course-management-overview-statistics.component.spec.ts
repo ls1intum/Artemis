@@ -7,6 +7,7 @@ import { LineChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('CourseManagementOverviewStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementOverviewStatisticsComponent>;
@@ -17,7 +18,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(LineChartModule)],
+            imports: [MockModule(LineChartModule), ArtemisTestModule],
             declarations: [
                 CourseManagementOverviewStatisticsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -40,6 +41,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
         component.initialStats = initialStats;
 
         component.ngOnInit();
+        component.ngOnChanges();
 
         expect(component.ngxData).toHaveLength(1);
         expect(component.ngxData[0].name).toBe('active students');

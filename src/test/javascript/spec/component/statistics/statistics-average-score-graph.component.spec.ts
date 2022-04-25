@@ -6,10 +6,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { GraphColors } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
+import { Theme } from 'app/core/theme/theme.service';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
@@ -68,7 +69,9 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             ExerciseType.PROGRAMMING,
             ExerciseType.MODELING,
         ];
-        const expectedColors = [...new Array(3).fill(GraphColors.RED), ...new Array(5).fill(GraphColors.GREY), ...new Array(3).fill(GraphColors.GREEN)];
+        const expectedColors = [...new Array(3).fill(GraphColors.RED), ...new Array(5).fill(GraphColors.GREY), ...new Array(3).fill(GraphColors.GREEN)].map((color) =>
+            getGraphColorForTheme(Theme.LIGHT, color),
+        );
         // take first 10 exerciseTitles
 
         expect(component.barChartLabels).toEqual([

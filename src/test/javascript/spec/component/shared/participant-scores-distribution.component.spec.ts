@@ -8,9 +8,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { GraphColors } from 'app/entities/statistics.model';
+import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
+import { Theme } from 'app/core/theme/theme.service';
 
 describe('ParticipantScoresDistributionComponent', () => {
     let fixture: ComponentFixture<ParticipantScoresDistributionComponent>;
@@ -98,7 +99,7 @@ describe('ParticipantScoresDistributionComponent', () => {
     afterEach(() => jest.restoreAllMocks());
 
     it('should setup default configuration if no grading scale exists', () => {
-        expectedColoring = [...Array(8).fill(GraphColors.YELLOW), ...Array(12).fill(GraphColors.GREY)];
+        expectedColoring = [...Array(8).fill(GraphColors.YELLOW), ...Array(12).fill(GraphColors.GREY)].map((color) => getGraphColorForTheme(Theme.LIGHT, color));
         expectedDistribution = [0, 0, 1, ...Array(8).fill(0), 1, ...Array(8).fill(0)];
         component.scoreToHighlight = 70;
 
@@ -123,7 +124,7 @@ describe('ParticipantScoresDistributionComponent', () => {
 
     it('should setup default configuration if nonbonus grading scale exists', () => {
         component.gradingScale = gradingScale;
-        expectedColoring = [GraphColors.RED, ...Array(3).fill(GraphColors.GREY)];
+        expectedColoring = [GraphColors.RED, ...Array(3).fill(GraphColors.GREY)].map((color) => getGraphColorForTheme(Theme.LIGHT, color));
         expectedDistribution = [2, 0, 0, 0];
         const expectedLabels = ['[0,40) {4}', '[40,60) {3}', '[60,80) {2}', '[80,100] {1}'];
 
@@ -149,7 +150,7 @@ describe('ParticipantScoresDistributionComponent', () => {
         bonusGradingScale.gradeType = GradeType.BONUS;
         component.gradingScale = bonusGradingScale;
         component.scoreToHighlight = 13;
-        expectedColoring = [GraphColors.LIGHT_BLUE, ...Array(3).fill(GraphColors.GREY)];
+        expectedColoring = [GraphColors.LIGHT_BLUE, ...Array(3).fill(GraphColors.GREY)].map((color) => getGraphColorForTheme(Theme.LIGHT, color));
         expectedDistribution = [2, 0, 0, 0];
         const expectedLabels = ['[0,40) {4}', '[40,60) {3}', '[60,80) {2}', '[80,100] {1}'];
 
@@ -168,6 +169,10 @@ describe('ParticipantScoresDistributionComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.ngxColor.domain).toEqual(Array(4).fill(GraphColors.GREY));
+        expect(component.ngxColor.domain).toEqual(
+            Array(4)
+                .fill(GraphColors.GREY)
+                .map((color) => getGraphColorForTheme(Theme.LIGHT, color)),
+        );
     });
 });
