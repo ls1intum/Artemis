@@ -144,12 +144,12 @@ public class JenkinsBuildPlanService {
      */
     public void configureBuildPlanForParticipation(ProgrammingExerciseParticipation participation) {
         // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a proxy)
-        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(participation.getProgrammingExercise().getId()).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(participation.getProgrammingExercise().getId()).get();
         participation.setProgrammingExercise(programmingExercise);
 
-        final var projectKey = programmingExercise.getProjectKey();
-        final var planKey = participation.getBuildPlanId();
-        final var templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
+        String projectKey = programmingExercise.getProjectKey();
+        String planKey = participation.getBuildPlanId();
+        String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
         updateBuildPlanRepositories(projectKey, planKey, ASSIGNMENT_REPO_NAME, participation.getRepositoryUrl(), templateRepoUrl);
         enablePlan(projectKey, planKey);
 
@@ -160,13 +160,12 @@ public class JenkinsBuildPlanService {
     }
 
     private void grantReadPermission(String planKey, Participant participant, List<CIPermission> permissions) {
-
         participant.getParticipants().forEach(user -> {
             try {
                 // TODO: is planKey the same as job name?
                 jenkinsJobPermissionsService.addPermissionsForUserToFolder(user.getLogin(), planKey, JenkinsJobPermission.getStudentPermissions());
             }
-            catch (Exception ex) {
+            catch (IOException ex) {
                 log.error("Cannot grant permissions {} to user {} for build plan {}", permissions, user.getLogin(), planKey, ex);
             }
         });

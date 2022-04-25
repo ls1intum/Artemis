@@ -108,11 +108,11 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        final var buildPlanId = participation.getBuildPlanId();
-        final var repositoryUrl = participation.getVcsRepositoryUrl();
-        final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
-        final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        String buildPlanId = participation.getBuildPlanId();
+        VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
+        String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
+        String planKey = participation.getBuildPlanId();
+        String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, defaultBranch, Optional.empty());
         enablePlan(projectKey, planKey);
 
@@ -124,19 +124,14 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     private void grantReadPermission(String buildPlanId, Participant participant, List<CIPermission> permissions) {
-        final var permissionData = permissions.stream().map(this::permissionToBambooPermission).collect(Collectors.toList());
-        final var entity = new HttpEntity<>(permissionData, null);
+        List<String> permissionData = permissions.stream().map(this::permissionToBambooPermission).toList();
+        HttpEntity<List<String>> entity = new HttpEntity<>(permissionData, null);
 
         participant.getParticipants().forEach(user -> {
-            try {
-                final var url = serverUrl + "/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin();
-                final var response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
-                if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
-                    log.warn("Cannot grant permissions {} to user {} for build plan {}", permissions, user.getLogin(), buildPlanId);
-                }
-            }
-            catch (Exception ex) {
-                log.error("Cannot grant permissions {} to user {} for build plan {}", permissions, user.getLogin(), buildPlanId, ex);
+            String url = serverUrl + "/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin();
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+            if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
+                log.warn("Cannot grant permissions {} to user {} for build plan {}", permissions, user.getLogin(), buildPlanId);
             }
         });
     }
