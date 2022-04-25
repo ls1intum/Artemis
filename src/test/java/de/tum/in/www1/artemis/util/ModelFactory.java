@@ -95,7 +95,7 @@ public class ModelFactory {
         return quizBatch;
     }
 
-    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
+    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
         var quizExercise = (QuizExercise) populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
@@ -104,8 +104,10 @@ public class ModelFactory {
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
         quizExercise.setRandomizeQuestionOrder(true);
-        quizExercise.setQuizMode(QuizMode.SYNCHRONIZED);
-        quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, releaseDate)));
+        quizExercise.setQuizMode(quizMode);
+        if (quizMode == QuizMode.SYNCHRONIZED) {
+            quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, releaseDate)));
+        }
         return quizExercise;
     }
 

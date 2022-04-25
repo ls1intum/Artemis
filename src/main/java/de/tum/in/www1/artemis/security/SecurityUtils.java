@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -103,11 +104,15 @@ public final class SecurityUtils {
      */
     public static void setAuthorizationObject() {
         SecurityContext context = SecurityContextHolder.getContext();
-        Authentication authentication = new Authentication() {
+        context.setAuthentication(makeAuthorizationObject(null));
+    }
+
+    public static Authentication makeAuthorizationObject(String login) {
+        return new Authentication() {
 
             @Override
             public Collection<? extends GrantedAuthority> getAuthorities() {
-                return null;
+                return Set.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
             }
 
             @Override
@@ -122,7 +127,7 @@ public final class SecurityUtils {
 
             @Override
             public Object getPrincipal() {
-                return null;
+                return login;
             }
 
             @Override
@@ -140,7 +145,6 @@ public final class SecurityUtils {
                 return null;
             }
         };
-        context.setAuthentication(authentication);
     }
 
     /**

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.repository;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +13,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
- * Spring Data JPA repository for the QuizExercise entity.
+ * Spring Data JPA repository for the QuizBatch entity.
  */
 @SuppressWarnings("unused")
 @Repository
@@ -29,10 +28,5 @@ public interface QuizBatchRepository extends JpaRepository<QuizBatch, Long> {
     @NotNull
     default QuizBatch findByIdElseThrow(Long quizBatchId) throws EntityNotFoundException {
         return findById(quizBatchId).orElseThrow(() -> new EntityNotFoundException("Quiz Batch", quizBatchId));
-    }
-
-    @Nullable
-    default QuizBatch findOne(Long quizBatchId) {
-        return findById(quizBatchId).orElse(null);
     }
 }
