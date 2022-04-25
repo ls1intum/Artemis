@@ -70,6 +70,16 @@
                     "title": "Statistiken Erstellen",
                     "shortDescription": "Statistiken erstellen und Einblicke in die Leistungen der Studierenden gewinnen.",
                     "descriptionTextOne": "Die Klausur ist vorbei, alle Klausuren wurden bewertet und die Beschwerden der Studierenden wurden ausgewertet. Was nun?\n\nDu kannst das Ergebnis der Klausur anhand der von Artemis generierten Statistiken auswerten. Überprüfe die Leistung der Studierenden anhand verschiedener Metriken wie Durchschnitt, Median und Standardabweichung. Überprüfen Sie die wahrgenommenen Schwierigkeiten der Studierenden bei jeder Aufgabe, um die Klausuren in Zukunft zu verbessern. Zusätzlich kannst du alle Ergebnisse in eine CSV-Datei herunterladen, um sie in externe Systeme zu exportieren und Diagramme und Grafiken zur weiteren Analyse zu erstellen."
+                },
+                "checklist": {
+                    "title": "Checkliste Befolgen",
+                    "shortDescription": "Verwenden Sie die Prüfungscheckliste, um jeden Schritt der Prüfung zu überwachen und sicherzustellen, dass er korrekt durchgeführt wird.",
+                    "descriptionTextOne": "Die Durchführung einer Prüfung ist ein langwieriger Prozess mit zahlreichen Fehlerquellen. Artemis stellt Ihnen eine Checkliste zur Verfügung, die Ihnen einen Überblick über jeden Schritt einer Prüfung gibt, von der Erstellung der Übungen bis zum Export der Ergebnisse. Die Prüfungs-Checkliste enthält die nächsten Schritte, die Sie durchführen müssen, und fasst den bisherigen Fortschritt zusammen, damit Sie alle Aufgaben korrekt und vollständig durchführen können. Sie verfügt außerdem über Schnellnavigationsschaltflächen, mit denen Sie schnell zugehörige Aktionen ausführen oder den Fortschritt im Detail überprüfen können."
+                },
+                "gradeKey": {
+                    "title": "Notenschlüssel Erstellen",
+                    "shortDescription": "Erstellen Sie einen Notenschlüssel mit benutzerdefinierten oder standardmäßigen Notenstufen für einen Kurs oder eine Prüfung.",
+                    "descriptionTextOne": "Noten sind hilfreich, um einzelne Übungen zu bewerten, aber am Ende eines Semesters möchten Sie und Ihre Studenten eine Standardnote sehen. Auf der Seite Bewertungsschlüssel können Sie für jeden Kurs und jede Prüfung einen Bewertungsschlüssel festlegen und die Bewertungsstufen definieren, indem Sie die Intervalle, die Mindestpunktzahl und die untere/obere Grenze für die Einbeziehung festlegen. Der Standard-Bewertungsschlüssel kann auch mit einem einzigen Klick erstellt werden. Artemis kümmert sich dann automatisch um die Zuordnung von Noten zu Notenstufen oder Bonuspunkten sowie um die Berechnung von Studentenergebnisstatistiken auf der Grundlage von Notenstufen."
                 }
             }
         },
@@ -142,6 +152,11 @@
                     "title": "Kompatibel Mit Allen Gängigen Browsern.",
                     "shortDescription": "Verwende Artemis in allen gängigen Browsern.",
                     "descriptionTextOne": "Der Artemis-Klausurmodus ist mit allen gängigen Browsern kompatibel, einschließlich Chrome, Safari, Edge und Opera. Wir bieten aktive Unterstützung für Google Chrome und Chromium-Browser."
+                },
+                "gradeKey": {
+                    "title": "Notenschlüssel Anzeigen",
+                    "shortDescription": "Sehen Sie Ihre Endnote und die erreichte Note für einen Kurs oder eine Prüfung, sobald Sie eine neue Aufgabe benotet haben.",
+                    "descriptionTextOne": "Wenn ein Notenschlüssel für einen Kurs oder eine Prüfung definiert ist, können Sie ihn untersuchen und das Punkteintervall für jede Bewertungsstufe sowie die zum Bestehen erforderliche Mindestnote sehen. Notenschlüssel verfügen auch über einen Bonuspunkte-Modus, der die erreichte Punktzahl in einen Bonus umwandelt. Sie müssen nicht bis zum Ende des Semesters warten, um den Notenschlüssel zu benutzen, Sie können jederzeit Ihre erreichte Note anhand der bisher durchgeführten und bewerteten Übungen überprüfen."
                 }
             }
         }
