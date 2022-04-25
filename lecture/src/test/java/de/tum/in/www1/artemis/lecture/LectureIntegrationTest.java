@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.lecture;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
@@ -13,6 +16,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.lecture.util.JmsMessageMockProvider;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -49,6 +53,9 @@ public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
     private AttachmentRepository attachmentRepository;
 
     @Autowired
+    private LearningGoalRepository learningGoalRepository;
+
+    @Autowired
     private JmsMessageMockProvider jmsMessageMockProvider;
 
     private Attachment attachmentDirectOfLecture;
@@ -61,10 +68,19 @@ public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
 
     private Lecture lecture1;
 
+    private ExerciseUnit exerciseUnit;
+
+    private AttachmentUnit attachmentUnit;
+
+    private VideoUnit videoUnit;
+
+    private TextUnit textUnit;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(10, 10, 0, 10);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true, true);
+
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
         this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
@@ -74,11 +90,11 @@ public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
         userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
 
         // Setting up a lecture with various kinds of content
-        ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
+        exerciseUnit = database.createExerciseUnit(textExercise);
+        attachmentUnit = database.createAttachmentUnit(true);
         this.attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
-        VideoUnit videoUnit = database.createVideoUnit();
-        TextUnit textUnit = database.createTextUnit();
+        videoUnit = database.createVideoUnit();
+        textUnit = database.createTextUnit();
         addAttachmentToLecture();
 
         this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(exerciseUnit, attachmentUnit, videoUnit, textUnit));
@@ -277,6 +293,25 @@ public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
         assertThat(lectureOptional).isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteLecture_shouldUpdateLearningGoal() throws Exception {
+        createLearningGoal();
+
+        Set<LearningGoal> learningGoals = learningGoalRepository.findAllByCourseIdWithLectureUnitsUnidirectional(course1.getId());
+        LearningGoal learningGoal = learningGoals.iterator().next();
+
+        request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
+
+        Set<LearningGoal> learningGoalsAfterDeletion = learningGoalRepository.findAllByCourseIdWithLectureUnitsUnidirectional(course1.getId());
+        LearningGoal learningGoalAfterDeletion = learningGoalsAfterDeletion.iterator().next();
+
+        assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId))
+            .containsAll(Set.of(exerciseUnit.getId(), textUnit.getId(), videoUnit.getId(), attachmentUnit.getId()));
+        assertThat(learningGoalAfterDeletion.getLectureUnits().stream().map(DomainObject::getId))
+            .doesNotContainAnyElementsOf(Set.of(exerciseUnit.getId(), textUnit.getId(), videoUnit.getId(), attachmentUnit.getId()));
+    }
+
     /**
      * Hibernates sometimes adds null to the list of lecture units to keep the order after a lecture unit has been deleted.
      * This should not happen any more as we have refactored the way lecture units are deleted, nevertheless we want to
@@ -325,7 +360,27 @@ public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
             }
         }
         assertThat(nullFound).isFalse();
+    }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteLectureUnit_shouldUpdateLearningGoal() throws Exception {
+        createLearningGoal();
+
+        Set<LearningGoal> learningGoals = learningGoalRepository.findAllByCourseIdWithLectureUnitsUnidirectional(course1.getId());
+        LearningGoal learningGoal = learningGoals.iterator().next();
+
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + textUnit.getId(), HttpStatus.OK);
+
+        Set<LearningGoal> learningGoalsAfterDeletion = learningGoalRepository.findAllByCourseIdWithLectureUnitsUnidirectional(course1.getId());
+        LearningGoal learningGoalAfterDeletion = learningGoalsAfterDeletion.iterator().next();
+
+        assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId))
+            .containsAll(Set.of(exerciseUnit.getId(), textUnit.getId(), videoUnit.getId(), attachmentUnit.getId()));
+        assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId))
+            .containsAll(Set.of(exerciseUnit.getId(), videoUnit.getId(), attachmentUnit.getId()));
+        assertThat(learningGoalAfterDeletion.getLectureUnits().stream().map(DomainObject::getId))
+            .doesNotContainAnyElementsOf(Set.of(textUnit.getId()));
     }
 
     @Test
@@ -405,5 +460,16 @@ public class LectureIntegrationTest extends AbstractSpringDevelopmentTest {
 
         assertThat(lecture2.getAttachments().stream().map(Attachment::getName).toList())
             .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
+    }
+
+    private void createLearningGoal() {
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("LearningGoalOne");
+        learningGoal.setDescription("This is an example learning goal");
+        learningGoal.setCourse(course1);
+        List<LectureUnit> allLectureUnits = lecture1.getLectureUnits();
+        Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
+        learningGoal.setLectureUnits(connectedLectureUnits);
+        learningGoalRepository.save(learningGoal);
     }
 }

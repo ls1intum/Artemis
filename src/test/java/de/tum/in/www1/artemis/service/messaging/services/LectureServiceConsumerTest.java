@@ -78,7 +78,7 @@ public class LectureServiceConsumerTest extends AbstractSpringDevelopmentTest {
 
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit();
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
         VideoUnit videoUnit = database.createVideoUnit();
         TextUnit textUnit = database.createTextUnit();
 
