@@ -398,6 +398,16 @@
                 "lineStatTooltipFullReport": "Filtered lines that were added and removed when comparing the template and solution repositories. This excludes empty lines.",
                 "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file. This excludes empty lines."
             },
+            "projectTypes": {
+                "PLAIN_MAVEN": "Maven",
+                "PLAIN_GRADLE": "Gradle",
+                "PLAIN": "Plain",
+                "XCODE": "Xcode",
+                "FACT": "FACT",
+                "GCC": "GCC"
+            },
+            "withDependencies": "With exemplary dependency",
+            "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
             "recordTestwiseCoverage": "Record Testwise Coverage",
             "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java-Gradle-projects with non-sequential test runs.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
