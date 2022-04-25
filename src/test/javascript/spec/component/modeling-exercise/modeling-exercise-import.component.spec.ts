@@ -65,7 +65,7 @@ describe('ModelingExerciseImportComponent', () => {
         modelingExercise.id = 5;
         searchResult = { numberOfPages: 3, resultsOnPage: [modelingExercise] };
         state = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,

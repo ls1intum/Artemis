@@ -87,7 +87,7 @@ describe('ExampleSubmissionImportComponent', () => {
         } as Exercise;
         searchResult = { numberOfPages: 3, resultsOnPage: [submission] };
         state = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,

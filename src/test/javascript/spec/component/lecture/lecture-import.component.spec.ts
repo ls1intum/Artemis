@@ -56,7 +56,7 @@ describe('LectureImportComponent', () => {
         lecture.id = 1;
         searchResult = { numberOfPages: 3, resultsOnPage: [lecture] };
         state = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
