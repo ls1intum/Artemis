@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
@@ -17,6 +19,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -91,6 +94,11 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Language language;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_programming_language")
+    @JsonView(QuizView.Before.class)
+    private ProgrammingLanguage defaultProgrammingLanguage;
+
     @Column(name = "online_course")
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
@@ -106,6 +114,14 @@ public class Course extends DomainObject {
     @Column(name = "max_complaint_time_days")
     @JsonView(QuizView.Before.class)
     private int maxComplaintTimeDays;
+
+    @Column(name = "max_complaint_text_limit")
+    @JsonView(QuizView.Before.class)
+    private int maxComplaintTextLimit;
+
+    @Column(name = "max_complaint_response_text_limit")
+    @JsonView(QuizView.Before.class)
+    private int maxComplaintResponseTextLimit;
 
     @Column(name = "posts_enabled")
     @JsonView(QuizView.Before.class)
@@ -304,6 +320,14 @@ public class Course extends DomainObject {
         this.language = language;
     }
 
+    public ProgrammingLanguage getDefaultProgrammingLanguage() {
+        return defaultProgrammingLanguage;
+    }
+
+    public void setDefaultProgrammingLanguage(ProgrammingLanguage defaultProgrammingLanguage) {
+        this.defaultProgrammingLanguage = defaultProgrammingLanguage;
+    }
+
     public Boolean isOnlineCourse() {
         return Boolean.TRUE.equals(onlineCourse);
     }
@@ -334,6 +358,22 @@ public class Course extends DomainObject {
 
     public void setMaxComplaintTimeDays(int maxComplaintTimeDays) {
         this.maxComplaintTimeDays = maxComplaintTimeDays;
+    }
+
+    public int getMaxComplaintTextLimit() {
+        return maxComplaintTextLimit;
+    }
+
+    public void setMaxComplaintTextLimit(int maxComplaintTextLimit) {
+        this.maxComplaintTextLimit = maxComplaintTextLimit;
+    }
+
+    public int getMaxComplaintResponseTextLimit() {
+        return maxComplaintResponseTextLimit;
+    }
+
+    public void setMaxComplaintResponseTextLimit(int maxComplaintResponseTextLimit) {
+        this.maxComplaintResponseTextLimit = maxComplaintResponseTextLimit;
     }
 
     public boolean getComplaintsEnabled() {
@@ -654,6 +694,20 @@ public class Course extends DomainObject {
         }
         if (getMaxComplaintTimeDays() < 0) {
             throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
+        }
+        if (getMaxComplaintTextLimit() < 0) {
+            throw new BadRequestAlertException("Max Complaint text limit cannot be negative", ENTITY_NAME, "maxComplaintTextLimitInvalid", true);
+        }
+        if (getMaxComplaintTextLimit() > COMPLAINT_TEXT_LIMIT) {
+            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_TEXT_LIMIT + " characters.", ENTITY_NAME,
+                    "maxComplaintTextLimitInvalid", true);
+        }
+        if (getMaxComplaintResponseTextLimit() < 0) {
+            throw new BadRequestAlertException("Max Complaint response text limit cannot be negative", ENTITY_NAME, "maxComplaintResponseTextLimitInvalid", true);
+        }
+        if (getMaxComplaintResponseTextLimit() > COMPLAINT_RESPONSE_TEXT_LIMIT) {
+            throw new BadRequestAlertException("Max Complaint response text limit cannot be above " + COMPLAINT_RESPONSE_TEXT_LIMIT + " characters.", ENTITY_NAME,
+                    "maxComplaintResponseTextLimitInvalid", true);
         }
         if (getMaxRequestMoreFeedbackTimeDays() < 0) {
             throw new BadRequestAlertException("Max Request More Feedback Days cannot be negative", ENTITY_NAME, "maxRequestMoreFeedbackDaysInvalid", true);

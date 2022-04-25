@@ -56,42 +56,6 @@
                 }
             }
 
-            .close-circle {
-                position: absolute;
-                top: 0;
-                right: 0;
-
-                color: black;
-                border-radius: 20px;
-                background: white;
-                width: 20px;
-                height: 20px;
-                border: 1px solid rgba(93, 93, 93, 0.65);
-                text-align: center;
-                vertical-align: center;
-                padding: 4.5px 0;
-
-                display: flex;
-                justify-content: center;
-                align-items: center;
-
-                // rotate is a workaround for subpixel rendering issues on Firefox
-                transform: translate(35%, -35%) rotate(0.0000001deg);
-
-                cursor: pointer;
-                transition: all 0.25s;
-                opacity: 0.7;
-
-                .ng-fa-icon {
-                    transform: rotate(0.0000001deg);
-                }
-            }
-
-            .close-circle:hover {
-                opacity: 1;
-                background: #d2d2d2;
-            }
-
             .time-bar {
                 position: absolute;
                 bottom: 0px;

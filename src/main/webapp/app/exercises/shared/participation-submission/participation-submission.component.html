@@ -65,6 +65,7 @@
                 <div class="d-flex flex-column">
                     <div *ngFor="let result of value">
                         <jhi-result
+                            [exercise]="exercise"
                             [result]="result"
                             [participation]="participation!"
                             [showUngradedResults]="!isTmpOrSolutionProgrParticipation"

@@ -153,12 +153,11 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
-     * @throws InterruptedException If something during the communication with the remote Git repository went wrong
      * @throws GitAPIException      If something during the communication with the remote Git repository went wrong
      * @throws IOException          If the template files couldn't be read
      */
     @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
@@ -288,7 +287,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
      */
-    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator) throws GitAPIException, InterruptedException {
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator) throws GitAPIException {
 
         // Get URLs for repos
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
@@ -373,9 +372,9 @@ public class ProgrammingExerciseService {
             // if any exception occurs, try to at least push an empty commit, so that the
             // repositories can be used by the build plans
             log.warn("An exception occurred while setting up the repositories", ex);
-            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", exerciseCreator);
-            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", exerciseCreator);
-            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", exerciseCreator);
+            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", true, exerciseCreator);
+            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", true, exerciseCreator);
+            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", true, exerciseCreator);
         }
     }
 
@@ -387,7 +386,7 @@ public class ProgrammingExerciseService {
         return "templates/" + programmingLanguage.name().toLowerCase();
     }
 
-    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
+    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
@@ -398,13 +397,13 @@ public class ProgrammingExerciseService {
         createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
     }
 
-    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
+    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException {
         for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
             versionControlService.get().createRepository(projectKey, repositoryName, null);
             repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
             Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
-            gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, null);
+            gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
     }
 
@@ -483,7 +482,7 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", user);
+            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
         }
     }
 
@@ -535,8 +534,11 @@ public class ProgrammingExerciseService {
 
             Map<String, Boolean> sectionsMap = new HashMap<>();
 
-            // Keep or delete static code analysis configuration in pom.xml
+            // Keep or delete static code analysis configuration in the build configuration file
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+
+            // Keep or delete testwise coverage configuration in the build file
+            sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles/**/*.*";
@@ -651,7 +653,7 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", user);
+            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
@@ -706,14 +708,15 @@ public class ProgrammingExerciseService {
     /**
      * Stage, commit and push.
      *
-     * @param repository The repository to which the changes should get pushed
-     * @param message    The commit message
-     * @param user       the user who has initiated the generation of the programming exercise
+     * @param repository  The repository to which the changes should get pushed
+     * @param message     The commit message
+     * @param emptyCommit whether an empty commit should be created or not
+     * @param user        the user who has initiated the generation of the programming exercise
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
-    public void commitAndPushRepository(Repository repository, String message, User user) throws GitAPIException {
+    public void commitAndPushRepository(Repository repository, String message, boolean emptyCommit, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, message, user);
+        gitService.commitAndPush(repository, message, emptyCommit, user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
@@ -777,11 +780,10 @@ public class ProgrammingExerciseService {
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException          If the URLs cannot be converted to actual {@link Path paths}
-     * @throws InterruptedException If the checkout fails
      * @throws GitAPIException      If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
-            throws IOException, GitAPIException, InterruptedException {
+            throws IOException, GitAPIException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
@@ -810,7 +812,7 @@ public class ProgrammingExerciseService {
             try {
                 Files.write(structureOraclePath, structureOracleJSON.getBytes());
                 gitService.stageAllChanges(testRepository);
-                gitService.commitAndPush(testRepository, "Generate the structure oracle file.", user);
+                gitService.commitAndPush(testRepository, "Generate the structure oracle file.", true, user);
                 return true;
             }
             catch (GitAPIException e) {
@@ -830,7 +832,7 @@ public class ProgrammingExerciseService {
                 try {
                     Files.write(structureOraclePath, structureOracleJSON.getBytes());
                     gitService.stageAllChanges(testRepository);
-                    gitService.commitAndPush(testRepository, "Update the structure oracle file.", user);
+                    gitService.commitAndPush(testRepository, "Update the structure oracle file.", true, user);
                     return true;
                 }
                 catch (GitAPIException e) {
@@ -942,7 +944,7 @@ public class ProgrammingExerciseService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createPageRequest(search);
+        final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
 
         final var exercisePage = authCheckService.isAdmin(user)

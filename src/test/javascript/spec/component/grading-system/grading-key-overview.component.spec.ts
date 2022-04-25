@@ -12,6 +12,8 @@ import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -45,7 +47,14 @@ describe('GradeKeyOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(NgbModule)],
-            declarations: [GradingKeyOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            declarations: [
+                GradingKeyOverviewComponent,
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+                MockPipe(SafeHtmlPipe),
+                MockPipe(GradeStepBoundsPipe),
+            ],
             providers: [
                 { provide: ActivatedRoute, useValue: { parent: { parent: { params: of({ courseId: 345, examId: 123 }), queryParams: of({ grade: '2.0' }) } } } },
                 { provide: Router, useClass: MockRouter },

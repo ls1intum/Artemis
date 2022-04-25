@@ -28,6 +28,7 @@ import dayjs from 'dayjs/esm';
 import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { base64StringToBlob } from 'app/utils/blob-util';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -55,6 +56,7 @@ describe('Course Management Update Component', () => {
         course.startDate = dayjs();
         course.endDate = dayjs();
         course.semester = 'testSemester';
+        course.defaultProgrammingLanguage = ProgrammingLanguage.PYTHON;
         course.testCourse = true;
         course.onlineCourse = true;
         course.complaintsEnabled = true;
@@ -62,6 +64,8 @@ describe('Course Management Update Component', () => {
         course.maxComplaints = 12;
         course.maxTeamComplaints = 13;
         course.maxComplaintTimeDays = 14;
+        course.maxComplaintTextLimit = 500;
+        course.maxComplaintResponseTextLimit = 1000;
         course.maxRequestMoreFeedbackTimeDays = 15;
         course.postsEnabled = true;
         course.registrationEnabled = true;
@@ -145,6 +149,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['startDate'])?.value).toBe(course.startDate);
             expect(comp.courseForm.get(['endDate'])?.value).toBe(course.endDate);
             expect(comp.courseForm.get(['semester'])?.value).toBe(course.semester);
+            expect(comp.courseForm.get(['defaultProgrammingLanguage'])?.value).toBe(course.defaultProgrammingLanguage);
             expect(comp.courseForm.get(['testCourse'])?.value).toBe(course.testCourse);
             expect(comp.courseForm.get(['onlineCourse'])?.value).toBe(course.onlineCourse);
             expect(comp.courseForm.get(['complaintsEnabled'])?.value).toBe(course.complaintsEnabled);
@@ -152,6 +157,8 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['maxComplaints'])?.value).toBe(course.maxComplaints);
             expect(comp.courseForm.get(['maxTeamComplaints'])?.value).toBe(course.maxTeamComplaints);
             expect(comp.courseForm.get(['maxComplaintTimeDays'])?.value).toBe(course.maxComplaintTimeDays);
+            expect(comp.courseForm.get(['maxComplaintTextLimit'])?.value).toBe(course.maxComplaintTextLimit);
+            expect(comp.courseForm.get(['maxComplaintResponseTextLimit'])?.value).toBe(course.maxComplaintResponseTextLimit);
             expect(comp.courseForm.get(['maxRequestMoreFeedbackTimeDays'])?.value).toBe(course.maxRequestMoreFeedbackTimeDays);
             expect(comp.courseForm.get(['postsEnabled'])?.value).toBe(course.postsEnabled);
             expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.registrationEnabled);
@@ -178,6 +185,8 @@ describe('Course Management Update Component', () => {
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
+                maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
+                maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
                 postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
@@ -209,6 +218,8 @@ describe('Course Management Update Component', () => {
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
                 maxTeamComplaints: new FormControl(entity.maxTeamComplaints),
                 maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
+                maxComplaintTextLimit: new FormControl(entity.maxComplaintTextLimit),
+                maxComplaintResponseTextLimit: new FormControl(entity.maxComplaintResponseTextLimit),
                 complaintsEnabled: new FormControl(entity.complaintsEnabled),
                 postsEnabled: new FormControl(entity.postsEnabled),
                 requestMoreFeedbackEnabled: new FormControl(entity.requestMoreFeedbackEnabled),
@@ -354,17 +365,23 @@ describe('Course Management Update Component', () => {
                 maxComplaints: new FormControl(2),
                 maxTeamComplaints: new FormControl(2),
                 maxComplaintTimeDays: new FormControl(2),
+                maxComplaintTextLimit: new FormControl(2),
+                maxComplaintResponseTextLimit: new FormControl(2),
             });
             comp.complaintsEnabled = false;
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(3);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(7);
+            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(2000);
+            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(2000);
             expect(comp.complaintsEnabled).toBe(true);
             comp.changeComplaintsEnabled();
             expect(comp.courseForm.controls['maxComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxTeamComplaints'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(0);
+            expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(0);
+            expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(0);
             expect(comp.complaintsEnabled).toBe(false);
         });
     });

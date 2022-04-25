@@ -7,5 +7,5 @@ import org.springframework.http.ResponseEntity;
 
 public interface RepositoryExecutor<T> {
 
-    ResponseEntity<T> exec() throws IOException, InterruptedException, IllegalAccessException, GitAPIException, IllegalArgumentException;
+    ResponseEntity<T> exec() throws IOException, IllegalAccessException, GitAPIException, IllegalArgumentException;
 }

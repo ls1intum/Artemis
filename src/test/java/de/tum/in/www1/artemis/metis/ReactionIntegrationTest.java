@@ -221,7 +221,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         createVoteReactionOnPost(postReactedOn2, student2);
 
         // refresh posts after reactions are added
-        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, null, null, null, null);
+        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, false, false, false, null);
 
         var params = new LinkedMultiValueMap<String, String>();
 
@@ -258,7 +258,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         createVoteReactionOnPost(post2ReactedOn, student2);
 
         // refresh posts after reactions are added
-        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, null, null, null, null);
+        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, false, false, false, null);
 
         var params = new LinkedMultiValueMap<String, String>();
 
@@ -379,7 +379,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         reaction.setEmojiId("smiley");
         reaction.setPost(postReactedOn);
         Reaction savedReaction = reactionRepository.save(reaction);
-        User user = this.userRepository.getUserWithGroupsAndAuthorities("student2");
+        User user = userRepository.getUserWithGroupsAndAuthorities("student2");
         savedReaction.setUser(user);
         reactionRepository.save(savedReaction);
         return savedReaction;
@@ -404,5 +404,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // check if association to post or answer post is correct
         assertThat(createdReaction.getPost()).isEqualTo(expectedReaction.getPost());
         assertThat(createdReaction.getAnswerPost()).isEqualTo(expectedReaction.getAnswerPost());
+
+        database.assertSensitiveInformationHidden(createdReaction);
     }
 }

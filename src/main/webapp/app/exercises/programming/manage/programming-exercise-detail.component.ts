@@ -38,10 +38,13 @@ import {
     faTable,
     faTimes,
     faUserCheck,
+    faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
+import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
+import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 @Component({
@@ -63,6 +66,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     supportsAuxiliaryRepositories: boolean;
     baseResource: string;
     shortBaseResource: string;
+    teamBaseResource: string;
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
     lockingOrUnlockingRepositories = false;
@@ -70,6 +74,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     doughnutStats: ExerciseManagementStatisticsDto;
 
     isAdmin = false;
+    addedLineCount: number;
+    removedLineCount: number;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -86,6 +92,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faChartBar = faChartBar;
     faPencilAlt = faPencilAlt;
     faEraser = faEraser;
+    faUsers = faUsers;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -95,6 +102,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
+        private repositoryFileService: CodeEditorRepositoryFileService,
         private eventManager: EventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
@@ -133,6 +141,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     // This is needed to access the exercise in the result details
                     this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
                 }
+                this.setLatestCoveredLineRatio();
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
 
@@ -163,11 +172,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             if (!this.isExamExercise) {
                 this.baseResource = `/course-management/${this.courseId}/programming-exercises/${programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/`;
+                this.teamBaseResource = `/course-management/${this.courseId}/exercises/${programmingExercise.id}/`;
             } else {
                 this.baseResource =
                     `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
                 this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
+                this.teamBaseResource =
+                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
+                    `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
 
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(programmingExercise.id).subscribe((submissionPolicy) => {
@@ -176,7 +189,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }
             });
 
-            this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => (this.programmingExercise.gitDiffReport = gitDiffReport));
+            this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => {
+                this.programmingExercise.gitDiffReport = gitDiffReport;
+                if (gitDiffReport) {
+                    this.addedLineCount = gitDiffReport.entries
+                        .map((entry) => entry.lineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+                    this.removedLineCount = gitDiffReport.entries
+                        .map((entry) => entry.previousLineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+                }
+            });
+
+            this.setLatestCoveredLineRatio();
         });
     }
 
@@ -261,7 +290,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     translationParams: {
                         numberTasks: res.length,
                         numberTestCases: numberTests,
-                        detailedResult: this.buildTaskCreationMessage(res),
+                        detailedResult: ProgrammingExerciseDetailComponent.buildTaskCreationMessage(res),
                     },
                     timeout: 0,
                 });
@@ -270,7 +299,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    private buildTaskCreationMessage(tasks: Task[]): string {
+    private static buildTaskCreationMessage(tasks: Task[]): string {
         return tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
     }
 
@@ -447,7 +476,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
-                console.log(this.buildStructuralSolutionEntriesMessage(res));
+                console.log(ProgrammingExerciseDetailComponent.buildStructuralSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
@@ -455,7 +484,46 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    private buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
+    private static buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
         return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
+    }
+
+    /**
+     * Returns undefined if the last solution submission was not successful or no report exists yet
+     */
+    private setLatestCoveredLineRatio() {
+        const latestSolutionSubmissionSuccessful = this.getLatestResult(this.programmingExercise?.solutionParticipation?.submissions)?.successful;
+        if (this.programmingExercise.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
+            this.programmingExerciseService.getLatestTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
+                this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
+            });
+        }
+    }
+
+    /**
+     * Gets the testwise coverage reports from the server and displays it in a modal.
+     */
+    getAndShowTestwiseCoverage() {
+        this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!).subscribe({
+            next: (response: Map<string, string>) => {
+                this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe({
+                    next: (coverageReport) => {
+                        const modalRef = this.modalService.open(TestwiseCoverageReportModalComponent, {
+                            size: 'xl',
+                            backdrop: 'static',
+                        });
+                        modalRef.componentInstance.report = coverageReport;
+                        modalRef.componentInstance.fileContentByPath = response;
+                    },
+                    error: (err: HttpErrorResponse) => {
+                        if (err.status === 404) {
+                            this.alertService.error('artemisApp.programmingExercise.testwiseCoverageReport.404');
+                        } else {
+                            this.onError(err);
+                        }
+                    },
+                });
+            },
+        });
     }
 }
