@@ -4,25 +4,25 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { CsvDecimalSeparator, CsvExportModalComponent, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
+import { CsvDecimalSeparator, ExportModalComponent, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
 
-describe('CsvExportModalComponent', () => {
-    let component: CsvExportModalComponent;
-    let fixture: ComponentFixture<CsvExportModalComponent>;
+describe('ExportModalComponent', () => {
+    let component: ExportModalComponent;
+    let fixture: ComponentFixture<ExportModalComponent>;
     let ngbActiveModal: NgbActiveModal;
     let translateService: TranslateService;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [NgbNavModule],
-            declarations: [CsvExportModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            declarations: [ExportModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
             providers: [MockProvider(NgbActiveModal), MockProvider(TranslateService)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CsvExportModalComponent);
+                fixture = TestBed.createComponent(ExportModalComponent);
                 component = fixture.componentInstance;
                 ngbActiveModal = TestBed.inject(NgbActiveModal);
                 translateService = TestBed.inject(TranslateService);

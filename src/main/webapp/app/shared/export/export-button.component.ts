@@ -1,16 +1,16 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { CsvExportModalComponent, CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
+import { ExportModalComponent, CsvExportOptions } from 'app/shared/export/export-modal.component';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-csv-export-button',
     template: `
-        <jhi-button [btnType]="ButtonType.PRIMARY" [btnSize]="buttonSize" [icon]="icon" [disabled]="disabled" [title]="title" (onClick)="openCsvExportModal($event)"></jhi-button>
+        <jhi-button [btnType]="ButtonType.PRIMARY" [btnSize]="buttonSize" [icon]="icon" [disabled]="disabled" [title]="title" (onClick)="openExportModal($event)"></jhi-button>
     `,
 })
-export class CsvExportButtonComponent {
+export class ExportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -27,9 +27,9 @@ export class CsvExportButtonComponent {
      * Open up csv export option modal
      * @param {Event} event - Mouse Event which invoked the opening
      */
-    openCsvExportModal(event: MouseEvent) {
+    openExportModal(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(CsvExportModalComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ExportModalComponent, { size: 'lg', backdrop: 'static' });
         modalRef.result.then(
             (customCsvOptions) => this.onExport.emit(customCsvOptions),
             () => {},

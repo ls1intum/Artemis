@@ -30,10 +30,10 @@ export interface CsvExportOptions {
 
 @Component({
     selector: 'jhi-csv-export-modal',
-    templateUrl: './csv-export-modal.component.html',
-    styleUrls: ['./csv-export-modal.component.scss'],
+    templateUrl: './export-modal.component.html',
+    styleUrls: ['./export-modal.component.scss'],
 })
-export class CsvExportModalComponent implements OnInit {
+export class ExportModalComponent implements OnInit {
     readonly CsvFieldSeparator = CsvFieldSeparator;
     readonly CsvQuoteStrings = CsvQuoteStrings;
     readonly CsvDecimalSeparator = CsvDecimalSeparator;

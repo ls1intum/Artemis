@@ -1,5 +1,5 @@
 import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
-import { CsvDecimalSeparator } from 'app/shared/export/csv-export-modal.component';
+import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
 import { round } from 'app/shared/util/utils';
 
 /**

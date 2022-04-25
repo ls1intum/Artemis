@@ -4,7 +4,7 @@ import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, US
 import { ExerciseType } from 'app/entities/exercise.model';
 import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
 import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
-import { CsvDecimalSeparator } from 'app/shared/export/csv-export-modal.component';
+import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
 
 describe('The CourseScoresCsvRowBuilder', () => {
     let csvRow: CourseScoresRowBuilder;
