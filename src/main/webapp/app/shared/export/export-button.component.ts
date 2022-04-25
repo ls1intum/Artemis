@@ -24,7 +24,7 @@ export class ExportButtonComponent {
     constructor(private modalService: NgbModal) {}
 
     /**
-     * Open up csv export option modal
+     * Open up export option modal
      * @param {Event} event - Mouse Event which invoked the opening
      */
     openExportModal(event: MouseEvent) {

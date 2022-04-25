@@ -98,7 +98,7 @@ export class ExportModalComponent implements OnInit {
     }
 
     /**
-     * Closes the csv export modal and passes the selected csv options back
+     * Closes the export modal and passes the selected csv options back in case the active page is not set to 1.
      */
     onFinish() {
         if (this.active === 1) {
