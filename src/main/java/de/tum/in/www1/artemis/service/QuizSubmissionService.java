@@ -143,6 +143,12 @@ public class QuizSubmissionService {
             throw new QuizSubmissionException("The quiz is not active");
         }
 
+        var cachedSubmission = quizScheduleService.getQuizSubmission(exerciseId, user.getLogin());
+        if (cachedSubmission.isSubmitted()) {
+            // current attempt has not yet been committed to DB, so countByExerciseIdAndStudentId will not pick it up
+            throw new QuizSubmissionException("You have already submitted the quiz");
+        }
+
         // TODO: add one additional check: fetch quizSubmission.getId() with the corresponding participation and check that the user of participation is the
         // same as the user who executes this call. This prevents injecting submissions to other users
 
@@ -150,7 +156,7 @@ public class QuizSubmissionService {
         int submissionCount = submissionRepository.countByExerciseIdAndStudentId(exerciseId, user.getId());
         log.debug("{} Counted {} submissions for user {} in quiz {} in {} µs.", logText, submissionCount, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
         if (quizExercise.getAllowedNumberOfAttempts() != null && submissionCount >= quizExercise.getAllowedNumberOfAttempts()) {
-            throw new QuizSubmissionException("You have already submitted the quiz");
+            throw new QuizSubmissionException("You have no more attempts at this quiz left");
         }
 
         // recreate pointers back to submission in each submitted answer
