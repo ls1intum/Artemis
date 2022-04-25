@@ -29,6 +29,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { of } from 'rxjs';
 import dayjs from 'dayjs';
 import { Result } from 'app/entities/result.model';
+import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -43,6 +44,7 @@ describe('TextblockFeedbackEditorComponent', () => {
             declarations: [
                 TextblockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
+                MockComponent(TextblockFeedbackDropdownComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ConfirmIconComponent),
                 MockComponent(FaIconComponent),
@@ -349,33 +351,6 @@ describe('TextblockFeedbackEditorComponent', () => {
 
         // then
         expect(component.feedback.correctionStatus).toBeUndefined();
-    });
-
-    it('should update assessment correctly when using dropdown-menu', () => {
-        const gradingInstruction = {
-            credits: 1,
-            gradingScale: 'Good',
-            instructionDescription: 'Apply if it is well done',
-            feedback: 'Well done!',
-        } as GradingInstruction;
-
-        const changeSpy = jest.spyOn(component, 'didChange');
-        component.updateAssessmentWithDropdown(gradingInstruction);
-
-        expect(changeSpy).toHaveBeenCalledTimes(1);
-        expect(component.feedback.gradingInstruction).toEqual(gradingInstruction);
-    });
-
-    it('should display correct background colors for dropdown elements', () => {
-        const gradingInstruction = { id: 1, feedback: 'feedback', credits: 1 } as GradingInstruction;
-
-        expect(component.getInstrColour(gradingInstruction)).toBe('#e3f0da');
-        gradingInstruction.credits = 0;
-        fixture.detectChanges();
-        expect(component.getInstrColour(gradingInstruction)).toBe('#fff2cc');
-        gradingInstruction.credits = -1;
-        fixture.detectChanges();
-        expect(component.getInstrColour(gradingInstruction)).toBe('#fbe5d6');
     });
 
     it('should send assessment event if feedback type changed', () => {

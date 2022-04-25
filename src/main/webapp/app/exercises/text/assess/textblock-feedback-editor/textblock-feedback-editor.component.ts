@@ -25,7 +25,6 @@ import {
     faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -108,21 +107,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     /**
-     * Get the color for grading instruction based on the credits of the instruction
-     *  @param {GradingInstruction} instr - the instruction object we get its color based on its credits
-     */
-    getInstrColour(instr: GradingInstruction): string | undefined {
-        if (instr.credits === 0) {
-            return '#fff2cc';
-        } else if (instr.credits < 0) {
-            return '#fbe5d6';
-        } else if (instr.credits > 0) {
-            return '#e3f0da';
-        }
-        return undefined;
-    }
-
-    /**
      * Increase size of text area automatically
      */
     textareaAutogrow(): void {
@@ -195,16 +179,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
         if (feedbackTypeBefore !== this.feedback.type) {
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, this.feedback.type, this.textBlock.type);
         }
-    }
-
-    updateAssessmentWithDropdown(instruction: GradingInstruction) {
-        this.feedback.gradingInstruction = instruction;
-        this.feedback.credits = instruction.credits;
-
-        // Reset the feedback correction status upon setting grading instruction in order to hide it.
-        this.feedback.correctionStatus = undefined;
-
-        this.didChange();
     }
 
     connectFeedbackWithInstruction(event: Event) {
