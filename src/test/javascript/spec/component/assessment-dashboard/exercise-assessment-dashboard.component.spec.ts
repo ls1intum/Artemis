@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
@@ -30,7 +30,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ComplaintType } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Language } from 'app/entities/tutor-group.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
@@ -66,6 +66,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
+import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
@@ -98,6 +100,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     let accountService: AccountService;
 
+    let translateService: TranslateService;
+
+    let submissionService: SubmissionService;
+
     const result1 = { id: 11 } as Result;
     const result2 = { id: 12 } as Result;
     const exam = { id: 13, numberOfCorrectionRoundsInExam: 2 } as Exam;
@@ -116,11 +122,22 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
         secondCorrectionEnabled: false,
     } as ProgrammingExercise;
+    const programmingExerciseWithAutomaticAssessment = {
+        id: 16,
+        exerciseGroup,
+        type: ExerciseType.PROGRAMMING,
+        tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        secondCorrectionEnabled: false,
+        assessmentType: AssessmentType.AUTOMATIC,
+        allowComplaintsForAutomaticAssessments: true,
+    } as ProgrammingExercise;
     const modelingExercise = {
         id: 17,
         exerciseGroup,
         type: ExerciseType.MODELING,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
+        exampleSolutionModel: '{"elements": [{"id": 1}]}',
+        exampleSolutionExplanation: 'explanation',
     } as ModelingExercise;
     const textExercise = {
         id: 18,
@@ -128,6 +145,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         type: ExerciseType.TEXT,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
         secondCorrectionEnabled: false,
+        exampleSubmissions: [
+            { id: 1, usedForTutorial: false },
+            { id: 2, usedForTutorial: true },
+        ],
     } as TextExercise;
     const fileUploadExercise = {
         id: 19,
@@ -141,7 +162,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     const modelingSubmission = { id: 21 } as ModelingSubmission;
     const fileUploadSubmission = { id: 22 } as FileUploadSubmission;
-    const textSubmission = { id: 23 } as TextSubmission;
+    const textSubmission = { id: 23, submissionExerciseType: SubmissionExerciseType.TEXT, language: Language.ENGLISH } as TextSubmission;
     const programmingSubmission = { id: 24 } as ProgrammingSubmission;
 
     const modelingSubmissionAssessed = { id: 25, results: [result1, result2], participation } as ModelingSubmission;
@@ -183,8 +204,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     let navigateSpy: jest.SpyInstance;
     let routingStub: jest.SpyInstance;
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, exerciseId: modelingExercise.id! }) } } as any as ActivatedRoute;
-
+    const route = {
+        snapshot: {
+            paramMap: convertToParamMap({
+                courseId: 1,
+                examId: 2,
+                exerciseGroupId: 3,
+                exerciseId: modelingExercise.id!,
+            }),
+        },
+    } as any as ActivatedRoute;
     const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule)];
 
     const declarations = [
@@ -245,7 +274,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 exerciseService = TestBed.inject(ExerciseService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
 
-                const submissionService = TestBed.inject(SubmissionService);
+                submissionService = TestBed.inject(SubmissionService);
                 jest.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
 
                 const complaintService = TestBed.inject(ComplaintService);
@@ -295,11 +324,65 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 const chartRoutingService = TestBed.inject(ChartRoutingService);
 
                 routingStub = jest.spyOn(chartRoutingService, 'routeInNewTab').mockImplementation();
+
+                translateService = TestBed.inject(TranslateService);
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should initialize', fakeAsync(() => {
+        const user = { id: 10 } as User;
+        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+
+        fixture.detectChanges();
+
+        expect(comp.courseId).toBe(1);
+        expect(comp.examId).toBe(2);
+        expect(comp.exerciseGroupId).toBe(3);
+        expect(comp.exerciseId).toBe(modelingExercise.id);
+
+        tick();
+
+        expect(comp.tutor).toEqual(user);
+
+        const setupGraphSpy = jest.spyOn(comp, 'setupGraph');
+
+        translateService.use('en'); // Change language.
+        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should initialize with tutor leaderboard entry', () => {
+        const tutor = { id: 10 } as User;
+        comp.tutor = tutor;
+        const tutorLeaderBoardEntry = {
+            userId: tutor.id!,
+            numberOfAssessments: 3,
+            numberOfTutorComplaints: 2,
+            numberOfTutorMoreFeedbackRequests: 1,
+            numberOfTutorRatings: 4,
+        } as TutorLeaderboardElement;
+
+        const statsWithTutor = {
+            ...stats,
+            tutorLeaderboardEntries: [tutorLeaderBoardEntry],
+        } as StatsForDashboard;
+
+        exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: statsWithTutor, headers: new HttpHeaders() })));
+
+        fixture.detectChanges();
+
+        expect(comp.numberOfTutorAssessments).toBe(tutorLeaderBoardEntry.numberOfAssessments);
+        expect(comp.complaintsDashboardInfo.tutor).toBe(tutorLeaderBoardEntry.numberOfTutorComplaints);
+        expect(comp.moreFeedbackRequestsDashboardInfo.tutor).toBe(tutorLeaderBoardEntry.numberOfTutorMoreFeedbackRequests);
+        expect(comp.ratingsDashboardInfo.tutor).toBe(tutorLeaderBoardEntry.numberOfTutorRatings);
+
+        const setupGraphSpy = jest.spyOn(comp, 'setupGraph');
+
+        translateService.use('en'); // Change language.
+        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -333,6 +416,23 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBe(undefined);
         expect(comp.submissionLockLimitReached).toBe(true);
         expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
+    });
+
+    it('should handle generic error', () => {
+        const error = { errorKey: 'mock', detail: 'Mock error' };
+        const errorResponse = new HttpErrorResponse({ error });
+
+        const alertService = TestBed.inject(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+
+        modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => errorResponse));
+        modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+
+        comp.loadAll();
+
+        expect(alertServiceSpy).toHaveBeenCalledTimes(2);
+        expect(alertServiceSpy).toHaveBeenNthCalledWith(1, error.detail);
+        expect(alertServiceSpy).toHaveBeenNthCalledWith(2, error.detail);
     });
 
     it('should have correct percentages calculated', () => {
@@ -382,10 +482,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('should call readInstruction', () => {
         const tutorParticipationServiceCreateStub = jest.spyOn(tutorParticipationService, 'create');
         const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
-        tutorParticipationServiceCreateStub.mockReturnValue(of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() })));
+        tutorParticipationServiceCreateStub.mockImplementation(() => {
+            expect(comp.isLoading).toBe(true);
+            return of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() }));
+        });
 
         expect(comp.tutorParticipation).toBe(undefined);
+        expect(comp.isLoading).toBe(false);
+
         comp.readInstruction();
+
+        expect(comp.isLoading).toBe(false);
 
         expect(comp.tutorParticipation).toEqual(tutorParticipation);
         expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
@@ -413,6 +520,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             expect(textSubmissionStubWithoutAssessment).toHaveBeenCalled();
             expect(textSubmissionStubWithAssessment).toHaveBeenCalled();
+
+            expect(comp.exampleSubmissionsToReview).toHaveLength(1);
+            expect(comp.exampleSubmissionsToReview[0]).toEqual(textExercise.exampleSubmissions![0]);
+
+            expect(comp.exampleSubmissionsToAssess).toHaveLength(1);
+            expect(comp.exampleSubmissionsToAssess[0]).toEqual(textExercise.exampleSubmissions![1]);
         });
 
         it('programmingSubmission', () => {
@@ -424,6 +537,23 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             expect(programmingSubmissionStubWithAssessment).toHaveBeenCalled();
             expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+        });
+
+        it('programmingSubmission with automatic assessment', () => {
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
+
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExerciseWithAutomaticAssessment, headers: new HttpHeaders() })));
+
+            const translateServiceSpy = jest.spyOn(translateService, 'instant');
+
+            comp.loadAll();
+
+            expect(programmingSubmissionStubWithAssessment).toHaveBeenCalled();
+            expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
         });
     });
 
@@ -623,5 +753,99 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions']);
             });
         });
+    });
+
+    it('should toggle second correction', () => {
+        comp.exercise = exercise;
+        comp.exercise.type = ExerciseType.TEXT;
+
+        const secondCorrectionEnabled = true;
+        jest.spyOn(exerciseService, 'toggleSecondCorrection').mockImplementation((exerciseId) => {
+            expect(comp.togglingSecondCorrectionButton).toBe(secondCorrectionEnabled);
+
+            expect(exerciseId).toBe(comp.exerciseId);
+            return of(secondCorrectionEnabled);
+        });
+
+        comp.toggleSecondCorrection();
+
+        expect(comp.togglingSecondCorrectionButton).toBe(false);
+        expect(comp.secondCorrectionEnabled).toBe(secondCorrectionEnabled);
+        expect(comp.numberOfCorrectionRoundsEnabled).toBe(2);
+    });
+
+    it('should check if complaint locked', () => {
+        comp.exercise = exercise;
+        const complaintService = TestBed.inject(ComplaintService);
+        const complaintServiceSpy = jest.spyOn(complaintService, 'isComplaintLockedForLoggedInUser');
+
+        const complaint: Complaint = { id: 20 };
+        comp.isComplaintLocked(complaint);
+
+        expect(complaintServiceSpy).toHaveBeenCalledWith(complaint, exercise);
+    });
+
+    it('should get submissions with more feedback requests for tutor', () => {
+        const submissionServiceSpy = jest.spyOn(submissionService, 'getSubmissionsWithMoreFeedbackRequestsForTutor');
+        submissionServiceSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
+
+        const sortMoreFeedbackRowsSpy = jest.spyOn(comp, 'sortMoreFeedbackRows');
+
+        fixture.detectChanges();
+
+        expect(sortMoreFeedbackRowsSpy).toHaveBeenCalledTimes(1);
+
+        submissionServiceSpy.mockReturnValue(throwError(() => errorResponse));
+
+        const errorStatus = 400;
+        const errorResponse = new HttpErrorResponse({ status: errorStatus });
+
+        const alertService = TestBed.inject(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+
+        comp.loadAll();
+
+        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(alertServiceSpy).toHaveBeenCalledWith('error.http.400');
+    });
+
+    it('should sort more feedback rows', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortServicePropertySpy = jest.spyOn(sortService, 'sortByProperty');
+
+        comp.sortMoreFeedbackRows();
+
+        expect(sortServicePropertySpy).toHaveBeenCalledTimes(2);
+        expect(sortServicePropertySpy).toHaveBeenNthCalledWith(1, comp.submissionsWithMoreFeedbackRequests, 'complaint.submittedTime', true);
+        expect(sortServicePropertySpy).toHaveBeenNthCalledWith(2, comp.submissionsWithMoreFeedbackRequests, 'complaint.accepted', false);
+
+        comp.sortPredicates[2] = 'responseTime';
+        const sortServiceFunctionSpy = jest.spyOn(sortService, 'sortByFunction');
+
+        comp.sortMoreFeedbackRows();
+
+        expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests, expect.any(Function), false);
+    });
+
+    it('should check if complaint locked', () => {
+        comp.exercise = exercise;
+        const complaintService = TestBed.inject(ComplaintService);
+        const complaintServiceSpy = jest.spyOn(complaintService, 'isComplaintLockedForLoggedInUser');
+
+        const complaint: Complaint = { id: 20 };
+        comp.isComplaintLocked(complaint);
+
+        expect(complaintServiceSpy).toHaveBeenCalledWith(complaint, exercise);
+    });
+
+    it('should return submission language', () => {
+        expect(comp.language(textSubmission)).toBe(textSubmission.language);
+        const unkownLanguage = 'UNKNOWN';
+        const textSubmissionWithoutLanguage = {
+            id: 23,
+            submissionExerciseType: SubmissionExerciseType.TEXT,
+        };
+        expect(comp.language(textSubmissionWithoutLanguage)).toBe(unkownLanguage);
+        expect(comp.language(programmingSubmission)).toBe(unkownLanguage);
     });
 });
