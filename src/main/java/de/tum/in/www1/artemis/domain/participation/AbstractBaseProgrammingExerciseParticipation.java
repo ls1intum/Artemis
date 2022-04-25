@@ -56,6 +56,13 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
     }
 
     @Override
+    @JsonIgnore
+    public Participant getParticipant() {
+        // No student is participating
+        return null;
+    }
+
+    @Override
     public void filterSensitiveInformation() {
         // nothing to filter here
     }
