@@ -8,7 +8,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
@@ -30,11 +30,11 @@ describe('ModelingExerciseImportComponent', () => {
             declarations: [
                 ModelingExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),
-                MockDirective(NgbHighlight),
-                MockDirective(NgbPagination),
+                MockComponent(ButtonComponent),
+                MockComponent(NgbHighlight),
+                MockComponent(NgbPagination),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
-                MockDirective(ButtonComponent),
             ],
             providers: [],
             schemas: [],

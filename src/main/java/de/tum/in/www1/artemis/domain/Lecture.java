@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.persistence.*;
 
@@ -60,22 +63,12 @@ public class Lecture extends DomainObject {
         return title;
     }
 
-    public Lecture title(String title) {
-        this.title = title;
-        return this;
-    }
-
     public void setTitle(String title) {
         this.title = title;
     }
 
     public String getDescription() {
         return description;
-    }
-
-    public Lecture description(String description) {
-        this.description = description;
-        return this;
     }
 
     public void setDescription(String description) {
@@ -136,11 +129,6 @@ public class Lecture extends DomainObject {
         return course;
     }
 
-    public Lecture course(Course course) {
-        this.course = course;
-        return this;
-    }
-
     public void setCourse(Course course) {
         this.course = course;
     }
@@ -149,5 +137,20 @@ public class Lecture extends DomainObject {
     public String toString() {
         return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='"
                 + getEndDate() + "'" + "}";
+    }
+
+    public enum LectureSearchColumn {
+
+        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
+
+        private final String mappedColumnName;
+
+        LectureSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }

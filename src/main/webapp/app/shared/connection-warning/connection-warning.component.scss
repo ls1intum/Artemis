@@ -1,0 +1,45 @@
+:host {
+    padding: 0;
+}
+
+.connection-warning {
+    color: red;
+    position: relative;
+    max-width: 0;
+    transform: scale(0);
+    margin: 0;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.connection-warning.disconnected {
+    max-width: 50px;
+    transform: scale(1);
+    margin: 0 12px;
+
+    .ng-fa-icon:first-child {
+        transform: translateX(10px);
+    }
+}
+
+#pulse-icon {
+    position: absolute;
+    left: 0;
+    animation: pulse 1s;
+    animation-iteration-count: 60;
+    transform-origin: center;
+    pointer-events: none;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    70%,
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}

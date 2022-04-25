@@ -55,7 +55,7 @@ declare -a group_names=("tutors" "instructors" "students" "editors")
 jira_group_url="http://localhost:$jira_external_port/rest/api/latest/group"
 
 for group_name in "${group_names[@]}"; do
-    curl -u $jira_uservar:$jira_passvar \
+    curl -u "$jira_uservar":"$jira_passvar" \
     -s \
     --header "Content-Type: application/json" \
     --request POST \
@@ -69,7 +69,6 @@ done
 
 # create users
 
-base_user_name="artemis_test_user_"
 jira_user_url="http://localhost:$jira_external_port/rest/api/latest/user"
 jira_group_add_url="http://localhost:$jira_external_port/rest/api/2/group/user?groupname="
 
@@ -87,7 +86,7 @@ for i in {1..20}; do
     fi
 
     # Create user
-    curl -u $jira_uservar:$jira_passvar \
+    curl -u "$jira_uservar":"$jira_passvar" \
     -s \
     --header "Content-Type: application/json" \
     --request POST \
@@ -102,17 +101,17 @@ for i in {1..20}; do
             }" \
     $jira_user_url
 
-#    # Add user to group
-#    curl -v -u $jira_uservar:$jira_passvar \
-#    -s \
-#    --header "Content-Type: application/json" \
-#    --request POST \
-#    --fail \
-#    --show-error \
-#    --data "{
-#                \"name\": \"artemis_test_user_$i\"
-#            }" \
-#    "$jira_group_add_url$group"
+    # Add user to group
+    curl -u "$jira_uservar":"$jira_passvar" \
+    -s \
+    --header "Content-Type: application/json" \
+    --request POST \
+    --fail \
+    --show-error \
+    --data "{
+                \"name\": \"artemis_test_user_$i\"
+            }" \
+    "$jira_group_add_url$group"
 done
 
 # Application Links
@@ -128,7 +127,7 @@ internal_bitbucket_url="http://bitbucket:$bitbucket_port"
 echo $'\nConfiguring ApplicationLinks'
 # Jira
 # add link from jira to bitbucket
-curl -u $jira_uservar:$jira_passvar \
+curl -u "$jira_uservar":"$jira_passvar" \
     -s \
     --fail \
     --show-error \
@@ -155,7 +154,7 @@ curl -u $jira_uservar:$jira_passvar \
             }" \
     $jira_url
 # add link from jira to bamboo
-curl -u $jira_uservar:$jira_passvar \
+curl -u "$jira_uservar":"$jira_passvar" \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -182,7 +181,7 @@ curl -u $jira_uservar:$jira_passvar \
     $jira_url
 # Bamboo
 # add link from bamboo to bitbucket
-curl -u $bamboo_uservar:$bamboo_passvar \
+curl -u "$bamboo_uservar":"$bamboo_passvar" \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -208,7 +207,7 @@ curl -u $bamboo_uservar:$bamboo_passvar \
             }" \
     $bamboo_url
 # add link from bamboo to jira
-curl -u $bamboo_uservar:$bamboo_passvar \
+curl -u "$bamboo_uservar":"$bamboo_passvar" \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -235,7 +234,7 @@ curl -u $bamboo_uservar:$bamboo_passvar \
     $bamboo_url
 #Bitbucket
 # add link from bitbucket to jira
-curl -u $bitbucket_uservar:$bitbucket_passvar \
+curl -u "$bitbucket_uservar":"$bitbucket_passvar" \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -261,7 +260,7 @@ curl -u $bitbucket_uservar:$bitbucket_passvar \
             }" \
     $bitbucket_url
 # add link from bitbucket to bamboo
-curl -u $bitbucket_uservar:$bitbucket_passvar \
+curl -u "$bitbucket_uservar":"$bitbucket_passvar" \
     --fail \
     --show-error \
     --header "Content-Type: application/json" \
@@ -293,6 +292,11 @@ jira_application_links_url="http://localhost:$jira_external_port/plugins/servlet
 bamboo_application_links_url="http://localhost:$bamboo_port/plugins/servlet/applinks/listApplicationLinks"
 bitbucket_application_links_url="http://localhost:$bitbucket_port/plugins/servlet/applinks/listApplicationLinks"
 
-xdg-open $jira_application_links_url
-xdg-open $bamboo_application_links_url
-xdg-open $bitbucket_application_links_url
+if [ "$(uname)" == "Darwin" ]
+then
+    open $jira_application_links_url $bamboo_application_links_url $bitbucket_application_links_url
+else
+    xdg-open $jira_application_links_url
+    xdg-open $bamboo_application_links_url
+    xdg-open $bitbucket_application_links_url
+fi

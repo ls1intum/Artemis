@@ -1,0 +1,190 @@
+plugins {
+    // %static-code-analysis-start%
+    id 'checkstyle'
+    id 'pmd'
+    id 'com.github.spotbugs' version '5.0.6'
+    // %static-code-analysis-stop%
+    // %record-testwise-coverage-start%
+    id "com.teamscale" version "23.0.0"
+    // %record-testwise-coverage-stop%
+}
+
+apply plugin: 'java'
+sourceCompatibility = 17
+version = '1.0.0'
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.9.2'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+}
+
+def assignmentSrcDir = "assignment/src"
+def studentOutputDir = sourceSets.main.java.destinationDirectory.get()
+// %static-code-analysis-start%
+def scaConfigDirectory = "$projectDir/staticCodeAnalysisConfig"
+// %static-code-analysis-stop%
+
+sourceSets {
+    // %non-sequential-start%
+    test {
+        java {
+            srcDir 'test'
+        }
+        resources {
+            srcDir 'test'
+        }
+    }
+    // %non-sequential-stop%
+
+    // %sequential-start%
+    structuralTest {
+        java {
+            srcDir 'structural/test'
+        }
+        resources {
+            srcDir 'structural/test'
+        }
+    }
+
+    behaviorTest {
+        java {
+            srcDir 'behavior/test'
+            compileClasspath += sourceSets.main.runtimeClasspath
+        }
+        resources {
+            srcDir 'behavior/test'
+        }
+    }
+    // %sequential-stop%
+
+    main {
+        java {
+            srcDirs = [assignmentSrcDir]
+        }
+        resources {
+            srcDirs = []
+        }
+    }
+}
+
+def forbiddenPackageFolders = [ //(2)
+                                "$studentOutputDir/ch/qos/logback/",
+                                "$studentOutputDir/com/intellij/",
+                                "$studentOutputDir/com/sun/",
+                                "$studentOutputDir/de/tum/in/test/api/",
+                                "$studentOutputDir/java/",
+                                "$studentOutputDir/javax/",
+                                "$studentOutputDir/jdk/",
+                                "$studentOutputDir/net/jqwik/",
+                                "$studentOutputDir/org/assertj/",
+                                "$studentOutputDir/org/apache/",
+                                "$studentOutputDir/org/eclipse/",
+                                "$studentOutputDir/org/gradle/",
+                                "$studentOutputDir/org/jacoco/",
+                                "$studentOutputDir/org/json/",
+                                "$studentOutputDir/org/junit/",
+                                "$studentOutputDir/org/opentest4j/",
+                                "$studentOutputDir/sun/",
+                                "$studentOutputDir/worker/org/gradle/"
+                                // %record-testwise-coverage-start%
+                                ,"$studentOutputDir/com/teamscale/",
+                                "$studentOutputDir/okhttp3/",
+                                "$studentOutputDir/retrofit2/",
+                                "$studentOutputDir/shadow/",
+                                "$studentOutputDir/com/squareup/",
+                                "$studentOutputDir/okio/"
+                                // %record-testwise-coverage-stop%
+]
+test {
+    doFirst { //(1)
+        for (String packageFolder in forbiddenPackageFolders) {
+            assert !file(packageFolder).exists(): "$packageFolder must not exist within the submission."
+        }
+    }
+    defaultCharacterEncoding = 'UTF-8'
+    useJUnitPlatform()
+}
+
+// %sequential-start%
+configurations {
+    structuralTestImplementation.extendsFrom testImplementation
+    structuralTestRuntime.extendsFrom testRuntime
+    behaviorTestImplementation.extendsFrom testImplementation
+    behaviorTestRuntime.extendsFrom testRuntime
+}
+
+task structuralTests(type: Test) {
+    testClassesDirs = sourceSets.structuralTest.output.classesDirs
+    classpath += sourceSets.structuralTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+
+task behaviorTests(type: Test) {
+    testClassesDirs = sourceSets.behaviorTest.output.classesDirs
+    classpath += sourceSets.behaviorTest.runtimeClasspath
+
+    useJUnitPlatform()
+}
+// %sequential-stop%
+
+// %static-code-analysis-start%
+checkstyle {
+    configFile = file("$scaConfigDirectory/checkstyle-configuration.xml")
+    ignoreFailures = true
+    // exclude the test files
+    checkstyleTest.enabled = false
+    checkstyleMain.reports {
+        xml.outputLocation = file('target/checkstyle-result.xml')
+    }
+}
+
+spotbugs {
+    excludeFilter = file("$scaConfigDirectory/spotbugs-exclusions.xml")
+    ignoreFailures = true
+    // exclude the test files
+    spotbugsTest.enabled = false
+    spotbugsMain.reports {
+        xml {
+            enabled = true
+            outputLocation = file('target/spotbugsXml.xml')
+        }
+        html.enabled = false
+    }
+}
+
+pmd {
+    ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
+    rulesMinimumPriority = 5
+    ignoreFailures = true
+    // exclude the test files
+    pmdTest.enabled = false
+    pmdMain.reports {
+        xml.outputLocation = file('target/pmd.xml')
+    }
+}
+// %static-code-analysis-stop%
+
+
+// %record-testwise-coverage-start%
+tasks.register('tiaTests', com.teamscale.TestImpacted) {
+    systemProperty "ares.security.trustedpackages", "okhttp3,com.teamscale,retrofit2,shadow,com.squareup,okio"
+    useJUnitPlatform()
+    filter {
+        excludeTestsMatching "AttributeTest"
+        excludeTestsMatching "ConstructorTest"
+        excludeTestsMatching "ClassTest"
+        excludeTestsMatching "MethodTest"
+    }
+    jacoco {
+        includes = ["${packageName}.*"]
+    }
+}
+// %record-testwise-coverage-stop%

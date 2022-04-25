@@ -14,15 +14,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let gradeStep of gradeSteps; let i = index" [class.highlighted]="gradeStep.gradeName == studentGrade">
+                    <tr *ngFor="let gradeStep of gradeSteps; let i = index; let last = last" [class.highlighted]="gradeStep.gradeName == studentGrade">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>
-                            {{ gradeStep.lowerBoundInclusive ? '[' : '(' }}{{ round(gradeStep.lowerBoundPercentage) }} - {{ round(gradeStep.upperBoundPercentage)
-                            }}{{ gradeStep.upperBoundInclusive ? ']' : ')' }}
+                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
                         </td>
                         <td *ngIf="hasPointsSet()">
-                            {{ gradeStep.lowerBoundInclusive ? '[' : '(' }}{{ round(gradeStep.lowerBoundPoints) }} - {{ round(gradeStep.upperBoundPoints)
-                            }}{{ gradeStep.upperBoundInclusive ? ']' : ')' }}
+                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
                         </td>
                     </tr>
                 </tbody>

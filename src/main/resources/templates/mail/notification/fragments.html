@@ -8,100 +8,115 @@
 <th:block th:fragment="head">
     <head>
         <title th:text="${notification.title}">Notification Title</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/favicon.svg|}" />
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@500&display=swap');
-
-            * {
-                margin: 0;
-                padding: 0;
-                border: 0;
-            }
-
-            body {
-                font-family: "Raleway", sans-serif;
-                font-size: 19px;
-                margin: 0 auto;
-            }
-
-            a {
-                color: #3e8acc;
-            }
-
-            #logo {
-                max-width: 50px;
-                vertical-align: middle;
-                background-color: #353D47;
-                padding: 10px;
-            }
-
-            .notification-text-header {
-                padding-top: 10px;
-            }
-
-            .notification-text {
-                font-style: italic;
-                font-weight: bold;
-                padding-top: 3px;
-            }
-
-            ul {
-                padding-left: 20px;
-            }
-
-            .button {
-                background-color: #5B9CD4;
-                color: white;
-                padding: 8px 12px ;
-                border-radius: 8px;
-                text-decoration: none;
-            }
-
-            .button-wrapper {
-                padding: 25px 25px 25px 0px;
-            }
-
-            .emergency-link {
-                color: gray;
-                font-size: small;
-            }
-
-            .notification-content {
-                border: 1px solid #ccc;
-                padding: 16px;
-                margin-top: 10px;
-                border-radius: 16px;
-            }
-
-            .bold-text {
-                font-weight: bold;
-            }
-
-            header {
-                background-color: #353D47;
-                font-style: italic;
-                color: white;
-                font-size: smaller;
-                padding: 10px;
-            }
-
-            #message-body {
-                background-color: white;
-                padding: 10px;
-            }
-
-            footer {
-                background-color: #353D47;
-                font-style: italic;
-                color: white;
-                font-size: smaller;
-                padding: 5px;
-            }
-        </style>
+        <th:block th:replace="mail/notification/fragments :: headMetaDataAndIconLink"/>
+        <th:block th:replace="mail/notification/fragments :: css"/>
     </head>
 </th:block>
 <body>
+
+<!--
+ Fragment containing CSS
+-->
+<th:block th:fragment="css">
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@500&display=swap');
+
+    * {
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+
+    body {
+        font-family: "Raleway", sans-serif;
+        font-size: 19px;
+        margin: 0 auto;
+    }
+
+    a {
+        color: #3e8acc;
+    }
+
+    #logo {
+        max-width: 50px;
+        vertical-align: middle;
+        background-color: #353D47;
+        padding: 10px;
+    }
+
+    .notification-text-header {
+        padding-top: 10px;
+    }
+
+    .notification-text {
+        font-style: italic;
+        font-weight: bold;
+        padding-top: 3px;
+    }
+
+    ul {
+        padding-left: 20px;
+    }
+
+    .button {
+        background-color: #5B9CD4;
+        color: white;
+        padding: 8px 12px ;
+        border-radius: 8px;
+        text-decoration: none;
+    }
+
+    .button-wrapper {
+        padding: 25px 25px 25px 0px;
+    }
+
+    .emergency-link {
+        color: gray;
+        font-size: small;
+    }
+
+    .notification-content {
+        border: 1px solid #ccc;
+        padding: 16px;
+        margin-top: 10px;
+        border-radius: 16px;
+    }
+
+    .bold-text {
+        font-weight: bold;
+    }
+
+    header {
+        background-color: #353D47;
+        font-style: italic;
+        color: white;
+        font-size: smaller;
+        padding: 10px;
+    }
+
+    #message-body {
+        background-color: white;
+        padding: 10px;
+    }
+
+    footer {
+        background-color: #353D47;
+        font-style: italic;
+        color: white;
+        font-size: smaller;
+        padding: 5px;
+    }
+</style>
+</th:block>
+
+<!--
+ Fragment containing Head meta data & icon link
+-->
+<th:block th:fragment="headMetaDataAndIconLink">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/favicon.svg|}" />
+</th:block>
+
 
 <!--
  Fragment containing Artemis Logo email header

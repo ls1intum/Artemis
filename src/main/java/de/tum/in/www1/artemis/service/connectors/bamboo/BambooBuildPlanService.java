@@ -117,12 +117,13 @@ public class BambooBuildPlanService {
         final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
+        final boolean recordTestwiseCoverage = Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && "SOLUTION".equals(planKey);
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryName, testRepositoryName,
                 programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryName, auxiliaryRepositories)
                         .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
                                 programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
-                                programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
+                                recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
 
         bambooServer.publish(plan);
         setBuildPlanPermissionsForExercise(programmingExercise, plan.getKey().toString());
@@ -153,7 +154,7 @@ public class BambooBuildPlanService {
     }
 
     private Stage createBuildStage(ProgrammingLanguage programmingLanguage, ProjectType projectType, String packageName, final boolean sequentialBuildRuns,
-            Boolean staticCodeAnalysisEnabled, boolean checkoutSolutionRepository, List<AuxiliaryRepository> auxiliaryRepositories) {
+            Boolean staticCodeAnalysisEnabled, boolean checkoutSolutionRepository, final boolean recordTestwiseCoverage, List<AuxiliaryRepository> auxiliaryRepositories) {
         final var assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         final var testPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         VcsCheckoutTask checkoutTask;
@@ -179,26 +180,39 @@ public class BambooBuildPlanService {
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
+                // the project type can be null for Kotlin exercises and exercises created before the project type was
+                // added to Artemis. The project type for these exercises is implicitly Maven (because Gradle did not
+                // exist in Artemis yet)
+                boolean isMavenProject = projectType == null || projectType.isMaven();
+
+                var defaultTasks = new ArrayList<Task<?, ?>>();
+                defaultTasks.add(checkoutTask);
+                var finalTasks = new ArrayList<Task<?, ?>>();
+                var artifacts = new ArrayList<Artifact>();
+
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
-                    // Create artifacts and a final task for the execution of static code analysis
-                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
-                    String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
-                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
-                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
-                    defaultJob.finalTasks(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
-                    defaultJob.artifacts(artifacts);
+                    modifyBuildConfigurationForStaticCodeAnalysisForJavaAndKotlinExercise(isMavenProject, finalTasks, artifacts);
                 }
 
                 if (!sequentialBuildRuns) {
-                    return defaultStage
-                            .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
+                    modifyBuildConfigurationForRegularTestsForJavaAndKotlinExercise(isMavenProject, recordTestwiseCoverage, defaultTasks, finalTasks, artifacts);
                 }
                 else {
-                    return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                            new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests")
-                                    .hasTests(true),
-                            new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+                    modifyBuildConfigurationForSequentialTestsForJavaAndKotlinExercise(isMavenProject, defaultTasks, finalTasks);
                 }
+
+                // This conversion is required because the attributes are passed as varargs-parameter which is only possible
+                // for array collections
+                var defaultTasksArray = defaultTasks.toArray(new Task<?, ?>[defaultTasks.size()]);
+                var finalTasksArray = finalTasks.toArray(new Task<?, ?>[finalTasks.size()]);
+                var artifactsArray = artifacts.toArray(new Artifact[artifacts.size()]);
+
+                // assign tasks and artifacts to job
+                defaultJob.tasks(defaultTasksArray);
+                defaultJob.finalTasks(finalTasksArray);
+                defaultJob.artifacts(artifactsArray);
+
+                return defaultStage.jobs(defaultJob);
             }
             case PYTHON -> {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "test-reports/*results.xml");
@@ -275,6 +289,80 @@ public class BambooBuildPlanService {
             // this is needed, otherwise the compiler complaints with missing return
             // statement
             default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
+        }
+    }
+
+    /**
+     * Modify the lists containing default tasks, final tasks and artifacts for executing a static code analysis for
+     * Java and Kotlin exercises.
+     * @param isMavenProject whether the project is a Maven build (or implicitly a Gradle build)
+     * @param finalTasks the list containing the final tasks for the build plan to be created
+     * @param artifacts the list containing all artifacts for the build plan to be created
+     */
+    private void modifyBuildConfigurationForStaticCodeAnalysisForJavaAndKotlinExercise(boolean isMavenProject, List<Task<?, ?>> finalTasks, List<Artifact> artifacts) {
+        // Create artifacts and a final task for the execution of static code analysis
+        List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
+        var scaArtifacts = staticCodeAnalysisTools.stream()
+                .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toList();
+
+        if (isMavenProject) {
+            String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
+            finalTasks.add(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
+        }
+        else {
+            finalTasks.add(new ScriptTask().inlineBody("./gradlew check").description("Static Code Analysis"));
+        }
+        artifacts.addAll(scaArtifacts);
+    }
+
+    /**
+     * Modify the lists containing default and final tasks for executing a non-sequential test run
+     * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
+     * @param recordTestwiseCoverage whether the testwise coverage should be recorded (only available for Gradle projects)
+     * @param defaultTasks the list containing the default tasks for the build plan to be created
+     * @param finalTasks the list containing the final tasks for the build plan to be created
+     * @param artifacts the list containing all artifacts for the build plan to be created
+     */
+    private void modifyBuildConfigurationForRegularTestsForJavaAndKotlinExercise(boolean isMavenProject, boolean recordTestwiseCoverage, List<Task<?, ?>> defaultTasks,
+            List<Task<?, ?>> finalTasks, List<Artifact> artifacts) {
+        if (isMavenProject) {
+            defaultTasks.add(new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true));
+        }
+        else {
+            // setting the permission as a final task is required as a workaround because the docker container runs as a root user
+            // and creates files that cannot be deleted by Bamboo because it does not have these root permissions
+            String testCommand = "./gradlew clean test";
+            if (recordTestwiseCoverage) {
+                testCommand += " tiaTests --run-all-tests";
+                artifacts.add(new Artifact().name("testwiseCoverageReport").location("build/reports/testwise-coverage/tiaTests").copyPattern("tiaTests.json"));
+            }
+            defaultTasks.add(new ScriptTask().inlineBody(testCommand).description("Tests"));
+            finalTasks.add(new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/test/*.xml").description("JUnit Parser"));
+            finalTasks.add(new ScriptTask().inlineBody("chmod -R 777 ${bamboo.working.directory}").description("Setup working directory for cleanup"));
+        }
+    }
+
+    /**
+     * Modify the lists containing default and final tasks for executing a sequential test run
+     * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
+     * @param defaultTasks the list containing the default tasks for the build plan to be created
+     * @param finalTasks the list containing the final tasks for the build plan to be created
+     */
+    private void modifyBuildConfigurationForSequentialTestsForJavaAndKotlinExercise(boolean isMavenProject, List<Task<?, ?>> defaultTasks, List<Task<?, ?>> finalTasks) {
+        if (isMavenProject) {
+            defaultTasks
+                    .add(new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests").hasTests(true));
+            defaultTasks.add(new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true));
+        }
+        else {
+            // setting the permission as a final task is required as a workaround because the docker container runs as a root user
+            // and creates files that cannot be deleted by Bamboo because it does not have these root permissions
+            finalTasks.add(new TestParserTask(TestParserTaskProperties.TestType.JUNIT)
+                    .resultDirectories("**/test-results/structuralTests/*.xml,**/test-results/behaviorTests/*.xml").description("JUnit Parser"));
+            finalTasks.add(new ScriptTask().inlineBody("chmod -R 777 ${bamboo.working.directory}").description("Setup working directory for cleanup"));
+            // the script task for executing the behavior tests must not clean the build files because the test parser would not have parsed the tests for the structural tests yet
+            defaultTasks.add(new ScriptTask().inlineBody("./gradlew clean structuralTests").description("Structural tests"));
+            defaultTasks.add(new ScriptTask().inlineBody("./gradlew behaviorTests").description("Behavior tests"));
         }
     }
 

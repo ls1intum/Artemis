@@ -178,8 +178,8 @@ public class OracleGenerator {
 
     private static List<Path> retrieveJavaSourceFiles(Path start) {
         var matcher = FileSystems.getDefault().getPathMatcher("glob:**/*.java");
-        try {
-            return Files.walk(start).filter(Files::isRegularFile).filter(matcher::matches).toList();
+        try (var files = Files.walk(start)) {
+            return files.filter(Files::isRegularFile).filter(matcher::matches).toList();
         }
         catch (IOException e) {
             var error = "Could not retrieve the project files to generate the oracle";

@@ -120,9 +120,10 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                     deleteFileIfPresent(repository, SCA_CONFIG_FOLDER);
                 }
             }
-            programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", userRepository.getUser());
+            // TODO: double check that this still works correctly
+            programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", false, userRepository.getUser());
         }
-        catch (IOException | GitAPIException | InterruptedException | XmlPullParserException exception) {
+        catch (IOException | GitAPIException | XmlPullParserException exception) {
             log.error("Updating of template files of repository {} for exercise {} failed with error: {}", repositoryType.name(), exercise.getId(), exception.getMessage());
             // Rollback by deleting the local repository
             gitService.deleteLocalRepository(exercise.getRepositoryURL(repositoryType));

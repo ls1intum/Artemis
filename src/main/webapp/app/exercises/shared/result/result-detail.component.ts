@@ -13,7 +13,6 @@ import {
 } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { getExercise } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
@@ -35,6 +34,7 @@ import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-sv
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
+import { Course } from 'app/entities/course.model';
 
 export enum FeedbackItemType {
     Issue,
@@ -68,9 +68,9 @@ export class ResultDetailComponent implements OnInit {
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    readonly getCourseFromExercise = getCourseFromExercise;
     readonly FeedbackItemType = FeedbackItemType;
 
+    @Input() exercise?: Exercise;
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
@@ -96,6 +96,7 @@ export class ResultDetailComponent implements OnInit {
     filteredFeedbackList: FeedbackItem[];
     backupFilteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
+    course?: Course;
 
     showScoreChartTooltip = false;
 
@@ -117,12 +118,6 @@ export class ResultDetailComponent implements OnInit {
     showOnlyNegativeFeedback = false;
 
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
-
-    get exercise(): Exercise | undefined {
-        if (this.result.participation) {
-            return getExercise(this.result.participation);
-        }
-    }
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -147,6 +142,44 @@ export class ResultDetailComponent implements OnInit {
      */
     ngOnInit(): void {
         this.isLoading = true;
+
+        this.initializeExerciseInformation();
+        this.fetchAdditionalInformation();
+
+        this.commitHash = this.getCommitHash().slice(0, 11);
+
+        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
+        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
+            this.commitHashURLTemplate = info?.commitHashURLTemplate;
+            this.commitUrl = this.getCommitUrl();
+        });
+    }
+
+    /**
+     * Sets up the information related to the exercise.
+     * @private
+     */
+    private initializeExerciseInformation() {
+        this.exercise ??= this.result.participation?.exercise;
+        if (this.exercise) {
+            this.course = getCourseFromExercise(this.exercise);
+        }
+
+        if (!this.exerciseType && this.exercise?.type) {
+            this.exerciseType = this.exercise.type;
+        }
+
+        // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
+        if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
+            this.exerciseType = ExerciseType.PROGRAMMING;
+        }
+    }
+
+    /**
+     * Fetches additional information about feedbacks and build logs if required.
+     * @private
+     */
+    private fetchAdditionalInformation() {
         of(this.result.feedbacks)
             .pipe(
                 // If the result already has feedbacks assigned to it, don't query the server.
@@ -154,11 +187,6 @@ export class ResultDetailComponent implements OnInit {
                     feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.participation!.id!, this.result.id!),
                 ),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
-                    // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
-                    if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
-                        this.exerciseType = ExerciseType.PROGRAMMING;
-                    }
-
                     /*
                      * If we have feedback, filter it if needed, distinguish between test case and static code analysis
                      * feedback and assign the lists to the component
@@ -170,10 +198,12 @@ export class ResultDetailComponent implements OnInit {
                         this.feedbackList = this.createFeedbackItems(filteredFeedback);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
+
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);
                         }
                     }
+
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
                     if (
                         this.exerciseType === ExerciseType.PROGRAMMING &&
@@ -182,6 +212,7 @@ export class ResultDetailComponent implements OnInit {
                     ) {
                         return this.fetchAndSetBuildLogs(this.result.participation.id!, this.result.id);
                     }
+
                     return of(null);
                 }),
                 catchError(() => {
@@ -192,14 +223,6 @@ export class ResultDetailComponent implements OnInit {
             .subscribe(() => {
                 this.isLoading = false;
             });
-
-        this.commitHash = this.getCommitHash().slice(0, 11);
-
-        // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
-        this.profileService.getProfileInfo().subscribe((info: ProfileInfo) => {
-            this.commitHashURLTemplate = info?.commitHashURLTemplate;
-            this.commitUrl = this.getCommitUrl();
-        });
     }
 
     /**
@@ -220,35 +243,31 @@ export class ResultDetailComponent implements OnInit {
         if (!this.feedbackFilter) {
             return [...feedbackList];
         } else {
-            return this.feedbackFilter
-                .map((filterText) => {
-                    return feedbackList.find(({ text }) => text === filterText);
-                })
-                .filter(Boolean) as Feedback[];
+            return this.feedbackFilter.map((filterText) => feedbackList.find(({ text }) => text === filterText)).filter(Boolean) as Feedback[];
         }
     };
 
     /**
-     * computes the feedback preview for feedback texts with multiple lines or feedback that is longer than <feedbackPreviewCharacterLimit> characters
-     * @param text the feedback.detail Text
-     * @return the preview text (one line of text with at most <feedbackPreviewCharacterLimit> characters)
+     * Computes the feedback preview for feedback texts with multiple lines or feedback that is longer than {@link feedbackPreviewCharacterLimit} characters.
+     * @param text The feedback detail text.
+     * @return One line of text with at most {@link feedbackPreviewCharacterLimit} characters.
      */
-    private static computeFeedbackPreviewText(text: string | undefined): string | undefined {
-        if (text) {
-            if (text.includes('\n')) {
-                // if there are multiple lines, only use the first one
-                const firstLine = text.slice(0, text.indexOf('\n'));
-                if (firstLine.length > feedbackPreviewCharacterLimit) {
-                    return firstLine.slice(0, feedbackPreviewCharacterLimit);
-                } else {
-                    return firstLine;
-                }
-            } else if (text.length > feedbackPreviewCharacterLimit) {
-                return text.slice(0, feedbackPreviewCharacterLimit);
-            }
+    private static computeFeedbackPreviewText(text?: string): string | undefined {
+        if (!text) {
+            return undefined;
         }
-        // for all other cases
-        return undefined; // this means the previewText is not used
+
+        if (text.includes('\n')) {
+            // if there are multiple lines, only use the first one
+            const firstLine = text.slice(0, text.indexOf('\n'));
+            if (firstLine.length > feedbackPreviewCharacterLimit) {
+                return firstLine.slice(0, feedbackPreviewCharacterLimit);
+            } else {
+                return firstLine;
+            }
+        } else if (text.length > feedbackPreviewCharacterLimit) {
+            return text.slice(0, feedbackPreviewCharacterLimit);
+        }
     }
 
     /**
@@ -258,71 +277,7 @@ export class ResultDetailComponent implements OnInit {
      */
     private createFeedbackItems(feedbacks: Feedback[]): FeedbackItem[] {
         if (this.exerciseType === ExerciseType.PROGRAMMING) {
-            return feedbacks.map((feedback) => {
-                const previewText = ResultDetailComponent.computeFeedbackPreviewText(feedback.detailText);
-                if (Feedback.isSubmissionPolicyFeedback(feedback)) {
-                    const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
-                    return {
-                        type: FeedbackItemType.Policy,
-                        category: 'Submission Policy',
-                        title: submissionPolicyTitle,
-                        text: feedback.detailText,
-                        previewText,
-                        positive: false,
-                        credits: feedback.credits,
-                        appliedCredits: feedback.credits,
-                    };
-                } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
-                    const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
-                    const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
-                    const text = this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
-                    const scaPreviewText = ResultDetailComponent.computeFeedbackPreviewText(text);
-                    return {
-                        type: FeedbackItemType.Issue,
-                        category: 'Code Issue',
-                        title: `${scaCategory} Issue in file ${this.getIssueLocation(scaIssue)}`.trim(),
-                        text,
-                        previewText: scaPreviewText,
-                        positive: false,
-                        credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
-                        appliedCredits: feedback.credits,
-                    };
-                } else if (feedback.type === FeedbackType.AUTOMATIC) {
-                    return {
-                        type: FeedbackItemType.Test,
-                        category: this.showTestDetails ? 'Test Case' : 'Feedback',
-                        title: !this.showTestDetails
-                            ? undefined
-                            : feedback.positive === undefined
-                            ? `No result information for ${feedback.text}`
-                            : `Test ${feedback.text} ${feedback.positive ? 'passed' : 'failed'}`,
-                        text: feedback.detailText,
-                        previewText,
-                        positive: feedback.positive,
-                        credits: feedback.credits,
-                    };
-                } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
-                    return {
-                        type: feedback.isSubsequent ? FeedbackItemType.Subsequent : FeedbackItemType.Feedback,
-                        category: this.showTestDetails ? 'Tutor' : 'Feedback',
-                        title: feedback.text,
-                        text: feedback.detailText ? feedback.gradingInstruction.feedback + '\n' + feedback.detailText : feedback.gradingInstruction.feedback,
-                        previewText,
-                        positive: feedback.positive,
-                        credits: feedback.credits,
-                    };
-                } else {
-                    return {
-                        type: FeedbackItemType.Feedback,
-                        category: this.showTestDetails ? 'Tutor' : 'Feedback',
-                        title: feedback.text,
-                        text: feedback.detailText,
-                        previewText,
-                        positive: feedback.positive,
-                        credits: feedback.credits,
-                    };
-                }
-            });
+            return feedbacks.map((feedback) => this.createProgrammingExerciseFeedbackItem(feedback));
         } else {
             return feedbacks.map((feedback) => ({
                 type: FeedbackItemType.Feedback,
@@ -337,16 +292,146 @@ export class ResultDetailComponent implements OnInit {
     }
 
     /**
+     * Creates a feedback item for feedback received for a programming exercise.
+     * @param feedback The feedback from which the feedback item should be created.
+     * @private
+     */
+    private createProgrammingExerciseFeedbackItem(feedback: Feedback): FeedbackItem {
+        const previewText = ResultDetailComponent.computeFeedbackPreviewText(feedback.detailText);
+
+        if (Feedback.isSubmissionPolicyFeedback(feedback)) {
+            return this.createProgrammingExerciseSubmissionPolicyFeedbackItem(feedback, previewText);
+        } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
+            return this.createProgrammingExerciseScaFeedbackItem(feedback);
+        } else if (feedback.type === FeedbackType.AUTOMATIC) {
+            return this.createProgrammingExerciseAutomaticFeedbackItem(feedback, previewText);
+        } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
+            return this.createProgrammingExerciseGradingInstructionFeedbackItem(feedback, previewText);
+        } else {
+            return this.createProgrammingExerciseTutorFeedbackItem(feedback, previewText);
+        }
+    }
+
+    /**
+     * Creates a feedback item from a submission policy feedback.
+     * @param feedback The submission policy feedback.
+     * @param previewText The preview text for the feedback item.
+     * @private
+     */
+    private createProgrammingExerciseSubmissionPolicyFeedbackItem(feedback: Feedback, previewText?: string): FeedbackItem {
+        const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
+
+        return {
+            type: FeedbackItemType.Policy,
+            category: 'Submission Policy',
+            title: submissionPolicyTitle,
+            text: feedback.detailText,
+            previewText,
+            positive: false,
+            credits: feedback.credits,
+            appliedCredits: feedback.credits,
+        };
+    }
+
+    /**
+     * Creates a feedback item from a feedback generated from static code analysis.
+     * @param feedback A static code analysis feedback.
+     * @private
+     */
+    private createProgrammingExerciseScaFeedbackItem(feedback: Feedback): FeedbackItem {
+        const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
+        const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
+        const text = this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
+        const previewText = ResultDetailComponent.computeFeedbackPreviewText(text);
+
+        return {
+            type: FeedbackItemType.Issue,
+            category: 'Code Issue',
+            title: `${scaCategory} Issue in file ${ResultDetailComponent.getIssueLocation(scaIssue)}`.trim(),
+            text,
+            previewText,
+            positive: false,
+            credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
+            appliedCredits: feedback.credits,
+        };
+    }
+
+    /**
      * Builds the location string for a static code analysis issue
      * @param issue The sca issue
      */
-    getIssueLocation(issue: StaticCodeAnalysisIssue): string {
+    private static getIssueLocation(issue: StaticCodeAnalysisIssue): string {
         const lineText = !issue.endLine || issue.startLine === issue.endLine ? ` at line ${issue.startLine}` : ` at lines ${issue.startLine}-${issue.endLine}`;
         let columnText = '';
         if (issue.startColumn) {
             columnText = !issue.endColumn || issue.startColumn === issue.endColumn ? ` column ${issue.startColumn}` : ` columns ${issue.startColumn}-${issue.endColumn}`;
         }
         return issue.filePath + lineText + columnText;
+    }
+
+    /**
+     * Creates a feedback item from a feedback generated from an automatic test case result.
+     * @param feedback A feedback received from an automatic test case.
+     * @param previewText The preview text for the feedback item.
+     * @private
+     */
+    private createProgrammingExerciseAutomaticFeedbackItem(feedback: Feedback, previewText?: string): FeedbackItem {
+        let title = undefined;
+        if (this.showTestDetails) {
+            if (feedback.positive === undefined) {
+                title = `No result information for ${feedback.text}`;
+            } else {
+                title = `Test ${feedback.text} ${feedback.positive ? 'passed' : 'failed'}`;
+            }
+        }
+
+        return {
+            type: FeedbackItemType.Test,
+            category: this.showTestDetails ? 'Test Case' : 'Feedback',
+            title,
+            text: feedback.detailText,
+            previewText,
+            positive: feedback.positive,
+            credits: feedback.credits,
+        };
+    }
+
+    /**
+     * Creates a feedback item for a manual feedback where the tutor used a grading instruction.
+     * @param feedback The manual feedback where a grading instruction was used.
+     * @param previewText The preview text for the feedback item.
+     * @private
+     */
+    private createProgrammingExerciseGradingInstructionFeedbackItem(feedback: Feedback, previewText?: string): FeedbackItem {
+        const gradingInstruction = feedback.gradingInstruction!;
+
+        return {
+            type: feedback.isSubsequent ? FeedbackItemType.Subsequent : FeedbackItemType.Feedback,
+            category: this.showTestDetails ? 'Tutor' : 'Feedback',
+            title: feedback.text,
+            text: gradingInstruction.feedback + (feedback.detailText ? '\n' + feedback.detailText : ''),
+            previewText,
+            positive: feedback.positive,
+            credits: feedback.credits,
+        };
+    }
+
+    /**
+     * Creates a feedback item for a regular tutor feedback not using a grading instruction.
+     * @param feedback The manual feedback from which the feedback item should be created.
+     * @param previewText The preview text for the feedback item.
+     * @private
+     */
+    private createProgrammingExerciseTutorFeedbackItem(feedback: Feedback, previewText?: string): FeedbackItem {
+        return {
+            type: FeedbackItemType.Feedback,
+            category: this.showTestDetails ? 'Tutor' : 'Feedback',
+            title: feedback.text,
+            text: feedback.detailText,
+            previewText,
+            positive: feedback.positive,
+            credits: feedback.credits,
+        };
     }
 
     /**
@@ -460,7 +545,7 @@ export class ResultDetailComponent implements OnInit {
             }
         }
 
-        const course = getCourseFromExercise(this.exercise!);
+        const course = getCourseFromExercise(this.exercise);
 
         const appliedNegativePoints = roundValueSpecifiedByCourseSettings(codeIssueCredits + negativeCredits, course);
         const receivedNegativePoints = roundValueSpecifiedByCourseSettings(codeIssuePenalties + negativeCredits, course);
@@ -479,7 +564,7 @@ export class ResultDetailComponent implements OnInit {
         return (
             this.result.participation &&
             isProgrammingExerciseStudentParticipation(this.result.participation) &&
-            isResultPreliminary(this.result!, this.exercise as ProgrammingExercise)
+            isResultPreliminary(this.result, this.exercise as ProgrammingExercise)
         );
     }
 
@@ -556,7 +641,11 @@ export class ResultDetailComponent implements OnInit {
                 if (points.name === name) {
                     const color = this.ngxColors.domain[index];
                     // if the bar is not transparent yet, make it transparent. Else, reset the normal color
-                    this.ngxColors.domain[index] = color !== 'rgba(255,255,255,0)' ? 'rgba(255,255,255,0)' : index === 0 ? GraphColors.GREEN : GraphColors.RED;
+                    if (color !== 'rgba(255,255,255,0)') {
+                        this.ngxColors.domain[index] = 'rgba(255,255,255,0)';
+                    } else {
+                        this.ngxColors.domain[index] = index === 0 ? GraphColors.GREEN : GraphColors.RED;
+                    }
 
                     // update is necessary for the colors to change
                     this.ngxData = [...this.ngxData];

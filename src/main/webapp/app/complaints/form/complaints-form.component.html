@@ -31,11 +31,16 @@
                 {{ 'artemisApp.complaint.exclusivityDisclaimer' | artemisTranslate }}
             </p>
 
-            <textarea id="complainTextArea" class="col-12 px-1" rows="4" maxLength="2000" [(ngModel)]="complaintText"></textarea>
+            <textarea id="complainTextArea" class="col-12 px-1" rows="4" [maxLength]="this.course!.maxComplaintTextLimit!" [(ngModel)]="complaintText"></textarea>
 
             <div class="row">
                 <div class="col-6">
-                    <button id="submit-complaint" class="btn btn-primary" [disabled]="!complaintText" (click)="createComplaint()">
+                    <button
+                        id="submit-complaint"
+                        class="btn btn-primary"
+                        [disabled]="!complaintText || complaintTextLength() > this.course!.maxComplaintTextLimit!"
+                        (click)="createComplaint()"
+                    >
                         {{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.submit' | artemisTranslate) : ('artemisApp.moreFeedback.button' | artemisTranslate) }}
                     </button>
                 </div>

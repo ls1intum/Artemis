@@ -32,6 +32,14 @@
                 "title": "Beschwerdefrist in Tagen nach dem Ergebnis",
                 "description": "Diese Zahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Einreichungsfrist der Bewertung oder Ergebnisdatum, je nachdem, welches später liegt). Studierende können sich nach Ablauf dieser Frist nicht mehr beschweren."
             },
+            "maxComplaintTextLimit": {
+                "title": "Maximale Anzahl von Zeichen pro Beschwerde",
+                "description": "Diese Nummer gibt an, wie viele Zeichen ein Student maximal pro Beschwerde verwenden darf."
+            },
+            "maxComplaintResponseTextLimit": {
+                "title": "Maximale Anzahl von Zeichen für Antworten auf Beschwerden",
+                "description": "Diese Nummer gibt an, wie viele Zeichen für die Antwort pro Beschwerde maximal verwendet werden darf."
+            },
             "postsEnabled": {
                 "title": "Posts von Studierenden aktivieren",
                 "description": "Postings auf Vorlesung- und Übungsseite aktivieren / deaktivieren"
@@ -66,6 +74,7 @@
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für den Kurs aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl"
             },
             "accuracyOfScores": "Anzahl der Nachkommastellen bei der Berechnung von Punktzahlen",
+            "defaultProgrammingLanguage": "Standard-Programmiersprache",
             "gradingSystem": "Notenschlüssel",
             "testCourse": {
                 "title": "Testkurs",
