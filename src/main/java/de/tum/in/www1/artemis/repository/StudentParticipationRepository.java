@@ -73,6 +73,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
+                AND p.initializationState <> 'ARCHIVED'
                 AND p.student.login = :#{#username}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
@@ -81,8 +82,19 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.initializationState <> 'ARCHIVED'
+                AND p.student.login = :#{#username}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    Optional<StudentParticipation> findNotFinishedWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
             where p.exercise.id = :#{#exerciseId}
                 AND p.team.id = :#{#teamId}
+                AND p.initializationState <> 'ARCHIVED'
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
@@ -91,7 +103,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results
-            WHERE p.exercise.id = :#{#exerciseId} AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResult(@Param("exerciseId") Long exerciseId);
 
@@ -109,7 +122,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor
-            WHERE p.exercise.id = :#{#exerciseId} AND p.testRun = false
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND p.testRun = false
             """)
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
@@ -134,6 +148,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacksIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
     // TODO SE improve
+
     /**
      * Get all participations for an exercise with each latest result (determined by id).
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
@@ -367,6 +382,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             @Param("correctionRound") long correctionRound);
 
     // TODO SE This one need to be improved.
+
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
@@ -626,7 +642,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     /**
      * Count the number of submissions for each participation for a given team in a course
      *
-     * @param courseId the id of the course for which to consider participations
+     * @param courseId      the id of the course for which to consider participations
      * @param teamShortName the short name of the team for which to consider participations
      * @return Tuples of participation ids and number of submissions per participation
      */
@@ -702,7 +718,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     /**
      * filters the relevant results by removing all irrelevant ones
-     * @param participations the participations to get filtered
+     *
+     * @param participations     the participations to get filtered
      * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
      * @return the filtered participations
      */
@@ -786,7 +803,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     /**
      * Get a mapping of participation ids to the number of submission for each participation.
      *
-     * @param courseId the id of the course for which to consider participations
+     * @param courseId      the id of the course for which to consider participations
      * @param teamShortName the short name of the team for which to consider participations
      * @return the number of submissions per participation in the given course for the team
      */
@@ -867,6 +884,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     /**
      * Checks if the exercise has any test runs and sets the transient property if it does
+     *
      * @param exercise - the exercise for which we check if test runs exist
      */
     default void checkTestRunsExist(Exercise exercise) {

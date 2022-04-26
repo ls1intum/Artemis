@@ -413,6 +413,40 @@ public class StudentExamService {
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
+    public List<StudentParticipation> setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam) {
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        setUpExerciseParticipationsAndSubmissionsForTestExam(studentExam, generatedParticipations);
+        studentParticipationRepository.saveAll(generatedParticipations);
+        return generatedParticipations;
+    }
+
+    private void setUpExerciseParticipationsAndSubmissionsForTestExam(StudentExam studentExam, List<StudentParticipation> generatedParticipations) {
+        User student = studentExam.getUser();
+
+        for (Exercise exercise : studentExam.getExercises()) {
+            SecurityUtils.setAuthorizationObject();
+            try {
+                // Load lazy property
+                if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+                    final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                    programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
+                }
+                // this will also create initial (empty) submissions for quiz, text, modeling and file upload
+                var participation = participationService.startExerciseWithNewParticipation(exercise, student, true);
+                generatedParticipations.add(participation);
+                // Unlock Repositories if the exam starts within 5 minutes
+                if (exercise instanceof ProgrammingExercise programmingExercise
+                        && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
+                    instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
+                }
+            }
+            catch (Exception ex) {
+                log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
+                        ex.getMessage(), ex);
+            }
+        }
+    }
+
     public StudentExam setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissionsForTestExam(studentExam, generatedParticipations);

@@ -26,6 +26,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results
             WHERE p.id = :#{#participationId}
+                AND p.initializationState <> 'ARCHIVED'
             """)
     Optional<Participation> findByIdWithResultsAndSubmissionsResults(@Param("participationId") Long participationId);
 
@@ -35,13 +36,15 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             LEFT JOIN FETCH s.results r
             WHERE p.id = :participationId
                 AND (s.id = (SELECT max(id) FROM p.submissions) OR s.id = NULL)
+                AND p.initializationState <> 'ARCHIVED'
             """)
     Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") Long participationId);
 
     @Query("""
             SELECT p FROM Participation p
             LEFT JOIN FETCH p.submissions s
-            WHERE p.id = :#{#participationId}
+            WHERE p.id = :#{#participationId
+                AND p.initializationState <> 'ARCHIVED'
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") Long participationId);
@@ -60,6 +63,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             SELECT max(p.individualDueDate)
             FROM Participation p
             WHERE p.exercise.id = :#{#exerciseId}
+                AND p.initializationState <> 'ARCHIVED'
                 AND p.individualDueDate IS NOT null
             """)
     Optional<ZonedDateTime> findLatestIndividualDueDate(@Param("exerciseId") Long exerciseId);
@@ -69,6 +73,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             FROM Participation p
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.individualDueDate IS NOT null
+                AND p.initializationState <> 'ARCHIVED'
             """)
     Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
 

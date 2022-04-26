@@ -40,8 +40,19 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                   WHERE se.testRun = FALSE
                       AND se.exam.id = :#{#examId}
                       AND se.user.id = :#{#userId}
+                      AND se.exam.testExam = false
             """)
     Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
+
+    @Query("""
+            SELECT DISTINCT se FROM StudentExam se
+            LEFT JOIN FETCH se.exercises e
+                  WHERE se.testRun = FALSE
+                      AND se.exam.id = :#{#examId}
+                      AND se.user.id = :#{#userId}
+                      AND se.exam.testExam = false
+            """)
+    Optional<StudentExam> findLatestStudentExamWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT se FROM StudentExam se

@@ -154,6 +154,58 @@ public class ParticipationService {
         return studentParticipationRepository.saveAndFlush(participation);
     }
 
+    public StudentParticipation startExerciseWithNewParticipation(Exercise exercise, Participant participant, boolean createInitialSubmission) {
+        // common for all exercises
+        // Check if participation already exists
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+        StudentParticipation participation;
+        optionalStudentParticipation.ifPresent(studentParticipation -> studentParticipation.setInitializationState(ARCHIVED));
+        // if (optionalStudentParticipation.isEmpty()) {
+        // create a new participation only if no participation can be found
+        if (exercise instanceof ProgrammingExercise) {
+            participation = new ProgrammingExerciseStudentParticipation();
+        }
+        else {
+            participation = new StudentParticipation();
+        }
+        participation.setInitializationState(UNINITIALIZED);
+        participation.setExercise(exercise);
+        participation.setParticipant(participant);
+        participation = studentParticipationRepository.saveAndFlush(participation);
+        /*
+         * } else { // make sure participation and exercise are connected participation = optionalStudentParticipation.get(); participation.setExercise(exercise); }
+         */
+
+        if (exercise instanceof ProgrammingExercise) {
+            // fetch again to get additional objects
+            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        }
+        else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
+            if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED) {
+                // || participation.getInitializationState() == FINISHED && !(exercise instanceof QuizExercise)) {
+                // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side.
+                // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
+                participation.setInitializationState(INITIALIZED);
+            }
+
+            if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
+                participation.setInitializationDate(ZonedDateTime.now());
+            }
+            // TODO: load submission with exercise for exam edge case:
+            // clients creates missing participation for exercise, call on server succeeds, but response to client is lost
+            // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
+            // if (optionalStudentParticipation.isEmpty() ||
+            if (!submissionRepository.existsByParticipationId(participation.getId())) {
+                // initialize a modeling, text, file upload or quiz submission
+                if (createInitialSubmission) {
+                    submissionRepository.initializeSubmission(participation, exercise, null);
+                }
+            }
+        }
+        return studentParticipationRepository.saveAndFlush(participation);
+    }
+
     /**
      * Start a programming exercise participation (which does not exist yet) by creating and configuring a student git repository (step 1) and a student build plan (step 2)
      * based on the templates in the given programming exercise
