@@ -227,6 +227,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     }
 
     /**
+     * Retrieve a user by its login with authorities, or else throw exception
+     * @param login the login of the user to search
+     * @return the user entity if it exists
+     */
+    @NotNull
+    default User getUserWithAuthoritiesByLoginElseThrow(String login) {
+        return findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User: " + login));
+    }
+
+    /**
      * Get user with user groups and authorities of currently logged in user
      *
      * @return currently logged in user

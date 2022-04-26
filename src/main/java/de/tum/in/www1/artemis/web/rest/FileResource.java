@@ -28,10 +28,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.FileUploadSubmission;
-import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -47,7 +44,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
- * REST controller for managing Course.
+ * REST controller for managing Files.
  */
 @RestController
 @RequestMapping("/api")
@@ -73,6 +70,8 @@ public class FileResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final UserRepository userRepository;
+
     // NOTE: this list has to be the same as in file-uploader.service.ts
     private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
 
@@ -86,7 +85,7 @@ public class FileResource {
 
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
-            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository, UserRepository userRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -96,6 +95,7 @@ public class FileResource {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -350,10 +350,15 @@ public class FileResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
 
+        // Parse user information from the access token
+        var claims = this.tokenProvider.parseClaims(temporaryAccessToken);
+        String username = claims.getSubject();
+        User user = userRepository.getUserWithAuthoritiesByLoginElseThrow(username);
+
         Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
 
         List<String> attachmentLinks = lectureAttachments.stream()
-                .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, null) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
+                .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .sorted(Comparator.comparing(LectureUnit::getOrder))
                 .map(unit -> Paths
                         .get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
