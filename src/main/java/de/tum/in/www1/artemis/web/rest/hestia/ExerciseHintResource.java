@@ -178,7 +178,7 @@ public class ExerciseHintResource {
         log.debug("REST request to get ExerciseHint : {}", exerciseHintId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
+        var exerciseHint = exerciseHintRepository.findByIdWithRelationsElseThrow(exerciseHintId);
 
         if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
             throw new ConflictException("An exercise hint can only be retrieved if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
@@ -215,11 +215,11 @@ public class ExerciseHintResource {
      * or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @GetMapping("exercises/{exerciseId}/full-exercise-hints")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsWithRelationsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHints for Exercise: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseIdWithRelations(exerciseId);
         return ResponseEntity.ok(exerciseHints);
     }

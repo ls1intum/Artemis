@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.hestia;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,20 +25,33 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long> {
 
-    Set<ExerciseHint> findByExerciseId(Long exerciseId);
-
     @Query("""
             SELECT h
             FROM ExerciseHint h
-            LEFT JOIN FETCH h.solutionEntries tc
-            WHERE h.exercise.id = :exerciseId
+            LEFT JOIN FETCH h.solutionEntries se
+            WHERE h.id = :hintId
             """)
-    Set<ExerciseHint> findByExerciseIdWithRelations(Long exerciseId);
+    Optional<ExerciseHint> findByIdWithRelations(Long hintId);
+
+    @NotNull
+    default ExerciseHint findByIdWithRelationsElseThrow(long hintId) throws EntityNotFoundException {
+        return findByIdWithRelations(hintId).orElseThrow(() -> new EntityNotFoundException("Exercise Hint", hintId));
+    }
 
     @NotNull
     default ExerciseHint findByIdElseThrow(long exerciseHintId) throws EntityNotFoundException {
         return findById(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Exercise Hint", exerciseHintId));
     }
+
+    Set<ExerciseHint> findByExerciseId(Long exerciseId);
+
+    @Query("""
+            SELECT h
+            FROM ExerciseHint h
+            LEFT JOIN FETCH h.solutionEntries se
+            WHERE h.exercise.id = :exerciseId
+            """)
+    Set<ExerciseHint> findByExerciseIdWithRelations(Long exerciseId);
 
     /**
      * Copies the hints of an exercise to a new target exercise by cloning the hint objects and saving them
