@@ -1,5 +1,5 @@
 .panel-wrapper {
-    border: 1px solid var(--primary);
+    border: 1px solid var(--overview-blue-border-color);
     border-radius: 3px;
 
     .panel-header {
@@ -13,6 +13,6 @@
 
     .vertLine {
         height: 1px;
-        background-color: var(--primary);
+        background-color: var(--overview-blue-border-color);
     }
 }

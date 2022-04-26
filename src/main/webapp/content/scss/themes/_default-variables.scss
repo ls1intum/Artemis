@@ -370,3 +370,23 @@ $gt-tour-block-content-tt-background: #f2f2f2;
 $gt-tour-block-content-red: #ca2024;
 $gt-tour-block-step-hint-not-interaction-background: #f0f0f0;
 $gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
+
+// Apollon
+
+$apollon-primary: #2a8fbd;
+$apollon-primary-contrast: #212529;
+$apollon-secondary: #6c757d;
+$apollon-warning-yellow: #ffc800;
+$apollon-background: #ffffff;
+$apollon-background-variant: #e5e5e5;
+$apollon-gray: #e9ecef;
+$apollon-gray-variant: #343a40;
+
+$apollon-primary: $primary;
+$apollon-primary-contrast: $gray-900;
+$apollon-secondary: $gray-600;
+$apollon-warning-yellow: $warning;
+$apollon-background: white;
+$apollon-background-variant: $gray-100;
+$apollon-gray: $gray-200;
+$apollon-gray-variant: $gray-700;

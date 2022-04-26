@@ -13,7 +13,7 @@ $gray-800: #303030;
 $gray-900: #222;
 $black: #000;
 
-$blue: #375a7f;
+$blue: #3e8acc;
 $indigo: #6610f2;
 $purple: #6f42c1;
 $pink: #e83e8c;
@@ -217,7 +217,7 @@ $connection-warning-popover-body-background: #f1d1d1e0;
 $connection-warning-popover-body-shadow: rgba(0, 0, 0, 0.55);
 
 // Header Participation
-$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
+$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 5%), 15%);
 
 // Markdown Editor
 $md-wrapper-body-bg: $body-bg;
@@ -344,7 +344,7 @@ $overview-border-color: $border-color;
 $overview-light-border-color: darken($overview-border-color, 5%);
 $overview-light-background-color: rgba($overview-light-border-color, 0.3);
 $overview-light-primary-background-color: rgba($primary, 0.3);
-$overview-blue-border-color: $primary;
+$overview-blue-border-color: darken($primary, 20);
 $overview-tab-active-border-color: $body-color;
 $overview-refresh-overlay-bg-color: transparentize($neutral-dark, 0.5);
 $overview-refresh-overlay-color: $gray-400;
@@ -452,3 +452,22 @@ $gt-tour-block-content-tt-background: $gray-600;
 $gt-tour-block-content-red: #ca2024;
 $gt-tour-block-step-hint-not-interaction-background: $gray-800;
 $gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
+
+// Apollon
+$apollon-primary: #51a2a2;
+$apollon-primary-contrast: #eae1e1;
+$apollon-secondary: #6f85c2;
+$apollon-warning-yellow: #ffc800;
+$apollon-background: #1b2121;
+$apollon-background-variant: #3e4c4c;
+$apollon-gray: #343a40;
+$apollon-gray-variant: #6c757d;
+
+$apollon-primary: $link-color;
+$apollon-primary-contrast: white;
+$apollon-secondary: $gray-600;
+$apollon-warning-yellow: $warning;
+$apollon-background: $neutral-dark;
+$apollon-background-variant: lighten($neutral-dark, 10);
+$apollon-gray: lighten($neutral-dark, 5);
+$apollon-gray-variant: $gray-100;
