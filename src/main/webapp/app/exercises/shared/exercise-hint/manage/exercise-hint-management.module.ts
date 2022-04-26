@@ -6,7 +6,7 @@ import { exerciseHintRoute } from 'app/exercises/shared/exercise-hint/manage/exe
 import { ExerciseHintDetailComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-detail.component';
 import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
+import { CodeHintCastPipe, ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/shared/solution-entry.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
@@ -16,7 +16,7 @@ const ENTITY_STATES = [...exerciseHintRoute];
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule, AceEditorModule],
-    declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent, SolutionEntryComponent, CodeHintContainerComponent],
+    declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent, SolutionEntryComponent, CodeHintContainerComponent, CodeHintCastPipe],
     exports: [SolutionEntryComponent, CodeHintContainerComponent],
 })
 export class ArtemisExerciseHintManagementModule {}
