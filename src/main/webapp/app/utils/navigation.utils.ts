@@ -75,7 +75,6 @@ export class ArtemisNavigationUtilService {
 
     /**
      * Opens the target page in a new tab
-     * Used for routing via charts
      * @param route the target route
      */
     routeInNewTab(route: any[]): void {
