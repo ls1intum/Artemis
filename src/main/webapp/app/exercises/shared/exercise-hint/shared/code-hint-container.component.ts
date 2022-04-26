@@ -4,6 +4,10 @@ import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
+/**
+ * Component containing the solution entries for a {@link CodeHint}.
+ * The entries are sorted by name (primary) and start line number (secondary)
+ */
 @Component({
     selector: 'jhi-code-hint-container',
     templateUrl: './code-hint-container.component.html',
