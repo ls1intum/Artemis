@@ -176,7 +176,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.students.feature.gradeKey.descriptionTextOne',
             faFileAlt,
             undefined,
-            '/content/images/feature-overview/students/complaint.png',
+            '/content/images/feature-overview/students/student_grade_key.png',
         );
 
         this.features = [
@@ -331,7 +331,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.checklist.descriptionTextOne',
             faClipboardCheck,
             undefined,
-            '/content/images/feature-overview/instructors/complaint.png',
+            '/content/images/feature-overview/instructors/exam_checklist.png',
         );
 
         const featureGradeKey = new Feature(
@@ -340,7 +340,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.gradeKey.descriptionTextOne',
             faFileAlt,
             undefined,
-            '/content/images/feature-overview/instructors/complaint.png',
+            '/content/images/feature-overview/instructors/grade_key_editor.png',
         );
         this.features = [
             featureCreateConductAssess,

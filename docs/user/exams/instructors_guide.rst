@@ -229,7 +229,12 @@ During the exam creation and configuration, you can create your exam and configu
 - You can track the progress of the steps mentioned in this document and spot missed steps easily.
 - Each row of the checklist includes the name of the task, description and short summary where it is applicable and the page column which navigates the instructors to the relevant action.
 - Going through each task from the start until the current task and checking the description column contains no warnings or errors can help instructors conduct the exam smoothly.
-TODO Ata ss
+
+.. figure:: instructor/exam_checklist.png
+   :alt: Exam Checklist
+   :align: center
+
+   In Progress Exam Checklist
 
 1.9 Grading Key
 ^^^^^^^^^^^^^^^
