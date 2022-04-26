@@ -10,26 +10,33 @@
 </div>
 
 <div class="col-12 mt-4">
-    <div class="row table-responsive">
-        <div class="form-check col-6 align-baseline" *ngIf="!loading">
-            <input
-                type="checkbox"
-                name="showAddressedComplaint"
-                id="field_showAddressedComplaint"
-                [ngModel]="showAddressedComplaints"
-                (ngModelChange)="triggerAddressedComplaints()"
-            />
-            <label class="form-check-label" for="field_showAddressedComplaint">
-                <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.showAddressedComplaints' | artemisTranslate }}</span>
-                <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.showAnsweredRequests' | artemisTranslate }}</span>
-            </label>
-        </div>
-
-        <div [hidden]="complaintsToShow.length !== 0">
-            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.noComplaintsToShow' | artemisTranslate }}</span>
-            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.noRequestsToShow' | artemisTranslate }}</span>
-        </div>
-
+    <div class *ngIf="!loading">
+        <button class="me-1 btn btn-info" (click)="triggerAddressedComplaints()">
+            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{
+                'artemisApp.complaint.listOfComplaints.' + (showAddressedComplaints ? 'hide' : 'show') + 'AddressedComplaints' | artemisTranslate
+            }}</span>
+            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{
+                'artemisApp.moreFeedback.list.' + (showAddressedComplaints ? 'hideAnsweredRequests' : 'showAnsweredRequests') | artemisTranslate
+            }}</span>
+        </button>
+        <button
+            *ngIf="!hasStudentInformation"
+            class="btn btn-info me-1"
+            (click)="triggerShowAllComplaints()"
+            [disabled]="allComplaintsForTutorLoaded"
+            name="showAddressedComplaint"
+            id="field_showAddressedComplaint"
+        >
+            <span *ngIf="isLoadingAllComplaints" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{
+                'artemisApp.complaint.listOfComplaints.' + (allComplaintsForTutorLoaded ? 'allComplaintsLoaded' : 'loadAllComplaints') | artemisTranslate
+            }}</span>
+            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{
+                'artemisApp.moreFeedback.list.' + (allComplaintsForTutorLoaded ? 'allRequestsLoaded' : 'loadAllRequests') | artemisTranslate
+            }}</span>
+        </button>
+    </div>
+    <div class="row table-responsive pt-3">
         <table class="table" [hidden]="complaintsToShow.length === 0">
             <thead>
                 <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" (sortChange)="sortRows()">
@@ -46,12 +53,12 @@
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="result.assessor.login">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | artemisTranslate }}</a
-                        ><fa-icon [icon]="faSort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="result.assessor.name">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a
-                        ><fa-icon [icon]="faSort"></fa-icon>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="student.login" *ngIf="hasStudentInformation">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | artemisTranslate }}</a>

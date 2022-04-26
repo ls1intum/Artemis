@@ -46,6 +46,9 @@
                 "accepted": "Angenommen",
                 "rejected": "Abgelehnt",
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
+                "hideAddressedComplaints": "Adressierte Beschwerden ausblenden",
+                "loadAllComplaints": "Alle Beschwerden laden",
+                "allComplaintsLoaded": "Alle Beschwerden geladen",
                 "noComplaintsToShow": "Es gibt im Moment keine anzeigbaren Beschwerden."
             },
             "review": "Beschwerde überprüfen",
@@ -73,6 +76,9 @@
             "list": {
                 "title": "Liste der Feedbackanfragen",
                 "showAnsweredRequests": "Beantwortete Feedbackanfragen anzeigen",
+                "hideAnsweredRequests": "Beantwortete Feedbackanfragen ausblenden",
+                "loadAllRequests": "Lade alle Feedbackanfragen",
+                "allRequestsLoaded": "Alle Feedbackanfragen geladen",
                 "noRequestsToShow": "Es gibt im Moment keine Feedbackanfragen zu zeigen."
             }
         }

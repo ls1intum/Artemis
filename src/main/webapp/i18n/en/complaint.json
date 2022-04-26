@@ -46,6 +46,9 @@
                 "accepted": "Accepted",
                 "rejected": "Rejected",
                 "showAddressedComplaints": "Show addressed complaints",
+                "hideAddressedComplaints": "Hide addressed complaints",
+                "loadAllComplaints": "Load all complaints",
+                "allComplaintsLoaded": "All complaints loaded",
                 "noComplaintsToShow": "There are no complaints to show at the moment"
             },
             "review": "Review Complaint",
@@ -71,6 +74,9 @@
             "list": {
                 "title": "List of More Feedback Requests",
                 "showAnsweredRequests": "Show answered requests",
+                "hideAnsweredRequests": "Hide answered requests",
+                "loadAllRequests": "Load all requests",
+                "allRequestsLoaded": "All requests loaded",
                 "noRequestsToShow": "There are no requests to show at the moment"
             },
             "hint": "Scroll down to review More Feedback Request"

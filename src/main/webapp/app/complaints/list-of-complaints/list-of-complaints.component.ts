@@ -34,6 +34,8 @@ export class ListOfComplaintsComponent implements OnInit {
     complaintsReverseOrder = false;
     complaintsToShow: Complaint[] = [];
     showAddressedComplaints = false;
+    allComplaintsForTutorLoaded = false;
+    isLoadingAllComplaints = false;
 
     loading = true;
     // Icons
@@ -87,7 +89,10 @@ export class ListOfComplaintsComponent implements OnInit {
                 complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
             }
         }
+        this.subscribeToComplaintResponse(complaintResponse);
+    }
 
+    subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<Complaint[]>>) {
         complaintResponse.subscribe({
             next: (res) => {
                 this.complaints = res.body!;
@@ -153,6 +158,18 @@ export class ListOfComplaintsComponent implements OnInit {
         } else {
             this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
         }
+    }
+
+    /**
+     * Used to lazy-load all complaints from the server for a tutor or editor.
+     */
+    triggerShowAllComplaints() {
+        this.isLoadingAllComplaints = true;
+        let complaintResponse: Observable<HttpResponse<Complaint[]>>;
+        complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType);
+        this.subscribeToComplaintResponse(complaintResponse);
+        this.isLoadingAllComplaints = false;
+        this.allComplaintsForTutorLoaded = true;
     }
 
     calculateComplaintLockStatus(complaint: Complaint) {
