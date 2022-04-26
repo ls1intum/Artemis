@@ -240,16 +240,16 @@ During the exam creation and configuration, you can create your exam and configu
 ^^^^^^^^^^^^^^^
 - Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.
 - Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after their submissions are assessed.
-- Grading key also enhances the generated statistics so that the instructor is able to view grade distributions.
+- Using a grading key also enhances the generated statistics so that the instructor is able to view grade distributions.
 - For an easy out-of-the-box configuration, you can click |generate_default_grade_key| and then click ``Save``.
-- By default, grades are defined as percentages of the total obtainable score. You can also have their point equivalent if you specify ``Maximum number of points for exam``.
-- If you would like to have custom grade steps, you can use the |add_grade_step| button and modify the grade step intervals.
+- By default, grades are defined as percentages of the total obtainable score. You can also display their point equivalent if you specify ``Maximum number of points for exam``.
+- If you would like to define custom grade steps, you can use the |add_grade_step| button and modify the grade step intervals.
 
 .. note::
-    Keep an eye out for the warnings at the bottom of the page to ensure the grading key is valid.
+    Keep an eye out for the warnings at the bottom of the page to ensure that the grading key is valid.
 
 - ``Inclusivity`` field allows you to decide which grade should be assigned if the student's score is exactly equal to a boundary value between two grades.
-- There are two grade types you can use: ``Grade`` and ``Bonus``: ``Grade`` type allows you to set a final grade for the exam with custom grade step names, ``Bonus`` type allows you to assign bonus points to each grade step so they can contribute to the grade of another course or exam.
+- There are two grade types you can use: ``Grade`` and ``Bonus``. The ``Grade`` type allows you to set a final grade for the exam with custom grade step names, while the ``Bonus`` type allows you to assign bonus points to each grade step so they can contribute to the grade of another course or exam.
 
 .. note::
     If the ``Grade Type`` is ``Grade`` you should set ``First Passing Grade``.
