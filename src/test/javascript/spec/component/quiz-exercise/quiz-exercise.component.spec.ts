@@ -8,13 +8,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs/esm';
 
 describe('QuizExercise Management Component', () => {
     let comp: QuizExerciseComponent;
@@ -26,6 +25,8 @@ describe('QuizExercise Management Component', () => {
     const quizExercise = new QuizExercise(course, undefined);
     quizExercise.id = 456;
     quizExercise.title = 'Quiz Exercise';
+    const quizBatch = new QuizBatch();
+    quizBatch.id = 567;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -169,6 +170,57 @@ describe('QuizExercise Management Component', () => {
         expect(alertService.error).toHaveBeenCalledTimes(1);
         expect(service.find).toHaveBeenCalledWith(456);
         expect(service.find).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should end quiz', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(service, 'end').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: quizExercise,
+                    headers,
+                }),
+            ),
+        );
+
+        comp.ngOnInit();
+        comp.endQuiz(456);
+        expect(service.end).toHaveBeenCalledWith(456);
+        expect(service.end).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should add quiz batch', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(service, 'addBatch').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: quizBatch,
+                    headers,
+                }),
+            ),
+        );
+
+        comp.ngOnInit();
+        comp.addBatch(456);
+        expect(service.addBatch).toHaveBeenCalledWith(456);
+        expect(service.addBatch).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should start quiz batch', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        jest.spyOn(service, 'startBatch').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: quizBatch,
+                    headers,
+                }),
+            ),
+        );
+
+        comp.ngOnInit();
+        comp.startBatch(456, 567);
+        expect(service.startBatch).toHaveBeenCalledWith(567);
+        expect(service.startBatch).toHaveBeenCalledTimes(1);
     });
 
     it('Should make quiz visible', () => {

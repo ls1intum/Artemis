@@ -142,20 +142,16 @@ export class QuizExerciseService {
      * Start a quiz batch
      * @param quizBatchId the id of the quiz batch that should be started
      */
-    startBatch(quizBatchId: number): Observable<EntityResponseType> {
-        return this.http
-            .put<QuizExercise>(`${this.resourceUrl}/${quizBatchId}/start-batch`, null, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    startBatch(quizBatchId: number): Observable<HttpResponse<QuizBatch>> {
+        return this.http.put<QuizBatch>(`${this.resourceUrl}/${quizBatchId}/start-batch`, null, { observe: 'response' });
     }
 
     /**
      * Start a quiz batch
      * @param quizExerciseId the id of the quiz exercise that should be started
      */
-    addBatch(quizExerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/add-batch`, null, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    addBatch(quizExerciseId: number): Observable<HttpResponse<QuizBatch>> {
+        return this.http.put<QuizBatch>(`${this.resourceUrl}/${quizExerciseId}/add-batch`, null, { observe: 'response' });
     }
 
     /**
@@ -219,10 +215,10 @@ export class QuizExerciseService {
      * @return the status of the quiz
      */
     getStatus(quizExercise: QuizExercise) {
-        if (quizExercise.releaseDate && quizExercise.releaseDate.isAfter(dayjs())) {
+        if (!quizExercise.quizStarted) {
             return QuizStatus.HIDDEN;
         }
-        if (quizExercise.dueDate && quizExercise.dueDate.isBefore(dayjs())) {
+        if (quizExercise.quizEnded) {
             return quizExercise.isOpenForPractice ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;
         }
         if (quizExercise.quizBatches && quizExercise.quizBatches.some((batch) => batch.started)) {
