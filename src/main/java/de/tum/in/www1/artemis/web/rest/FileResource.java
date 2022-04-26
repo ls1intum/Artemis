@@ -353,7 +353,7 @@ public class FileResource {
         // Parse user information from the access token
         var claims = this.tokenProvider.parseClaims(temporaryAccessToken);
         String username = claims.getSubject();
-        User user = userRepository.getUserWithAuthoritiesByLoginElseThrow(username);
+        User user = userRepository.getUserWithGroupsAndAuthorities(username);
 
         Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
 
