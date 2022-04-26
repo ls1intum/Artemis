@@ -36,7 +36,14 @@
                             ><fa-icon [icon]="faText"></fa-icon> {{ 'artemisApp.exerciseHint.textHint' | artemisTranslate }}</span
                         >
                     </td>
-                    <td [innerHTML]="exerciseHint.content | htmlForMarkdown"></td>
+                    <div *ngIf="exerciseHint.type === HintType.TEXT">
+                        <td [innerHTML]="exerciseHint.content | htmlForMarkdown"></td>
+                    </div>
+                    <div *ngIf="exerciseHint.type === HintType.CODE">
+                        <td>
+                            <span>{{ exerciseHint.solutionEntries.length }} {{ 'artemisApp.exerciseHint.entries' | artemisTranslate }}</span>
+                        </td>
+                    </div>
                     <td>
                         <span>{{ exerciseHint.exercise?.id }}</span>
                     </td>
