@@ -43,7 +43,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("""
             SELECT p FROM Participation p
             LEFT JOIN FETCH p.submissions s
-            WHERE p.id = :#{#participationId
+            WHERE p.id = :#{#participationId}
                 AND p.initializationState <> 'ARCHIVED'
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)

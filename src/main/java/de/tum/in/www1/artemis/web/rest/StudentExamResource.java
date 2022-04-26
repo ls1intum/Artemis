@@ -272,48 +272,6 @@ public class StudentExamResource {
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
         StudentExam studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExamId, false)
                 .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + studentExamId + "does not exist"));
-        ;
-
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
-
-        // students can not fetch the exam until 5 minutes before the exam start, we use the same constant in the client
-        if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
-            throw new AccessForbiddenException();
-        }
-
-        if (!user.getId().equals(studentExam.getUser().getId())) {
-            throw new AccessForbiddenException("The requested exam does not belong to the requesting user");
-        }
-
-        studentExam = studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
-        prepareStudentExamForConduction(request, user, studentExam);
-
-        log.info("getStudentExamForTestExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
-                user.getLogin());
-        return ResponseEntity.ok(studentExam);
-    }
-
-    /**
-     * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction : Find the specified student exam for the user.
-     * This will be used for the actual conduction of the exam. The student exam will be returned with the exercises
-     * and with the student participation and with the submissions.
-     * NOTE: when this is called it will also mark the student exam as started
-     *
-     * @param courseId      the course to which the student exam belongs to
-     * @param examId        the exam to which the student exam belongs to
-     * @param studentExamId the studentExam which should be loaded
-     * @param request       the http request, used to extract headers
-     * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
-     */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> getStudentExamForTestExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
-            HttpServletRequest request) {
-        long start = System.currentTimeMillis();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
-        StudentExam studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExamId, false)
-                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + studentExamId + "does not exist"));
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
 
@@ -418,45 +376,6 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}summary
-     * Find a specified student exam for the summary of an TestExam. This will be used to display the summary of the exam.
-     * The student exam will be returned with the exercises and with the student participation and with the submissions.
-     *
-     * @param courseId the course to which the student exam belongs to
-     * @param examId   the exam to which the student exam belongs to
-     * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
-     */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> getStudentExamForTestExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        long start = System.currentTimeMillis();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get the student exam of user {} for TestExam {}", user.getLogin(), examId);
-
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
-
-        // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!studentExam.isSubmitted()) {
-            throw new AccessForbiddenException();
-        }
-
-        // For RealExams, /student-exams/summary must be used, as exactly one StudentExams exists per student.
-        if (!studentExam.getExam().isTestExam()) {
-            throw new AccessForbiddenException();
-        }
-
-        loadExercisesForStudentExam(studentExam);
-
-        // 3rd fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user);
-
-        log.info("getStudentExamForTestExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
-                user.getLogin());
-        return ResponseEntity.ok(studentExam);
-    }
-
-    /**
      * GET /courses/{courseId}/test-exams-per-user
      * Retrieves all StudentExams for TestExams of one Course for the specified user
      *
@@ -519,17 +438,12 @@ public class StudentExamResource {
      *
      * @param courseId the course to which the student exam belongs to
      * @return all StudentExams for TestExam for the specified course and user
-     */
-    @GetMapping("courses/{courseId}/test-exams-per-user")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<StudentExam>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
-
-        List<StudentExam> studentExamList = studentExamRepository.findStudentExamForTestExamsByUserIdAndCourseId(user.getId(), courseId);
-
-        return ResponseEntity.ok(studentExamList);
-    }
+     *//*
+         * @GetMapping("courses/{courseId}/test-exams-per-user")
+         * @PreAuthorize("hasRole('USER')") public ResponseEntity<List<StudentExam>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) { User user =
+         * userRepository.getUserWithGroupsAndAuthorities(); studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user); List<StudentExam> studentExamList =
+         * studentExamRepository.findStudentExamForTestExamsByUserIdAndCourseId(user.getId(), courseId); return ResponseEntity.ok(studentExamList); }
+         */
 
     /**
      * GET /courses/{courseId}/exams/{examId}/test-runs : Find all test runs for the exam

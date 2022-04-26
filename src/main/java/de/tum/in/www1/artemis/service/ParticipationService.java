@@ -159,7 +159,7 @@ public class ParticipationService {
         // Check if participation already exists
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         StudentParticipation participation;
-        optionalStudentParticipation.ifPresent(studentParticipation -> studentParticipation.setInitializationState(ARCHIVED));
+        // optionalStudentParticipation.ifPresent(studentParticipation -> studentParticipation.setInitializationState(ARCHIVED));
         // if (optionalStudentParticipation.isEmpty()) {
         // create a new participation only if no participation can be found
         if (exercise instanceof ProgrammingExercise) {
