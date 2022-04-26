@@ -46,7 +46,7 @@
                                 <fa-icon [icon]="faEye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </a>
-                            <a *ngIf="exerciseHint.type === HintType.TEXT" [routerLink]="[exerciseHint.id, 'edit']" class="btn btn-warning btn-sm me-1">
+                            <a [routerLink]="[exerciseHint.id, 'edit']" class="btn btn-warning btn-sm me-1">
                                 <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>

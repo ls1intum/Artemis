@@ -11,7 +11,7 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.title" for="field_title">Title</label>
                     <input type="text" required minlength="3" class="form-control" name="title" id="field_title" [(ngModel)]="exerciseHint.title" />
                 </div>
-                <div class="form-group hint-form__editor-wrapper">
+                <div *ngIf="exerciseHint.type === HintType.TEXT" class="form-group hint-form__editor-wrapper">
                     <jhi-markdown-editor
                         [markdown]="exerciseHint.content"
                         (markdownChange)="updateHintContent($event)"
@@ -21,6 +21,13 @@
                         [domainCommands]="domainCommands"
                         [editorMode]="editorMode"
                     ></jhi-markdown-editor>
+                </div>
+                <div *ngIf="exerciseHint.type === HintType.CODE" class="form-group hint-form__editor-wrapper">
+                    <div *ngFor="let solutionEntry of solutionEntries">
+                        <div class="mb-3">
+                            <jhi-solution-entry [solutionEntry]="solutionEntry"></jhi-solution-entry>
+                        </div>
+                    </div>
                 </div>
                 <div *ngIf="!isLoading; else exerciseLoading" class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise">Exercise</label>

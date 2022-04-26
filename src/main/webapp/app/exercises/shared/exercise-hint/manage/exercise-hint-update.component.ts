@@ -12,7 +12,9 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -24,7 +26,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     courseId: number;
     exerciseId: number;
+    readonly HintType = HintType;
     exerciseHint = new ExerciseHint();
+    solutionEntries: ProgrammingExerciseSolutionEntry[];
 
     isSaving: boolean;
     isLoading: boolean;
@@ -60,6 +64,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         });
         this.route.data.subscribe(({ exerciseHint }) => {
             this.exerciseHint = exerciseHint;
+            this.setSortedSolutionEntriesForCodeHint();
             // If the exercise was not yet created, load the exercise from the current route to set it as its exercise.
             if (!this.exerciseHint.id) {
                 this.exerciseService
@@ -139,5 +144,17 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     protected onSaveError() {
         this.isSaving = false;
+    }
+
+    setSortedSolutionEntriesForCodeHint() {
+        if (this.exerciseHint.type !== HintType.CODE) {
+            this.solutionEntries = [];
+            return;
+        }
+        const codeHint = this.exerciseHint as CodeHint;
+        this.solutionEntries =
+            codeHint.solutionEntries?.sort((a, b) => {
+                return a.filePath?.localeCompare(b.filePath!) || a.line! - b.line!;
+            }) ?? [];
     }
 }
