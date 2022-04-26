@@ -130,11 +130,6 @@ $connection-status-disconnected: $danger;
 $mat-autocomplete-visible-box-shadow: rgb(100 100 100);
 $mat-form-field-outline: #ccc;
 
-$connection-warning-popover-arrow-border: #f1d1d1e0;
-$connection-warning-popover-body: #600c0c;
-$connection-warning-popover-body-background: #f1d1d1e0;
-$connection-warning-popover-body-shadow: rgba(0, 0, 0, 0.55);
-
 // Header Participation
 $header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
 
@@ -370,6 +365,25 @@ $gt-tour-block-content-tt-background: #f2f2f2;
 $gt-tour-block-content-red: #ca2024;
 $gt-tour-block-step-hint-not-interaction-background: #f0f0f0;
 $gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
+
+// Alerts
+$artemis-alert-info-color: #0c5460;
+$artemis-alert-info-background: #d1ecf1;
+$artemis-alert-info-border: #1295ab;
+$artemis-alert-danger-color: #600c0c;
+$artemis-alert-danger-background: #f1d1d1;
+$artemis-alert-danger-border: #bb2d3b;
+$artemis-alert-warning-color: #604c0c;
+$artemis-alert-warning-background: #f1e8d1;
+$artemis-alert-warning-border: #cc9c12;
+$artemis-alert-success-color: #21600c;
+$artemis-alert-success-background: #d9f1d1;
+$artemis-alert-success-border: #3eb058;
+
+$close-circle-color: black;
+$close-circle-background: white;
+$close-circle-border: rgba(93, 93, 93, 0.65);
+$close-circle-opacity: 0.7;
 
 // Apollon
 $apollon-primary: $primary;

@@ -1228,21 +1228,21 @@ Course Info Bar
     background-color: transparent;
 
     .popover-arrow::after {
-        border-bottom-color: $connection-warning-popover-arrow-border;
+        border-bottom-color: $artemis-alert-danger-background;
     }
 
     .popover-body {
         border: none;
         max-width: 70vw;
         width: 400px;
-        background-color: $connection-warning-popover-body-background;
-        color: $connection-warning-popover-body;
+        background-color: $artemis-alert-danger-background;
+        color: $artemis-alert-danger-color;
         font-size: 14px;
         display: flex;
         align-items: center;
         gap: 15px;
         padding-left: 20px;
-        box-shadow: $connection-warning-popover-body-shadow 0 5px 15px;
+        box-shadow: rgba(0, 0, 0, 0.55) 0 5px 15px;
     }
 }
 

@@ -211,11 +211,6 @@ $connection-status-disconnected: $danger;
 $mat-autocomplete-visible-box-shadow: rgb(100 100 100);
 $mat-form-field-outline: #ccc;
 
-$connection-warning-popover-arrow-border: #f1d1d1e0;
-$connection-warning-popover-body: #600c0c;
-$connection-warning-popover-body-background: #f1d1d1e0;
-$connection-warning-popover-body-shadow: rgba(0, 0, 0, 0.55);
-
 // Header Participation
 $header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 5%), 15%);
 
@@ -452,6 +447,25 @@ $gt-tour-block-content-tt-background: $gray-600;
 $gt-tour-block-content-red: #ca2024;
 $gt-tour-block-step-hint-not-interaction-background: $gray-800;
 $gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
+
+// Alerts
+$artemis-alert-info-color: lighten($info, 15);
+$artemis-alert-info-background: darken($info, 40);
+$artemis-alert-info-border: darken($info, 5);
+$artemis-alert-danger-color: lighten($danger, 15);
+$artemis-alert-danger-background: darken($danger, 45);
+$artemis-alert-danger-border: darken($danger, 5);
+$artemis-alert-warning-color: $warning;
+$artemis-alert-warning-background: darken($warning, 40);
+$artemis-alert-warning-border: darken($warning, 5);
+$artemis-alert-success-color: $success;
+$artemis-alert-success-background: darken($success, 30);
+$artemis-alert-success-border: darken($success, 5);
+
+$close-circle-color: white;
+$close-circle-background: $gray-900;
+$close-circle-border: rgba($gray-400, 0.8);
+$close-circle-opacity: 0.9;
 
 // Apollon
 $apollon-primary: $link-color;
