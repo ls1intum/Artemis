@@ -219,11 +219,11 @@ public class ExerciseHintResource {
      * or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @GetMapping("exercises/{exerciseId}/full-exercise-hints")
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsWithRelationsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHints for Exercise: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
         Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseIdWithRelations(exerciseId);
         return ResponseEntity.ok(exerciseHints);
     }
