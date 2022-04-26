@@ -120,11 +120,11 @@ public class ExerciseHintResource {
         // Reload the exercise from the database as we can't trust data from the client
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        var hintBeforeSaving = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
+        var hintBeforeSaving = exerciseHintRepository.findByIdWithRelationsElseThrow(exerciseHintId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, hintBeforeSaving.getExercise(), null);
 
-        if (exerciseHint instanceof CodeHint) {
-            throw new BadRequestAlertException("A code hint cannot be updated manually.", CODE_HINT_ENTITY_NAME, "manualCodeHintOperation");
+        if (!exerciseHint.getClass().equals(hintBeforeSaving.getClass())) {
+            throw new BadRequestAlertException("A code hint cannot be converted to or from a normal hint.", CODE_HINT_ENTITY_NAME, "manualCodeHintOperation");
         }
 
         if (exerciseHint.getId() == null || !exerciseHintId.equals(exerciseHint.getId()) || exerciseHint.getExercise() == null) {
@@ -138,6 +138,10 @@ public class ExerciseHintResource {
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
             throw new AccessForbiddenException("Exercise hints for exams are currently not supported");
+        }
+
+        if (exerciseHint instanceof CodeHint codeHint && hintBeforeSaving instanceof CodeHint codeHintBeforeSaving) {
+            codeHint.setSolutionEntries(codeHintBeforeSaving.getSolutionEntries());
         }
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, EXERCISE_HINT_ENTITY_NAME, exerciseHint.getId().toString())).body(result);
