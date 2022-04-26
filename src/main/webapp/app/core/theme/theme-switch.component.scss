@@ -12,17 +12,14 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
         background: none;
         border: none;
         padding: 0;
-
         inline-size: $size;
         block-size: $size;
         aspect-ratio: 1;
         border-radius: 50%;
-
         cursor: pointer;
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
         outline-offset: 5px;
-
         transform: translateY(-0.5px);
 
         & > svg {

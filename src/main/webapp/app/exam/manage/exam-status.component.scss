@@ -17,12 +17,12 @@
     .planned,
     .finished,
     .check {
-        color: var(--success); // green
+        color: var(--success);
     }
 
     .unset,
     .cross {
-        color: var(--danger); // red
+        color: var(--danger);
     }
 
     li {
@@ -30,7 +30,7 @@
     }
 
     .running {
-        color: var(--warning); // yellow
+        color: var(--warning);
     }
 
     .connector {
