@@ -9,6 +9,7 @@ import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-sv
 import * as shape from 'd3-shape';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
+import { mean } from 'simple-statistics';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
@@ -113,7 +114,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
                 this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
-            const currentAverage = this.computeAverage(allValues);
+            const currentAverage = allValues.length > 0 ? mean(allValues) : 0;
             this.average.name = currentAverage.toFixed(2) + '%';
             this.average.value = currentAverage;
         } else {
@@ -177,17 +178,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     findAbsoluteValue(model: any) {
         const result: any = this.absoluteSeries.find((entry: any) => entry.name === model.name);
         return result ? result.absoluteValue : '/';
-    }
-
-    /**
-     * Computes the average of the given number array
-     * @param array of numbers the average should be returned
-     * @returns average of the number array
-     * @private
-     */
-    private computeAverage(array: number[]): number {
-        const sum = array.reduce((num1, num2) => num1 + num2, 0);
-        return sum / array.length;
     }
 
     /**

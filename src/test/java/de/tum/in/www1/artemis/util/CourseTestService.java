@@ -1754,7 +1754,7 @@ public class CourseTestService {
         var result2 = database.createParticipationSubmissionAndResult(exerciseId, student2, 5.0, 0.0, 40, true);
 
         Submission submission1 = result1.getSubmission();
-        submission1.setSubmissionDate(now.minusDays(3));
+        submission1.setSubmissionDate(now);
         submissionRepository.save(submission1);
 
         Submission submission2 = result2.getSubmission();
@@ -1864,7 +1864,7 @@ public class CourseTestService {
         courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
 
         var expectedActiveStudentDistribution = List.of(1, 0);
-        assertThat(courseDTO.getActiveStudents()).as("submission 3 days ago should not be included").isEqualTo(expectedActiveStudentDistribution);
+        assertThat(courseDTO.getActiveStudents()).as("submission today should not be included").isEqualTo(expectedActiveStudentDistribution);
 
         // Active Users
         int periodIndex = 0;
