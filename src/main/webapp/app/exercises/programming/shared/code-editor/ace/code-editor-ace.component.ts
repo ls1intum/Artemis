@@ -30,7 +30,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faGear, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
