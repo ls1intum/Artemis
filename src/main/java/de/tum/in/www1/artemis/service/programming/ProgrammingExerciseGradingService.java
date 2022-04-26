@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
+import static de.tum.in.www1.artemis.domain.ProgrammingSubmission.createFallbackSubmission;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -27,14 +29,15 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
-import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -45,6 +48,8 @@ public class ProgrammingExerciseGradingService {
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
+    private final Optional<VersionControlService> versionControlService;
 
     private final ProgrammingExerciseTestCaseService testCaseService;
 
@@ -80,20 +85,25 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
+    private final BuildLogEntryService buildLogService;
+
+    private final TestwiseCoverageService testwiseCoverageService;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
+            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService,
-            ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
+            BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.resultRepository = resultRepository;
+        this.versionControlService = versionControlService;
         this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -107,6 +117,8 @@ public class ProgrammingExerciseGradingService {
         this.exerciseDateService = exerciseDateService;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
+        this.buildLogService = buildLogService;
+        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     /**
@@ -123,7 +135,28 @@ public class ProgrammingExerciseGradingService {
 
         Result newResult = null;
         try {
-            newResult = continuousIntegrationService.get().onBuildCompleted(participation, requestBody);
+            var buildResult = continuousIntegrationService.get().convertBuildResult(requestBody);
+            newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);
+
+            // Fetch submission or create a fallback
+            var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+            latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
+            // Add artifacts to submission
+            latestSubmission.setBuildArtifact(buildResult.hasArtifact());
+
+            if (buildResult.hasLogs()) {
+                var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
+                var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
+                buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
+                var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
+
+                // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+                latestSubmission.setBuildLogEntries(savedBuildLogs);
+            }
+
+            // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
+            newResult.setSubmission(latestSubmission);
+            newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission);
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
@@ -131,6 +164,49 @@ public class ProgrammingExerciseGradingService {
         }
 
         return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
+    }
+
+    /**
+     * Retrieves the submission that is assigned to the specified participation and its commit hash matches the one from the build result.
+     *
+     * @param participationId id of the participation
+     * @param buildResult     The build results
+     * @return The submission or empty no submissions exist
+     */
+    protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, AbstractBuildResultNotificationDTO buildResult) {
+        var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
+        if (submissions.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return submissions.stream().filter(theSubmission -> {
+            var commitHash = buildResult.getCommitHash(theSubmission.getType());
+            return commitHash.isPresent() && commitHash.get().equals(theSubmission.getCommitHash());
+        }).max(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
+    }
+
+    @NotNull
+    protected ProgrammingSubmission createAndSaveFallbackSubmission(ProgrammingExerciseParticipation participation, AbstractBuildResultNotificationDTO buildResult) {
+        final var commitHash = buildResult.getCommitHash(SubmissionType.MANUAL);
+        if (commitHash.isEmpty()) {
+            log.error("Could not find commit hash for participation {}, build plan {}", participation.getId(), participation.getBuildPlanId());
+        }
+        log.warn("Could not find pending ProgrammingSubmission for Commit Hash {} (Participation {}, Build Plan {}). Will create a new one subsequently...", commitHash,
+                participation.getId(), participation.getBuildPlanId());
+        // We always take the build run date as the fallback solution
+        // In general we try to get the actual date.
+        ZonedDateTime submissionDate = buildResult.getBuildRunDate();
+        if (commitHash.isPresent()) {
+            try {
+                submissionDate = versionControlService.get().getPushDate(participation, commitHash.get(), null);
+            }
+            catch (VersionControlException e) {
+                log.error("Could not retrieve push date for participation " + participation.getId() + " and build plan " + participation.getBuildPlanId(), e);
+            }
+        }
+        var submission = createFallbackSubmission(participation, submissionDate, commitHash.orElse(null));
+        // Save to avoid TransientPropertyValueException.
+        return programmingSubmissionRepository.save(submission);
     }
 
     /**
@@ -159,10 +235,15 @@ public class ProgrammingExerciseGradingService {
         // Note: This programming submission might already have multiple results, however they do not contain the assessor or the feedback
         var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
 
-        // If the solution participation was updated, also trigger the template participation build.
         if (isSolutionParticipation) {
+            // If the solution participation was updated, also trigger the template participation build.
             // This method will return without triggering the build if the submission is not of type TEST.
             triggerTemplateBuildIfTestCasesChanged(programmingExercise.getId(), programmingSubmission);
+
+            // the test cases and the submission have been saved to the database previously, therefore we can add the reference to the coverage reports
+            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && Boolean.TRUE.equals(processedResult.isSuccessful())) {
+                testwiseCoverageService.createTestwiseCoverageReport(newResult.getCoverageFileReportsByTestCaseName(), programmingExercise, programmingSubmission);
+            }
         }
 
         if (isStudentParticipation) {

@@ -1,11 +1,8 @@
 import { ExerciseType } from 'app/entities/exercise.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
-
-/**
- * A function that converts a number into the localized representation for the user.
- */
-type Localizer = (value: number) => string;
+import { CsvDecimalSeparator } from 'app/shared/export/csv-export-modal.component';
+import { round } from 'app/shared/util/utils';
 
 export type CourseScoresCsvRow = any;
 
@@ -13,19 +10,19 @@ export type CourseScoresCsvRow = any;
  * Builds CSV rows for the course scores export.
  */
 export class CourseScoresCsvRowBuilder {
-    private readonly localizer: Localizer;
-    private readonly percentLocalizer: Localizer;
+    private readonly decimalSeparator: CsvDecimalSeparator;
+    private readonly accuracyOfScores: number;
 
     private csvRow = {};
 
     /**
      * Creates a new empty CSV row.
-     * @param localizer The function that should be used to convert numbers into their localized representations.
-     * @param percentLocalizer The function that should be used to convert percentage values into their localized representations.
+     * @param decimalSeparator The separator that should be used for numbers.
+     * @param accuracyOfScores The accuracy of fraction digits that should be used for numbers.
      */
-    constructor(localizer: Localizer, percentLocalizer: Localizer) {
-        this.localizer = localizer;
-        this.percentLocalizer = percentLocalizer;
+    constructor(decimalSeparator: CsvDecimalSeparator, accuracyOfScores = 1) {
+        this.decimalSeparator = decimalSeparator;
+        this.accuracyOfScores = accuracyOfScores;
     }
 
     /**
@@ -45,21 +42,29 @@ export class CourseScoresCsvRowBuilder {
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized format.
+     * Stores the given value under the key in the row after converting it to the format using the specified decimal separator.
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
     setLocalized(key: string, value: number) {
-        this.set(key, this.localizer(value));
+        if (isNaN(value)) {
+            this.set(key, '-');
+        } else {
+            this.set(key, round(value, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator));
+        }
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized percentage format.
+     * Stores the given value under the key in the row after converting it to the percentage format using the specified decimal separator.
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
     setLocalizedPercent(key: string, value: number) {
-        this.set(key, this.percentLocalizer(value));
+        if (isNaN(value)) {
+            this.set(key, '-');
+        } else {
+            this.set(key, `${round(value, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator)}%`);
+        }
     }
 
     /**

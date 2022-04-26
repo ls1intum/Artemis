@@ -106,6 +106,15 @@
                     </div>
                 </div>
             </div>
+            <jhi-programming-exercise-test-schedule-date-picker
+                *ngIf="!isExamMode"
+                [(ngModel)]="exercise.exampleSolutionPublicationDate"
+                [readOnly]="readOnly"
+                class="test-schedule-date me-2"
+                label="artemisApp.exercise.exampleSolutionPublicationDate"
+                tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"
+            >
+            </jhi-programming-exercise-test-schedule-date-picker>
         </div>
     </div>
 </div>

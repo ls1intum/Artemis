@@ -1,0 +1,11 @@
+<div>
+    <div class="modal-header">
+        <h3 class="modal-title" jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.title">Diff Report</h3>
+        <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="row mb-2">
+            <jhi-testwise-coverage-report [report]="report" [fileContentByPath]="fileContentByPath"></jhi-testwise-coverage-report>
+        </div>
+    </div>
+</div>

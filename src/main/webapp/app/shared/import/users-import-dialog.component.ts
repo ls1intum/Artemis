@@ -6,7 +6,6 @@ import { HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
@@ -17,11 +16,19 @@ const csvColumns = Object.freeze({
     registrationNumber: 'registrationnumber',
     matrikelNummer: 'matrikelnummer',
     matriculationNumber: 'matriculationnumber',
-    firstNameOfUser: 'firstname',
-    familyNameOfUser: 'familyname',
+    number: 'number',
+    firstNameOfStudent: 'firstnameofstudent',
     firstName: 'firstname',
+    vorname: 'vorname',
+    givenName: 'givenname',
+    forename: 'forename',
+    familyNameOfStudent: 'familynameofstudent',
     familyName: 'familyname',
+    familienName: 'familienname',
     lastName: 'lastname',
+    surname: 'surname',
+    nachName: 'nachname',
+    name: 'name',
     login: 'login',
     username: 'username',
     user: 'user',
@@ -69,7 +76,6 @@ export class UsersImportDialogComponent implements OnDestroy {
         private alertService: AlertService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
-        private translateService: TranslateService,
     ) {}
 
     ngOnDestroy(): void {
@@ -113,15 +119,42 @@ export class UsersImportDialogComponent implements OnDestroy {
             event.target.value = ''; // remove selected file so user can fix the file and select it again
             return [];
         }
-        return csvUsers.map(
-            (users) =>
-                ({
-                    registrationNumber: users[csvColumns.registrationNumber] || users[csvColumns.matrikelNummer] || users[csvColumns.matriculationNumber] || '',
-                    login: users[csvColumns.login] || users[csvColumns.username] || users[csvColumns.user] || users[csvColumns.benutzer] || users[csvColumns.benutzerName] || '',
-                    firstName: users[csvColumns.firstName] || users[csvColumns.firstNameOfUser] || '',
-                    lastName: users[csvColumns.lastName] || users[csvColumns.familyName] || users[csvColumns.familyNameOfUser] || '',
-                } as StudentDTO),
-        );
+        return csvUsers
+            .map(
+                (users) =>
+                    ({
+                        registrationNumber:
+                            users[csvColumns.registrationNumber] || users[csvColumns.matrikelNummer] || users[csvColumns.matriculationNumber] || users[csvColumns.number] || '',
+                        login:
+                            users[csvColumns.login] || users[csvColumns.username] || users[csvColumns.user] || users[csvColumns.benutzer] || users[csvColumns.benutzerName] || '',
+                        firstName:
+                            users[csvColumns.firstName] ||
+                            users[csvColumns.firstNameOfStudent] ||
+                            users[csvColumns.vorname] ||
+                            users[csvColumns.givenName] ||
+                            users[csvColumns.forename] ||
+                            '',
+                        lastName:
+                            users[csvColumns.lastName] ||
+                            users[csvColumns.familyNameOfStudent] ||
+                            users[csvColumns.familyName] ||
+                            users[csvColumns.surname] ||
+                            users[csvColumns.name] ||
+                            users[csvColumns.familienName] ||
+                            users[csvColumns.nachName] ||
+                            '',
+                    } as StudentDTO),
+            )
+            .map(
+                (studentDto) =>
+                    ({
+                        // make sure that there are no leading and trailing whitespaces
+                        registrationNumber: studentDto.registrationNumber.trim(),
+                        login: studentDto.login.trim(),
+                        firstName: studentDto.firstName.trim(),
+                        lastName: studentDto.lastName.trim(),
+                    } as StudentDTO),
+            );
     }
 
     /**
@@ -135,8 +168,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         const invalidUserEntries = this.computeInvalidUserEntries(csvUsers);
         if (invalidUserEntries) {
             const maxLength = 30;
-            const entriesFormatted = invalidUserEntries.length <= maxLength ? invalidUserEntries : invalidUserEntries.slice(0, maxLength) + '...';
-            this.validationError = entriesFormatted;
+            this.validationError = invalidUserEntries.length <= maxLength ? invalidUserEntries : invalidUserEntries.slice(0, maxLength) + '...';
         }
     }
 
@@ -151,6 +183,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 !user[csvColumns.registrationNumber] &&
                 !user[csvColumns.matrikelNummer] &&
                 !user[csvColumns.matriculationNumber] &&
+                !user[csvColumns.number] &&
                 !user[csvColumns.login] &&
                 !user[csvColumns.user] &&
                 !user[csvColumns.username] &&
@@ -172,7 +205,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
-                transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
+                transformHeader: (header: string) => header.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', ''),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvUser[]),
                 error: (error) => reject(error),

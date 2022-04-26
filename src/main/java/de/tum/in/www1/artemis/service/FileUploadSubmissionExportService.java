@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
 
@@ -30,9 +30,9 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
 
         // we need to get the 'real' file path here, the submission only has the api url path
         String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
-        String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split("/");
+        String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(File.separator));
 
-        Path submissionPath = Paths.get(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
+        Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
 
         if (!submissionPath.toFile().exists()) { // throw if submission file does not exist
             throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + submissionPath + " doesn't exist.");
@@ -47,7 +47,7 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
             return ""; // submission will be ignored by saveSubmissionToFile
         }
         else {
-            String[] parts = ((FileUploadSubmission) submission).getFilePath().split("/");
+            String[] parts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(File.separator));
             String fileName = parts[parts.length - 1];
             int endingIndex = fileName.indexOf(".");
             return fileName.substring(endingIndex);
