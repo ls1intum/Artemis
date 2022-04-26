@@ -10,12 +10,13 @@ import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/manage/solution-entry.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
+import { CodeHintContainerComponent } from 'app/exercises/shared/exercise-hint/manage/code-hint-container.component';
 
 const ENTITY_STATES = [...exerciseHintRoute];
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule, AceEditorModule],
-    declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent, SolutionEntryComponent],
-    exports: [SolutionEntryComponent],
+    declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent, SolutionEntryComponent, CodeHintContainerComponent],
+    exports: [SolutionEntryComponent, CodeHintContainerComponent],
 })
 export class ArtemisExerciseHintManagementModule {}

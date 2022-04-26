@@ -13,11 +13,7 @@
                     <span *ngIf="exerciseHint.content" [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
                 </dd>
                 <dd *ngIf="exerciseHint.type === HintType.CODE">
-                    <div *ngFor="let solutionEntry of solutionEntries">
-                        <div class="mb-3">
-                            <jhi-solution-entry [solutionEntry]="solutionEntry"></jhi-solution-entry>
-                        </div>
-                    </div>
+                    <jhi-code-hint-container [codeHint]="exerciseHint"></jhi-code-hint-container>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.exercise">Exercise</span></dt>
                 <dd>

@@ -64,7 +64,6 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         });
         this.route.data.subscribe(({ exerciseHint }) => {
             this.exerciseHint = exerciseHint;
-            this.setSortedSolutionEntriesForCodeHint();
             // If the exercise was not yet created, load the exercise from the current route to set it as its exercise.
             if (!this.exerciseHint.id) {
                 this.exerciseService
@@ -146,15 +145,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         this.isSaving = false;
     }
 
-    setSortedSolutionEntriesForCodeHint() {
-        if (this.exerciseHint.type !== HintType.CODE) {
-            this.solutionEntries = [];
-            return;
-        }
-        const codeHint = this.exerciseHint as CodeHint;
-        this.solutionEntries =
-            codeHint.solutionEntries?.sort((a, b) => {
-                return a.filePath?.localeCompare(b.filePath!) || a.line! - b.line!;
-            }) ?? [];
+    getAsCodeHint(): CodeHint {
+        return this.exerciseHint as CodeHint;
     }
 }

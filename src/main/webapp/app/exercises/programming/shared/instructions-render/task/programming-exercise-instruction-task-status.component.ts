@@ -7,9 +7,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { CodeHint } from 'app/entities/hestia/code-hint-model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -96,7 +94,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     public openHintsModal() {
         // Open hint modal.
         this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { keyboard: true, size: 'lg' });
-        this.ngbModalRef.componentInstance.solutionEntriesByExerciseHint = this.testMethod(this.exerciseHints);
+        this.ngbModalRef.componentInstance.exerciseHints = this.exerciseHints;
         this.ngbModalRef.result.then(
             () => {
                 this.ngbModalRef = undefined;
@@ -104,24 +102,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
             () => {
                 this.ngbModalRef = undefined;
             },
-        );
-    }
-
-    testMethod(exerciseHints: ExerciseHint[]) {
-        const map = new Map<ExerciseHint, ProgrammingExerciseSolutionEntry[]>();
-        exerciseHints.forEach((exerciseHint) => map.set(exerciseHint, this.getSortedSolutionEntriesForCodeHint(exerciseHint)));
-        return map;
-    }
-
-    getSortedSolutionEntriesForCodeHint(exerciseHint: ExerciseHint): ProgrammingExerciseSolutionEntry[] {
-        if (exerciseHint.type !== HintType.CODE) {
-            return [];
-        }
-        const codeHint = exerciseHint as CodeHint;
-        return (
-            codeHint.solutionEntries?.sort((a, b) => {
-                return a.filePath?.localeCompare(b.filePath!) || a.line! - b.line!;
-            }) ?? []
         );
     }
 }

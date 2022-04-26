@@ -8,8 +8,6 @@ import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstra
 import { ExerciseHintService } from '../manage/exercise-hint.service';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
 /**
  * This component is a modal that shows the exercise's hints.
@@ -20,7 +18,7 @@ import { CodeHint } from 'app/entities/hestia/code-hint-model';
     styleUrls: ['./exercise-hint-student-dialog.scss'],
 })
 export class ExerciseHintStudentDialogComponent {
-    @Input() solutionEntriesByExerciseHint: Map<ExerciseHint, ProgrammingExerciseSolutionEntry[]>;
+    @Input() exerciseHints: ExerciseHint[];
 
     readonly HintType = HintType;
 
@@ -41,7 +39,7 @@ export class ExerciseHintStudentDialogComponent {
     selector: 'jhi-exercise-hint-student',
     template: `
         <fa-icon
-            *ngIf="solutionEntriesByExerciseHint && solutionEntriesByExerciseHint.size"
+            *ngIf="exerciseHints && exerciseHints.length"
             [icon]="farQuestionCircle"
             (click)="openModal()"
             class="hint-icon text-secondary"
@@ -52,7 +50,7 @@ export class ExerciseHintStudentDialogComponent {
 })
 export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
     @Input() exerciseId: number;
-    solutionEntriesByExerciseHint: Map<ExerciseHint, ProgrammingExerciseSolutionEntry[]>;
+    exerciseHints: ExerciseHint[];
     protected ngbModalRef: NgbModalRef | null;
 
     // Icons
@@ -68,9 +66,7 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
             .findByExerciseIdWithRelations(this.exerciseId)
             .pipe(
                 map(({ body }) => body),
-                tap((hints: ExerciseHint[]) =>
-                    hints.forEach((exerciseHint: ExerciseHint) => this.solutionEntriesByExerciseHint.set(exerciseHint, this.getSortedSolutionEntriesForCodeHint(exerciseHint))),
-                ),
+                tap((hints: ExerciseHint[]) => (this.exerciseHints = hints)),
                 catchError(() => of()),
             )
             .subscribe();
@@ -81,7 +77,7 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
      */
     openModal() {
         this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
-        this.ngbModalRef.componentInstance.solutionEntriesByExerciseHint = this.solutionEntriesByExerciseHint;
+        this.ngbModalRef.componentInstance.exerciseHints = this.exerciseHints;
         this.ngbModalRef.result.then(
             () => {
                 this.ngbModalRef = null;
@@ -97,17 +93,5 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.ngbModalRef = null;
-    }
-
-    getSortedSolutionEntriesForCodeHint(exerciseHint: ExerciseHint): ProgrammingExerciseSolutionEntry[] {
-        if (exerciseHint.type !== HintType.CODE) {
-            return [];
-        }
-        const codeHint = exerciseHint as CodeHint;
-        return (
-            codeHint.solutionEntries?.sort((a, b) => {
-                return a.filePath?.localeCompare(b.filePath!) || a.line! - b.line!;
-            }) ?? []
-        );
     }
 }
