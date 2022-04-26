@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.validation.constraints.NotNull;
@@ -37,6 +36,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -354,10 +354,11 @@ public class FileResource {
 
         List<String> attachmentLinks = lectureAttachments.stream()
                 .filter(unit -> unit.isVisibleToStudents() && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
+                .sorted(Comparator.comparing(LectureUnit::getOrder))
                 .map(unit -> Paths
                         .get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
                         .toString())
-                .collect(Collectors.toList());
+                .toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks);
         if (file.isEmpty()) {
