@@ -2,16 +2,17 @@ import { Theme, THEME_LOCAL_STORAGE_KEY, THEME_OVERRIDE_ID, ThemeService } from 
 import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { TestBed } from '@angular/core/testing';
+import { MockThemeService } from '../helpers/mocks/service/mock-theme.service';
 
 describe('ThemeService', () => {
     let service: ThemeService;
     let localStorageService: LocalStorageService;
 
-    let linkElement;
+    let linkElement: HTMLElement;
     let documentGetElementMock: jest.SpyInstance;
-    let headElement;
+    let headElement: HTMLElement;
     let documentgetElementsByTagNameMock: jest.SpyInstance;
-    let newElement;
+    let newElement: HTMLLinkElement;
     let documentCreateElementMock: jest.SpyInstance;
     let storeSpy: jest.SpyInstance;
 
@@ -28,16 +29,16 @@ describe('ThemeService', () => {
                 localStorageService = TestBed.inject(LocalStorageService);
                 linkElement = {
                     remove: jest.fn(),
-                };
+                } as any as HTMLElement;
                 documentGetElementMock = jest.spyOn(document, 'getElementById').mockReturnValue(linkElement);
 
                 headElement = {
-                    getElementsByTagName: jest.fn().mockReturnValue({}, {}),
+                    getElementsByTagName: jest.fn().mockReturnValue([{}, {}]),
                     insertBefore: jest.fn(),
-                };
-                documentgetElementsByTagNameMock = jest.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement]);
+                } as any as HTMLElement;
+                documentgetElementsByTagNameMock = jest.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
 
-                newElement = {};
+                newElement = {} as HTMLLinkElement;
                 documentCreateElementMock = jest.spyOn(document, 'createElement').mockReturnValue(newElement);
 
                 storeSpy = jest.spyOn(localStorageService, 'store');
@@ -75,6 +76,7 @@ describe('ThemeService', () => {
         expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
         expect(storeSpy).toHaveBeenCalledWith(THEME_LOCAL_STORAGE_KEY, 'DARK');
 
+        // @ts-ignore
         newElement.onload();
 
         expect(linkElement.remove).toHaveBeenCalledOnce();
@@ -102,14 +104,15 @@ describe('ThemeService', () => {
 
     it('applies dark OS preferences', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
-        const applySpy = jest.spyOn(service, 'applyThemeInternal').mockImplementation(jest.fn());
+        const applySpy = jest.spyOn(service as any as MockThemeService, 'applyThemeInternal').mockImplementation(jest.fn());
         const windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query) => {
             if (query === '(prefers-color-scheme)') {
-                return 'all';
+                return { media: 'all' } as MediaQueryList;
             }
             if (query === '(prefers-color-scheme: dark)') {
-                return { matches: true };
+                return { matches: true } as MediaQueryList;
             }
+            throw new Error('Shouldnt happen');
         });
 
         service.restoreTheme();
@@ -126,14 +129,15 @@ describe('ThemeService', () => {
 
     it('applies light OS preferences', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
-        const applySpy = jest.spyOn(service, 'applyThemeInternal').mockImplementation(jest.fn());
+        const applySpy = jest.spyOn(service as any as MockThemeService, 'applyThemeInternal').mockImplementation(jest.fn());
         const windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query) => {
             if (query === '(prefers-color-scheme)') {
-                return 'all';
+                return { media: 'all' } as MediaQueryList;
             }
             if (query === '(prefers-color-scheme: dark)') {
-                return { matches: false };
+                return { matches: false } as MediaQueryList;
             }
+            throw new Error('Shouldnt happen');
         });
 
         service.restoreTheme();

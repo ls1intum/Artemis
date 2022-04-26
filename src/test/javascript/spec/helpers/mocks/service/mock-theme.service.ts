@@ -18,6 +18,10 @@ export class MockThemeService {
     public restoreTheme() {}
 
     public applyTheme(theme: Theme) {
+        this.applyThemeInternal(theme, false);
+    }
+
+    public applyThemeInternal(theme: Theme, isByAutoDetection: boolean) {
         this.currentTheme = theme;
         this.currentThemeSubject.next(theme);
     }
