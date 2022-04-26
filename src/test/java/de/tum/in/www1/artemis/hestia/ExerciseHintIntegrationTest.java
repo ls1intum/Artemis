@@ -196,7 +196,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateCodeHintShouldFail() throws Exception {
+    public void updateCodeHintTitle() throws Exception {
         CodeHint codeHint = new CodeHint();
         codeHint.setTitle("Hint 1");
         codeHint.setExercise(exercise);
@@ -204,11 +204,11 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         codeHint.setTitle("New Title");
 
-        request.put("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/" + codeHint.getId(), codeHint, HttpStatus.BAD_REQUEST);
+        request.put("/api/exercises/" + codeHint.getExercise().getId() + "/exercise-hints/" + codeHint.getId(), codeHint, HttpStatus.OK);
         Optional<ExerciseHint> hintAfterSave = exerciseHintRepository.findById(codeHint.getId());
         assertThat(hintAfterSave).isPresent();
         assertThat(hintAfterSave.get()).isInstanceOf(CodeHint.class);
-        assertThat((hintAfterSave.get()).getTitle()).isEqualTo("Hint 1");
+        assertThat((hintAfterSave.get()).getTitle()).isEqualTo("New Title");
     }
 
     @Test
