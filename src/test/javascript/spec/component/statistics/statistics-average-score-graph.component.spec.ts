@@ -8,7 +8,7 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
@@ -38,13 +38,13 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule)],
             declarations: [StatisticsAverageScoreGraphComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ChartRoutingService)],
+            providers: [MockProvider(ArtemisNavigationUtilService)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
                 component = fixture.componentInstance;
-                const routingService = TestBed.inject(ChartRoutingService);
+                const routingService = TestBed.inject(ArtemisNavigationUtilService);
                 routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
 
                 component.exerciseAverageScores = returnValue;

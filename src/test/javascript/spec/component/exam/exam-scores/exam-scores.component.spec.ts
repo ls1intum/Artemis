@@ -38,7 +38,7 @@ import { Course } from 'app/entities/course.model';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -244,7 +244,7 @@ describe('ExamScoresComponent', () => {
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AccountService),
-                MockProvider(ChartRoutingService),
+                MockProvider(ArtemisNavigationUtilService),
                 MockProvider(TranslateService),
                 MockProvider(ExamManagementService),
                 MockProvider(SortService),
@@ -290,9 +290,9 @@ describe('ExamScoresComponent', () => {
                     .spyOn(participationScoreService, 'findExamScores')
                     .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
                 accountService = TestBed.inject(AccountService);
-                const chartRoutingService = TestBed.inject(ChartRoutingService);
+                const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
 
-                routingStub = jest.spyOn(chartRoutingService, 'routeInNewTab').mockImplementation();
+                routingStub = jest.spyOn(navigationUtilService, 'routeInNewTab').mockImplementation();
             });
     });
 

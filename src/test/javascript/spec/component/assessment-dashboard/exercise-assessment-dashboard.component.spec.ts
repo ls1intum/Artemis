@@ -53,7 +53,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -68,7 +68,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -254,7 +253,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(GuidedTourService),
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
-        MockProvider(ChartRoutingService),
+        MockProvider(ArtemisNavigationUtilService),
     ];
 
     beforeEach(() => {
@@ -321,9 +320,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 comp.submissionsWithComplaints = [submissionWithComplaintDTO];
 
                 accountService = TestBed.inject(AccountService);
-                const chartRoutingService = TestBed.inject(ChartRoutingService);
+                const navigationUitlService = TestBed.inject(ArtemisNavigationUtilService);
 
-                routingStub = jest.spyOn(chartRoutingService, 'routeInNewTab').mockImplementation();
+                routingStub = jest.spyOn(navigationUitlService, 'routeInNewTab').mockImplementation();
 
                 translateService = TestBed.inject(TranslateService);
             });

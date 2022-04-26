@@ -38,7 +38,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
@@ -47,7 +47,6 @@ import dayjs from 'dayjs/esm';
 import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -187,7 +186,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
-        private chartRoutingService: ChartRoutingService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
@@ -781,7 +780,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     navigateToExerciseSubmissionOverview(event: any): void {
         if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.chartRoutingService.routeInNewTab(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
+            this.navigationUtilService.routeInNewTab(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
     }
 

@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 enum ScaChartBarTitle {
     PENALTY = 'Penalty',
@@ -102,7 +102,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
     // ngx
     ngxData: NgxChartsMultiSeriesDataEntry[] = [];
 
-    constructor(private translateService: TranslateService, private chartRoutingService: ChartRoutingService) {
+    constructor(private translateService: TranslateService, private navigationUtilsService: ArtemisNavigationUtilService) {
         super();
         translateService.onLangChange.subscribe(() => {
             this.updateTranslations();
@@ -178,7 +178,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
      */
     onSelect(event: any): void {
         if (!event.isPenalty) {
-            this.chartRoutingService.routeInNewTab(['course-management', this.exercise.course!.id, 'programming-exercises', this.exercise.id, 'scores']);
+            this.navigationUtilsService.routeInNewTab(['course-management', this.exercise.course!.id, 'programming-exercises', this.exercise.id, 'scores']);
         } else {
             this.tableFiltered = true;
             this.scaCategoryFilter.emit(event.id);

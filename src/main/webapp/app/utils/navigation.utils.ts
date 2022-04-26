@@ -3,7 +3,6 @@ import { NavigationEnd, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisNavigationUtilService {
@@ -72,6 +71,16 @@ export class ArtemisNavigationUtilService {
         const newUrl = url.slice(0, -3) + id;
         const regex = /http(s)?:\/\/([a-zA-Z0-9\.\:]*)(?<rest>\/.*)/;
         this.location.go(newUrl.match(regex)!.groups!.rest);
+    }
+
+    /**
+     * Opens the target page in a new tab
+     * Used for routing via charts
+     * @param route the target route
+     */
+    routeInNewTab(route: any[]): void {
+        const url = this.router.serializeUrl(this.router.createUrlTree(route));
+        window.open(url, '_blank');
     }
 }
 
@@ -198,7 +207,7 @@ export const getExerciseSubmissionsLink = (exerciseType: ExerciseType, courseId:
  * @subPage the subpage of an exercise which we want to navigate into, e.g. scores
  */
 export const navigateToExamExercise = (
-    chartRoutingService: ChartRoutingService,
+    navigationUtilService: ArtemisNavigationUtilService,
     courseId: number,
     examId: number,
     exerciseGroupId: number,
@@ -207,6 +216,6 @@ export const navigateToExamExercise = (
     subPage: string,
 ): void => {
     setTimeout(() => {
-        chartRoutingService.routeInNewTab(['course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, `${exerciseType}-exercises`, exerciseId, subPage]);
+        navigationUtilService.routeInNewTab(['course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, `${exerciseType}-exercises`, exerciseId, subPage]);
     }, 1000);
 };

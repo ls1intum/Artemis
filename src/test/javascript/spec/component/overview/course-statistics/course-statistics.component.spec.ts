@@ -24,7 +24,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -339,7 +339,7 @@ describe('CourseStatisticsComponent', () => {
                 ArtemisTranslatePipe,
                 MockDirective(NgbTooltip),
             ],
-            providers: [MockProvider(ChartRoutingService), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
         })
             .compileComponents()
             .then(() => {
@@ -536,7 +536,7 @@ describe('CourseStatisticsComponent', () => {
     it('should delegate the user correctly', () => {
         const clickEvent = { exerciseId: 42 };
         jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(course);
-        const routingService = TestBed.inject(ChartRoutingService);
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
         const routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
         comp.ngOnInit();
 

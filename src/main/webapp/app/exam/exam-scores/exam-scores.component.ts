@@ -32,7 +32,7 @@ import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-so
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 export enum MedianType {
     PASSED,
@@ -109,7 +109,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
         private courseManagementService: CourseManagementService,
-        private chartRoutingService: ChartRoutingService,
+        private navigationUtilService: ArtemisNavigationUtilService,
         private accountService: AccountService,
     ) {}
 
@@ -735,7 +735,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     onSelect() {
         if (this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.chartRoutingService.routeInNewTab(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
+            this.navigationUtilService.routeInNewTab(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
         }
     }
 

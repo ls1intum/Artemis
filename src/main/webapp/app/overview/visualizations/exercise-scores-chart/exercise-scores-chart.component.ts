@@ -13,7 +13,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ChartExerciseTypeFilterDirective } from 'app/shared/chart/chart-exercise-type-filter.directive';
 import { GraphColors } from 'app/entities/statistics.model';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
@@ -55,7 +55,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
     maxScale = 101;
 
     constructor(
-        private chartRoutingService: ChartRoutingService,
+        private navigationUtilService: ArtemisNavigationUtilService,
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private exerciseScoresChartService: ExerciseScoresChartService,
@@ -190,7 +190,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
      * We navigate to the exercise sub page in a new tab when the user clicks on a data point
      */
     navigateToExercise(exerciseId: number): void {
-        this.chartRoutingService.routeInNewTab(['courses', this.courseId, 'exercises', exerciseId]);
+        this.navigationUtilService.routeInNewTab(['courses', this.courseId, 'exercises', exerciseId]);
     }
 
     /**

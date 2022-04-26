@@ -16,7 +16,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { GraphColors } from 'app/entities/statistics.model';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 class MockActivatedRoute {
     parent: any;
@@ -46,7 +46,7 @@ describe('ExerciseScoresChartComponent', () => {
             declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(ChartRoutingService),
+                MockProvider(ArtemisNavigationUtilService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ExerciseScoresChartService),
 
@@ -147,7 +147,7 @@ describe('ExerciseScoresChartComponent', () => {
         const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 2, 43, 31, 70, dayjs(), 'second exercise');
 
         setUpServiceAndStartComponent([firstExercise, secondExercise]);
-        const routingService = TestBed.inject(ChartRoutingService);
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
         const routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
         const pointClickEvent = { exerciseId: 2 };
 

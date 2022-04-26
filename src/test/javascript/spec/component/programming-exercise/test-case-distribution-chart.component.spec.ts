@@ -9,7 +9,7 @@ import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programmin
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('Test case distribution chart', () => {
     const programmingExercise = new ProgrammingExercise(undefined, undefined);
@@ -72,13 +72,13 @@ describe('Test case distribution chart', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [TestCaseDistributionChartComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ChartRoutingService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestCaseDistributionChartComponent);
         component = fixture.componentInstance;
 
-        const routingService = TestBed.inject(ChartRoutingService);
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
         routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
     });
 

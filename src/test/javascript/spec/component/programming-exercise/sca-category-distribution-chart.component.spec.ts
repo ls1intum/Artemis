@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;
@@ -56,12 +56,12 @@ describe('SCA category distribution chart', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [ScaCategoryDistributionChartComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ChartRoutingService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ScaCategoryDistributionChartComponent);
         component = fixture.componentInstance;
-        const routingService = TestBed.inject(ChartRoutingService);
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
         routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
     });
 

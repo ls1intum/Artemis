@@ -17,7 +17,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 import { GraphColors } from 'app/entities/statistics.model';
-import { ChartRoutingService } from 'app/shared/chart/chart-routing.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -185,7 +185,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
-        private chartRoutingService: ChartRoutingService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     ngOnInit() {
@@ -710,7 +710,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param event the event that is fired by ngx-charts
      */
     onSelect(event: any) {
-        this.chartRoutingService.routeInNewTab(['courses', this.course!.id!, 'exercises', event.exerciseId]);
+        this.navigationUtilService.routeInNewTab(['courses', this.course!.id!, 'exercises', event.exerciseId]);
     }
 
     /**
