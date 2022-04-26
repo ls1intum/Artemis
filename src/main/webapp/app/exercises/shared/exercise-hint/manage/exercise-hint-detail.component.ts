@@ -15,6 +15,7 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
     readonly HintType = HintType;
 
     exerciseHint: ExerciseHint;
+    solutionEntries: ProgrammingExerciseSolutionEntry[];
 
     courseId: number;
     exerciseId: number;
@@ -37,6 +38,7 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
         this.route.data.subscribe(({ exerciseHint }) => {
             this.exerciseHint = exerciseHint;
         });
+        this.setSortedSolutionEntriesForCodeHint();
     }
 
     /**
@@ -48,16 +50,15 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    getSortedSolutionEntriesForCodeHint(): ProgrammingExerciseSolutionEntry[] {
+    setSortedSolutionEntriesForCodeHint() {
+        if (this.exerciseHint.type !== HintType.CODE) {
+            this.solutionEntries = [];
+            return;
+        }
         const codeHint = this.exerciseHint as CodeHint;
-        return (
+        this.solutionEntries =
             codeHint.solutionEntries?.sort((a, b) => {
                 return a.filePath?.localeCompare(b.filePath!) || a.line! - b.line!;
-            }) ?? []
-        );
-    }
-
-    getExerciseHintAsCodeHint(): CodeHint {
-        return this.exerciseHint as CodeHint;
+            }) ?? [];
     }
 }

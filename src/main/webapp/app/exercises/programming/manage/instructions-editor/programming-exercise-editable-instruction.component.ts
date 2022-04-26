@@ -185,7 +185,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     loadExerciseHints(exerciseId: number) {
         this.exerciseHintService
-            .findByExerciseId(exerciseId)
+            .findByExerciseIdWithRelations(exerciseId)
             .pipe(rxMap(({ body }) => body || []))
             .subscribe((exerciseHints: ExerciseHint[]) => {
                 this.exerciseHints = exerciseHints;

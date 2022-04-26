@@ -102,7 +102,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 getFileStub = jest.spyOn(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 getHintsForExerciseStub = jest
-                    .spyOn(exerciseHintService, 'findByExerciseId')
+                    .spyOn(exerciseHintService, 'findByExerciseIdWithRelations')
                     .mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
                 comp.personalParticipation = true;

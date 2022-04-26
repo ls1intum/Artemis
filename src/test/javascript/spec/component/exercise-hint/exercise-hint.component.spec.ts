@@ -34,7 +34,7 @@ describe('ExerciseHint Management Component', () => {
         const hint = new ExerciseHint();
         hint.id = 123;
 
-        jest.spyOn(service, 'findByExerciseId').mockReturnValue(
+        jest.spyOn(service, 'findByExerciseIdWithRelations').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [hint],
@@ -47,8 +47,8 @@ describe('ExerciseHint Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.findByExerciseId).toHaveBeenCalledTimes(1);
-        expect(service.findByExerciseId).toHaveBeenCalledWith(15);
+        expect(service.findByExerciseIdWithRelations).toHaveBeenCalledTimes(1);
+        expect(service.findByExerciseIdWithRelations).toHaveBeenCalledWith(15);
         expect(comp.exerciseHints[0]).toEqual(expect.objectContaining({ id: 123 }));
     });
 

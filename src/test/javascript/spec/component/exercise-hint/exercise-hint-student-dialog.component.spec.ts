@@ -40,7 +40,7 @@ describe('ExerciseHint Hint Student Component', () => {
         exerciseHint.id = 123;
         comp.exerciseId = 15;
         const headers = new HttpHeaders().append('link', 'link;link');
-        const findByExerciseIdSpy = jest.spyOn(service, 'findByExerciseId').mockReturnValue(
+        const findByExerciseIdSpy = jest.spyOn(service, 'findByExerciseIdWithRelations').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [exerciseHint],

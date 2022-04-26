@@ -16,5 +16,6 @@ const ENTITY_STATES = [...exerciseHintRoute];
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), FormsModule, ReactiveFormsModule, ArtemisMarkdownModule, ArtemisMarkdownEditorModule, AceEditorModule],
     declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent, SolutionEntryComponent],
+    exports: [SolutionEntryComponent],
 })
 export class ArtemisExerciseHintManagementModule {}

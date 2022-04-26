@@ -185,7 +185,7 @@ describe('CodeEditorInstructorIntegration', () => {
                     .mockReturnValue(throwError(() => new Error('no result')));
                 getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
                 getHintsForExerciseStub = jest
-                    .spyOn(exerciseHintService, 'findByExerciseId')
+                    .spyOn(exerciseHintService, 'findByExerciseIdWithRelations')
                     .mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
                 findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
