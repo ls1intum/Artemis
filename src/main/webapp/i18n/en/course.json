@@ -74,6 +74,7 @@
                 "warning": "Updating this field will update the grading key for the course if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
             },
             "accuracyOfScores": "Amount of decimal places used for calculating the scores",
+            "defaultProgrammingLanguage": "Default Programming Language",
             "gradingSystem": "Grading Key",
             "testCourse": {
                 "title": "Test Course",

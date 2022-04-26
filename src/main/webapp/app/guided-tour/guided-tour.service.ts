@@ -4,7 +4,7 @@ import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
 import { AlertService } from 'app/core/util/alert.service';
 import { BehaviorSubject, fromEvent, Observable, Subject } from 'rxjs';
-import { filter, mergeMap, map, switchMap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
@@ -620,7 +620,7 @@ export class GuidedTourService {
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
             const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
             const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
-            this.handleWaitForSelectorEvent(nextStep, afterNextStep);
+            this.handleWaitForSelectorEvent(currentStep, nextStep, afterNextStep);
         } else {
             /** At a minimum one of childList, attributes, and characterData must be true, otherwise, a TypeError exception will be thrown. */
             let options: MutationObserverInit = { attributes: true, childList: true, characterData: true };
@@ -679,16 +679,13 @@ export class GuidedTourService {
     /**
      * Enables the next step click if the highlightSelector of the next step or
      * the highlightSelector of the after next step are visible
+     * @param currentStep  current tour step
      * @param nextStep  next tour step
      * @param afterNextStep the tour step after the next tour step
      */
-    private handleWaitForSelectorEvent(nextStep: TourStep | undefined, afterNextStep: TourStep | undefined) {
+    private handleWaitForSelectorEvent(currentStep: UserInterActionTourStep, nextStep: TourStep | undefined, afterNextStep: TourStep | undefined) {
         if (nextStep && nextStep.highlightSelector) {
-            if (afterNextStep && afterNextStep.highlightSelector) {
-                this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
-            } else {
-                this.waitForElement(nextStep.highlightSelector);
-            }
+            this.waitForElement(nextStep.highlightSelector, afterNextStep?.highlightSelector, currentStep.triggerNextStep);
         } else {
             this.enableNextStepClick();
         }
@@ -714,14 +711,19 @@ export class GuidedTourService {
      * Wait for the next step selector to appear in the DOM and continue with the next step
      * @param nextStepSelector the selector string of the next element that should appear in the DOM
      * @param afterNextStepSelector if the nextSelector does not show up in the DOM then wait for the step afterwards as well
+     * @param triggerNextStep if the next step should be called as soon as the element is found
      */
-    private waitForElement(nextStepSelector: string, afterNextStepSelector?: string) {
+    private waitForElement(nextStepSelector: string, afterNextStepSelector?: string, triggerNextStep?: boolean) {
         const interval = setInterval(() => {
             const nextElement = document.querySelector(nextStepSelector);
             const afterNextElement = afterNextStepSelector ? document.querySelector(afterNextStepSelector) : undefined;
             if (nextElement || afterNextElement) {
                 clearInterval(interval);
-                this.enableNextStepClick();
+                if (triggerNextStep) {
+                    this.nextStep();
+                } else {
+                    this.enableNextStepClick();
+                }
             }
         }, 1000);
     }
@@ -880,7 +882,7 @@ export class GuidedTourService {
             return false;
         }
 
-        return !!currentTourStep.highlightSelector && !!document.querySelector(currentTourStep.highlightSelector);
+        return !currentTourStep.highlightSelector || !!document.querySelector(currentTourStep.highlightSelector);
     }
 
     /**

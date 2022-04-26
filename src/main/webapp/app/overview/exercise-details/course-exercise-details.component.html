@@ -218,11 +218,12 @@
             <!-- RESULTS END -->
             <ng-container *ngIf="exampleSolutionUML || exampleSolution || isProgrammingExerciseExampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
-                    <div class="col-auto">
-                        <h3>{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</h3>
+                    <div class="control-label" (click)="changeExampleSolution()">
+                        <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
+                        <fa-icon class="pe-3" [icon]="exampleSolutionCollapsed ? faAngleDown : faAngleUp"></fa-icon>
                     </div>
                 </div>
-                <dl class="row-md jh-entity-details markdown-preview">
+                <dl class="row-md jh-entity-details markdown-preview" *ngIf="!exampleSolutionCollapsed">
                     <dd *ngIf="exampleSolutionUML && modelingExercise" class="editor-outline-background">
                         <jhi-modeling-editor
                             [readOnly]="true"
