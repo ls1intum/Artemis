@@ -36,8 +36,6 @@ describe('ModelingExerciseImportComponent', () => {
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
             ],
-            providers: [],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
@@ -52,11 +50,6 @@ describe('ModelingExerciseImportComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(ModelingExerciseImportComponent).not.toBeNull();
     });
 
     beforeEach(() => {
@@ -95,7 +88,7 @@ describe('ModelingExerciseImportComponent', () => {
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(comp.page).toEqual(0);
+        expect(comp.page).toEqual(1);
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);

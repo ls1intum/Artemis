@@ -121,7 +121,7 @@ describe('ExampleSubmissionImportComponent', () => {
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(component.page).toBe(0);
+        expect(component.page).toBe(1);
         setStateAndCallOnInit(() => {
             component.onPageChange(2);
             tick(10);

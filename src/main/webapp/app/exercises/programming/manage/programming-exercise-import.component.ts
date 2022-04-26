@@ -8,7 +8,7 @@ import { ProgrammingExercisePagingService } from 'app/exercises/programming/mana
 import { SortService } from 'app/shared/service/sort.service';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 
-enum TableColumn {
+export enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
     PROGRAMMING_LANGUAGE = 'PROGRAMMING_LANGUAGE',

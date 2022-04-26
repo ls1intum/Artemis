@@ -86,7 +86,7 @@ describe('LectureImportComponent', () => {
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(comp.page).toEqual(0);
+        expect(comp.page).toEqual(1);
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
