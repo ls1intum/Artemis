@@ -38,7 +38,7 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
-import { IExerciseHintService, ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { IExerciseHintService, ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 

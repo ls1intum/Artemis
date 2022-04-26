@@ -46,7 +46,7 @@ import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hesti
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { CodeHintService } from 'app/exercises/shared/exercise-hint/manage/code-hint.service';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/shared/code-hint.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',

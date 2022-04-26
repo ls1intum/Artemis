@@ -20,7 +20,7 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 
 /**
  * Enumeration specifying the repository type

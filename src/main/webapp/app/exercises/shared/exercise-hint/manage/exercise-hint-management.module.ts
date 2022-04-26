@@ -8,9 +8,9 @@ import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
-import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/manage/solution-entry.component';
+import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/shared/solution-entry.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { CodeHintContainerComponent } from 'app/exercises/shared/exercise-hint/manage/code-hint-container.component';
+import { CodeHintContainerComponent } from 'app/exercises/shared/exercise-hint/shared/code-hint-container.component';
 
 const ENTITY_STATES = [...exerciseHintRoute];
 

@@ -5,7 +5,7 @@ import { catchError, map, tap } from 'rxjs/operators';
 
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
-import { ExerciseHintService } from '../manage/exercise-hint.service';
+import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 

@@ -50,7 +50,7 @@ import {
     faUserPlus,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';
 
 @Component({

@@ -18,7 +18,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';

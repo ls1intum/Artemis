@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('ExerciseHint Management Component', () => {
