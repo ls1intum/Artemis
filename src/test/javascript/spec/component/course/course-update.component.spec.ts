@@ -28,6 +28,7 @@ import dayjs from 'dayjs/esm';
 import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { base64StringToBlob } from 'app/utils/blob-util';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -55,6 +56,7 @@ describe('Course Management Update Component', () => {
         course.startDate = dayjs();
         course.endDate = dayjs();
         course.semester = 'testSemester';
+        course.defaultProgrammingLanguage = ProgrammingLanguage.PYTHON;
         course.testCourse = true;
         course.onlineCourse = true;
         course.complaintsEnabled = true;
@@ -147,6 +149,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['startDate'])?.value).toBe(course.startDate);
             expect(comp.courseForm.get(['endDate'])?.value).toBe(course.endDate);
             expect(comp.courseForm.get(['semester'])?.value).toBe(course.semester);
+            expect(comp.courseForm.get(['defaultProgrammingLanguage'])?.value).toBe(course.defaultProgrammingLanguage);
             expect(comp.courseForm.get(['testCourse'])?.value).toBe(course.testCourse);
             expect(comp.courseForm.get(['onlineCourse'])?.value).toBe(course.onlineCourse);
             expect(comp.courseForm.get(['complaintsEnabled'])?.value).toBe(course.complaintsEnabled);

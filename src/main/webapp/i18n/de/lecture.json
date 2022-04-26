@@ -4,6 +4,7 @@
             "home": {
                 "title": "Vorlesungen",
                 "createLabel": "Vorlesung erstellen",
+                "importLabel": "Vorlesung importieren",
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
@@ -39,6 +40,16 @@
                 "notificationText": "Mitteilungstext",
                 "notificationPlaceholder": "Optional: Mitteilung über die Änderung",
                 "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 10MB"
+            },
+            "import": {
+                "table": {
+                    "title": "Titel",
+                    "course": "Kurs",
+                    "semester": "Semester",
+                    "doImport": "Importieren"
+                },
+                "searchLecture": "Nach Vorlesung suchen:",
+                "loading": "Lade..."
             }
         },
         "attachment": {
