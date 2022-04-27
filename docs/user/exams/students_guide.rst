@@ -343,7 +343,7 @@ Grades
     .. note::
         The grades below the ``First Passing Grade`` are shown in red, and the passing grades are shown in green.
 
-- For more information about all the grading intervals, you can click the |view_grade_key| button to view each grade step boundaries with their bound inclusivity.
+- For more information about all the grading intervals, you can click the |view_grade_key| button to view all grade step boundaries with their bound inclusivity.
 - A square bracket ``[`` or ``]`` in the interval of a grade step means the bound is included in the current grade step, and a parenthesis ``(`` or ``)`` means it is excluded.
 - For example, if the grade step for ``2.0`` shows the percentage interval as ``[80 - 85)`` this means that a student achieving ``80%`` has the grade ``2.0``, whereas a student achieving ``85%`` receives the grade right above ``2.0`` (i.e. ``1.7`` if the default grading key is used).
 
