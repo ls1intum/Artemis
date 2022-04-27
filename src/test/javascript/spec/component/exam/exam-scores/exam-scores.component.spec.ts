@@ -292,7 +292,7 @@ describe('ExamScoresComponent', () => {
                 accountService = TestBed.inject(AccountService);
                 const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
 
-                routingStub = jest.spyOn(navigationUtilService, 'routeInNewTab').mockImplementation();
+                routingStub = jest.spyOn(navigationUtilService, 'routeInNewTab');
             });
     });
 
