@@ -1,82 +1,105 @@
 import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
-export enum ExamUserActionType {
+export enum ExamActionEvent {
     STARTED_EXAM = 'STARTED_EXAM',
     ENDED_EXAM = 'ENDED_EXAM',
     HANDED_IN_EARLY = 'HANDED_IN_EARLY',
+    CONTINUED_AFTER_HAND_IN_EARLY = 'CONTINUED_AFTER_HAND_IN_EARLY',
     SWITCHED_EXERCISE = 'SWITCHED_EXERCISE',
     SAVED_EXERCISE = 'SAVED_EXERCISE',
+    CONNECTION_UPDATED = 'CONNECTION_UPDATED',
 }
 
-export class ExamUserActivity implements BaseEntity {
-    public id?: number;
-    public examUserActions?: ExamUserAction[];
+export class ExamActivity {
+    public examActions: ExamAction[];
 
-    constructor(id: number, examUserActions: ExamUserAction[]) {
-        this.id = id;
-        this.examUserActions = examUserActions;
+    constructor() {
+        this.examActions = [];
+    }
+
+    public addAction(examUserAction: ExamAction) {
+        this.examActions.push(examUserAction);
     }
 }
 
-class ExamUserAction implements BaseEntity {
+export class ExamAction implements BaseEntity {
     public id?: number;
-    public manually?: boolean;
     public timestamp?: dayjs.Dayjs;
-    public actionDetail?: ExamUserActionDetail;
+    public actionDetail?: ExamActionDetail;
+    public synced?: boolean;
 
-    constructor(id: number, manually: boolean, timestamp: dayjs.Dayjs, actionDetail: ExamUserActionDetail) {
-        this.id = id;
-        this.manually = manually;
+    constructor(timestamp: dayjs.Dayjs, actionDetail: ExamActionDetail) {
         this.timestamp = timestamp;
         this.actionDetail = actionDetail;
+        this.synced = false;
     }
 }
 
-abstract class ExamUserActionDetail {
-    public readonly examUserActionType: ExamUserActionType;
+export abstract class ExamActionDetail {
+    public readonly examActionEvent: ExamActionEvent;
 
-    protected constructor(examUserActionType: ExamUserActionType) {
-        this.examUserActionType = examUserActionType;
+    protected constructor(examActionEvent: ExamActionEvent) {
+        this.examActionEvent = examActionEvent;
     }
 }
 
-export class ExamUserStartedExamActionDetail extends ExamUserActionDetail {
+export class StartedExamActionDetail extends ExamActionDetail {
+    public sessionId?: number;
+
+    constructor(sessionId: number | undefined) {
+        super(ExamActionEvent.STARTED_EXAM);
+        this.sessionId = sessionId;
+    }
+}
+
+export class EndedExamActionDetail extends ExamActionDetail {
     constructor() {
-        super(ExamUserActionType.STARTED_EXAM);
+        super(ExamActionEvent.ENDED_EXAM);
     }
 }
 
-export class ExamUserEndedExamActionDetail extends ExamUserActionDetail {
+export class HandedInEarlyActionDetail extends ExamActionDetail {
     constructor() {
-        super(ExamUserActionType.ENDED_EXAM);
+        super(ExamActionEvent.HANDED_IN_EARLY);
     }
 }
 
-export class ExamUserHandedInEarlyActionDetail extends ExamUserActionDetail {
+export class ContinueAfterHandedInEarlyActionDetail extends ExamActionDetail {
     constructor() {
-        super(ExamUserActionType.HANDED_IN_EARLY);
+        super(ExamActionEvent.CONTINUED_AFTER_HAND_IN_EARLY);
     }
 }
 
-export class ExamUserSwitchedExerciseActionDetail extends ExamUserActionDetail {
-    public from?: number;
-    public to?: number;
+export class SwitchedExerciseActionDetail extends ExamActionDetail {
+    public exerciseId?: number;
 
-    constructor(from: number, to: number) {
-        super(ExamUserActionType.SWITCHED_EXERCISE);
-        this.from = from;
-        this.to = to;
+    constructor(exerciseId: number | undefined) {
+        super(ExamActionEvent.SWITCHED_EXERCISE);
+        this.exerciseId = exerciseId;
     }
 }
 
-export class ExamUserSavedExerciseActionDetail extends ExamUserActionDetail {
+export class SavedSubmissionActionDetail extends ExamActionDetail {
     public forced?: boolean;
     public submissionId?: number;
+    public failed?: boolean;
+    public automatically?: boolean;
 
-    constructor(forced: boolean, submissionId: number) {
-        super(ExamUserActionType.SAVED_EXERCISE);
+    constructor(forced: boolean, submissionId: number | undefined, failed: boolean, automatically: boolean) {
+        super(ExamActionEvent.SAVED_EXERCISE);
         this.forced = forced;
         this.submissionId = submissionId;
+        this.failed = failed;
+        this.automatically = automatically;
+    }
+}
+
+export class ConnectionUpdatedActionDetail extends ExamActionDetail {
+    public connected?: boolean;
+
+    constructor(connected: boolean) {
+        super(ExamActionEvent.CONNECTION_UPDATED);
+        this.connected = connected;
     }
 }

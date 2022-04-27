@@ -4,7 +4,7 @@ import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { ExamSession } from 'app/entities/exam-session.model';
-import { ExamUserActivity } from 'app/entities/exam-user-activity.model';
+import { ExamActivity } from 'app/entities/exam-user-activity.model';
 
 export class StudentExam implements BaseEntity {
     public id?: number;
@@ -17,7 +17,7 @@ export class StudentExam implements BaseEntity {
     public exam?: Exam;
     public exercises?: Exercise[];
     public examSessions?: ExamSession[];
-    public examUserActivity?: ExamUserActivity;
+    public examActivity?: ExamActivity;
 
     // helper attribute
     public ended?: boolean;
