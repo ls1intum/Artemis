@@ -31,7 +31,7 @@ export class ThemeSwitchComponent implements OnInit {
             this.animate = true;
             if (this.openPopupAfterNextChange) {
                 this.openPopupAfterNextChange = false;
-                setTimeout(() => this.popover.open(), 250);
+                setTimeout(() => this.openPopover(), 250);
             }
         });
 
@@ -39,7 +39,7 @@ export class ThemeSwitchComponent implements OnInit {
         setTimeout(() => {
             if (this.themeService.isAutoDetected) {
                 this.isByAutoDetection = true;
-                this.popover.open();
+                this.openPopover();
             }
         }, 1200);
 
@@ -49,6 +49,16 @@ export class ThemeSwitchComponent implements OnInit {
                 this.popover.close();
             }
         });
+    }
+
+    /**
+     * Open the popover if this is not a cypress test
+     * @private
+     */
+    private openPopover() {
+        if (!window['Cypress']) {
+            this.popover?.open();
+        }
     }
 
     /**
