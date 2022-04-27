@@ -79,7 +79,7 @@ describe('Test case distribution chart', () => {
         component = fixture.componentInstance;
 
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
-        routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
+        routingStub = jest.spyOn(routingService, 'routeInNewTab');
     });
 
     it('should handle no test cases appropriately', () => {
