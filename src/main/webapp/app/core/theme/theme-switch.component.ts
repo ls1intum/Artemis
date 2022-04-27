@@ -20,6 +20,7 @@ export class ThemeSwitchComponent implements OnInit {
     isByAutoDetection = false;
     animate = true;
     openPopupAfterNextChange = false;
+    closeTimeout: any;
 
     constructor(private themeService: ThemeService) {}
 
@@ -46,7 +47,7 @@ export class ThemeSwitchComponent implements OnInit {
         // Workaround as we can't dynamically change the "autoClose" property on popovers
         fromEvent(window, 'click').subscribe(() => {
             if (!this.isByAutoDetection && this.popover.isOpen()) {
-                this.popover.close();
+                this.closePopover();
             }
         });
     }
@@ -55,10 +56,21 @@ export class ThemeSwitchComponent implements OnInit {
      * Open the popover if this is not a cypress test
      * @private
      */
-    private openPopover() {
+    openPopover() {
         if (!window['Cypress']) {
             this.popover?.open();
         }
+        clearTimeout(this.closeTimeout);
+    }
+
+    closePopover() {
+        clearTimeout(this.closeTimeout);
+        this.popover?.close();
+    }
+
+    mouseLeave() {
+        clearTimeout(this.closeTimeout);
+        this.closeTimeout = setTimeout(() => this.closePopover(), 250);
     }
 
     /**
@@ -74,7 +86,7 @@ export class ThemeSwitchComponent implements OnInit {
      * Enables dark mode, but fades out the popover before that (made for the "Apply now" button)
      */
     enableNow() {
-        this.popover.close();
+        this.closePopover();
         this.openPopupAfterNextChange = true;
         // Wait until the popover has closed to prevent weird visual jumping issues
         setTimeout(() => this.themeService.applyTheme(Theme.DARK), 200);
@@ -86,7 +98,7 @@ export class ThemeSwitchComponent implements OnInit {
      * if the dark mode was enabled automatically, understood that they can disable it any time.
      */
     manualClose() {
-        this.popover.close();
+        this.closePopover();
         // Apply the inherited mode explicitly to store the preference in local storage in case of light mode.
         // Doesn't hurt in dark mode, either
         setTimeout(() => {
