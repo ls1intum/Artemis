@@ -129,7 +129,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
         participant.getParticipants().forEach(user -> {
             // Access to a single buildplan also needs access to the project
-            String url = serverUrl + "/rest/api/latest/permissions/projectplan/" + projectKey + "/users/" + user.getLogin();
+            String url = serverUrl + "/rest/api/latest/permissions/project/" + projectKey + "/users/" + user.getLogin();
             granReadPermissionRESTCall(url, entity, user, buildPlanId);
             // Access to the buildplan itself
             url = serverUrl + "/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin();
