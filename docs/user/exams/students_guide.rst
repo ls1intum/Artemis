@@ -332,7 +332,7 @@ Summary
 Grades
 ^^^^^^
 - When your exam has been graded, you can view your result on the exam scores page.
-- You will see your obtained points along with the maximum points you can get for individual exercises.
+- You will see your obtained points along with the maximum achievable points for each individual exercise.
 - If the instructor defined a grading key for your exam, you will also see your grade.
 
 .. figure:: student/exam_grade.png
