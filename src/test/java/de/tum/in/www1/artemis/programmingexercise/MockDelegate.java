@@ -63,6 +63,8 @@ public interface MockDelegate {
 
     void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
+    void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException;
+
     void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
     void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
