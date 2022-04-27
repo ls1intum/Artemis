@@ -74,7 +74,7 @@
                 "checklist": {
                     "title": "Follow Checklist",
                     "shortDescription": "Use the exam checklist to oversee and ensure every step of the exam is executed correctly.",
-                    "descriptionTextOne": "Carrying out an exam is a long process with multiple points of failure. Artemis provides you a checklist that gives you an overview of each step of an exam from creation of the exercises to exporting the results. The exam checklist contains the next action you need to take on a step and summarizes the progress taken so far to help you carry out all tasks correctly and completely. It also has quick navigation buttons so you can quickly take related actions or examine the progress in detail."
+                    "descriptionTextOne": "Carrying out an exam is a long process with multiple points of failure. Artemis provides you a checklist that gives you an overview of each step of an exam from creation of the exercises to exporting the results. The exam checklist contains the next action you need to take on a step and summarizes the progress taken so far to help you carry out all tasks correctly and completely. It also has quick navigation buttons so you can quickly take related actions or examine the progress in detail. It also has a more compact overview version in the exam list page to glance over the exam preparation, conduction and correction status of the exams in the list."
                 },
                 "gradeKey": {
                     "title": "Create Grading Keys",

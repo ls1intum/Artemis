@@ -236,34 +236,14 @@ During the exam creation and configuration, you can create your exam and configu
 
    In Progress Exam Checklist
 
-1.9 Grading Key
-^^^^^^^^^^^^^^^
-- Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.
-- Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after their submissions are assessed.
-- Using a grading key also enhances the generated statistics so that the instructor is able to view grade distributions.
-- For an easy out-of-the-box configuration, you can click |generate_default_grade_key| and then click ``Save``.
-- By default, grades are defined as percentages of the total obtainable score. You can also display their point equivalent if you specify ``Maximum number of points for exam``.
-- If you would like to define custom grade steps, you can use the |add_grade_step| button and modify the grade step intervals.
+- The exam list page displays a more concise overview of the exam steps in the exam status column.
+- You can glance over the exam preparation, conduction and correction status of the exams in the list.
 
-.. note::
-    Keep an eye out for the warnings at the bottom of the page to ensure that the grading key is valid.
-
-- ``Inclusivity`` field allows you to decide which grade should be assigned if the student's score is exactly equal to a boundary value between two grades.
-- There are two grade types you can use: ``Grade`` and ``Bonus``. The ``Grade`` type allows you to set a final grade for the exam with custom grade step names, while the ``Bonus`` type allows you to assign bonus points to each grade step so they can contribute to the grade of another course or exam.
-
-.. note::
-    If the ``Grade Type`` is ``Grade`` you should set ``First Passing Grade``.
-
-- For more fine grained control, you can switch to ``Detailed`` editing mode and set grade step bounds manually.
-- |import_export| buttons enable you to save the grading key as a CSV file and re-use it in other courses and exams.
-
-
-.. figure:: instructor/grade_key_editor.png
-   :alt: Default Grading Key
+.. figure:: instructor/exam_overview.png
+   :alt: Exam Status
    :align: center
 
-   Default Grading Key
-
+   Exam Status
 
 .. _exam_conduction:
 
@@ -375,6 +355,33 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 - At the bottom of the page you will find the option |check_plagiarism|.
 
+3.4 Grading Key
+^^^^^^^^^^^^^^^
+- Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.
+- Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after their submissions are assessed.
+- Using a grading key also enhances the generated statistics so that the instructor is able to view grade distributions.
+- For an easy out-of-the-box configuration, you can click |generate_default_grade_key| and then click ``Save``.
+- By default, grades are defined as percentages of the total obtainable score. You can also display their point equivalent if you specify ``Maximum number of points for exam``.
+- If you would like to define custom grade steps, you can use the |add_grade_step| button and modify the grade step intervals.
+
+.. note::
+    Keep an eye out for the warnings at the bottom of the page to ensure that the grading key is valid.
+
+- ``Inclusivity`` field allows you to decide which grade should be assigned if the student's score is exactly equal to a boundary value between two grades.
+- There are two grade types you can use: ``Grade`` and ``Bonus``. The ``Grade`` type allows you to set a final grade for the exam with custom grade step names, while the ``Bonus`` type allows you to assign bonus points to each grade step so they can contribute to the grade of another course or exam.
+
+.. note::
+    If the ``Grade Type`` is ``Grade`` you should set ``First Passing Grade``.
+
+- For more fine grained control, you can switch to ``Detailed`` editing mode and set grade step bounds manually.
+- |import_export| buttons enable you to save the grading key as a CSV file and re-use it in other courses and exams.
+
+
+.. figure:: instructor/grade_key_editor.png
+   :alt: Default Grading Key
+   :align: center
+
+   Default Grading Key
 
 
 

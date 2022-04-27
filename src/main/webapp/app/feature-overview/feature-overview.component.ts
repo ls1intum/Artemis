@@ -331,6 +331,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.checklist.descriptionTextOne',
             faClipboardCheck,
             undefined,
+            '/content/images/feature-overview/instructors/exam_checklist_overview.png',
             '/content/images/feature-overview/instructors/exam_checklist.png',
         );
 
