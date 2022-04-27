@@ -8,7 +8,6 @@ import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -355,8 +354,7 @@ public class FileResource {
 
         List<String> attachmentLinks = lectureAttachments.stream()
                 .filter(unit -> unit.isVisibleToStudents() && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
-                .map(unit -> Paths
-                        .get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
+                .map(unit -> Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(unit.getId()), StringUtils.substringAfterLast(unit.getAttachment().getLink(), "/"))
                         .toString())
                 .collect(Collectors.toList());
 
