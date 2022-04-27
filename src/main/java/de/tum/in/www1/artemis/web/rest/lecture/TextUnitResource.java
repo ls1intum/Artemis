@@ -87,6 +87,9 @@ public class TextUnitResource {
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
+        TextUnit existingUnit = textUnitRepository.findById(textUnit.getId()).orElseThrow();
+        textUnit.setOrder(existingUnit.getOrder());
+
         TextUnit result = textUnitRepository.save(textUnit);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textUnit.getId().toString())).body(result);
     }

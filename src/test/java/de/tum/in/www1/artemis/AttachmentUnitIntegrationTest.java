@@ -109,6 +109,23 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(this.attachment.getAttachmentUnit()).isEqualTo(this.attachmentUnit);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateAttachmentUnit_asInstructor_shouldKeepOrdering() throws Exception {
+        persistAttachmentUnitWithLecture();
+
+        // Add a second lecture unit
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
+        lecture1.addLectureUnit(attachmentUnit);
+        lectureRepository.save(lecture1);
+
+        // Updating the lecture unit should not change order attribute
+        request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class, HttpStatus.OK);
+
+        AttachmentUnit updatedAttachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).orElseThrow();
+        assertThat(updatedAttachmentUnit.getOrder()).isEqualTo(1);
+    }
+
     private void persistAttachmentUnitWithLecture() {
         this.attachmentUnit = attachmentUnitRepository.save(this.attachmentUnit);
         lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
