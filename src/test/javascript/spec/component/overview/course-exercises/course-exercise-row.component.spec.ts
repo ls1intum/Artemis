@@ -94,12 +94,12 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the past and not planned to start', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(false, dayjs(), dayjs().subtract(3, 'minutes'), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(false, dayjs().add(1, 'minute'), dayjs().subtract(3, 'minutes'), true, false);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the future and planned to start', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs(), dayjs().add(3, 'minutes'), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(5, 'minutes'), dayjs().add(3, 'minutes'), true, false);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
@@ -124,12 +124,20 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no results', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), false, true, InitializationState.UNINITIALIZED, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(
+            true,
+            dayjs().subtract(1, 'second'),
+            dayjs().subtract(2, 'seconds'),
+            true,
+            true,
+            InitializationState.UNINITIALIZED,
+            false,
+        );
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_FINISHED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), false, true, InitializationState.UNINITIALIZED, true);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().subtract(3, 'minutes'), dayjs().subtract(1, 'hour'), false, true, InitializationState.UNINITIALIZED, true);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_FINISHED);
     });
 
