@@ -1,5 +1,4 @@
 import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
-import dayjs from 'dayjs/esm';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';

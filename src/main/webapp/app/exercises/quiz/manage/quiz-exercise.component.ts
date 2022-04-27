@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
@@ -176,7 +176,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     startBatch(quizExerciseId: number, quizBatchId: number) {
         this.quizExerciseService.startBatch(quizBatchId).subscribe({
-            next: (res: HttpResponse<QuizBatch>) => {
+            next: () => {
                 this.loadOne(quizExerciseId);
             },
             error: (res: HttpErrorResponse) => {
@@ -193,7 +193,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     addBatch(quizExerciseId: number) {
         this.quizExerciseService.addBatch(quizExerciseId).subscribe({
-            next: (res: HttpResponse<QuizBatch>) => {
+            next: () => {
                 this.loadOne(quizExerciseId);
             },
             error: (res: HttpErrorResponse) => {

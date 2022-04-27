@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -107,7 +109,12 @@ public final class SecurityUtils {
         context.setAuthentication(makeAuthorizationObject(null));
     }
 
-    public static Authentication makeAuthorizationObject(String login) {
+    /**
+     * Create an Authentication object to impersonate the specified user
+     * @param login The login of the user to impersonate
+     * @return A new Authentication object
+     */
+    public static Authentication makeAuthorizationObject(@Nullable String login) {
         return new Authentication() {
 
             @Override

@@ -1,6 +1,7 @@
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'ngx-webstorage';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
@@ -11,6 +12,7 @@ import { ArtemisTestModule } from '../test.module';
 import * as downloadUtil from 'app/shared/util/download.util';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import dayjs from 'dayjs/esm';
+import { firstValueFrom } from 'rxjs';
 
 /**
  * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object
@@ -46,7 +48,7 @@ describe('QuizExercise Service', () => {
 
     it('should find an element', async () => {
         const returnedFromService = Object.assign({}, elemDefault);
-        const result = service.find(123).toPromise();
+        const result = firstValueFrom(service.find(123));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(elemDefault);
@@ -60,7 +62,7 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = service.create(new QuizExercise(undefined, undefined)).toPromise();
+        const result = firstValueFrom(service.create(new QuizExercise(undefined, undefined)));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -81,7 +83,7 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = service.update(expected).toPromise();
+        const result = firstValueFrom(service.update(expected));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -102,7 +104,7 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = service.query().toPromise();
+        const result = firstValueFrom(service.query());
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush([returnedFromService]);
         expect((await result)?.body).toEqual([expected]);
@@ -126,7 +128,7 @@ describe('QuizExercise Service', () => {
         ['recalculate', [123], quizEx, 'GET', '/recalculate-statistics'],
         ['find', [123], quizEx, 'GET', ''],
     ])('should perform a http request for %p', async (method, args, response, httpMethod, urlSuffix) => {
-        const result = service[method].apply(service, args).toPromise();
+        const result = firstValueFrom(service[method].apply(service, args)) as Promise<HttpResponse<unknown>>;
         const req = httpMock.expectOne({ method: httpMethod });
         expect(req.request.url).toEndWith(urlSuffix);
         req.flush(response);
@@ -146,7 +148,9 @@ describe('QuizExercise Service', () => {
         elemDefault.quizStarted = quizStarted;
         elemDefault.quizEnded = quizEnded;
         elemDefault.isOpenForPractice = practice;
-        if (started !== undefined) elemDefault.quizBatches = [{ started }];
+        if (started !== undefined) {
+            elemDefault.quizBatches = [{ started }];
+        }
         expect(service.getStatus(elemDefault)).toBe(result);
     });
 
@@ -201,7 +205,7 @@ describe('QuizExercise Service', () => {
             expect(spy).toHaveBeenCalledTimes(0);
         } else {
             expect(spy).toHaveBeenCalledTimes(1);
-            const [blob, filename] = spy.mock.calls[0];
+            const [blob, file] = spy.mock.calls[0];
             const data = await new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.readAsText(blob);
@@ -211,7 +215,7 @@ describe('QuizExercise Service', () => {
             });
             expect(blob.type).toBe('application/json');
             expect(data).toBeArrayOfSize(count);
-            expect(filename).toEndWith('.json');
+            expect(file).toEndWith('.json');
         }
     });
 
