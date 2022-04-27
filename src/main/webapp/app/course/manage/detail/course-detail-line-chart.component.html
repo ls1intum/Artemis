@@ -58,7 +58,7 @@
                 class="col-md-1 d-flex justify-content-start align-items-center"
                 role="button"
                 (click)="switchTimeSpan(RIGHT)"
-                [ngClass]="showsCurrentWeek ? 'hide-arrow' : ''"
+                [ngClass]="{ 'hide-arrow': showsCurrentWeek }"
             ></fa-icon>
         </div>
         <div class="col-md-10 offset-md-1 text-center mt-4 justify-content-center">
