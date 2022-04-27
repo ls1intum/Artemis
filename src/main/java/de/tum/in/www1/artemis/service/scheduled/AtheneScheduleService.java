@@ -67,7 +67,7 @@ public class AtheneScheduleService {
     }
 
     /**
-     * Schedule a Athene task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
+     * Schedule an Athene task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
      * @param exercise exercise to schedule Athene for
      */
     public void scheduleExerciseForAtheneIfRequired(TextExercise exercise) {

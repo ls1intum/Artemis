@@ -534,7 +534,7 @@ export class GuidedTourService {
 
     /**
      * Determines if the tour step stored in the database is valid for the current tour
-     * It might be that tour steps have been removed in the mean time
+     * It might be that tour steps have been removed in the meantime
      * @param tourSettings  the tour setting that is stored for the current tour
      */
     private hasValidTourStepNumber(tourSettings: GuidedTourSetting[]): boolean {

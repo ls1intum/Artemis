@@ -206,7 +206,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     /**
-     * Set the selected participation based on a its id.
+     * Set the selected participation based on its id.
      * Shows an error if the participationId does not match the template, solution or assignment participation.
      **/
     setSelectedParticipation(participationId: number) {
@@ -255,7 +255,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     /**
-     * Set the selected participation domain based on a its id.
+     * Set the selected participation domain based on its id.
      * Shows an error if the participationId does not match the template, solution or assignment participation.
      **/
     selectParticipationDomainById(participationId: number) {

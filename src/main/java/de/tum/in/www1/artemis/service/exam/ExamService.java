@@ -693,7 +693,7 @@ public class ExamService {
      *
      * @param course - the couse of the exam
      * @param examId - the id of the exam to retrieve stats from
-     * @return data about a exam including all exercises, plus some data for the tutor as tutor status for assessment
+     * @return data about an exam including all exercises, plus some data for the tutor as tutor status for assessment
      */
     public StatsForDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
         Exam exam = examRepository.findById(examId).orElseThrow();

@@ -97,7 +97,7 @@ export class ExerciseService {
     }
 
     /**
-     * Get exercise details including all results for the currently logged in user
+     * Get exercise details including all results for the currently logged-in user
      * @param { number } exerciseId - Id of the exercise to get the repos from
      */
     getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {

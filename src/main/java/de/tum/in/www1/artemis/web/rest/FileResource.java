@@ -196,7 +196,7 @@ public class FileResource {
      *
      * @param questionId ID of the drag and drop question, the file belongs to
      * @param filename   the filename of the file
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/drag-and-drop/backgrounds/{questionId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
@@ -210,7 +210,7 @@ public class FileResource {
      *
      * @param dragItemId ID of the drag item, the file belongs to
      * @param filename   the filename of the file
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
@@ -226,7 +226,7 @@ public class FileResource {
      * @param exerciseId id of the exercise, the file belongs to
      * @param filename  the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
@@ -252,7 +252,7 @@ public class FileResource {
      *
      * @param courseId ID of the course, the image belongs to
      * @param filename the filename of the file
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/course/icons/{courseId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
@@ -311,7 +311,7 @@ public class FileResource {
      * @param lectureId ID of the lecture, the attachment belongs to
      * @param filename  the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
     @PreAuthorize("permitAll()")
@@ -374,7 +374,7 @@ public class FileResource {
      * @param attachmentUnitId     ID of the attachment unit, the attachment belongs to
      * @param filename             the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
     @PreAuthorize("permitAll()")

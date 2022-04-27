@@ -359,10 +359,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
         catch (RestClientException clientException) {
             if (clientException.getMessage() != null && clientException.getMessage().contains("already exists")) {
-                // NOTE: this case cannot happen any more, because we get the build plan above. It might still be reported by Bamboo, then we still throw an exception,
+                // NOTE: this case cannot happen anymore, because we get the build plan above. It might still be reported by Bamboo, then we still throw an exception,
                 // because the build plan cannot exist (this might be a caching issue shortly after the participation / build plan was deleted).
                 // It is important that we do not allow this here, because otherwise the subsequent actions won't succeed and the user might be in a wrong state that cannot be
-                // solved any more
+                // solved anymore
                 log.warn("Edge case: Bamboo reports that the build Plan {} already exists. However the build plan was not found. The user should try again in a few minutes",
                         targetPlanKey);
             }

@@ -183,7 +183,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param repositoryPath The id of the repository
      * @param branch         The branch to protect
      * @param delayTime      Time until the call is executed
-     * @param delayTimeUnit  The unit of the time (e.g seconds, minutes)
+     * @param delayTimeUnit  The unit of the time (e.g. seconds, minutes)
      */
     private void protectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
@@ -210,7 +210,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param repositoryPath The id of the repository
      * @param branch         The branch to unprotect
      * @param delayTime      Time until the call is executed
-     * @param delayTimeUnit  The unit of the time (e.g seconds, minutes)
+     * @param delayTimeUnit  The unit of the time (e.g. seconds, minutes)
      */
     private void unprotectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
