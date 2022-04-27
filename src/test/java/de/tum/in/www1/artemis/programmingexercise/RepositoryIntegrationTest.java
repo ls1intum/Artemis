@@ -649,7 +649,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         var result = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "tutor1");
         database.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
 
-        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.BAD_REQUEST, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
+        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
     }
 
     @Test
