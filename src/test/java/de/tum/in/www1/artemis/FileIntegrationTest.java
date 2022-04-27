@@ -325,14 +325,32 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetLecturePdfAttachmentsMerged() throws Exception {
         Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
+        callAndCheckMergeResult(lecture, 5);
+    }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetLecturePdfAttachmentsMerged_TutorAccessToUnreleasedUnits() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
+
+        var attachment = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getId() == 1).map(lectureUnit -> (AttachmentUnit) lectureUnit)
+                .map(AttachmentUnit::getAttachment).findFirst().orElseThrow();
+        attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
+        attachmentRepo.save(attachment);
+
+        // The unit is hidden but a tutor can still see it
+        // -> the merged result should contain the unit
+        callAndCheckMergeResult(lecture, 5);
+    }
+
+    private void callAndCheckMergeResult(Lecture lecture, int expectedPages) throws Exception {
         // get access token and then send request using the access token
         String accessToken = request.get("/api/files/attachments/course/" + lecture.getCourse().getId() + "/access-token", HttpStatus.OK, String.class);
         byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.OK, byte[].class);
 
         assertThat(receivedFile).isNotEmpty();
         try (PDDocument mergedDoc = PDDocument.load(receivedFile)) {
-            assertEquals(5, mergedDoc.getNumberOfPages());
+            assertEquals(expectedPages, mergedDoc.getNumberOfPages());
         }
     }
 
@@ -344,34 +362,34 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
         lectureRepo.save(lecture);
 
-        // create pdf file 1
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PDDocument doc1 = new PDDocument();
-        doc1.addPage(new PDPage());
-        doc1.addPage(new PDPage());
-        doc1.addPage(new PDPage());
-        doc1.save(outputStream);
-        doc1.close();
-
         Long lectureId = lecture.getId();
-        MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-        AttachmentUnit unit1 = uploadAttachmentUnit(file1, lectureId, expectedStatus);
+
+        // create pdf file 1
+        AttachmentUnit unit1;
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc1 = new PDDocument()) {
+            doc1.addPage(new PDPage());
+            doc1.addPage(new PDPage());
+            doc1.addPage(new PDPage());
+            doc1.save(outputStream);
+            MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
+            unit1 = uploadAttachmentUnit(file1, lectureId, expectedStatus);
+        }
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
         AttachmentUnit unit2 = uploadAttachmentUnit(file2, lectureId, expectedStatus);
 
-        // create pdf file 2
-        outputStream = new ByteArrayOutputStream();
-        try (PDDocument doc2 = new PDDocument()) {
+        // create pdf file 3
+        AttachmentUnit unit3;
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc2 = new PDDocument()) {
             doc2.addPage(new PDPage());
             doc2.addPage(new PDPage());
             doc2.save(outputStream);
+            MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
+            unit3 = uploadAttachmentUnit(file3, lectureId, expectedStatus);
         }
-        MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-        AttachmentUnit unit3 = uploadAttachmentUnit(file3, lectureId, expectedStatus);
 
-        database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
+        lecture = database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
 
         return lecture;
     }
