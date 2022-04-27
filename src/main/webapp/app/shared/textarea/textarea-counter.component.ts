@@ -3,10 +3,10 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
 
 @Component({
     selector: 'jhi-textarea-counter',
-    templateUrl: './text-area-counter.component.html',
+    templateUrl: './textarea-counter.component.html',
     providers: [],
 })
-export class TextAreaCounterComponent {
+export class TextareaCounterComponent {
     @Input() maxLength: number;
     @Input() content?: string;
     @Input() visible?: boolean;

@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
-import { TextAreaCounterComponent } from 'app/shared/textarea/text-area-counter.component';
+import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
     imports: [ArtemisSharedModule],
-    declarations: [TextAreaCounterComponent],
-    exports: [TextAreaCounterComponent],
+    declarations: [TextareaCounterComponent],
+    exports: [TextareaCounterComponent],
 })
 export class TextareaModule {}
