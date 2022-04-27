@@ -142,7 +142,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks);
         // for the start date, we subtract the currently possible span size - 1 from the end date in addition
         const startDate = dayjs().subtract(diffToLastChartWeek + this.currentSpanSize - 1, 'weeks');
-        this.startDateDisplayed = this.course.startDate ? remainingWeeksTillStartDate <= this.displayedNumberOfWeeks : false;
+        this.startDateDisplayed = !!this.course.startDate && remainingWeeksTillStartDate <= this.displayedNumberOfWeeks;
         let currentWeek;
         for (let i = 0; i < this.currentSpanSize; i++) {
             currentWeek = dayjs()
