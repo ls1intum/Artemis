@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
@@ -326,7 +327,7 @@ public class FileResource {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
-        return buildFileResponse(Paths.get(FilePathService.getLectureAttachmentFilePath(), String.valueOf(optionalLecture.get().getId())).toString(), filename);
+        return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(optionalLecture.get().getId())).toString(), filename);
     }
 
     /**
@@ -390,7 +391,7 @@ public class FileResource {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
-        return buildFileResponse(Paths.get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(optionalAttachmentUnit.get().getId())).toString(), filename);
+        return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(optionalAttachmentUnit.get().getId())).toString(), filename);
     }
 
     /**
@@ -484,7 +485,7 @@ public class FileResource {
                     filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
                             + "." + fileExtension;
                 }
-                String path = Paths.get(filePath, filename).toString();
+                String path = Path.of(filePath, filename).toString();
 
                 newFile = new File(path);
                 if (keepFileName && newFile.exists()) {
@@ -517,7 +518,7 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(String path, String filename) {
         try {
-            var actualPath = Paths.get(path, filename).toString();
+            var actualPath = Path.of(path, filename).toString();
             var file = fileService.getFileForPath(actualPath);
             if (file == null) {
                 return ResponseEntity.notFound().build();
@@ -554,7 +555,7 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> responseEntityForFilePath(String path, String filename) {
         try {
-            var actualPath = Paths.get(path, filename).toString();
+            var actualPath = Path.of(path, filename).toString();
             var file = fileService.getFileForPath(actualPath);
             if (file == null) {
                 return ResponseEntity.notFound().build();
