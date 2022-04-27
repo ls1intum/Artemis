@@ -660,7 +660,7 @@ public class GitlabRequestMockProvider {
             doThrow(new GitLabApiException("Internal Error", 500)).when(pipelineApi).triggerPipeline(any(), (Trigger) any(), anyString(), any());
         }
         else {
-            doNothing().when(pipelineApi).triggerPipeline(any(), (Trigger) any(), anyString(), any());
+            doReturn(null).when(pipelineApi).triggerPipeline(any(), (Trigger) any(), anyString(), any());
         }
     }
 
@@ -689,7 +689,7 @@ public class GitlabRequestMockProvider {
         }
         else {
             Project project = new Project();
-            doNothing().when(projectApi).updateProject(any());
+            doReturn(project).when(projectApi).updateProject(any());
         }
     }
 }
