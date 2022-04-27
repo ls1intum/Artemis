@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
@@ -159,14 +158,12 @@ public class JenkinsBuildPlanService {
     }
 
     private void grantReadPermission(String planKey, Participant participant) {
-        Set<JenkinsJobPermission> studentPermissions = JenkinsJobPermission.getStudentPermissions();
         participant.getParticipants().forEach(user -> {
             try {
-                // TODO: is planKey the same as job name?
-                jenkinsJobPermissionsService.addPermissionsForUserToFolder(user.getLogin(), planKey, studentPermissions);
+                jenkinsJobPermissionsService.addPermissionsForUserToFolder(user.getLogin(), planKey, JenkinsJobPermission.getStudentPermissions());
             }
             catch (IOException ex) {
-                log.error("Cannot grant permissions {} to user {} for build plan {}", studentPermissions, user.getLogin(), planKey, ex);
+                log.error("Cannot grant permissions {} to user {} for build plan {}", JenkinsJobPermission.getStudentPermissions(), user.getLogin(), planKey, ex);
             }
         });
     }
