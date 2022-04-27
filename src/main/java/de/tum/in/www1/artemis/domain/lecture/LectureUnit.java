@@ -10,10 +10,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.LearningGoal;
@@ -42,10 +39,10 @@ public abstract class LectureUnit extends DomainObject {
     @Column(name = "release_date")
     private ZonedDateTime releaseDate;
 
-    // This is explicitly required by Hibernate for the indexed collection
+    // This is explicitly required by Hibernate for the indexed collection (OrderColumn)
     // https://docs.jboss.org/hibernate/stable/annotations/reference/en/html_single/#entity-hibspec-collection-extratype-indexbidir
-    @SuppressWarnings("unused")
     @Column(name = "lecture_unit_order")
+    @JsonIgnore
     private int order;
 
     @ManyToOne
@@ -64,6 +61,14 @@ public abstract class LectureUnit extends DomainObject {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 
     public Lecture getLecture() {
