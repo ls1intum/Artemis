@@ -20,42 +20,42 @@ public class GitLabCIUserManagementService implements CIUserManagementService {
 
     @Override
     public void createUser(User user, String password) throws ContinuousIntegrationException {
-        log.warn("Please refer to the repository for user management.");
+        log.error("Please refer to the repository for user management.");
     }
 
     @Override
     public void deleteUser(User user) throws ContinuousIntegrationException {
-        log.warn("Please refer to the repository for user management.");
+        log.error("Please refer to the repository for user management.");
     }
 
     @Override
     public void updateUser(User user, String password) throws ContinuousIntegrationException {
-        log.warn("Please refer to the repository for user management.");
+        log.error("Please refer to the repository for user management.");
     }
 
     @Override
     public void updateUserLogin(String oldLogin, User user, String password) throws ContinuousIntegrationException {
-        log.warn("Please refer to the repository for user management.");
+        log.error("Please refer to the repository for user management.");
     }
 
     @Override
     public void updateUserAndGroups(String oldLogin, User user, String password, Set<String> groupsToAdd, Set<String> groupsToRemove) throws ContinuousIntegrationException {
-        log.warn("Please refer to the repository for user management.");
+        log.error("Please refer to the repository for user management.");
     }
 
     @Override
     public void addUserToGroups(String userLogin, Set<String> group) throws ContinuousIntegrationException {
-        log.warn("Please refer to the repository for user management.");
+        log.error("Please refer to the repository for user management.");
     }
 
     @Override
     public void removeUserFromGroups(String userLogin, Set<String> group) throws ContinuousIntegrationException {
-        log.warn("Please refer to the repository for user management.");
+        log.error("Please refer to the repository for user management.");
     }
 
     @Override
     public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup)
             throws ContinuousIntegrationException {
-        log.warn("Please refer to the repository for user management.");
+        log.error("Please refer to the repository for user management.");
     }
 }

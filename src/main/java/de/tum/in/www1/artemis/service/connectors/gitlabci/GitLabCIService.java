@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Profile("gitlabci")
@@ -42,7 +41,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final GitLabApi gitlab;
 
-    private UrlService urlService;
+    private final UrlService urlService;
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
@@ -52,11 +51,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitlab = gitlab;
         this.urlService = urlService;
-    }
-
-    @Override
-    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-
     }
 
     @Override
@@ -78,7 +72,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             gitlab.getProjectApi().updateProject(project);
         }
         catch (GitLabApiException e) {
-            throw new GitLabCIException("Error getting project from repository path ", e);
+            throw new GitLabCIException("Error getting project from repository path for " + repositoryURL.toString());
         }
     }
 
@@ -95,8 +89,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
-        // TODO: Necessary information missing.
-        // Database query: SELECT repository_url FROM participation WHERE build_plan_id = '';
+        log.error("Unsupported action: GitLabCIService.copyBuildPlan()");
         return null;
     }
 
@@ -107,109 +100,123 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void performEmptySetupCommit(ProgrammingExerciseParticipation participation) {
-        // TODO: Necessary ?
+        log.error("Unsupported action: GitLabCIService.performEmptySetupCommit()");
     }
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
         final String repositoryPath = getRepositoryPath(participation.getVcsRepositoryUrl());
-        // TODO: Should the trigger token be stored in the database or removed again
         try {
             Trigger trigger = gitlab.getPipelineApi().createPipelineTrigger(repositoryPath, "Trigger build");
             gitlab.getPipelineApi().triggerPipeline(repositoryPath, trigger, "Trigger build", null);
             gitlab.getPipelineApi().deletePipelineTrigger(repositoryPath, trigger.getId());
         }
         catch (GitLabApiException e) {
-            // TODO: Should I add the URL / the repository name for debugging; should I add the throwable ?
-            log.error("Error while triggering the build", e);
+            throw new GitLabCIException("Error triggering the build for " + repositoryPath);
         }
     }
 
     @Override
     public void deleteProject(String projectKey) {
-        // TODO: Necessary ?
-        log.warn("Can not delete a GitLab CI project separately. Delete the whole repository if needed.");
+        log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
+        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted seperatly.");
     }
 
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
-        // TODO: Necessary ?
-        log.warn("Can not delete a GitLab CI project separately. Delete the whole repository if needed.");
+        log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
+        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted seperatly.");
     }
 
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
+        log.error("Unsupported action: GitLabCIService.getPlanKey()");
         return null;
     }
 
     @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
+        log.error("Unsupported action: GitLabCIService.convertBuildResult()");
         return null;
     }
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        log.error("Unsupported action: GitLabCIService.getBuildStatus()");
+        // TODO
         return null;
     }
 
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
+        log.error("Unsupported action: GitLabCIService.checkIfBuildPlanExists()");
         return false;
     }
 
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
+        log.error("Unsupported action: GitLabCIService.getLatestBuildLogs()");
         return null;
     }
 
     @Override
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
+        log.error("Unsupported action: GitLabCIService.retrieveLatestArtifact()");
         return null;
     }
 
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
+        log.error("Unsupported action: GitLabCIService.checkIfProjectExists()");
         return null;
     }
 
     @Override
     public void enablePlan(String projectKey, String planKey) {
-
+        log.error("Unsupported action: GitLabCIService.enablePlan()");
     }
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) {
-
+        log.error("Unsupported action: GitLabCIService.updatePlanRepository()");
     }
 
     @Override
     public void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions) {
-
+        log.error("Unsupported action: GitLabCIService.giveProjectPermissions()");
     }
 
     @Override
     public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
-
+        log.error("Unsupported action: GitLabCIService.givePlanPermissions()");
     }
 
     @Override
     public void removeAllDefaultProjectPermissions(String projectKey) {
-
+        log.error("Unsupported action: GitLabCIService.removeAllDefaultProjectPermissions()");
     }
 
     @Override
     public ConnectorHealth health() {
-        return GitLabService.health(gitlabServerUrl, shortTimeoutRestTemplate);
+        log.error("Unsupported action: GitLabCIService.health()");
+        return null;
     }
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException {
-
+        log.error("Unsupported action: GitLabCIService.createProjectForExercise()");
     }
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
+        log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
+        // TODO
         return Optional.empty();
+    }
+
+    @Override
+    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
+        // TODO
     }
 }
