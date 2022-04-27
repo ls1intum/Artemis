@@ -530,7 +530,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         rows.push(this.generateCsvRowParticipation(customCsvOptions));
         rows.push(this.generateCsvRowSuccessfulParticipation(customCsvOptions));
 
-        if (!!customCsvOptions) {
+        if (customCsvOptions) {
             // required because the currently used library for exporting to csv does not quote the header fields (keys)
             const quotedKeys = keys.map((key) => customCsvOptions.quoteStrings + key + customCsvOptions.quoteStrings);
             this.exportAsCsv(quotedKeys, rows, customCsvOptions);
@@ -547,14 +547,14 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     exportAsExcel(keys: string[], rows: CourseScoresExportRow[]) {
         const workbook = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(rows, { header: keys });
-        const worksheetName = `${this.course.title} Scores`;
+        const worksheetName = 'Course Scores';
         XLSX.utils.book_append_sheet(workbook, ws, worksheetName);
 
         const workbookProps = {
             Title: `${this.course.title} Scores`,
-            Author: `Artemis ${VERSION ? VERSION : ''}`,
+            Author: `Artemis ${VERSION ?? ''}`,
         };
-        const fileName = `Artemis Course ${this.course.title} Scores.xlsx`;
+        const fileName = `${this.course.title} Scores.xlsx`;
         XLSX.writeFile(workbook, fileName, { Props: workbookProps, compression: true });
     }
 
