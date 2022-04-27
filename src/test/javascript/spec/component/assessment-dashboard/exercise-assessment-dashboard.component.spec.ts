@@ -320,9 +320,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 comp.submissionsWithComplaints = [submissionWithComplaintDTO];
 
                 accountService = TestBed.inject(AccountService);
-                const navigationUitlService = TestBed.inject(ArtemisNavigationUtilService);
+                const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
 
-                routingStub = jest.spyOn(navigationUitlService, 'routeInNewTab').mockImplementation();
+                routingStub = jest.spyOn(navigationUtilService, 'routeInNewTab');
 
                 translateService = TestBed.inject(TranslateService);
             });
