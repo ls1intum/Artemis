@@ -69,8 +69,8 @@
                     [disabled]="handled || isLockedForLoggedInUser"
                 >
                 </textarea>
-                <jhi-complaints-textarea-counter [maxLength]="this.course!.maxComplaintResponseTextLimit!" [content]="complaintResponse.responseText" [visible]="!handled">
-                </jhi-complaints-textarea-counter>
+                <jhi-textarea-counter [maxLength]="this.course!.maxComplaintResponseTextLimit!" [content]="complaintResponse.responseText" [visible]="!handled">
+                </jhi-textarea-counter>
             </div>
             <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="d-flex flex-wrap gap-1 justify-content-between mt-1">
                 <button

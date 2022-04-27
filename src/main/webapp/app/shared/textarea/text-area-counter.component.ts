@@ -2,11 +2,11 @@ import { Component, Input } from '@angular/core';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 @Component({
-    selector: 'jhi-complaints-textarea-counter',
-    templateUrl: './complaints-textarea-counter.component.html',
+    selector: 'jhi-textarea-counter',
+    templateUrl: './text-area-counter.component.html',
     providers: [],
 })
-export class ComplaintsTextAreaCounterComponent {
+export class TextAreaCounterComponent {
     @Input() maxLength: number;
     @Input() content?: string;
     @Input() visible?: boolean;
