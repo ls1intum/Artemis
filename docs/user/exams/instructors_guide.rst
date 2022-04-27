@@ -239,11 +239,11 @@ During the exam creation and configuration, you can create your exam and configu
 - The exam list page displays a more concise overview of the exam steps in the exam status column.
 - You can glance over the exam preparation, conduction and correction status of the exams in the list.
 
-.. figure:: instructor/exam_overview.png
-   :alt: Exam Status
+.. figure:: instructor/exam_checklist_overview.png
+   :alt: Exam Status Overview
    :align: center
 
-   Exam Status
+   Exam Status Overview
 
 .. _exam_conduction:
 
