@@ -65,6 +65,7 @@ public class LectureImportService {
             LectureUnit clonedLectureUnit = cloneLectureUnit(lectureUnit, lecture);
             if (clonedLectureUnit != null) {
                 clonedLectureUnit.setLecture(lecture);
+                clonedLectureUnit.setOrder(lectureUnit.getOrder());
                 lectureUnits.add(clonedLectureUnit);
             }
         }
