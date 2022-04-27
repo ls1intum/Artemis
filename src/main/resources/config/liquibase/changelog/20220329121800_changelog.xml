@@ -1,0 +1,77 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <property name="autoIncrement" value="true"/>
+
+    <!--
+    This changeset adds the database tables for storing (testwise) coverage reports in programming exercises.
+    It contains tables for ProgrammingExerciseCoverageReport, ProgrammingExerciseCoverageFileReport and ProgrammingExerciseTestwiseCoverageReportEntry.
+    It also adds a new column to the programming exercise details table representing if the testwise coverage will be recorded for this exercise.
+    -->
+    <changeSet author="ole-ve" id="20220329121800">
+        <createTable tableName="coverage_report">
+            <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="submission_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="covered_line_ratio" type="double" />
+        </createTable>
+        <addForeignKeyConstraint baseTableName="coverage_report"
+                                 baseColumnNames="submission_id"
+                                 constraintName="fk_testwise_coverage_report_participation_id"
+                                 referencedTableName="submission"
+                                 referencedColumnNames="id"/>
+
+        <createTable tableName="coverage_file_report">
+            <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="full_report_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_path" type="VARCHAR(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="line_count" type="INT"/>
+            <column name="covered_line_count" type="INT" />
+        </createTable>
+        <addForeignKeyConstraint baseTableName="coverage_file_report"
+                                 baseColumnNames="full_report_id"
+                                 constraintName="fk_coverage_file_full_report_id"
+                                 referencedTableName="coverage_report"
+                                 referencedColumnNames="id" />
+
+        <createTable tableName="testwise_coverage_report_entry">
+            <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="file_report_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="test_case_id" type="BIGINT" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_line" type="INT"/>
+            <column name="line_count" type="INT"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="testwise_coverage_report_entry"
+                                 baseColumnNames="file_report_id"
+                                 constraintName="fk_testwise_entry_file_report_id"
+                                 referencedTableName="coverage_file_report"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="testwise_coverage_report_entry"
+                                 baseColumnNames="test_case_id"
+                                 constraintName="fk_testwise_coverage_entry_test_case_id"
+                                 referencedTableName="programming_exercise_test_case"
+                                 referencedColumnNames="id"/>
+
+        <addColumn tableName="programming_exercise_details">
+            <column name="testwise_coverage_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

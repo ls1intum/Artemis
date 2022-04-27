@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.hestia.TestwiseCoverageTestUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 
@@ -129,5 +130,12 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     public void shouldGenerateNewManualResultIfManualAssessmentExists() {
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldGenerateTestwiseCoverageFileReport() throws Exception {
+        var resultNotification = TestwiseCoverageTestUtil.generateBambooBuildResultWithCoverage();
+        programmingExerciseResultTestService.shouldGenerateTestwiseCoverageFileReports(resultNotification);
     }
 }

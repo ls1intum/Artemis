@@ -9,7 +9,6 @@ import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
-import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { User } from 'app/core/user/user.model';
@@ -253,7 +252,7 @@ export class ExerciseService {
 
     /**
      * Replace dates in http-response including an exercise with the corresponding client time
-     * @param { ERT } res - Response from server including one exercise
+     * @param res - Response from server including one exercise
      */
     static convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
@@ -267,21 +266,8 @@ export class ExerciseService {
     }
 
     /**
-     * Look up permissions and add/replace isAtLeastInstructor, isAtLeastEditor and isAtLeastTutor to http request containing a course
-     * @param { ERT } res - Response from server including a course
-     */
-    checkPermission<ERT extends EntityResponseType>(res: ERT): ERT {
-        if (res.body && res.body.course) {
-            res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body.course);
-            res.body.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(res.body.course);
-            res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body.course);
-        }
-        return res;
-    }
-
-    /**
      * Replace dates in http-response including an array of exercises with the corresponding client time
-     * @param { EART } res - Response from server including an array of exercise
+     * @param res - Response from server including an array of exercise
      */
     static convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
@@ -372,24 +358,6 @@ export class ExerciseService {
      */
     getStatsForTutors(exerciseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${exerciseId}/stats-for-assessment-dashboard`, { observe: 'response' });
-    }
-
-    /**
-     * Retrieves useful statistics for course exercises
-     *
-     * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>. Either the results of the last submission or the results of the last rated
-     * submission are considered for a student/team, depending on the value of <code>onlyConsiderRatedResults</code>
-     * @param onlyConsiderRatedResults - either the results of the last submission or the results of the last rated submission are considered
-     * @param exerciseIds - list of exercise ids (must be belong to the same course)
-     */
-    getCourseExerciseStatistics(exerciseIds: number[], onlyConsiderRatedResults: boolean): Observable<HttpResponse<CourseExerciseStatisticsDTO[]>> {
-        let params = new HttpParams();
-        params = params.append('exerciseIds', exerciseIds.join(', '));
-        params = params.append('onlyConsiderRatedResults', onlyConsiderRatedResults.toString());
-        return this.http.get<CourseExerciseStatisticsDTO[]>(`${this.resourceUrl}/exercises/course-exercise-statistics`, {
-            params,
-            observe: 'response',
-        });
     }
 
     /**
