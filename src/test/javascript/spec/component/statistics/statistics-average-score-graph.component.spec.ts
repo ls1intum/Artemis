@@ -45,7 +45,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
                 fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
                 component = fixture.componentInstance;
                 const routingService = TestBed.inject(ArtemisNavigationUtilService);
-                routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
+                routingStub = jest.spyOn(routingService, 'routeInNewTab');
 
                 component.exerciseAverageScores = returnValue;
                 component.courseAverage = courseAverageScore;
