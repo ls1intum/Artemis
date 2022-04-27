@@ -136,7 +136,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         displayedNumberOfWeeks determines the normal scope of the chart (usually 17 weeks).
         currentPeriod indicates how many times the observer shifted the scope in the past (by pressing the arrow)
          */
-        const diffToLastChartWeek = this.currentOffsetToEndDate + this.displayedNumberOfWeeks * -this.currentPeriod;
+        const diffToLastChartWeek = this.currentOffsetToEndDate - this.displayedNumberOfWeeks * this.currentPeriod;
         const endDate = dayjs().subtract(diffToLastChartWeek, 'weeks');
         const remainingWeeksTillStartDate = this.course.startDate ? this.determineDifferenceBetweenIsoWeeks(this.course.startDate, endDate) + 1 : this.displayedNumberOfWeeks;
         this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks);
