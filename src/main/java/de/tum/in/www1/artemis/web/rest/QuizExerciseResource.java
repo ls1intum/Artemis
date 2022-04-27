@@ -383,7 +383,7 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizBatch> startBatch(@PathVariable Long quizBatchId) {
         log.debug("REST request to start batch : {}", quizBatchId);
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
-        QuizExercise quizExercise = batch.getQuizExercise();
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(batch.getQuizExercise().getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, user)) {
             throw new AccessForbiddenException();
@@ -395,7 +395,9 @@ public class QuizExerciseResource {
 
         batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, ZonedDateTime.now()));
         batch = quizBatchService.save(batch);
-        // TODO: QQQ send to students
+
+        quizExercise.setQuizBatches(Set.of(batch));
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, batch, "start-batch");
 
         return ResponseEntity.ok(batch);
     }

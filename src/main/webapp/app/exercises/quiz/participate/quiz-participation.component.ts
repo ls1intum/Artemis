@@ -112,6 +112,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     submissionChannel: string;
     participationChannel: string;
     quizExerciseChannel: string;
+    quizBatchChannel: string;
     websocketSubscription?: Subscription;
 
     /**
@@ -351,6 +352,17 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     this.applyQuizFull(quiz);
                 }
             });
+        }
+
+        if (this.quizBatch && !this.quizBatch.started) {
+            const batchChannel = this.quizExerciseChannel + '/' + this.quizBatch.id;
+            if (this.quizBatchChannel !== batchChannel) {
+                this.quizBatchChannel = batchChannel;
+                this.jhiWebsocketService.subscribe(this.quizBatchChannel);
+                this.jhiWebsocketService.receive(this.quizBatchChannel).subscribe((quiz) => {
+                    this.applyQuizFull(quiz);
+                });
+            }
         }
     }
 
@@ -932,7 +944,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     if (this.quizBatch?.started) {
                         this.refreshQuiz();
                     } else {
-                        // TODO: QQQ subscribe to batch updates
+                        this.subscribeToWebsocketChannels();
                     }
                 }
             },
