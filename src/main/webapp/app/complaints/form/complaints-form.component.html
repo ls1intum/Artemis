@@ -33,7 +33,7 @@
 
             <div class="d-flex flex-column">
                 <textarea id="complainTextArea" class="col-12 px-1" rows="4" [maxLength]="this.course!.maxComplaintTextLimit!" [(ngModel)]="complaintText"> </textarea>
-                <jhi-complaints-textarea-counter [maxLength]="this.course!.maxComplaintTextLimit!" [content]="complaintText"> </jhi-complaints-textarea-counter>
+                <jhi-complaints-textarea-counter [maxLength]="this.course!.maxComplaintTextLimit!" [content]="complaintText" [visible]="true"> </jhi-complaints-textarea-counter>
             </div>
 
             <div class="row">
