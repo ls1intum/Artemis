@@ -140,12 +140,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param keys that should be checked for in the entry.
      */
     checkIfEntryContainsKey(entry: CsvUser, keys: string[]): boolean {
-        for (const key of keys) {
-            if (entry[key] !== undefined && entry[key] !== '') {
-                return true;
-            }
-        }
-        return false;
+        return keys.some((key) => entry[key] !== undefined && entry[key] !== '');
     }
 
     /**
