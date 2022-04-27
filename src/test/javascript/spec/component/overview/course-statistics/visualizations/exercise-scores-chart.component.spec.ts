@@ -148,7 +148,7 @@ describe('ExerciseScoresChartComponent', () => {
 
         setUpServiceAndStartComponent([firstExercise, secondExercise]);
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
-        const routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
+        const routingStub = jest.spyOn(routingService, 'routeInNewTab');
         const pointClickEvent = { exerciseId: 2 };
 
         component.onSelect(pointClickEvent);
