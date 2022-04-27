@@ -358,7 +358,7 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 3.4 Grading Key
 ^^^^^^^^^^^^^^^
 - Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.
-- Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after their submissions are assessed.
+- Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after the specified `Release Date of Results`.
 - Using a grading key also enhances the generated statistics so that the instructor is able to view grade distributions.
 - For an easy out-of-the-box configuration, you can click |generate_default_grade_key| and then click ``Save``.
 - By default, grades are defined as percentages of the total obtainable score. You can also display their point equivalent if you specify ``Maximum number of points for exam``.
