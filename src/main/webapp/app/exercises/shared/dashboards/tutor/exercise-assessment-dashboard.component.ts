@@ -17,7 +17,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -72,6 +72,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     isExamMode = false;
     isTestRun = false;
     isAtLeastInstructor = false;
+    isLoading = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -612,14 +613,18 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Called after the tutor has read the instructions and creates a new tutor participation
      */
     readInstruction() {
-        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe({
-            next: (res: HttpResponse<TutorParticipation>) => {
-                this.tutorParticipation = res.body!;
-                this.tutorParticipationStatus = this.tutorParticipation.status!;
-                this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
-            },
-            error: this.onError,
-        });
+        this.isLoading = true;
+        this.tutorParticipationService
+            .create(this.tutorParticipation, this.exerciseId)
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe({
+                next: (res: HttpResponse<TutorParticipation>) => {
+                    this.tutorParticipation = res.body!;
+                    this.tutorParticipationStatus = this.tutorParticipation.status!;
+                    this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
+                },
+                error: this.onError,
+            });
     }
 
     /**

@@ -76,7 +76,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         doReturn(objectId).when(gitService).getLastCommitHash(any());
         doNothing().when(gitService).resetToOriginHead(any());
         doNothing().when(gitService).pullIgnoreConflicts(any());
-        doNothing().when(gitService).commitAndPush(any(), anyString(), any());
+        doNothing().when(gitService).commitAndPush(any(), anyString(), anyBoolean(), any());
     }
 
     @AfterEach

@@ -504,7 +504,7 @@ public class ExerciseService {
 
             return dueDateA.isBefore(dueDateB) ? 1 : -1;
         });
-        var fivePastExercises = pastExercises.stream().limit(5).collect(Collectors.toList());
+        var fivePastExercises = pastExercises.stream().limit(5).toList();
 
         // Calculate the average score for all five exercises at once
         var averageScore = participantScoreRepository.findAverageScoreForExercises(fivePastExercises);
@@ -591,7 +591,7 @@ public class ExerciseService {
     private void setAssessmentsAndSubmissionsForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Exercise exercise) {
         if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
             long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exercise.getId());
-            long noOfSubmissionsInTime = submissionRepository.countUniqueSubmissionsByExerciseId(exercise.getId());
+            long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
             exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
             exerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
             exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
