@@ -276,7 +276,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
-
+        // Currently not needed
     }
 
     @Override
