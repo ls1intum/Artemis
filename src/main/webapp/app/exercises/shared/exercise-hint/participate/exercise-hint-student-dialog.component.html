@@ -3,11 +3,11 @@
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
 </div>
 <div class="modal-body">
-    <div *ngFor="let hint of exerciseHints; index as i" class="mb-4">
-        <h3 class="mb-3">Hint {{ i + 1 }}: {{ hint.title }}</h3>
-        <div *ngIf="hint.type === HintType.TEXT" class="p-3 border border-1 border-secondary bg-light" [innerHTML]="hint.content | htmlForMarkdown"></div>
-        <div *ngIf="hint.type === HintType.CODE">
-            <jhi-code-hint-container [codeHint]="hint"></jhi-code-hint-container>
+    <div *ngFor="let exerciseHint of exerciseHints; index as i" class="mb-4">
+        <h3 class="mb-3">Hint {{ i + 1 }}: {{ exerciseHint.title }}</h3>
+        <div *ngIf="exerciseHint.type === HintType.TEXT" class="p-3 border border-1 border-secondary bg-light" [innerHTML]="exerciseHint.content | htmlForMarkdown"></div>
+        <div *ngIf="exerciseHint.type === HintType.CODE">
+            <jhi-code-hint-container [codeHint]="exerciseHint | cast"></jhi-code-hint-container>
         </div>
     </div>
 </div>

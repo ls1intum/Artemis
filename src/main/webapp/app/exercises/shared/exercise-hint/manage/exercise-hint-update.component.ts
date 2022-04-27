@@ -14,7 +14,6 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -143,9 +142,5 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     protected onSaveError() {
         this.isSaving = false;
-    }
-
-    getAsCodeHint(): CodeHint {
-        return this.exerciseHint as CodeHint;
     }
 }

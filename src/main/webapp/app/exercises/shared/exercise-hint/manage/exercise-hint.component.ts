@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
@@ -11,17 +11,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faEye, faPlus, faTimes, faWrench, faFont, faCode } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
-@Pipe({
-    name: 'cast',
-    pure: true,
-})
-export class CodeHintCastPipe implements PipeTransform {
-    transform(value: any): CodeHint {
-        return value as CodeHint;
-    }
-}
 @Component({
     selector: 'jhi-exercise-hint',
     templateUrl: './exercise-hint.component.html',

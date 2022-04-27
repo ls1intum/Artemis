@@ -15,6 +15,7 @@ import { CodeHint } from 'app/entities/hestia/code-hint-model';
 export class CodeHintContainerComponent implements OnInit {
     @Input()
     codeHint: CodeHint;
+
     sortedSolutionEntries: ProgrammingExerciseSolutionEntry[];
 
     constructor(protected route: ActivatedRoute) {}
