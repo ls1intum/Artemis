@@ -1,7 +1,7 @@
 version: "3"
 services:
     gitlab:
-        build: gitlab
+        image: ghcr.io/ls1intum/artemis-gitlab:latest
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab
@@ -18,7 +18,7 @@ services:
             artemis-gitlab:
                 ipv4_address: 172.33.0.2
     jenkins:
-        build: jenkins
+        image: ghcr.io/ls1intum/artemis-jenkins:latest
         user: root
         volumes:
             - artemis-jenkins-data:/var/jenkins_home
