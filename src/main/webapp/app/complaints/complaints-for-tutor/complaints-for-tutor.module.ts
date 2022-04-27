@@ -3,9 +3,10 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ComplaintsForTutorComponent } from './complaints-for-tutor.component';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintsSharedModule } from 'app/complaints/shared/complaints-shared.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule],
+    imports: [ArtemisSharedModule, ComplaintsSharedModule],
     declarations: [ComplaintsForTutorComponent],
     exports: [ComplaintsForTutorComponent],
     providers: [ComplaintService, ComplaintResponseService],
