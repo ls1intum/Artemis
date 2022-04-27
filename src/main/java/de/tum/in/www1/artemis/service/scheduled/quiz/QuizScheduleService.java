@@ -68,9 +68,11 @@ public class QuizScheduleService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
+    private final QuizBatchRepository quizBatchRepository;
+
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             UserRepository userRepository, QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
-            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService) {
+            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, QuizBatchRepository quizBatchRepository) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
@@ -82,6 +84,7 @@ public class QuizScheduleService {
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
+        this.quizBatchRepository = quizBatchRepository;
     }
 
     /**
@@ -399,6 +402,18 @@ public class QuizScheduleService {
                     continue;
                 }
 
+                // Update cached exercise object (use the expensive operation upfront)
+                quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
+                var batchCache = quizExercise.getQuizBatches().stream().collect(Collectors.toUnmodifiableMap(QuizBatch::getId, b -> b));
+
+                // ensure that attempts that were never submitted get committed to the database and saved
+                // this is required to ensure that students cannot gain extra attempts this way
+                for (var batch : cachedQuiz.getBatches().entrySet()) {
+                    if (batchCache.get(batch.getValue()).isEnded()) {
+                        cachedQuiz.getSubmissions().putIfAbsent(batch.getKey(), new QuizSubmission());
+                    }
+                }
+
                 // (Boolean wrapper is safe to auto-unbox here)
                 boolean hasEnded = quizExercise.isQuizEnded();
                 // Note that those might not be true later on due to concurrency and a distributed system,
@@ -415,10 +430,6 @@ public class QuizScheduleService {
                     }
                     continue;
                 }
-
-                // Update cached exercise object (use the expensive operation upfront)
-                quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
-                var batchCache = quizExercise.getQuizBatches().stream().collect(Collectors.toUnmodifiableMap(QuizBatch::getId, b -> b));
 
                 // Save cached Submissions (this will also generate results and participations and place them in the cache)
                 long start = System.nanoTime();
