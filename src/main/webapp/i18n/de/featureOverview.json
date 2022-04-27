@@ -73,13 +73,13 @@
                 },
                 "checklist": {
                     "title": "Checkliste Befolgen",
-                    "shortDescription": "Verwenden Sie die Prüfungscheckliste, um jeden Schritt der Prüfung zu überwachen und sicherzustellen, dass er korrekt durchgeführt wird.",
-                    "descriptionTextOne": "Die Durchführung einer Prüfung ist ein langwieriger Prozess mit zahlreichen Fehlerquellen. Artemis stellt Ihnen eine Checkliste zur Verfügung, die Ihnen einen Überblick über jeden Schritt einer Prüfung gibt, von der Erstellung der Übungen bis zum Export der Ergebnisse. Die Prüfungs-Checkliste enthält die nächsten Schritte, die Sie unternehmen müssen, und fasst den bisherigen Fortschritt zusammen, damit Sie alle Aufgaben korrekt und vollständig ausführen können. Sie verfügt außerdem über Schnellnavigationsschaltflächen, mit denen Sie schnell zugehörige Aktionen ausführen oder den Fortschritt im Detail überprüfen können. Außerdem gibt es eine kompaktere Übersichtsversion auf der Prüfungslistenseite, die einen Überblick über den Status der Prüfungsvorbereitung, -durchführung und -korrektur der Prüfungen in der Liste gibt."
+                    "shortDescription": "Verwende die Prüfungscheckliste, um jeden Schritt der Prüfung zu überwachen und sicherzustellen, dass er korrekt durchgeführt wird.",
+                    "descriptionTextOne": "Die Durchführung einer Prüfung ist ein langer Prozess mit vielen Fehlerquellen. Artemis bietet dir eine Checkliste, die dir einen Überblick über jeden Schritt einer Prüfung gibt, von der Erstellung der Übungen bis zum Export der Ergebnisse. Die Prüfungs-Checkliste enthält die nächste Aktion, die du bei einem Schritt durchführen musst, und fasst den bisherigen Fortschritt zusammen, um dir zu helfen, alle Aufgaben korrekt und vollständig auszuführen. Sie hat auch Schnellnavigationsschaltflächen, damit du schnell verwandte Aktionen durchführen oder den Fortschritt im Detail überprüfen kannst. Außerdem gibt es auf der Seite mit der Prüfungsliste eine kompaktere Übersichtsversion, mit der du den Status der Prüfungsvorbereitung, -durchführung und -korrektur der Prüfungen in der Liste überblicken kannst."
                 },
                 "gradeKey": {
                     "title": "Notenschlüssel Erstellen",
-                    "shortDescription": "Erstellen Sie einen Notenschlüssel mit benutzerdefinierten oder standardmäßigen Notenstufen für einen Kurs oder eine Prüfung.",
-                    "descriptionTextOne": "Noten sind hilfreich, um einzelne Übungen zu bewerten, aber am Ende eines Semesters möchten Sie und Ihre Studenten eine Standardnote sehen. Auf der Seite Bewertungsschlüssel können Sie für jeden Kurs und jede Prüfung einen Bewertungsschlüssel festlegen und die Bewertungsstufen definieren, indem Sie die Intervalle, die Mindestpunktzahl und die untere/obere Grenze für die Einbeziehung festlegen. Der Standard-Bewertungsschlüssel kann auch mit einem einzigen Klick erstellt werden. Artemis kümmert sich dann automatisch um die Zuordnung von Noten zu Notenstufen oder Bonuspunkten sowie um die Berechnung von Studentenergebnisstatistiken auf der Grundlage von Notenstufen."
+                    "shortDescription": "Erstelle einen Notenschlüssel mit benutzerdefinierten oder vorgegebenen Notenstufen für einen Kurs oder eine Prüfung.",
+                    "descriptionTextOne": "Noten sind hilfreich, um einzelne Übungen zu bewerten, aber am Ende eines Semesters möchten du und deine Schüler/innen eine Standardnote sehen. Auf der Seite Notenschlüssel kannst du für jeden Kurs und jede Prüfung einen Notenschlüssel festlegen und die Notenstufen definieren, indem du die Intervalle, die Mindestnote und die untere/obere Grenze angibst. Der Standard-Notenschlüssel kann auch mit einem einzigen Klick erstellt werden. Artemis kümmert sich dann automatisch um die Zuordnung von Noten zu Notenstufen oder Bonuspunkten und um die Berechnung der Schülerergebnisstatistiken auf der Grundlage der Notenstufen."
                 }
             }
         },
@@ -155,8 +155,8 @@
                 },
                 "gradeKey": {
                     "title": "Notenschlüssel Anzeigen",
-                    "shortDescription": "Sehen Sie Ihre Endnote und die erreichte Note für einen Kurs oder eine Prüfung, sobald Sie eine neue Aufgabe benotet haben.",
-                    "descriptionTextOne": "Wenn ein Notenschlüssel für einen Kurs oder eine Prüfung definiert ist, können Sie ihn untersuchen und das Punkteintervall für jede Bewertungsstufe sowie die zum Bestehen erforderliche Mindestnote sehen. Notenschlüssel verfügen auch über einen Bonuspunkte-Modus, der die erreichte Punktzahl in einen Bonus umwandelt. Sie müssen nicht bis zum Ende des Semesters warten, um den Notenschlüssel zu benutzen, Sie können jederzeit Ihre erreichte Note anhand der bisher durchgeführten und bewerteten Übungen überprüfen."
+                    "shortDescription": "Sieh dir deine Endnote und die erreichte Note für einen Kurs oder eine Prüfung an, sobald du eine neue Aufgabe benotet hast.",
+                    "descriptionTextOne": "Wenn ein Notenschlüssel für einen Kurs oder eine Prüfung definiert ist, kannst du ihn überprüfen und den Punkteschnitt für jede Bewertungsstufe sowie die zum Bestehen erforderliche Mindestpunktzahl sehen. Notenschlüssel haben auch einen Bonuspunkte-Modus, der die erreichte Punktzahl in einen Bonus umwandelt. Du musst nicht bis zum Ende des Semesters warten, um den Notenschlüssel zu benutzen, sondern kannst jederzeit deine erreichte Note anhand der bisher durchgeführten und bewerteten Übungen überprüfen."
                 }
             }
         }
