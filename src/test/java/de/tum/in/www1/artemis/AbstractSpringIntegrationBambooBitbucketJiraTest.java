@@ -510,6 +510,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
+        // Make sure that all REST calls are necessary
+        continuousIntegrationUpdateService.clearCachedApplicationLinks();
+
         String buildPlanId = participation.getBuildPlanId();
         VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
         String projectKey = buildPlanId.split("-")[0];
@@ -519,7 +522,6 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         for (User user : ((StudentParticipation) participation).getParticipant().getParticipants()) {
             bambooRequestMockProvider.mockGrantReadAccess(buildPlanId, projectKey, user);
         }
-
     }
 
     @Override

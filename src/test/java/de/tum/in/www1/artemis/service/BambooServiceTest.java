@@ -103,13 +103,13 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     @WithMockUser(username = "student1")
-    public void testConfigureBuildPlan() throws Exception {
-        continuousIntegrationTestService.testConfigureBuildPlan();
+    public void testHealthException() throws Exception {
+        continuousIntegrationTestService.testHealthException();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthException() throws Exception {
-        continuousIntegrationTestService.testHealthException();
+    public void testConfigureBuildPlan() throws Exception {
+        continuousIntegrationTestService.testConfigureBuildPlan();
     }
 }
