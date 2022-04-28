@@ -28,7 +28,7 @@ export class ModelingExerciseImportComponent implements OnInit {
     content: SearchResult<ModelingExercise>;
     total = 0;
     state: PageableSearch = {
-        page: 0,
+        page: 1,
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,

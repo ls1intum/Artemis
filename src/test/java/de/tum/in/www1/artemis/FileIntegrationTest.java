@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
@@ -221,7 +221,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
-        var targetFolder = Paths.get(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString();
+        var targetFolder = Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString();
         String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
 
         attachment.setLink(attachmentPath);
@@ -389,7 +389,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
-        var targetFolder = Paths.get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString();
+        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString();
 
         fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
         var attachmentPath = targetFolder + "/" + file.getOriginalFilename();
