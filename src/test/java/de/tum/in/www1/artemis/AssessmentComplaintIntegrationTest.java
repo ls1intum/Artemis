@@ -752,10 +752,9 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void submitComplaintForExamExerciseUsingTheCourseExerciseCall_badRequest() throws Exception {
         // Set up Exam, Exercise, Participation and Complaint
         final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
-        final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
         database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
-        final var examExerciseComplaint = new Complaint().result(null).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        final var examExerciseComplaint = new Complaint().complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         // The complaint is about an exam exercise, but the REST-Call for course exercises is used
         request.post("api/complaints", examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
