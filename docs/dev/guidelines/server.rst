@@ -157,7 +157,7 @@ Additional notes on the controller methods:
 =================
 
 * Never use operating system (OS) specific file paths such as "test/test". Always use OS independent paths.
-* Do not deal with File.separator manually. Instead use the Paths.get(firstPart, secondPart, ...) method which deals with separators automatically.
+* Do not deal with File.separator manually. Instead use the Path.of(firstPart, secondPart, ...) method which deals with separators automatically.
 * Existing paths can easily be appended with a new folder using ``existingPath.resolve(subfolder)``
 
 15. General best practices

@@ -34,6 +34,7 @@ export class CloneRepoButtonComponent implements OnInit {
     sshTemplateUrl: string;
     repositoryPassword: string;
     versionControlUrl: string;
+    versionControlAccessTokenRequired?: boolean;
     wasCopied = false;
     FeatureToggle = FeatureToggle;
     user: User;
@@ -63,6 +64,7 @@ export class CloneRepoButtonComponent implements OnInit {
             if (info.versionControlUrl) {
                 this.versionControlUrl = info.versionControlUrl;
             }
+            this.versionControlAccessTokenRequired = info.versionControlAccessToken;
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
@@ -74,16 +76,47 @@ export class CloneRepoButtonComponent implements OnInit {
         this.localStorage.store('useSsh', this.useSsh);
     }
 
-    getHttpOrSshRepositoryUrl(): string {
+    getHttpOrSshRepositoryUrl(insertPlaceholder = true): string {
         if (this.useSsh) {
             return this.getSshCloneUrl(this.repositoryUrl) || this.repositoryUrl;
         }
 
         if (this.isTeamParticipation) {
-            return this.repositoryUrlForTeam(this.repositoryUrl);
+            return this.addAccessTokenToHttpUrl(this.repositoryUrlForTeam(this.repositoryUrl), insertPlaceholder);
         }
 
-        return this.repositoryUrl;
+        return this.addAccessTokenToHttpUrl(this.repositoryUrl, insertPlaceholder);
+    }
+
+    /**
+     * Add the access token to the http url, if possible.
+     * The token will be added if
+     * - the token is required (based on the profile information), and
+     * - the token is present (based on the user model).
+     *
+     * It will only be added if a username is present in the given url and will be added after the username and before the host name.
+     * @param url the url to which the token should be added
+     * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
+     */
+    addAccessTokenToHttpUrl(url: string, insertPlaceholder = false): string {
+        const vcsAccessToken = this.user.vcsAccessToken;
+        // If the token is not present or not required, don't include it
+        if (!this.versionControlAccessTokenRequired || !vcsAccessToken || !url) {
+            return url;
+        }
+
+        // repositoryUrl must be in format https://USERNAME@HOST to insert token
+        const repositoryUrlParts = url.split('@');
+        if (repositoryUrlParts.length !== 2) {
+            return url;
+        }
+
+        const token = insertPlaceholder ? '**********' : vcsAccessToken;
+
+        const protocolAndUsername = repositoryUrlParts[0];
+        const host = repositoryUrlParts[1];
+
+        return protocolAndUsername + ':' + token + '@' + host;
     }
 
     /**
@@ -139,6 +172,6 @@ export class CloneRepoButtonComponent implements OnInit {
      * @return sourceTreeUrl
      */
     buildSourceTreeUrl() {
-        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUrl());
+        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUrl(false));
     }
 }
