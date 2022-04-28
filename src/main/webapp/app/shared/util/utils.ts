@@ -1,4 +1,4 @@
-import { omit } from 'lodash-es';
+import { omit, sum } from 'lodash-es';
 import { captureException } from '@sentry/browser';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
@@ -88,7 +88,7 @@ export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, c
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
-    return round(relativeScore * 100, course ? course!.accuracyOfScores : 1);
+    return round(relativeScore * 100, course ? course.accuracyOfScores : 1);
 };
 
 /**
@@ -102,6 +102,19 @@ export const roundValueSpecifiedByCourseSettings = (value: any, course?: Course)
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
     return round(value, course ? course.accuracyOfScores : 1);
+};
+
+/**
+ * Computes the average value for the given array.
+ * @param values The array for which the average should be computed.
+ * @returns The average value of the array. Zero for an empty array.
+ */
+export const average = (values: Array<number>): number => {
+    if (values.length === 0) {
+        return 0;
+    } else {
+        return sum(values) / values.length;
+    }
 };
 
 /**

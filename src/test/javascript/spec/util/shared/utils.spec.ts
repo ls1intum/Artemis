@@ -1,4 +1,4 @@
-import { round, roundValueSpecifiedByCourseSettings, roundScorePercentSpecifiedByCourseSettings, stringifyIgnoringFields } from 'app/shared/util/utils';
+import { round, roundValueSpecifiedByCourseSettings, roundScorePercentSpecifiedByCourseSettings, stringifyIgnoringFields, average } from 'app/shared/util/utils';
 
 describe('Round', () => {
     it('Decimal length', () => {
@@ -64,5 +64,17 @@ describe('stringifyIgnoringFields', () => {
         expect(stringifyIgnoringFields({ a: 1 }, 'a')).toBe(JSON.stringify({}));
         expect(stringifyIgnoringFields({ a: 1, c: 2, b: 3 }, 'a', 'b')).toBe(JSON.stringify({ c: 2 }));
         expect(stringifyIgnoringFields({ b: 1, c: 3 }, 'c', 'b')).toBe(JSON.stringify({}));
+    });
+});
+
+describe('average', () => {
+    it('should return an average of 0 for an empty array', () => {
+        expect(average([])).toBe(0);
+    });
+
+    it('should return the average for a non-empty array', () => {
+        expect(average([10])).toBe(10);
+        expect(average([1, 3])).toBe(2);
+        expect(average([1, 5, 4, 8])).toBe(4.5);
     });
 });

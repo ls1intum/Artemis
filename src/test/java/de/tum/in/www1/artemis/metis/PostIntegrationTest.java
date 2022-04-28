@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -58,6 +59,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Validator validator;
 
+    private User student1;
+
     private static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
@@ -67,6 +70,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         validator = Validation.buildDefaultValidatorFactory().getValidator();
 
         database.addUsers(5, 5, 0, 1);
+
+        student1 = database.getUserByLogin("student1");
 
         // initialize test setup and get all existing posts (there are 4 posts with lecture context, 4 with exercise context, and 3 with course-wide context - initialized): 11
         // posts in total
@@ -111,8 +116,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setExercise(exercise);
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingExercisePosts.size() + 1).isEqualTo(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null).size());
+        assertThat(existingExercisePosts).hasSize(postRepository.findPostsByExerciseId(exerciseId, false, false, false, null).size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
     }
 
@@ -125,7 +131,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setExercise(examExercise);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingExercisePosts.size()).isEqualTo(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null).size());
+        assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPostsByExerciseId(exerciseId, false, false, false, null));
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
 
     }
@@ -138,8 +144,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setLecture(lecture);
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingLecturePosts.size() + 1).isEqualTo(postRepository.findPostsByLectureId(lectureId, null, null, null, null).size());
+        assertThat(existingLecturePosts).hasSize(postRepository.findPostsByLectureId(lectureId, false, false, false, null).size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
     }
 
@@ -151,11 +158,12 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setCourseWideContext(existingCourseWidePosts.get(0).getCourseWideContext());
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null).stream().filter(post -> post.getCourseWideContext() != null)
-                .toList();
-        assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, false, false, false, null).stream()
+                .filter(post -> post.getCourseWideContext() != null).toList();
+        assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewCoursePost(createdPost, course);
     }
 
@@ -167,12 +175,13 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdPost);
         postToSave.setDisplayPriority(DisplayPriority.PINNED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null).stream().filter(post -> post.getCourseWideContext() != null)
-                .toList();
-        assertThat(existingCourseWidePosts.size() + 1).isEqualTo(updatedCourseWidePosts.size());
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, false, false, false, null).stream()
+                .filter(post -> post.getCourseWideContext() != null).toList();
+        assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
     }
 
@@ -220,7 +229,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setContent("");
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-
+        database.assertSensitiveInformationHidden(createdPost);
         Post expectedPost = new Post();
         expectedPost.setId(createdPost.getId());
         expectedPost.setAuthor(createdPost.getAuthor());
@@ -245,21 +254,21 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Post>> constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
 
         invalidPost = createPostWithoutContext();
         invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
 
         invalidPost = createPostWithoutContext();
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
     }
 
     @Test
@@ -268,8 +277,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToCheck = new Post();
         postToCheck.setTitle("Title Post");
 
-        List<Post> similarPosts = request.postWithResponseBody("/api/courses/" + courseId + "/posts/similarity-check", postToCheck, List.class, HttpStatus.OK);
-        assertThat(similarPosts).size().isEqualTo(TOP_K_SIMILARITY_RESULTS);
+        List<Post> similarPosts = request.postListWithResponseBody("/api/courses/" + courseId + "/posts/similarity-check", postToCheck, Post.class, HttpStatus.OK);
+        assertThat(similarPosts).hasSize(TOP_K_SIMILARITY_RESULTS);
     }
 
     // UPDATE
@@ -292,6 +301,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToUpdate = editExistingPost(existingPosts.get(0));
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        database.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -305,6 +315,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        database.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -318,6 +329,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setExercise(this.existingExercisePosts.get(0).getExercise());
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        database.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -332,6 +344,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        database.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -344,6 +357,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToUpdate.setCourseWideContext(CourseWideContext.RANDOM);
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        database.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
     }
 
@@ -354,6 +368,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post postToUpdate = editExistingPost(existingPosts.get(0));
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        database.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToUpdate);
 
         // update post from another student (index 1)--> forbidden
@@ -373,10 +388,11 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToNotUpdate.setLecture(this.existingLecturePosts.get(0).getLecture());
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.OK);
+        database.assertSensitiveInformationHidden(notUpdatedPost);
         // no effect on post context
-        assertThat(notUpdatedPost.getCourseWideContext()).isEqualTo(null);
-        assertThat(notUpdatedPost.getCourse()).isEqualTo(null);
-        assertThat(notUpdatedPost.getLecture()).isEqualTo(null);
+        assertThat(notUpdatedPost.getCourseWideContext()).isNull();
+        assertThat(notUpdatedPost.getCourse()).isNull();
+        assertThat(notUpdatedPost.getLecture()).isNull();
         assertThat(notUpdatedPost.getExercise()).isEqualTo(existingExercisePosts.get(2).getExercise());
     }
 
@@ -423,6 +439,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // change display priority to PINNED
         Post updatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToPin.getId() + "/display-priority", null, Post.class, HttpStatus.OK,
                 params);
+        database.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToPin);
     }
 
@@ -449,6 +466,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // change display priority to ARCHIVED
         Post updatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/posts/" + postToArchive.getId() + "/display-priority", null, Post.class,
                 HttpStatus.OK, params);
+        database.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost).isEqualTo(postToArchive);
     }
 
@@ -462,7 +480,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts.size()).isEqualTo(existingPosts.size());
+        database.assertSensitiveInformationHidden(returnedPosts);
+        assertThat(returnedPosts).hasSameSizeAs(existingPosts);
     }
 
     @Test
@@ -474,6 +493,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         params.add("courseWideContext", courseWideContext.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         // get amount of posts with that certain course-wide context
         var expectedAmountOfFetchedPosts = existingCourseWidePosts.stream().filter(coursePost -> coursePost.getCourseWideContext() == courseWideContext).count();
         assertThat(returnedPosts.size()).isEqualTo(expectedAmountOfFetchedPosts);
@@ -487,8 +507,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         params.add("exerciseId", exerciseId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         // get amount of posts with that certain course-wide context
-        assertThat(returnedPosts.size()).isEqualTo(existingExercisePosts.size());
+        assertThat(returnedPosts).hasSameSizeAs(existingExercisePosts);
     }
 
     @Test
@@ -499,8 +520,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         params.add("lectureId", lectureId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         // get amount of posts with that certain course-wide context
-        assertThat(returnedPosts.size()).isEqualTo(existingLecturePosts.size());
+        assertThat(returnedPosts).hasSameSizeAs(existingLecturePosts);
     }
 
     @Test
@@ -521,7 +543,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetPostTagsForCourse() throws Exception {
         List<String> returnedTags = request.getList("/api/courses/" + courseId + "/posts/tags", HttpStatus.OK, String.class);
         // 4 different tags were used for the posts
-        assertThat(returnedTags.size()).isEqualTo(postRepository.findPostTagsForCourse(courseId).size());
+        assertThat(returnedTags).hasSameSizeAs(postRepository.findPostTagsForCourse(courseId));
     }
 
     @Test
@@ -539,8 +561,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         params.add("filterToOwn", "true");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user and compare
-        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> "student1".equals(post.getAuthor().getLogin())).collect(Collectors.toList()));
+        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())).toList());
     }
 
     @Test
@@ -552,7 +575,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         params.add("pagingEnabled", "true"); // search by text, only available in course discussions page where paging is enabled
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-
+        database.assertSensitiveInformationHidden(returnedPosts);
         assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getId() == 1).collect(Collectors.toList()));
     }
 
@@ -573,6 +596,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         params.add("sortingOrder", sortingOrder.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPosts.sort(Comparator.comparing(Post::getCreationDate).reversed());
 
         assertThat(returnedPosts).isEqualTo(existingPosts);
@@ -595,6 +619,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         params.add("sortingOrder", sortingOrder.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         existingPosts.sort(Comparator.comparing(Post::getCreationDate));
 
         assertThat(returnedPosts).isEqualTo(existingPosts);
@@ -612,6 +637,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
         assertThat(returnedPosts.size()).isIn(returnedPosts.size(), MAX_POSTS_PER_PAGE);
     }
 

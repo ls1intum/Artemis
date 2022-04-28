@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZoneId;
@@ -152,7 +150,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.OK,
                 TextSubmission.class);
 
-        assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
+        assertThat(textSubmissions).as("one text submission was found").hasSize(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
@@ -164,7 +162,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class);
 
-        assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
+        assertThat(textSubmissions).as("one text submission was found").hasSize(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
         assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNotEmpty();
     }
@@ -289,10 +287,10 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         StudentParticipation participation = request.get("/api/text-editor/" + participationId, HttpStatus.OK, StudentParticipation.class);
 
-        assertThat(participation.getResults(), is(notNullValue()));
-        assertThat(participation.getResults(), hasSize(1));
+        assertThat(participation.getResults()).isNotNull();
+        assertThat(participation.getResults()).hasSize(1);
 
-        assertThat(participation.getSubmissions(), is(notNullValue()));
+        assertThat(participation.getSubmissions()).isNotNull();
     }
 
     @Test

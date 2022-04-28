@@ -87,7 +87,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
-        assertThat(postReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
+        assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
     }
 
     @Test
@@ -99,7 +99,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
-        assertThat(postReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
+        assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
 
         // try again
         request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -114,7 +114,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
-        assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
     }
 
     @Test
@@ -126,7 +126,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
-        assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
 
         // try again
         request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -142,7 +142,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Reaction createdFirstReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdFirstReaction);
-        assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
 
         // student 2 reacts again on this answer post
         reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -152,7 +152,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Reaction createdSecondReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdSecondReaction);
-        assertThat(answerPostReactedOn.getReactions().size() + 2).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 2);
     }
 
     @Test
@@ -165,7 +165,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Reaction createdFirstReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdFirstReaction);
-        assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
 
         // student 2 reacts again on this answer post
         reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -175,7 +175,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Reaction createdSecondReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdSecondReaction);
-        assertThat(answerPostReactedOn.getReactions().size() + 2).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 2);
     }
 
     @Test
@@ -188,7 +188,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
         request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", createdReaction, Reaction.class, HttpStatus.BAD_REQUEST);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
-        assertThat(answerPostReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size());
+        assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
     }
 
     @Test
@@ -198,7 +198,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", invalidReaction, Reaction.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Reaction>> constraintViolations = validator.validate(invalidReaction);
-        assertThat(constraintViolations.size()).isEqualTo(1);
+        assertThat(constraintViolations).hasSize(1);
     }
 
     // GET
@@ -221,7 +221,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         createVoteReactionOnPost(postReactedOn2, student2);
 
         // refresh posts after reactions are added
-        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, null, null, null, null);
+        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, false, false, false, null);
 
         var params = new LinkedMultiValueMap<String, String>();
 
@@ -258,7 +258,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         createVoteReactionOnPost(post2ReactedOn, student2);
 
         // refresh posts after reactions are added
-        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, null, null, null, null);
+        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, false, false, false, null);
 
         var params = new LinkedMultiValueMap<String, String>();
 
@@ -291,7 +291,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // student 1 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
 
-        assertThat(postReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
+        assertThat(postReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(postReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
 
@@ -306,7 +306,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         // student 1 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
-        assertThat(answerPostReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPostId(answerPostReactedOn.getId()).size());
+        assertThat(answerPostReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(answerPostReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
 
@@ -319,7 +319,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         // student 1 wants to delete the reaction of student 2
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionSaveOnPost.getId(), HttpStatus.FORBIDDEN);
-        assertThat(postReactedOn.getReactions().size() + 1).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
+        assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
     }
 
     @Test
@@ -330,7 +330,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
 
         request.delete("/api/courses/" + dummyCourse.getCourseIcon() + "/postings/reactions/" + reactionToSaveOnPost.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(postToReactOn.getReactions().size()).isEqualTo(postRepository.findById(postToReactOn.getId()).get().getReactions().size());
+        assertThat(postToReactOn.getReactions()).hasSameSizeAs(postRepository.findById(postToReactOn.getId()).get().getReactions());
     }
 
     @Test
@@ -344,7 +344,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         // student 2 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
-        assertThat(postReactedOn.getReactions().size()).isEqualTo(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size());
+        assertThat(postReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(postReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
 
@@ -379,7 +379,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         reaction.setEmojiId("smiley");
         reaction.setPost(postReactedOn);
         Reaction savedReaction = reactionRepository.save(reaction);
-        User user = this.userRepository.getUserWithGroupsAndAuthorities("student2");
+        User user = userRepository.getUserWithGroupsAndAuthorities("student2");
         savedReaction.setUser(user);
         reactionRepository.save(savedReaction);
         return savedReaction;
@@ -404,5 +404,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // check if association to post or answer post is correct
         assertThat(createdReaction.getPost()).isEqualTo(expectedReaction.getPost());
         assertThat(createdReaction.getAnswerPost()).isEqualTo(expectedReaction.getAnswerPost());
+
+        database.assertSensitiveInformationHidden(createdReaction);
     }
 }

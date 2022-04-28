@@ -8,7 +8,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,10 +31,13 @@ public class ContinuousIntegrationTestService {
     @Value("${artemis.continuous-integration.url}")
     private URL ciServerUrl;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final LocalRepository localRepo = new LocalRepository();
+    private final LocalRepository localRepo = new LocalRepository(defaultBranch);
 
     private ProgrammingExerciseStudentParticipation participation;
 
@@ -68,17 +70,17 @@ public class ContinuousIntegrationTestService {
         String currentLocalFolderName = "currentFolderName";
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
         // add file to the repository folder
-        Path filePath = Paths.get(localRepo.localRepoFile + "/" + currentLocalFileName);
+        Path filePath = Path.of(localRepo.localRepoFile + "/" + currentLocalFileName);
         var file = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
         // add folder to the repository folder
-        filePath = Paths.get(localRepo.localRepoFile + "/" + currentLocalFolderName);
+        filePath = Path.of(localRepo.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath).toFile();
 
         GitUtilService.MockFileRepositoryUrl localRepoUrl = new GitUtilService.MockFileRepositoryUrl(localRepo.localRepoFile);
         // create a participation
-        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURL());
+        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURI());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
 
         // mock return of git path
@@ -158,22 +160,22 @@ public class ContinuousIntegrationTestService {
     public void testHealthRunning() throws Exception {
         mockDelegate.mockHealthInCiService(true, HttpStatus.OK);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(ciServerUrl);
-        assertThat(health.isUp()).isEqualTo(true);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.isUp()).isTrue();
     }
 
     public void testHealthNotRunning() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.OK);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(ciServerUrl);
-        assertThat(health.isUp()).isEqualTo(false);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.isUp()).isFalse();
     }
 
     public void testHealthException() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.INTERNAL_SERVER_ERROR);
         var health = continuousIntegrationService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(ciServerUrl);
-        assertThat(health.isUp()).isEqualTo(false);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
+        assertThat(health.isUp()).isFalse();
         assertThat(health.getException()).isNotNull();
     }
 }

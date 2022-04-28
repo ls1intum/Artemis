@@ -6,7 +6,7 @@ import { SystemNotification } from 'app/entities/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -33,7 +33,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(RouterOutlet),
-                MockDirective(FormDateTimePickerComponent),
+                MockComponent(FormDateTimePickerComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

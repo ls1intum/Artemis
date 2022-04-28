@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.UserTestService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -41,6 +42,12 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Autowired
     private UserTestService userTestService;
+
+    @Autowired
+    private PasswordService passwordService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private JenkinsUserManagementService jenkinsUserManagementService;
@@ -142,6 +149,15 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUser_asAdmin_isSuccessful() throws Exception {
         userTestService.createExternalUser_asAdmin_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void createInternalUser_asAdmin_with_vcsAccessToken_isSuccessful() throws Exception {
+        gitlabRequestMockProvider.mockCreationOfUser("batman");
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", true);
+        userTestService.createInternalUser_asAdmin_isSuccessful();
+        ReflectionTestUtils.setField(gitLabUserManagementService, "versionControlAccessToken", false);
     }
 
     @Test
@@ -350,6 +366,8 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateUserGroups() throws Exception {
+        userTestService.student.setPassword(passwordService.hashPassword("this is a password"));
+        userRepository.save(userTestService.student);
         userTestService.updateUserGroups();
     }
 
@@ -402,6 +420,9 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void shouldBlockUserInGitlabIfAccountNotActivated() throws Exception {
+        String password = "this is a password";
+        userTestService.student.setPassword(passwordService.hashPassword(password));
+        userRepository.save(userTestService.student);
         var oldLogin = userTestService.student.getLogin();
         User user = userTestService.student;
         user.setLogin("new-login");
@@ -410,14 +431,14 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
         gitlabRequestMockProvider.mockUpdateVcsUser(oldLogin, user, Set.of(), user.getGroups(), true);
 
-        request.put("/api/users", new ManagedUserVM(user, user.getPassword()), HttpStatus.OK);
+        request.put("/api/users", new ManagedUserVM(user, password), HttpStatus.OK);
 
         UserRepository userRepository = userTestService.getUserRepository();
         final var userInDB = userRepository.findById(user.getId());
         assertThat(userInDB).isPresent();
         assertThat(userInDB.get().getLogin()).isEqualTo(user.getLogin());
 
-        verify(gitlabRequestMockProvider.getMockedUserApi()).blockUser(anyInt());
+        verify(gitlabRequestMockProvider.getMockedUserApi()).blockUser(anyLong());
     }
 
     @Test

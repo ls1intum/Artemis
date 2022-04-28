@@ -131,9 +131,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         instructor = users.get(users.size() - 1);
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("student42", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor6", passwordService.encryptPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("student42", passwordService.hashPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("tutor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD)));
+        userRepo.save(ModelFactory.generateActivatedUser("instructor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD)));
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -521,7 +521,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Another request should not create any exams
         missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
-        assertThat(missingStudentExams).hasSize(0);
+        assertThat(missingStudentExams).isEmpty();
         studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(exam.getRegisteredUsers().size());
 
@@ -538,7 +538,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(4);
-        assertThat(exam.getRegisteredUsers().size()).isEqualTo(4);
+        assertThat(exam.getRegisteredUsers()).hasSize(4);
 
         // /courses/{courseId}/exams/{examId}/student-exams/start-exercises
         Integer numberOfGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
@@ -563,11 +563,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var params = new LinkedMultiValueMap<String, String>();
         params.add("withStudents", "true");
         Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(storedExam.getRegisteredUsers().size()).isEqualTo(0);
+        assertThat(storedExam.getRegisteredUsers()).isEmpty();
 
         // Fetch student exams
         studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExamsDB).hasSize(0);
+        assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
         exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
@@ -588,7 +588,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(4);
-        assertThat(exam.getRegisteredUsers().size()).isEqualTo(4);
+        assertThat(exam.getRegisteredUsers()).hasSize(4);
 
         // /courses/{courseId}/exams/{examId}/student-exams/start-exercises
         Integer numberOfGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises",
@@ -615,11 +615,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var params = new LinkedMultiValueMap<String, String>();
         params.add("withStudents", "true");
         Exam storedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(storedExam.getRegisteredUsers().size()).isEqualTo(0);
+        assertThat(storedExam.getRegisteredUsers()).isEmpty();
 
         // Fetch student exams
         studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExamsDB).hasSize(0);
+        assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
         exercises = examRepository.findAllExercisesByExamId(exam.getId()).toArray(new Exercise[0]);
@@ -627,7 +627,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         for (Exercise exercise : exercises) {
             participationList.addAll(studentParticipationRepository.findByExerciseId(exercise.getId()));
         }
-        assertThat(participationList).hasSize(0);
+        assertThat(participationList).isEmpty();
     }
 
     @Test
@@ -676,17 +676,17 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam examA = ModelFactory.generateExam(course1);
         examA.setId(55L);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
-        // Test for conflict when course is null.
+        // Test for bad request when course is null.
         Exam examB = ModelFactory.generateExam(course1);
         examB.setCourse(null);
-        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CONFLICT);
-        // Test for conflict when course deviates from course specified in route.
+        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
+        // Test for bad request when course deviates from course specified in route.
         Exam examC = ModelFactory.generateExam(course1);
-        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
         // Test invalid dates
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
         for (var exam : examsWithInvalidDate) {
-            request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
+            request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
         }
         // Test for conflict when user tries to create an exam with exercise groups.
         Exam examD = ModelFactory.generateExam(course1);
@@ -699,22 +699,84 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private List<Exam> createExamsWithInvalidDates(Course course) {
-        // Test for conflict, visible date not set
+        // Test for bad request, visible date not set
         Exam examA = ModelFactory.generateExam(course);
         examA.setVisibleDate(null);
-        // Test for conflict, start date not set
+        // Test for bad request, start date not set
         Exam examB = ModelFactory.generateExam(course);
         examB.setStartDate(null);
-        // Test for conflict, end date not set
+        // Test for bad request, end date not set
         Exam examC = ModelFactory.generateExam(course);
         examC.setEndDate(null);
-        // Test for conflict, start date not after visible date
+        // Test for bad request, start date not after visible date
         Exam examD = ModelFactory.generateExam(course);
         examD.setStartDate(examD.getVisibleDate());
-        // Test for conflict, end date not after start date
+        // Test for bad request, end date not after start date
         Exam examE = ModelFactory.generateExam(course);
         examE.setEndDate(examE.getStartDate());
-        return List.of(examA, examB, examC, examD, examE);
+        // Test for bad request, when visibleDate equals the startDate
+        Exam examF = ModelFactory.generateExam(course);
+        examF.setVisibleDate(examF.getStartDate());
+        return List.of(examA, examB, examC, examD, examE, examF);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor() throws Exception {
+        // Test the creation of a TestExam
+        Exam examA = ModelFactory.generateTestExam(course1);
+        request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+
+        verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor_withVisibleDateEqualsStartDate() throws Exception {
+        // Test the creation of a TestExam, where visibleDate equals StartDate
+        Exam examB = ModelFactory.generateTestExam(course1);
+        examB.setVisibleDate(examB.getStartDate());
+        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
+
+        verify(examAccessService, times(1)).checkCourseAccessForInstructorElseThrow(course1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor_badReuestWithWorkingTimeGreatherThanWorkingWindow() throws Exception {
+        // Test for bad request, where workingTime is greater than difference between StartDate and EndDate
+        Exam examC = ModelFactory.generateTestExam(course1);
+        examC.setWorkingTime(5000);
+        request.post("/api/courses/" + course1.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor_badRequestWithWorkingTimeSetToZero() throws Exception {
+        // Test for bad request, if the working time is 0
+        Exam examD = ModelFactory.generateTestExam(course1);
+        examD.setWorkingTime(0);
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateTestExam_asInstructor_withExamModeChanged() throws Exception {
+        // The Exam-Mode should not be changeable with a PUT / update operation, a CONFLICT should be returned instead
+        // Case 1: TestExam should be updated to RealExam
+        Exam examA = ModelFactory.generateTestExam(course1);
+        Exam createdExamA = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
+        createdExamA.setTestExam(false);
+        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
+
+        // Case 2: RealExam should be updated to TestExam
+        Exam examB = ModelFactory.generateTestExam(course1);
+        examB.setTestExam(false);
+        Exam createdExamB = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
+        createdExamB.setTestExam(true);
+        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamB, Exam.class, HttpStatus.CONFLICT);
+
     }
 
     @Test
@@ -731,20 +793,20 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Note: ZonedDateTime has problems with comparison due to time zone differences for values saved in the database and values not saved in the database
         assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate").isEqualTo(createdExam);
         assertThat(examCountBefore + 1).isEqualTo(examRepository.count());
-        // No course is set -> conflict
+        // No course is set -> bad request
         exam = ModelFactory.generateExam(course1);
         exam.setId(1L);
         exam.setCourse(null);
-        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CONFLICT);
-        // Course id in the updated exam and in the REST resource url do not match -> conflict
+        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        // Course id in the updated exam and in the REST resource url do not match -> bad request
         exam = ModelFactory.generateExam(course1);
         exam.setId(1L);
-        request.put("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.CONFLICT);
-        // Dates in the updated exam are not valid -> conflict
+        request.put("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        // Dates in the updated exam are not valid -> bad request
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
         for (var examWithInvDate : examsWithInvalidDate) {
             examWithInvDate.setId(1L);
-            request.put("/api/courses/" + course1.getId() + "/exams", examWithInvDate, HttpStatus.CONFLICT);
+            request.put("/api/courses/" + course1.getId() + "/exams", examWithInvDate, HttpStatus.BAD_REQUEST);
         }
         // Update the exam -> ok
         exam1.setTitle("Best exam ever");
@@ -761,6 +823,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
+        examWithProgrammingEx.setWorkingTime(examWithProgrammingEx.getWorkingTime() - 1);
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
@@ -781,6 +844,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var programmingEx = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setStartDate(examWithProgrammingEx.getStartDate().plusSeconds(1));
+        examWithProgrammingEx.setWorkingTime(examWithProgrammingEx.getWorkingTime() - 1);
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendProgrammingExerciseSchedule(programmingEx.getId());
     }
@@ -791,6 +855,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
         examWithModelingEx.setEndDate(examWithModelingEx.getEndDate().plusSeconds(2));
+        examWithModelingEx.setWorkingTime(examWithModelingEx.getWorkingTime() + 2);
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
         verify(instanceMessageSendService, times(1)).sendModelingExerciseSchedule(modelingExercise.getId());
     }
@@ -803,6 +868,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         examWithModelingEx.setVisibleDate(now().plusHours(1));
         examWithModelingEx.setStartDate(now().plusHours(2));
         examWithModelingEx.setEndDate(now().plusHours(3));
+        examWithModelingEx.setWorkingTime(3600);
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
 
         StudentExam studentExam = database.addStudentExam(examWithModelingEx);
@@ -981,8 +1047,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Ensure that the student exam of student2 was deleted
         List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams).hasSize(storedExam.getRegisteredUsers().size());
-        assertThat(studentExams).doesNotContain(studentExam2);
+        assertThat(studentExams).hasSameSizeAs(storedExam.getRegisteredUsers()).doesNotContain(studentExam2);
 
         // Ensure that the participations were not deleted
         List<StudentParticipation> participationsStudent2 = studentParticipationRepository
@@ -1031,7 +1096,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(exam4.getExerciseGroups().get(1).getExercises()).hasSize(exam.getExerciseGroups().get(1).getExercises().size());
         exam4.getExerciseGroups().get(1).getExercises().forEach(exercise -> {
             assertThat(exercise.getNumberOfParticipations()).isNotNull();
-            assertThat(exercise.getNumberOfParticipations()).isEqualTo(0);
+            assertThat(exercise.getNumberOfParticipations()).isZero();
         });
     }
 
@@ -1077,8 +1142,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Ensure that the student exam of student1 was deleted
         List<StudentExam> studentExams = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams).hasSize(storedExam.getRegisteredUsers().size());
-        assertThat(studentExams).doesNotContain(studentExam1);
+        assertThat(studentExams).hasSameSizeAs(storedExam.getRegisteredUsers()).doesNotContain(studentExam1);
 
         // Ensure that the participations of student1 were deleted
         participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
@@ -1097,8 +1161,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExamForTestRunDashboard_conflict() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.CONFLICT, Exam.class);
+    public void testGetExamForTestRunDashboard_badRequest() throws Exception {
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.BAD_REQUEST, Exam.class);
     }
 
     @Test
@@ -1166,7 +1230,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = examRepository.findWithRegisteredUsersById(exam.getId()).get();
 
         // 10 normal students + our custom student99
-        assertThat(exam.getRegisteredUsers().size()).isEqualTo(this.numberOfStudents + 1);
+        assertThat(exam.getRegisteredUsers()).hasSize(this.numberOfStudents + 1);
         assertThat(exam.getRegisteredUsers()).contains(student99);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course.getId(), exam.getId());
     }
@@ -1227,15 +1291,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         ExerciseGroup savedExerciseGroup1 = savedExam.getExerciseGroups().get(2);
         ExerciseGroup savedExerciseGroup2 = savedExam.getExerciseGroups().get(0);
         ExerciseGroup savedExerciseGroup3 = savedExam.getExerciseGroups().get(1);
-        assertThat(savedExerciseGroup1.getExercises().size()).isEqualTo(2);
-        assertThat(savedExerciseGroup2.getExercises().size()).isEqualTo(1);
-        assertThat(savedExerciseGroup3.getExercises().size()).isEqualTo(3);
-        assertThat(savedExerciseGroup1.getExercises().contains(exercise1_1)).isTrue();
-        assertThat(savedExerciseGroup1.getExercises().contains(exercise1_2)).isTrue();
-        assertThat(savedExerciseGroup2.getExercises().contains(exercise2_1)).isTrue();
-        assertThat(savedExerciseGroup3.getExercises().contains(exercise3_1)).isTrue();
-        assertThat(savedExerciseGroup3.getExercises().contains(exercise3_2)).isTrue();
-        assertThat(savedExerciseGroup3.getExercises().contains(exercise3_3)).isTrue();
+        assertThat(savedExerciseGroup1.getExercises()).hasSize(2);
+        assertThat(savedExerciseGroup2.getExercises()).hasSize(1);
+        assertThat(savedExerciseGroup3.getExercises()).hasSize(3);
+        assertThat(savedExerciseGroup1.getExercises()).contains(exercise1_1);
+        assertThat(savedExerciseGroup1.getExercises()).contains(exercise1_2);
+        assertThat(savedExerciseGroup2.getExercises()).contains(exercise2_1);
+        assertThat(savedExerciseGroup3.getExercises()).contains(exercise3_1);
+        assertThat(savedExerciseGroup3.getExercises()).contains(exercise3_2);
+        assertThat(savedExerciseGroup3.getExercises()).contains(exercise3_3);
 
         // Should fail with too many exercise groups
         orderedExerciseGroups.add(exerciseGroup1);
@@ -1350,14 +1414,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var participationEx2St1 = database.addStudentParticipationForProgrammingExercise(programmingExercise2, "student1");
         var participationEx2St2 = database.addStudentParticipationForProgrammingExercise(programmingExercise2, "student2");
 
-        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt1)).isPresent();
-        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt1).get()).isEqualTo(studentExam1);
-        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt2)).isPresent();
-        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt2).get()).isEqualTo(studentExam2);
-        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St1)).isPresent();
-        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St1).get()).isEqualTo(studentExam1);
-        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2)).isPresent();
-        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2).get()).isEqualTo(studentExam2);
+        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt1)).contains(studentExam1);
+        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt2)).contains(studentExam2);
+        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St1)).contains(studentExam1);
+        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2)).contains(studentExam2);
 
         mockConfigureRepository(programmingExercise, "student1", Set.of(student1), true);
         mockConfigureRepository(programmingExercise, "student2", Set.of(student2), true);
@@ -1383,9 +1443,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK, Exam.class);
 
         // Test that the received exam has two text exercises
-        assertThat(receivedExam.getExerciseGroups().get(0).getExercises().size()).as("Two exercises are returned").isEqualTo(2);
+        assertThat(receivedExam.getExerciseGroups().get(0).getExercises()).as("Two exercises are returned").hasSize(2);
         // Test that the received exam has zero quiz exercises, because quiz exercises do not need to be corrected manually
-        assertThat(receivedExam.getExerciseGroups().get(1).getExercises().size()).as("Zero exercises are returned").isEqualTo(0);
+        assertThat(receivedExam.getExerciseGroups().get(1).getExercises()).as("Zero exercises are returned").isEmpty();
     }
 
     @Test
@@ -1412,8 +1472,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExamForExamAssessmentDashboard_courseIdDoesNotMatch_conflict() throws Exception {
-        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.CONFLICT, Course.class);
+    public void testGetExamForExamAssessmentDashboard_courseIdDoesNotMatch_badRequest() throws Exception {
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam1.getId() + "/exam-for-assessment-dashboard", HttpStatus.BAD_REQUEST, Course.class);
     }
 
     @Test
@@ -1489,19 +1549,19 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // instructor exam checklist checks
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, true);
-        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO).isNotNull();
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(15L);
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(true);
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(0);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isTrue();
+        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isZero();
 
         // check that an adapted version is computed for tutors
         database.changeUser("tutor1");
 
         examChecklistDTO = examService.getStatsForChecklist(exam, false);
-        assertThat(examChecklistDTO).isNotEqualTo(null);
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(null);
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
-        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(0);
+        assertThat(examChecklistDTO).isNotNull();
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isNull();
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
+        assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isZero();
 
         database.changeUser("instructor1");
 
@@ -1533,7 +1593,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 Submission submission;
                 // Programming exercises don't have a submission yet
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(participation.getSubmissions()).hasSize(0);
+                    assertThat(participation.getSubmissions()).isEmpty();
                     submission = new ProgrammingSubmission();
                     submission.setParticipation(participation);
                     submission = submissionRepository.save(submission);
@@ -1678,15 +1738,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // check if stats are set correctly for the instructor
         examChecklistDTO = examService.getStatsForChecklist(exam, true);
-        assertThat(examChecklistDTO).isNotEqualTo(null);
+        assertThat(examChecklistDTO).isNotNull();
         assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(15);
         assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(15);
         assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(15);
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(true);
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isTrue();
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(75);
-        assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(0L);
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound().length).isEqualTo(1);
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).containsAll((Collections.singletonList(90L)));
+        assertThat(examChecklistDTO.getNumberOfTestRuns()).isZero();
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(1).containsAll((Collections.singletonList(90L)));
 
         // change to a tutor
         database.changeUser("tutor1");
@@ -1694,15 +1753,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // check that a modified version is returned
         // check if stats are set correctly for the instructor
         examChecklistDTO = examService.getStatsForChecklist(exam, false);
-        assertThat(examChecklistDTO).isNotEqualTo(null);
-        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isEqualTo(null);
-        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isEqualTo(null);
-        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isEqualTo(null);
-        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isEqualTo(false);
+        assertThat(examChecklistDTO).isNotNull();
+        assertThat(examChecklistDTO.getNumberOfGeneratedStudentExams()).isNull();
+        assertThat(examChecklistDTO.getNumberOfExamsSubmitted()).isNull();
+        assertThat(examChecklistDTO.getNumberOfExamsStarted()).isNull();
+        assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(75);
-        assertThat(examChecklistDTO.getNumberOfTestRuns()).isEqualTo(null);
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound().length).isEqualTo(1);
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).containsAll((Collections.singletonList(90L)));
+        assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(1).containsExactly(90L);
 
         // change back to instructor user
         database.changeUser("instructor1");
@@ -1839,7 +1897,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         studentExamRepository.save(studentExam3);
 
         final var individualWorkingTimes = examDateService.getAllIndividualExamEndDates(exam.getId());
-        assertThat(individualWorkingTimes.size()).isEqualTo(2);
+        assertThat(individualWorkingTimes).hasSize(2);
     }
 
     @Test
@@ -1986,7 +2044,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
 
         // Check that the dummy files we created exist in the archive.
-        var filenames = Files.walk(Path.of(extractedArchiveDir)).filter(Files::isRegularFile).map(Path::getFileName).collect(Collectors.toList());
+        List<Path> filenames;
+        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+            filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
+        }
 
         var submissions = submissionRepository.findAll();
 
@@ -2037,13 +2098,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getNumberOfSubmissions()).isInstanceOf(DueDateStat.class);
         assertThat(stats.getTutorLeaderboardEntries()).isInstanceOf(List.class);
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
-        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
-        assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(0L);
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
-        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
+        assertThat(stats.getNumberOfAssessmentLocks()).isZero();
+        assertThat(stats.getNumberOfSubmissions().inTime()).isZero();
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
 
         var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
-        assertThat(lockedSubmissions.size()).isEqualTo(0);
+        assertThat(lockedSubmissions).isEmpty();
 
         // register users. Instructors are ignored from scores as they are exclusive for test run exercises
         Set<User> registeredStudents = users.stream().filter(user -> !user.getLogin().contains("instructor") && !user.getLogin().contains("admin")).collect(Collectors.toSet());
@@ -2092,12 +2153,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // check the stats again - check the count of submitted submissions
         stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
+        assertThat(stats.getNumberOfAssessmentLocks()).isZero();
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(75L);
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(0L);
-        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
-        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
+        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+        assertThat(stats.getNumberOfComplaints()).isZero();
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
 
         // Score used for all exercise results
         Double resultScore = 75.0;
@@ -2131,7 +2192,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(75L);
         // the 15 quiz submissions are already assessed
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(15L);
-        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
+        assertThat(stats.getNumberOfComplaints()).isZero();
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(75L);
 
         // test the query needed for assessment information
@@ -2147,7 +2208,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         database.changeUser("instructor1");
         lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
-        assertThat(lockedSubmissions.size()).isEqualTo(75);
+        assertThat(lockedSubmissions).hasSize(75);
 
         // Finish assessment of all submissions
         for (var exercise : exercisesInExam) {
@@ -2163,16 +2224,16 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // check the stats again
         stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
+        assertThat(stats.getNumberOfAssessmentLocks()).isZero();
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(75L);
         // 75 + the 15 quiz submissions
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(90L);
-        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
-        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
+        assertThat(stats.getNumberOfComplaints()).isZero();
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
 
         lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
-        assertThat(lockedSubmissions.size()).isEqualTo(0);
+        assertThat(lockedSubmissions).isEmpty();
         if (numberOfCorrectionRounds == 2) {
             lockAndAssessForSecondCorrection(exam, course, exercisesInExam, numberOfCorrectionRounds);
         }
@@ -2211,7 +2272,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // the 15 quiz submissions are already assessed - and all are assessed in the first correctionRound
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(90L);
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[1].inTime()).isEqualTo(15L);
-        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
+        assertThat(stats.getNumberOfComplaints()).isZero();
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(75L);
 
         // test the query needed for assessment information
@@ -2221,20 +2282,22 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[0]
                             .inTime())
                     .reduce(Long::sum).get();
-            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
-                assertThat(locksRound1).isEqualTo(0L);
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise))) {
+                assertThat(locksRound1).isZero();
+            }
 
             var locksRound2 = group.getExercises().stream().map(
                     exercise -> resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds, examTutor2)[1]
                             .inTime())
                     .reduce(Long::sum).get();
-            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise)))
+            if (group.getExercises().stream().anyMatch(exercise -> !(exercise instanceof QuizExercise))) {
                 assertThat(locksRound2).isEqualTo(15L);
+            }
         });
 
         database.changeUser("instructor1");
         var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
-        assertThat(lockedSubmissions.size()).isEqualTo(75);
+        assertThat(lockedSubmissions).hasSize(75);
 
         // Finish assessment of all submissions
         for (var exercise : exercisesInExam) {
@@ -2250,16 +2313,16 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // check the stats again
         stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        assertThat(stats.getNumberOfAssessmentLocks()).isEqualTo(0L);
+        assertThat(stats.getNumberOfAssessmentLocks()).isZero();
         // 75 = (15 users * 5 exercises); quiz submissions are not counted
         assertThat(stats.getNumberOfSubmissions().inTime()).isEqualTo(75L);
         // 75 + the 15 quiz submissions
         assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(90L);
-        assertThat(stats.getNumberOfComplaints()).isEqualTo(0L);
-        assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(0L);
+        assertThat(stats.getNumberOfComplaints()).isZero();
+        assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
 
         lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
-        assertThat(lockedSubmissions.size()).isEqualTo(0);
+        assertThat(lockedSubmissions).isEmpty();
 
     }
 

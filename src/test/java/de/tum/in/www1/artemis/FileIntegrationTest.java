@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
@@ -209,7 +209,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         lecture.setDescription("Test");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
-        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now(), lecture);
+        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now());
+        attachment.setLecture(lecture);
 
         // create file
         MockMultipartFile file = new MockMultipartFile("file", filename, "application/json", "some data".getBytes());
@@ -220,7 +221,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
-        var targetFolder = Paths.get(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString();
+        var targetFolder = Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString();
         String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
 
         attachment.setLink(attachmentPath);
@@ -249,7 +250,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         JsonNode response = request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
                 HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        assertThat(responsePath.contains("markdown")).isTrue();
+        assertThat(responsePath).contains("markdown");
     }
 
     @Test
@@ -278,7 +279,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        assertThat(responsePath.contains("temp")).isTrue();
+        assertThat(responsePath).contains("temp");
     }
 
     @Test
@@ -330,8 +331,9 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.OK, byte[].class);
 
         assertThat(receivedFile).isNotEmpty();
-        PDDocument mergedDoc = PDDocument.load(receivedFile);
-        assertEquals(5, mergedDoc.getNumberOfPages());
+        try (PDDocument mergedDoc = PDDocument.load(receivedFile)) {
+            assertEquals(5, mergedDoc.getNumberOfPages());
+        }
     }
 
     public Lecture createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {
@@ -377,7 +379,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
         Lecture lecture = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).get();
 
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit();
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
 
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);
@@ -387,7 +389,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
-        var targetFolder = Paths.get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString();
+        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString();
 
         fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
         var attachmentPath = targetFolder + "/" + file.getOriginalFilename();

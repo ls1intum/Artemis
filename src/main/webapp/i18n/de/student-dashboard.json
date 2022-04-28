@@ -48,7 +48,7 @@
                 "newFirst": "Neueste",
                 "oldFirst": "Älteste",
                 "noExercises": "Es gibt keine Aufgaben für diesen Kurs.",
-                "notReleasedTooltip": "Nicht sichbar für Studierende. Veröffentlichungsdatum: ",
+                "notReleasedTooltip": "Nicht sichtbar für Studierende. Veröffentlichungsdatum: ",
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
                 "noDueDate": "Keine Deadline",
@@ -161,6 +161,7 @@
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
                     "title": "Aktionen für Lehrende:",
+                    "titleTutor": "Aktionen für Tutor:innen",
                     "scores": "Bewertungen",
                     "submissions": "Einreichungen",
                     "statistics": "Statistiken"

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -54,8 +53,8 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     public void testHealthOk() throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth("ok", HttpStatus.OK);
         var health = versionControlService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(gitlabServerUrl);
-        assertThat(health.isUp()).isEqualTo(true);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", gitlabServerUrl);
+        assertThat(health.isUp()).isTrue();
     }
 
     @Test
@@ -63,9 +62,8 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     public void testHealthNotOk() throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth("notok", HttpStatus.OK);
         var health = versionControlService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(gitlabServerUrl);
-        assertThat(health.getAdditionalInfo().get("status")).isEqualTo("notok");
-        assertThat(health.isUp()).isEqualTo(false);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", gitlabServerUrl).containsEntry("status", "notok");
+        assertThat(health.isUp()).isFalse();
     }
 
     @Test
@@ -73,15 +71,15 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     public void testHealthException() throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth("ok", HttpStatus.INTERNAL_SERVER_ERROR);
         var health = versionControlService.health();
-        assertThat(health.isUp()).isEqualTo(false);
+        assertThat(health.isUp()).isFalse();
         assertThat(health.getException()).isNotNull();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void testGetDefaultBranch(String defaultBranch) throws IOException, GitLabApiException {
+    public void testGetDefaultBranch(String defaultBranch) throws URISyntaxException, GitLabApiException {
         VcsRepositoryUrl repoURL = new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch, repoURL);
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoURL);
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);
     }

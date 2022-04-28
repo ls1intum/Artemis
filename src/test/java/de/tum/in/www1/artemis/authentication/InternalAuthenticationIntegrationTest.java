@@ -107,8 +107,9 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
-        final var encodedPassword = passwordService.encodePassword(USER_PASSWORD);
+        final var encodedPassword = passwordService.hashPassword(USER_PASSWORD);
         student.setPassword(encodedPassword);
+        student.setInternal(true);
         userRepository.save(student);
         ltiLaunchRequest.setLis_person_contact_email_primary(student.getEmail());
     }
@@ -145,7 +146,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         final var auth = new TestingAuthenticationToken(student.getLogin(), USER_PASSWORD);
         final var authResponse = artemisInternalAuthenticationProvider.authenticate(auth);
 
-        assertThat(authResponse.getCredentials().toString()).isEqualTo(student.getPassword());
+        assertThat(authResponse.getCredentials()).hasToString(student.getPassword());
         assertThat(authResponse.getPrincipal()).isEqualTo(student.getLogin());
     }
 
@@ -180,7 +181,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         student.setAuthorities(authorities);
 
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(student.getGroups());
-        assertThat(exercises).hasSize(0);
+        assertThat(exercises).isEmpty();
         jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
 
         final var user = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
@@ -275,7 +276,12 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
-        updatedUserIndDB.setPassword(passwordService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
+
+        assertThat(passwordService.checkPasswordMatch(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();
+
+        // Skip passwords for comparison
+        updatedUserIndDB.setPassword(null);
+        student.setPassword(null);
 
         assertThat(response).isNotNull();
         assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);

@@ -148,8 +148,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         // Only one complaint is possible for exercise regardless of its type
         request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
-        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType() == ComplaintType.MORE_FEEDBACK).as("more feedback request is not saved")
-                .isFalse();
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType()).as("more feedback request is not saved")
+                .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
@@ -225,6 +225,42 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result resultAfterComplaintResponse = resultRepo.findByIdWithEagerFeedbacksAndAssessor(receivedResult.getId()).get();
         database.checkFeedbackCorrectlyStored(feedbacks, resultAfterComplaintResponse.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void submitComplaintResponseComplaintResponseTextLimitExceeded() throws Exception {
+        complaint = complaintRepo.save(complaint);
+        course = database.updateCourseComplaintResponseTextLimit(course, 25);
+        // creating the initial complaintResponse
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        // 26 characters
+        complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
+
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
+        request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void submitComplaintResponseComplaintResponseTextLimitNotExceeded() throws Exception {
+        complaint = complaintRepo.save(complaint);
+        course = database.updateCourseComplaintResponseTextLimit(course, 26);
+        // creating the initial complaintResponse
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        // 26 characters
+        complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
+
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
+        request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).isPresent();
     }
 
     @Test
@@ -380,7 +416,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-test-run-dashboard", HttpStatus.OK, Complaint.class, params);
-        assertThat(complaints.size()).isEqualTo(1);
+        assertThat(complaints).hasSize(1);
         complaints.forEach(compl -> {
             assertThat(compl.getResult()).isEqualTo(complaint.getResult());
             assertThat(compl.getParticipant()).as("No student information").isNull();
@@ -471,12 +507,12 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         params.add("complaintType", ComplaintType.COMPLAINT.toString());
         List<ComplaintResponse> complaintResponsesByCourse = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
         List<ComplaintResponse> complaintResponsesByExercise = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
-        assertThat(complaintResponsesByExercise.size()).isEqualTo(complaintResponsesByCourse.size()).isEqualTo(1);
+        assertThat(complaintResponsesByExercise).hasSameSizeAs(complaintResponsesByCourse).hasSize(1);
 
         params.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
         complaintResponsesByCourse = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
         complaintResponsesByExercise = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
-        assertThat(complaintResponsesByCourse.size()).isEqualTo(complaintResponsesByExercise.size()).isEqualTo(2);
+        assertThat(complaintResponsesByCourse).hasSameSizeAs(complaintResponsesByExercise).hasSize(2);
     }
 
     @Test
@@ -736,5 +772,25 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         var fetchedComplaints = request.getList("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.OK, Complaint.class);
         assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.get().getId().intValue());
         assertThat(fetchedComplaints.get(0).getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void submitComplaintForExerciseComplaintExceededTextLimit() throws Exception {
+        course = database.updateCourseComplaintTextLimit(course, 25);
+        // 26 characters
+        complaint.setComplaintText("abcdefghijklmnopqrstuvwxyz");
+        request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void submitComplaintForExerciseComplaintNotExceededTextLimit() throws Exception {
+        course = database.updateCourseComplaintTextLimit(course, 27);
+        // 26 characters
+        complaint.setComplaintText("abcdefghijklmnopqrstuvwxyz");
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+        Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
+        assertThat(storedComplaint).isPresent();
     }
 }

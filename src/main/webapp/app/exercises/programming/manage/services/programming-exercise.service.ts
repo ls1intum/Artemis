@@ -15,6 +15,10 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { Submission } from 'app/entities/submission.model';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -183,7 +187,10 @@ export class ProgrammingExerciseService {
     updateProblemStatement(programmingExerciseId: number, problemStatement: string, req?: any) {
         const options = createRequestOption(req);
         return this.http
-            .patch<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/problem-statement`, problemStatement, { params: options, observe: 'response' })
+            .patch<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/problem-statement`, problemStatement, {
+                params: options,
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
@@ -215,20 +222,25 @@ export class ProgrammingExerciseService {
     findWithTemplateAndSolutionParticipation(programmingExerciseId: number, withSubmissionResults = false): Observable<EntityResponseType> {
         let params = new HttpParams();
         params = params.set('withSubmissionResults', withSubmissionResults.toString());
-        return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, { params, observe: 'response' }).pipe(
-            map((res: EntityResponseType) => {
-                if (res.body && withSubmissionResults) {
-                    // We need to reconnect the submissions with the results. They got removed because of the circular dependency
-                    const templateSubmissions = res.body.templateParticipation?.submissions;
-                    this.reconnectSubmissionAndResult(templateSubmissions);
-                    const solutionSubmissions = res.body.solutionParticipation?.submissions;
-                    this.reconnectSubmissionAndResult(solutionSubmissions);
+        return this.http
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-template-and-solution-participation`, {
+                params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res: EntityResponseType) => {
+                    if (res.body && withSubmissionResults) {
+                        // We need to reconnect the submissions with the results. They got removed because of the circular dependency
+                        const templateSubmissions = res.body.templateParticipation?.submissions;
+                        this.reconnectSubmissionAndResult(templateSubmissions);
+                        const solutionSubmissions = res.body.solutionParticipation?.submissions;
+                        this.reconnectSubmissionAndResult(solutionSubmissions);
 
-                    this.processProgrammingExerciseEntityResponse(res);
-                }
-                return res;
-            }),
-        );
+                        this.processProgrammingExerciseEntityResponse(res);
+                    }
+                    return res;
+                }),
+            );
     }
 
     /**
@@ -371,6 +383,17 @@ export class ProgrammingExerciseService {
     }
 
     /**
+     * Exports the example solution repository for a given exercise, suitable for distributing to students.
+     * @param exerciseId
+     */
+    exportSolutionRepository(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-solution-repository`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
      * Re-evaluates and updates an existing programming exercise.
      *
      * @param programmingExercise that should be updated of type {ProgrammingExercise}
@@ -382,7 +405,10 @@ export class ProgrammingExerciseService {
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, copy, {
+                params: options,
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -439,5 +465,58 @@ export class ProgrammingExerciseService {
      */
     deleteTasksWithSolutionEntries(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' });
+    }
+
+    /**
+     * Gets the git-diff report of a programming exercise
+     *
+     * @param exerciseId The id of a programming exercise
+     */
+    getDiffReport(exerciseId: number): Observable<ProgrammingExerciseGitDiffReport | undefined> {
+        return this.http
+            .get<ProgrammingExerciseGitDiffReport>(`${this.resourceUrl}/${exerciseId}/diff-report`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProgrammingExerciseGitDiffReport>) => res.body ?? undefined));
+    }
+
+    /**
+     * Gets the full git-diff report of a programming exercise containing the previousCode and current code blocks
+     *
+     * @param exerciseId The id of a programming exercise
+     */
+    getFullDiffReport(exerciseId: number): Observable<ProgrammingExerciseFullGitDiffReport> {
+        return this.http.get<ProgrammingExerciseFullGitDiffReport>(`${this.resourceUrl}/${exerciseId}/full-diff-report`);
+    }
+
+    /**
+     * Gets the testwise coverage report of a programming exercise for the latest solution submission with all descending reports
+     * @param exerciseId The id of a programming exercise
+     */
+    getLatestFullTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
+        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
+    }
+
+    /**
+     * Gets the testwise coverage report of a programming exercise for the latest solution submission without the actual reports
+     * @param exerciseId The id of a programming exercise
+     */
+    getLatestTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
+        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
+    }
+
+    /**
+     * Gets all files from the last solution participation repository
+     */
+    getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                return res && new Map(Object.entries(res));
+            }),
+        );
+    }
+
+    createStructuralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
+        return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/structural-solution-entries`, null);
     }
 }

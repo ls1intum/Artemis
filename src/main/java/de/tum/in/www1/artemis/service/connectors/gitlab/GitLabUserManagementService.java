@@ -10,9 +10,14 @@ import org.gitlab4j.api.UserApi;
 import org.gitlab4j.api.models.AccessLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -21,7 +26,8 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
-import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenRequestDTO;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 
 @Service
 @Profile("gitlab")
@@ -29,36 +35,39 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     private final Logger log = LoggerFactory.getLogger(GitLabUserManagementService.class);
 
-    private final PasswordService passwordService;
-
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GitLabApi gitlabApi;
 
+    protected final RestTemplate restTemplate;
+
     @Value("${gitlab.use-pseudonyms:#{false}}")
     private boolean usePseudonyms;
 
+    @Value("${artemis.version-control.version-control-access-token:#{false}}")
+    private Boolean versionControlAccessToken;
+
     public GitLabUserManagementService(ProgrammingExerciseRepository programmingExerciseRepository, GitLabApi gitlabApi, UserRepository userRepository,
-            PasswordService passwordService) {
+            @Qualifier("gitlabRestTemplate") RestTemplate restTemplate) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitlabApi = gitlabApi;
         this.userRepository = userRepository;
-        this.passwordService = passwordService;
+        this.restTemplate = restTemplate;
     }
 
     @Override
-    public void createVcsUser(User user) throws VersionControlException {
-        final int gitlabUserId = getUserIdCreateIfNotExists(user);
+    public void createVcsUser(User user, String password) throws VersionControlException {
+        final Long gitlabUserId = getUserIdCreateIfNotExists(user, password);
         // Add user to existing exercises
         addUserToGroups(gitlabUserId, user.getGroups());
     }
 
     @Override
-    public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldUpdatePassword) {
+    public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, String newPassword) {
         try {
-            var gitlabUser = updateBasicUserInformation(vcsLogin, user, shouldUpdatePassword);
+            var gitlabUser = updateBasicUserInformation(vcsLogin, user, newPassword);
             if (gitlabUser == null) {
                 return;
             }
@@ -67,7 +76,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
             addUserToGroups(gitlabUser.getId(), addedGroups);
 
-            // Remove the user from groups or update it's permissions if the user belongs to multiple
+            // Remove the user from groups or update its permissions if the user belongs to multiple
             // groups of the same course.
             removeOrUpdateUserFromGroups(gitlabUser.getId(), user.getGroups(), removedGroups);
         }
@@ -81,11 +90,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      *
      * @param userLogin the username of the user
      * @param user the Artemis user to update
-     * @param shouldUpdatePassword if the Gitlab password should be updated
+     * @param newPassword if provided the Gitlab password should be updated to the new value
      * @return the updated Gitlab user
      * @throws GitLabApiException if the user cannot be retrieved or cannot update the user
      */
-    private org.gitlab4j.api.models.User updateBasicUserInformation(String userLogin, User user, boolean shouldUpdatePassword) throws GitLabApiException {
+    private org.gitlab4j.api.models.User updateBasicUserInformation(String userLogin, User user, String newPassword) throws GitLabApiException {
         UserApi userApi = gitlabApi.getUserApi();
 
         final var gitlabUser = userApi.getUser(userLogin);
@@ -101,8 +110,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         // Skip confirmation is necessary in order to update the email without user re-confirmation
         gitlabUser.setSkipConfirmation(true);
 
-        String password = shouldUpdatePassword ? passwordService.decryptPassword(user) : null;
-        return userApi.updateUser(gitlabUser, password);
+        return userApi.updateUser(gitlabUser, newPassword);
     }
 
     /**
@@ -111,7 +119,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param user The Artemis user
      * @param gitlabUserId the id of the GitLab user that is mapped to the Artemis user
      */
-    private void updateUserActivationState(User user, int gitlabUserId) throws GitLabApiException {
+    private void updateUserActivationState(User user, Long gitlabUserId) throws GitLabApiException {
         if (user.getActivated()) {
             gitlabApi.getUserApi().unblockUser(gitlabUserId);
         }
@@ -235,7 +243,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param gitlabUserId          gitlabUserId for which the permissions shall be updated
      * @param accessLevel           access level that shall be set for a user
      */
-    private void updateMemberExercisePermissions(List<ProgrammingExercise> programmingExercises, Integer gitlabUserId, AccessLevel accessLevel) {
+    private void updateMemberExercisePermissions(List<ProgrammingExercise> programmingExercises, Long gitlabUserId, AccessLevel accessLevel) {
         programmingExercises.forEach(exercise -> {
             try {
                 gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUserId, accessLevel);
@@ -253,7 +261,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param programmingExercises  all exercises for which the permissions shall be updated
      * @param gitlabUserId          gitlabUserId for which the permissions shall be updated
      */
-    private void removeMemberFromExercises(List<ProgrammingExercise> programmingExercises, Integer gitlabUserId) {
+    private void removeMemberFromExercises(List<ProgrammingExercise> programmingExercises, Long gitlabUserId) {
         programmingExercises.forEach(exercise -> {
             try {
                 gitlabApi.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUserId);
@@ -269,7 +277,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     public void deleteVcsUser(String login) {
         try {
             // Delete by login String doesn't work, so we need to get the actual userId first.
-            final int userId = getUserId(login);
+            final Long userId = getUserId(login);
             gitlabApi.getUserApi().deleteUser(userId, true);
         }
         catch (GitLabUserDoesNotExistException e) {
@@ -283,7 +291,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     @Override
     public void deactivateUser(String login) throws VersionControlException {
         try {
-            final int userId = getUserId(login);
+            final Long userId = getUserId(login);
             // We block the user instead of deactivating because a deactivated account
             // is activated automatically when the user logs into Gitlab.
             gitlabApi.getUserApi().blockUser(userId);
@@ -296,7 +304,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     @Override
     public void activateUser(String login) throws VersionControlException {
         try {
-            final int userId = getUserId(login);
+            final Long userId = getUserId(login);
             gitlabApi.getUserApi().unblockUser(userId);
         }
         catch (GitLabApiException e) {
@@ -310,13 +318,14 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * generated id.
      *
      * @param user the Artemis user
+     * @param password the user's password
      * @return the Gitlab user id
      */
-    private int getUserIdCreateIfNotExists(User user) {
+    private Long getUserIdCreateIfNotExists(User user, String password) {
         try {
             var gitlabUser = gitlabApi.getUserApi().getUser(user.getLogin());
             if (gitlabUser == null) {
-                gitlabUser = createUser(user);
+                gitlabUser = createUser(user, password);
             }
             return gitlabUser.getId();
         }
@@ -333,7 +342,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param gitlabUserId the user id of the Gitlab user
      * @param groups the new groups
      */
-    private void addUserToGroups(int gitlabUserId, Set<String> groups) {
+    private void addUserToGroups(Long gitlabUserId, Set<String> groups) {
         if (groups == null || groups.isEmpty()) {
             return;
         }
@@ -355,7 +364,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param exercises   the list of exercises which project key is used as the Gitlab "group" (i.e. Gitlab project)
      * @param accessLevel the access level that the user should get as part of the group/project
      */
-    public void addUserToGroupsOfExercises(int userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) throws GitLabException {
+    public void addUserToGroupsOfExercises(Long userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) throws GitLabException {
         for (final var exercise : exercises) {
             addUserToGroup(exercise.getProjectKey(), userId, accessLevel);
         }
@@ -369,7 +378,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param accessLevel the access level to grant to the user
      * @throws GitLabException if the user cannot be added to the group
      */
-    private void addUserToGroup(String groupName, int gitlabUserId, AccessLevel accessLevel) throws GitLabException {
+    private void addUserToGroup(String groupName, Long gitlabUserId, AccessLevel accessLevel) throws GitLabException {
         try {
             log.info("Add member " + gitlabUserId + " to Gitlab group " + groupName);
             gitlabApi.getGroupApi().addMember(groupName, gitlabUserId, accessLevel);
@@ -394,7 +403,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param userGroups groups that the user belongs to
      * @param groupsToRemove groups where the user should be removed from
      */
-    private void removeOrUpdateUserFromGroups(int gitlabUserId, Set<String> userGroups, Set<String> groupsToRemove) throws GitLabApiException {
+    private void removeOrUpdateUserFromGroups(Long gitlabUserId, Set<String> userGroups, Set<String> groupsToRemove) throws GitLabApiException {
         if (groupsToRemove == null || groupsToRemove.isEmpty()) {
             return;
         }
@@ -451,7 +460,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param gitlabUserId the user id of the Gitlab user
      * @param group the group to remove the user from
      */
-    private void removeUserFromGroup(int gitlabUserId, String group) throws GitLabApiException {
+    private void removeUserFromGroup(Long gitlabUserId, String group) throws GitLabApiException {
         try {
             gitlabApi.getGroupApi().removeMember(group, gitlabUserId);
         }
@@ -469,16 +478,63 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * user account with the same email, login, name and password
      *
      * @param user The artemis user
+     * @param password The user's password
      * @return a Gitlab user
      */
-    public org.gitlab4j.api.models.User createUser(User user) {
+    public org.gitlab4j.api.models.User createUser(User user, String password) {
         try {
-            final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user))
-                    .withCanCreateGroup(false).withCanCreateProject(false).withSkipConfirmation(true);
-            return gitlabApi.getUserApi().createUser(gitlabUser, passwordService.decryptPassword(user), false);
+            var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(getUsersName(user)).withCanCreateGroup(false)
+                    .withCanCreateProject(false).withSkipConfirmation(true);
+            gitlabUser = gitlabApi.getUserApi().createUser(gitlabUser, password, false);
+            generateVersionControlAccessTokenIfNecessary(gitlabUser, user);
+            return gitlabUser;
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to create new user in GitLab " + user.getLogin(), e);
+        }
+    }
+
+    /**
+     * Generate a version control access token and store it in the user object, if it is needed.
+     * It is needed if
+     * 1. the config option is enabled, and
+     * 2. the user does not yet have an access token
+     *
+     * The GitLab user will be extracted from the Gitlab user API
+     *
+     * @param user the Artemis user (where the token will be stored)
+     */
+    public void generateVersionControlAccessTokenIfNecessary(User user) {
+        UserApi userApi = gitlabApi.getUserApi();
+
+        final org.gitlab4j.api.models.User gitlabUser;
+        try {
+            gitlabUser = userApi.getUser(user.getLogin());
+            if (gitlabUser == null) {
+                // No GitLab user is found -> Do nothing
+                return;
+            }
+
+            generateVersionControlAccessTokenIfNecessary(gitlabUser, user);
+        }
+        catch (GitLabApiException e) {
+            log.error("Could not generate a Gitlab access token for user " + user.getLogin(), e);
+        }
+    }
+
+    /**
+     * Generate a version control access token and store it in the user object, if it is needed.
+     * It is needed if
+     * 1. the config option is enabled, and
+     * 2. the user does not yet have an access token
+     * @param gitlabUser the Gitlab user (for which the token will be created)
+     * @param user the Artemis user (where the token will be stored)
+     */
+    private void generateVersionControlAccessTokenIfNecessary(org.gitlab4j.api.models.User gitlabUser, User user) {
+        if (versionControlAccessToken && user.getVcsAccessToken() == null) {
+            String personalAccessToken = createPersonalAccessToken(gitlabUser.getId());
+            user.setVcsAccessToken(personalAccessToken);
+            userRepository.save(user);
         }
     }
 
@@ -507,7 +563,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      * @param username the username for which the user id should be retrieved
      * @return the Gitlab user id
      */
-    public int getUserId(String username) {
+    public Long getUserId(String username) {
         try {
             var gitlabUser = gitlabApi.getUserApi().getUser(username);
             if (gitlabUser != null) {
@@ -517,6 +573,35 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to get ID for user " + username, e);
+        }
+    }
+
+    /**
+     * Create a personal access token for the user with the given id.
+     * The token has scopes "read_repository" and "write_repository".
+     *
+     * @param userId the id of the user in Gitlab
+     * @return the personal access token created for that user
+     */
+    private String createPersonalAccessToken(Long userId) {
+        // TODO: Change this to Gitlab4J api once it's supported: https://github.com/gitlab4j/gitlab4j-api/issues/653
+        var body = new GitLabPersonalAccessTokenRequestDTO("Artemis-Automatic-Access-Token", userId, new String[] { "read_repository", "write_repository" });
+
+        var entity = new HttpEntity<>(body);
+
+        try {
+            var response = restTemplate.exchange(gitlabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens", HttpMethod.POST, entity,
+                    GitLabPersonalAccessTokenResponseDTO.class);
+            GitLabPersonalAccessTokenResponseDTO responseBody = response.getBody();
+            if (responseBody == null || responseBody.getToken() == null) {
+                log.error("Could not create Gitlab personal access token for user with id " + userId + ", response is null");
+                throw new GitLabException("Error while creating personal access token");
+            }
+            return responseBody.getToken();
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Could not create Gitlab personal access token for user with id {}, response is null", userId);
+            throw new GitLabException("Error while creating personal access token");
         }
     }
 }

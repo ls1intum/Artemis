@@ -5,7 +5,7 @@ import { GlobalCacheConfig, ICachePair, IStorageStrategy } from 'ts-cacheable';
  * instead of the localStorage: https://github.com/angelnikolov/ts-cacheable/blob/master/common/LocalStorageStrategy.ts
  */
 export class SessionStorageStrategy extends IStorageStrategy {
-    private masterCacheKey: string = GlobalCacheConfig.globalCacheKey;
+    private mainCacheKey: string = GlobalCacheConfig.globalCacheKey;
     constructor() {
         super();
         if (sessionStorage == undefined) {
@@ -69,7 +69,7 @@ export class SessionStorageStrategy extends IStorageStrategy {
     }
 
     private getRawData(): { [key: string]: Array<ICachePair<any>> } {
-        const data = sessionStorage.getItem(this.masterCacheKey);
+        const data = sessionStorage.getItem(this.mainCacheKey);
         try {
             return data ? JSON.parse(data) : {};
         } catch (error) {
@@ -78,6 +78,6 @@ export class SessionStorageStrategy extends IStorageStrategy {
     }
 
     private storeRawData(data: { [key: string]: Array<ICachePair<any>> }): void {
-        sessionStorage.setItem(this.masterCacheKey, JSON.stringify(data));
+        sessionStorage.setItem(this.mainCacheKey, JSON.stringify(data));
     }
 }

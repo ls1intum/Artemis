@@ -44,7 +44,7 @@ export interface ValidationReason {
     translateValues: any;
 }
 
-export const exerciseTypes: string[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
+export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
 export enum IncludedInOverallScore {
@@ -132,6 +132,7 @@ export abstract class Exercise implements BaseEntity {
     public averagePoints?: number;
     public presentationScoreEnabled?: boolean;
     public gradingInstructionFeedbackUsed?: boolean;
+    public exampleSolutionPublished?: boolean;
 
     protected constructor(type: ExerciseType) {
         this.type = type;

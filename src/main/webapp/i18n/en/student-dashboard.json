@@ -163,6 +163,7 @@
                 "noResults": "You have no results yet",
                 "instructorActions": {
                     "title": "Instructor actions:",
+                    "titleTutor": "Tutor actions:",
                     "scores": "Scores",
                     "submissions": "Submissions",
                     "statistics": "Statistics"

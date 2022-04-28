@@ -1,3 +1,4 @@
 module.exports = {
-  '{,src/**/,webpack/}*.{md,json,yml,html,cjs,mjs,js,ts,tsx,css,scss,java}': ['prettier --write'],
+    'src/{main/webapp,test}/**/*.{json,js,ts,css,scss,html}': ['prettier --write'],
+    'src/{main,test}/java/**/*.java': ['bash ./linting.sh'],
 };

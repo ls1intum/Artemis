@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.GitUtilService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -54,17 +55,17 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
-        localGit = Git.init().setDirectory(localRepoFile).call();
+        localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
 
         // create commits
         // the following 2 lines prepare the generation of the structural test oracle
-        var testJsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
+        var testJsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
         localGit.commit().setMessage("add test.json").setAuthor("test", "test@test.com").call();
-        var testJsonFilePath2 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test2.json");
+        var testJsonFilePath2 = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test2.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath2);
         localGit.commit().setMessage("add test2.json").setAuthor("test", "test@test.com").call();
-        var testJsonFilePath3 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test3.json");
+        var testJsonFilePath3 = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test3.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath3);
         localGit.commit().setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
@@ -75,7 +76,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         doReturn(objectId).when(gitService).getLastCommitHash(any());
         doNothing().when(gitService).resetToOriginHead(any());
         doNothing().when(gitService).pullIgnoreConflicts(any());
-        doNothing().when(gitService).commitAndPush(any(), anyString(), any());
+        doNothing().when(gitService).commitAndPush(any(), anyString(), anyBoolean(), any());
     }
 
     @AfterEach
@@ -108,19 +109,19 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits() throws Exception {
         File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        Git remoteGit = Git.init().setDirectory(originRepoFile).call();
+        Git remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
         config.save();
         localGit.push().call();
-        assertThat(getAllCommits(localGit).size()).isEqualTo(3);
-        assertThat(getAllCommits(remoteGit).size()).isEqualTo(3);
+        assertThat(getAllCommits(localGit)).hasSize(3);
+        assertThat(getAllCommits(remoteGit)).hasSize(3);
 
         final var path = ProgrammingExerciseResourceEndpoints.ROOT
                 + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.OK);
-        assertThat(getAllCommits(localGit).size()).isEqualTo(1);
-        assertThat(getAllCommits(remoteGit).size()).isEqualTo(1);
+        assertThat(getAllCommits(localGit)).hasSize(1);
+        assertThat(getAllCommits(remoteGit)).hasSize(1);
     }
 
     @Test

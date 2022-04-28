@@ -82,8 +82,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
 
         TutorEffort effortExpected = createTutorEffortObject(0);
 
-        assertThat(tutorEfforts).isNotNull();
-        assertThat(tutorEfforts.size()).isEqualTo(1);
+        assertThat(tutorEfforts).isNotNull().hasSize(1);
         assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
@@ -103,8 +102,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
 
         TutorEffort effortExpected = createTutorEffortObject(25);
 
-        assertThat(tutorEfforts).isNotNull();
-        assertThat(tutorEfforts.size()).isEqualTo(1);
+        assertThat(tutorEfforts).isNotNull().hasSize(1);
         assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
@@ -124,8 +122,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
 
         TutorEffort effortExpected = createTutorEffortObject(0);
 
-        assertThat(tutorEfforts).isNotNull();
-        assertThat(tutorEfforts.size()).isEqualTo(1);
+        assertThat(tutorEfforts).isNotNull().hasSize(1);
         assertThat(tutorEfforts.get(0)).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 

@@ -41,8 +41,8 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
     public void testHealthRunning() throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockHealth("RUNNING", HttpStatus.OK);
         var health = versionControlService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(bitbucketServerUrl);
-        assertThat(health.isUp()).isEqualTo(true);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", bitbucketServerUrl);
+        assertThat(health.isUp()).isTrue();
     }
 
     @Test
@@ -50,8 +50,8 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
     public void testHealthNotRunning() throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockHealth("PAUSED", HttpStatus.OK);
         var health = versionControlService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(bitbucketServerUrl);
-        assertThat(health.isUp()).isEqualTo(false);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", bitbucketServerUrl);
+        assertThat(health.isUp()).isFalse();
     }
 
     @Test
@@ -59,14 +59,14 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
     public void testHealthException() throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockHealth("RUNNING", HttpStatus.INTERNAL_SERVER_ERROR);
         var health = versionControlService.health();
-        assertThat(health.getAdditionalInfo().get("url")).isEqualTo(bitbucketServerUrl);
-        assertThat(health.isUp()).isEqualTo(false);
+        assertThat(health.getAdditionalInfo()).containsEntry("url", bitbucketServerUrl);
+        assertThat(health.isUp()).isFalse();
         assertThat(health.getException()).isNotNull();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void testGetDefaultBranch(String defaultBranch) throws IOException {
+    public void testGetDefaultBranch(String defaultBranch) throws IOException, URISyntaxException {
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, "PROJECTNAME");
         String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git"));
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);

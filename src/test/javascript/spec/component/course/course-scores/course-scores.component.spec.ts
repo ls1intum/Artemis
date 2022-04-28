@@ -37,6 +37,9 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
+import { CsvExportButtonComponent } from 'app/shared/export/csv-export-button.component';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -54,7 +57,7 @@ describe('CourseScoresComponent', () => {
     } as Exercise;
 
     const overallPoints = 10 + 10 + 10;
-    const exerciseMaxPointsPerType = new Map<ExerciseType, number[]>();
+    const exerciseMaxPointsPerType = new ExerciseTypeStatisticsMap();
     const textIncludedWith10Points10BonusPoints = {
         title: 'exercise', // testing duplicated titles
         id: 1,
@@ -210,33 +213,34 @@ describe('CourseScoresComponent', () => {
         participation9,
         participation10,
     ];
-    const pointsOfStudent1 = new Map<ExerciseType, number[]>();
-    const pointsOfStudent2 = new Map<ExerciseType, number[]>();
+    const pointsOfStudent1 = new ExerciseTypeStatisticsMap();
+    const pointsOfStudent2 = new ExerciseTypeStatisticsMap();
 
     beforeEach(() => {
-        exerciseMaxPointsPerType.set(ExerciseType.QUIZ, [10]);
-        exerciseMaxPointsPerType.set(ExerciseType.FILE_UPLOAD, [10]);
-        exerciseMaxPointsPerType.set(ExerciseType.MODELING, [10]);
-        exerciseMaxPointsPerType.set(ExerciseType.PROGRAMMING, []);
-        exerciseMaxPointsPerType.set(ExerciseType.TEXT, [10]);
+        exerciseMaxPointsPerType.setValue(ExerciseType.QUIZ, quizIncludedWith10Points0BonusPoints, 10);
+        exerciseMaxPointsPerType.setValue(ExerciseType.FILE_UPLOAD, fileBonusWith10Points0BonusPoints, 10);
+        exerciseMaxPointsPerType.setValue(ExerciseType.MODELING, modelingIncludedWith10Points0BonusPoints, 10);
+        exerciseMaxPointsPerType.set(ExerciseType.PROGRAMMING, new Map());
+        exerciseMaxPointsPerType.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, 10);
 
-        pointsOfStudent1.set(ExerciseType.QUIZ, [Number.NaN]);
-        pointsOfStudent1.set(ExerciseType.FILE_UPLOAD, [10]);
-        pointsOfStudent1.set(ExerciseType.MODELING, [10]);
-        pointsOfStudent1.set(ExerciseType.PROGRAMMING, []);
-        pointsOfStudent1.set(ExerciseType.TEXT, [20]);
+        pointsOfStudent1.setValue(ExerciseType.QUIZ, quizIncludedWith10Points0BonusPoints, Number.NaN);
+        pointsOfStudent1.setValue(ExerciseType.FILE_UPLOAD, fileBonusWith10Points0BonusPoints, 10);
+        pointsOfStudent1.setValue(ExerciseType.MODELING, modelingIncludedWith10Points0BonusPoints, 10);
+        pointsOfStudent1.set(ExerciseType.PROGRAMMING, new Map());
+        pointsOfStudent1.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, 20);
 
-        pointsOfStudent2.set(ExerciseType.QUIZ, [Number.NaN]);
-        pointsOfStudent2.set(ExerciseType.FILE_UPLOAD, [10]);
-        pointsOfStudent2.set(ExerciseType.MODELING, [5]);
-        pointsOfStudent2.set(ExerciseType.PROGRAMMING, []);
-        pointsOfStudent2.set(ExerciseType.TEXT, [Number.NaN]);
+        pointsOfStudent2.setValue(ExerciseType.QUIZ, quizIncludedWith10Points0BonusPoints, Number.NaN);
+        pointsOfStudent2.setValue(ExerciseType.FILE_UPLOAD, fileBonusWith10Points0BonusPoints, 10);
+        pointsOfStudent2.setValue(ExerciseType.MODELING, modelingIncludedWith10Points0BonusPoints, 5);
+        pointsOfStudent2.set(ExerciseType.PROGRAMMING, new Map());
+        pointsOfStudent2.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, Number.NaN);
 
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
                 CourseScoresComponent,
                 MockComponent(ParticipantScoresDistributionComponent),
+                MockComponent(CsvExportButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(OrionFilterDirective),
@@ -400,7 +404,12 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         fixture.detectChanges();
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
-        component.exportResults();
+        const testOptions: CsvExportOptions = {
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        };
+        component.exportResults(testOptions);
         const generatedRows = exportAsCsvStub.mock.calls[0][1];
         const user1Row = generatedRows[0];
         validateUserRow(

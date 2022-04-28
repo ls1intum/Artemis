@@ -8,6 +8,9 @@ export enum UserSettingsCategory {
 export enum SettingId {
     // notification settings settingIds
 
+    // weekly summary
+    NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY = 'notification.weekly-summary.basic-weekly-summary',
+
     // course wide discussion notification setting group
     NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST = 'notification.course-wide-discussion.new-course-post',
     NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST = 'notification.course-wide-discussion.new-reply-for-course-post',

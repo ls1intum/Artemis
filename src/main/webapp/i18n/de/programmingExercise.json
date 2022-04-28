@@ -106,6 +106,9 @@
             "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Solution Entries wurden gelöscht.",
             "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Solution Entries.",
             "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
+            "createStructuralSolutionEntriesTooltip": "Erstellt Solution Entries für alle strukturellen Tests dieser Aufgabe.",
+            "createStructuralSolutionEntriesTitle": "Erstelle strukturelle Solution Entries",
+            "createStructuralSolutionEntriesSuccess": "Strukturelle Solution Entries wurden erfolgreich erstellt",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -270,7 +273,8 @@
                 "allowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen",
                 "disallowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen keine Beschwerde nach einer automatischen Bewertung einlegen",
                 "complaintOnAutomaticAssessmentEnabled": "Beschwerden sind möglich",
-                "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich"
+                "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich",
+                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studenten zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen."
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
@@ -377,6 +381,40 @@
                     "pattern": "Das Abgabelimit muss eine ganze Zahl zwischen 1 und 500 sein!",
                     "required": "Das Abgabelimit muss gesetzt sein!"
                 }
+            },
+            "diffReport": {
+                "button": "Zeige den Unterschied zwischen Template und Lösung",
+                "tooltip": "Zeigt den Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "title": "Template-Lösungs-Diff",
+                "template": "Template",
+                "solution": "Lösung",
+                "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
+                "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
+                "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
+                "lineStatTooltipFullReport": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungs-Repositories hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
+                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
+            },
+            "projectTypes": {
+                "PLAIN_MAVEN": "Maven",
+                "PLAIN_GRADLE": "Gradle",
+                "PLAIN": "Plain",
+                "XCODE": "Xcode",
+                "FACT": "FACT",
+                "GCC": "GCC"
+            },
+            "withDependencies": "Mit beispielhafter Abhängigkeit",
+            "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
+            "recordTestwiseCoverage": "Testweise Test-Abdeckung aufzeichnen",
+            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testweise Test-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java-Gradle-Projekte mit nicht-sequentiellen Testläufen verfügbar.",
+            "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
+            "testwiseCoverageReport": {
+                "button": "Testweise Test-Abdeckung anzeigen",
+                "tooltip": "Zeigt die testwise Test-Abdeckung für das Lösungs-Repository.",
+                "title": "Testweise Test-Abdeckung",
+                "404": "Testweise Test-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
+                "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
+                "filePath": "Datei-Pfad",
+                "coveredLines": "Abgedeckte Zeilen"
             }
         },
         "error": {

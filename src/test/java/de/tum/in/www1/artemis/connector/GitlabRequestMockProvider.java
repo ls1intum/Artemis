@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,26 +36,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
-import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 
 @Component
 @Profile("gitlab")
 public class GitlabRequestMockProvider {
 
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
-
-    @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    private Optional<String> userPrefixEdx;
-
-    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
-    private Optional<String> userPrefixU4I;
 
     private final RestTemplate restTemplate;
 
@@ -78,13 +77,13 @@ public class GitlabRequestMockProvider {
     private UserApi userApi;
 
     @Mock
+    private EventsApi eventsApi;
+
+    @Mock
     private RepositoryApi repositoryApi;
 
     @Mock
     private ProtectedBranchesApi protectedBranchesApi;
-
-    @SpyBean
-    private PasswordService passwordService;
 
     @SpyBean
     private GitLabUserManagementService gitLabUserManagementService;
@@ -120,8 +119,8 @@ public class GitlabRequestMockProvider {
         final Group group = new Group().withPath(exercisePath).withName(exerciseName).withVisibility(Visibility.PRIVATE);
         doReturn(group).when(groupApi).addGroup(group);
         mockGetUserID();
-        mockAddUserToGroup(exercise.getProjectKey(), MAINTAINER, "instructor1", 2);
-        mockAddUserToGroup(exercise.getProjectKey(), GUEST, "tutor1", 3);
+        mockAddUserToGroup(exercise.getProjectKey(), MAINTAINER, "instructor1", 2L);
+        mockAddUserToGroup(exercise.getProjectKey(), GUEST, "tutor1", 3L);
     }
 
     /**
@@ -133,9 +132,9 @@ public class GitlabRequestMockProvider {
         User instructor = new User();
         User tutor = new User();
         User user = new User();
-        instructor.setId(2);
-        tutor.setId(3);
-        user.setId(4);
+        instructor.setId(2L);
+        tutor.setId(3L);
+        user.setId(4L);
 
         doReturn(instructor).when(userApi).getUser("instructor1");
         doReturn(tutor).when(userApi).getUser("tutor1");
@@ -146,7 +145,7 @@ public class GitlabRequestMockProvider {
         doReturn(new org.gitlab4j.api.models.User()).when(userApi).updateUser(any(), any());
     }
 
-    public void mockAddUserToGroup(String group, AccessLevel accessLevel, String userName, Integer userId) throws GitLabApiException {
+    public void mockAddUserToGroup(String group, AccessLevel accessLevel, String userName, Long userId) throws GitLabApiException {
         final Member member = new Member();
         member.setAccessLevel(accessLevel);
         member.setId(userId);
@@ -159,7 +158,7 @@ public class GitlabRequestMockProvider {
         final var project = new Project().withName(repositoryName.toLowerCase()).withNamespace(exerciseNamespace).withVisibility(Visibility.PRIVATE).withJobsEnabled(false)
                 .withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
         final var group = new Group();
-        group.setId(1);
+        group.setId(1L);
         doReturn(group).when(groupApi).getGroup(exercise.getProjectKey());
         doReturn(project).when(projectApi).createProject(project);
     }
@@ -172,6 +171,36 @@ public class GitlabRequestMockProvider {
             result.add(foundProject);
         }
         doReturn(result).when(projectApi).getProjects(exercise.getProjectKey());
+    }
+
+    /**
+     * Mocks the call on the events API to receive all qualifying push events to get the push dates of certain commits.
+     *
+     * @param participation         Affected participation
+     * @param commitHashPushDateMap A map mapping the commit hashes to their push date. We expect here that only one commit is pushed at a time and the order of the map is the
+     *                              order of the commits
+     * @throws GitLabApiException if events API fails
+     */
+    public void mockGetPushDate(ProgrammingExerciseParticipation participation, Map<String, ZonedDateTime> commitHashPushDateMap) throws GitLabApiException {
+        if (commitHashPushDateMap.isEmpty()) {
+            return;
+        }
+        List<String> commits = new ArrayList<>(commitHashPushDateMap.keySet());
+        commits.add(0, "7".repeat(40));
+        List<Event> events = new ArrayList<>();
+        for (int i = 0; i < commits.size() - 1; i++) {
+            PushData pushData = new PushData();
+            pushData.setAction(Constants.ActionType.PUSHED);
+            pushData.setCommitCount(1);
+            pushData.setCommitFrom(commits.get(i));
+            pushData.setCommitTo(commits.get(i + 1));
+            Event event = new Event().withCreatedAt(Date.from(commitHashPushDateMap.get(commits.get(i + 1)).toInstant()));
+            event.setPushData(pushData);
+            events.add(0, event); // The latest event has to be at the front
+        }
+        var path = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        doAnswer((invocation) -> events.stream()).when(eventsApi).getProjectEventsStream(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null),
+                eq(Constants.SortOrder.DESC));
     }
 
     public void mockAddAuthenticatedWebHook() throws GitLabApiException {
@@ -191,15 +220,25 @@ public class GitlabRequestMockProvider {
      * @param login Login of the user who's creation is mocked
      * @throws GitLabApiException Never
      */
-    public void mockCreationOfUser(String login) throws GitLabApiException {
+    public void mockCreationOfUser(String login) throws GitLabApiException, JsonProcessingException {
+        var userId = 1234L;
         UserApi userApi = mock(UserApi.class);
         doReturn(userApi).when(gitLabApi).getUserApi();
         doReturn(null).when(userApi).getUser(eq(login));
         doAnswer(invocation -> {
             User user = (User) invocation.getArguments()[0];
-            user.setId(1234);
+            user.setId(userId);
             return user;
         }).when(userApi).createUser(any(), any(), anyBoolean());
+
+        var accessTokenResponseDTO = new GitLabPersonalAccessTokenResponseDTO();
+        accessTokenResponseDTO.setName("acccess-token-name");
+        accessTokenResponseDTO.setToken("acccess-token-value");
+        accessTokenResponseDTO.setUserId(userId);
+        final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
+
+        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
@@ -209,8 +248,7 @@ public class GitlabRequestMockProvider {
         mockCreateRepository(exercise, clonedRepoName);
     }
 
-    public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<de.tum.in.www1.artemis.domain.User> users, boolean userExists)
-            throws GitLabApiException {
+    public void mockConfigureRepository(ProgrammingExercise exercise, Set<de.tum.in.www1.artemis.domain.User> users, boolean userExists) throws GitLabApiException {
         var repositoryUrl = exercise.getVcsTemplateRepositoryUrl();
         for (var user : users) {
             String loginName = user.getLogin();
@@ -219,8 +257,7 @@ public class GitlabRequestMockProvider {
                 mockAddMemberToRepository(repositoryUrl, user.getLogin());
             }
         }
-        var defaultBranch = "main";
-        mockGetDefaultBranch(defaultBranch, repositoryUrl);
+        mockGetDefaultBranch(defaultBranch);
         mockProtectBranch(defaultBranch, repositoryUrl);
     }
 
@@ -231,10 +268,8 @@ public class GitlabRequestMockProvider {
     private void mockImportUser(de.tum.in.www1.artemis.domain.User user, boolean shouldFail) throws GitLabApiException {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
-        doReturn(user.getPassword()).when(passwordService).decryptPassword(user);
-
         if (!shouldFail) {
-            var createdUser = gitlabUser.withId(1);
+            var createdUser = gitlabUser.withId(1L);
             doReturn(createdUser).when(userApi).createUser(isA(User.class), anyString(), eq(false));
         }
         else {
@@ -248,7 +283,7 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockAddMemberToRepository(String repositoryPath, String login, boolean throwError) throws GitLabApiException {
-        final var mockedUserId = 1;
+        final var mockedUserId = 1L;
         doReturn(mockedUserId).when(gitLabUserManagementService).getUserId(login);
         if (throwError) {
             System.out.println("repositoryPath: " + repositoryPath + ", mockedUserId: " + mockedUserId);
@@ -259,7 +294,7 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockGetDefaultBranch(String defaultBranch, VcsRepositoryUrl repositoryUrl) throws GitLabApiException {
+    public void mockGetDefaultBranch(String defaultBranch) throws GitLabApiException {
         var mockProject = new Project();
         mockProject.setDefaultBranch(defaultBranch);
         doReturn(mockProject).when(projectApi).getProject(notNull());
@@ -282,7 +317,7 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockRemoveMemberFromRepository(String repositoryPath, String login) throws GitLabApiException {
-        final var mockedUserId = 1;
+        final var mockedUserId = 1L;
         doReturn(mockedUserId).when(gitLabUserManagementService).getUserId(login);
         doNothing().when(projectApi).removeMember(repositoryPath, mockedUserId);
     }
@@ -297,7 +332,7 @@ public class GitlabRequestMockProvider {
             final var exercisesWithAddedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(addedGroups);
             for (final var exercise : exercisesWithAddedGroups) {
                 final var accessLevel = addedGroups.contains(exercise.getCourseViaExerciseGroupOrCourseMember().getInstructorGroupName()) ? MAINTAINER : GUEST;
-                doReturn(new Member()).when(groupApi).addMember(eq(exercise.getProjectKey()), anyInt(), eq(accessLevel));
+                doReturn(new Member()).when(groupApi).addMember(eq(exercise.getProjectKey()), anyLong(), eq(accessLevel));
             }
         }
 
@@ -309,14 +344,14 @@ public class GitlabRequestMockProvider {
                 // then we have to add him as a member with the new access level
                 final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 if (user.getGroups().contains(course.getInstructorGroupName())) {
-                    doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyInt(), eq(MAINTAINER));
+                    doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyLong(), eq(MAINTAINER));
                 }
                 else if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
-                    doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyInt(), eq(GUEST));
+                    doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyLong(), eq(GUEST));
                 }
                 else {
                     // If the user is not a member of any relevant group any more, we can remove him from the exercise
-                    doNothing().when(groupApi).removeMember(eq(exercise.getProjectKey()), anyInt());
+                    doNothing().when(groupApi).removeMember(eq(exercise.getProjectKey()), anyLong());
                 }
             }
         }
@@ -328,17 +363,17 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockUpdateBasicUserInformation(String login, de.tum.in.www1.artemis.domain.User user, boolean shouldUpdatePassword) throws GitLabApiException {
-        var gitlabUser = new User().withUsername(login).withId(1);
+        var gitlabUser = new User().withUsername(login).withId(1L);
         doReturn(gitlabUser).when(userApi).getUser(login);
         if (shouldUpdatePassword) {
-            doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, user.getPassword());
+            doReturn(gitlabUser).when(userApi).updateUser(eq(gitlabUser), any(CharSequence.class));
         }
         else {
             doReturn(gitlabUser).when(userApi).updateUser(gitlabUser, null);
         }
     }
 
-    public void mockRemoveUserFromGroup(int gitlabUserId, String group, Optional<GitLabApiException> exceptionToThrow) throws GitLabApiException {
+    public void mockRemoveUserFromGroup(Long gitlabUserId, String group, Optional<GitLabApiException> exceptionToThrow) throws GitLabApiException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(Set.of(group));
         for (var exercise : exercises) {
             if (exceptionToThrow.isEmpty()) {
@@ -353,13 +388,13 @@ public class GitlabRequestMockProvider {
     public void mockDeleteVcsUser(String login, boolean userExists, boolean shouldFailToDelete) throws GitLabApiException {
         mockGetUserId(login, true, false);
         if (!userExists) {
-            doThrow(GitLabUserDoesNotExistException.class).when(userApi).deleteUser(anyInt(), eq(true));
+            doThrow(GitLabUserDoesNotExistException.class).when(userApi).deleteUser(anyLong(), eq(true));
         }
         else if (shouldFailToDelete) {
-            doThrow(GitLabApiException.class).when(userApi).deleteUser(anyInt(), eq(true));
+            doThrow(GitLabApiException.class).when(userApi).deleteUser(anyLong(), eq(true));
         }
         else {
-            doNothing().when(userApi).deleteUser(anyInt(), eq(true));
+            doNothing().when(userApi).deleteUser(anyLong(), eq(true));
         }
     }
 
@@ -372,7 +407,7 @@ public class GitlabRequestMockProvider {
             doThrow(GitLabApiException.class).when(userApi).getUser(username);
         }
         else if (userExists) {
-            doReturn(new User().withId(1)).when(userApi).getUser(username);
+            doReturn(new User().withId(1L)).when(userApi).getUser(username);
         }
         else {
             throw new GitLabUserDoesNotExistException(username);
@@ -396,17 +431,17 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockAddUserToGroupsUserExists(de.tum.in.www1.artemis.domain.User user, String projectKey) throws GitLabApiException {
-        int userId = mockGetUserIdCreateIfNotExist(user, false, false);
+        Long userId = mockGetUserIdCreateIfNotExist(user, false, false);
         doThrow(new GitLabApiException("Member already exists")).when(groupApi).addMember(eq(projectKey), eq(userId), any(AccessLevel.class));
     }
 
     public void mockAddUserToGroupsFails(de.tum.in.www1.artemis.domain.User user, String projectKey) throws GitLabApiException {
-        int userId = mockGetUserIdCreateIfNotExist(user, false, false);
+        Long userId = mockGetUserIdCreateIfNotExist(user, false, false);
         doThrow(new GitLabApiException("Oh no")).when(groupApi).addMember(eq(projectKey), eq(userId), any(AccessLevel.class));
     }
 
-    private int mockGetUserIdCreateIfNotExist(de.tum.in.www1.artemis.domain.User user, boolean userExists, boolean shouldFail) throws GitLabApiException {
-        var userToReturn = new User().withId(1).withUsername(user.getLogin());
+    private Long mockGetUserIdCreateIfNotExist(de.tum.in.www1.artemis.domain.User user, boolean userExists, boolean shouldFail) throws GitLabApiException {
+        var userToReturn = new User().withId(1L).withUsername(user.getLogin());
         doReturn(userExists ? userToReturn : null).when(userApi).getUser(user.getLogin());
         if (!userExists) {
             mockImportUser(user, shouldFail);
@@ -414,7 +449,7 @@ public class GitlabRequestMockProvider {
         return userToReturn.getId();
     }
 
-    private void mockAddUserToGroups(int userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) throws GitLabApiException {
+    private void mockAddUserToGroups(Long userId, List<ProgrammingExercise> exercises, AccessLevel accessLevel) throws GitLabApiException {
         for (final var exercise : exercises) {
             doReturn(new Member()).when(groupApi).addMember(exercise.getProjectKey(), userId, accessLevel);
         }
@@ -481,7 +516,7 @@ public class GitlabRequestMockProvider {
 
                 Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(user.getGroups(), updatedCourse);
                 if (accessLevel.isPresent()) {
-                    mockAddUserToGroups(1, programmingExercises, accessLevel.get());
+                    mockAddUserToGroups(1L, programmingExercises, accessLevel.get());
                 }
                 else {
                     mockRemoveMemberFromExercises(programmingExercises);
@@ -514,13 +549,13 @@ public class GitlabRequestMockProvider {
 
     private void mockUpdateMemberExercisePermissions(List<ProgrammingExercise> programmingExercises, AccessLevel accessLevel) throws GitLabApiException {
         for (var exercise : programmingExercises) {
-            doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyInt(), eq(accessLevel));
+            doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyLong(), eq(accessLevel));
         }
     }
 
     private void mockRemoveMemberFromExercises(List<ProgrammingExercise> programmingExercises) throws GitLabApiException {
         for (var exercise : programmingExercises) {
-            doNothing().when(groupApi).removeMember(eq(exercise.getProjectKey()), anyInt());
+            doNothing().when(groupApi).removeMember(eq(exercise.getProjectKey()), anyLong());
         }
     }
 
@@ -530,12 +565,12 @@ public class GitlabRequestMockProvider {
 
     public void mockFailToUpdateOldGroupMembers(ProgrammingExercise exercise, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
         mockGetUserId(user.getLogin(), true, false);
-        doThrow(GitLabApiException.class).when(groupApi).updateMember(eq(exercise.getProjectKey()), eq(1), any(AccessLevel.class));
+        doThrow(GitLabApiException.class).when(groupApi).updateMember(eq(exercise.getProjectKey()), eq(1L), any(AccessLevel.class));
     }
 
     public void mockFailToRemoveOldMember(ProgrammingExercise programmingExercise, de.tum.in.www1.artemis.domain.User user) throws GitLabApiException {
         mockGetUserId(user.getLogin(), true, false);
-        doThrow(GitLabApiException.class).when(groupApi).removeMember(programmingExercise.getProjectKey(), 1);
+        doThrow(GitLabApiException.class).when(groupApi).removeMember(programmingExercise.getProjectKey(), 1L);
     }
 
     public void mockDeleteRepository(String repositoryPath, boolean shouldFail) throws GitLabApiException {
@@ -557,7 +592,7 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, boolean isUrlValid) throws GitLabApiException {
-        if (repositoryUrl == null || repositoryUrl.getURL() == null) {
+        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
             return;
         }
 
@@ -576,7 +611,7 @@ public class GitlabRequestMockProvider {
         for (var user : users) {
             mockGetUserId(user.getLogin(), true, false);
             final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
-            doReturn(new Member()).when(projectApi).updateMember(repositoryPath, 1, GUEST);
+            doReturn(new Member()).when(projectApi).updateMember(repositoryPath, 1L, GUEST);
         }
     }
 
@@ -590,31 +625,30 @@ public class GitlabRequestMockProvider {
         mockUnblockUser(shouldFail);
     }
 
-    public UserApi mockUpdateUserActivationState(de.tum.in.www1.artemis.domain.User user, boolean shouldFail) throws GitLabApiException {
+    public void mockUpdateUserActivationState(de.tum.in.www1.artemis.domain.User user, boolean shouldFail) throws GitLabApiException {
         if (user.getActivated()) {
             mockUnblockUser(shouldFail);
         }
         else {
             mockBlockUser(shouldFail);
         }
-        return userApi;
     }
 
     public void mockBlockUser(boolean shouldFail) throws GitLabApiException {
         if (shouldFail) {
-            doThrow(new GitLabApiException("Internal Error", 500)).when(userApi).blockUser(anyInt());
+            doThrow(new GitLabApiException("Internal Error", 500)).when(userApi).blockUser(anyLong());
         }
         else {
-            doNothing().when(userApi).blockUser(anyInt());
+            doNothing().when(userApi).blockUser(anyLong());
         }
     }
 
     public void mockUnblockUser(boolean shouldFail) throws GitLabApiException {
         if (shouldFail) {
-            doThrow(new GitLabApiException("Internal Error", 500)).when(userApi).unblockUser(anyInt());
+            doThrow(new GitLabApiException("Internal Error", 500)).when(userApi).unblockUser(anyLong());
         }
         else {
-            doNothing().when(userApi).blockUser(anyInt());
+            doNothing().when(userApi).blockUser(anyLong());
         }
     }
 

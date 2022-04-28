@@ -62,7 +62,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission = submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
 
         assert submission.getResults() != null;
-        assertThat(submission.getResults().size()).isEqualTo(2);
+        assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
         assertThat(submission.getLatestResult()).isEqualTo(result2);
@@ -93,7 +93,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
         assert submission.getResults() != null;
-        assertThat(submission.getResults().size()).isEqualTo(2);
+        assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
         assertThat(submission.getLatestResult()).isEqualTo(result2);
@@ -130,7 +130,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
         assert submission.getResults() != null;
-        assertThat(submission.getResults().size()).isEqualTo(2);
+        assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
         assertThat(submission.getLatestResult()).isEqualTo(result2);
@@ -149,8 +149,8 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
 
         var resultPage = request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SearchResultPageDTO.class,
-                database.exerciseSearchMapping(search));
-        assertThat(resultPage.getResultsOnPage().size()).isEqualTo(1);
+                database.searchMapping(search));
+        assertThat(resultPage.getResultsOnPage()).hasSize(1);
     }
 
     @Test
@@ -158,7 +158,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = 12345L;
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
-        request.get("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        request.get("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, SearchResultPageDTO.class, database.searchMapping(search));
     }
 
     @Test
@@ -170,7 +170,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
-        request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.searchMapping(search));
     }
 
 }

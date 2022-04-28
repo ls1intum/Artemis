@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -128,24 +128,24 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         String actualFilePath;
 
         if (differentFilePath) {
-            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+            actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
         }
         else {
             if (filename.length() < 5) {
-                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
+                actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
             }
             else if (filename.contains("\\")) {
-                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
+                actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
             }
             else {
-                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+                actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
             }
         }
 
         String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
-        var fileBytes = Files.readAllBytes(Paths.get(actualFilePath));
+        var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -206,7 +206,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?assessedByTutor=true",
                 HttpStatus.OK, FileUploadSubmission.class);
 
-        assertThat(submissions.size()).as("one file upload submission was found").isEqualTo(1);
+        assertThat(submissions).as("one file upload submission was found").hasSize(1);
         assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
         final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
         assertThat(participation1.getStudent()).as("contains no student details").isEmpty();
@@ -220,7 +220,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true",
                 HttpStatus.OK, FileUploadSubmission.class);
 
-        assertThat(submissions.size()).as("one file upload submission was found").isEqualTo(1);
+        assertThat(submissions).as("one file upload submission was found").hasSize(1);
         assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
         final StudentParticipation participation1 = (StudentParticipation) submissions.get(0).getParticipation();
         assertThat(participation1.getStudent()).as("contains student details").isNotEmpty();
@@ -368,7 +368,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getLatestResult().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
+        assertThat(submission.getLatestResult().getFeedbacks()).as("No feedback should be returned for editor").isEmpty();
     }
 
     @Test
@@ -384,7 +384,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getLatestResult().getFeedbacks().size()).as("No feedback should be returned for editor").isEqualTo(0);
+        assertThat(submission.getLatestResult().getFeedbacks()).as("No feedback should be returned for editor").isEmpty();
         assertThat(submission.getLatestResult().getAssessor()).isNull();
     }
 

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 public class File extends java.io.File {
 
@@ -31,10 +32,11 @@ public class File extends java.io.File {
 
     @Override
     public String toString() {
-        // Make windows paths safe
-        String safeFilename = super.toString().replaceAll("\\\\", "/");
-        String safeRepositoryPath = repository.getLocalPath().toString().replaceAll("\\\\", "/");
-
-        return safeFilename.replaceFirst(safeRepositoryPath, "").replaceAll("^/+", "");
+        String path = repository.getLocalPath().relativize(super.toPath()).toString();
+        // Unify separator
+        if (!"/".equals(File.separator)) {
+            path = path.replaceAll(Pattern.quote(File.separator), "/");
+        }
+        return path;
     }
 }

@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -54,7 +53,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     private final String currentLocalFolderName = "currentFolderName";
 
-    private final LocalRepository testRepo = new LocalRepository();
+    private final LocalRepository testRepo = new LocalRepository(defaultBranch);
 
     @BeforeEach
     public void setup() throws Exception {
@@ -64,13 +63,13 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
 
         // add file to the repository folder
-        Path filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName);
+        Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
         var file = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
 
         // add folder to the repository folder
-        filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName);
+        filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath).toFile();
 
         var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.localRepoFile);
@@ -84,7 +83,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
                 any());
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch("master", urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
     }
 
     @AfterEach
@@ -103,7 +102,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + key))).isTrue();
+            assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + key))).isTrue();
         }
     }
 
@@ -117,7 +116,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + key))).isTrue();
+            assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + key))).isTrue();
         }
     }
 
@@ -129,7 +128,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         params.add("file", currentLocalFileName);
         var file = request.get(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
 
@@ -138,10 +137,10 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testCreateFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/newFile"))).isFalse();
         params.add("file", "newFile");
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Files.isRegularFile(Paths.get(testRepo.localRepoFile + "/newFile"))).isTrue();
+        assertThat(Files.isRegularFile(Path.of(testRepo.localRepoFile + "/newFile"))).isTrue();
     }
 
     @Test
@@ -149,7 +148,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testCreateFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/newFile"))).isFalse();
         params.add("file", "newFile");
 
         doReturn(Optional.of(true)).when(gitService).getFileByName(any(), any());
@@ -161,7 +160,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testCreateFile_invalidRepository() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/newFile"))).isFalse();
         params.add("file", "newFile");
 
         Repository mockRepository = mock(Repository.class);
@@ -176,25 +175,25 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testCreateFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFolder"))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/newFolder"))).isFalse();
         params.add("folder", "newFolder");
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/folder", HttpStatus.OK, params);
-        assertThat(Files.isDirectory(Paths.get(testRepo.localRepoFile + "/newFolder"))).isTrue();
+        assertThat(Files.isDirectory(Path.of(testRepo.localRepoFile + "/newFolder"))).isTrue();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         String newLocalFileName = "newFileName";
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
         FileMove fileMove = new FileMove();
         fileMove.setCurrentFilePath(currentLocalFileName);
         fileMove.setNewFilename(newLocalFileName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isTrue();
     }
 
     @Test
@@ -225,8 +224,8 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     private FileMove createRenameFileMove() {
         String newLocalFileName = "newFileName";
 
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
 
         FileMove fileMove = new FileMove();
         fileMove.setCurrentFilePath(currentLocalFileName);
@@ -238,15 +237,15 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRenameFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         String newLocalFolderName = "newFolderName";
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFolderName))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName))).isFalse();
         FileMove fileMove = new FileMove();
         fileMove.setCurrentFilePath(currentLocalFolderName);
         fileMove.setNewFilename(newLocalFolderName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName))).isFalse();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFolderName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName))).isTrue();
     }
 
     @Test
@@ -254,10 +253,10 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testDeleteFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         params.add("file", currentLocalFileName);
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
     }
 
     @Test
@@ -265,7 +264,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testDeleteFile_notFound() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         params.add("file", currentLocalFileName);
 
         doReturn(Optional.empty()).when(gitService).getFileByName(any(), any());
@@ -278,7 +277,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testDeleteFile_invalidFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         params.add("file", currentLocalFileName);
 
         doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(currentLocalFileName));
@@ -295,7 +294,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testDeleteFile_validFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         params.add("file", currentLocalFileName);
 
         File mockFile = mock(File.class);
@@ -315,12 +314,12 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void testCommitChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
         var testRepoCommits = testRepo.getAllLocalCommits();
-        assertThat(testRepoCommits.size() == 1).isTrue();
+        assertThat(testRepoCommits).hasSize(1);
         assertThat(database.getUserByLogin("instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
@@ -337,10 +336,10 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
 
-        Path filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName);
+        Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
         assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
     }
 
@@ -348,21 +347,21 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSaveFilesAndCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
 
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
 
         request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=true", getFileSubmissions(), HttpStatus.OK);
 
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
 
-        Path filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName);
+        Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
         assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
 
         var testRepoCommits = testRepo.getAllLocalCommits();
-        assertThat(testRepoCommits.size() == 1).isTrue();
+        assertThat(testRepoCommits).hasSize(1);
         assertThat(database.getUserByLogin("instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
@@ -377,12 +376,12 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.originRepoFile.toPath(), null);
 
         // Create file in the remote repository
-        Path filePath = Paths.get(testRepo.originRepoFile + "/" + fileName);
+        Path filePath = Path.of(testRepo.originRepoFile + "/" + fileName);
         Files.createFile(filePath).toFile();
 
         // Check if the file exists in the remote repository and that it doesn't yet exists in the local repository
-        assertThat(Files.exists(Paths.get(testRepo.originRepoFile + "/" + fileName))).isTrue();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + fileName))).isFalse();
+        assertThat(Files.exists(Path.of(testRepo.originRepoFile + "/" + fileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + fileName))).isFalse();
 
         // Stage all changes and make a second commit in the remote repository
         gitService.stageAllChanges(remoteRepository);
@@ -396,7 +395,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
         assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + fileName))).isTrue();
+        assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + fileName))).isTrue();
     }
 
     @Test
@@ -409,17 +408,17 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         // Check status of git before the commit
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
 
         // Check status of git after the commit
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
 
         // Create file in the local repository and commit it
-        Path localFilePath = Paths.get(testRepo.localRepoFile + "/" + fileName);
+        Path localFilePath = Path.of(testRepo.localRepoFile + "/" + fileName);
         var localFile = Files.createFile(localFilePath).toFile();
         // write content to the created file
         FileUtils.write(localFile, "local", Charset.defaultCharset());
@@ -427,7 +426,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         testRepo.localGit.commit().setMessage("local").call();
 
         // Create file in the remote repository and commit it
-        Path remoteFilePath = Paths.get(testRepo.originRepoFile + "/" + fileName);
+        Path remoteFilePath = Path.of(testRepo.originRepoFile + "/" + fileName);
         var remoteFile = Files.createFile(remoteFilePath).toFile();
         // write content to the created file
         FileUtils.write(remoteFile, "remote", Charset.defaultCharset());
@@ -440,17 +439,17 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         var result = testRepo.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
         var status = testRepo.localGit.status().call();
         assertThat(status.getConflicting().size() > 0).isTrue();
-        assertThat(MergeResult.MergeStatus.CONFLICTING).isEqualTo(result.getMergeStatus());
+        assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
         // Execute the reset Rest call
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/reset", null, HttpStatus.OK, null);
 
         // Check the git status after the reset
         status = testRepo.localGit.status().call();
-        assertThat(status.getConflicting().size() == 0).isTrue();
+        assertThat(status.getConflicting()).isEmpty();
         assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
         var receivedStatusAfterReset = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterReset.repositoryStatus.toString()).isEqualTo("CLEAN");
+        assertThat(receivedStatusAfterReset.repositoryStatus).hasToString("CLEAN");
     }
 
     @Test
@@ -460,14 +459,14 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
 
         // The current status is "uncommited changes", since we added files and folders, but we didn't commit yet
-        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
 
         // Perform a commit to check if the status changes
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
 
         // Check if the status of git is "clean" after the commit
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
     }
 
     @Test
@@ -476,7 +475,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         programmingExerciseRepository.save(programmingExercise);
         doReturn(true).when(gitService).isRepositoryCached(any());
         var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, HashMap.class);
-        assertThat(status.size()).isGreaterThan(0);
+        assertThat(status).isNotEmpty();
     }
 
     @Test
