@@ -125,7 +125,7 @@
                         {{ remainingTimeText }}
                     </span>
                 </div>
-                <div *ngIf="mode === 'live' && waitingForQuizStart">
+                <div *ngIf="mode === 'live' && waitingForQuizStart && quizExercise.remainingNumberOfAttempts !== 0">
                     <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
                 </div>
                 <div *ngIf="mode === 'live' && !waitingForQuizStart">
