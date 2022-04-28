@@ -161,9 +161,9 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
      * We cannot use standard Java-serialization here, because the individual fields of {@link QuizExerciseDistributedCache}
      * need to use different serialization mechanisms (e.g. {@link ScheduledTaskHandler} is not {@link Serializable}).
      * <p>
-     * We don't serialize and deserialize the quiz exercise here because it is not directly written to Hazelcast but only 
-     * set transiently. Setting it here as well could cause an old exercise version to be loaded when Hazelcast decides 
-     * to deserialize the quiz exercise cache again. (It is really hard to predict or influence that, so we don't do that.) 
+     * We don't serialize and deserialize the quiz exercise here because it is not directly written to Hazelcast but only
+     * set transiently. Setting it here as well could cause an old exercise version to be loaded when Hazelcast decides
+     * to deserialize the quiz exercise cache again. (It is really hard to predict or influence that, so we don't do that.)
      */
     static class QuizExerciseDistributedCacheStreamSerializer implements StreamSerializer<QuizExerciseDistributedCache> {
 
@@ -174,7 +174,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
         @Override
         public void write(ObjectDataOutput out, QuizExerciseDistributedCache exerciseCacheImpl) throws IOException {
-            // Hazelcast will choose the best fit from it's own serializers for each object
+            // Hazelcast will choose the best fit from its own serializers for each object
             out.writeLong(exerciseCacheImpl.getExerciseId());
             out.writeObject(exerciseCacheImpl.quizStart);
         }

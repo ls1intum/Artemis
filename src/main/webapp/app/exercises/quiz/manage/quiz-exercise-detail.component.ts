@@ -746,7 +746,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     /**
-     * Save the quiz to the server and invoke callback functions depending of result
+     * Save the quiz to the server and invoke callback functions depending on result
      */
     save(): void {
         if (this.hasSavedQuizStarted || !this.pendingChangesCache || !this.quizIsValid) {
@@ -812,7 +812,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     };
 
     /**
-     * Makes sure the entity is well formed and its fields are of the correct types
+     * Makes sure the entity is well-formed and its fields are of the correct types
      * @param quizExercise {QuizExercise} exercise which will be prepared
      */
     prepareEntity(quizExercise: QuizExercise): void {

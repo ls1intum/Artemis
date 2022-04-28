@@ -171,7 +171,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      *
      * @param submissionId the id of the modelingSubmission to retrieve
      * @param correctionRound correction round for which we prepare the submission
-     * @param resultId the resultId for which we want do get the submission
+     * @param resultId the resultId for which we want to get the submission
      * @param withoutResults No result will be created or loaded and the exercise won't be locked when this is set so plagiarism detection doesn't lock results
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found

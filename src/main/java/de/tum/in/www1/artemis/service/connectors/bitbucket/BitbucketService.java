@@ -218,7 +218,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     /**
-     * Creates an user on Bitbucket
+     * Creates a user on Bitbucket
      *
      * @param username     The wanted Bitbucket username
      * @param password     The wanted password in clear text

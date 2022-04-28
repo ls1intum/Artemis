@@ -92,7 +92,7 @@ export abstract class QuizStatisticsDirective {
     }
 
     /**
-     * Calculates the maximum value on the y axis on a chart depending of the data to display
+     * Calculates the maximum value on the y axis on a chart depending on the data to display
      * @param data the array of data that is to display by the chart
      * @returns height of the chart
      * @private

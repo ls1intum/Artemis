@@ -349,7 +349,7 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * GET /programming-submissions/:submissionId/lock : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
+     * GET /programming-submissions/:submissionId/lock : get the programmingSubmissions participation by its id and locks the corresponding submission for assessment
      *
      * @param submissionId the id of the participation to retrieve
      * @param correctionRound correction round for which we prepare the submission

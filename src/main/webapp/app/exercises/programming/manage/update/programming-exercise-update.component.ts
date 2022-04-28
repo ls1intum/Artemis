@@ -555,7 +555,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * When setting the programming language, a change guard is triggered.
-     * This is because we want to reload the instructions template for a different language, but don't want the user to loose unsaved changes.
+     * This is because we want to reload the instructions template for a different language, but don't want the user to lose unsaved changes.
      * If the user cancels the language will not be changed.
      *
      * @param language to switch to.
@@ -589,7 +589,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * When setting the project type, a change guard is triggered.
-     * This is because we want to reload the instructions template for a project type, but don't want the user to loose unsaved changes.
+     * This is because we want to reload the instructions template for a project type, but don't want the user to lose unsaved changes.
      * If the user cancels the project type will not be changed.
      *
      * @param projectType to switch to.

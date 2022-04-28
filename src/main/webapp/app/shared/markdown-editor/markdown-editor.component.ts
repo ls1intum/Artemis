@@ -293,7 +293,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
              * will contain the splitted text with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
             const commandTextsMappedToCommandIdentifiers: [string, DomainCommand | null][] = [];
-            /** create a remainingMarkdownText of the markdown text to loop trough it and find the domainCommandIdentifier */
+            /** create a remainingMarkdownText of the markdown text to loop through it and find the domainCommandIdentifier */
             let remainingMarkdownText = this.markdown.slice(0);
 
             /** create string with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */

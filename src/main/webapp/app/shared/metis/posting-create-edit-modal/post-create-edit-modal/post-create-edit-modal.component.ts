@@ -87,7 +87,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         });
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
-            // announcements should no show similar posts
+            // announcements should not show similar posts
             if (this.currentContextSelectorOption.courseWideContext === CourseWideContext.ANNOUNCEMENT) {
                 this.similarPosts = [];
             }
