@@ -21,7 +21,7 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.2.1"
     id "com.github.node-gradle.node" version "3.2.1"
-    id "com.diffplug.spotless" version "6.5.0"
+    id "com.diffplug.spotless" version "6.5.1"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
@@ -228,8 +228,8 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core:2.3.7.RELEASE"
     implementation "org.springframework.data:spring-data-ldap:2.6.4"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.1"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.1"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.2"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.2"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
     implementation "io.netty:netty-all:4.1.76.Final"
@@ -243,15 +243,15 @@ dependencies {
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
     implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
     implementation "org.xmlbeam:xmlprojector:1.4.23"
-    implementation "io.jsonwebtoken:jjwt-api:0.11.3"
+    implementation "io.jsonwebtoken:jjwt-api:0.11.5"
     implementation "org.bouncycastle:bcprov-jdk15on:1.70"
-    runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.3"
-    runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.3"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.5"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.5"
     implementation ("io.springfox:springfox-swagger2:3.0.0") {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "mysql:mysql-connector-java:8.0.28"
+    implementation "mysql:mysql-connector-java:8.0.29"
 
     implementation "org.zalando:problem-spring-web:0.27.0"
     implementation "com.ibm.icu:icu4j:71.1"
