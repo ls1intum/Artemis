@@ -8,7 +8,7 @@
             jhiDeleteButton
             [entityTitle]="solutionEntry.id!.toString()"
             deleteQuestion="artemisApp.exerciseHint.removeEntryQuestion"
-            (delete)="emitDeletionEvent()"
+            (delete)="emitRemovalEvent()"
             [dialogError]="dialogError"
         >
             <fa-icon [icon]="faTimes"></fa-icon>

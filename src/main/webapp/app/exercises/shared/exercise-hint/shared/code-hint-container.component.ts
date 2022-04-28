@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
-import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/shared/programming-exercise-solution-entry.service';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/shared/code-hint.service';
 
 /**
  * Component containing the solution entries for a {@link CodeHint}.
@@ -26,7 +26,7 @@ export class CodeHintContainerComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(protected route: ActivatedRoute, private solutionEntryService: ProgrammingExerciseSolutionEntryService) {}
+    constructor(protected route: ActivatedRoute, private codeHintService: CodeHintService) {}
 
     ngOnInit() {
         this.setSortedSolutionEntriesForCodeHint();
@@ -44,11 +44,11 @@ export class CodeHintContainerComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Delete a solution entry by its id
-     * @param solutionEntryId of the solution entry to be deleted
+     * Removes a solution entry from the code hint
+     * @param solutionEntryId of the solution entry to be removed
      */
-    deleteEntry(solutionEntryId: number) {
-        this.solutionEntryService.deleteSolutionEntry(this.codeHint.exercise!.id!, this.codeHint.id!, solutionEntryId).subscribe({
+    removeEntryFromCodeHint(solutionEntryId: number) {
+        this.codeHintService.removeSolutionEntryFromCodeHint(this.codeHint.exercise!.id!, this.codeHint.id!, solutionEntryId).subscribe({
             next: () => {
                 this.sortedSolutionEntries = this.sortedSolutionEntries.filter((entry) => entry.id !== solutionEntryId);
                 this.dialogErrorSource.next('');

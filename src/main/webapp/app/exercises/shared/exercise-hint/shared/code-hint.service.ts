@@ -11,6 +11,14 @@ export interface ICodeHintService {
      * @param deleteOldCodeHints Whether the old code hints should be deleted
      */
     generateCodeHintsForExercise(exerciseId: number, deleteOldCodeHints: boolean): Observable<HttpResponse<CodeHint[]>>;
+
+    /**
+     * Removes a programming exercise solution entry from a code hint
+     * @param exerciseId of the programming exercise
+     * @param codeHintId of the code hint from which the solution entry will be removed
+     * @param solutionEntryId of the solution entry to be removed
+     */
+    removeSolutionEntryFromCodeHint(exerciseId: number, codeHintId: number, solutionEntryId: number): Observable<HttpResponse<void>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -30,5 +38,15 @@ export class CodeHintService implements ICodeHintService {
             params: options,
             observe: 'response',
         });
+    }
+
+    /**
+     * Removes a programming exercise solution entry from a code hint
+     * @param exerciseId of the programming exercise
+     * @param codeHintId of the code hint from which the solution entry will be removed
+     * @param solutionEntryId of the solution entry to be removed
+     */
+    removeSolutionEntryFromCodeHint(exerciseId: number, codeHintId: number, solutionEntryId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/code-hints/${codeHintId}/solution-entries/${solutionEntryId}`, { observe: 'response' });
     }
 }
