@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.transaction.Transactional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,6 +103,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return 200 Ok if successful with the corresponding result as body, but sensitive information are filtered out
      */
     @PutMapping("participations/{participationId}/results/{resultId}/text-assessment")
+    @Transactional
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
         final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks() != null
@@ -567,9 +569,12 @@ public class TextAssessmentResource extends AssessmentResource {
                 tb.setKnowledge(exercise.getKnowledge());
             }).collect(toSet());
             // Update the feedback_id for existing text blocks
-            final var blocksToUpdate = textSubmission.getBlocks();
-            blocksToUpdate.forEach(tb -> tb.setFeedback(feedbackMap.get(tb.getId())));
-            if (!updatedTextBlocks.isEmpty() || !existingTextBlockIds.isEmpty()) {
+            if (!existingTextBlockIds.isEmpty()) {
+                final var blocksToUpdate = textSubmission.getBlocks();
+                blocksToUpdate.forEach(tb -> tb.setFeedback(feedbackMap.get(tb.getId())));
+                updatedTextBlocks.addAll(blocksToUpdate);
+            }
+            if (!updatedTextBlocks.isEmpty()) {
                 textBlockService.saveAll(updatedTextBlocks);
             }
         }
