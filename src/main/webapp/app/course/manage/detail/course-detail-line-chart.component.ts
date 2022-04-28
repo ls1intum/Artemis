@@ -146,7 +146,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         let currentWeek;
         for (let i = 0; i < this.currentSpanSize; i++) {
             currentWeek = dayjs()
-                .subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
+                .subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 - this.displayedNumberOfWeeks * this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
             this.dataCopy[0].series[i] = {};
