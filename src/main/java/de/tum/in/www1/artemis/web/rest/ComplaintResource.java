@@ -125,7 +125,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("complaints/exam/{examId}") // TODO: should be exams/{examId}/participations/{participationId}/)complaints
+    @PostMapping("complaints/exam/{examId}") // TODO: should be exams/{examId}/(participations/{participationId}/)complaints
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Complaint> createComplaintForExamExercise(@PathVariable Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint for exam exercise: {}", complaint);
