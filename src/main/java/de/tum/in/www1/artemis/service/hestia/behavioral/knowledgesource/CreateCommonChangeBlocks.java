@@ -38,6 +38,7 @@ public class CreateCommonChangeBlocks extends BehavioralKnowledgeSource {
                 if (startLine == null) {
                     startLine = currentLine;
                 }
+                // Check if this is a new change block
                 if (previousLine != null && currentLine - 1 > previousLine) {
                     changeBlocks.add(new GroupedFile.ChangeBlock(IntStream.range(startLine, startLine + lineCount).boxed().toList()));
                     lineCount = 0;
@@ -47,6 +48,7 @@ public class CreateCommonChangeBlocks extends BehavioralKnowledgeSource {
                 previousLine = currentLine;
             }
 
+            // Add the last change block if any existA
             if (startLine != null) {
                 changeBlocks.add(new GroupedFile.ChangeBlock(IntStream.range(startLine, startLine + lineCount).boxed().toList()));
             }

@@ -34,12 +34,14 @@ public class CombineChangeBlocks extends BehavioralKnowledgeSource {
                 var newChangeBlocks = new ArrayList<GroupedFile.ChangeBlock>();
                 for (int i = 0; i < currentChangeBlocks.size(); i++) {
                     var currentChangeBlock = currentChangeBlocks.get(i);
+                    // If this is not the last change block check if it can be merged with the next change block
                     if (i < currentChangeBlocks.size() - 1) {
                         var nextChangeBlock = currentChangeBlocks.get(i + 1);
                         if (currentChangeBlock.intersectsOrTouches(nextChangeBlock)) {
                             var lines = new TreeSet<>(currentChangeBlock.getLines());
                             lines.addAll(nextChangeBlock.getLines());
                             newChangeBlocks.add(new GroupedFile.ChangeBlock(lines));
+                            // Skip the next change block, as it has already been processed
                             i++;
                             continue;
                         }

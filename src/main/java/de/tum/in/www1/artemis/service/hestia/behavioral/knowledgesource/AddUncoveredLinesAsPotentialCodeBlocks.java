@@ -65,6 +65,7 @@ public class AddUncoveredLinesAsPotentialCodeBlocks extends BehavioralKnowledgeS
     private ChangeBlock getPotentialPrefix(int firstLine, String fileContent) {
         var potentialLines = new TreeSet<Integer>();
         var lineContents = fileContent.split("\n");
+        // Starting two lines before the first line, as first line is the line in the file which starts at 1 and not 0
         for (int i = firstLine - 2; i >= 0; i--) {
             var lineContent = lineContents[i];
             if (doesLineMatch(lineContent)) {
@@ -85,6 +86,7 @@ public class AddUncoveredLinesAsPotentialCodeBlocks extends BehavioralKnowledgeS
     private ChangeBlock getPotentialPostfix(int lastLine, String fileContent) {
         var potentialLines = new TreeSet<Integer>();
         var lineContents = fileContent.split("\n");
+        // Starting at last line instead of lastLine + 1, as last line is the line in the file which starts at 1 and not 0
         for (int i = lastLine; i < lineContents.length; i++) {
             var lineContent = lineContents[i];
             if (doesLineMatch(lineContent)) {
