@@ -172,6 +172,11 @@ public class ContinuousIntegrationTestService {
         assertThat(health.isUp()).isFalse();
     }
 
+    public void testConfigureBuildPlan() throws Exception {
+        mockDelegate.mockConfigureBuildPlan(participation, defaultBranch);
+        continuousIntegrationService.configureBuildPlan(participation, defaultBranch);
+    }
+
     public void testHealthException() throws Exception {
         mockDelegate.mockHealthInCiService(false, HttpStatus.INTERNAL_SERVER_ERROR);
         var health = continuousIntegrationService.health();

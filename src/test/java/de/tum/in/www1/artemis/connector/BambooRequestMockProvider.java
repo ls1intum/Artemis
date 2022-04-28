@@ -493,10 +493,10 @@ public class BambooRequestMockProvider {
      * @throws URISyntaxException
      */
     public void mockGrantReadAccess(String buildPlanId, String projectKey, User user) throws URISyntaxException {
-        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin()).build().toUri();
+        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/project/" + projectKey + "/users/" + user.getLogin()).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
 
-        uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/project/" + projectKey + "/users/" + user.getLogin()).build().toUri();
+        uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin()).build().toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 

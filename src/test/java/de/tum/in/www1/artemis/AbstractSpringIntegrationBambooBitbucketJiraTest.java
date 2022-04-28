@@ -35,7 +35,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -504,6 +506,19 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
         var state = isRunning ? "RUNNING" : "PAUSED";
         bambooRequestMockProvider.mockHealth(state, httpStatus);
+    }
+
+    @Override
+    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
+        String buildPlanId = participation.getBuildPlanId();
+        VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
+        String projectKey = buildPlanId.split("-")[0];
+        String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        bambooRequestMockProvider.mockUpdatePlanRepository(buildPlanId, "assignment", repoProjectName, defaultBranch);
+        bambooRequestMockProvider.mockEnablePlan(projectKey, buildPlanId.split("-")[1], true, false);
+        for (User user : ((StudentParticipation) participation).getParticipant().getParticipants()) {
+            bambooRequestMockProvider.mockGrantReadAccess(buildPlanId, projectKey, user);
+        }
     }
 
     @Override
