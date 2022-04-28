@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.Set;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -333,8 +335,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetLecturePdfAttachmentsMerged_TutorAccessToUnreleasedUnits() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
 
-        var attachment = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getId() == 1).map(lectureUnit -> (AttachmentUnit) lectureUnit)
-                .map(AttachmentUnit::getAttachment).findFirst().orElseThrow();
+        var attachment = lecture.getLectureUnits().stream().sorted(Comparator.comparing(LectureUnit::getId)).map(lectureUnit -> ((AttachmentUnit) lectureUnit).getAttachment())
+                .findFirst().orElseThrow();
         attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
         attachmentRepo.save(attachment);
 
@@ -348,8 +350,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetLecturePdfAttachmentsMerged_StudentMergeDoesNotContainHiddenUnits() throws Exception {
         Lecture lecture = createLectureWithLectureUnits(false, null);
 
-        var attachment = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit.getId() == 1).map(lectureUnit -> (AttachmentUnit) lectureUnit)
-                .map(AttachmentUnit::getAttachment).findFirst().orElseThrow();
+        var attachment = lecture.getLectureUnits().stream().sorted(Comparator.comparing(LectureUnit::getId)).map(lectureUnit -> ((AttachmentUnit) lectureUnit).getAttachment())
+                .findFirst().orElseThrow();
         attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
         attachmentRepo.save(attachment);
 
