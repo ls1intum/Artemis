@@ -8,33 +8,45 @@
         </div>
     </div>
 </div>
-
 <div class="col-12 mt-4">
-    <div class *ngIf="!loading">
-        <button class="me-1 btn btn-info" (click)="triggerAddressedComplaints()">
-            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{
-                'artemisApp.complaint.listOfComplaints.' + (showAddressedComplaints ? 'hide' : 'show') + 'AddressedComplaints' | artemisTranslate
-            }}</span>
-            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{
-                'artemisApp.moreFeedback.list.' + (showAddressedComplaints ? 'hideAnsweredRequests' : 'showAnsweredRequests') | artemisTranslate
-            }}</span>
-        </button>
+    <div class="alert alert-info" [hidden]="hasStudentInformation">
+        <span *ngIf="!allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT">{{
+            'artemisApp.complaint.listOfComplaints.loadAllComplaintsExplanation' | artemisTranslate
+        }}</span>
+        <span *ngIf="!allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK">{{
+            'artemisApp.moreFeedback.list.loadAllRequestsExplanation' | artemisTranslate
+        }}</span>
+        <span *ngIf="allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT">
+            {{ 'artemisApp.complaint.listOfComplaints.allComplaintsLoaded' | artemisTranslate }}</span
+        >
+        <span *ngIf="allComplaintsForTutorLoaded && complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.allRequestsLoaded' | artemisTranslate }}</span>
         <button
-            *ngIf="!hasStudentInformation"
-            class="btn btn-info me-1"
+            *ngIf="!allComplaintsForTutorLoaded"
+            class="btn btn-outline-info m-1"
             (click)="triggerShowAllComplaints()"
             [disabled]="allComplaintsForTutorLoaded"
-            name="showAddressedComplaint"
-            id="field_showAddressedComplaint"
+            name="loadAllComplaintsForTutor"
+            id="button_loadAllComplaintsForTutor"
         >
             <span *ngIf="isLoadingAllComplaints" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{
-                'artemisApp.complaint.listOfComplaints.' + (allComplaintsForTutorLoaded ? 'allComplaintsLoaded' : 'loadAllComplaints') | artemisTranslate
-            }}</span>
-            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{
-                'artemisApp.moreFeedback.list.' + (allComplaintsForTutorLoaded ? 'allRequestsLoaded' : 'loadAllRequests') | artemisTranslate
-            }}</span>
+            <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.loadAllComplaints' | artemisTranslate }}</span>
+            <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.loadAllRequests' | artemisTranslate }}</span>
         </button>
+    </div>
+    <div class="row table-responsive">
+        <div class="form-check col-6 align-baseline" *ngIf="!loading">
+            <input
+                type="checkbox"
+                name="showAddressedComplaint"
+                id="field_showAddressedComplaint"
+                [ngModel]="showAddressedComplaints"
+                (ngModelChange)="triggerAddressedComplaints()"
+            />
+            <label class="form-check-label" for="field_showAddressedComplaint">
+                <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.showAddressedComplaints' | artemisTranslate }}</span>
+                <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.showAnsweredRequests' | artemisTranslate }}</span>
+            </label>
+        </div>
     </div>
     <div class="row table-responsive pt-3">
         <table class="table" [hidden]="complaintsToShow.length === 0">
@@ -161,7 +173,6 @@
             </tbody>
         </table>
     </div>
-
     <div class="alert alert-info" [hidden]="complaints.length !== 0">
         <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.exerciseAssessmentDashboard.noComplaints' | artemisTranslate }}</span>
         <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests' | artemisTranslate }}</span>
