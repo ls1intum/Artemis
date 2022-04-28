@@ -59,13 +59,21 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
      * problem statement of the target exercise get replaced by the new IDs.
      *
      * @param template The template exercise containing the hints that should be copied
-     * @param target The new target exercise, to which all hints should get copied to.
+     * @param target   The new target exercise, to which all hints should get copied to.
+     * @return A map with the old hint id as a key and the new hint id as a value
      */
-    default void copyExerciseHints(final Exercise template, final Exercise target) {
+    default Map<Long, Long> copyExerciseHints(final Exercise template, final Exercise target) {
         final Map<Long, Long> hintIdMapping = new HashMap<>();
         // Copying non text hints is currently not supported
-        target.setExerciseHints(template.getExerciseHints().stream().filter(exerciseHint -> !(exerciseHint instanceof CodeHint)).map(hint -> {
-            final var copiedHint = new ExerciseHint();
+        target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
+            ExerciseHint copiedHint;
+            if (hint instanceof CodeHint) {
+                copiedHint = new CodeHint();
+            }
+            else {
+                copiedHint = new ExerciseHint();
+            }
+
             copiedHint.setExercise(target);
             copiedHint.setContent(hint.getContent());
             copiedHint.setTitle(hint.getTitle());
@@ -79,9 +87,10 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
             // Replace any old hint ID in the imported statement with the new hint ID
             // $1 --> everything before the old hint ID; $3 --> Everything after the old hint ID --> $1 newHintID $3
             final var replacement = "$1" + idMapping.getValue() + "$3";
-            patchedStatement = patchedStatement.replaceAll("(\\{[^}]*)(" + idMapping.getKey() + ")([^}]*\\})", replacement);
+            patchedStatement = patchedStatement.replaceAll("(\\{[^}]*)(" + idMapping.getKey() + ")([^}]*})", replacement);
         }
         target.setProblemStatement(patchedStatement);
+        return hintIdMapping;
     }
 
     /**

@@ -57,4 +57,12 @@ public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepositor
             WHERE t.id = :testCaseId
             """)
     Set<ProgrammingExerciseSolutionEntry> findByTestCaseId(@Param("testCaseId") Long testCaseId);
+
+    @Query("""
+            SELECT se
+            FROM ProgrammingExerciseSolutionEntry se
+            LEFT JOIN FETCH se.codeHint
+            WHERE se.testCase.id = :testCaseId
+            """)
+    Set<ProgrammingExerciseSolutionEntry> findByTestCaseIdWithCodeHint(@Param("testCaseId") Long testCaseId);
 }

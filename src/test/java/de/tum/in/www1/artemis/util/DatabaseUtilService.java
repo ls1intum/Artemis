@@ -45,7 +45,10 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -56,7 +59,10 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -250,6 +256,15 @@ public class DatabaseUtilService {
 
     @Autowired
     private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    @Autowired
+    private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
+
+    @Autowired
+    private CodeHintRepository codeHintRepository;
 
     @Autowired
     private RatingRepository ratingRepo;
@@ -3011,13 +3026,58 @@ public class DatabaseUtilService {
         exerciseHintRepository.saveAll(hints);
     }
 
+    public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        var tasks = programmingExercise.getTestCases().stream().map(testCase -> {
+            var task = new ProgrammingExerciseTask();
+            task.setTaskName("Task for " + testCase.getTestName());
+            task.setExercise(programmingExercise);
+            task.setTestCases(Collections.singleton(testCase));
+            testCase.setTasks(Collections.singleton(task));
+            return task;
+        }).collect(Collectors.toSet());
+        programmingExercise.setTasks(tasks);
+        programmingExerciseTaskRepository.saveAll(tasks);
+    }
+
+    public void addSolutionEntriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        for (ProgrammingExerciseTestCase testCase : programmingExercise.getTestCases()) {
+            var solutionEntry = new ProgrammingExerciseSolutionEntry();
+            solutionEntry.setFilePath("test.txt");
+            solutionEntry.setLine(1);
+            solutionEntry.setCode("Line for " + testCase.getTestName());
+            solutionEntry.setTestCase(testCase);
+
+            testCase.setSolutionEntries(Collections.singleton(solutionEntry));
+            solutionEntryRepository.save(solutionEntry);
+        }
+    }
+
+    public void addCodeHintsToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        for (ProgrammingExerciseTask task : programmingExercise.getTasks()) {
+            var solutionEntries = task.getTestCases().stream().flatMap(testCase -> testCase.getSolutionEntries().stream()).collect(Collectors.toSet());
+            var codeHint = new CodeHint();
+            codeHint.setTitle("Code Hint for " + task.getTaskName());
+            codeHint.setContent("Content for " + task.getTaskName());
+            codeHint.setExercise(programmingExercise);
+            codeHint.setSolutionEntries(solutionEntries);
+            codeHint.setProgrammingExerciseTask(task);
+
+            programmingExercise.getExerciseHints().add(codeHint);
+            codeHintRepository.save(codeHint);
+            for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
+                solutionEntry.setCodeHint(codeHint);
+                solutionEntryRepository.save(solutionEntry);
+            }
+        }
+    }
+
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
     }
 
     public <T extends Exercise> void addHintsToProblemStatement(T exercise) {
         final var statement = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement();
-        final var hintsInStatement = exercise.getExerciseHints().stream().map(ExerciseHint::getId).map(Object::toString).collect(Collectors.joining(", ", "{", "}"));
+        final var hintsInStatement = exercise.getExerciseHints().stream().map(ExerciseHint::getId).map(Object::toString).collect(Collectors.joining("}{", "{", "}"));
         exercise.setProblemStatement(statement + hintsInStatement);
         exerciseRepo.save(exercise);
     }
