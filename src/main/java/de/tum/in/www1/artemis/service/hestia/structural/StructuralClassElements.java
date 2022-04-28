@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.hestia.structural;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -13,13 +16,13 @@ class StructuralClassElements {
     @JsonProperty(value = "class", required = true)
     private StructuralClass structuralClass;
 
-    private StructuralMethod[] methods;
+    private List<StructuralMethod> methods = new ArrayList<>();
 
-    private StructuralAttribute[] attributes;
+    private List<StructuralAttribute> attributes = new ArrayList<>();
 
-    private StructuralConstructor[] constructors;
+    private List<StructuralConstructor> constructors = new ArrayList<>();
 
-    private String[] enumValues;
+    private List<String> enumValues = new ArrayList<>();
 
     public StructuralClass getStructuralClass() {
         return structuralClass;
@@ -29,35 +32,35 @@ class StructuralClassElements {
         this.structuralClass = structuralClass;
     }
 
-    public StructuralMethod[] getMethods() {
+    public List<StructuralMethod> getMethods() {
         return methods;
     }
 
-    public void setMethods(StructuralMethod[] methods) {
+    public void setMethods(List<StructuralMethod> methods) {
         this.methods = methods;
     }
 
-    public StructuralAttribute[] getAttributes() {
+    public List<StructuralAttribute> getAttributes() {
         return attributes;
     }
 
-    public void setAttributes(StructuralAttribute[] attributes) {
+    public void setAttributes(List<StructuralAttribute> attributes) {
         this.attributes = attributes;
     }
 
-    public StructuralConstructor[] getConstructors() {
+    public List<StructuralConstructor> getConstructors() {
         return constructors;
     }
 
-    public void setConstructors(StructuralConstructor[] constructors) {
+    public void setConstructors(List<StructuralConstructor> constructors) {
         this.constructors = constructors;
     }
 
-    public String[] getEnumValues() {
+    public List<String> getEnumValues() {
         return enumValues;
     }
 
-    public void setEnumValues(String[] enumValues) {
+    public void setEnumValues(List<String> enumValues) {
         this.enumValues = enumValues;
     }
 }

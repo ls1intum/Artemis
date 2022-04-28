@@ -4,6 +4,7 @@
             "textHint": "Text hint",
             "codeHint": "Code hint",
             "entry": "Entry",
+            "removeEntryQuestion": "Are you sure you want to remove this entry?",
             "entries": "Entries",
             "home": {
                 "title": "Exercise Hints",

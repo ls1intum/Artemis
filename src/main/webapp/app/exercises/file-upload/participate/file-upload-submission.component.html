@@ -64,7 +64,7 @@
             </div>
         </div>
         <jhi-complaint-student-view
-            *ngIf="fileUploadExercise && result && participation && isAfterAssessmentDueDate"
+            *ngIf="fileUploadExercise && result && participation && isAfterAssessmentDueDate && !examMode"
             [result]="resultWithComplaint ? resultWithComplaint : result"
             [participation]="participation"
             [exercise]="fileUploadExercise"

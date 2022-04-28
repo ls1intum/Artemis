@@ -1,8 +1,10 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Observable } from 'rxjs';
 
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 @Component({
     selector: 'jhi-solution-entry',
@@ -14,11 +16,24 @@ export class SolutionEntryComponent implements OnInit {
 
     @Input()
     solutionEntry: ProgrammingExerciseSolutionEntry;
+    @Input()
+    enableEditing: boolean;
+    @Input()
+    dialogError: Observable<string>;
+
+    @Output()
+    onRemoveEntry: EventEmitter<any> = new EventEmitter();
+
+    faTimes = faTimes;
 
     constructor(protected route: ActivatedRoute) {}
 
     ngOnInit() {
         this.setupEditor();
+    }
+
+    emitRemovalEvent() {
+        this.onRemoveEntry.emit();
     }
 
     private setupEditor() {
