@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.hestia.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
-import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
@@ -31,9 +30,6 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private CodeHintRepository codeHintRepository;
-
-    @Autowired
-    private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
     private ProgrammingExerciseTaskRepository taskRepository;
