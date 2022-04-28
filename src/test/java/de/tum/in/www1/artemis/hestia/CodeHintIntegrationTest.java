@@ -36,13 +36,6 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
         database.addUsers(1, 1, 1, 1);
 
         exercise = exerciseRepository.findAll().get(0);
-        exercise = database.loadProgrammingExerciseWithEagerReferences(exercise);
-        database.addHintsToExercise(exercise);
-        database.addTasksToProgrammingExercise(exercise);
-        database.addSolutionEntriesToProgrammingExercise(exercise);
-        database.addCodeHintsToProgrammingExercise(exercise);
-        codeHint = codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHintRepository.findAll().get(0).getId());
-        solutionEntry = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
     }
 
     @AfterEach
@@ -74,21 +67,34 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
         request.postListWithResponseBody("/api/programming-exercises/" + exercise.getId() + "/code-hints", null, CodeHint.class, HttpStatus.OK);
     }
 
+    private void addCodeHints() {
+        exercise = database.loadProgrammingExerciseWithEagerReferences(exercise);
+        database.addHintsToExercise(exercise);
+        database.addTasksToProgrammingExercise(exercise);
+        database.addSolutionEntriesToProgrammingExercise(exercise);
+        database.addCodeHintsToProgrammingExercise(exercise);
+        codeHint = codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHintRepository.findAll().get(0).getId());
+        solutionEntry = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
+    }
+
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void removeSolutionEntryFromCodeHintAsAStudent() throws Exception {
+        addCodeHints();
         request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void removeSolutionEntryFromCodeHintAsATutor() throws Exception {
+        addCodeHints();
         request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void removeSolutionEntryFromCodeHintAsAnEditor() throws Exception {
+        addCodeHints();
         request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.NO_CONTENT);
         assertThat(codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHint.getId()).getSolutionEntries()).isEmpty();
     }
@@ -96,6 +102,7 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void removeSolutionEntryFromCodeHintAsAnInstructor() throws Exception {
+        addCodeHints();
         request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.NO_CONTENT);
         assertThat(codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHint.getId()).getSolutionEntries()).isEmpty();
     }
