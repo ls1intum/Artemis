@@ -566,12 +566,11 @@ public class TextAssessmentResource extends AssessmentResource {
                 tb.setFeedback(feedbackMap.get(tb.getId()));
                 tb.setKnowledge(exercise.getKnowledge());
             }).collect(toSet());
-            textBlockService.saveAll(updatedTextBlocks);
             // Update the feedback_id for existing text blocks
-            if (!existingTextBlockIds.isEmpty()) {
-                final var blocksToUpdate = textSubmission.getBlocks();
-                blocksToUpdate.forEach(tb -> tb.setFeedback(feedbackMap.get(tb.getId())));
-                textBlockService.saveAll(blocksToUpdate);
+            final var blocksToUpdate = textSubmission.getBlocks();
+            blocksToUpdate.forEach(tb -> tb.setFeedback(feedbackMap.get(tb.getId())));
+            if (!updatedTextBlocks.isEmpty() || (!existingTextBlockIds.isEmpty())) {
+                textBlockService.saveAll(updatedTextBlocks);
             }
         }
     }
