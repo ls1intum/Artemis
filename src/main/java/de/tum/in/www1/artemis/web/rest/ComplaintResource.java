@@ -60,8 +60,7 @@ public class ComplaintResource {
     private final CourseRepository courseRepository;
 
     public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository,
-            ResultRepository resultRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository,
-            ExamRepository examRepository) {
+            ResultRepository resultRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
