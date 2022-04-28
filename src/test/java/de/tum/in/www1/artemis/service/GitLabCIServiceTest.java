@@ -141,7 +141,6 @@ public class GitLabCIServiceTest extends AbstractSpringIntegrationGitLabCIGitLab
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
-        continuousIntegrationService.triggerBuild(participation);
         assertThatThrownBy(() -> continuousIntegrationService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
     }
 
