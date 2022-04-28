@@ -68,11 +68,9 @@ public class QuizScheduleService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final QuizBatchRepository quizBatchRepository;
-
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             UserRepository userRepository, QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
-            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, QuizBatchRepository quizBatchRepository) {
+            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
@@ -84,7 +82,6 @@ public class QuizScheduleService {
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
-        this.quizBatchRepository = quizBatchRepository;
     }
 
     /**

@@ -1074,8 +1074,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
         quizExercise = quizExerciseService.save(quizExercise);
 
-        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class,
-                HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

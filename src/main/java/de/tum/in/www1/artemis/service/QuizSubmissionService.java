@@ -125,6 +125,27 @@ public class QuizSubmissionService {
         String logText = submitted ? "submit quiz in live mode:" : "save quiz in live mode:";
 
         long start = System.nanoTime();
+        checkSubmissionForLiveModeOrThrow(exerciseId, user, logText, start);
+
+        // recreate pointers back to submission in each submitted answer
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(quizSubmission);
+        }
+
+        // set submission date
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+
+        // save submission to HashMap
+        quizScheduleService.updateSubmission(exerciseId, user.getLogin(), quizSubmission);
+
+        log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
+        return quizSubmission;
+    }
+
+    /**
+     * Check that the user is allowed to currently submit to the specified exercise and throws an exception if not
+     */
+    private void checkSubmissionForLiveModeOrThrow(Long exerciseId, User user, String logText, long start) throws QuizSubmissionException {
         // check if submission is still allowed
         QuizExercise quizExercise = quizScheduleService.getQuizExercise(exerciseId);
         if (quizExercise == null) {
@@ -138,7 +159,6 @@ public class QuizSubmissionService {
         }
 
         var batch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
-
         if (batch.stream().noneMatch(QuizBatch::isSubmissionAllowed)) {
             throw new QuizSubmissionException("The quiz is not active");
         }
@@ -158,20 +178,6 @@ public class QuizSubmissionService {
         if (quizExercise.getAllowedNumberOfAttempts() != null && submissionCount >= quizExercise.getAllowedNumberOfAttempts()) {
             throw new QuizSubmissionException("You have no more attempts at this quiz left");
         }
-
-        // recreate pointers back to submission in each submitted answer
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            submittedAnswer.setSubmission(quizSubmission);
-        }
-
-        // set submission date
-        quizSubmission.setSubmissionDate(ZonedDateTime.now());
-
-        // save submission to HashMap
-        quizScheduleService.updateSubmission(exerciseId, user.getLogin(), quizSubmission);
-
-        log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
-        return quizSubmission;
     }
 
     /**
