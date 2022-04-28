@@ -243,7 +243,7 @@
             *ngIf="publishBuildPlanUrl() && buildPlanActive()"
         >
             <fa-icon class="me-1" [icon]="faExternalLinkAlt" [fixedWidth]="true"></fa-icon>
-            {{ 'artemisApp.exerciseActions.goToBuildPlan' | artemisTranslate }}
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.goToBuildPlan">Go to build plan</span>
         </a>
     </div>
     <!-- ACTION END -->
