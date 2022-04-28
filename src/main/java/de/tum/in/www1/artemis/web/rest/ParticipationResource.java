@@ -488,7 +488,10 @@ public class ParticipationResource {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        // if exercise is not yet released to the students they should not have any access to it
+        if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+            throw new AccessForbiddenException();
+        }
         MappingJacksonValue response;
         if (exercise instanceof QuizExercise) {
             // fetch again to load some additional objects
