@@ -569,7 +569,7 @@ public class TextAssessmentResource extends AssessmentResource {
             // Update the feedback_id for existing text blocks
             final var blocksToUpdate = textSubmission.getBlocks();
             blocksToUpdate.forEach(tb -> tb.setFeedback(feedbackMap.get(tb.getId())));
-            if (!updatedTextBlocks.isEmpty() || (!existingTextBlockIds.isEmpty())) {
+            if (!updatedTextBlocks.isEmpty() || !existingTextBlockIds.isEmpty()) {
                 textBlockService.saveAll(updatedTextBlocks);
             }
         }
