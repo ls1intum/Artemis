@@ -2,12 +2,12 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.BadRequestException;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -161,14 +162,14 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
         if (workingTime <= 0) {
-            return badRequest();
+            throw new BadRequestException();
         }
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         if (!studentExam.isTestRun()) {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
-                return badRequest();
+                throw new BadRequestAlertException("Working time can not be changed after exam becomes visible", "StudentExam", "workingTimeError");
             }
             if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
                     && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTime))) {
@@ -316,7 +317,7 @@ public class StudentExamResource {
         StudentExam testRun = studentExamRepository.findWithExercisesById(testRunId).orElseThrow(() -> new EntityNotFoundException("StudentExam", testRunId));
 
         if (!currentUser.equals(testRun.getUser())) {
-            return conflict();
+            throw new ConflictException("Current user is not the user of the test run", "StudentExam", "userMismatch");
         }
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true);
@@ -476,7 +477,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
         if (testRunConfiguration.getExam() == null || !testRunConfiguration.getExam().getId().equals(examId)) {
-            return badRequest();
+            throw new BadRequestException();
         }
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
@@ -507,7 +508,7 @@ public class StudentExamResource {
 
         if (!this.examDateService.isExamWithGracePeriodOver(exam)) {
             // you can only grade not submitted exams if the exam is over
-            return badRequest();
+            throw new BadRequestException();
         }
 
         // delete all test runs if the instructor forgot to delete them
@@ -789,7 +790,7 @@ public class StudentExamResource {
 
         StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
         if (studentExam.isSubmitted()) {
-            return badRequest();
+            throw new BadRequestException();
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Exam", examId);
@@ -826,7 +827,7 @@ public class StudentExamResource {
 
         StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
         if (!studentExam.isSubmitted()) {
-            return badRequest();
+            throw new BadRequestException();
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Exam", examId);
