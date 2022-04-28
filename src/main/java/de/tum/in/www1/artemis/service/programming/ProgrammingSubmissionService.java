@@ -122,6 +122,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
+        // Note: the following line is intentionally at the top of the method to get the most accurate submission date
+        ZonedDateTime submissionDate = ZonedDateTime.now();
         Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new EntityNotFoundException("Programming Exercise Participation", participationId);
@@ -184,7 +186,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         programmingSubmission.setSubmitted(true);
 
-        ZonedDateTime submissionDate = ZonedDateTime.now();
         programmingSubmission.setSubmissionDate(submissionDate);
         programmingSubmission.setType(SubmissionType.MANUAL);
 
