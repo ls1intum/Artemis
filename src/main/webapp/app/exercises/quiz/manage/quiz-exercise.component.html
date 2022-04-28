@@ -100,7 +100,7 @@
                             >
                                 <div *ngFor="let batch of quizExercise.quizBatches">
                                     ID: {{ batch.id }}
-                                    <span *ngIf="!batch.started"> PW: {{ batch.password }} </span>
+                                    <span *ngIf="!batch.ended"> PW: {{ batch.password }} </span>
                                     <span *ngIf="batch.started && !batch.ended"> Running </span>
                                     <span *ngIf="batch.ended"> Done </span>
                                     <button
