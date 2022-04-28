@@ -258,7 +258,8 @@
             },
             "addBatch": "Gruppe hinzufügen",
             "join": "Bearbeiten",
-            "joinFailed": "Dem Quiz konnte nicht beigetreten werden."
+            "joinFailed": "Dem Quiz konnte nicht beigetreten werden.",
+            "submitSuccess": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse sind verfügbar, nachdem das Quiz beendet ist."
         },
         "quizLiveModal": {
             "title": "Go-Live einer neuen Quiz-Übung",

@@ -105,6 +105,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     startDate: dayjs.Dayjs | undefined;
     endDate: dayjs.Dayjs | undefined;
     password = '';
+    previousRunning = false;
 
     /**
      * Websocket channels
@@ -170,6 +171,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // update displayed times in UI regularly
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
+            this.checkForQuizEnd();
         }, UI_RELOAD_TIME);
     }
 
@@ -404,13 +406,18 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 // Check if websocket has updated the quiz exercise and check that following block is only executed once
                 if (!this.quizBatch.started && !this.quizStarted) {
                     this.quizStarted = true;
-                    // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
-                    setTimeout(() => {
-                        // Check again if websocket has updated the quiz exercise within the 5 seconds
-                        if (!this.quizBatch || !this.quizBatch.started) {
-                            this.refreshQuiz(true);
-                        }
-                    }, 5000);
+                    if (this.quizExercise.quizMode === QuizMode.INDIVIDUAL) {
+                        // there is not websocket notification for INDIVIDUAL mode so just load the quiz
+                        this.refreshQuiz(true);
+                    } else {
+                        // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
+                        setTimeout(() => {
+                            // Check again if websocket has updated the quiz exercise within the 5 seconds
+                            if (!this.quizBatch || !this.quizBatch.started) {
+                                this.refreshQuiz(true);
+                            }
+                        }, 5000);
+                    }
                 }
             }
         } else {
@@ -432,6 +439,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         } else {
             return remainingTimeSeconds + ' s';
         }
+    }
+
+    checkForQuizEnd() {
+        const running = this.mode === 'live' && !!this.quizBatch && this.remainingTimeSeconds >= 0 && this.quizExercise?.quizMode !== QuizMode.SYNCHRONIZED;
+        if (!running && this.previousRunning) {
+            if (!this.submission.submitted) {
+                this.alertService.success('artemisApp.quizExercise.submitSuccess');
+            }
+        }
+        this.previousRunning = running;
     }
 
     /**
@@ -863,6 +880,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             this.isSubmitting = false;
                             this.updateSubmissionTime();
                             this.applySubmission();
+                            if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
+                                this.alertService.success('artemisApp.quizExercise.submitSuccess');
+                            }
                         },
                         error: (error: HttpErrorResponse) => this.onSubmitError(error),
                     });

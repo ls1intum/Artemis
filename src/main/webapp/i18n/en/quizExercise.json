@@ -264,7 +264,8 @@
             },
             "addBatch": "Add Batch",
             "join": "Join",
-            "joinFailed": "Unable to join the quiz."
+            "joinFailed": "Unable to join the quiz.",
+            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date."
         }
     }
 }

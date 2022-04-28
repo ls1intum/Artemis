@@ -196,11 +196,14 @@
         </div>
     </div>
 </div>
-<div class="quiz-is-over-overlay alert alert-info" *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0">
+<div
+    class="quiz-is-over-overlay alert alert-info"
+    *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0 && quizExercise?.quizMode === QuizMode.SYNCHRONIZED"
+>
     <span *ngIf="submission.submissionDate" jhiTranslate="artemisApp.quizExercise.quizIsOverText"></span>
     <span *ngIf="!submission.submissionDate" jhiTranslate="artemisApp.quizExercise.notParticipatedText"></span>
 </div>
-<div class="quiz-submitted-overlay alert alert-success" *ngIf="!waitingForQuizStart && submission.submitted && !showingResult">
+<div class="quiz-submitted-overlay alert alert-success" *ngIf="!waitingForQuizStart && submission.submitted && !showingResult && quizExercise?.quizMode === QuizMode.SYNCHRONIZED">
     <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
 </div>
 <div class="quiz-waiting-for-start-overlay alert alert-info" *ngIf="waitingForQuizStart">
