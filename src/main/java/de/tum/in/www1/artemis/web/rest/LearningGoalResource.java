@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,11 +181,11 @@ public class LearningGoalResource {
     public ResponseEntity<LearningGoal> updateLearningGoal(@PathVariable Long courseId, @RequestBody LearningGoal learningGoal) {
         log.debug("REST request to update LearningGoal : {}", learningGoal);
         if (learningGoal.getId() == null) {
-            return badRequest();
+            throw new BadRequestException();
         }
         var learningGoalFromDb = this.learningGoalRepository.findByIdWithLectureUnitsBidirectionalElseThrow(learningGoal.getId());
         if (learningGoalFromDb.getCourse() == null || !learningGoalFromDb.getCourse().getId().equals(courseId)) {
-            return badRequest();
+            throw new BadRequestException();
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, learningGoalFromDb.getCourse(), null);
         learningGoalFromDb.setTitle(learningGoal.getTitle());
@@ -225,11 +225,11 @@ public class LearningGoalResource {
         log.debug("REST request to create LearningGoal : {}", learningGoalFromClient);
 
         if (learningGoalFromClient.getId() != null || learningGoalFromClient.getTitle() == null) {
-            return badRequest();
+            throw new BadRequestException();
         }
         Course course = courseRepository.findWithEagerLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
         if (course.getLearningGoals().stream().map(LearningGoal::getTitle).anyMatch(title -> title.equals(learningGoalFromClient.getTitle()))) {
-            return badRequest();
+            throw new BadRequestException();
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
