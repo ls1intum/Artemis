@@ -60,7 +60,8 @@ public class ComplaintResource {
     private final CourseRepository courseRepository;
 
     public ComplaintResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository, TeamRepository teamRepository,
-            ResultRepository resultRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository) {
+            ResultRepository resultRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, CourseRepository courseRepository,
+            ExamRepository examRepository) {
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
@@ -96,6 +97,13 @@ public class ComplaintResource {
         }
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
+
+        // For exam exercises, the POST complaints/exam/examId should be used
+        if (result.getParticipation().getExercise().isExamExercise()) {
+            throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                    "complaintAboutExamExerciseWrongComponent");
+        }
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
@@ -118,7 +126,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("complaints/exam/{examId}") // TODO: should be exams/{examId}/(participations/{participationId}/)complaints
+    @PostMapping("complaints/exam/{examId}") // TODO: should be exams/{examId}/participations/{participationId}/)complaints
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Complaint> createComplaintForExamExercise(@PathVariable Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint for exam exercise: {}", complaint);
@@ -135,6 +143,13 @@ public class ComplaintResource {
         }
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
+
+        // For non-exam exercises, the POST complaints should be used
+        if (!result.getParticipation().getExercise().isExamExercise()) {
+            throw new BadRequestAlertException("A complaint for an course exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                    "complaintAboutCourseExerciseWrongComponent");
+        }
+
         authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
@@ -474,5 +489,4 @@ public class ComplaintResource {
 
         return responseComplaints;
     }
-
 }
