@@ -410,6 +410,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         if (expectedStatus != HttpStatus.CREATED) {
             return null;
         }
+
         String responsePath = response.get("path").asText();
 
         // move file from temp folder to correct folder
