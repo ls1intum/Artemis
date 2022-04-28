@@ -154,7 +154,12 @@
                 name="exampleSolutionPublicationDate"
                 labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                 [(ngModel)]="fileUploadExercise.exampleSolutionPublicationDate"
+                [error]="fileUploadExercise.exampleSolutionPublicationDateError!"
+                (valueChange)="validateDate()"
             ></jhi-date-time-picker>
+            <span *ngIf="fileUploadExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
+                'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
+            }}</span>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>

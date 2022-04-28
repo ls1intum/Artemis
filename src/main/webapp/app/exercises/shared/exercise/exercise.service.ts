@@ -19,8 +19,11 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 
 export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
+
     import?(exercise: T): Observable<HttpResponse<T>>;
+
     update(exercise: T, req?: any): Observable<HttpResponse<T>>;
+
     reevaluateAndUpdate(exercise: T, req?: any): Observable<HttpResponse<T>>;
 }
 
@@ -52,7 +55,7 @@ export class ExerciseService {
     }
 
     /**
-     * Validates if the date is correct
+     * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {
         exercise.dueDateError = exercise.releaseDate && exercise.dueDate ? !exercise.dueDate.isAfter(exercise.releaseDate) : false;
@@ -73,6 +76,12 @@ export class ExerciseService {
             } else {
                 exercise.assessmentDueDateError = true;
             }
+        }
+
+        if (exercise.exampleSolutionPublicationDate) {
+            exercise.exampleSolutionPublicationDateError =
+                exercise.exampleSolutionPublicationDate.isSameOrBefore(exercise.dueDate || null) ||
+                exercise.exampleSolutionPublicationDate.isSameOrBefore(exercise.releaseDate || null);
         }
     }
 

@@ -1063,6 +1063,46 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        textExercise.setId(null);
+        textExercise.setAssessmentDueDate(null);
+
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(3));
+        textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+
+        textExercise.setReleaseDate(baseTime.plusHours(3));
+        textExercise.setDueDate(null);
+        textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_setValidExampleSolutionPublicationDate() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        textExercise.setId(null);
+        textExercise.setAssessmentDueDate(null);
+
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(2));
+        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        var result = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetTextExercise_asStudent_exampleSolutionVisibility() throws Exception {
         testGetTextExercise_exampleSolutionVisibility(true, "student1");

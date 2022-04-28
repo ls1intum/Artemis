@@ -194,7 +194,12 @@
                 name="exampleSolutionPublicationDate"
                 labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                 [(ngModel)]="modelingExercise.exampleSolutionPublicationDate"
+                [error]="modelingExercise.exampleSolutionPublicationDateError!"
+                (valueChange)="validateDate()"
             ></jhi-date-time-picker>
+            <span *ngIf="modelingExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
+                'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
+            }}</span>
         </div>
         <div class="form-group" *ngIf="!modelingExercise.id || isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSubmissions">Example submissions</label>

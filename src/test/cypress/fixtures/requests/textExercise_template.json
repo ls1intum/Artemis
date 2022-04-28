@@ -17,6 +17,7 @@
     "teamMode": false,
     "assessmentDueDateError": false,
     "dueDateError": false,
+    "exampleSolutionPublicationDateError": false,
     "presentationScoreEnabled": false,
     "assessmentType": "MANUAL",
     "title": "Text Exercise 1",

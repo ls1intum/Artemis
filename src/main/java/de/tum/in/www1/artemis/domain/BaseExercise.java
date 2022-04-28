@@ -213,8 +213,9 @@ public abstract class BaseExercise extends DomainObject {
         if (isExamExercise()) {
             throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
         }
-        // at least one is set, so we have to check the two possible errors
-        boolean areDatesValid = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
+        // at least one is set, so we have to check the three possible errors
+        boolean areDatesValid = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate());
 
         if (!areDatesValid) {
             throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
@@ -234,6 +235,20 @@ public abstract class BaseExercise extends DomainObject {
             return false;
         }
         return isBeforeAndNotNull(dueDate, assessmentDueDate) && isBeforeAndNotNull(releaseDate, assessmentDueDate);
+    }
+
+    /**
+     * This method is used to validate the exampleSolutionPublicationDate of an exercise. An exampleSolutionPublicationDate is valid if it is after the releaseDate and dueDate.
+     * Any given exampleSolutionPublicationDate is valid if releaseDate and dueDate are not set.
+     * exampleSolutionPublicationDate is valid if it is not set.
+     * @return true if there is no exampleSolutionPublicationDateError
+     */
+    private static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime exampleSolutionPublicationDate) {
+        if (exampleSolutionPublicationDate == null) {
+            return true;
+        }
+
+        return isBeforeAndNotNull(dueDate, exampleSolutionPublicationDate) && isBeforeAndNotNull(releaseDate, exampleSolutionPublicationDate);
     }
 
     /**
