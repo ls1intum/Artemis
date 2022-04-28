@@ -253,10 +253,12 @@
                 "title": "Ausführungsmodus",
                 "synchronized": "Synchronisiert",
                 "batched": "Gruppiert",
-                "individual": "Einzeln"
+                "individual": "Einzeln",
+                "explanation": "Ausführungsmodus bestimmt wie Studierende an einem Quiz teilnehmen können.<br/><br/><strong>Synchronisiert</strong>: Alle Studierenden nehmen gleichzeitig an dem Quiz teil.<br/><strong>Gruppiert</strong>: Es gibt mehrere Gruppen an denen Studierende mit einem Passwort teilnehmen können.<br/><strong>Einzeln</strong>: Studierende können jederzeit selbstständid an dem QUiz teilnehmen."
             },
             "addBatch": "Gruppe hinzufügen",
-            "join": "Bearbeiten"
+            "join": "Bearbeiten",
+            "joinFailed": "Dem Quiz konnte nicht beigetreten werden."
         },
         "quizLiveModal": {
             "title": "Go-Live einer neuen Quiz-Übung",

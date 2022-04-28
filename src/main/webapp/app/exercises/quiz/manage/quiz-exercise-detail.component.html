@@ -95,6 +95,7 @@
                         <ng-container *ngIf="!isExamMode">
                             <div class="form-check custom-control">
                                 <span jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></span>
+                                <jhi-help-icon placement="auto" text="artemisApp.quizExercise.quizMode.explanation"></jhi-help-icon>
                                 <select class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
                                     <option [value]="QuizMode.SYNCHRONIZED">{{ 'artemisApp.quizExercise.quizMode.synchronized' | artemisTranslate }}</option>
                                     <option [value]="QuizMode.BATCHED">{{ 'artemisApp.quizExercise.quizMode.batched' | artemisTranslate }}</option>

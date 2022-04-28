@@ -18,7 +18,6 @@ public class QuizUtilService {
 
     /**
      * Create, join and start a batch for student by tutor
-     * @throws Exception
      */
     public void prepareBatchForSubmitting(QuizExercise quizExercise, Authentication tutor, Authentication student) throws Exception {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
