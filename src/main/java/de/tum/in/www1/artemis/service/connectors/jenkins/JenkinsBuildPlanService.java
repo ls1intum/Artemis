@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -153,7 +154,8 @@ public class JenkinsBuildPlanService {
 
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)
         if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && programmingExercise.isCourseExercise()) {
-            grantReadPermission(planKey, participation.getParticipant());
+            Participant participant = ((StudentParticipation) participation).getParticipant();
+            grantReadPermission(planKey, participant);
         }
     }
 

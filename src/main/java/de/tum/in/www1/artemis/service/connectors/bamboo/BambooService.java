@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -119,7 +120,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && programmingExercise.isCourseExercise()) {
-            grantBuildPlanPermissions(buildPlanId, projectKey, participation.getParticipant(), List.of(CIPermission.READ));
+            Participant participant = ((StudentParticipation) participation).getParticipant();
+            grantBuildPlanPermissions(buildPlanId, projectKey, participant, List.of(CIPermission.READ));
         }
     }
 
