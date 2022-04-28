@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { IExerciseHintService, ExerciseHintResponse } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { IExerciseHintService, ExerciseHintResponse } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 export class MockExerciseHintService implements IExerciseHintService {
@@ -19,7 +19,7 @@ export class MockExerciseHintService implements IExerciseHintService {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 
-    findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
+    findByExerciseIdWithRelations(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
         return of({ body: [this.exerciseHintDummy, this.exerciseHintDummy2] }) as Observable<HttpResponse<ExerciseHint[]>>;
     }
 

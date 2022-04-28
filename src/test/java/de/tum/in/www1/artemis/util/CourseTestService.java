@@ -534,7 +534,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
@@ -570,7 +570,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboard() throws Exception {
-        database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
+        database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
 
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
@@ -1462,7 +1462,7 @@ public class CourseTestService {
     // Test
     public void testCleanupCourseAsInstructor() throws Exception {
         // Generate a course that has an archive
-        var course = database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         course.setCourseArchivePath("some-archive-path");
         courseRepo.save(course);
 

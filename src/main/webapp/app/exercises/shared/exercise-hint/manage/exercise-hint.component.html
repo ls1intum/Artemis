@@ -36,7 +36,17 @@
                             ><fa-icon [icon]="faText"></fa-icon> {{ 'artemisApp.exerciseHint.textHint' | artemisTranslate }}</span
                         >
                     </td>
-                    <td [innerHTML]="exerciseHint.content | htmlForMarkdown"></td>
+                    <td>
+                        <div *ngIf="exerciseHint.type === HintType.TEXT">
+                            <span [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
+                        </div>
+                        <div *ngIf="exerciseHint.type === HintType.CODE">
+                            <span>
+                                {{ (exerciseHint | cast).solutionEntries!.length }}
+                                {{ ((exerciseHint | cast).solutionEntries!.length === 1 ? 'artemisApp.exerciseHint.entry' : 'artemisApp.exerciseHint.entries') | artemisTranslate }}
+                            </span>
+                        </div>
+                    </td>
                     <td>
                         <span>{{ exerciseHint.exercise?.id }}</span>
                     </td>
@@ -46,7 +56,7 @@
                                 <fa-icon [icon]="faEye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </a>
-                            <a *ngIf="exerciseHint.type === HintType.TEXT" [routerLink]="[exerciseHint.id, 'edit']" class="btn btn-warning btn-sm me-1">
+                            <a [routerLink]="[exerciseHint.id, 'edit']" class="btn btn-warning btn-sm me-1">
                                 <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>

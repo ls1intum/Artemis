@@ -3,6 +3,8 @@
         "exerciseHint": {
             "textHint": "Text Hinweis",
             "codeHint": "Code Hinweis",
+            "entry": "Eintrag",
+            "entries": "Einträge",
             "home": {
                 "title": "Exercise Hints",
                 "createLabel": "Exercise Hint erstellen",
