@@ -102,6 +102,9 @@ public class JenkinsRequestMockProvider {
         shortTimeoutMockServer.reset();
     }
 
+    /**
+     * Verify that the mocked REST-calls were called
+     */
     public void verifyMocks() {
         mockServer.verify();
     }

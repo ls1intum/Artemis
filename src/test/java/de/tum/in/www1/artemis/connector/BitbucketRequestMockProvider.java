@@ -104,6 +104,9 @@ public class BitbucketRequestMockProvider {
         }
     }
 
+    /**
+     * Verify that the mocked REST-calls were called
+     */
     public void verifyMocks() {
         mockServer.verify();
     }

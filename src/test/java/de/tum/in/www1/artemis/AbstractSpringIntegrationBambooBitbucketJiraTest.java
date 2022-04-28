@@ -576,6 +576,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
+    /**
+     * Verify that the mocked REST-calls were called
+     */
     public void verifyMocks() {
         bitbucketRequestMockProvider.verifyMocks();
         bambooRequestMockProvider.verifyMocks();

@@ -457,6 +457,9 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
+    /**
+     * Verify that the mocked REST-calls were called
+     */
     public void verifyMocks() {
         gitlabRequestMockProvider.verifyMocks();
         jenkinsRequestMockProvider.verifyMocks();
