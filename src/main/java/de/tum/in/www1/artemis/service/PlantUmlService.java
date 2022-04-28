@@ -17,6 +17,7 @@ public class PlantUmlService {
 
     public PlantUmlService() {
         System.setProperty("PLANTUML_SECURITY_PROFILE", "ALLOWLIST");
+        System.setProperty("plantuml.allowlist.path", "/Users/pat/projects/Artemis/src/main/resources/puml");
     }
 
     /**
@@ -47,7 +48,9 @@ public class PlantUmlService {
     public String generateSvg(final String plantUml) throws IOException {
         validateInput(plantUml);
         try (final var bos = new ByteArrayOutputStream()) {
-            final var reader = new SourceStringReader(plantUml);
+            var st = plantUml.replace("@startuml", "@startuml\n!theme artemisdark2 from /Users/pat/projects/Artemis/src/main/resources/puml");
+            System.out.println(st);
+            final var reader = new SourceStringReader(st);
             reader.outputImage(bos, new FileFormatOption(FileFormat.SVG));
             return bos.toString(StandardCharsets.UTF_8);
         }
