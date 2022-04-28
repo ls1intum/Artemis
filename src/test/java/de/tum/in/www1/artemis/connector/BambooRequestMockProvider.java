@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.connector;
 
 import static de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources;
-import static org.mockito.ArgumentMatchers.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 

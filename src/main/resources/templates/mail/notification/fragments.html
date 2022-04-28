@@ -19,29 +19,47 @@
 -->
 <th:block th:fragment="css">
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@500&display=swap');
-
-    * {
-        margin: 0;
-        padding: 0;
-        border: 0;
-    }
 
     body {
-        font-family: "Raleway", sans-serif;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
         font-size: 19px;
         margin: 0 auto;
+        background: white;
+        color: black;
     }
 
     a {
         color: #3e8acc;
     }
 
-    #logo {
-        max-width: 50px;
-        vertical-align: middle;
-        background-color: #353D47;
-        padding: 10px;
+    pre {
+        padding: 10px 24px;
+        max-width: 800px;
+        white-space: pre-wrap;
+        background-color: #47474b;
+        color: white;
+        border-radius: 3px;
+    }
+    code {
+        font-family: Consolas, Monaco, Andale Mono, monospace;
+        line-height: 1.5;
+        font-size: 13px;
+    }
+    p code {
+        background-color: #47474b;
+        color: white;
+        border-radius: 3px;
+        padding: 3px 5px;
+    }
+    blockquote {
+        margin: 1em;
+        max-width: 476px;
+        border-left: 5px solid gray;
+        padding-left: 12px;
+    }
+    blockquote p {
+        color: #666;
+        max-width: 460px;
     }
 
     .notification-text-header {
@@ -75,11 +93,29 @@
         font-size: small;
     }
 
+    .emergency-link > * {
+        margin: 0;
+    }
+
     .notification-content {
-        border: 1px solid #ccc;
-        padding: 16px;
         margin-top: 10px;
-        border-radius: 16px;
+    }
+
+    .notification-content p {
+        margin-top: 0;
+    }
+
+    .notification-content p:first-child:empty, .notification-content p:last-child:empty {
+        display: none;
+    }
+
+    .bordered-content {
+        border-radius: 3px;
+        border: 1px solid #ccc;
+        background: #f7f7f7;
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+        margin: 15px 0;
+        padding: 10px;
     }
 
     .bold-text {
@@ -88,10 +124,21 @@
 
     header {
         background-color: #353D47;
-        font-style: italic;
-        color: white;
-        font-size: smaller;
         padding: 10px;
+        color: white;
+    }
+
+    #header-table {
+        border: none;
+    }
+
+    #logo {
+        max-width: 50px;
+        vertical-align: middle;
+    }
+
+    #app-name {
+        padding-left: 10px;
     }
 
     #message-body {
@@ -101,7 +148,6 @@
 
     footer {
         background-color: #353D47;
-        font-style: italic;
         color: white;
         font-size: smaller;
         padding: 5px;
@@ -123,7 +169,16 @@
 -->
 <th:block th:fragment="header">
     <header>
-        <img id="logo" src="https://artemis.ase.in.tum.de/public/images/logo.png" alt="artemis logo"/>
+        <table id="header-table">
+            <tr>
+                <td>
+                    <img id="logo" src="https://artemis.ase.in.tum.de/public/images/logo.png" alt="artemis logo"/>
+                </td>
+                <td>
+                    <div id="app-name">Artemis</div>
+                </td>
+            </tr>
+        </table>
     </header>
 </th:block>
 
