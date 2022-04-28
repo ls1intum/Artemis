@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.hestia;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,16 +10,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 
 public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseRepository exerciseRepository;
 
-    private Exercise exercise;
+    @Autowired
+    private CodeHintRepository codeHintRepository;
+
+    private ProgrammingExercise exercise;
+
+    private CodeHint codeHint;
+
+    private ProgrammingExerciseSolutionEntry solutionEntry;
 
     @BeforeEach
     public void initTestCase() {
@@ -25,7 +36,13 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
         database.addUsers(1, 1, 1, 1);
 
         exercise = exerciseRepository.findAll().get(0);
+        exercise = database.loadProgrammingExerciseWithEagerReferences(exercise);
         database.addHintsToExercise(exercise);
+        database.addTasksToProgrammingExercise(exercise);
+        database.addSolutionEntriesToProgrammingExercise(exercise);
+        database.addCodeHintsToProgrammingExercise(exercise);
+        codeHint = codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHintRepository.findAll().get(0).getId());
+        solutionEntry = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
     }
 
     @AfterEach
@@ -55,5 +72,31 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void generateCodeHintsForAnExerciseAsAnInstructor() throws Exception {
         request.postListWithResponseBody("/api/programming-exercises/" + exercise.getId() + "/code-hints", null, CodeHint.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void removeSolutionEntryFromCodeHintAsAStudent() throws Exception {
+        request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void removeSolutionEntryFromCodeHintAsATutor() throws Exception {
+        request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void removeSolutionEntryFromCodeHintAsAnEditor() throws Exception {
+        request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.NO_CONTENT);
+        assertThat(codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHint.getId()).getSolutionEntries()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void removeSolutionEntryFromCodeHintAsAnInstructor() throws Exception {
+        request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.NO_CONTENT);
+        assertThat(codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHint.getId()).getSolutionEntries()).isEmpty();
     }
 }
