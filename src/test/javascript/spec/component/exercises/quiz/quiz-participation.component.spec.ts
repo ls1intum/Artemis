@@ -6,7 +6,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
@@ -150,7 +150,7 @@ describe('QuizParticipationComponent', () => {
                     component = fixture.componentInstance;
 
                     const participationService = fixture.debugElement.injector.get(ParticipationService);
-                    const participation = { exercise: quizExercise } as StudentParticipation;
+                    const participation = { exercise: { ...quizExercise } } as StudentParticipation;
                     participationSpy = jest
                         .spyOn(participationService, 'findParticipationForCurrentUser')
                         .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
@@ -208,13 +208,48 @@ describe('QuizParticipationComponent', () => {
             const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
 
+            const initLiveModeSpy = jest.spyOn(component, 'initLiveMode');
+
             const refreshButton = fixture.debugElement.nativeElement.querySelector('#refresh-quiz button');
             expect(refreshButton).not.toBe(null);
 
             refreshButton.click();
             fixture.detectChanges();
 
+            expect(initLiveModeSpy).toHaveBeenCalledTimes(1);
             expect(findStudentSpy).toHaveBeenCalledWith(quizExercise.id);
+            expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+        });
+
+        it.each([
+            [QuizMode.BATCHED, false],
+            [QuizMode.BATCHED, true],
+            [QuizMode.INDIVIDUAL, false],
+            [QuizMode.INDIVIDUAL, true],
+        ])('should join %s batches that have started %p', (quizMode, started) => {
+            exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+            const participationService = fixture.debugElement.injector.get(ParticipationService);
+            const participation = { exercise: { ...quizExercise, quizBatches: [], quizMode, quizStarted: false } as QuizExercise } as StudentParticipation;
+            participationSpy = jest
+                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
+
+            fixture.detectChanges();
+
+            // Returns the started exercise
+            const joinBatchSpy = jest.spyOn(exerciseService, 'join').mockReturnValue(of({ body: { started } } as HttpResponse<QuizBatch>));
+            fixture.detectChanges();
+
+            const refreshQuizSpy = jest.spyOn(component, 'refreshQuiz').mockReturnValue();
+
+            const joinButton = fixture.debugElement.nativeElement.querySelector(quizMode === QuizMode.BATCHED ? '#join-batch button' : '#start-batch button');
+            expect(joinButton).not.toBe(null);
+
+            joinButton.click();
+            fixture.detectChanges();
+
+            expect(refreshQuizSpy).toHaveBeenCalledTimes(started ? 1 : 0);
+            expect(joinBatchSpy).toHaveBeenCalledWith(quizExercise.id, '');
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
         });
 
