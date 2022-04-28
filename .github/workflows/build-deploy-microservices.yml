@@ -42,14 +42,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Setup Node.js
-      uses: actions/setup-node@v2.4.1
+      uses: actions/setup-node@v3
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Setup Java
-      uses: actions/setup-java@v2.3.1
+      uses: actions/setup-java@v3
       with:
         distribution: 'zulu'
         java-version: '${{ env.java }}'
@@ -72,17 +72,17 @@ jobs:
         name: Artemis.war
         path: build/libs/Artemis-*.war
     - name: Upload Gateway Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: gateway.war
         path: gateway/build/libs/gateway-*.war
     - name: Upload User Management Microservice Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: user-management.war
         path: user-management/build/libs/user-management-*.war
     - name: Upload Lecture Microservice Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: lecture.war
         path: lecture/build/libs/lecture-*.war
@@ -116,8 +116,9 @@ jobs:
           dockerfile_path: "lecture/src/main/docker"
           war_name: "lecture.war"
     steps:
+    - uses: actions/checkout@v3
     - name: Download Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: ${{ matrix.war_name }}
     - name: Copy Dockerfile to Build Directory
@@ -196,7 +197,7 @@ jobs:
           return "FALSE";
 
     - name: Check "lock:${{ matrix.environment }}" label
-      uses: actions/github-script@v5
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
