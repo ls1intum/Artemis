@@ -74,6 +74,8 @@ public interface MockDelegate {
 
     void resetMockProvider();
 
+    void verifyMocks();
+
     void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception;
 
     void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws Exception;

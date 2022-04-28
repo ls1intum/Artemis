@@ -92,6 +92,10 @@ public class BambooRequestMockProvider {
         }
     }
 
+    public void verifyMocks() {
+        mockServer.verify();
+    }
+
     /**
      * This method mocks that the programming exercise with the same project key (based on the course + programming exercise short name) already exists
      *

@@ -519,6 +519,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         for (User user : ((StudentParticipation) participation).getParticipant().getParticipants()) {
             bambooRequestMockProvider.mockGrantReadAccess(buildPlanId, projectKey, user);
         }
+
     }
 
     @Override
@@ -572,5 +573,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void resetMockProvider() {
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
+    }
+
+    @Override
+    public void verifyMocks() {
+        bitbucketRequestMockProvider.verifyMocks();
+        bambooRequestMockProvider.verifyMocks();
     }
 }

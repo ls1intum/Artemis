@@ -102,6 +102,10 @@ public class JenkinsRequestMockProvider {
         shortTimeoutMockServer.reset();
     }
 
+    public void verifyMocks() {
+        mockServer.verify();
+    }
+
     public void mockCreateProjectForExercise(ProgrammingExercise exercise, boolean shouldFail) throws IOException {
         // TODO: we need to mockRetrieveArtifacts folder(...)
         if (shouldFail) {

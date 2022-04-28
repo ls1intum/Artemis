@@ -455,4 +455,10 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
     }
+
+    @Override
+    public void verifyMocks() {
+        gitlabRequestMockProvider.verifyMocks();
+        jenkinsRequestMockProvider.verifyMocks();
+    }
 }

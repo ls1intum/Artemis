@@ -175,6 +175,7 @@ public class ContinuousIntegrationTestService {
     public void testConfigureBuildPlan() throws Exception {
         mockDelegate.mockConfigureBuildPlan(participation, defaultBranch);
         continuousIntegrationService.configureBuildPlan(participation, defaultBranch);
+        mockDelegate.verifyMocks();
     }
 
     public void testHealthException() throws Exception {

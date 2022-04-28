@@ -104,6 +104,10 @@ public class BitbucketRequestMockProvider {
         }
     }
 
+    public void verifyMocks() {
+        mockServer.verify();
+    }
+
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();
