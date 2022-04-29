@@ -99,6 +99,8 @@ export class ListOfComplaintsComponent implements OnInit {
 
                 if (!this.showAddressedComplaints) {
                     this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
+                } else {
+                    this.complaintsToShow = this.complaints;
                 }
 
                 if (this.complaints.some((complaint) => complaint.student)) {
