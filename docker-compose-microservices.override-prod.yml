@@ -38,7 +38,7 @@ services:
             - SERVER_COMPRESSION_ENABLED=true
             - SERVER_COMPRESSION_MIMETYPES=text/html,text/xml,text/plain,text/css, application/javascript, application/json
             - SERVER_COMPRESSION_MINRESPONSESIZE=1024
-            - SERVER_URL=https://artemistest6.ase.in.tum.de
+            - SERVER_URL=https://localhost:8080
         expose:
             - "8080"
         networks:
