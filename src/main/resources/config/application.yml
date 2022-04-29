@@ -26,6 +26,7 @@ artemis:
     version: #project.version#
     file-upload-path: uploads
     submission-export-path: exports
+    bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
@@ -33,9 +34,9 @@ artemis:
         # Defines the used docker images for certain programming languages
         build:
             images:
-                JAVA: "ls1tum/artemis-maven-template:java17-3"
-                KOTLIN: "ls1tum/artemis-maven-template:java17-3"
-                EMPTY: "ls1tum/artemis-maven-template:java17-3"
+                JAVA: "ls1tum/artemis-maven-template:java17-6"
+                KOTLIN: "ls1tum/artemis-maven-template:java17-6"
+                EMPTY: "ls1tum/artemis-maven-template:java17-6"
                 PYTHON: "ls1tum/artemis-python-docker:latest"
                 C: "ls1tum/artemis-c-docker:latest"
                 C_FACT: "sharingcodeability/fact:latest"
@@ -217,6 +218,7 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
     text-assessment-analytics-enabled: false
+    browser-fingerprints-enabled: true
 
 # ===================================================================
 # JHipster specific properties

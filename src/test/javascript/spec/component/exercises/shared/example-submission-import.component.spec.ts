@@ -41,11 +41,11 @@ describe('ExampleSubmissionImportComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 ExampleSubmissionImportComponent,
+                MockComponent(ButtonComponent),
                 MockComponent(ResultComponent),
-                MockDirective(NgbPagination),
+                MockComponent(NgbPagination),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
-                MockDirective(ButtonComponent),
                 MockDirective(NgModel),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
@@ -87,7 +87,7 @@ describe('ExampleSubmissionImportComponent', () => {
         } as Exercise;
         searchResult = { numberOfPages: 3, resultsOnPage: [submission] };
         state = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
@@ -121,7 +121,7 @@ describe('ExampleSubmissionImportComponent', () => {
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(component.page).toBe(0);
+        expect(component.page).toBe(1);
         setStateAndCallOnInit(() => {
             component.onPageChange(2);
             tick(10);

@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, Observer, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Observer, Subscription } from 'rxjs';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
@@ -28,6 +28,13 @@ export interface IWebsocketService {
     receive(channel: string): Observable<any>;
 
     /**
+     * Send data through the websocket connection
+     * @param path {string} the path for the websocket connection
+     * @param data {object} the data to send through the websocket connection
+     */
+    send(path: string, data: any): void;
+
+    /**
      * Subscribe to a channel.
      * @param channel
      */
@@ -40,22 +47,6 @@ export interface IWebsocketService {
     unsubscribe(channel: string): void;
 
     /**
-     * Bind the given callback function to the given event
-     *
-     * @param event {string} the event to be notified of
-     * @param callback {function} the function to call when the event is triggered
-     */
-    bind(event: string, callback: () => void): void;
-
-    /**
-     * Unbind the given callback function from the given event
-     *
-     * @param event {string} the event to no longer be notified of
-     * @param callback {function} the function to no longer call when the event is triggered
-     */
-    unbind(event: string, callback: () => void): void;
-
-    /**
      * Enable automatic reconnect
      */
     enableReconnect(): void;
@@ -64,6 +55,23 @@ export interface IWebsocketService {
      * Disable automatic reconnect
      */
     disableReconnect(): void;
+
+    /**
+     * Get updates on current connection status
+     */
+    get connectionState(): Observable<ConnectionState>;
+}
+
+export class ConnectionState {
+    readonly connected: boolean;
+    readonly wasEverConnectedBefore: boolean;
+    readonly intendedDisconnect: boolean;
+
+    constructor(connected: boolean, wasEverConnectedBefore: boolean, intendedDisconnect: boolean) {
+        this.connected = connected;
+        this.wasEverConnectedBefore = wasEverConnectedBefore;
+        this.intendedDisconnect = intendedDisconnect;
+    }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -77,8 +85,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     alreadyConnectedOnce = false;
     private subscription: Subscription | null;
     shouldReconnect = false;
-    connectListeners: { (): void }[] = [];
-    disconnectListeners: { (): void }[] = [];
+    private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     consecutiveFailedAttempts = 0;
     connecting = false;
 
@@ -86,7 +93,12 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     private subscriptionCounter = 0;
 
     constructor(private router: Router, private authServerProvider: AuthServerProvider) {
+        this.connectionStateInternal = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false, true));
         this.connection = this.createConnection();
+    }
+
+    get connectionState(): Observable<ConnectionState> {
+        return this.connectionStateInternal.asObservable();
     }
 
     /**
@@ -103,9 +115,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     stompFailureCallback() {
         this.connecting = false;
         this.consecutiveFailedAttempts++;
-        this.disconnectListeners.forEach((listener) => {
-            listener();
-        });
+        if (this.connectionStateInternal.getValue().connected) {
+            this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false));
+        }
         if (this.shouldReconnect) {
             let waitUntilReconnectAttempt;
             if (this.consecutiveFailedAttempts > 20) {
@@ -133,7 +145,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * Set up the websocket connection.
      */
     connect() {
-        if ((this.stompClient && this.stompClient.connected) || this.connecting) {
+        if (this.isConnected() || this.connecting) {
             return; // don't connect, if already connected or connecting
         }
         this.connecting = true;
@@ -163,9 +175,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             () => {
                 this.connectedPromise('success');
                 this.connecting = false;
-                this.connectListeners.forEach((listener) => {
-                    listener();
-                });
+                if (!this.connectionStateInternal.getValue().connected) {
+                    this.connectionStateInternal.next(new ConnectionState(true, this.alreadyConnectedOnce, false));
+                }
                 this.consecutiveFailedAttempts = 0;
                 if (this.alreadyConnectedOnce) {
                     // (re)connect to all existing channels
@@ -195,8 +207,12 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         );
     }
 
+    private isConnected(): boolean {
+        return !!this.stompClient?.connected;
+    }
+
     /**
-     * Close the connection to the websocket and unsubscribe als listeners.
+     * Close the connection to the websocket, unsubscribe all listeners and distribute "intended disconnect" state.
      */
     disconnect() {
         this.connection = this.createConnection();
@@ -204,6 +220,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         if (this.stompClient) {
             this.stompClient.disconnect();
             this.stompClient = null;
+            if (this.connectionStateInternal.getValue().connected || !this.connectionStateInternal.getValue().intendedDisconnect) {
+                this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, true));
+            }
         }
         if (this.subscription) {
             this.subscription.unsubscribe();
@@ -228,9 +247,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * @param path {string} the path for the websocket connection
      * @param data {object} the data to send through the websocket connection
      */
-    send(path: string, data: any) {
-        if (this.stompClient !== null && this.stompClient.connected) {
-            this.stompClient.send(path, JSON.stringify(data), {});
+    send(path: string, data: any): void {
+        if (this.isConnected()) {
+            this.stompClient!.send(path, JSON.stringify(data), {});
         }
     }
 
@@ -288,46 +307,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      */
     private createConnection(): Promise<void> {
         return new Promise((resolve: Function) => (this.connectedPromise = resolve));
-    }
-
-    /**
-     * Bind the given callback function to the given event
-     *
-     * @param event {string} the event to be notified of
-     * @param callback {function} the function to call when the event is triggered
-     */
-    bind(event: string, callback: () => void) {
-        if (this.stompClient) {
-            if (event === 'connect') {
-                this.connectListeners.push(callback);
-                if (this.stompClient.connected) {
-                    callback();
-                }
-            } else if (event === 'disconnect') {
-                this.disconnectListeners.push(callback);
-                if (!this.stompClient.connected) {
-                    callback();
-                }
-            }
-        }
-    }
-
-    /**
-     * Unbind the given callback function from the given event
-     *
-     * @param event {string} the event to no longer be notified of
-     * @param callback {function} the function to no longer call when the event is triggered
-     */
-    unbind(event: string, callback: () => void) {
-        if (event === 'connect') {
-            this.connectListeners = this.connectListeners.filter((listener) => {
-                return listener !== callback;
-            });
-        } else if (event === 'disconnect') {
-            this.disconnectListeners = this.disconnectListeners.filter((listener) => {
-                return listener !== callback;
-            });
-        }
     }
 
     /**

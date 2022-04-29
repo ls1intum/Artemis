@@ -86,7 +86,7 @@
             </ng-template>
 
             <jhi-complaint-student-view
-                *ngIf="textExercise && result && participation"
+                *ngIf="textExercise && result && participation && !examMode"
                 [exercise]="textExercise"
                 [result]="resultWithComplaint ? resultWithComplaint : result"
                 [participation]="participation"

@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -225,6 +226,42 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result resultAfterComplaintResponse = resultRepo.findByIdWithEagerFeedbacksAndAssessor(receivedResult.getId()).get();
         database.checkFeedbackCorrectlyStored(feedbacks, resultAfterComplaintResponse.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void submitComplaintResponseComplaintResponseTextLimitExceeded() throws Exception {
+        complaint = complaintRepo.save(complaint);
+        course = database.updateCourseComplaintResponseTextLimit(course, 25);
+        // creating the initial complaintResponse
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        // 26 characters
+        complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
+
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
+        request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void submitComplaintResponseComplaintResponseTextLimitNotExceeded() throws Exception {
+        complaint = complaintRepo.save(complaint);
+        course = database.updateCourseComplaintResponseTextLimit(course, 26);
+        // creating the initial complaintResponse
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        // 26 characters
+        complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
+
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
+        AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
+        request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).isPresent();
     }
 
     @Test
@@ -699,7 +736,27 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final var examExerciseComplaint = new Complaint().result(null).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
+    }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void submitComplaintForCourseExerciseUsingTheExamExerciseCall_badRequest() throws Exception {
+        // "Mock Exam" which id is used to call the wrong REST-Call
+        final Exam exam = ModelFactory.generateExam(course);
+        // The complaint is about a course exercise, not an exam exercise
+        request.post("/api/complaints/exam/" + exam.getId(), complaint, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void submitComplaintForExamExerciseUsingTheCourseExerciseCall_badRequest() throws Exception {
+        // Set up Exam, Exercise, Participation and Complaint
+        final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+        final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        // The complaint is about an exam exercise, but the REST-Call for course exercises is used
+        request.post("/api/complaints", examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -736,5 +793,25 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         var fetchedComplaints = request.getList("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.OK, Complaint.class);
         assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.get().getId().intValue());
         assertThat(fetchedComplaints.get(0).getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void submitComplaintForExerciseComplaintExceededTextLimit() throws Exception {
+        course = database.updateCourseComplaintTextLimit(course, 25);
+        // 26 characters
+        complaint.setComplaintText("abcdefghijklmnopqrstuvwxyz");
+        request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void submitComplaintForExerciseComplaintNotExceededTextLimit() throws Exception {
+        course = database.updateCourseComplaintTextLimit(course, 27);
+        // 26 characters
+        complaint.setComplaintText("abcdefghijklmnopqrstuvwxyz");
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+        Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
+        assertThat(storedComplaint).isPresent();
     }
 }

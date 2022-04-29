@@ -188,6 +188,7 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.examManagement.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
+        loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
     },
     {
         path: ':examId/test-runs',

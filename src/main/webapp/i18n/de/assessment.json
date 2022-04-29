@@ -36,7 +36,8 @@
                 "overrideAssessment": "Bewertung überschreiben",
                 "nextSubmission": "Nächste Abgabe bewerten",
                 "resolveConflict": "Konflikte behandeln",
-                "useAsExampleSubmission": "Als Beispielabgabe verwenden"
+                "useAsExampleSubmission": "Als Beispielabgabe verwenden",
+                "control": "Strg"
             },
             "detail": {
                 "feedback": "Feedback",

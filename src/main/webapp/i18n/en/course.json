@@ -32,6 +32,14 @@
                 "title": "Complaint deadline in days after result date",
                 "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this deadline."
             },
+            "maxComplaintTextLimit": {
+                "title": "Maximum number of characters per complaint",
+                "description": "This number indicates the maximum number of characters a student may use per complaint."
+            },
+            "maxComplaintResponseTextLimit": {
+                "title": "Maximum number of characters per complaint response",
+                "description": "This number indicates the maximum number of characters that may be used for the response per complaint."
+            },
             "postsEnabled": {
                 "title": "Enable postings by students",
                 "description": "Enable postings section on lecture and exercise page."
@@ -66,6 +74,7 @@
                 "warning": "Updating this field will update the grading key for the course if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
             },
             "accuracyOfScores": "Amount of decimal places used for calculating the scores",
+            "defaultProgrammingLanguage": "Default Programming Language",
             "gradingSystem": "Grading Key",
             "testCourse": {
                 "title": "Test Course",

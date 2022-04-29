@@ -154,7 +154,7 @@ public class RepositoryService {
                     }
                 }
                 catch (IOException e) {
-                    log.error("Comparing files '{}' with '{}' failed: {}", fileName, templateFile.toString(), e.getMessage());
+                    log.error("Comparing files '{}' with '{}' failed: {}", fileName, templateFile, e.getMessage());
                 }
             }
         });
@@ -181,7 +181,7 @@ public class RepositoryService {
             throw new FileAlreadyExistsException("file already exists");
         }
 
-        File file = new File(Paths.get(repository.getLocalPath().toString(), filename).toFile(), repository);
+        File file = new File(Path.of(repository.getLocalPath().toString(), filename).toFile(), repository);
         if (!repository.isValidFile(file)) {
             throw new IllegalArgumentException();
         }
@@ -284,7 +284,7 @@ public class RepositoryService {
      */
     public void commitChanges(Repository repository, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, "Changes by Online Editor", user);
+        gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
     }
 
     /**
@@ -292,10 +292,9 @@ public class RepositoryService {
      *
      * @param repositoryUrl of the repository to check the status for.
      * @return a dto to determine the status of the repository.
-     * @throws InterruptedException if the repository can't be checked out on the server.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUrl repositoryUrl) throws GitAPIException, InterruptedException {
+    public boolean isClean(VcsRepositoryUrl repositoryUrl) throws GitAPIException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         return gitService.isClean(repository);
     }
@@ -306,10 +305,9 @@ public class RepositoryService {
      * @param repositoryUrl of the repository to check the status for.
      * @param defaultBranch the already used default branch in the remote repository
      * @return a dto to determine the status of the repository.
-     * @throws InterruptedException if the repository can't be checked out on the server.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isClean(VcsRepositoryUrl repositoryUrl, String defaultBranch) throws GitAPIException, InterruptedException {
+    public boolean isClean(VcsRepositoryUrl repositoryUrl, String defaultBranch) throws GitAPIException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true, defaultBranch);
         return gitService.isClean(repository);
     }
@@ -323,10 +321,8 @@ public class RepositoryService {
      * @return the repository if available.
      * @throws GitAPIException if the repository can't be checked out.
      * @throws IllegalAccessException if the user does not have access to the repository.
-     * @throws InterruptedException if the repository can't be checked out.
      */
-    public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout)
-            throws IllegalAccessException, InterruptedException, GitAPIException {
+    public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout) throws IllegalAccessException, GitAPIException {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
@@ -345,10 +341,8 @@ public class RepositoryService {
      * @return the repository if available.
      * @throws GitAPIException if the repository can't be checked out.
      * @throws IllegalAccessException if the user does not have access to the repository.
-     * @throws InterruptedException if the repository can't be checked out.
      */
-    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, VcsRepositoryUrl repoUrl)
-            throws IllegalAccessException, InterruptedException, GitAPIException {
+    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, VcsRepositoryUrl repoUrl) throws IllegalAccessException, GitAPIException {
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean hasPermissions = authCheckService.isAtLeastEditorInCourse(course, user);

@@ -27,6 +27,8 @@
             "rejected": "Abgelehnt",
             "rejectedLong": "Beschwerde wurde abgelehnt",
             "tooManyComplaints": "Maximale Anzahl an Beschwerden erreicht. Du kannst nicht mehr als {{ maxComplaintNumber }} offene oder abgelehnte Beschwerden gleichzeitig haben.",
+            "exceededComplaintTextLimit": "Maximale Anzahl an Zeichen für die Beschwerde erreicht. Du kannst nicht mehr als {{ maxComplaintTextLimit }} Zeichen verwenden.",
+            "exceededComplaintResponseTextLimit": "Maximale Anzahl an Zeichen für die Antwort auf die Beschwerde erreicht. Du kannst nicht mehr als {{ maxComplaintRespondTextLimit }} Zeichen verwenden.",
             "complaintAlreadyHandled": "Die Beschwerde wurde bereits bearbeitet",
             "listOfComplaints": {
                 "exercise": "Übung",
@@ -44,6 +46,10 @@
                 "accepted": "Angenommen",
                 "rejected": "Abgelehnt",
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
+                "hideAddressedComplaints": "Adressierte Beschwerden ausblenden",
+                "loadAllComplaints": "Alle Beschwerden laden",
+                "loadAllComplaintsExplanation": "Die Liste zeigt nur eingereichte Beschwerden über dich an. Mittels des Buttons können alle Beschwerden über alle Reviewer:innen geladen werden: ",
+                "allComplaintsLoaded": "Alle Beschwerden geladen",
                 "noComplaintsToShow": "Es gibt im Moment keine anzeigbaren Beschwerden."
             },
             "review": "Beschwerde überprüfen",
@@ -71,6 +77,10 @@
             "list": {
                 "title": "Liste der Feedbackanfragen",
                 "showAnsweredRequests": "Beantwortete Feedbackanfragen anzeigen",
+                "hideAnsweredRequests": "Beantwortete Feedbackanfragen ausblenden",
+                "loadAllRequests": "Alle Feedbackanfragen laden",
+                "loadAllRequestsExplanation": "Die Liste zeigt nur eingerechte Feedbackanfragen über deine Bewertungen an. Mittels des Buttons können alle Feedbackanfragen über alle Reviewer:innen geladen werden: ",
+                "allRequestsLoaded": "Alle Feedbackanfragen geladen",
                 "noRequestsToShow": "Es gibt im Moment keine Feedbackanfragen zu zeigen."
             }
         }

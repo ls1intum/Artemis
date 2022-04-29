@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -18,32 +20,42 @@ public class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private ResourceLoaderService resourceLoaderService;
 
+    private final Path javaPath = Path.of("templates", "java", "java.txt");
+
+    private final Path jenkinsPath = Path.of("templates", "jenkins", "jenkins.txt");
+
     @AfterEach
-    public void cleanup() {
-        new File("templates/java/java.txt").delete();
-        new File("templates/jenkins/jenkins.txt").delete();
+    public void cleanup() throws IOException {
+        Files.deleteIfExists(javaPath);
+        Files.deleteIfExists(jenkinsPath);
     }
 
     @Test
     public void testShouldLoadJavaFileFromClasspath() throws IOException {
-        FileUtils.writeStringToFile(new File("templates/java/java.txt"), "filesystem", Charset.defaultCharset());
-        String fileContent = IOUtils.toString(resourceLoaderService.getResource("templates/java/java.txt").getInputStream(), Charset.defaultCharset());
+        FileUtils.writeStringToFile(javaPath.toFile(), "filesystem", Charset.defaultCharset());
+        try (InputStream inputStream = resourceLoaderService.getResource(javaPath.toString()).getInputStream()) {
+            String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-        Assertions.assertEquals("classpath", fileContent.trim());
+            Assertions.assertEquals("classpath", fileContent.trim());
+        }
     }
 
     @Test
     public void testShouldLoadJenkinsFileFromFilesystem() throws IOException {
-        FileUtils.writeStringToFile(new File("templates/jenkins/jenkins.txt"), "filesystem", Charset.defaultCharset());
-        String fileContent = IOUtils.toString(resourceLoaderService.getResource("templates/jenkins/jenkins.txt").getInputStream(), Charset.defaultCharset());
+        FileUtils.writeStringToFile(jenkinsPath.toFile(), "filesystem", Charset.defaultCharset());
+        try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath.toString()).getInputStream()) {
+            String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-        Assertions.assertEquals("filesystem", fileContent.trim());
+            Assertions.assertEquals("filesystem", fileContent.trim());
+        }
     }
 
     @Test
     public void testShouldLoadJenkinsFileFromClasspath_IfNotPresentInFileSystem() throws IOException {
-        String fileContent = IOUtils.toString(resourceLoaderService.getResource("templates/jenkins/jenkins.txt").getInputStream(), Charset.defaultCharset());
+        try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath.toString()).getInputStream()) {
+            String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-        Assertions.assertEquals("classpath", fileContent.trim());
+            Assertions.assertEquals("classpath", fileContent.trim());
+        }
     }
 }

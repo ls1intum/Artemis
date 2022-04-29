@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -25,8 +27,8 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Complaint extends DomainObject {
 
-    @Column(name = "complaint_text", length = 2000)
-    @Size(max = 2000)
+    @Column(name = "complaint_text", length = COMPLAINT_TEXT_LIMIT)
+    @Size(max = COMPLAINT_TEXT_LIMIT)
     private String complaintText;
 
     @Column(name = "accepted")
@@ -173,6 +175,17 @@ public class Complaint extends DomainObject {
      */
     public void filterSensitiveInformation() {
         setParticipant(null);
+    }
+
+    /**
+     * Filters out the reviewer, if the user was not the reviewer
+     * @param user - the user for which the reviewer should not be deleted
+     */
+    public void filterForeignReviewer(User user) {
+        User assessor = result.getAssessor();
+        if (!assessor.equals(user)) {
+            result.setAssessor(null);
+        }
     }
 
     @Override

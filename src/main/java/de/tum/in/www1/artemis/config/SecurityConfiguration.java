@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
-import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -29,7 +29,6 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -50,18 +49,21 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final SecurityProblemSupport problemSupport;
 
+    private final PasswordService passwordService;
+
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
     @Value("${spring.prometheus.monitoringIp:#{null}}")
     private Optional<String> monitoringIpAddress;
 
-    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
-                                 CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
+    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport,
+        PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
         this.corsFilter = corsFilter;
         this.problemSupport = problemSupport;
+        this.passwordService = passwordService;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
     }
 
@@ -73,7 +75,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     public void init() {
         try {
             // here we configure 2 authentication provider: 1) the user details service for internal authentication using the Artemis database...
-            authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+            authenticationManagerBuilder.userDetailsService(userDetailsService);
             // ... and 2), if specified a remote (or external) user authentication provider (e.g. JIRA)
             remoteUserAuthenticationProvider.ifPresent(authenticationManagerBuilder::authenticationProvider);
             // When users try to authenticate, Spring will always first ask the remote user authentication provider (e.g. JIRA) if available, and only if this one fails,
@@ -84,20 +86,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         }
     }
 
-    @Value("${artemis.encryption-password}")
-    private String encryptionPassword;
-
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new PBEPasswordEncoder(encryptor());
-    }
-
-    @Bean
-    public StandardPBEStringEncryptor encryptor() {
-        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
-        encryptor.setAlgorithm("PBEWithMD5AndDES");
-        encryptor.setPassword(encryptionPassword);
-        return encryptor;
+        return this.passwordService.getPasswordEncoder();
     }
 
     @Bean

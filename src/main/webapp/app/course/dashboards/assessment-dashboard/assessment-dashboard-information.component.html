@@ -98,9 +98,8 @@
                         {{ 'artemisApp.assessmentDashboard.assessments' | artemisTranslate }}
                     </div>
                     <div class="col-5">
-                        ({{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }}) | {{ numberOfTutorAssessments }} ({{
-                            totalAssessmentPercentage
-                        }}%)
+                        ({{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }}) ({{ totalAssessmentPercentage }}%) |
+                        {{ numberOfTutorAssessments }}
                     </div>
                 </div>
                 <div class="row mb-1">
@@ -112,7 +111,7 @@
                             <a [routerLink]="complaintsLink" [queryParams]="{ correctionRound: numberOfCorrectionRounds - 1 }">
                                 {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }})
                             </a>
-                            | -
+                            | {{ complaints.tutor }}
                         </div>
                         <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
                         <!-- this value is not yet available for exam mode. As soon as the leaderboards exist add it again. {{ complaints.tutor }} -->

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.programming;
 import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -203,7 +204,7 @@ public class ProgrammingExerciseImportService {
             // Adjust placeholders that were replaced during creation of template exercise
             adjustProjectNames(templateExercise, newExercise);
         }
-        catch (GitAPIException | IOException | InterruptedException e) {
+        catch (GitAPIException | IOException e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
         }
     }
@@ -240,24 +241,33 @@ public class ProgrammingExerciseImportService {
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
             String oldTestRepoUrl, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
-        // update 2 repositories for the template (BASE) build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build
-        // plan
-        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
-        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, Optional.empty());
+        try {
+            String templateDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newExercise.getTemplateRepositoryUrl()));
+            String testDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()));
+            String solutionDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newExercise.getSolutionRepositoryUrl()));
 
-        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, templateParticipation,
-                targetExerciseProjectKey);
+            // update 2 repositories for the BASE build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build plan
+            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME,
+                    targetExerciseProjectKey, newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, templateDefaultBranch, Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
 
-        // update 2 repositories for the solution (SOLUTION) build plan
-        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, Optional.empty());
-        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, Optional.empty());
+            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
+                    newExercise.getTestRepositoryUrl(), oldTestRepoUrl, testDefaultBranch, Optional.empty());
 
-        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation,
-                targetExerciseProjectKey);
+            updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, templateParticipation,
+                    targetExerciseProjectKey);
+
+            // update 2 repositories for the SOLUTION build plan
+            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME,
+                    targetExerciseProjectKey, newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, solutionDefaultBranch, Optional.empty());
+            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
+                    newExercise.getTestRepositoryUrl(), oldTestRepoUrl, testDefaultBranch, Optional.empty());
+
+            updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation,
+                    targetExerciseProjectKey);
+        }
+        catch (URISyntaxException ex) {
+            log.error(ex.getMessage(), ex);
+        }
     }
 
     private void updateAuxiliaryRepositoriesForNewExercise(List<AuxiliaryRepository> newRepositories, List<AuxiliaryRepository> oldRepositories,
@@ -265,8 +275,14 @@ public class ProgrammingExerciseImportService {
         for (int i = 0; i < newRepositories.size(); i++) {
             AuxiliaryRepository newAuxiliaryRepository = newRepositories.get(i);
             AuxiliaryRepository oldAuxiliaryRepository = oldRepositories.get(i);
-            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
-                    targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), Optional.empty());
+            try {
+                String auxiliaryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newAuxiliaryRepository.getRepositoryUrl()));
+                continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
+                        targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryDefaultBranch, Optional.empty());
+            }
+            catch (URISyntaxException ex) {
+                log.error(ex.getMessage(), ex);
+            }
         }
     }
 
@@ -389,6 +405,7 @@ public class ProgrammingExerciseImportService {
      */
     private void setupExerciseForImport(ProgrammingExercise newExercise) {
         newExercise.setId(null);
+        newExercise.setExampleSolutionPublicationDate(null);
         newExercise.setTemplateParticipation(null);
         newExercise.setSolutionParticipation(null);
         newExercise.setExerciseHints(null);
@@ -433,16 +450,21 @@ public class ProgrammingExerciseImportService {
      * @param templateExercise the exercise from which the values that should be replaced are extracted
      * @param newExercise the exercise from which the values that should be inserted are extracted
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws InterruptedException If the checkout of one repository fails
      * @throws IOException If the values in the files could not be replaced
      */
-    private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, InterruptedException, IOException {
+    private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
         final var projectKey = newExercise.getProjectKey();
 
         Map<String, String> replacements = new HashMap<>();
 
         // Used in pom.xml
         replacements.put("<artifactId>" + templateExercise.getTitle().replaceAll(" ", "-"), "<artifactId>" + newExercise.getTitle().replaceAll(" ", "-"));
+
+        // Used in settings.gradle
+        replacements.put("rootProject.name = '" + templateExercise.getTitle().replaceAll(" ", "-"), "rootProject.name = '" + newExercise.getTitle().replaceAll(" ", "-"));
+
+        // Used in readme.md (Gradle)
+        replacements.put("testImplementation(':" + templateExercise.getTitle().replaceAll(" ", "-"), "testImplementation(':" + newExercise.getTitle().replaceAll(" ", "-"));
 
         // Used in .project
         replacements.put("<name>" + templateExercise.getTitle(), "<name>" + newExercise.getTitle());
@@ -462,16 +484,15 @@ public class ProgrammingExerciseImportService {
      * @param repositoryName the name of the repository that should be adjusted
      * @param user the user which performed the action (used as Git author)
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws InterruptedException If the checkout of one repository fails
      * @throws IOException If the values in the files could not be replaced
      */
-    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user)
-            throws GitAPIException, IOException, InterruptedException {
+    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
         final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements);
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
         gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, "Template adjusted by Artemis", user);
+        // TODO: bug: it seems that this does not work any more
+        gitService.commitAndPush(repository, "Template adjusted by Artemis", false, user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 }

@@ -109,8 +109,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     submissionChannel: string;
     participationChannel: string;
     quizExerciseChannel: string;
-    onConnected: () => void;
-    onDisconnected: () => void;
+    websocketSubscription?: Subscription;
 
     /**
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
@@ -187,12 +186,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (this.quizExerciseChannel) {
             this.jhiWebsocketService.unsubscribe(this.quizExerciseChannel);
         }
-        if (this.onConnected) {
-            this.jhiWebsocketService.unbind('connect', this.onConnected);
-        }
-        if (this.onDisconnected) {
-            this.jhiWebsocketService.unbind('disconnect', this.onDisconnected);
-        }
+        this.websocketSubscription?.unsubscribe();
         if (this.subscription) {
             this.subscription.unsubscribe();
         }
@@ -206,8 +200,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     initLiveMode() {
         // listen to connect / disconnect events
-        this.onConnected = () => {
-            if (this.disconnected) {
+        this.websocketSubscription = this.jhiWebsocketService.connectionState.subscribe((status) => {
+            if (status.connected && this.disconnected) {
                 // if the disconnect happened during the live quiz and there are unsaved changes, we trigger a selection changed event to save the submission on the server
                 if (this.unsavedChanges && this.sendWebsocket) {
                     this.onSelectionChanged();
@@ -220,16 +214,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     this.refreshQuiz(true);
                 }
             }
-            this.disconnected = false;
-        };
-        this.jhiWebsocketService.bind('connect', () => {
-            this.onConnected();
-        });
-        this.onDisconnected = () => {
-            this.disconnected = true;
-        };
-        this.jhiWebsocketService.bind('disconnect', () => {
-            this.onDisconnected();
+            this.disconnected = !status.connected;
         });
 
         this.subscribeToWebsocketChannels();
