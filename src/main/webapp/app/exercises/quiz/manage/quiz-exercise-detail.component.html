@@ -274,18 +274,6 @@
                                     <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
                                 </option>
                             </select>
-                            <!--<select
-                                *ngIf="showDropdown === 'isVisibleBeforeStart'"
-                                class="form-select"
-                                [(ngModel)]="quizExercise.isVisibleBeforeStart"
-                                (ngModelChange)="cacheValidation()"
-                                title="status"
-                            >
-                                <option *ngFor="let option of statusOptionsVisible" [value]="option.key">
-                                    <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
-                                    <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.hidden' | artemisTranslate }}</span>
-                                </option>
-                            </select>-->
                             <select *ngIf="showDropdown === 'active'" class="form-select" title="status" disabled>
                                 <option *ngFor="let option of statusOptionsActive" [value]="option.key">
                                     {{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}
