@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -373,8 +375,9 @@ public class Result extends DomainObject {
     }
 
     /**
-     * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
-     * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
+     * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, matches the input referenced feedback with existing list of feedback,
+     * clears the non-matched old feedback and assigns the new feedback afterwards. No matching is done for unreferenced feedbacks, they are cleared and assigned new.
+     * IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
      * @param feedbacks the new feedback list
      * @param skipAutomaticResults if true automatic results won't be updated
@@ -392,10 +395,29 @@ public class Result extends DomainObject {
             }
             setFeedbackType(feedback);
         }
+
+        var feedbackMap = feedbacks.stream().filter(fb -> fb.getReference() != null).collect(Collectors.toMap(Feedback::getReference, Function.identity()));
+        var oldFeedbacks = getFeedbacks();
+        setFeedbacks(new ArrayList<>());
+        oldFeedbacks.forEach(fb -> {
+            if (fb == null || fb.getReference() == null) {
+                return;
+            }
+            var newFeedback = feedbackMap.remove(fb.getReference());
+            fb.setResult(null);
+            if (newFeedback == null) {
+                return;
+            }
+            newFeedback.setId(fb.getId());
+            addFeedback(newFeedback);
+        });
         // Note: If there is old feedback that gets removed here and not added again in the forEach-loop, it
         // will also be deleted in the database because of the 'orphanRemoval = true' flag.
-        getFeedbacks().clear();
-        feedbacks.forEach(this::addFeedback);
+        oldFeedbacks.clear();
+        feedbackMap.values().forEach(this::addFeedback);
+
+        // Handle unreferenced feedbacks.
+        feedbacks.stream().filter(fb -> fb.getReference() == null).forEach(this::addFeedback);
     }
 
     /**
