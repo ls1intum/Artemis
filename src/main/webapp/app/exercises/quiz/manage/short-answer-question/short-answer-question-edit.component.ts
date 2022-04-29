@@ -267,7 +267,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const questionParts = text.split(/\[-option /g);
         const questionText = questionParts[0];
 
-        // Split into spots to generated this structure: {"1","2","3"}
+        // Split into spots to generate this structure: {"1","2","3"}
         const spotParts = questionText
             .split(/\[-spot/g)
             .map((splitText) => splitText.split(/\]/g))
@@ -402,7 +402,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * @function addSpotAtCursorVisualMode
-     * @desc Add a input field on the current selected location and add the solution option accordingly
+     * @desc Add an input field on the current selected location and add the solution option accordingly
      */
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div

@@ -437,7 +437,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         Path filePath = Path.of(studentRepository.originRepoFile.toString()).resolve(fileName);
         Files.createFile(filePath);
 
-        // Check if the file exists in the remote repository and that it doesn't yet exists in the local repository
+        // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
         assertThat(Files.exists(Path.of(studentRepository.originRepoFile.toString()).resolve(fileName))).isTrue();
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile.toString()).resolve(fileName))).isFalse();
 
@@ -875,7 +875,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        // Check with programmingExercise null and an non-existent participation id
+        // Check with programmingExercise null and a non-existent participation id
         participation.setProgrammingExercise(null);
         participation.setId(123456L);
         programmingExercise.getSolutionParticipation().setProgrammingExercise(null);

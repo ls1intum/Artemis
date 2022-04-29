@@ -379,7 +379,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         Path filePath = Path.of(testRepo.originRepoFile + "/" + fileName);
         Files.createFile(filePath).toFile();
 
-        // Check if the file exists in the remote repository and that it doesn't yet exists in the local repository
+        // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
         assertThat(Files.exists(Path.of(testRepo.originRepoFile + "/" + fileName))).isTrue();
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + fileName))).isFalse();
 
