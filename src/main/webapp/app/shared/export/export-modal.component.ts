@@ -38,7 +38,7 @@ export class ExportModalComponent implements OnInit {
     readonly CsvQuoteStrings = CsvQuoteStrings;
     readonly CsvDecimalSeparator = CsvDecimalSeparator;
 
-    active = 1;
+    activeTab = 1;
     options: CsvExportOptions;
 
     // Icons
@@ -101,7 +101,7 @@ export class ExportModalComponent implements OnInit {
      * Closes the export modal and passes the selected csv options back in case the active page is not set to 1.
      */
     onFinish() {
-        if (this.active === 1) {
+        if (this.activeTab === 1) {
             // Excel export
             this.activeModal.close();
         } else {

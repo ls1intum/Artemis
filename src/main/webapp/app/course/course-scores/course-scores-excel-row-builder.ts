@@ -6,9 +6,9 @@ import { round } from 'app/shared/util/utils';
  * https://github.com/sheetjs/sheetjs#common-spreadsheet-format
  */
 export interface CommonSpreadsheetCellObject {
-    t: string;
-    v: number;
-    z?: string;
+    t: string; // type -> b: Boolean, e: Error, n: Number, d: Date, s: Text, z: Stub
+    v: number; // raw value
+    z?: string; // number format string associated with the cell (if requested)
 }
 
 /**

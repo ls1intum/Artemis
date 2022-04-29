@@ -5,7 +5,7 @@
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
     </div>
-    <nav ngbNav #nav="ngbNav" [(activeId)]="active" class="nav-tabs">
+    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs">
         <ng-container ngbNavItem [ngbNavItem]="1">
             <a ngbNavLink>Excel</a>
             <ng-template ngbNavContent>
@@ -81,7 +81,7 @@
             </button>
             <button class="btn btn-success" id="finish-button" (click)="onFinish()">
                 <fa-icon [icon]="faDownload" class="me-2"></fa-icon>
-                <span *ngIf="active === 1; else csvExport" jhiTranslate="export.excelFile.buttonText">Export as Excel</span>
+                <span *ngIf="activeTab === 1; else csvExport" jhiTranslate="export.excelFile.buttonText">Export as Excel</span>
                 <ng-template #csvExport>
                     <span jhiTranslate="export.csvFile.buttonText">Export as CSV</span>
                 </ng-template>

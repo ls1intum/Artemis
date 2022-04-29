@@ -73,7 +73,7 @@ describe('ExportModalComponent', () => {
     });
 
     it('should return empty on finish when excel export is active', () => {
-        component.active = 1;
+        component.activeTab = 1;
         const activeModalStub = jest.spyOn(ngbActiveModal, 'close');
         component.onFinish();
         expect(activeModalStub).toHaveBeenCalledWith();
@@ -86,7 +86,7 @@ describe('ExportModalComponent', () => {
             decimalSeparator: CsvDecimalSeparator.COMMA,
         };
         component.options = testOptions;
-        component.active = 2;
+        component.activeTab = 2;
         const activeModalStub = jest.spyOn(ngbActiveModal, 'close');
         component.onFinish();
         expect(activeModalStub).toHaveBeenCalledWith(testOptions);
