@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -123,6 +122,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
+        // Note: the following line is intentionally at the top of the method to get the most accurate submission date
+        ZonedDateTime submissionDate = ZonedDateTime.now();
         Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new EntityNotFoundException("Programming Exercise Participation", participationId);
@@ -143,6 +144,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalArgumentException(ex);
         }
 
+        // TODO: we should avoid this call by storing the used default branch in the ProgrammingExerciseParticipation
         String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(programmingExerciseParticipation.getVcsRepositoryUrl());
         if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(defaultBranch)) {
             // if the commit was made in a branch different than the default, ignore this
@@ -184,13 +186,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         programmingSubmission.setSubmitted(true);
 
-        ZonedDateTime submissionDate = ZonedDateTime.now();
-        try {
-            submissionDate = versionControlService.get().getPushDate(programmingExerciseParticipation, commit.getCommitHash(), requestBody);
-        }
-        catch (VersionControlException e) {
-            log.error("Could not retrieve push date for participation " + participation.getId(), e);
-        }
         programmingSubmission.setSubmissionDate(submissionDate);
         programmingSubmission.setType(SubmissionType.MANUAL);
 

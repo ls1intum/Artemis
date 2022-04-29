@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -582,7 +581,7 @@ public class ProgrammingExerciseExportService {
      */
     public void deleteReposDownloadProjectRootDirectory(ProgrammingExercise programmingExercise, String targetPath) {
         final String projectDirName = programmingExercise.getProjectKey();
-        Path projectPath = Paths.get(targetPath, projectDirName);
+        Path projectPath = Path.of(targetPath, projectDirName);
         try {
             log.info("Delete project root directory {}", projectPath.toFile());
             FileUtils.deleteDirectory(projectPath.toFile());
