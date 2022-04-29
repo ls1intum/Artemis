@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -84,7 +84,7 @@ public class ModelFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(Paths.get("/api/files/temp/", testFileName).toString());
+        attachment.setLink(Path.of("/api/files/temp/", testFileName).toString());
         return attachment;
     }
 

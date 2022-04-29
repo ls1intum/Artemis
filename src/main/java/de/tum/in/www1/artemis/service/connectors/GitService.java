@@ -11,7 +11,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -1255,8 +1254,8 @@ public class GitService {
             zipFilenameWithoutSlash += ".zip";
         }
 
-        Path zipFilePath = Paths.get(repositoryDir, zipFilenameWithoutSlash);
-        Files.createDirectories(Paths.get(repositoryDir));
+        Path zipFilePath = Path.of(repositoryDir, zipFilenameWithoutSlash);
+        Files.createDirectories(Path.of(repositoryDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, repository.getLocalPath(), contentFilter);
     }
 
