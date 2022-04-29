@@ -64,6 +64,7 @@ export class ProfileService {
                         profileInfo.allowedCourseRegistrationUsernamePattern = data.allowedCourseRegistrationUsernamePattern;
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
+                        profileInfo.versionControlAccessToken = data.versionControlAccessToken;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];
                         profileInfo.browserFingerprintsEnabled = data['browser-fingerprints-enabled'];
