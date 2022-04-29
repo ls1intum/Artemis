@@ -96,7 +96,10 @@ export class ListOfComplaintsComponent implements OnInit {
         complaintResponse.subscribe({
             next: (res) => {
                 this.complaints = res.body!;
-                this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
+
+                if (!this.showAddressedComplaints) {
+                    this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
+                }
 
                 if (this.complaints.some((complaint) => complaint.student)) {
                     this.hasStudentInformation = true;
