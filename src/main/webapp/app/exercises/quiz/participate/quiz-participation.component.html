@@ -75,8 +75,9 @@
                             *ngIf="question.type === DRAG_AND_DROP"
                             class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
                             (click)="navigateToQuestion(i)"
-                            [ngbTooltip]="mode !== 'solution' ? (dragAndDropMappings[question.id!]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
+                            [ngbTooltip]="mode !== 'solution' ? (dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
                             [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
+                            container="body"
                         >
                             <b class="fa">DD</b>
                         </span>
@@ -84,8 +85,11 @@
                             *ngIf="question.type === MULTIPLE_CHOICE"
                             class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
                             (click)="navigateToQuestion(i)"
-                            [ngbTooltip]="mode !== 'solution' ? (selectedAnswerOptions[question.id!]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
+                            [ngbTooltip]="
+                                mode !== 'solution' ? (selectedAnswerOptions.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''
+                            "
                             [ngClass]="!!selectedAnswerOptions.get(question.id!)?.length ? 'changed-question' : ''"
+                            container="body"
                         >
                             <b class="fa">MC</b>
                         </span>
@@ -94,9 +98,10 @@
                             class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
                             (click)="navigateToQuestion(i)"
                             [ngbTooltip]="
-                                mode !== 'solution' ? (shortAnswerSubmittedTexts[question.id!]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''
+                                mode !== 'solution' ? (shortAnswerSubmittedTexts.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''
                             "
                             [ngClass]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? 'changed-question' : ''"
+                            container="body"
                         >
                             <b class="fa">SA</b>
                         </span>
