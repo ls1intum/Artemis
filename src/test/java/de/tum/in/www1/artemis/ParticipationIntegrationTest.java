@@ -836,8 +836,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     public void getParticipation_quizExerciseNotStarted(QuizMode quizMode) throws Exception {
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusDays(1), quizMode, course);
         quizEx = exerciseRepo.save(quizEx);
-        var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation.getExercise()).isEqualTo(quizEx);
+        request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
