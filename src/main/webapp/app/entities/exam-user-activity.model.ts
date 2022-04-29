@@ -27,12 +27,10 @@ export class ExamAction implements BaseEntity {
     public id?: number;
     public timestamp?: dayjs.Dayjs;
     public actionDetail?: ExamActionDetail;
-    public synced?: boolean;
 
     constructor(timestamp: dayjs.Dayjs, actionDetail: ExamActionDetail) {
         this.timestamp = timestamp;
         this.actionDetail = actionDetail;
-        this.synced = false;
     }
 }
 

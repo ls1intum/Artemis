@@ -39,6 +39,7 @@ import {
     ConnectionUpdatedActionDetail,
     ContinueAfterHandedInEarlyActionDetail,
     EndedExamActionDetail,
+    ExamAction,
     HandedInEarlyActionDetail,
     SavedSubmissionActionDetail,
     StartedExamActionDetail,
@@ -629,14 +630,23 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             }
         });
 
-        // TODO: Sync actions and save to local storage
-
         // save the studentExam in localStorage, so that we would be able to retrieve it later on, in case the student needs to reload the page while being offline
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
 
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions
         if (forceSave || !this.disconnected) {
+            // We synchronize the user actions with the server and then delete them on the client, as they are no longer used
+            if (this.studentExam.examActivity !== null) {
+                const actionsToSync = this.studentExam.examActivity!.examActions;
+                this.examMonitoringService.syncActions(actionsToSync).subscribe({
+                    // After successful synchronization we can delete the actions -> filter in case of new actions during the synchronization
+                    next: () => this.studentExam.examActivity!.examActions.filter((action) => actionsToSync.includes(action)),
+                    // We do not delete the client actions, because they are not synchronized yet
+                    error: () => {},
+                });
+            }
+
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
