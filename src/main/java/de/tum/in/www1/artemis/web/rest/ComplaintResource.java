@@ -280,12 +280,13 @@ public class ComplaintResource {
      * @param tutorId the id of the tutor by which we want to filter
      * @param courseId the id of the course we are interested in
      * @param complaintType the type of complaints we are interested in
+     * @param allComplaintsForTutor flag if all complaints should be send for a tutor
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("courses/{courseId}/complaints")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@PathVariable Long courseId, @RequestParam ComplaintType complaintType,
-            @RequestParam(required = false) Long tutorId) {
+            @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
 
@@ -301,6 +302,12 @@ public class ComplaintResource {
         if (tutorId == null) {
             complaints = complaintService.getAllComplaintsByCourseId(courseId);
             filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+        }
+        else if (allComplaintsForTutor) {
+            complaints = complaintService.getAllComplaintsByCourseId(courseId);
+            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            // For a tutor, all foreign reviewers are filtered out
+            complaints.forEach(complaint -> complaint.filterForeignReviewer(user));
         }
         else {
             complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
@@ -443,7 +450,6 @@ public class ComplaintResource {
         if (filterOutStudentFromComplaints) {
             complaints.forEach(this::filterOutStudentFromComplaint);
         }
-
         complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
