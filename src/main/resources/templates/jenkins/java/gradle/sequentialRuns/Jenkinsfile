@@ -22,7 +22,7 @@ pipeline {
             stage('Build') {
                 steps {
                     timestamps {
-                        sh './gradlew clean structuralTest behaviorTest'
+                        sh './gradlew --no-daemon clean structuralTest behaviorTest'
                     }
                 }
             }
