@@ -177,6 +177,7 @@ jobs:
       url: ${{ matrix.url }}
       name: ${{ matrix.environment }}
     steps:
+    - uses: actions/checkout@v3
     - name: Compute Tag
       uses: actions/github-script@v5
       id: compute-tag
