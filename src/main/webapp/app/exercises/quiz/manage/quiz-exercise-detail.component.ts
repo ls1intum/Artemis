@@ -948,8 +948,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      * @return {boolean} true if the saved quiz has started, otherwise false
      */
     get hasSavedQuizStarted(): boolean {
-        // TODO: QQQ
-        return false; // !!(this.savedEntity && this.savedEntity.isPlannedToStart && dayjs(this.savedEntity.releaseDate!).isBefore(dayjs()));
+        return !!(this.savedEntity && this.savedEntity.quizBatches && this.savedEntity.quizBatches.some((batch) => dayjs(batch.startTime).isBefore(dayjs())));
     }
 
     includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
