@@ -96,6 +96,13 @@ public class ComplaintResource {
         }
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
+
+        // For exam exercises, the POST complaints/exam/examId should be used
+        if (result.getParticipation().getExercise().isExamExercise()) {
+            throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                    "complaintAboutExamExerciseWrongComponent");
+        }
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
@@ -135,6 +142,13 @@ public class ComplaintResource {
         }
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
+
+        // For non-exam exercises, the POST complaints should be used
+        if (!result.getParticipation().getExercise().isExamExercise()) {
+            throw new BadRequestAlertException("A complaint for an course exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                    "complaintAboutCourseExerciseWrongComponent");
+        }
+
         authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
@@ -480,5 +494,4 @@ public class ComplaintResource {
 
         return responseComplaints;
     }
-
 }
