@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Entity
 @Table(name = "exam_action")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "exam_action_type", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorOptions(force = true)
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 

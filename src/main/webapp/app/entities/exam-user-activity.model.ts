@@ -23,18 +23,9 @@ export class ExamActivity {
     }
 }
 
-export class ExamAction implements BaseEntity {
+export abstract class ExamAction implements BaseEntity {
     public id?: number;
     public timestamp?: dayjs.Dayjs;
-    public actionDetail?: ExamActionDetail;
-
-    constructor(timestamp: dayjs.Dayjs, actionDetail: ExamActionDetail) {
-        this.timestamp = timestamp;
-        this.actionDetail = actionDetail;
-    }
-}
-
-export abstract class ExamActionDetail {
     public readonly examActionEvent: ExamActionType;
 
     protected constructor(examActionEvent: ExamActionType) {
@@ -42,7 +33,7 @@ export abstract class ExamActionDetail {
     }
 }
 
-export class StartedExamActionDetail extends ExamActionDetail {
+export class StartedExamAction extends ExamAction {
     public sessionId?: number;
 
     constructor(sessionId: number | undefined) {
@@ -51,25 +42,25 @@ export class StartedExamActionDetail extends ExamActionDetail {
     }
 }
 
-export class EndedExamActionDetail extends ExamActionDetail {
+export class EndedExamAction extends ExamAction {
     constructor() {
         super(ExamActionType.ENDED_EXAM);
     }
 }
 
-export class HandedInEarlyActionDetail extends ExamActionDetail {
+export class HandedInEarlyAction extends ExamAction {
     constructor() {
         super(ExamActionType.HANDED_IN_EARLY);
     }
 }
 
-export class ContinueAfterHandedInEarlyActionDetail extends ExamActionDetail {
+export class ContinueAfterHandedInEarlyAction extends ExamAction {
     constructor() {
         super(ExamActionType.CONTINUED_AFTER_HAND_IN_EARLY);
     }
 }
 
-export class SwitchedExerciseActionDetail extends ExamActionDetail {
+export class SwitchedExerciseAction extends ExamAction {
     public exerciseId?: number;
 
     constructor(exerciseId: number | undefined) {
@@ -78,7 +69,7 @@ export class SwitchedExerciseActionDetail extends ExamActionDetail {
     }
 }
 
-export class SavedSubmissionActionDetail extends ExamActionDetail {
+export class SavedExerciseAction extends ExamAction {
     public forced?: boolean;
     public submissionId?: number;
     public failed?: boolean;
@@ -93,7 +84,7 @@ export class SavedSubmissionActionDetail extends ExamActionDetail {
     }
 }
 
-export class ConnectionUpdatedActionDetail extends ExamActionDetail {
+export class ConnectionUpdatedAction extends ExamAction {
     public connected?: boolean;
 
     constructor(connected: boolean) {

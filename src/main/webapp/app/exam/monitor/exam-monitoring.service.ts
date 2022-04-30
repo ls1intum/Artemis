@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamAction, ExamActionDetail, ExamActivity } from 'app/entities/exam-user-activity.model';
+import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -13,11 +13,12 @@ export class ExamMonitoringService {
 
     constructor(private serverDateService: ArtemisServerDateService, private http: HttpClient) {}
 
-    public handleActionEvent(studentExam: StudentExam, examActionDetail: ExamActionDetail) {
+    public handleActionEvent(studentExam: StudentExam, examAction: ExamAction) {
         const examActivity = studentExam.examActivity ?? new ExamActivity();
-        const timestamp = this.serverDateService.now();
-        console.log(`Exam activity with details ${examActionDetail.examActionEvent.toString()}`);
-        examActivity.addAction(new ExamAction(timestamp, examActionDetail));
+
+        examAction.timestamp = this.serverDateService.now();
+        console.log(`Exam activity with details ${examAction.examActionEvent.toString()}`);
+        examActivity.addAction(examAction);
     }
 
     public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<void>> {
