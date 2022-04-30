@@ -573,6 +573,8 @@ public class TextAssessmentResource extends AssessmentResource {
                 updatedTextBlocks.addAll(blocksToUpdate);
             }
             if (!updatedTextBlocks.isEmpty()) {
+                // Reload text blocks to avoid trying to delete already removed referenced feedback.
+                textBlockService.findAllBySubmissionId(textSubmission.getId());
                 textBlockService.saveAll(updatedTextBlocks);
             }
         }
