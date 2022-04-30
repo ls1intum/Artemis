@@ -636,8 +636,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // based on the submissions that need to be saved and the exercise, we perform different actions
         if (forceSave || !this.disconnected) {
             // We synchronize the user actions with the server and then delete them on the client, as they are no longer used
-            if (this.studentExam.examActivity !== null) {
-                const actionsToSync = this.studentExam.examActivity!.examActions;
+            if (this.studentExam.examActivity !== undefined) {
+                const actionsToSync = this.studentExam.examActivity.examActions;
                 this.examMonitoringService.syncActions(actionsToSync, this.courseId, this.examId, this.studentExam.id!).subscribe({
                     // After successful synchronization we can delete the actions -> filter in case of new actions during the synchronization
                     next: () => this.studentExam.examActivity!.examActions.filter((action) => actionsToSync.includes(action)),

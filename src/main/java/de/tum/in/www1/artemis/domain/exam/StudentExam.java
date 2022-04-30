@@ -65,7 +65,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     @OneToOne(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private ExamActivity examActivity;
+    private ExamActivity examActivity = new ExamActivity();
 
     public Boolean isSubmitted() {
         return submitted;
@@ -159,6 +159,10 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public ExamActivity getExamActivity() {
         return examActivity;
+    }
+
+    public void setExamActivity(ExamActivity examActivity) {
+        this.examActivity = examActivity;
     }
 
     /**

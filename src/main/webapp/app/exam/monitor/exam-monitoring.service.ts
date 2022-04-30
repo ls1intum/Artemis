@@ -17,12 +17,14 @@ export class ExamMonitoringService {
         const examActivity = studentExam.examActivity ?? new ExamActivity();
 
         examAction.timestamp = this.serverDateService.now();
-        console.log(`Exam activity with details ${examAction.examActionEvent.toString()}`);
+        console.log(`Exam activity with details ${examAction.type.toString()}`);
         examActivity.addAction(examAction);
+        studentExam.examActivity = examActivity;
     }
 
     public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<void>> {
         const url = this.getResourceURL(courseId, examId) + `/student-exams/${studentExamId}/actions`;
+        console.log('synced!');
         return this.http.put<void>(url, examActions, { observe: 'response' });
     }
 }

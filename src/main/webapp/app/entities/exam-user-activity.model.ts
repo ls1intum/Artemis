@@ -26,10 +26,10 @@ export class ExamActivity {
 export abstract class ExamAction implements BaseEntity {
     public id?: number;
     public timestamp?: dayjs.Dayjs;
-    public readonly examActionEvent: ExamActionType;
+    public readonly type: ExamActionType;
 
     protected constructor(examActionEvent: ExamActionType) {
-        this.examActionEvent = examActionEvent;
+        this.type = examActionEvent;
     }
 }
 

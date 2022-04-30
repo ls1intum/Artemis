@@ -679,20 +679,16 @@ public class StudentExamResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody List<ExamAction> actions) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
-
-        StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
-
-        // TODO: Check if any additional checks are required
-
-        studentExam.setSubmissionDate(null);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isTestRun = studentExam.isTestRun();
+        this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, studentExamId, currentUser, isTestRun);
 
         // TODO: Filter not valid actions
         studentExam.getExamActivity().addExamActions(actions);
 
         // TODO: Update log
-        log.info("REST request by user: {} for exam with id {} to add {} actions to student-exam {}", user.getLogin(), examId, 5, studentExamId);
+        log.info("REST request by user: {} for exam with id {} to add {} actions to student-exam {}", currentUser.getLogin(), examId, 5, studentExamId);
 
         return ResponseEntity.ok().build();
     }
