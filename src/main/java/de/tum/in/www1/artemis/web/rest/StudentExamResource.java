@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -676,15 +677,19 @@ public class StudentExamResource {
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/actions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExam> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+            @RequestBody List<ExamAction> actions) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
         StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
 
-        // TODO: Check if any additional checks are rerquired
+        // TODO: Check if any additional checks are required
 
         studentExam.setSubmissionDate(null);
+
+        // TODO: Filter not valid actions
+        studentExam.getExamActivity().addExamActions(actions);
 
         // TODO: Update log
         log.info("REST request by user: {} for exam with id {} to add {} actions to student-exam {}", user.getLogin(), examId, 5, studentExamId);
