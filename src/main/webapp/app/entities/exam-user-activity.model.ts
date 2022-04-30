@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
-export enum ExamActionEvent {
+export enum ExamActionType {
     STARTED_EXAM = 'STARTED_EXAM',
     ENDED_EXAM = 'ENDED_EXAM',
     HANDED_IN_EARLY = 'HANDED_IN_EARLY',
@@ -35,9 +35,9 @@ export class ExamAction implements BaseEntity {
 }
 
 export abstract class ExamActionDetail {
-    public readonly examActionEvent: ExamActionEvent;
+    public readonly examActionEvent: ExamActionType;
 
-    protected constructor(examActionEvent: ExamActionEvent) {
+    protected constructor(examActionEvent: ExamActionType) {
         this.examActionEvent = examActionEvent;
     }
 }
@@ -46,26 +46,26 @@ export class StartedExamActionDetail extends ExamActionDetail {
     public sessionId?: number;
 
     constructor(sessionId: number | undefined) {
-        super(ExamActionEvent.STARTED_EXAM);
+        super(ExamActionType.STARTED_EXAM);
         this.sessionId = sessionId;
     }
 }
 
 export class EndedExamActionDetail extends ExamActionDetail {
     constructor() {
-        super(ExamActionEvent.ENDED_EXAM);
+        super(ExamActionType.ENDED_EXAM);
     }
 }
 
 export class HandedInEarlyActionDetail extends ExamActionDetail {
     constructor() {
-        super(ExamActionEvent.HANDED_IN_EARLY);
+        super(ExamActionType.HANDED_IN_EARLY);
     }
 }
 
 export class ContinueAfterHandedInEarlyActionDetail extends ExamActionDetail {
     constructor() {
-        super(ExamActionEvent.CONTINUED_AFTER_HAND_IN_EARLY);
+        super(ExamActionType.CONTINUED_AFTER_HAND_IN_EARLY);
     }
 }
 
@@ -73,7 +73,7 @@ export class SwitchedExerciseActionDetail extends ExamActionDetail {
     public exerciseId?: number;
 
     constructor(exerciseId: number | undefined) {
-        super(ExamActionEvent.SWITCHED_EXERCISE);
+        super(ExamActionType.SWITCHED_EXERCISE);
         this.exerciseId = exerciseId;
     }
 }
@@ -85,7 +85,7 @@ export class SavedSubmissionActionDetail extends ExamActionDetail {
     public automatically?: boolean;
 
     constructor(forced: boolean, submissionId: number | undefined, failed: boolean, automatically: boolean) {
-        super(ExamActionEvent.SAVED_EXERCISE);
+        super(ExamActionType.SAVED_EXERCISE);
         this.forced = forced;
         this.submissionId = submissionId;
         this.failed = failed;
@@ -97,7 +97,7 @@ export class ConnectionUpdatedActionDetail extends ExamActionDetail {
     public connected?: boolean;
 
     constructor(connected: boolean) {
-        super(ExamActionEvent.CONNECTION_UPDATED);
+        super(ExamActionType.CONNECTION_UPDATED);
         this.connected = connected;
     }
 }

@@ -7,20 +7,21 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringService {
-    public resourceUrl = SERVER_API_URL + 'TODO';
+    public getResourceURL(courseId: number, examId: number): string {
+        return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
+    }
 
     constructor(private serverDateService: ArtemisServerDateService, private http: HttpClient) {}
 
     public handleActionEvent(studentExam: StudentExam, examActionDetail: ExamActionDetail) {
         const examActivity = studentExam.examActivity ?? new ExamActivity();
         const timestamp = this.serverDateService.now();
-        console.log(`Exam activity ${examActivity.examActions.length + 1} with details ${examActionDetail.examActionEvent.toString()}`);
-
-        // TODO: Add validation + ID
+        console.log(`Exam activity with details ${examActionDetail.examActionEvent.toString()}`);
         examActivity.addAction(new ExamAction(timestamp, examActionDetail));
     }
 
-    public syncActions(examActions: ExamAction[]): Observable<HttpResponse<void>> {
-        return this.http.put<void>(`${this.resourceUrl}/TODO`, examActions, { observe: 'response' });
+    public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<void>> {
+        const url = this.getResourceURL(courseId, examId) + `/student-exams/${studentExamId}/actions`;
+        return this.http.put<void>(url, examActions, { observe: 'response' });
     }
 }
