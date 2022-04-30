@@ -19,7 +19,7 @@
 
         <!-- Exam Action -->
         <createTable tableName="exam_action">
-            <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
+            <column name="id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
             <column name="exam_activity_id" type="BIGINT">
@@ -53,7 +53,7 @@
                 <constraints nullable="true"/>
             </column>
         </createTable>
-        <addPrimaryKey columnNames="id, exam_activity_id" tableName="exam_action"/>
+        <addPrimaryKey columnNames="id, exam_activity_id" constraintName="PRIMARY" tableName="exam_action"/>
         <addForeignKeyConstraint baseColumnNames="session_id" baseTableName="exam_action"
                                  constraintName="TODO_2" deferrable="false" onDelete="CASCADE"
                                  initiallyDeferred="false" referencedColumnNames="id"

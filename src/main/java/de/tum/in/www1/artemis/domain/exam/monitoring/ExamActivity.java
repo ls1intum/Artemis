@@ -37,6 +37,11 @@ public class ExamActivity extends DomainObject {
     }
 
     public void addExamActions(List<ExamAction> examActions) {
+        long id = this.examActions.size();
+        for (ExamAction action : examActions) {
+            action.setId(id);
+            id++;
+        }
         this.examActions.addAll(examActions);
     }
 
