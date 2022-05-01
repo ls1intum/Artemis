@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.exam;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -71,5 +72,9 @@ public class ExamSessionService {
     public boolean checkExamSessionIsInitial(Long studentExamId) {
         long examSessionCount = examSessionRepository.findExamSessionCountByStudentExamId(studentExamId);
         return (examSessionCount == 1);
+    }
+
+    public Optional<ExamSession> findById(Long id) {
+        return examSessionRepository.findById(id);
     }
 }

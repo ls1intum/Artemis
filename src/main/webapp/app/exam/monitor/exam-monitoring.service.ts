@@ -14,7 +14,7 @@ export class ExamMonitoringService {
     constructor(private serverDateService: ArtemisServerDateService, private http: HttpClient) {}
 
     public handleActionEvent(studentExam: StudentExam, examAction: ExamAction) {
-        const examActivity = studentExam.examActivity ?? new ExamActivity();
+        const examActivity = studentExam.examActivity || new ExamActivity();
 
         examAction.timestamp = this.serverDateService.now();
         console.log(`Exam activity with details ${examAction.type.toString()}`);

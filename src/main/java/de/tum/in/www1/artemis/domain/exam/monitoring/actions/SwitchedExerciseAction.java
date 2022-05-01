@@ -16,7 +16,18 @@ public class SwitchedExerciseAction extends ExamAction {
     @JoinColumn(name = "exercise_id")
     private Exercise exercise;
 
+    public SwitchedExerciseAction(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
+    public SwitchedExerciseAction() {
+    }
+
     public Exercise getExercise() {
         return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 }

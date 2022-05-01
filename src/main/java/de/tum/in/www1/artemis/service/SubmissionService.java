@@ -696,4 +696,8 @@ public class SubmissionService {
         final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, sorted, latestSubmissions.size());
         return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
+
+    public Optional<Submission> findById(Long id) {
+        return submissionRepository.findById(id);
+    }
 }

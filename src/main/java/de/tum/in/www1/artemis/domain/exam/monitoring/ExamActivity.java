@@ -9,6 +9,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -24,24 +25,28 @@ public class ExamActivity extends DomainObject {
     @JoinColumn(name = "student_exam_id")
     private StudentExam studentExam;
 
-    @OneToMany(mappedBy = "examActivity", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "examActivity", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("examActivity")
     private Set<ExamAction> examActions = new HashSet<>();
 
     public StudentExam getStudentExam() {
         return studentExam;
     }
 
+    public void setStudentExam(StudentExam studentExam) {
+        this.studentExam = studentExam;
+    }
+
     public Set<ExamAction> getExamActions() {
         return examActions;
     }
 
+    public void setExamActions(Set<ExamAction> examActions) {
+        this.examActions = examActions;
+    }
+
     public void addExamActions(List<ExamAction> examActions) {
-        long id = this.examActions.size();
-        for (ExamAction action : examActions) {
-            action.setId(id);
-            id++;
-        }
         this.examActions.addAll(examActions);
     }
 

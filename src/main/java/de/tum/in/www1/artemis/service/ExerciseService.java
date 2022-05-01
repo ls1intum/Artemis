@@ -715,4 +715,8 @@ public class ExerciseService {
         }
         return feedbackToBeDeleted;
     }
+
+    public Optional<Exercise> findById(Long id) {
+        return exerciseRepository.findById(id);
+    }
 }

@@ -63,9 +63,10 @@ public class StudentExam extends AbstractAuditingEntity {
     @JsonIgnoreProperties("studentExam")
     private Set<ExamSession> examSessions = new HashSet<>();
 
-    @OneToOne(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private ExamActivity examActivity = new ExamActivity();
+    @JsonIgnoreProperties("studentExam")
+    private ExamActivity examActivity;
 
     public Boolean isSubmitted() {
         return submitted;

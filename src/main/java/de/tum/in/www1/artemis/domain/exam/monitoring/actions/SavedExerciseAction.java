@@ -22,19 +22,45 @@ public class SavedExerciseAction extends ExamAction {
     @JoinColumn(name = "submission_id")
     private Submission submission;
 
+    public SavedExerciseAction(boolean forced, boolean failed, boolean automatically, Submission submission) {
+        this.forced = forced;
+        this.failed = failed;
+        this.automatically = automatically;
+        this.submission = submission;
+    }
+
+    public SavedExerciseAction() {
+    }
+
     public boolean isForced() {
         return forced;
+    }
+
+    public void setForced(boolean forced) {
+        this.forced = forced;
     }
 
     public boolean isFailed() {
         return failed;
     }
 
+    public void setFailed(boolean failed) {
+        this.failed = failed;
+    }
+
     public boolean isAutomatically() {
         return automatically;
     }
 
+    public void setAutomatically(boolean automatically) {
+        this.automatically = automatically;
+    }
+
     public Submission getSubmission() {
         return submission;
+    }
+
+    public void setSubmission(Submission submission) {
+        this.submission = submission;
     }
 }

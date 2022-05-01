@@ -16,7 +16,18 @@ public class StartedExamAction extends ExamAction {
     @JoinColumn(name = "session_id")
     private ExamSession examSession;
 
+    public StartedExamAction(ExamSession examSession) {
+        this.examSession = examSession;
+    }
+
+    public StartedExamAction() {
+    }
+
     public ExamSession getExamSession() {
         return examSession;
+    }
+
+    public void setExamSession(ExamSession examSession) {
+        this.examSession = examSession;
     }
 }

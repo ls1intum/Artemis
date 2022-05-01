@@ -13,7 +13,18 @@ public class ConnectionUpdatedAction extends ExamAction {
     @Column(name = "connected", nullable = false)
     private boolean connected;
 
+    public ConnectionUpdatedAction(boolean connected) {
+        this.connected = connected;
+    }
+
+    public ConnectionUpdatedAction() {
+    }
+
     public boolean isConnected() {
         return connected;
+    }
+
+    public void setConnected(boolean connected) {
+        this.connected = connected;
     }
 }

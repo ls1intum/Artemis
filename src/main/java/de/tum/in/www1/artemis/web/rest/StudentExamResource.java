@@ -32,7 +32,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.dto.exam.monitoring.ExamActionDTO;
 import de.tum.in.www1.artemis.service.exam.*;
+import de.tum.in.www1.artemis.service.exam.monitoring.ExamActionService;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -73,13 +75,15 @@ public class StudentExamResource {
 
     private final ExamService examService;
 
+    private final ExamActionService examActionService;
+
     @Value("${info.browser-fingerprints-enabled:#{true}}")
     private boolean fingerprintingEnabled;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService) {
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, ExamActionService examActionService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -93,6 +97,7 @@ public class StudentExamResource {
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
+        this.examActionService = examActionService;
     }
 
     /**
@@ -476,6 +481,7 @@ public class StudentExamResource {
 
         // not needed
         studentExam.getExam().setCourse(null);
+        studentExam.setExamActivity(null);
     }
 
     /**
@@ -678,14 +684,17 @@ public class StudentExamResource {
     @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/actions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
-            @RequestBody List<ExamAction> actions) {
+            @RequestBody List<ExamActionDTO> actions) {
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         boolean isTestRun = studentExam.isTestRun();
         this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, studentExamId, currentUser, isTestRun);
 
         // TODO: Filter not valid actions
-        studentExam.getExamActivity().addExamActions(actions);
+        List<ExamAction> examActions = actions.stream().map(examActionService::mapExamAction).toList();
+        studentExam.getExamActivity().addExamActions(examActions);
+        examActions.forEach(action -> action.setExamActivity(studentExam.getExamActivity()));
+        examActionService.saveAll(examActions);
 
         // TODO: Update log
         log.info("REST request by user: {} for exam with id {} to add {} actions to student-exam {}", currentUser.getLogin(), examId, 5, studentExamId);

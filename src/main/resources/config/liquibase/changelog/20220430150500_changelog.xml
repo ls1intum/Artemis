@@ -19,8 +19,8 @@
 
         <!-- Exam Action -->
         <createTable tableName="exam_action">
-            <column name="id" type="BIGINT">
-                <constraints nullable="false"/>
+            <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="exam_activity_id" type="BIGINT">
                 <constraints nullable="false"/>
@@ -53,7 +53,6 @@
                 <constraints nullable="true"/>
             </column>
         </createTable>
-        <addPrimaryKey columnNames="id, exam_activity_id" constraintName="PRIMARY" tableName="exam_action"/>
         <addForeignKeyConstraint baseColumnNames="session_id" baseTableName="exam_action"
                                  constraintName="TODO_2" deferrable="false" onDelete="CASCADE"
                                  initiallyDeferred="false" referencedColumnNames="id"
@@ -66,5 +65,9 @@
                                  constraintName="TODO_4" deferrable="false" onDelete="CASCADE"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="submission"/>
+        <addForeignKeyConstraint baseColumnNames="exam_activity_id" baseTableName="exam_action"
+                                 constraintName="TODO_5" deferrable="false" onDelete="CASCADE"
+                                 initiallyDeferred="false" referencedColumnNames="id"
+                                 referencedTableName="exam_activity"/>
     </changeSet>
 </databaseChangeLog>
