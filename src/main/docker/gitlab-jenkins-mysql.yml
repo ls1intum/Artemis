@@ -41,9 +41,9 @@ services:
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
             - MYSQL_DATABASE=Artemis
-        image: mysql:8.0.27
+        image: mysql:oracle
         ports:
-            - 3306:3306
+            - "3306:3306"
         volumes:
             - artemis-mysql-data:/var/lib/mysql
         networks:
