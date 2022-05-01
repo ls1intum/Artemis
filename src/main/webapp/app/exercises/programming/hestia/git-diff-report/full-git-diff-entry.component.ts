@@ -1,14 +1,13 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
-import { ThemeService } from 'app/core/theme/theme.service';
-import { Subscription } from 'rxjs';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-git-diff-entry',
     templateUrl: './full-git-diff-entry.component.html',
 })
-export class FullGitDiffEntryComponent implements OnInit, OnDestroy {
+export class FullGitDiffEntryComponent implements OnInit {
     @ViewChild('editorPrevious', { static: true })
     editorPrevious: AceEditorComponent;
     @ViewChild('editorNow', { static: true })
@@ -18,23 +17,14 @@ export class FullGitDiffEntryComponent implements OnInit, OnDestroy {
     addedLineCount: number;
     removedLineCount: number;
 
-    themeSubscription: Subscription;
-
     constructor(private themeService: ThemeService) {}
 
     ngOnInit(): void {
-        this.setupEditor(this.editorPrevious, this.diffEntry.previousLine, this.diffEntry.previousCode ?? '', 'rgba(248, 81, 73, 0.5)');
-        this.setupEditor(this.editorNow, this.diffEntry.line, this.diffEntry.code ?? '', 'rgba(63, 185, 80, 0.5)');
+        const isDark = this.themeService.getCurrentTheme() === Theme.DARK;
+        this.setupEditor(this.editorPrevious, this.diffEntry.previousLine, this.diffEntry.previousCode ?? '', isDark ? 'rgba(248, 81, 73, 0.15)' : 'rgba(248, 81, 73, 0.5)');
+        this.setupEditor(this.editorNow, this.diffEntry.line, this.diffEntry.code ?? '', isDark ? 'rgba(46, 160, 67, 0.15)' : 'rgba(63, 185, 80, 0.5)');
         this.addedLineCount = this.diffEntry.code?.split('\n').filter((line) => line && line.trim().length !== 0).length ?? 0;
         this.removedLineCount = this.diffEntry.previousCode?.split('\n').filter((line) => line && line.trim().length !== 0).length ?? 0;
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
-            this.editorNow?.getEditor().setTheme(theme.codeAceTheme);
-            this.editorPrevious?.getEditor().setTheme(theme.codeAceTheme);
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.themeSubscription?.unsubscribe();
     }
 
     /**
@@ -46,6 +36,7 @@ export class FullGitDiffEntryComponent implements OnInit, OnDestroy {
      * @param color The background color of the editor
      */
     private setupEditor(editor: AceEditorComponent, line: number | undefined, code: string, color: string) {
+        editor.setTheme(this.themeService.getCurrentTheme().codeAceTheme);
         editor.getEditor().setOptions({
             animatedScroll: true,
             maxLines: Infinity,
