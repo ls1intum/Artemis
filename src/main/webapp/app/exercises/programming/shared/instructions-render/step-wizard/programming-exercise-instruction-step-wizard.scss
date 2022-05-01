@@ -57,6 +57,10 @@
     }
 }
 
+.stepwizard-circle .not-done {
+    color: var(--programming-exercise-instruction-step-wizard-circle-not-done-color);
+}
+
 .btn-circle.btn-circle {
     width: 30px;
     height: 30px;
