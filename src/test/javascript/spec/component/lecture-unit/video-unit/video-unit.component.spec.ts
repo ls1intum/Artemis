@@ -55,9 +55,17 @@ describe('VideoUnitComponent', () => {
 
     it('should iFrame correctly', () => {
         videoUnitComponent.videoUnit = videoUnit;
+        videoUnitComponent.isCollapsed = false;
         videoUnitComponentFixture.detectChanges(); // ngInit
         const iFrame = videoUnitComponentFixture.debugElement.nativeElement.querySelector('#videoFrame');
         expect(iFrame.src).toEqual(videoUnit.source);
+    });
+
+    it('should not have iFrame', () => {
+        videoUnitComponent.videoUnit = videoUnit;
+        videoUnitComponentFixture.detectChanges(); // ngInit
+        const iFrame = videoUnitComponentFixture.debugElement.nativeElement.querySelector('#videoFrame');
+        expect(iFrame).toBeNull();
     });
 
     it('should collapse when clicked', () => {
