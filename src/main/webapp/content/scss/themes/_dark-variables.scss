@@ -168,10 +168,10 @@ $btn-total-score-color: #337ab7;
 $result-orange: orange;
 $result-late: gray;
 
-$negative-color: #c7254e;
-$negative-background: #f9f2f4;
-$positive-color: green;
-$positive-background: #f2f9f2;
+$negative-color: $danger;
+$negative-background: $gray-800;
+$positive-color: $success;
+$positive-background: $gray-800;
 
 $artemis-pre-color: white;
 $artemis-pre-background: lighten($neutral-dark, 10);
