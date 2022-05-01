@@ -65,6 +65,8 @@ public class UserDTO extends AuditingEntityDTO {
 
     private Set<Organization> organizations;
 
+    private String vcsAccessToken;
+
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
@@ -72,12 +74,12 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations());
+                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getVcsAccessToken());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations) {
+            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, String accessToken) {
 
         this.id = id;
         this.login = login;
@@ -101,6 +103,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.groups = groups;
         this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
+        this.vcsAccessToken = accessToken;
     }
 
     public Long getId() {
@@ -221,6 +224,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         this.guidedTourSettings = guidedTourSettings;
+    }
+
+    public String getVcsAccessToken() {
+        return vcsAccessToken;
+    }
+
+    public void setVcsAccessToken(String vcsAccessToken) {
+        this.vcsAccessToken = vcsAccessToken;
     }
 
     @Override

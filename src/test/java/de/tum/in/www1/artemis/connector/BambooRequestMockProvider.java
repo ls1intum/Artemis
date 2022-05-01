@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.connector;
 
 import static de.tum.in.www1.artemis.util.FileUtils.loadFileFromResources;
-import static org.mockito.ArgumentMatchers.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
@@ -35,6 +34,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
@@ -89,6 +89,13 @@ public class BambooRequestMockProvider {
         if (mockServer != null) {
             mockServer.reset();
         }
+    }
+
+    /**
+     * Verify that the mocked REST-calls were called
+     */
+    public void verifyMocks() {
+        mockServer.verify();
     }
 
     /**
@@ -482,6 +489,21 @@ public class BambooRequestMockProvider {
 
         var status = !planExistsInCi || shouldPlanEnableFail ? HttpStatus.NOT_FOUND : HttpStatus.OK;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
+    }
+
+    /**
+     * Mocks the Rest calls for granting read access to the build plan
+     * @param buildPlanId the Bamboo build plan ID
+     * @param projectKey the Bamboo project key
+     * @param user the user that should get read access
+     * @throws URISyntaxException
+     */
+    public void mockGrantReadAccess(String buildPlanId, String projectKey, User user) throws URISyntaxException {
+        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/project/" + projectKey + "/users/" + user.getLogin()).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+        uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin()).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 
     public void mockDeleteBambooBuildProject(String projectKey) throws URISyntaxException, JsonProcessingException {

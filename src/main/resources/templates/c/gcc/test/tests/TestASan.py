@@ -12,8 +12,7 @@ class TestASan(AbstractProgramTest):
 
     makeTarget: str
 
-    def __init__(self, executionDirectory: str, makeTarget: str = "asan", requirements: List[str] = None,
-                 name: str = "TestCompileASan"):
+    def __init__(self, executionDirectory: str, makeTarget: str = "asan", requirements: List[str] = None, name: str = "TestCompileASan"):
         super(TestASan, self).__init__(name, executionDirectory, "make", requirements, timeoutSec=5)
         self.makeTarget = makeTarget
 
@@ -26,8 +25,7 @@ class TestASan(AbstractProgramTest):
 
         retCode: int = self.pWrap.getReturnCode()
         if retCode != 0:
-            self._failWith(
-                f"Make for directory {str(self.executionDirectory)} failed. Returncode is {retCode}.")
+            self._failWith(f"Make for directory {str(self.executionDirectory)} failed. Returncode is {retCode}.")
 
         # Always cleanup to make sure all threads get joined:
         self.pWrap.cleanup()

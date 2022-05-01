@@ -40,7 +40,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -107,13 +109,48 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        final var buildPlanId = participation.getBuildPlanId();
-        final var repositoryUrl = participation.getVcsRepositoryUrl();
-        final var projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
-        final var planKey = participation.getBuildPlanId();
-        final var repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        updatePlanRepository(projectKey, planKey, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, defaultBranch, Optional.empty());
-        enablePlan(projectKey, planKey);
+        String buildPlanId = participation.getBuildPlanId();
+        VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
+        String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
+        String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, defaultBranch,
+                Optional.empty());
+        enablePlan(projectKey, buildPlanId);
+
+        // allow student or team access to the build plan in case this option was specified (only available for course exercises)
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && programmingExercise.isCourseExercise()) {
+            Participant participant = ((StudentParticipation) participation).getParticipant();
+            grantBuildPlanPermissions(buildPlanId, projectKey, participant, List.of(CIPermission.READ));
+        }
+    }
+
+    /**
+     * Grants read access to the participants of the specified build plan
+     * @param buildPlanId the ID of the build plan
+     * @param projectKey the key for the project to which the build plan belongs to
+     * @param participant the participants receiving access
+     * @param permissions the permissions given to the participants
+     */
+    private void grantBuildPlanPermissions(String buildPlanId, String projectKey, Participant participant, List<CIPermission> permissions) {
+        List<String> permissionData = permissions.stream().map(this::permissionToBambooPermission).toList();
+        HttpEntity<List<String>> entity = new HttpEntity<>(permissionData, null);
+
+        participant.getParticipants().forEach(user -> {
+            // Access to a single buildplan also needs access to the project
+            String url = serverUrl + "/rest/api/latest/permissions/project/" + projectKey + "/users/" + user.getLogin();
+            grantBuildPlanPermissionsRESTCall(url, entity, user, buildPlanId);
+            // Access to the buildplan itself
+            url = serverUrl + "/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin();
+            grantBuildPlanPermissionsRESTCall(url, entity, user, buildPlanId);
+        });
+    }
+
+    private void grantBuildPlanPermissionsRESTCall(String url, HttpEntity<List<String>> entity, User user, String buildPlanId) {
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+        if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
+            log.error("Cannot grant read permissions to student {} for build plan {}", user.getLogin(), buildPlanId);
+        }
     }
 
     @Override

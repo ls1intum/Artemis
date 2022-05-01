@@ -58,6 +58,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         sshKeysURL: 'sshKeysURL',
         testServer: false,
         versionControlUrl: 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
+        versionControlAccessToken: true,
     };
 
     beforeEach(() => {
@@ -106,10 +107,10 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         component.ngOnInit();
         tick();
-        expect(component.sshKeysUrl).toEqual(info.sshKeysURL);
-        expect(component.sshTemplateUrl).toEqual(info.sshCloneURLTemplate);
-        expect(component.sshEnabled).toEqual(!!info.sshCloneURLTemplate);
-        expect(component.versionControlUrl).toEqual(info.versionControlUrl);
+        expect(component.sshKeysUrl).toBe(info.sshKeysURL);
+        expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
+        expect(component.sshEnabled).toBe(!!info.sshCloneURLTemplate);
+        expect(component.versionControlUrl).toBe(info.versionControlUrl);
     }));
 
     it('should get ssh url (same url for team and individual participation)', () => {
@@ -119,11 +120,11 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
-        expect(url).toEqual('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
+        expect(url).toBe('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
 
         component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUrl();
-        expect(url).toEqual('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
+        expect(url).toBe('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
     });
 
     it('should get html url (not the same url for team and individual participation)', () => {
@@ -134,11 +135,11 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.user = { login: 'user1', guidedTourSettings: [], internal: true };
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
-        expect(url).toEqual(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUrl();
-        expect(url).toEqual(info.versionControlUrl!);
+        expect(url).toBe(info.versionControlUrl!);
     });
 
     it('should get copy the repository url', () => {
@@ -148,11 +149,38 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.user = { login: 'user1', guidedTourSettings: [], internal: true };
         component.isTeamParticipation = true;
         let url = component.getHttpOrSshRepositoryUrl();
-        expect(url).toEqual(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUrl();
-        expect(url).toEqual(info.versionControlUrl!);
+        expect(url).toBe(info.versionControlUrl!);
+    });
+
+    it('should insert the correct token in the repository url', () => {
+        component.user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
+        component.repositoryUrl = `https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.useSsh = false;
+        component.isTeamParticipation = false;
+
+        component.versionControlAccessTokenRequired = true;
+
+        // Placeholder is shown
+        let url = component.getHttpOrSshRepositoryUrl();
+        expect(url).toBe(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+
+        url = component.getHttpOrSshRepositoryUrl(false);
+        expect(url).toBe(`https://${component.user.login}:token@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+
+        // Team participation does not include user name
+        component.repositoryUrl = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.isTeamParticipation = true;
+
+        // Placeholder is shown
+        url = component.getHttpOrSshRepositoryUrl();
+        expect(url).toBe(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+
+        url = component.getHttpOrSshRepositoryUrl(false);
+        expect(url).toBe(`https://${component.user.login}:token@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {
@@ -190,7 +218,7 @@ describe('JhiCloneRepoButtonComponent', () => {
 
     function stubServices() {
         const identityStub = jest.spyOn(accountService, 'identity');
-        identityStub.mockReturnValue(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin', internal: true }));
+        identityStub.mockReturnValue(Promise.resolve({ guidedTourSettings: [], login: 'edx_userLogin', internal: true, vcsAccessToken: 'token' }));
 
         const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(new BehaviorSubject(info));
