@@ -113,6 +113,13 @@ public class GitlabRequestMockProvider {
         mockServer.reset();
     }
 
+    /**
+     * Verify that the mocked REST-calls were called
+     */
+    public void verifyMocks() {
+        mockServer.verify();
+    }
+
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws GitLabApiException {
         final var exercisePath = exercise.getProjectKey();
         final var exerciseName = exercisePath + " " + exercise.getTitle();
