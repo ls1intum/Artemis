@@ -28,9 +28,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
+import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
+import de.tum.in.www1.artemis.domain.exam.monitoring.actions.StartedExamAction;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -41,6 +46,8 @@ import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.dto.exam.monitoring.ExamActionDTO;
+import de.tum.in.www1.artemis.service.dto.exam.monitoring.actions.StartedExamActionDTO;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -1637,5 +1644,57 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
         assertThat(studentExam.isSubmitted()).isFalse();
         assertThat(studentExam.getSubmissionDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateStudentExamWithExamActivity() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction(false);
+        var studentExam = studentExams.get(0);
+
+        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(studentExam.getExamActivity()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSynchronizeStartExamAction() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction(false);
+        var studentExam = studentExams.get(0);
+
+        var user = studentExam.getUser();
+        database.changeUser(user.getLogin());
+
+        // Init session
+        final HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "foo");
+        headers.set("X-Artemis-Client-Fingerprint", "bar");
+        headers.set("X-Forwarded-For", "10.0.28.1");
+        studentExam = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/conduction", HttpStatus.OK, StudentExam.class);
+
+        ExamSession session = new ArrayList<>(studentExam.getExamSessions()).get(studentExam.getExamSessions().size() - 1);
+
+        ZonedDateTime timestamp = ZonedDateTime.now();
+
+        StartedExamActionDTO startedExamActionDTO = new StartedExamActionDTO();
+        startedExamActionDTO.setExamSessionId(session.getId());
+        startedExamActionDTO.setType(ExamActionType.STARTED_EXAM);
+        startedExamActionDTO.setTimestamp(timestamp);
+        List<ExamActionDTO> actions = List.of(startedExamActionDTO);
+
+        database.changeUser(user.getLogin());
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/actions", actions, HttpStatus.OK);
+        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(studentExam.getExamActivity()).isNotNull();
+
+        ExamActivity examActivity = studentExam.getExamActivity();
+        assertThat(examActivity.getExamActions().size()).isEqualTo(1);
+
+        List<ExamAction> examActions = new ArrayList<>(examActivity.getExamActions());
+        StartedExamAction startedExamAction = new StartedExamAction();
+        startedExamAction.setExamSession(session);
+        startedExamAction.setType(ExamActionType.STARTED_EXAM);
+        startedExamAction.setTimestamp(timestamp);
+        assertThat(examActions.get(0)).isEqualTo(startedExamAction);
     }
 }

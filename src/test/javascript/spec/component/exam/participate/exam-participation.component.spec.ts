@@ -46,6 +46,7 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { ExamActivity } from 'app/entities/exam-user-activity.model';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -367,7 +368,7 @@ describe('ExamParticipationComponent', () => {
             textExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [textExercise];
             textSubmissionUpdateSpy = jest.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
-            comp.triggerSave(false);
+            comp.triggerSave(false, false);
             expect(textSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
             expect(textSubmissionUpdateSpy).not.toHaveBeenCalledWith(syncedSubmission, 5);
             expectSyncedSubmissions(submission, syncedSubmission);
@@ -384,7 +385,7 @@ describe('ExamParticipationComponent', () => {
             modelingExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [modelingExercise];
             modelingSubmissionUpdateSpy = jest.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
-            comp.triggerSave(false);
+            comp.triggerSave(false, false);
             expect(modelingSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
             expect(modelingSubmissionUpdateSpy).not.toHaveBeenCalledWith(syncedSubmission, 5);
             expectSyncedSubmissions(submission, syncedSubmission);
@@ -401,7 +402,7 @@ describe('ExamParticipationComponent', () => {
             quizExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [quizExercise];
             quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
-            comp.triggerSave(false);
+            comp.triggerSave(false, false);
             tick(500);
             expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
             expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
@@ -526,6 +527,7 @@ describe('ExamParticipationComponent', () => {
     it('should clear autoSaveInterval when exam ended', () => {
         const clearIntervalSpy = jest.spyOn(window, 'clearInterval');
         comp.autoSaveInterval = 1;
+        comp.studentExam = new StudentExam();
         comp.examEnded();
         expect(clearIntervalSpy).toHaveBeenCalledWith(comp.autoSaveInterval);
     });
@@ -542,7 +544,7 @@ describe('ExamParticipationComponent', () => {
         const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
         const createParticipationForExerciseSpy = jest.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
         comp.onPageChange(exerciseChange);
-        expect(triggerSpy).toHaveBeenCalledWith(true);
+        expect(triggerSpy).toHaveBeenCalledWith(true, false);
         expect(comp.exerciseIndex).toEqual(1);
         expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
     });
