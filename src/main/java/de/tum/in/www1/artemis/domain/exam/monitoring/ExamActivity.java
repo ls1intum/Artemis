@@ -9,6 +9,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -23,6 +24,7 @@ public class ExamActivity extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "student_exam_id")
+    @JsonBackReference
     private StudentExam studentExam;
 
     @OneToMany(mappedBy = "examActivity", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)

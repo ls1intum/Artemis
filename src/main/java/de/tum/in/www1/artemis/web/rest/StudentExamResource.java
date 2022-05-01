@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.exam.monitoring.ExamActionDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActionService;
+import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -78,13 +79,16 @@ public class StudentExamResource {
 
     private final ExamActionService examActionService;
 
+    private final ExamActivityService examActivityService;
+
     @Value("${info.browser-fingerprints-enabled:#{true}}")
     private boolean fingerprintingEnabled;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, ExamActionService examActionService) {
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, ExamActionService examActionService,
+            ExamActivityService examActivityService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -99,6 +103,7 @@ public class StudentExamResource {
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.examActionService = examActionService;
+        this.examActivityService = examActivityService;
     }
 
     /**
@@ -700,7 +705,10 @@ public class StudentExamResource {
         List<ExamAction> examActions = actions.stream().map(examActionService::mapExamAction).toList();
         studentExam.getExamActivity().addExamActions(examActions);
         examActions.forEach(action -> action.setExamActivity(studentExam.getExamActivity()));
+
+        // TODO: Check if both are required
         examActionService.saveAll(examActions);
+        examActivityService.save(studentExam.getExamActivity());
 
         // TODO: Update log
         log.info("REST request by user: {} for exam with id {} to add {} actions to student-exam {}", currentUser.getLogin(), examId, 5, studentExamId);

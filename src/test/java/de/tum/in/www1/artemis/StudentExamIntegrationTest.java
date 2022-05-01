@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
-import de.tum.in.www1.artemis.domain.exam.monitoring.actions.StartedExamAction;
+import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -47,7 +47,10 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.exam.monitoring.ExamActionDTO;
+import de.tum.in.www1.artemis.service.dto.exam.monitoring.actions.ConnectionUpdatedActionDTO;
+import de.tum.in.www1.artemis.service.dto.exam.monitoring.actions.SavedExerciseActionDTO;
 import de.tum.in.www1.artemis.service.dto.exam.monitoring.actions.StartedExamActionDTO;
+import de.tum.in.www1.artemis.service.dto.exam.monitoring.actions.SwitchedExerciseActionDTO;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -1656,45 +1659,226 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExam.getExamActivity()).isNotNull();
     }
 
+    /**
+     * Used to wrap the test calls for the added actions
+     * @param studentExam student exam
+     * @param input received action DTO from the client
+     * @param expected mapped and expected action
+     * @throws Exception exception
+     */
+    private void synchronizeExamActionHelper(StudentExam studentExam, ExamActionDTO input, ExamAction expected) throws Exception {
+        // Participate as student
+        var user = studentExam.getUser();
+        database.changeUser(user.getLogin());
+
+        List<ExamActionDTO> actions = List.of(input);
+        // Make request to add actions
+        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/actions", actions, HttpStatus.OK);
+        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(studentExam.getExamActivity()).isNotNull();
+
+        // Receive the ExamActivity
+        ExamActivity examActivity = studentExam.getExamActivity();
+        assertThat(examActivity.getExamActions().size()).isEqualTo(1);
+
+        // Expect that the list of ExamActions contains the added ExamAction
+        List<ExamAction> examActions = new ArrayList<>(examActivity.getExamActions());
+
+        // Validate the values
+        assertThat(examActions.get(0)).isEqualTo(expected);
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testSynchronizeStartExamAction() throws Exception {
         final var studentExams = prepareStudentExamsForConduction(false);
         var studentExam = studentExams.get(0);
 
+        // Participate as student to create initial exam session
         var user = studentExam.getUser();
         database.changeUser(user.getLogin());
-
-        // Init session
-        final HttpHeaders headers = new HttpHeaders();
-        headers.set("User-Agent", "foo");
-        headers.set("X-Artemis-Client-Fingerprint", "bar");
-        headers.set("X-Forwarded-For", "10.0.28.1");
         studentExam = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/conduction", HttpStatus.OK, StudentExam.class);
-
         ExamSession session = new ArrayList<>(studentExam.getExamSessions()).get(studentExam.getExamSessions().size() - 1);
 
+        // Set timestamp of action
         ZonedDateTime timestamp = ZonedDateTime.now();
 
-        StartedExamActionDTO startedExamActionDTO = new StartedExamActionDTO();
-        startedExamActionDTO.setExamSessionId(session.getId());
-        startedExamActionDTO.setType(ExamActionType.STARTED_EXAM);
-        startedExamActionDTO.setTimestamp(timestamp);
-        List<ExamActionDTO> actions = List.of(startedExamActionDTO);
+        // Create DTO
+        StartedExamActionDTO examActionDTO = new StartedExamActionDTO();
+        examActionDTO.setExamSessionId(session.getId());
+        examActionDTO.setType(ExamActionType.STARTED_EXAM);
+        examActionDTO.setTimestamp(timestamp);
 
-        database.changeUser(user.getLogin());
-        request.put("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/actions", actions, HttpStatus.OK);
-        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
-        assertThat(studentExam.getExamActivity()).isNotNull();
+        // Expected StartedExamAction
+        StartedExamAction examAction = new StartedExamAction();
+        examAction.setExamSession(session);
+        examAction.setType(ExamActionType.STARTED_EXAM);
+        examAction.setTimestamp(timestamp);
+        examAction.setId(1L);
+        examAction.setExamActivity(studentExam.getExamActivity());
 
-        ExamActivity examActivity = studentExam.getExamActivity();
-        assertThat(examActivity.getExamActions().size()).isEqualTo(1);
+        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+    }
 
-        List<ExamAction> examActions = new ArrayList<>(examActivity.getExamActions());
-        StartedExamAction startedExamAction = new StartedExamAction();
-        startedExamAction.setExamSession(session);
-        startedExamAction.setType(ExamActionType.STARTED_EXAM);
-        startedExamAction.setTimestamp(timestamp);
-        assertThat(examActions.get(0)).isEqualTo(startedExamAction);
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSynchronizeEndedExamAction() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction(false);
+        var studentExam = studentExams.get(0);
+
+        // Set timestamp of action
+        ZonedDateTime timestamp = ZonedDateTime.now();
+
+        // Create DTO
+        ExamActionDTO examActionDTO = new ExamActionDTO();
+        examActionDTO.setType(ExamActionType.ENDED_EXAM);
+        examActionDTO.setTimestamp(timestamp);
+
+        // Expected EndedExamAction
+        EndedExamAction examAction = new EndedExamAction();
+        examAction.setType(ExamActionType.ENDED_EXAM);
+        examAction.setTimestamp(timestamp);
+        examAction.setId(1L);
+        examAction.setExamActivity(studentExam.getExamActivity());
+
+        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSynchronizeContinuedAfterHandedInEarlyAction() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction(false);
+        var studentExam = studentExams.get(0);
+
+        // Set timestamp of action
+        ZonedDateTime timestamp = ZonedDateTime.now();
+
+        // Create DTO
+        ExamActionDTO examActionDTO = new ExamActionDTO();
+        examActionDTO.setType(ExamActionType.CONTINUED_AFTER_HAND_IN_EARLY);
+        examActionDTO.setTimestamp(timestamp);
+
+        // Expected ContinuedAfterHandedInEarlyAction
+        ContinuedAfterHandedInEarlyAction examAction = new ContinuedAfterHandedInEarlyAction();
+        examAction.setType(ExamActionType.CONTINUED_AFTER_HAND_IN_EARLY);
+        examAction.setTimestamp(timestamp);
+        examAction.setId(1L);
+        examAction.setExamActivity(studentExam.getExamActivity());
+
+        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSynchronizeConnectionUpdatedAction() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction(false);
+        var studentExam = studentExams.get(0);
+
+        // Set timestamp of action
+        ZonedDateTime timestamp = ZonedDateTime.now();
+
+        // Create DTO
+        ConnectionUpdatedActionDTO examActionDTO = new ConnectionUpdatedActionDTO();
+        examActionDTO.setType(ExamActionType.CONNECTION_UPDATED);
+        examActionDTO.setTimestamp(timestamp);
+        examActionDTO.setConnected(false);
+
+        // Expected ConnectionUpdatedAction
+        ConnectionUpdatedAction examAction = new ConnectionUpdatedAction();
+        examAction.setType(ExamActionType.CONNECTION_UPDATED);
+        examAction.setTimestamp(timestamp);
+        examAction.setId(1L);
+        examAction.setExamActivity(studentExam.getExamActivity());
+        examAction.setConnected(false);
+
+        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSynchronizeHandedInEarlyAction() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction(false);
+        var studentExam = studentExams.get(0);
+
+        // Set timestamp of action
+        ZonedDateTime timestamp = ZonedDateTime.now();
+
+        // Create DTO
+        ExamActionDTO examActionDTO = new ExamActionDTO();
+        examActionDTO.setType(ExamActionType.HANDED_IN_EARLY);
+        examActionDTO.setTimestamp(timestamp);
+
+        // Expected HandedInEarlyAction
+        HandedInEarlyAction examAction = new HandedInEarlyAction();
+        examAction.setType(ExamActionType.HANDED_IN_EARLY);
+        examAction.setTimestamp(timestamp);
+        examAction.setId(1L);
+        examAction.setExamActivity(studentExam.getExamActivity());
+
+        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSynchronizeSavedExerciseAction() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction(false);
+        var studentExam = studentExams.get(0);
+
+        // Set timestamp of action
+        ZonedDateTime timestamp = ZonedDateTime.now();
+
+        // Create submission for exercise
+        Submission submission = submissionRepository.save(new FileUploadSubmission());
+
+        // Create DTO
+        SavedExerciseActionDTO examActionDTO = new SavedExerciseActionDTO();
+        examActionDTO.setType(ExamActionType.SAVED_EXERCISE);
+        examActionDTO.setTimestamp(timestamp);
+        examActionDTO.setAutomatically(false);
+        examActionDTO.setFailed(true);
+        examActionDTO.setForced(true);
+        examActionDTO.setSubmissionId(submission.getId());
+
+        // Expected SavedExerciseAction
+        SavedExerciseAction examAction = new SavedExerciseAction();
+        examAction.setType(ExamActionType.SAVED_EXERCISE);
+        examAction.setTimestamp(timestamp);
+        examAction.setId(1L);
+        examAction.setExamActivity(studentExam.getExamActivity());
+        examAction.setAutomatically(false);
+        examAction.setFailed(true);
+        examAction.setForced(true);
+        examAction.setSubmission(submission);
+
+        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSynchronizeSwitchedExerciseAction() throws Exception {
+        final var studentExams = prepareStudentExamsForConduction(false);
+        var studentExam = studentExams.get(0);
+
+        // Set timestamp of action
+        ZonedDateTime timestamp = ZonedDateTime.now();
+
+        // Get exercise
+        Exercise exercise = exam2.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
+
+        // Create DTO
+        SwitchedExerciseActionDTO examActionDTO = new SwitchedExerciseActionDTO();
+        examActionDTO.setType(ExamActionType.SWITCHED_EXERCISE);
+        examActionDTO.setTimestamp(timestamp);
+        examActionDTO.setExerciseId(exercise.getId());
+
+        // Expected SwitchedExerciseAction
+        SwitchedExerciseAction examAction = new SwitchedExerciseAction();
+        examAction.setType(ExamActionType.SWITCHED_EXERCISE);
+        examAction.setTimestamp(timestamp);
+        examAction.setId(1L);
+        examAction.setExamActivity(studentExam.getExamActivity());
+        examAction.setExercise(exercise);
+
+        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
     }
 }

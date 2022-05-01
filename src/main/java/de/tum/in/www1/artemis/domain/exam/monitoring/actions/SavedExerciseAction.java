@@ -9,13 +9,13 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 @DiscriminatorValue("SAVED_EXERCISE")
 public class SavedExerciseAction extends ExamAction {
 
-    @Column(name = "forced", nullable = false)
+    @Column(name = "forced")
     private boolean forced;
 
-    @Column(name = "failed", nullable = false)
+    @Column(name = "failed")
     private boolean failed;
 
-    @Column(name = "automatically", nullable = false)
+    @Column(name = "automatically")
     private boolean automatically;
 
     @OneToOne

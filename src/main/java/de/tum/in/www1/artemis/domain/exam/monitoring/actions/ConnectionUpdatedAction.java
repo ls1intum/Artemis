@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 @DiscriminatorValue("CONNECTION_UPDATED")
 public class ConnectionUpdatedAction extends ExamAction {
 
-    @Column(name = "connected", nullable = false)
+    @Column(name = "connected")
     private boolean connected;
 
     public ConnectionUpdatedAction(boolean connected) {

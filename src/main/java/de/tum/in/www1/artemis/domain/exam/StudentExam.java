@@ -11,6 +11,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -66,9 +67,9 @@ public class StudentExam extends AbstractAuditingEntity {
     /**
      * Each {@link StudentExam} has a relation to exactly one {@link ExamActivity} containing all performed actions.
      */
-    @OneToOne(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToOne(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("studentExam")
+    @JsonManagedReference
     private ExamActivity examActivity;
 
     public Boolean isSubmitted() {
