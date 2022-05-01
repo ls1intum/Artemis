@@ -151,7 +151,7 @@ $default-btn-border: lighten($artemis-dark, 20%);
 
 $border-lightgrey: rgba(0, 0, 0, 0.125);
 $text-lightgrey: rgba(0, 0, 0, 0.125);
-$form-control-focus-background: $body-bg;
+$form-control-focus-background: transparentize(#fff, 0.9);
 $form-control-color: $white;
 $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;

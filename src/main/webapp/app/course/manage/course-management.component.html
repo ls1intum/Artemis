@@ -3,11 +3,11 @@
         <div class="col-sm">
             <h4 class="fw-medium" id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</h4>
         </div>
-        <div class="col-12 col-sm-auto d-flex">
-            <label class="d-flex align-items-center mb-0 me-2">
-                <input type="checkbox" [checked]="showOnlyActive" (change)="toggleShowOnlyActive()" />
-                <span class="ms-2" jhiTranslate="artemisApp.course.showActive">Show only active courses</span>
-            </label>
+        <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" [checked]="showOnlyActive" (change)="toggleShowOnlyActive()" />
+                <label class="form-check-label" jhiTranslate="artemisApp.course.showActive">Show only active courses</label>
+            </div>
             <a
                 jhiOrionFilter
                 [showInOrionWindow]="false"

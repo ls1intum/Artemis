@@ -215,12 +215,21 @@ Generic styles
 
 /* Error highlight on input fields */
 .ng-valid[required],
-.ng-valid.required {
+.ng-valid.required,
+.ng-invalid:not(form) {
     border-left: 5px solid $ng-valid-border;
+
+    &.form-check-input {
+        border: 1px solid $ng-valid-border;
+    }
 }
 
 .ng-invalid:not(form) {
     border-left: 5px solid $ng-invalid-border;
+
+    &.form-check-input {
+        border: 1px solid $ng-invalid-border;
+    }
 }
 
 /* other generic styles */

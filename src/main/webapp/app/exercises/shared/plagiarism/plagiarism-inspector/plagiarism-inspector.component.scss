@@ -64,6 +64,7 @@ $footer-height: 31px;
             display: flex;
             flex-wrap: wrap;
             padding: 1rem 1.5rem;
+            white-space: nowrap;
 
             & > :not(:last-child) {
                 margin-right: 1.5rem;
@@ -118,7 +119,7 @@ $footer-height: 31px;
     .plagiarism-warning {
         align-items: center;
         display: flex;
-        color: var(--darker-body-bg);
+        color: var(--bs-body-color);
         padding-top: 1px;
 
         #plagiarismCaution {
@@ -127,8 +128,6 @@ $footer-height: 31px;
     }
 
     .plagiarism-checkbox {
-        align-items: center;
-        display: flex;
         margin: 0;
         flex-shrink: 0;
 
