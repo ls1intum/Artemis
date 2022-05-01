@@ -4,18 +4,22 @@ In dieser Aufgabe werden Sie Ihr erstes C Programm erstellen.
 Die Aufgabenstellung entnehmen Sie bitte [https://gbs.cm.in.tum.de](https://gbs.cm.in.tum.de).
 
 #### Allgemein
-1. [task][Kompilieren](TestCompile)
-2. [task][Rückgabewert == 0](TestReturnCode)
-3. [task][Ausgabe prüfen](TestOutput)
+
+1. [task][kompilieren](TestCompile)
+2. [task][rückgabewert == 0](TestReturnCode)
+3. [task][ausgabe prüfen](TestOutput)
 
 #### Adress Sanitizer
-1. [task][Kompilieren mit Address Sanitizer](TestCompileASan)
-2. [task][Ausgabe prüfen mit Address Sanitizer](TestOutputASan)
+
+1. [task][kompilieren mit address sanitizer](TestCompileASan)
+2. [task][ausgabe prüfen mit address sanitizer](TestOutputASan)
 
 #### Undefined Behavior Sanitizer
-1. [task][Kompilieren mit Undefined Behavior Sanitizer](TestCompileUBSan)
-2. [task][Ausgabe prüfen mit Undefined Behavior Sanitizer](TestOutputUBSan)
+
+1. [task][kompilieren mit undefined behavior sanitizer](TestCompileUBSan)
+2. [task][ausgabe prüfen mit undefined behavior sanitizer](TestOutputUBSan)
 
 #### Leak Sanitizer
-1. [task][Kompilieren mit Leak Sanitizer](TestCompileLeak)
-2. [task][Ausgabe prüfen mit Leak Sanitizer](TestOutputLSan)
+
+1. [task][kompilieren mit leak sanitizer](TestCompileLeak)
+2. [task][ausgabe prüfen mit leak sanitizer](TestOutputLSan)
