@@ -7,6 +7,8 @@ import javax.persistence.*;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 
@@ -20,6 +22,7 @@ public class ExamAction extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "exam_activity_id")
+    @JsonBackReference
     protected ExamActivity examActivity;
 
     @Column(name = "timestamp", nullable = false)
