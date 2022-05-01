@@ -273,7 +273,7 @@ You could use a compose file similar to this (as an example this deployment uses
 
     services:
       gitlab:
-        image: gitlab/gitlab-ce
+        image: ghcr.io/ls1intum/artemis-gitlab:latest
         restart: unless-stopped
         volumes:
           - ./data/gitlab/config:/etc/gitlab
@@ -304,7 +304,7 @@ You could use a compose file similar to this (as an example this deployment uses
           - artemis-net
 
       jenkins:
-        image: jenkins/jenkins:lts
+        image: ghcr.io/ls1intum/artemis-jenkins:latest
         restart: unless-stopped
         user: root
         volumes:
@@ -337,7 +337,7 @@ You could use a compose file similar to this (as an example this deployment uses
           - artemis-net
 
       artemis-db:
-        image: mysql:8.0.23
+        image: mysql:8.0.28-oracle
         restart: unless-stopped
         volumes:
           - ./data/artemis-db:/var/lib/mysql
