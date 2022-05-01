@@ -1,7 +1,7 @@
 version: "3.6"
 services:
     gitlab:
-        build: gitlab
+        image: ghcr.io/ls1intum/artemis-gitlab:latest
         container_name: gitlab
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab

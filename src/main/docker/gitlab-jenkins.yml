@@ -1,7 +1,7 @@
 version: "2"
 services:
     gitlab:
-        image: gitlab/gitlab-ce:latest
+        image: ghcr.io/ls1intum/artemis-gitlab:latest
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab
@@ -16,7 +16,7 @@ services:
             artemis:
                 ipv4_address: 172.20.0.4
     jenkins:
-        build: jenkins
+        image: ghcr.io/ls1intum/artemis-jenkins:latest
         volumes:
             - artemis-jenkins-data:/var/jenkins_home
             - /var/run/docker.sock:/var/run/docker.sock
