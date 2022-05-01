@@ -31,7 +31,10 @@
                 {{ 'artemisApp.complaint.exclusivityDisclaimer' | artemisTranslate }}
             </p>
 
-            <textarea id="complainTextArea" class="col-12 px-1" rows="4" [maxLength]="this.course!.maxComplaintTextLimit!" [(ngModel)]="complaintText"></textarea>
+            <div class="d-flex flex-column">
+                <textarea id="complainTextArea" class="col-12 px-1" rows="4" [maxLength]="this.course!.maxComplaintTextLimit!" [(ngModel)]="complaintText"> </textarea>
+                <jhi-textarea-counter [maxLength]="this.course!.maxComplaintTextLimit!" [content]="complaintText" [visible]="true"> </jhi-textarea-counter>
+            </div>
 
             <div class="row">
                 <div class="col-6">
