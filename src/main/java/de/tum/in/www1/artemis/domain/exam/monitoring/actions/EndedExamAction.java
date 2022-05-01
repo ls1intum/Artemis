@@ -6,6 +6,6 @@ import javax.persistence.Entity;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 @Entity
-@DiscriminatorValue(value = "ENDED_EXAM")
+@DiscriminatorValue("ENDED_EXAM")
 public class EndedExamAction extends ExamAction {
 }

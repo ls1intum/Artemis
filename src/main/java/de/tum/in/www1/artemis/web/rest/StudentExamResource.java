@@ -679,7 +679,12 @@ public class StudentExamResource {
     }
 
     /**
-     * TODO: Write documentation
+     * PUT /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/actions: Adds the performed actions by the user
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExamId the student exam id where we want to add the actions
+     * @param actions       list of actions performed by the user after the last synchronisation
+     * @return 200 if successful
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/actions")
     @PreAuthorize("hasRole('USER')")

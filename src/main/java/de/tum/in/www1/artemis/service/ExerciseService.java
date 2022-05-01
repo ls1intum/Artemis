@@ -716,7 +716,12 @@ public class ExerciseService {
         return feedbackToBeDeleted;
     }
 
-    public Optional<Exercise> findById(Long id) {
-        return exerciseRepository.findById(id);
+    /**
+     * To avoid direct access to the {@link ExerciseRepository}, we use delegation to find the corresponding {@link Exercise} based on its id.
+     * @param exerciseId id of the {@link Exercise}
+     * @return Optional<Exercise>
+     */
+    public Optional<Exercise> findById(Long exerciseId) {
+        return exerciseRepository.findById(exerciseId);
     }
 }

@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 @Entity
-@DiscriminatorValue(value = "SWITCHED_EXERCISE")
+@DiscriminatorValue("SWITCHED_EXERCISE")
 public class SwitchedExerciseAction extends ExamAction {
 
     @OneToOne

@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 @Entity
-@DiscriminatorValue(value = "STARTED_EXAM")
+@DiscriminatorValue("STARTED_EXAM")
 public class StartedExamAction extends ExamAction {
 
     @OneToOne

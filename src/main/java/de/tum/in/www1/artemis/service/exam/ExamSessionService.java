@@ -74,7 +74,12 @@ public class ExamSessionService {
         return (examSessionCount == 1);
     }
 
-    public Optional<ExamSession> findById(Long id) {
-        return examSessionRepository.findById(id);
+    /**
+     * To avoid direct access to the {@link ExamSessionRepository}, we use delegation to find the corresponding {@link ExamSession} based on its id.
+     * @param examSessionId id of the {@link ExamSession}
+     * @return Optional<ExamSession>
+     */
+    public Optional<ExamSession> findById(Long examSessionId) {
+        return examSessionRepository.findById(examSessionId);
     }
 }

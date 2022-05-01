@@ -6,6 +6,6 @@ import javax.persistence.Entity;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 @Entity
-@DiscriminatorValue(value = "CONTINUED_AFTER_HAND_IN_EARLY")
+@DiscriminatorValue("CONTINUED_AFTER_HAND_IN_EARLY")
 public class ContinuedAfterHandedInEarlyAction extends ExamAction {
 }

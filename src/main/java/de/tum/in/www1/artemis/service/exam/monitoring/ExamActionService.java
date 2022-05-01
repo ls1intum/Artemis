@@ -35,14 +35,30 @@ public class ExamActionService {
         this.submissionService = submissionService;
     }
 
+    /**
+     * To avoid direct access to the {@link ExamActionRepository}, we use delegation save the {@link ExamAction}.
+     * @param examAction {@link ExamAction} to save
+     * @return saved {@link ExamAction}
+     */
     public ExamAction save(ExamAction examAction) {
         return this.examActionRepository.save(examAction);
     }
 
-    public Collection<ExamAction> saveAll(Collection<ExamAction> examAction) {
-        return this.examActionRepository.saveAll(examAction);
+    /**
+     * To avoid direct access to the {@link ExamActionRepository}, we use delegation save the {@link ExamAction}s.
+     * @param examActions {@link ExamAction}s to save
+     * @return saved {@link ExamAction}s
+     */
+    public Collection<ExamAction> saveAll(Collection<ExamAction> examActions) {
+        return this.examActionRepository.saveAll(examActions);
     }
 
+    /**
+     * This method maps the {@link ExamActionDTO} to the associated {@link ExamAction}.
+     * @param examActionDTO received action
+     * @return mapped and transformed action
+     *
+     */
     public ExamAction mapExamAction(ExamActionDTO examActionDTO) {
         ExamAction action = null;
         switch (examActionDTO.getType()) {

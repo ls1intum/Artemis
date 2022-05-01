@@ -7,7 +7,7 @@ import javax.persistence.Entity;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 @Entity
-@DiscriminatorValue(value = "CONNECTION_UPDATED")
+@DiscriminatorValue("CONNECTION_UPDATED")
 public class ConnectionUpdatedAction extends ExamAction {
 
     @Column(name = "connected", nullable = false)

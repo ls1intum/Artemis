@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 @Entity
-@DiscriminatorValue(value = "SAVED_EXERCISE")
+@DiscriminatorValue("SAVED_EXERCISE")
 public class SavedExerciseAction extends ExamAction {
 
     @Column(name = "forced", nullable = false)

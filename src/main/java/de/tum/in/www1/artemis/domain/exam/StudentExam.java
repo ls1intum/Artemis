@@ -63,6 +63,9 @@ public class StudentExam extends AbstractAuditingEntity {
     @JsonIgnoreProperties("studentExam")
     private Set<ExamSession> examSessions = new HashSet<>();
 
+    /**
+     * Each {@link StudentExam} has a relation to exactly one {@link ExamActivity} containing all performed actions.
+     */
     @OneToOne(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("studentExam")
