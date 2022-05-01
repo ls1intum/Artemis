@@ -55,7 +55,7 @@
                         tooltip="artemisApp.plagiarism.plagiarismCases.verdict.tooltip"
                         class="col-auto"
                         [translateText]="true"
-                        [disabled]="!!plagiarismCase.verdict"
+                        [disabled]="!!plagiarismCase.verdict || verdictPointDeduction < 0 || verdictPointDeduction > 100"
                         (onConfirm)="savePointDeductionVerdict()"
                     ></jhi-confirm-button>
                 </div>

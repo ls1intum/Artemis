@@ -64,9 +64,12 @@
                 "conversation": "Notification and Statement",
                 "casesWithVerdict": "Cases with verdict",
                 "casesWithPost": "Students notified",
+                "casesWithStudentAnswer": "Students responded",
                 "appearsInComparisons": "Appears in {{ count }} comparison(s)",
                 "notifiedAt": "Notified at ",
                 "notNotified": "Not yet notified",
+                "respondedByStudent": "Student has given a statement",
+                "notResponded": "Not yet responded",
                 "noCases": "No plagiarism cases in this course"
             },
             "cases": {

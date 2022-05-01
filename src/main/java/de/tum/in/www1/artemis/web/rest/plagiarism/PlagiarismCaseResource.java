@@ -85,7 +85,6 @@ public class PlagiarismCaseResource {
 
     private ResponseEntity<PlagiarismCase> getPlagiarismCaseResponseEntity(PlagiarismCase plagiarismCase) {
         for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
-            submission.setPlagiarismCase(null);
             submission.getPlagiarismComparison().getPlagiarismResult().setExercise(null);
             submission.getPlagiarismComparison().setSubmissionA(null);
             submission.getPlagiarismComparison().setSubmissionB(null);
@@ -144,7 +143,6 @@ public class PlagiarismCaseResource {
                 plagiarismCase.getPost().setPlagiarismCase(null);
             }
             for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
-                submission.setPlagiarismCase(null);
                 submission.getPlagiarismComparison().getPlagiarismResult().setExercise(null);
                 submission.getPlagiarismComparison().setSubmissionA(null);
                 submission.getPlagiarismComparison().setSubmissionB(null);

@@ -74,7 +74,7 @@ public class PlagiarismResource {
 
         plagiarismService.updatePlagiarismComparisonStatus(comparisonId, statusDTO.getStatus());
         log.info("Finished updating the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.ok().build();
     }
 
     /**

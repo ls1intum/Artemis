@@ -28,22 +28,33 @@ describe('Plagiarism Cases Student View Component', () => {
     const plagiarismCase1 = {
         id: 1,
         exercise: exercise1,
+        student: { id: 1 },
         verdict: PlagiarismVerdict.PLAGIARISM,
-        post: { id: 1 },
+        post: {
+            id: 1,
+            answers: [
+                {
+                    author: { id: 1 },
+                },
+            ],
+        },
     } as PlagiarismCase;
     const plagiarismCase2 = {
         id: 2,
+        student: { id: 2 },
         exercise: exercise1,
         verdict: PlagiarismVerdict.WARNING,
     } as PlagiarismCase;
     const plagiarismCase3 = {
         id: 3,
+        student: { id: 3 },
         exercise: exercise2,
         verdict: PlagiarismVerdict.POINT_DEDUCTION,
         post: { id: 2 },
     } as PlagiarismCase;
     const plagiarismCase4 = {
         id: 4,
+        student: { id: 4 },
         exercise: exercise2,
     } as PlagiarismCase;
 
@@ -101,5 +112,21 @@ describe('Plagiarism Cases Student View Component', () => {
     it('should calculate percentage of plagiarism cases with post', () => {
         const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
         expect(component.percentageOfCasesWithPost(plagiarismCases)).toBe(50);
+    });
+
+    it('should calculate number of plagiarism cases with student answer', () => {
+        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
+        expect(component.numberOfCasesWithStudentAnswer(plagiarismCases)).toBe(1);
+    });
+
+    it('should calculate percentage of plagiarism cases with student answer', () => {
+        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
+        expect(component.percentageOfCasesWithStudentAnswer(plagiarismCases)).toBe(50);
+    });
+
+    it('should check if student has responded for a plagiarism case', () => {
+        expect(component.hasStudentAnswer(plagiarismCase1)).toBe(true);
+        expect(component.hasStudentAnswer(plagiarismCase2)).toBe(false);
+        expect(component.hasStudentAnswer(plagiarismCase3)).toBe(false);
     });
 });

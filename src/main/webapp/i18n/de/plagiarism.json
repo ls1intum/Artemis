@@ -64,9 +64,12 @@
                 "conversation": "Benachrichtigung und Aussage",
                 "casesWithVerdict": "Fälle mit Urteil",
                 "casesWithPost": "Studierende benachrichtigt",
+                "casesWithStudentAnswer": "Studierende beantwortet",
                 "appearsInComparisons": "Erscheint in {{ count }} Vergleich(en)",
                 "notifiedAt": "Benachrichtigt am ",
                 "notNotified": "Noch nicht benachrichtigt",
+                "respondedByStudent": "Studierende:r hat eine Aussage gemacht",
+                "notResponded": "Noch nicht beantwortet",
                 "noCases": "Keine Plagiatsfälle in diesem Kurs"
             },
             "cases": {

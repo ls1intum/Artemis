@@ -5,6 +5,8 @@ import java.util.Set;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -24,6 +26,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     @JoinColumn(name = "post_id")
     private Post post;
 
+    @JsonIgnoreProperties("plagiarismCase")
     @OneToMany(mappedBy = "plagiarismCase", targetEntity = PlagiarismSubmission.class, fetch = FetchType.LAZY)
     private Set<PlagiarismSubmission<?>> plagiarismSubmissions;
 
