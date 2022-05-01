@@ -173,9 +173,9 @@ $negative-background: #f9f2f4;
 $positive-color: green;
 $positive-background: #f2f9f2;
 
-$artemis-pre-color: #333;
-$artemis-pre-background: #f5f5f5;
-$artemis-pre-border: #ccc;
+$artemis-pre-color: white;
+$artemis-pre-background: lighten($neutral-dark, 10);
+$artemis-pre-border: lighten($neutral-dark, 20);
 
 $code-success-color: green;
 $code-success-background: #f2f9f2;
