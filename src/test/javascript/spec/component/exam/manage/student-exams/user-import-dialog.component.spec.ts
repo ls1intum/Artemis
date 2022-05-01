@@ -18,6 +18,8 @@ import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialo
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
+import * as fs from 'fs';
+import * as path from 'path';
 
 describe('UsersImportButtonComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
@@ -121,6 +123,30 @@ describe('UsersImportButtonComponent', () => {
         expect(component.isImporting).toBe(false);
         expect(component.hasImported).toBe(true);
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
+    });
+
+    describe('should read students from csv files', () => {
+        const testDir = path.join(__dirname, '../../../../util/user-import');
+        const testFiles = fs.readdirSync(testDir);
+
+        test.each(testFiles)('reading from %s', async (testFileName) => {
+            const pathToTestFile = path.join(testDir, testFileName);
+            const csv = fs.readFileSync(pathToTestFile, 'utf-8');
+            const event = { target: { files: [csv] } };
+            await component.onCSVFileSelect(event);
+
+            expect(component.usersToImport).toHaveLength(5);
+
+            const expectedStudentDTOs: StudentDTO[] = [
+                { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '' },
+                { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '' },
+                { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '' },
+                { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '' },
+                { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '' },
+            ];
+
+            expect(component.usersToImport).toEqual(expectedStudentDTOs);
+        });
     });
 
     it('should compute invalid student entries', () => {
