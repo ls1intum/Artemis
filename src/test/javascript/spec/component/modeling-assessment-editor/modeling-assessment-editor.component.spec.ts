@@ -204,12 +204,11 @@ describe('ModelingAssessmentEditorComponent', () => {
     });
 
     it('should save assessment', fakeAsync(() => {
-        const feedback = new Feedback();
-        feedback.id = 2;
-        feedback.text = 'This is a test feedback';
-        feedback.detailText = 'Feedback';
-        feedback.credits = 1;
-        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        const course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.maxPoints = 10;
+
+        const feedback = createTestFeedback();
         component.unreferencedFeedback = [feedback];
 
         component.result = {
@@ -249,12 +248,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.modelingExercise.assessmentDueDate = dayjs().subtract(2, 'days');
 
         // make sure feedback is valid
-        const feedback = new Feedback();
-        feedback.id = 2;
-        feedback.text = 'This is a test feedback';
-        feedback.detailText = 'Feedback';
-        feedback.credits = 1;
-        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        const feedback = createTestFeedback();
         component.unreferencedFeedback = [feedback];
 
         component.submission = {
@@ -291,6 +285,16 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(window.confirm).toHaveBeenCalledTimes(1);
         expect(component.highlightMissingFeedback).toBeTrue();
     }));
+
+    const createTestFeedback = (): Feedback => {
+        const feedback = new Feedback();
+        feedback.id = 2;
+        feedback.text = 'This is a test feedback';
+        feedback.detailText = 'Feedback';
+        feedback.credits = 1;
+        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        return feedback;
+    };
 
     it('should update assessment after complaint', fakeAsync(() => {
         const complaintResponse = new ComplaintResponse();
