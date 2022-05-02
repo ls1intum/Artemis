@@ -206,6 +206,8 @@ $quiz-drag-item-background: #fafafa;
 $quiz-drag-item-border: #696969;
 $quiz-drag-item-color: black;
 
+$quiz-navigation-background: white;
+
 $quiz-participation-footer-background: white;
 $quiz-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $quiz-participation-footer-dnd-background: #86ccd5;
@@ -251,6 +253,9 @@ $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
 $sa-question-container-input-background: white;
 $sa-question-container-input-border: #ced4da;
+
+$mc-question-answer-option-border: lightgrey;
+$mc-question-answer-option-hover-background: #fafafa;
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;

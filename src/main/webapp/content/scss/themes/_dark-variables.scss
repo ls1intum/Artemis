@@ -288,6 +288,8 @@ $quiz-drag-item-background: lighten($neutral-dark, 10%);
 $quiz-drag-item-border: lighten($neutral-dark, 20%);
 $quiz-drag-item-color: white;
 
+$quiz-navigation-background: $neutral-dark;
+
 $quiz-participation-footer-background: $brighter-body-bg;
 $quiz-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $quiz-participation-footer-dnd-background: #296773;
@@ -333,6 +335,9 @@ $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
 $sa-question-container-input-background: transparentize(#fff, 0.95);
 $sa-question-container-input-border: transparentize(#fff, 0.9);
+
+$mc-question-answer-option-border: transparentize(#fff, 0.8);
+$mc-question-answer-option-hover-background: transparentize(#fff, 0.97);
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: lighten($neutral-dark, 5%);
