@@ -703,11 +703,10 @@ public class StudentExamResource {
 
         // TODO: Filter not valid actions
         List<ExamAction> examActions = actions.stream().map(examActionService::mapExamAction).toList();
-        studentExam.getExamActivity().addExamActions(examActions);
         examActions.forEach(action -> action.setExamActivity(studentExam.getExamActivity()));
-
-        // TODO: Check if both are required
         examActionService.saveAll(examActions);
+
+        studentExam.getExamActivity().addExamActions(examActions);
         examActivityService.save(studentExam.getExamActivity());
 
         // TODO: Update log
