@@ -4,14 +4,17 @@ import static org.mockito.Mockito.*;
 
 import javax.mail.internet.MimeMessage;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -85,5 +88,14 @@ public class MailServiceTest {
     public void testSendEmail() {
         mailService.sendEmail(student1, subject, content, false, true);
         verify(javaMailSender, times(1)).send(mimeMessage);
+    }
+
+    /**
+     * When the javaMailSender returns an exception, that exception should be catched and an ArtemisMailException should be thrown instead.
+     */
+    @Test
+    public void testThrowException() {
+        doThrow(new org.springframework.mail.MailSendException("Some error occurred")).when(javaMailSender).send(Mockito.any(MimeMessage.class));
+        Assertions.assertThrows(ArtemisMailException.class, () -> mailService.sendEmail(student1, subject, content, false, true));
     }
 }
