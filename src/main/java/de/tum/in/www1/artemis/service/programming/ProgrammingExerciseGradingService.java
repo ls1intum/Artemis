@@ -194,10 +194,11 @@ public class ProgrammingExerciseGradingService {
         log.warn("Could not find pending ProgrammingSubmission for Commit Hash {} (Participation {}, Build Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
         // We always take the build run date as the fallback solution
-        // In general we try to get the actual date.
         ZonedDateTime submissionDate = buildResult.getBuildRunDate();
         if (commitHash.isPresent()) {
             try {
+                // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.
+                // Note: the whole method is a fallback in case creating the submission initially (when the user pushed the code) was not successful for whatever reason
                 submissionDate = versionControlService.get().getPushDate(participation, commitHash.get(), null);
             }
             catch (VersionControlException e) {

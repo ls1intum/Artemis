@@ -56,7 +56,7 @@ describe('LectureImportComponent', () => {
         lecture.id = 1;
         searchResult = { numberOfPages: 3, resultsOnPage: [lecture] };
         state = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
@@ -86,7 +86,7 @@ describe('LectureImportComponent', () => {
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(comp.page).toEqual(0);
+        expect(comp.page).toEqual(1);
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);

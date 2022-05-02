@@ -166,4 +166,9 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should not allow to publish a build plan for text exercises', () => {
+        comp.exercise = teamExerciseWithoutTeamAssigned;
+        expect(comp.publishBuildPlanUrl()).toBe(undefined);
+    });
 });
