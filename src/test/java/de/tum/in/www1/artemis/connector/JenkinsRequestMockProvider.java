@@ -102,6 +102,13 @@ public class JenkinsRequestMockProvider {
         shortTimeoutMockServer.reset();
     }
 
+    /**
+     * Verify that the mocked REST-calls were called
+     */
+    public void verifyMocks() {
+        mockServer.verify();
+    }
+
     public void mockCreateProjectForExercise(ProgrammingExercise exercise, boolean shouldFail) throws IOException {
         // TODO: we need to mockRetrieveArtifacts folder(...)
         if (shouldFail) {
