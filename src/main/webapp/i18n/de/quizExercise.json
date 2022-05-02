@@ -165,7 +165,7 @@
                 "questionTitle": "Frage {{index}}: Der Titel fehlt.",
                 "questionScore": "Frage {{index}}: Mindestens einen Punkt pro Aufgabe erforderlich.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
-                "questionSingleChoiceCorrectAnswerOptions": "Frage {{index}}: Es existieren mehrere korrekte Antwortmöglichkeiten.",
+                "questionSingleChoiceCorrectAnswerOptions": "Frage {{index}}: Es existieren mehrere korrekte Antwortmöglichkeiten bei einer Frage mit Einfachauswahl.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
                 "questionUnsolvable": "Frage {{index}}: Es gibt Drag Items, die auf mehrere Drop Locations gleichzeitig platziert werden müssten, um die Frage richtig zu beantworten.",
                 "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt.",

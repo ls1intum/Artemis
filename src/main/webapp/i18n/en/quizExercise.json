@@ -165,7 +165,7 @@
                 "questionTitle": "Question {{index}}: The title is missing.",
                 "questionScore": "Question {{index}}: At least one point is required per question.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
-                "questionSingleChoiceCorrectAnswerOptions": "Question {{index}}: Multiple answer options are correct.",
+                "questionSingleChoiceCorrectAnswerOptions": "Question {{index}}: Multiple answer options are correct for a single choice question.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
