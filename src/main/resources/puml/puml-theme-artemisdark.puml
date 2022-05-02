@@ -79,6 +79,8 @@ skinparam ParticipantPadding    40
 skinparam BoxPadding            40
 skinparam Padding               5
 skinparam ArrowColor            $WHITE
+skinparam ArrowFontSize 16
+skinparam classAttributeIconSize 0
 skinparam stereotype {
     CBackgroundColor $SECONDARY_DARK
     CBorderColor $SECONDARY_LIGHT
@@ -325,7 +327,8 @@ skinparam class {
 	StereotypeFontColor $LIGHT
 	BorderThickness 1
 	AttributeFontColor $LIGHT
-	AttributeFontSize 11
+	FontSize 20
+    AttributeFontSize 16
 }
 !endsub
 
