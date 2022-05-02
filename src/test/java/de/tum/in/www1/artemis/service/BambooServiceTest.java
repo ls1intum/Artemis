@@ -24,8 +24,8 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      */
     @BeforeEach
     public void initTestCase() throws Exception {
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
         continuousIntegrationTestService.setup(this, continuousIntegrationService);
     }
 
@@ -105,5 +105,11 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @WithMockUser(username = "student1")
     public void testHealthException() throws Exception {
         continuousIntegrationTestService.testHealthException();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testConfigureBuildPlan() throws Exception {
+        continuousIntegrationTestService.testConfigureBuildPlan();
     }
 }
