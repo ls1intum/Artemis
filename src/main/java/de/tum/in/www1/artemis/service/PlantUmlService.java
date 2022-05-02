@@ -66,11 +66,12 @@ public class PlantUmlService {
      * Generate PNG diagram for given PlantUML commands
      *
      * @param plantUml PlantUML command(s)
+     * @param useDarkTheme wether or not the dark theme should be used
      * @return The generated PNG as a byte array
      * @throws IOException if generateImage can't create the PNG
      */
     @Cacheable(value = "plantUmlPng", unless = "#result == null || #result.length == 0")
-    public byte[] generatePng(final String plantUml, boolean useDarkTheme) throws IOException {
+    public byte[] generatePng(final String plantUml, final boolean useDarkTheme) throws IOException {
         var input = validateInputAndApplyTheme(plantUml, useDarkTheme);
         try (final var bos = new ByteArrayOutputStream()) {
             final var reader = new SourceStringReader(input);
@@ -83,11 +84,12 @@ public class PlantUmlService {
      * Generate SVG diagram for given PlantUML commands
      *
      * @param plantUml PlantUML command(s)
+     * @param useDarkTheme wether or not the dark theme should be used
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the SVG
      */
     @Cacheable(value = "plantUmlSvg", unless = "#result == null || #result.isEmpty()")
-    public String generateSvg(final String plantUml, boolean useDarkTheme) throws IOException {
+    public String generateSvg(final String plantUml, final boolean useDarkTheme) throws IOException {
         var input = validateInputAndApplyTheme(plantUml, useDarkTheme);
         try (final var bos = new ByteArrayOutputStream()) {
             final var reader = new SourceStringReader(input);
