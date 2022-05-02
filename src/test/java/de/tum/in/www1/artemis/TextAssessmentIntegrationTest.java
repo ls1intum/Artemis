@@ -15,6 +15,7 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
@@ -113,6 +114,12 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+    }
+
+    @AfterEach
+    public void resetSpyBeans() {
+        Mockito.reset(textBlockService);
+        super.resetSpyBeans();
     }
 
     @Test
