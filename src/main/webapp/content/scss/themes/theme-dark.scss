@@ -113,7 +113,36 @@ html {
 }
 
 .owl-dt-control-button {
-    color: black !important;
+    color: white !important;
+
+    .owl-dt-control-button-arrow {
+        svg {
+            fill: white !important;
+        }
+    }
+}
+
+.owl-dt-timer-content .owl-dt-timer-input {
+    background: transparentize(#fff, 0.95) !important;
+    color: white !important;
+}
+
+.owl-dt-calendar-table .owl-dt-calendar-cell-today:not(.owl-dt-calendar-cell-selected) {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.owl-dt-container {
+    background-color: lighten($neutral-dark, 5) !important;
+}
+
+.owl-dt-calendar-table {
+    .owl-dt-calendar-header {
+        color: $gray-300 !important;
+    }
+
+    .owl-dt-calendar-cell-content {
+        color: white !important;
+    }
 }
 
 .bg-light {
