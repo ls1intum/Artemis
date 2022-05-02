@@ -46,6 +46,7 @@ export class LectureUnitService {
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
                 (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertDateFromClient((<ExerciseUnit>lectureUnit).exercise!);
+                (<ExerciseUnit>lectureUnit).exercise!.categories = ExerciseService.stringifyExerciseCategories((<ExerciseUnit>lectureUnit).exercise!);
                 return lectureUnit;
             }
         }
@@ -72,6 +73,7 @@ export class LectureUnitService {
             } else if (res.body.type === LectureUnitType.EXERCISE) {
                 if ((<ExerciseUnit>res.body).exercise) {
                     (<ExerciseUnit>res.body).exercise = ExerciseService.convertExerciseDateFromServer((<ExerciseUnit>res.body).exercise);
+                    ExerciseService.parseExerciseCategories((<ExerciseUnit>res.body).exercise);
                 }
             } else {
                 res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
@@ -88,6 +90,7 @@ export class LectureUnitService {
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
                 (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertExerciseDateFromServer((<ExerciseUnit>lectureUnit).exercise);
+                ExerciseService.parseExerciseCategories((<ExerciseUnit>lectureUnit).exercise);
             }
         } else {
             lectureUnit.releaseDate = lectureUnit.releaseDate ? dayjs(lectureUnit.releaseDate) : undefined;

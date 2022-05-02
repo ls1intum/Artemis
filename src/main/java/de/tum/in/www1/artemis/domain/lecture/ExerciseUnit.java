@@ -11,7 +11,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 
@@ -24,7 +23,6 @@ public class ExerciseUnit extends LectureUnit {
     @ManyToOne
     @JoinColumn(name = "exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIncludeProperties({ "id", "title", "type", "maxPoints", "assessmentDueDate", "teamMode", "visibleToStudents", "releaseDate", "released" })
     private Exercise exercise;
 
     public Exercise getExercise() {
