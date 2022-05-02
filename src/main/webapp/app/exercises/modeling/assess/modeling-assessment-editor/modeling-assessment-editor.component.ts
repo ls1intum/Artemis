@@ -237,6 +237,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.highlightMissingFeedback) {
             this.highlightElementsWithMissingFeedback();
         }
+        this.calculateTotalScore();
     }
 
     private checkPermissions(): void {
