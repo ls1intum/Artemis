@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
@@ -23,8 +23,8 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -339,10 +339,7 @@ describe('CourseStatisticsComponent', () => {
                 ArtemisTranslatePipe,
                 MockDirective(NgbTooltip),
             ],
-            providers: [
-                { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } },
-                { provide: Router, useClass: MockRouter },
-            ],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
         })
             .compileComponents()
             .then(() => {
@@ -539,13 +536,13 @@ describe('CourseStatisticsComponent', () => {
     it('should delegate the user correctly', () => {
         const clickEvent = { exerciseId: 42 };
         jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(course);
-        const router = TestBed.inject(Router);
-        const routerSpy = jest.spyOn(router, 'navigate');
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
+        const routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
         comp.ngOnInit();
 
         comp.onSelect(clickEvent);
 
-        expect(routerSpy).toHaveBeenCalledWith(['courses', 64, 'exercises', 42]);
+        expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 42]);
     });
 
     it('should deselect and select all categories', () => {
