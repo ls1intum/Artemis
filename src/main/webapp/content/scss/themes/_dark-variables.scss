@@ -190,7 +190,7 @@ $code-password-selection: white;
 $code-password-selection-background: #3297fd;
 $code-password-hover: white;
 
-$unreferenced-feedback-background: whitesmoke;
+$unreferenced-feedback-background: transparentize(#fff, 0.95);
 $displaycolor-background: #f8f9fa;
 
 $markdown-preview-editor-background: transparent;
@@ -475,6 +475,9 @@ $artemis-alert-warning-border: darken($warning, 5);
 $artemis-alert-success-color: $success;
 $artemis-alert-success-background: darken($success, 30);
 $artemis-alert-success-border: darken($success, 5);
+$artemis-alert-neutral-color: white;
+$artemis-alert-neutral-background: darken(white, 30);
+$artemis-alert-neutral-border: darken(white, 5);
 
 $close-circle-color: white;
 $close-circle-background: $gray-900;
