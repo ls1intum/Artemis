@@ -870,9 +870,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), QuizMode.INDIVIDUAL, course).duration(360);
         quizEx = exerciseRepo.save(quizEx);
         var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
+        assertThat(participation.getInitializationState()).as("Participation was not initialized").isNull();
         assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-        assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
+        assertThat(participation.getResults()).as("Participation results are empty").isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
