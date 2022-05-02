@@ -1,7 +1,8 @@
-from testUtils.junit.TestSuite import TestSuite
-from xml.etree import ElementTree as Et
-from os import makedirs, path, chmod
+from os import chmod, makedirs, path
 from typing import Tuple
+from xml.etree import ElementTree as Et
+
+from testUtils.junit.TestSuite import TestSuite
 
 
 # JUnit format: https://github.com/junit-team/junit5/blob/master/platform-tests/src/test/resources/jenkins-junit.xsd

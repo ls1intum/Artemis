@@ -245,13 +245,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
     }));
 
-    it('should not allow to publish a build plan for text exercises', () => {
-        comp.exercise = { ...exercise };
-        expect(comp.publishBuildPlanUrl()).toBe(undefined);
-        expect(comp.projectKey()).toBe(undefined);
-        expect(comp.buildPlanId(new StudentParticipation())).toBe(undefined);
-    });
-
     it('should not be a quiz exercise', () => {
         comp.exercise = { ...exercise };
         expect(comp.quizExerciseStatus).toBe(undefined);
