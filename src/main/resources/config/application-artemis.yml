@@ -51,6 +51,7 @@ artemis:
 #        ssh-private-key-folder-path: <ssh-private-key-folder-path>       # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored that can be used to clone git repos on the version control server
 #        ssh-private-key-password: <ssh-private-key-password>        # the password for the private ssh key
         default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
+        version-control-access-token: false # only for Gitlab setups: a Gitlab-API token can be generated for each user and used as part of the Git clone URL shown to students to allow for password-less Git operations via HTTP
     continuous-integration:
         user: <username>                # e.g. ga12abc
         password: <password>
