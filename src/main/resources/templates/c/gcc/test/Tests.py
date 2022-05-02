@@ -1,9 +1,10 @@
-from testUtils.Tester import Tester
-from tests.TestCompile import TestCompile
 from tests.TestASan import TestASan
-from tests.TestUBSan import TestUBSan
+from tests.TestCompile import TestCompile
 from tests.TestLSan import TestLSan
 from tests.TestOutput import TestOutput
+from tests.TestUBSan import TestUBSan
+from testUtils.Tester import Tester
+
 
 def main():
     # Makefile location:
@@ -53,5 +54,5 @@ def main():
     tester.exportResult("../test-reports/tests-results.xml")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
