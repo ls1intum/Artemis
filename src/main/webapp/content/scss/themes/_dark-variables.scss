@@ -211,6 +211,11 @@ $connection-status-disconnected: $danger;
 $mat-autocomplete-visible-box-shadow: rgb(100 100 100);
 $mat-form-field-outline: #ccc;
 
+// Feature Overview
+$fo-wrapper-background: $neutral-dark;
+$fo-container-box-icon-background: lighten($neutral-dark, 10);
+$fo-blue-font-color: #4188d3;
+
 // Header Participation
 $header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 5%), 15%);
 
