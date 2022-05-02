@@ -1663,10 +1663,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
      * Used to wrap the test calls for the added actions
      * @param studentExam student exam
      * @param input received action DTO from the client
-     * @param expected mapped and expected action
      * @throws Exception exception
      */
-    private void synchronizeExamActionHelper(StudentExam studentExam, ExamActionDTO input, ExamAction expected) throws Exception {
+    private ExamAction synchronizeExamActionHelper(StudentExam studentExam, ExamActionDTO input) throws Exception {
         // Participate as student
         var user = studentExam.getUser();
         database.changeUser(user.getLogin());
@@ -1683,9 +1682,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // Expect that the list of ExamActions contains the added ExamAction
         List<ExamAction> examActions = new ArrayList<>(examActivity.getExamActions());
-
-        // Validate the values
-        assertThat(examActions.get(0)).isEqualTo(expected);
+        return examActions.get(0);
     }
 
     @Test
@@ -1710,14 +1707,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         examActionDTO.setTimestamp(timestamp);
 
         // Expected StartedExamAction
-        StartedExamAction examAction = new StartedExamAction();
-        examAction.setExamSession(session);
-        examAction.setType(ExamActionType.STARTED_EXAM);
-        examAction.setTimestamp(timestamp);
-        examAction.setId(1L);
-        examAction.setExamActivity(studentExam.getExamActivity());
-
-        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+        StartedExamAction result = (StartedExamAction) synchronizeExamActionHelper(studentExam, examActionDTO);
+        assertThat(result.getType()).isEqualTo(ExamActionType.STARTED_EXAM);
+        assertThat(result.getExamSession()).isEqualTo(session);
     }
 
     @Test
@@ -1735,13 +1727,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         examActionDTO.setTimestamp(timestamp);
 
         // Expected EndedExamAction
-        EndedExamAction examAction = new EndedExamAction();
-        examAction.setType(ExamActionType.ENDED_EXAM);
-        examAction.setTimestamp(timestamp);
-        examAction.setId(1L);
-        examAction.setExamActivity(studentExam.getExamActivity());
-
-        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+        EndedExamAction result = (EndedExamAction) synchronizeExamActionHelper(studentExam, examActionDTO);
+        assertThat(result.getType()).isEqualTo(ExamActionType.ENDED_EXAM);
     }
 
     @Test
@@ -1759,13 +1746,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         examActionDTO.setTimestamp(timestamp);
 
         // Expected ContinuedAfterHandedInEarlyAction
-        ContinuedAfterHandedInEarlyAction examAction = new ContinuedAfterHandedInEarlyAction();
-        examAction.setType(ExamActionType.CONTINUED_AFTER_HAND_IN_EARLY);
-        examAction.setTimestamp(timestamp);
-        examAction.setId(1L);
-        examAction.setExamActivity(studentExam.getExamActivity());
-
-        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+        ContinuedAfterHandedInEarlyAction result = (ContinuedAfterHandedInEarlyAction) synchronizeExamActionHelper(studentExam, examActionDTO);
+        assertThat(result.getType()).isEqualTo(ExamActionType.CONTINUED_AFTER_HAND_IN_EARLY);
     }
 
     @Test
@@ -1784,14 +1766,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         examActionDTO.setConnected(false);
 
         // Expected ConnectionUpdatedAction
-        ConnectionUpdatedAction examAction = new ConnectionUpdatedAction();
-        examAction.setType(ExamActionType.CONNECTION_UPDATED);
-        examAction.setTimestamp(timestamp);
-        examAction.setId(1L);
-        examAction.setExamActivity(studentExam.getExamActivity());
-        examAction.setConnected(false);
-
-        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+        ConnectionUpdatedAction result = (ConnectionUpdatedAction) synchronizeExamActionHelper(studentExam, examActionDTO);
+        assertThat(result.getType()).isEqualTo(ExamActionType.CONNECTION_UPDATED);
+        assertThat(result.isConnected()).isEqualTo(false);
     }
 
     @Test
@@ -1809,13 +1786,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         examActionDTO.setTimestamp(timestamp);
 
         // Expected HandedInEarlyAction
-        HandedInEarlyAction examAction = new HandedInEarlyAction();
-        examAction.setType(ExamActionType.HANDED_IN_EARLY);
-        examAction.setTimestamp(timestamp);
-        examAction.setId(1L);
-        examAction.setExamActivity(studentExam.getExamActivity());
-
-        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+        HandedInEarlyAction result = (HandedInEarlyAction) synchronizeExamActionHelper(studentExam, examActionDTO);
+        assertThat(result.getType()).isEqualTo(ExamActionType.HANDED_IN_EARLY);
     }
 
     @Test
@@ -1840,17 +1812,13 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         examActionDTO.setSubmissionId(submission.getId());
 
         // Expected SavedExerciseAction
-        SavedExerciseAction examAction = new SavedExerciseAction();
-        examAction.setType(ExamActionType.SAVED_EXERCISE);
-        examAction.setTimestamp(timestamp);
-        examAction.setId(1L);
-        examAction.setExamActivity(studentExam.getExamActivity());
-        examAction.setAutomatically(false);
-        examAction.setFailed(true);
-        examAction.setForced(true);
-        examAction.setSubmission(submission);
+        SavedExerciseAction result = (SavedExerciseAction) synchronizeExamActionHelper(studentExam, examActionDTO);
+        assertThat(result.getType()).isEqualTo(ExamActionType.SAVED_EXERCISE);
+        assertThat(result.isAutomatically()).isEqualTo(false);
+        assertThat(result.isFailed()).isEqualTo(true);
+        assertThat(result.isForced()).isEqualTo(true);
+        assertThat(result.getSubmission()).isEqualTo(submission);
 
-        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
     }
 
     @Test
@@ -1872,13 +1840,8 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         examActionDTO.setExerciseId(exercise.getId());
 
         // Expected SwitchedExerciseAction
-        SwitchedExerciseAction examAction = new SwitchedExerciseAction();
-        examAction.setType(ExamActionType.SWITCHED_EXERCISE);
-        examAction.setTimestamp(timestamp);
-        examAction.setId(1L);
-        examAction.setExamActivity(studentExam.getExamActivity());
-        examAction.setExercise(exercise);
-
-        synchronizeExamActionHelper(studentExam, examActionDTO, examAction);
+        SwitchedExerciseAction result = (SwitchedExerciseAction) synchronizeExamActionHelper(studentExam, examActionDTO);
+        assertThat(result.getType()).isEqualTo(ExamActionType.SWITCHED_EXERCISE);
+        assertThat(result.getExercise()).isEqualTo(exercise);
     }
 }
