@@ -297,8 +297,8 @@ $quiz-participation-quiz-is-over-border-color: #3c763d;
 $quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
 $quiz-participation-btn-circle-light-border-color: transparent;
 
-$quiz-participation-question-disabled-color: #696969;
-$quiz-participation-question-disabled-background: #fafafa;
+$quiz-participation-question-disabled-color: $gray-600;
+$quiz-participation-question-disabled-background: transparentize(#fff, 0.9);
 $quiz-participation-question-result-border-color: $success;
 $quiz-participation-question-result-incorrect-border-color: $warning;
 $quiz-participation-question-h2-span-color: grey;
@@ -308,8 +308,9 @@ $quiz-participation-question-score-incorrect-result: $warning;
 $quiz-scoring-info-student-modal-question-correct: $success;
 $quiz-scoring-info-student-modal-question-wrong: $warning;
 
-$dnd-question-background: $neutral-dark;
-$dnd-question-border-color: lighten($neutral-dark, 10%);
+$quiz-question-background: $neutral-dark;
+$quiz-question-border-color: lighten($neutral-dark, 20%);
+
 $dnd-question-drop-location-background: white;
 $dnd-question-drop-location-border-color: black;
 $dnd-question-drop-location-results-border-color: $success;
@@ -324,6 +325,9 @@ $dnd-question-drop-location-drag-item-background: white;
 $dnd-question-dnd-items-drag-items-background: lighten($neutral-dark, 10%);
 $dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
 $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
+
+$sa-question-container-input-background: transparentize(#fff, 0.95);
+$sa-question-container-input-border: transparentize(#fff, 0.9);
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: lighten($neutral-dark, 5%);

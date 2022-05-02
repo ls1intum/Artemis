@@ -226,8 +226,9 @@ $quiz-participation-question-score-incorrect-result: $warning;
 $quiz-scoring-info-student-modal-question-correct: $success;
 $quiz-scoring-info-student-modal-question-wrong: $warning;
 
-$dnd-question-background: #fefefe;
-$dnd-question-border-color: lightgrey;
+$quiz-question-background: #fefefe;
+$quiz-question-border-color: lightgrey;
+
 $dnd-question-drop-location-background: white;
 $dnd-question-drop-location-border-color: black;
 $dnd-question-drop-location-results-border-color: $success;
@@ -242,6 +243,9 @@ $dnd-question-drop-location-drag-item-background: white;
 $dnd-question-dnd-items-drag-items-background: #eee;
 $dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
 $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
+
+$sa-question-container-input-background: white;
+$sa-question-container-input-border: #ced4da;
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;

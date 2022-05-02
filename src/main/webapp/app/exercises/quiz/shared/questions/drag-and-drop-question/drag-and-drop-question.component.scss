@@ -1,8 +1,8 @@
 @import '../../../../../../content/scss/artemis-mixins';
 
 .dnd-question {
-    background: var(--dnd-question-background);
-    border: 1px solid var(--dnd-question-border-color);
+    background: var(--quiz-question-background);
+    border: 1px solid var(--quiz-question-border-color);
     box-sizing: border-box;
     margin-bottom: 18px;
     padding: 20px;

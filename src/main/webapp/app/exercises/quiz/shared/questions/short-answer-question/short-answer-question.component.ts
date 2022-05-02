@@ -181,9 +181,9 @@ export class ShortAnswerQuestionComponent {
     getBackgroundColourForInputField(spotTag: string): string {
         const submittedTextForSpot = this.getSubmittedTextForSpot(spotTag);
         if (submittedTextForSpot === undefined) {
-            return 'red';
+            return 'var(--danger)';
         }
-        return submittedTextForSpot.isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
+        return submittedTextForSpot.isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'var(--success)' : 'var(--warning)') : 'var(--danger)';
     }
 
     /**
