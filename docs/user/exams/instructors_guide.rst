@@ -228,7 +228,7 @@ During the exam creation and configuration, you can create your exam and configu
 - The exam checklist helps you oversee and ensure every step of the exam is executed correctly.
 - You can track the progress of the steps mentioned in this document and spot missed steps easily.
 - Each row of the checklist includes the name of the task, description and short summary where it is applicable and the page column which navigates the instructors to the relevant action.
-- Going through each task from the start until the current task and checking the description column contains no warnings or errors can help instructors conduct the exam smoothly.
+- Going through each task from the start until the current task and making sure the description column contains no warnings or errors can help instructors conduct the exam smoothly.
 
 .. figure:: instructor/exam_checklist.png
    :alt: Exam Checklist
@@ -236,8 +236,8 @@ During the exam creation and configuration, you can create your exam and configu
 
    In Progress Exam Checklist
 
-- The exam list page displays a more concise overview of the exam steps in the exam status column.
-- You can glance over the exam preparation, conduction and correction status of the exams in the list.
+- The exam list page displays a more concise overview of the exam steps in the ``Exam Status`` column.
+- You can glance over the preparation, conduction and correction status of the exams in the list.
 
 .. figure:: instructor/exam_checklist_overview.png
    :alt: Exam Status Overview
