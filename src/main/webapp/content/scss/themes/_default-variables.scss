@@ -169,6 +169,11 @@ $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 $course-exercise-card-border-color: lightgrey;
 $course-exercise-card-background: #fefefe;
 
+// Component: color selector
+$color-selector-background: white;
+$color-selector-border: #ced4da;
+$color-selector-box-shadow: rgba(0, 0, 0, 0.175);
+
 // Component: Statistics average score graph
 $stat-av-sc-legend-background: whitesmoke;
 // These are from graph colors
