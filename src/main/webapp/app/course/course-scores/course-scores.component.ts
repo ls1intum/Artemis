@@ -25,6 +25,7 @@ import { mean, median, standardDeviation } from 'simple-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 import { CsvDecimalSeparator, CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
@@ -127,6 +128,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         private localeConversionService: LocaleConversionService,
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -912,5 +914,13 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 break;
         }
         this.changeDetector.detectChanges();
+    }
+
+    /**
+     * Handles the click on an arbitrary bar in the score distribution
+     * Delegates the user to the participant scores view of the course
+     */
+    accessParticipantScores(): void {
+        this.navigationUtilService.routeInNewTab(['course-management', this.course.id, 'participant-scores']);
     }
 }
