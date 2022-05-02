@@ -339,6 +339,41 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testQuizSubmitEmptyQuizInLiveMode() throws Exception {
+        int invalidExerciseId = -1;
+
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(350);
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
+        quizExerciseService.save(quizExercise);
+
+        quizScheduleService.clearAllQuizData();
+        quizScheduleService.clearQuizData(quizExercise.getId());
+
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
+
+        // submit quiz more times than the allowed number of attempts, expected status = BAD_REQUEST
+        request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testQuizSubmitNoMoreAttemptsLeftLiveMode_badRequest() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(360);
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
+        quizExercise.setAllowedNumberOfAttempts(0);
+        quizExerciseService.save(quizExercise);
+
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
+        // submit quiz more times than the allowed number of attempts, expected status = BAD_REQUEST
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(QuizMode.class)

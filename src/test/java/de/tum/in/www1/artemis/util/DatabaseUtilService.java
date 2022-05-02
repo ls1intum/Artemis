@@ -3202,23 +3202,30 @@ public class DatabaseUtilService {
     @NotNull
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
-        quizExercise.addQuestions(createMultipleChoiceQuestion());
-        quizExercise.addQuestions(createDragAndDropQuestion());
-        quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
-        quizExercise.setGradingInstructions(null);
+        initializeQuizExercise(quizExercise);
         return quizExercise;
+    }
+
+    @NotNull
+    public QuizExercise createQuizWithQuizBatchedExercises(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExerciseWithQuizBatches = ModelFactory.generateQuizExerciseWithQuizBatches(releaseDate, dueDate, quizMode, course);
+        initializeQuizExercise(quizExerciseWithQuizBatches);
+        return quizExerciseWithQuizBatches;
     }
 
     @NotNull
     public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
+        initializeQuizExercise(quizExercise);
+        return quizExercise;
+    }
+
+    private void initializeQuizExercise(QuizExercise quizExercise) {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
-        return quizExercise;
     }
 
     @NotNull
