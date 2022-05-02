@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.thymeleaf.spring5.SpringTemplateEngine;
@@ -95,7 +94,7 @@ public class MailServiceTest {
      */
     @Test
     public void testThrowException() {
-        doThrow(new org.springframework.mail.MailSendException("Some error occurred")).when(javaMailSender).send(Mockito.any(MimeMessage.class));
+        doThrow(new org.springframework.mail.MailSendException("Some error occurred")).when(javaMailSender).send(any(MimeMessage.class));
         Assertions.assertThrows(ArtemisMailException.class, () -> mailService.sendEmail(student1, subject, content, false, true));
     }
 }
