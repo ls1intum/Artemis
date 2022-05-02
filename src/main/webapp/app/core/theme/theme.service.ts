@@ -111,6 +111,24 @@ export class ThemeService {
     }
 
     /**
+     * Prints the current page.
+     * Disables any theme override before doing that to ensure that we print in default theme.
+     * Resets the theme afterwards if needed
+     */
+    public print() {
+        const overrideTag: any = document.getElementById(THEME_OVERRIDE_ID);
+        if (overrideTag) {
+            overrideTag.rel = 'none-tmp';
+        }
+        setTimeout(() => window.print(), 250);
+        setTimeout(() => {
+            if (overrideTag) {
+                overrideTag.rel = 'stylesheet';
+            }
+        }, 500);
+    }
+
+    /**
      * Applies the specified theme.
      * If the theme is the current theme, nothing will be changed, but the preference will be stored in local storage.
      * @param theme the theme to be applied
