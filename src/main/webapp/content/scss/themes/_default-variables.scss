@@ -154,10 +154,13 @@ $metis-light-blue: #e3ecf3;
 $metis-green: #33cd32;
 $metis-course-discussion-select-bg: white;
 
+$metis-answer-post-background-color: rgba(0, 0, 0, 0.02);
+
 $reaction-button-default-color: rgba(242, 242, 242);
 $reaction-button-hover-color: rgba(255, 255, 255);
 $reaction-button-reacted-color: $metis-light-blue;
 $reaction-button-reacted-accent-color: $metis-blue;
+$reaction-button-emoji-count-color: black;
 
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);

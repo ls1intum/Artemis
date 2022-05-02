@@ -27,6 +27,8 @@
 
     .emoji-count {
         font-size: 11px;
+        color: var(--reaction-button-emoji-count-color);
+        padding-left: 0.2em;
 
         &.reaction-count--reacted {
             font-weight: bold;
