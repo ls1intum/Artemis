@@ -134,7 +134,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
-                minimum = 0.9
+                minimum = 0.899
             }
             limit {
                 counter = "CLASS"
