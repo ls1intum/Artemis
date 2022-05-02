@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +25,9 @@ public class PlantUmlService {
 
     private static final String DARK_THEME_FILE_NAME = "puml-theme-artemisdark.puml";
 
-    private static final Path PATH_TMP_THEME = Paths.get(System.getProperty("java.io.tmpdir"), "artemis-puml-theme");
+    private static final String LIGHT_THEME_FILE_NAME = "puml-theme-artemislight.puml";
 
-    private static final Path PATH_DARK_THEME_FILE = Paths.get(System.getProperty("java.io.tmpdir"), "artemis-puml-theme", DARK_THEME_FILE_NAME);
+    private static final Path PATH_TMP_THEME = Paths.get(System.getProperty("java.io.tmpdir"), "artemis-puml-theme");
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -34,27 +35,31 @@ public class PlantUmlService {
         this.resourceLoaderService = resourceLoaderService;
 
         // Delete on first launch to ensure updates
-        Files.deleteIfExists(PATH_DARK_THEME_FILE);
-        ensureDarkTheme();
+        Files.deleteIfExists(PATH_TMP_THEME.resolve(DARK_THEME_FILE_NAME));
+        Files.deleteIfExists(PATH_TMP_THEME.resolve(LIGHT_THEME_FILE_NAME));
+        ensureThemes();
 
         System.setProperty("PLANTUML_SECURITY_PROFILE", "ALLOWLIST");
         System.setProperty("plantuml.allowlist.path", PATH_TMP_THEME.toAbsolutePath().toString());
     }
 
-    private void ensureDarkTheme() {
-        if (!Files.exists(PATH_DARK_THEME_FILE)) {
-            log.info("Storing dark UML theme to temporary directory");
-            var themeResource = resourceLoaderService.getResource("puml", DARK_THEME_FILE_NAME);
-            try (var inputStream = themeResource.getInputStream()) {
-                Files.createDirectories(PATH_TMP_THEME);
-                var path = Files.write(PATH_DARK_THEME_FILE, inputStream.readAllBytes());
-                log.info("Dark UML theme stored successfully to " + path);
+    private void ensureThemes() {
+        Stream.of(DARK_THEME_FILE_NAME, LIGHT_THEME_FILE_NAME).forEach(fileName -> {
+            var path = PATH_TMP_THEME.resolve(fileName);
+            if (!Files.exists(path)) {
+                log.info("Storing UML theme to temporary directory");
+                var themeResource = resourceLoaderService.getResource("puml", fileName);
+                try (var inputStream = themeResource.getInputStream()) {
+                    Files.createDirectories(PATH_TMP_THEME);
+                    Files.write(path, inputStream.readAllBytes());
+                    log.info("UML theme stored successfully to " + path);
+                }
+                catch (IOException e) {
+                    log.error("Unable to store UML dark theme");
+                    throw new RuntimeException(e);
+                }
             }
-            catch (IOException e) {
-                log.error("Unable to store UML dark theme");
-                throw new RuntimeException(e);
-            }
-        }
+        });
     }
 
     /**
@@ -99,9 +104,14 @@ public class PlantUmlService {
             throw new IllegalArgumentException("Cannot parse plantUml input longer than 10.000 characters");
         }
 
-        if (useDarkTheme && !plantUml.contains("!theme")) {
-            ensureDarkTheme();
-            return plantUml.replace("@startuml", "@startuml\n!theme artemisdark from " + PATH_TMP_THEME.toAbsolutePath());
+        if (!plantUml.contains("!theme")) {
+            ensureThemes();
+            if (useDarkTheme) {
+                return plantUml.replace("@startuml", "@startuml\n!theme artemisdark from " + PATH_TMP_THEME.toAbsolutePath());
+            }
+            else {
+                return plantUml.replace("@startuml", "@startuml\n!theme artemislight from " + PATH_TMP_THEME.toAbsolutePath());
+            }
         }
         return plantUml;
     }
