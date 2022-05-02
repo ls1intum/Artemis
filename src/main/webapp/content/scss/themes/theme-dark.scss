@@ -116,6 +116,10 @@ html {
     color: black !important;
 }
 
+.bg-light {
+    background: transparentize(white, 0.95) !important;
+}
+
 // ==================
 // NGX CHARTS STYLING
 // ==================
