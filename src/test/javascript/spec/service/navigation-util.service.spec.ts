@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../test.module';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, UrlTree } from '@angular/router';
 import { Location } from '@angular/common';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { of } from 'rxjs';
@@ -63,5 +63,20 @@ describe('Navigation Util Service', () => {
 
         expect(router.navigate).toHaveBeenCalledTimes(1);
         expect(router.navigate).toHaveBeenCalledWith(['a', 'b', 'c', 'd']);
+    });
+
+    it('should route correctly', () => {
+        const route = ['course-management', 17];
+        const urlTreeMock = { path: 'testValue' } as unknown as UrlTree;
+        const creationMock = jest.spyOn(router, 'createUrlTree');
+        const serializationMock = jest.spyOn(router, 'serializeUrl');
+        const windowStub = jest.spyOn(window, 'open').mockImplementation();
+
+        service.routeInNewTab(['course-management', 17]);
+
+        expect(creationMock).toHaveBeenCalledWith(route);
+        expect(creationMock).toHaveBeenCalledTimes(1);
+        expect(serializationMock).toHaveBeenCalledWith(urlTreeMock);
+        expect(windowStub).toHaveBeenCalledWith('testValue', '_blank');
     });
 });

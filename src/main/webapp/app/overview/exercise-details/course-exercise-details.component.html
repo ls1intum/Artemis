@@ -120,16 +120,6 @@
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
-                <a
-                    class="btn btn-primary btn-sm me-1"
-                    target="_blank"
-                    rel="noreferrer"
-                    href="{{ buildPlanUrl(exercise.studentParticipations![0]) }}"
-                    *ngIf="publishBuildPlanUrl() && buildPlanActive()"
-                >
-                    <fa-icon class="me-1" [icon]="faExternalLinkAlt" [fixedWidth]="true"></fa-icon>
-                    {{ 'artemisApp.exerciseActions.goToBuildPlan' | artemisTranslate }}
-                </a>
                 <jhi-programming-exercise-instructions
                     *ngIf="exercise"
                     [exercise]="exercise"

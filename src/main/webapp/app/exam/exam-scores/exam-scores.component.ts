@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExportToCsv } from 'export-to-csv';
 import {
@@ -32,6 +32,7 @@ import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-so
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 export enum MedianType {
     PASSED,
@@ -108,7 +109,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
         private courseManagementService: CourseManagementService,
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
         private accountService: AccountService,
     ) {}
 
@@ -734,7 +735,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     onSelect() {
         if (this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.router.navigate(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
+            this.navigationUtilService.routeInNewTab(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
         }
     }
 

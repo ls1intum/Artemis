@@ -349,4 +349,8 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
     private static String getText(Element element) {
         return element == null ? "" : element.text();
     }
+
+    public void clearCachedApplicationLinks() {
+        cachedApplicationLinks.clear();
+    }
 }
