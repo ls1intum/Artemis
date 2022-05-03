@@ -63,7 +63,7 @@ public class AccountResource {
 
     /**
      * the registration is only enabled when the configuration artemis.user-management.registration.enabled is set to true.
-     * A non existing entry or false mean that the registration is not enabled
+     * A non-existing entry or false mean that the registration is not enabled
      *
      * @return whether the registration is enabled or not
      */
@@ -219,7 +219,7 @@ public class AccountResource {
         else {
             // Pretend the request has been successful to prevent checking which emails or usernames really exist
             // but log that an invalid attempt has been made
-            log.warn("Password reset requested for non existing mail or username '{}'", mailUsername);
+            log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
         }
     }
 

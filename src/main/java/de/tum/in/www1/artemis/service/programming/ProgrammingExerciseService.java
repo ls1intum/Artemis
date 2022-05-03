@@ -566,7 +566,7 @@ public class ProgrammingExerciseService {
 
                     try {
                         Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
-                        // filter non existing resources to avoid exceptions
+                        // filter non-existing resources to avoid exceptions
                         List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
                         for (Resource resource : projectTypeTestFileResources) {
                             if (resource.exists()) {

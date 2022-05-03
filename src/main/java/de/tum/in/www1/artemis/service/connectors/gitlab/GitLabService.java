@@ -416,7 +416,7 @@ public class GitLabService extends AbstractVersionControlService {
                 gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(exercise), accessLevel);
             }
             catch (GitLabException e) {
-                // ignore the exception and continue with the next user, one non existing user or issue here should not
+                // ignore the exception and continue with the next user, one non-existing user or issue here should not
                 // prevent the creation of the whole programming exercise
                 log.warn("Skipped adding user {} to groups of exercise {}: {}", user.getLogin(), exercise, e.getMessage());
             }
