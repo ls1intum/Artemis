@@ -31,7 +31,6 @@ import { CourseScoresExcelRowBuilder } from 'app/course/course-scores/course-sco
 import { CourseScoresRowBuilder, CourseScoresExportRow } from 'app/course/course-scores/course-scores-row-builder';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
-
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const NAME_KEY = 'Name';
 export const USERNAME_KEY = 'Username';
