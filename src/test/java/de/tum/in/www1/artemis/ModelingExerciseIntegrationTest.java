@@ -810,12 +810,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportModelingExercise_setGradingInstructionForCopiedFeedback() throws Exception {
 
-        // gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
-        // gradingCriterionRepository.saveAll(gradingCriteria);
-        // Feedback feedback = new Feedback();
-        // feedback.setGradingInstruction(gradingCriteria.get(0).getStructuredGradingInstructions().get(0));
-        // feedbackRepository.save(feedback);
-
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
@@ -832,7 +826,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).get();
-        // modelingExerciseRepository.save(modelingExercise);
+
         Feedback feedback = ModelFactory.generateFeedback().get(0);
         feedback.setGradingInstruction(gradingInstruction);
         database.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
@@ -842,7 +836,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
                 HttpStatus.CREATED);
 
         assertThat(modelingExerciseRepository.findById(importedModelingExercise.getId())).isPresent();
-        // importedModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(importedModelingExercise.getId()).get();
 
         var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().get();
         GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getGradingInstruction();

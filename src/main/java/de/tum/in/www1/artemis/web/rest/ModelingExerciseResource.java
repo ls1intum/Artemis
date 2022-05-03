@@ -359,29 +359,8 @@ public class ModelingExerciseResource {
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
         ModelingExercise result = modelingExerciseRepository.save(newModelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
-        removeFeedbackGradingCriterionReferences(newModelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newModelingExercise.getId().toString())).body(newModelingExercise);
-    }
-
-    /**
-     * Sets references from Feedback's GradingInstruction to their GradingCriterion to null in order to avoid:
-     * "Could not write JSON: Infinite recursion (StackOverflowError)" error.
-     * @param exercise The exercise after save which will be serialized to JSON.
-     */
-    private void removeFeedbackGradingCriterionReferences(ModelingExercise exercise) {
-        for (var exampleSubmission : exercise.getExampleSubmissions()) {
-            var latestResult = exampleSubmission.getSubmission().getLatestResult();
-            if (latestResult == null) {
-                continue;
-            }
-            for (var feedback : latestResult.getFeedbacks()) {
-                var gradingInstruction = feedback.getGradingInstruction();
-                if (gradingInstruction != null) {
-                    gradingInstruction.setGradingCriterion(null);
-                }
-            }
-        }
     }
 
     /**

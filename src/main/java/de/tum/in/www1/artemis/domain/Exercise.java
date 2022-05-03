@@ -793,6 +793,9 @@ public abstract class Exercise extends BaseExercise {
     }
 
     /** Helper method which does a hard copy of the Grading Criteria
+     * Also fills {@code gradingInstructionCopyTracker}.
+     *
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      *
      * @return A clone of the grading criteria list
      */
@@ -809,9 +812,11 @@ public abstract class Exercise extends BaseExercise {
     }
 
     /** Helper method which does a hard copy of the Grading Instructions
+     * Also fills {@code gradingInstructionCopyTracker}.
      *
      * @param originalGradingCriterion The original grading criterion which contains the grading instructions
      * @param newGradingCriterion The cloned grading criterion in which we insert the grading instructions
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
     private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
