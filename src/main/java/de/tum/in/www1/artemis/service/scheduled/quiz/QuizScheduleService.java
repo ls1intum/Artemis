@@ -99,6 +99,7 @@ public class QuizScheduleService {
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         // activate Quiz Schedule Service
+        SecurityUtils.setAuthorizationObject();
         startSchedule(5 * 1000);                          // every 5 seconds
     }
 
@@ -222,7 +223,6 @@ public class QuizScheduleService {
             }
 
             // schedule quiz start for all existing quizzes that are planned to start in the future
-            SecurityUtils.setAuthorizationObject();
             List<QuizExercise> quizExercises = quizExerciseRepository.findAllPlannedToStartInTheFuture();
             log.info("Found {} quiz exercises with planned start in the future", quizExercises.size());
             for (QuizExercise quizExercise : quizExercises) {
