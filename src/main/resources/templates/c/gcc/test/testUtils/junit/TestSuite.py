@@ -1,7 +1,9 @@
-from typing import Dict
-from testUtils.junit.TestCase import TestCase, Result
 from datetime import timedelta
+from typing import Dict
 from xml.etree import ElementTree as Et
+
+from testUtils.junit.TestCase import Result, TestCase
+
 
 class TestSuite:
     __cases: Dict[str, TestCase]
@@ -14,7 +16,6 @@ class TestSuite:
     successful: int
     time: timedelta
 
-
     def __init__(self, name: str):
         self.name = name
 
@@ -25,7 +26,7 @@ class TestSuite:
         self.skipped: int = 0
         self.successful: int = 0
         self.time: timedelta = timedelta()
-    
+
     def addCase(self, case: TestCase):
         self.__cases[case.name] = case
         self.tests += 1
@@ -39,7 +40,7 @@ class TestSuite:
             self.skipped += 1
         else:
             self.successful += 1
-    
+
     def toXml(self):
         suite: Et.Element = Et.Element("testsuite")
         suite.set("name", self.name)
@@ -49,6 +50,6 @@ class TestSuite:
         suite.set("skipped", str(self.skipped))
         suite.set("time", str(self.time.total_seconds()))
 
-        for name, case in self.__cases.items():
+        for _name, case in self.__cases.items():
             case.toXml(suite)
         return suite

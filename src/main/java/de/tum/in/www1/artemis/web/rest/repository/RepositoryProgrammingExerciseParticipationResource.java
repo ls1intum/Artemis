@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -367,7 +365,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 // The result of the given ID must belong to the participation
                 log.warn("Participation ID {} tried to access the build logs of another participation's submission with ID {}.", participation.getId(),
                         programmingSubmission.getId());
-                return badRequest();
+                throw new AccessForbiddenException("No permission to access the build log of another participation's submission");
             }
         }
         else if (programmingSubmission == null) {
