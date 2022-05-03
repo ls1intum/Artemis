@@ -281,7 +281,7 @@ public class UserResource {
     @PutMapping("users/notification-date")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updateUserNotificationDate() {
-        log.debug("REST request to update notification date for logged in user");
+        log.debug("REST request to update notification date for logged-in user");
         User user = userRepository.getUser();
         userRepository.updateUserNotificationReadDate(user.getId());
         return ResponseEntity.ok().build();
@@ -296,7 +296,7 @@ public class UserResource {
     @PutMapping("users/notification-visibility")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updateUserNotificationVisibility(@RequestBody boolean showAllNotifications) {
-        log.debug("REST request to update notification visibility for logged in user");
+        log.debug("REST request to update notification visibility for logged-in user");
         User user = userRepository.getUser();
         // if all notifications (regardless of their creation date) should be shown hideUntil should be null
         ZonedDateTime hideUntil = showAllNotifications ? null : ZonedDateTime.now();

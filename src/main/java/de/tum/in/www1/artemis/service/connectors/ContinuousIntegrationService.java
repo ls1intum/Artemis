@@ -197,7 +197,7 @@ public interface ContinuousIntegrationService {
             String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories);
 
     /**
-     * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
+     * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
      *
      * @param projectKey The key of the project to grant permissions to
      * @param groups The role of the users that should have the permissions
