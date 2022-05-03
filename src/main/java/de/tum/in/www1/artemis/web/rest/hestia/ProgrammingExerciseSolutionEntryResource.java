@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.structural.StructuralSolutionEntryGenerationException;
 import de.tum.in.www1.artemis.service.hestia.structural.StructuralTestCaseService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
@@ -235,7 +236,7 @@ public class ProgrammingExerciseSolutionEntryResource {
         }
         catch (StructuralSolutionEntryGenerationException e) {
             log.error("Unable to create structural solution entries", e);
-            return ResponseEntity.badRequest().build();
+            throw new InternalServerErrorException(e.getMessage());
         }
     }
 

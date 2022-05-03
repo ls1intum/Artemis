@@ -3,9 +3,11 @@
         "title": "Fehlerseite!",
         "http": {
             "400": "Ungültige Anfrage.",
+            "401": "Du bist nicht authentifiziert, um auf diese Seite zuzugreifen.",
             "403": "Du hast nicht die nötigen Berechtigungen, um diese Seite anzuzeigen.",
             "404": "Die Seite existiert nicht.",
             "405": "Die verwendete Anfrage Methode ist für diese URL nicht erlaubt.",
+            "409": "Es gab einen Konflikt bei der Bearbeitung Deiner Anfrage.",
             "500": "Interner Serverfehler."
         },
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",

@@ -17,7 +17,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -38,7 +38,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
@@ -72,6 +72,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     isExamMode = false;
     isTestRun = false;
     isAtLeastInstructor = false;
+    isLoading = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -185,6 +186,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
@@ -612,14 +614,18 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Called after the tutor has read the instructions and creates a new tutor participation
      */
     readInstruction() {
-        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe({
-            next: (res: HttpResponse<TutorParticipation>) => {
-                this.tutorParticipation = res.body!;
-                this.tutorParticipationStatus = this.tutorParticipation.status!;
-                this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
-            },
-            error: this.onError,
-        });
+        this.isLoading = true;
+        this.tutorParticipationService
+            .create(this.tutorParticipation, this.exerciseId)
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe({
+                next: (res: HttpResponse<TutorParticipation>) => {
+                    this.tutorParticipation = res.body!;
+                    this.tutorParticipationStatus = this.tutorParticipation.status!;
+                    this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
+                },
+                error: this.onError,
+            });
     }
 
     /**
@@ -774,7 +780,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     navigateToExerciseSubmissionOverview(event: any): void {
         if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
+            this.navigationUtilService.routeInNewTab(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
     }
 
