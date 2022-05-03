@@ -60,7 +60,7 @@ public class LectureUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
-        final Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).orElseThrow();
+        final Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
 
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "LectureUnit", "courseMissing");
