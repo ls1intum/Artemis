@@ -93,8 +93,9 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    max-width: 250px;
-    min-width: 0;
+    max-width: 300px;
+    width: 250px;
+    min-width: fit-content;
     text-align: center;
 
     .head {
@@ -122,9 +123,11 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
         margin: 1em 0.5em 0.5em;
         padding: 0.3em 0.5em;
         width: 100%;
+        min-width: fit-content;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        white-space: nowrap;
 
         .form-switch {
             font-size: 16px;

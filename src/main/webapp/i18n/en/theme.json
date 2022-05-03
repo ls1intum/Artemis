@@ -15,7 +15,8 @@
             },
             "enableNow": "Enable now",
             "noThanks": "No, thanks",
-            "gotIt": "Got it!"
+            "gotIt": "Got it!",
+            "sync": "Sync with Operating System"
         }
     }
 }

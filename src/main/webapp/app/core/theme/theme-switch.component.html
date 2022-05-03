@@ -3,7 +3,7 @@
         <div class="head">☾ <span jhiTranslate="artemisApp.theme.darkMode">Dark Mode</span> ☾</div>
         <div class="experimental" jhiTranslate="artemisApp.theme.experimental">EXPERIMENTAL</div>
         <div class="switch-box">
-            <div><fa-icon [icon]="faSync"></fa-icon> Sync with Operating System</div>
+            <div><fa-icon [icon]="faSync"></fa-icon> {{ 'artemisApp.theme.sync' | artemisTranslate }}</div>
             <div class="form-switch">
                 <input class="form-check-input" type="checkbox" (click)="toggleSynced()" [checked]="isSynced" />
             </div>

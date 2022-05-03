@@ -15,7 +15,8 @@
             },
             "enableNow": "Jetzt aktivieren",
             "noThanks": "Nein, danke",
-            "gotIt": "Alles klar!"
+            "gotIt": "Alles klar!",
+            "sync": "Mit Betriebssystem synchronisieren"
         }
     }
 }
