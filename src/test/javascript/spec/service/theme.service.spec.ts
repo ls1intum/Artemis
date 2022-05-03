@@ -95,7 +95,7 @@ describe('ThemeService', () => {
         const applySpy = jest.spyOn(service, 'applyTheme').mockImplementation(jest.fn());
         const windowMatchMediaSpy = jest.spyOn(window, 'matchMedia');
 
-        service.restoreTheme();
+        service.initialize();
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(applySpy).toHaveBeenCalledWith(Theme.LIGHT);
@@ -115,7 +115,7 @@ describe('ThemeService', () => {
             throw new Error('Shouldnt happen');
         });
 
-        service.restoreTheme();
+        service.initialize();
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenCalledTimes(2);
@@ -140,7 +140,7 @@ describe('ThemeService', () => {
             throw new Error('Shouldnt happen');
         });
 
-        service.restoreTheme();
+        service.initialize();
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenCalledTimes(2);

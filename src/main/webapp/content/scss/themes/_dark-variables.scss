@@ -143,6 +143,9 @@ $popover-bg: lighten($neutral-dark, 5);
 $popover-header-bg: $gray-700;
 $modal-content-bg: $neutral-dark;
 
+// Borders
+$theme-switch-box-border-color: lighten($neutral-dark, 15);
+
 // Global.scss colors
 $colored-btn-font: #fff;
 $default-btn-font: white;

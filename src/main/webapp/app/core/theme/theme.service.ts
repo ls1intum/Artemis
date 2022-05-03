@@ -3,7 +3,7 @@ import { faMoon, faSun, IconDefinition } from '@fortawesome/free-solid-svg-icons
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable } from 'rxjs';
 
-export const THEME_LOCAL_STORAGE_KEY = 'artmisApp.theme.current';
+export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';
 export const THEME_OVERRIDE_ID = 'artemis-theme-override';
 
 /**
@@ -57,12 +57,14 @@ export class ThemeService {
      * @private
      */
     private currentThemeSubject: BehaviorSubject<Theme> = new BehaviorSubject<Theme>(Theme.LIGHT);
-
     /**
-     * Indicates whether the current theme selection resulted from an automated detection based on the environment.
-     * Will only be the case after application start up if there's no stored theme preference and we fall back to OS preferences.
+     * A behavior subject that fires if the user preference changes.
+     * Can be either a theme for an explicit theme or undefined if system settings are preferred
+     * @private
      */
-    isAutoDetected = true;
+    private preferenceSubject: BehaviorSubject<Theme | undefined> = new BehaviorSubject<Theme | undefined>(undefined);
+
+    private readonly darkSchemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     constructor(private localStorageService: LocalStorageService) {}
 
@@ -81,33 +83,71 @@ export class ThemeService {
     }
 
     /**
-     * Should be called once on application startup to either
-     * - load the theme from the theme preference stored in local storage, or
-     * - load the theme based on the OS preferences for dark user interfaces using a CSS media query
+     * Returns an observable that will be fired immediately for the current user preference and if the user preference changes.
+     * Can be either a theme for an explicit theme or undefined if system settings are preferred
      */
-    restoreTheme() {
-        const storedIdentifier = this.localStorageService.retrieve(THEME_LOCAL_STORAGE_KEY);
-        if (storedIdentifier) {
-            const storedTheme = Theme.all.find((theme) => theme.identifier === storedIdentifier);
+    public getPreferenceObservable(): Observable<Theme | undefined> {
+        return this.preferenceSubject.asObservable();
+    }
 
-            if (storedTheme) {
-                this.applyTheme(storedTheme);
-                return;
-            } else {
-                console.warn('Unknown theme found in local storage: ' + storedIdentifier);
-            }
+    /**
+     * Should be called once on application startup.
+     * Sets up the system preference listener and applies the theme initially
+     * Sets up a local storage listener to account for changes in other tabs
+     */
+    initialize() {
+        if (this.darkSchemeMediaQuery.media !== 'not all') {
+            this.darkSchemeMediaQuery.addEventListener('change', () => this.applyPreferredTheme());
         }
 
-        // Did not find a stored theme!
-        // Let's check if the user prefers dark mode on the OS level / globally
-        if (window.matchMedia('(prefers-color-scheme)').media !== 'not all' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            this.applyThemeInternal(Theme.DARK, true);
+        addEventListener('storage', (event) => {
+            if (event.key === 'jhi-' + THEME_LOCAL_STORAGE_KEY) {
+                this.preferenceSubject.next(this.getStoredTheme());
+                this.applyPreferredTheme();
+            }
+        });
+
+        this.applyPreferredTheme();
+        this.preferenceSubject.next(this.getStoredTheme());
+    }
+
+    /**
+     * Applies the preferred theme.
+     * The preferred theme is either
+     * - the theme stored in local storage, if present, or else
+     * - the system preference, if present, or else
+     * - the default theme
+     * @private
+     */
+    private applyPreferredTheme() {
+        const storedTheme = this.getStoredTheme();
+        if (storedTheme) {
+            this.applyThemeInternal(storedTheme);
             return;
         }
 
-        // The default LIGHT theme is always applied automatically; no need for fallback handling here.
-        // Anyways, be "detected" that the user prefers the light mode, so lets set the flag
-        this.isAutoDetected = true;
+        if (this.darkSchemeMediaQuery.matches) {
+            this.applyThemeInternal(Theme.DARK);
+            return;
+        }
+
+        this.applyThemeInternal(Theme.LIGHT);
+    }
+
+    /**
+     * Returns the theme preference stored in local storage or undefined if no preference is stored
+     * @private
+     */
+    private getStoredTheme(): Theme | undefined {
+        const storedIdentifier = this.localStorageService.retrieve(THEME_LOCAL_STORAGE_KEY);
+        const storedTheme = Theme.all.find((theme) => theme.identifier === storedIdentifier);
+
+        // An unknown theme was stored. Let's clear it
+        if (storedIdentifier && !storedTheme) {
+            this.storePreference(undefined);
+        }
+
+        return storedTheme;
     }
 
     /**
@@ -130,23 +170,23 @@ export class ThemeService {
 
     /**
      * Applies the specified theme.
-     * If the theme is the current theme, nothing will be changed, but the preference will be stored in local storage.
-     * @param theme the theme to be applied
+     * Should only be called upon user request.
+     * Stores the preference in local storage.
+     *
+     * @param theme the theme to be applied; pass undefined to use system preference mode
      */
-    public applyTheme(theme: Theme) {
-        this.applyThemeInternal(theme, false);
+    public applyThemeExplicitly(theme: Theme | undefined) {
+        this.storePreference(theme);
+        this.applyPreferredTheme();
     }
 
-    private applyThemeInternal(theme: Theme, byAutoDetection: boolean) {
+    private applyThemeInternal(theme: Theme) {
         if (!theme) {
             return;
         }
 
         // Do not inject or remove anything from the DOM if the applied theme is the current theme
         if (this.currentTheme === theme) {
-            // The theme has been explicitly set. Store it even if it's already applied
-            this.localStorageService.store(THEME_LOCAL_STORAGE_KEY, theme.identifier);
-            this.isAutoDetected = byAutoDetection;
             return;
         }
 
@@ -158,7 +198,6 @@ export class ThemeService {
             // our theme override, if present
             overrideTag?.remove();
 
-            this.isAutoDetected = byAutoDetection;
             this.currentTheme = theme;
             this.currentThemeSubject.next(theme);
         } else {
@@ -177,7 +216,6 @@ export class ThemeService {
             // and fire the subject to inform other services and components
             newTag.onload = () => {
                 overrideTag?.remove();
-                this.isAutoDetected = byAutoDetection;
                 this.currentTheme = theme;
                 this.currentThemeSubject.next(theme);
             };
@@ -187,8 +225,17 @@ export class ThemeService {
             const lastLinkTag = existingLinkTags[existingLinkTags.length - 1];
             head.insertBefore(newTag, lastLinkTag?.nextSibling);
         }
+    }
 
-        // Finally, store the selected preference in local storage
-        this.localStorageService.store(THEME_LOCAL_STORAGE_KEY, theme.identifier);
+    private storePreference(theme?: Theme) {
+        if (theme) {
+            this.localStorageService.store(THEME_LOCAL_STORAGE_KEY, theme.identifier);
+        } else {
+            this.localStorageService.clear(THEME_LOCAL_STORAGE_KEY);
+        }
+
+        if (this.preferenceSubject.getValue() !== theme) {
+            this.preferenceSubject.next(theme);
+        }
     }
 }

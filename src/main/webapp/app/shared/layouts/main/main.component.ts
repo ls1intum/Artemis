@@ -47,6 +47,6 @@ export class JhiMainComponent implements OnInit {
             }
         });
 
-        this.themeService.restoreTheme();
+        this.themeService.initialize();
     }
 }

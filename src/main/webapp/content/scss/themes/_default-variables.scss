@@ -62,6 +62,9 @@ $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 20);
 
+// Borders
+$theme-switch-box-border-color: $border-color;
+
 // Global.scss colors
 $colored-btn-font: #fff;
 $default-btn-font: #333;
