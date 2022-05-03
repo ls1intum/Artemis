@@ -1,9 +1,9 @@
 <div [id]="'exercise-card-' + exercise.id" class="course-exercise-row row align-items-center mb-2 mt-2 position-relative" [class.guided-tour]="hasGuidedTour">
     <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', exercise.id!]"></a>
     <div class="col-auto d-none d-sm-block">
-        <div class="exercise-row-icon">
+        <a class="exercise-row-icon" [routerLink]="['/courses', course.id!, 'exercises', exercise.id!]">
             <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
-        </div>
+        </a>
     </div>
     <div class="col">
         <div class="row">
@@ -38,7 +38,7 @@
             ></jhi-exercise-details-student-actions>
             <div class="exercise-tags col-auto col-sm d-flex justify-content-center mt-2">
                 <h4 class="fw-medium">
-                    <jhi-not-released-tag class="me-1" [exercise]="exercise"></jhi-not-released-tag>
+                    <a [routerLink]="['/courses', course.id!, 'exercises', exercise.id!]"><jhi-not-released-tag class="me-1" [exercise]="exercise"></jhi-not-released-tag></a>
                 </h4>
                 <h4 class="fw-medium" *ngIf="!isPresentationMode">
                     <span class="badge bg-success me-1" [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{
@@ -52,7 +52,9 @@
                     <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
                 </h4>
                 <h4 class="fw-medium" *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                    <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+                    <a [routerLink]="['/courses', course.id!, 'exercises', exercise.id!]">
+                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+                    </a>
                 </h4>
             </div>
             <div class="col-sm-auto mb-2" *ngIf="dueDate; else noDate" [ngClass]="getUrgentClass(dueDate) || ''">
