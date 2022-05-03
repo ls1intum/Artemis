@@ -31,7 +31,7 @@ public class PlantUmlResource {
      * Generate PNG diagram for given PlantUML commands
      *
      * @param plantuml PlantUML command(s)
-     * @param useDarkTheme wether or not the dark theme should be used
+     * @param useDarkTheme whether the dark theme should be used
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
@@ -50,7 +50,7 @@ public class PlantUmlResource {
      * Generate svn diagram for given PlantUML commands
      *
      * @param plantuml PlantUML command(s)
-     * @param useDarkTheme wether or not the dark theme should be used
+     * @param useDarkTheme whether the dark theme should be used
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
