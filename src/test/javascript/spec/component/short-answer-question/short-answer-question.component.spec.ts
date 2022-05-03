@@ -176,10 +176,10 @@ describe('ShortAnswerQuestionComponent', () => {
         alternativeQuestion.correctMappings = [mapping];
 
         component.shortAnswerQuestion = alternativeQuestion;
-        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('lightgreen');
+        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('var(--success)');
         component.shortAnswerQuestion.correctMappings = [];
-        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('yellow');
+        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('var(--warning)');
         component.submittedTexts = [];
-        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('red');
+        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('var(--danger)');
     });
 });

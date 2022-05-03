@@ -4,23 +4,24 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { MockDirective } from 'ng-mocks';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 describe('ThemeSwitchComponent', () => {
     let component: ThemeSwitchComponent;
     let fixture: ComponentFixture<ThemeSwitchComponent>;
     let themeService: ThemeService;
-    let applyThemeSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ThemeSwitchComponent, MockDirective(NgbPopover)],
+            providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ThemeSwitchComponent);
                 themeService = TestBed.inject(ThemeService);
-                applyThemeSpy = jest.spyOn(themeService, 'applyTheme');
                 component = fixture.componentInstance;
                 // @ts-ignore
                 component.popover = { open: jest.fn(), close: jest.fn() };
@@ -31,7 +32,6 @@ describe('ThemeSwitchComponent', () => {
 
     it('oninit: subscribe, open popover after 1200ms', fakeAsync(() => {
         const subscribeSpy = jest.spyOn(themeService, 'getCurrentThemeObservable');
-        themeService.isAutoDetected = true;
 
         component.ngOnInit();
         expect(subscribeSpy).toHaveBeenCalledOnce();
@@ -40,18 +40,40 @@ describe('ThemeSwitchComponent', () => {
         tick(1200);
 
         expect(component.popover.open).toHaveBeenCalled();
-        expect(component.isByAutoDetection).toBeTrue();
+        expect(component.showInitialHints).toBeTrue();
+
+        component.closePopover();
+
+        tick(200);
+
+        expect(component.showInitialHints).toBeFalse();
     }));
 
-    it('toggles correctly', fakeAsync(() => {
+    it('theme toggles correctly', fakeAsync(() => {
         component.ngOnInit();
-        component.toggle();
+        component.toggleTheme();
         expect(component.animate).toBeFalse();
         expect(component.openPopupAfterNextChange).toBeTrue();
 
         tick();
 
         expectSwitchToDark();
+
+        flush();
+    }));
+
+    it('os sync toggles correctly', fakeAsync(() => {
+        component.ngOnInit();
+        component.toggleSynced();
+
+        tick();
+
+        expect(component.isSynced).toBeFalse();
+        component.toggleSynced();
+
+        tick();
+
+        expect(component.isSynced).toBeTrue();
 
         flush();
     }));
@@ -70,26 +92,12 @@ describe('ThemeSwitchComponent', () => {
     }));
 
     function expectSwitchToDark() {
-        expect(applyThemeSpy).toHaveBeenCalledOnce();
-        expect(applyThemeSpy).toHaveBeenCalledWith(Theme.DARK);
         expect(component.isDark).toBeTrue();
         expect(component.animate).toBeTrue();
-        expect(component.isByAutoDetection).toBeFalse();
         expect(component.openPopupAfterNextChange).toBeFalse();
 
         tick(250);
 
         expect(component.popover.open).toHaveBeenCalled();
     }
-
-    it('manualClose works correctly', fakeAsync(() => {
-        component.manualClose();
-
-        expect(component.popover.close).toHaveBeenCalledOnce();
-
-        tick(200);
-
-        expect(applyThemeSpy).toHaveBeenCalledWith(Theme.LIGHT);
-        expect(component.isByAutoDetection).toBeFalse();
-    }));
 });

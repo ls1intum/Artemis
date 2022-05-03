@@ -1,8 +1,7 @@
 import { Theme, THEME_LOCAL_STORAGE_KEY, THEME_OVERRIDE_ID, ThemeService } from 'app/core/theme/theme.service';
 import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { TestBed } from '@angular/core/testing';
-import { MockThemeService } from '../helpers/mocks/service/mock-theme.service';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 describe('ThemeService', () => {
     let service: ThemeService;
@@ -15,6 +14,7 @@ describe('ThemeService', () => {
     let newElement: HTMLLinkElement;
     let documentCreateElementMock: jest.SpyInstance;
     let storeSpy: jest.SpyInstance;
+    let windowMatchMediaSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -42,19 +42,26 @@ describe('ThemeService', () => {
                 documentCreateElementMock = jest.spyOn(document, 'createElement').mockReturnValue(newElement);
 
                 storeSpy = jest.spyOn(localStorageService, 'store');
+
+                windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query) => {
+                    if (query === '(prefers-color-scheme)') {
+                        return { media: '(prefers-color-scheme)', addEventListener: jest.fn() } as any as MediaQueryList;
+                    }
+                    if (query === '(prefers-color-scheme: dark)') {
+                        return { media: '(prefers-color-scheme: dark)', matches: false, addEventListener: jest.fn() } as any as MediaQueryList;
+                    }
+                    throw new Error('Shouldnt happen');
+                });
             });
     });
 
-    afterEach(() => jest.restoreAllMocks());
-
-    it('doesnt change anything if current theme is reapplied', () => {
-        service.applyTheme(Theme.LIGHT);
-        expect(storeSpy).toHaveBeenCalledOnce();
-        expect(storeSpy).toHaveBeenCalledWith(THEME_LOCAL_STORAGE_KEY, 'LIGHT');
+    afterEach(() => {
+        jest.restoreAllMocks();
+        windowMatchMediaSpy.mockRestore();
     });
 
     it('applies theme changes correctly', () => {
-        service.applyTheme(Theme.DARK);
+        service.applyThemeExplicitly(Theme.DARK);
 
         expect(documentGetElementMock).toHaveBeenCalledOnce();
         expect(documentGetElementMock).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
@@ -82,7 +89,7 @@ describe('ThemeService', () => {
         expect(linkElement.remove).toHaveBeenCalledOnce();
         expect(service.getCurrentTheme()).toBe(Theme.DARK);
 
-        service.applyTheme(Theme.LIGHT);
+        service.applyThemeExplicitly(Theme.LIGHT);
 
         expect(documentGetElementMock).toHaveBeenCalledTimes(2);
         expect(documentGetElementMock).toHaveBeenNthCalledWith(2, THEME_OVERRIDE_ID);
@@ -92,63 +99,60 @@ describe('ThemeService', () => {
 
     it('restores stored theme correctly', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue('LIGHT');
-        const applySpy = jest.spyOn(service, 'applyTheme').mockImplementation(jest.fn());
-        const windowMatchMediaSpy = jest.spyOn(window, 'matchMedia');
 
         service.initialize();
 
-        expect(retrieveSpy).toHaveBeenCalledOnce();
-        expect(applySpy).toHaveBeenCalledWith(Theme.LIGHT);
-        expect(windowMatchMediaSpy).not.toHaveBeenCalled();
+        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
     });
 
     it('applies dark OS preferences', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
-        const applySpy = jest.spyOn(service as any as MockThemeService, 'applyThemeInternal').mockImplementation(jest.fn());
-        const windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query) => {
+        windowMatchMediaSpy.mockRestore();
+        windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query) => {
             if (query === '(prefers-color-scheme)') {
-                return { media: 'all' } as MediaQueryList;
+                return { media: '(prefers-color-scheme)', addEventListener: jest.fn() } as any as MediaQueryList;
             }
             if (query === '(prefers-color-scheme: dark)') {
-                return { matches: true } as MediaQueryList;
+                return { media: '(prefers-color-scheme: dark)', matches: true, addEventListener: jest.fn() } as any as MediaQueryList;
             }
             throw new Error('Shouldnt happen');
         });
 
         service.initialize();
+        // @ts-ignore
+        newElement?.onload();
 
-        expect(retrieveSpy).toHaveBeenCalledOnce();
-        expect(windowMatchMediaSpy).toHaveBeenCalledTimes(2);
-        expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme)');
-        expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(2, '(prefers-color-scheme: dark)');
-        expect(applySpy).toHaveBeenCalledOnce();
-        expect(applySpy).toHaveBeenCalledWith(Theme.DARK, true);
-
-        windowMatchMediaSpy.mockRestore();
+        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+        expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
+        expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme: dark)');
+        expect(service.getCurrentTheme()).toBe(Theme.DARK);
     });
 
     it('applies light OS preferences', () => {
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
-        const applySpy = jest.spyOn(service as any as MockThemeService, 'applyThemeInternal').mockImplementation(jest.fn());
-        const windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query) => {
-            if (query === '(prefers-color-scheme)') {
-                return { media: 'all' } as MediaQueryList;
-            }
-            if (query === '(prefers-color-scheme: dark)') {
-                return { matches: false } as MediaQueryList;
-            }
-            throw new Error('Shouldnt happen');
-        });
 
         service.initialize();
 
-        expect(retrieveSpy).toHaveBeenCalledOnce();
-        expect(windowMatchMediaSpy).toHaveBeenCalledTimes(2);
-        expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme)');
-        expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(2, '(prefers-color-scheme: dark)');
-        expect(applySpy).not.toHaveBeenCalled();
-        expect(service.isAutoDetected).toBe(true);
-
-        windowMatchMediaSpy.mockRestore();
+        expect(retrieveSpy).toHaveBeenCalledTimes(2);
+        expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
+        expect(windowMatchMediaSpy).toHaveBeenNthCalledWith(1, '(prefers-color-scheme: dark)');
+        expect(service.getCurrentTheme()).toBe(Theme.LIGHT);
     });
+
+    it('does print correctly', fakeAsync(() => {
+        const winSpy = jest.spyOn(window, 'print').mockImplementation();
+        const returnedElement = { rel: 'stylesheet' };
+        const docSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnedElement as any as HTMLElement);
+
+        service.print();
+
+        expect(docSpy).toHaveBeenCalledOnce();
+        expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
+        expect(returnedElement.rel).toBe('none-tmp');
+        tick(250);
+        expect(winSpy).toHaveBeenCalledOnce();
+        tick(250);
+        expect(returnedElement.rel).toBe('stylesheet');
+    }));
 });

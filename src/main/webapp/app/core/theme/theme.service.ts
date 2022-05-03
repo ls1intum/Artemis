@@ -64,7 +64,7 @@ export class ThemeService {
      */
     private preferenceSubject: BehaviorSubject<Theme | undefined> = new BehaviorSubject<Theme | undefined>(undefined);
 
-    private readonly darkSchemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    private darkSchemeMediaQuery: MediaQueryList;
 
     constructor(private localStorageService: LocalStorageService) {}
 
@@ -96,6 +96,7 @@ export class ThemeService {
      * Sets up a local storage listener to account for changes in other tabs
      */
     initialize() {
+        this.darkSchemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         if (this.darkSchemeMediaQuery.media !== 'not all') {
             this.darkSchemeMediaQuery.addEventListener('change', () => this.applyPreferredTheme());
         }

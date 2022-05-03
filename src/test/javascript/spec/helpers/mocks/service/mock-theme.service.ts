@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 export class MockThemeService {
     private currentTheme: Theme = Theme.LIGHT;
     private currentThemeSubject: BehaviorSubject<Theme> = new BehaviorSubject<Theme>(Theme.LIGHT);
+    private preferenceSubject: BehaviorSubject<Theme | undefined> = new BehaviorSubject<Theme | undefined>(undefined);
 
     public isByAutoDetection = false;
 
@@ -15,14 +16,17 @@ export class MockThemeService {
         return this.currentThemeSubject.asObservable();
     }
 
+    public getPreferenceObservable(): Observable<Theme | undefined> {
+        return this.preferenceSubject.asObservable();
+    }
+
     public restoreTheme() {}
 
-    public applyTheme(theme: Theme) {
-        this.applyThemeInternal(theme, false);
-    }
-
-    public applyThemeInternal(theme: Theme, isByAutoDetection: boolean) {
+    public applyThemeExplicitly(theme: Theme) {
         this.currentTheme = theme;
         this.currentThemeSubject.next(theme);
+        this.preferenceSubject.next(theme);
     }
+
+    public print() {}
 }
