@@ -60,7 +60,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Copying the exercise basis from {}", importedExercise);
         TextExercise newExercise = new TextExercise();
 
-        super.copyExerciseBasis(newExercise, importedExercise);
+        super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
     }

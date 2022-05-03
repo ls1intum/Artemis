@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
@@ -30,7 +32,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     /**
      * Imports a modeling exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyModelingExerciseBasis(Exercise)} to set up the basis of the exercise
+     * This method calls {@link #copyModelingExerciseBasis(Exercise, Map<Long, GradingInstruction>)} to set up the basis of the exercise
      * {@link #copyExampleSubmission(Exercise, Exercise)} for a hard copy of the example submissions.
      *
      * @param templateExercise The template exercise which should get imported
@@ -40,11 +42,32 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     @NotNull
     public ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
-        ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise);
+        Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
+        ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         newExercise.setKnowledge(templateExercise.getKnowledge());
         modelingExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
+        adaptFeedbackGradingInstructionReferences(newExercise, gradingInstructionCopyTracker);
         return newExercise;
+    }
+
+    private void adaptFeedbackGradingInstructionReferences(ModelingExercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        for (var exampleSubmission : newExercise.getExampleSubmissions()) {
+            var latestResult = exampleSubmission.getSubmission().getLatestResult();
+            if (latestResult == null) {
+                continue;
+            }
+            for (var feedback : latestResult.getFeedbacks()) {
+                var originalGradingInstruction = feedback.getGradingInstruction();
+                if (originalGradingInstruction != null) {
+                    GradingInstruction newGradingInstruction = gradingInstructionCopyTracker.get(originalGradingInstruction.getId());
+                    if (newGradingInstruction == null) {
+                        log.warn("New Grading Instruction is not found for original Grading Instruction with id {}", originalGradingInstruction.getId());
+                    }
+                    feedback.setGradingInstruction(newGradingInstruction);
+                }
+            }
+        }
     }
 
     /** This helper method copies all attributes of the {@code importedExercise} into the new exercise.
@@ -54,10 +77,10 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @return the cloned TextExercise basis
      */
     @NotNull
-    private ModelingExercise copyModelingExerciseBasis(Exercise importedExercise) {
+    private ModelingExercise copyModelingExerciseBasis(Exercise importedExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         ModelingExercise newExercise = new ModelingExercise();
-        super.copyExerciseBasis(newExercise, importedExercise);
+        super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
 
         newExercise.setDiagramType(((ModelingExercise) importedExercise).getDiagramType());
         newExercise.setExampleSolutionModel(((ModelingExercise) importedExercise).getExampleSolutionModel());

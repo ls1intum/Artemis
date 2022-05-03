@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -26,7 +24,7 @@ public abstract class ExerciseImportService {
         this.textBlockRepository = textBlockRepository;
     }
 
-    void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise) {
+    void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         if (importedExercise.isCourseExercise()) {
             newExercise.setCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember());
         }
@@ -47,7 +45,7 @@ public abstract class ExerciseImportService {
         newExercise.validateDates();
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
-        newExercise.setGradingCriteria(importedExercise.copyGradingCriteria());
+        newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
         if (newExercise.getExerciseGroup() != null) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
         }
@@ -110,6 +108,9 @@ public abstract class ExerciseImportService {
             newFeedback.setType(originalFeedback.getType());
             newFeedback.setText(originalFeedback.getText());
             newFeedback.setResult(newResult);
+
+            // Original GradingInstructions should be replaced with copied GradingInstructions before save.
+            newFeedback.setGradingInstruction(originalFeedback.getGradingInstruction());
             newFeedbacks.add(newFeedback);
         }
         return newFeedbacks;
