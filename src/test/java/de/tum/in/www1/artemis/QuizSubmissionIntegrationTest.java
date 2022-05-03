@@ -319,7 +319,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusSeconds(20), ZonedDateTime.now().plusSeconds(30), quizMode);
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
-        // quizExercise.setIsPlannedToStart(true);
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
     }
@@ -384,8 +383,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null, quizMode);
         quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(8));
         quizExercise.setDuration(2);
-        // quizExercise.setIsPlannedToStart(true);
-        // quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
@@ -462,8 +459,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizExercise quizExerciseServer = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseServer.setDueDate(ZonedDateTime.now().minusSeconds(2));
         quizExerciseServer.setDuration(2);
-        // quizExerciseServer.setIsPlannedToStart(true);
-        // quizExerciseServer.setIsVisibleBeforeStart(true);
         quizExerciseServer.setIsOpenForPractice(false);
         quizExerciseService.save(quizExerciseServer);
 
@@ -722,8 +717,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
-        // quizExercise.setIsPlannedToStart(true);
-        // quizExercise.setIsVisibleBeforeStart(true);
         quizExercise = quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = new QuizSubmission();
@@ -773,8 +766,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
-        // quizExercise.setIsPlannedToStart(true);
-        // quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> quizQuestion.setScoringType(scoringType)).collect(Collectors.toList()));
         quizExercise = quizExerciseService.save(quizExercise);
 
@@ -855,8 +846,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
-        // quizExercise.setIsPlannedToStart(true);
-        // quizExercise.setIsVisibleBeforeStart(true);
 
         return quizExercise;
     }

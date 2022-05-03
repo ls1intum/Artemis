@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.ArrayList;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +40,13 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
             """)
     List<QuizExercise> findByExamId(Long examId);
 
-    // List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
+    @Query("""
+            SELECT DISTINCT qe
+            FROM QuizExercise qe
+            LEFT JOIN qe.quizBatches b
+            WHERE b.startTime > :#{#earliestReleaseDate}
+            """)
+    List<QuizExercise> findAllPlannedToStartAfter(ZonedDateTime earliestReleaseDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
@@ -96,13 +102,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
         return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
-    /**
-     * Get all quiz exercises that are planned to start in the future
-     *
-     * @return the list of quiz exercises
-     */
     default List<QuizExercise> findAllPlannedToStartInTheFuture() {
-        return new ArrayList<>();
-        // return findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
+        return findAllPlannedToStartAfter(ZonedDateTime.now());
     }
 }

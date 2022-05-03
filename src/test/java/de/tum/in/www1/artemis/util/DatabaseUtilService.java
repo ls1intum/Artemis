@@ -1914,7 +1914,6 @@ public class DatabaseUtilService {
     public Course addCourseWithOneQuizExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
-        // quizExercise.setIsVisibleBeforeStart(false);
         quizExercise.setTitle(title);
         quizExercise.setDuration(120);
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();

@@ -34,8 +34,6 @@ public class QuizBatch extends DomainObject {
     @Column(name = "password")
     private String password;
 
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "creator_id")
     @Column(name = "creator_id")
     @JsonIgnore
     private Long creator;
