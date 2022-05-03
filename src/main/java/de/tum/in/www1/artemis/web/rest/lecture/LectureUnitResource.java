@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +20,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -54,43 +52,33 @@ public class LectureUnitResource {
     /**
      * PUT /lectures/:lectureId/lecture-units-order
      *
-     * @param lectureId           the id of the lecture for which to update the lecture unit order
-     * @param orderedLectureUnits ordered lecture units
+     * @param lectureId             the id of the lecture for which to update the lecture unit order
+     * @param orderedLectureUnitIds ordered list of ids of lecture units
      * @return the ResponseEntity with status 200 (OK) and with body the ordered lecture units
      */
     @PutMapping("/lectures/{lectureId}/lecture-units-order")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<LectureUnit> orderedLectureUnits) {
+    public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
-        if (lectureOptional.isEmpty()) {
-            throw new EntityNotFoundException("Lecture", lectureId);
-        }
-        Lecture lecture = lectureOptional.get();
+        final Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).orElseThrow();
+
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "LectureUnit", "courseMissing");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        // Ensure that exactly as many lecture units have been received as are currently related to the lecture
-        if (orderedLectureUnits.size() != lecture.getLectureUnits().size()) {
-            throw new ConflictException("Received wrong number of lecture units", "LectureUnit", "lectureUnitsSizeMismatch");
+        // Ensure that exactly as many lecture unit ids have been received as are currently related to the lecture
+        if (orderedLectureUnitIds.size() != lecture.getLectureUnits().size()) {
+            throw new ConflictException("Received wrong size of lecture unit ids", "LectureUnit", "lectureUnitsSizeMismatch");
         }
 
+        // We can not use findAllById because this does not preserve the ordering of orderedLectureUnitIds
+        List<LectureUnit> orderedLectureUnits = orderedLectureUnitIds.stream().map(id -> lectureUnitRepository.findById(id).orElseThrow()).toList();
+
         // Ensure that all received lecture units are already related to the lecture
-        for (LectureUnit lectureUnit : orderedLectureUnits) {
-            if (!lecture.getLectureUnits().contains(lectureUnit)) {
-                throw new ConflictException("Received lecture unit is not part of the lecture", "LectureUnit", "lectureMismatch");
-            }
-            // Set the lecture manually as it won't be included in orderedLectureUnits
-            lectureUnit.setLecture(lecture);
-
-            // keep bidirectional mapping between attachment unit and attachment
-            if (lectureUnit instanceof AttachmentUnit) {
-                ((AttachmentUnit) lectureUnit).getAttachment().setAttachmentUnit((AttachmentUnit) lectureUnit);
-            }
-
+        if (!orderedLectureUnits.stream().allMatch(lectureUnit -> lectureUnit.getLecture().getId().equals(lecture.getId()))) {
+            throw new ConflictException("Received lecture unit is not part of the lecture", "LectureUnit", "lectureMismatch");
         }
 
         lecture.setLectureUnits(orderedLectureUnits);
