@@ -75,7 +75,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     faArrowRight = faArrowRight;
     faFilter = faFilter;
 
-    constructor(private router: Router, private themeService: ThemeService, private navigationUtilService: ArtemisNavigationUtilService) {
+    constructor(private themeService: ThemeService, private navigationUtilService: ArtemisNavigationUtilService) {
         super();
     }
 
