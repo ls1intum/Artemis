@@ -86,7 +86,7 @@ Instructors can still use those templates to generate programming exercises and 
 .. note::
   Documentation for FACT framework can be found here: https://fact.readthedocs.io/en/latest/
 
-We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the Github repository.
+We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the GitHub repository.
 
 Exercise Creation
 ^^^^^^^^^^^^^^^^^
