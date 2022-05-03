@@ -115,7 +115,7 @@ public class UserResource {
     /**
      * POST users : Creates a new user.
      * <p>
-     * Creates a new user if the login and email are not already used, and sends an mail with an activation link. The user needs to be activated on creation.
+     * Creates a new user if the login and email are not already used, and sends an email with an activation link. The user needs to be activated on creation.
      *
      * @param managedUserVM the user to create. If the password is null, a random one will be generated
      * @return the ResponseEntity with status 201 (Created) and with body the new user, or with status 400 (Bad Request) if the login or email is already in use
