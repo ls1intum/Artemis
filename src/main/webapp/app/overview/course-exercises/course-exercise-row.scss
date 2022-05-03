@@ -23,10 +23,15 @@
         }
     }
     .exercise-row-icon {
+        color: var(--bs-body-color);
         display: flex;
         justify-content: center;
         align-items: center;
         min-width: 40px;
+
+        > fa-icon {
+            z-index: 1;
+        }
     }
 
     .result {

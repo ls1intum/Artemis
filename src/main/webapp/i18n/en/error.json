@@ -3,9 +3,11 @@
         "title": "Error page!",
         "http": {
             "400": "Bad request.",
+            "401": "You are not authenticated to access this page.",
             "403": "You are not authorized to access this page.",
             "404": "The page does not exist.",
             "405": "The HTTP verb you used is not supported for this URL.",
+            "409": "There was a conflict while processing your request.",
             "500": "Internal server error."
         },
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",

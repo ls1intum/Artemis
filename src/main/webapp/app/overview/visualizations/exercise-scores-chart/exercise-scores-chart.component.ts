@@ -4,7 +4,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
@@ -15,6 +15,7 @@ import { ChartExerciseTypeFilterDirective } from 'app/shared/chart/chart-exercis
 import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-exercise-scores-chart',
@@ -58,7 +59,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
     themeSubscription: Subscription;
 
     constructor(
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private exerciseScoresChartService: ExerciseScoresChartService,
@@ -208,10 +209,10 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
     }
 
     /**
-     * We navigate to the exercise sub page when the user clicks on a data point
+     * We navigate to the exercise sub page in a new tab when the user clicks on a data point
      */
     navigateToExercise(exerciseId: number): void {
-        this.router.navigate(['courses', this.courseId, 'exercises', exerciseId]);
+        this.navigationUtilService.routeInNewTab(['courses', this.courseId, 'exercises', exerciseId]);
     }
 
     /**

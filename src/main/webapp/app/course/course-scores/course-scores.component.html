@@ -15,7 +15,13 @@
             <div class="text-center">
                 <h4 jhiTranslate="instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
             </div>
-            <jhi-participant-scores-distribution *ngIf="scoresToDisplay" [gradingScale]="gradingScale" [scores]="scoresToDisplay" [scoreToHighlight]="valueToHighlight">
+            <jhi-participant-scores-distribution
+                *ngIf="scoresToDisplay"
+                [gradingScale]="gradingScale"
+                [scores]="scoresToDisplay"
+                [scoreToHighlight]="valueToHighlight"
+                (onSelect)="accessParticipantScores()"
+            >
             </jhi-participant-scores-distribution>
         </div>
         <div class="col-3">
