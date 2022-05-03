@@ -6,7 +6,7 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
 .toggle-popover-wrapper {
     display: flex;
     align-items: center;
-    justify-content: start;
+    justify-content: flex-start;
     height: 100%;
 }
 
