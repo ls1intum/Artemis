@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
@@ -380,6 +381,11 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
     }
 
     @Override
+    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
+        // jenkinsRequestMockProvider.mockConfigureBuildPlan(participation.getProgrammingExercise(), participation.getParticipantIdentifier());
+    }
+
+    @Override
     public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
         gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, existsInVcs);
     }
@@ -431,5 +437,15 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
     @Override
     public void resetMockProvider() {
         gitlabRequestMockProvider.reset();
+    }
+
+    @Override
+    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
+        // Not needed here.
+    }
+
+    @Override
+    public void verifyMocks() {
+        gitlabRequestMockProvider.verifyMocks();
     }
 }
