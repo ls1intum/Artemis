@@ -263,6 +263,7 @@ public class QuizExerciseResource {
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             throw new AccessForbiddenException();
         }
+        quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, userRepository.getUser().getId()));
         return ResponseEntity.ok(quizExercise);
     }
 
