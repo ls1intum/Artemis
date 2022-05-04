@@ -254,7 +254,7 @@
                 "synchronized": "Synchronisiert",
                 "batched": "Gruppiert",
                 "individual": "Einzeln",
-                "explanation": "Ausführungsmodus bestimmt wie Studierende an einem Quiz teilnehmen können.<br/><br/><strong>Synchronisiert</strong>: Alle Studierenden nehmen gleichzeitig an dem Quiz teil.<br/><strong>Gruppiert</strong>: Es gibt mehrere Gruppen an denen Studierende mit einem Passwort teilnehmen können.<br/><strong>Einzeln</strong>: Studierende können jederzeit selbstständid an dem QUiz teilnehmen."
+                "explanation": "Ausführungsmodus bestimmt wie Studierende an einem Quiz teilnehmen können.\n\nSynchronisiert: Alle Studierenden nehmen gleichzeitig an dem Quiz teil.\nGruppiert: Es gibt mehrere Gruppen an denen Studierende mit einem Passwort teilnehmen können.\nEinzeln: Studierende können jederzeit selbstständig an dem Quiz teilnehmen."
             },
             "addBatch": "Gruppe hinzufügen",
             "join": "Bearbeiten",

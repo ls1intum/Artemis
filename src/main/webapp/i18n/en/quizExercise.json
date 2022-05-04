@@ -260,7 +260,7 @@
                 "synchronized": "Synchronized",
                 "batched": "Batched",
                 "individual": "Individual",
-                "explanation": "Batch Mode controls how students can participate in the quiz.<br/><br/><strong>Synchronized</strong>: There is exactly opportunity for all students to participate in the quiz at once.<br/><strong>Batched</strong>: There are multiple opportunities for students to participate in the quiz by using a password.<br/><strong>Individual</strong>: Students can participate in the quiz by themselves at any time while it is released."
+                "explanation": "Batch Mode controls how students can participate in the quiz.\n\nSynchronized: There is exactly opportunity for all students to participate in the quiz at once.\nBatched: There are multiple opportunities for students to participate in the quiz by using a password.\nIndividual: Students can participate in the quiz by themselves at any time while it is released."
             },
             "addBatch": "Add Batch",
             "join": "Join",
