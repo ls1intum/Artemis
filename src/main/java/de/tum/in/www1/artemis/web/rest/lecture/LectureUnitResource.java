@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -68,20 +69,20 @@ public class LectureUnitResource {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
+        List<LectureUnit> lectureUnits = lecture.getLectureUnits();
+
         // Ensure that exactly as many lecture unit ids have been received as are currently related to the lecture
-        if (orderedLectureUnitIds.size() != lecture.getLectureUnits().size()) {
+        if (orderedLectureUnitIds.size() != lectureUnits.size()) {
             throw new ConflictException("Received wrong size of lecture unit ids", "LectureUnit", "lectureUnitsSizeMismatch");
         }
 
-        // We can not use findAllById because this does not preserve the ordering of orderedLectureUnitIds
-        List<LectureUnit> orderedLectureUnits = orderedLectureUnitIds.stream().map(id -> lectureUnitRepository.findById(id).orElseThrow()).toList();
-
-        // Ensure that all received lecture units are already related to the lecture
-        if (!orderedLectureUnits.stream().allMatch(lectureUnit -> lectureUnit.getLecture().getId().equals(lecture.getId()))) {
+        // Ensure that all received lecture unit ids are already part of the lecture
+        if (!lectureUnits.stream().map(LectureUnit::getId).toList().containsAll(orderedLectureUnitIds)) {
             throw new ConflictException("Received lecture unit is not part of the lecture", "LectureUnit", "lectureMismatch");
         }
 
-        lecture.setLectureUnits(orderedLectureUnits);
+        lectureUnits.sort(Comparator.comparing(unit -> orderedLectureUnitIds.indexOf(unit.getId())));
+
         Lecture persistedLecture = lectureRepository.save(lecture);
         return ResponseEntity.ok(persistedLecture.getLectureUnits());
     }
