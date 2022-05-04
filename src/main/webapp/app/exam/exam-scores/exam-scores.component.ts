@@ -304,7 +304,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 // Update the specific exercise statistic
                 const exerciseResult = exGroupResult.exerciseResults.find((exResult) => exResult.exerciseId === studentExerciseResult.exerciseId);
                 if (!exerciseResult) {
-                    // This should never bee thrown. Indicates that the information in the ExamScoresDTO is inconsistent
+                    // This should never be thrown. Indicates that the information in the ExamScoresDTO is inconsistent
                     throw new Error(`Exercise with id ${studentExerciseResult.exerciseId} does not exist in this exam!`);
                 } else {
                     exerciseResult.noOfParticipantsWithFilter++;
