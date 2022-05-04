@@ -25,17 +25,13 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.dto.exam.monitoring.ExamActionDTO;
 import de.tum.in.www1.artemis.service.exam.*;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActionService;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -77,18 +73,13 @@ public class StudentExamResource {
 
     private final ExamService examService;
 
-    private final ExamActionService examActionService;
-
-    private final ExamActivityService examActivityService;
-
     @Value("${info.browser-fingerprints-enabled:#{true}}")
     private boolean fingerprintingEnabled;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, ExamActionService examActionService,
-            ExamActivityService examActivityService) {
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -102,8 +93,6 @@ public class StudentExamResource {
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
-        this.examActionService = examActionService;
-        this.examActivityService = examActivityService;
     }
 
     /**
@@ -682,36 +671,5 @@ public class StudentExamResource {
         auditEventRepository.add(auditEvent);
 
         return ResponseEntity.ok(studentExamRepository.save(studentExam));
-    }
-
-    /**
-     * PUT /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/actions: Adds the performed actions by the user
-     * @param courseId      the course to which the student exams belong to
-     * @param examId        the exam to which the student exams belong to
-     * @param studentExamId the student exam id where we want to add the actions
-     * @param actions       list of actions performed by the user after the last synchronisation
-     * @return 200 if successful
-     */
-    @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/actions")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
-            @RequestBody List<ExamActionDTO> actions) {
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        boolean isTestRun = studentExam.isTestRun();
-        this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, studentExamId, currentUser, isTestRun);
-
-        // TODO: Filter not valid actions
-        List<ExamAction> examActions = actions.stream().map(examActionService::mapExamAction).toList();
-        examActions.forEach(action -> action.setExamActivity(studentExam.getExamActivity()));
-        examActionService.saveAll(examActions);
-
-        studentExam.getExamActivity().addExamActions(examActions);
-        examActivityService.save(studentExam.getExamActivity());
-
-        // TODO: Update log
-        log.info("REST request by user: {} for exam with id {} to add {} actions to student-exam {}", currentUser.getLogin(), examId, 5, studentExamId);
-
-        return ResponseEntity.ok().build();
     }
 }

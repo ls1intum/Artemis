@@ -24,7 +24,7 @@ export class ExamMonitoringService {
 
     public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<void>> {
         const url = this.getResourceURL(courseId, examId) + `/student-exams/${studentExamId}/actions`;
-        console.log('synced!');
+        console.log(examActions);
         return this.http.put<void>(url, examActions, { observe: 'response' });
     }
 }
