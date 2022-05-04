@@ -30,13 +30,22 @@
                             class="form-text text-danger"
                             *ngIf="editForm.get('loginInput')!.errors?.maxlength"
                             jhiTranslate="entity.validation.maxlength"
-                            [translateValues]="{ max: 50 }"
+                            [translateValues]="{ max: USERNAME_MAX_LENGTH }"
                         >
                             This field cannot be longer than 50 characters.
                         </small>
 
                         <small class="form-text text-danger" *ngIf="editForm.get('loginInput')!.errors?.pattern" jhiTranslate="entity.validation.patternLogin">
                             This field can only contain letters, digits and e-mail addresses.
+                        </small>
+
+                        <small
+                            class="form-text text-danger"
+                            *ngIf="editForm.get('loginInput')!.errors?.minlength"
+                            jhiTranslate="entity.validation.minlength"
+                            [translateValues]="{ min: USERNAME_MIN_LENGTH }"
+                        >
+                            This field is required to be at least 4 characters.
                         </small>
                     </div>
                 </div>
@@ -119,6 +128,14 @@
                         <small
                             class="form-text text-danger"
                             *ngIf="editForm.get('passwordInput')!.errors?.maxlength"
+                            jhiTranslate="userManagement.passwordConstraints"
+                            [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
+                        >
+                            The password has to contain 8-50 characters!
+                        </small>
+                        <small
+                            class="form-text text-danger"
+                            *ngIf="editForm.get('passwordInput')!.errors?.minlength"
                             jhiTranslate="userManagement.passwordConstraints"
                             [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
                         >
