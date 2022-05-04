@@ -140,14 +140,16 @@ public class JenkinsBuildPlanService {
      */
     public void configureBuildPlanForParticipation(ProgrammingExerciseParticipation participation) {
         // Refetch the programming exercise with the template participation and assign it to programmingExerciseParticipation to make sure it is initialized (and not a proxy)
-        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(participation.getProgrammingExercise().getId()).get();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(participation.getProgrammingExercise().getId()).get();
         participation.setProgrammingExercise(programmingExercise);
 
-        final var projectKey = programmingExercise.getProjectKey();
-        final var planKey = participation.getBuildPlanId();
-        final var templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
+        String projectKey = programmingExercise.getProjectKey();
+        String planKey = participation.getBuildPlanId();
+        String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
         updateBuildPlanRepositories(projectKey, planKey, ASSIGNMENT_REPO_NAME, participation.getRepositoryUrl(), templateRepoUrl);
         enablePlan(projectKey, planKey);
+
+        // Students currently always have access to the build plan in Jenkins
     }
 
     /**
