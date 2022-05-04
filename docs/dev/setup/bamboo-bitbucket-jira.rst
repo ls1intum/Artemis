@@ -198,6 +198,7 @@ under ``localhost:7990``.
    as the secret. The value of this variable should be then stored in
    ``src/main/resources/config/application-artemis.yml`` as the value of
    ``artemis-authentication-token-value``.
+   You can create a global variable from settings on Bamboo.
 
 #. Download the
    `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
