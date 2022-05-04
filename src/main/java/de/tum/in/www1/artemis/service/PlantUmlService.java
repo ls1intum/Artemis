@@ -56,7 +56,7 @@ public class PlantUmlService {
                 }
                 catch (IOException e) {
                     log.error("Unable to store UML dark theme");
-                    throw new RuntimeException("Unable to store UML dark theme", e);
+                    throw new RuntimeException("Unable to store UML dark theme", e); // NOPMD
                 }
             }
         });

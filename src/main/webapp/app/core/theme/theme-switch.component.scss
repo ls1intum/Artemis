@@ -53,6 +53,7 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
 
                 & > .moon > circle {
                     transition: transform 0.25s $ease-out;
+
                     @supports (cx: 1) {
                         transition: cx 0.25s $ease-out;
                     }
@@ -132,6 +133,7 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
         .form-switch {
             font-size: 16px;
             margin: 0;
+
             > * {
                 cursor: pointer;
             }
