@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.exam.monitoring;
 
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +10,6 @@ import com.hazelcast.config.Config;
 import com.hazelcast.config.SerializerConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
-import com.hazelcast.internal.serialization.impl.SerializationServiceV1;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -22,11 +21,6 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
     private static final Logger log = LoggerFactory.getLogger(ExamMonitoringDistributedCache.class);
 
     private static final String HAZELCAST_CACHE_ACTIVITIES = "-activities";
-
-    /**
-     * All {@link List} classes that are supported by Hazelcast {@link SerializationServiceV1}
-     */
-    private static final Set<Class<?>> SUPPORTED_LIST_CLASSES = Set.of(ArrayList.class, LinkedList.class, CopyOnWriteArrayList.class);
 
     private transient Exam exam;
 
@@ -44,7 +38,7 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
 
     @Override
     Exam getExam() {
-        return null;
+        return exam;
     }
 
     @Override
@@ -54,7 +48,7 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
 
     @Override
     Map<Long, ExamActivity> getActivities() {
-        return null;
+        return activities;
     }
 
     @Override
