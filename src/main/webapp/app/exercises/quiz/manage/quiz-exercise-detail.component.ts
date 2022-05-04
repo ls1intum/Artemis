@@ -240,7 +240,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     cacheValidation() {
-        this.exerciseService.validateDate(this.quizExercise);
+        // TODO: quiz cleanup: this makes the exercise dirty and attempts to prevent leaving
+        // this.exerciseService.validateDate(this.quizExercise);
 
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
             if (this.scheduleQuizStart) {
