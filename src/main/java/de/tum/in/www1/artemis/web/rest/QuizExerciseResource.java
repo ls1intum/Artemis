@@ -202,9 +202,7 @@ public class QuizExerciseResource {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
 
         for (QuizExercise quizExercise : quizExercises) {
@@ -360,9 +358,7 @@ public class QuizExerciseResource {
         log.debug("REST request to add batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, user)) {
-            throw new AccessForbiddenException();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
 
         // TODO: QQQ configuration to limit the number of batches a tutor can create
 
@@ -385,12 +381,10 @@ public class QuizExerciseResource {
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(batch.getQuizExercise().getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, user)) {
-            throw new AccessForbiddenException();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
 
-        if (!user.getId().equals(batch.getCreator()) && !authCheckService.isAtLeastInstructorForExercise(quizExercise, user)) {
-            throw new AccessForbiddenException();
+        if (!user.getId().equals(batch.getCreator())) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
         }
 
         batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, ZonedDateTime.now()));
