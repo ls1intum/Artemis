@@ -172,7 +172,7 @@ jobs:
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
 
-    # Downlaod artemis-server-cli from GH without cloning the Repo
+    # Download artemis-server-cli from GH without cloning the Repo
     - name: Fetch Artemis CLI
       run: |
         wget ${{ env.RAW_URL }}/artemis-server-cli
