@@ -130,7 +130,8 @@
                 "includeStandardCategories": "Hide Artemis standard categories:",
                 "includeIndividualCategories": "Include course specific categories:",
                 "includeAllCategories": "Select all options",
-                "exercisesWithNoCategories": "Exercises with no categories"
+                "exercisesWithNoCategories": "Exercises with no categories",
+                "pointsPerExercise": "Points per Exercise"
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",

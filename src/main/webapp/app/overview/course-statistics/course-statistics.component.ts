@@ -424,18 +424,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
         absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.overallPointsPerExercise = absoluteScores;
-        /*this.ngxDoughnutData.push({ name: this.programmingPointLabel, value: programmingExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.quizPointLabel, value: quizzesTotalScore });
-        this.ngxDoughnutData.push({ name: this.modelingPointLabel, value: modelingExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.textPointLabel, value: textExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.fileUploadPointLabel, value: fileUploadExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.missingPointsLabel, value: totalMissedPoints });
-        this.includeIfNotZero(this.programmingPointLabel, programmingExerciseTotalScore);
-        this.includeIfNotZero(this.quizPointLabel, quizzesTotalScore);
-        this.includeIfNotZero(this.modelingPointLabel, modelingExerciseTotalScore);
-        this.includeIfNotZero(this.textPointLabel, textExerciseTotalScore);
-        this.includeIfNotZero(this.fileUploadPointLabel, fileUploadExerciseTotalScore);
-        this.includeIfNotZero(this.missingPointsLabel, totalMissedPoints);*/
         scores.forEach((score, index) => {
             if (score > 0) {
                 this.ngxDoughnutData.push({
@@ -880,6 +868,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
     }
 
+    /**
+     * Helper method to ensure translation sensitivity of chart legend
+     * Updates the name of every chart entity to the current language settings if changes occur.
+     * @private
+     */
     private updateDoughnutChartLegend(): void {
         this.ngxDoughnutData.forEach((dataEntry) => {
             dataEntry.name = this.translateService.instant('artemisApp.courseOverview.statistics.' + dataEntry.label);
