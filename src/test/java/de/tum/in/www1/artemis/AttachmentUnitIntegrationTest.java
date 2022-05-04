@@ -11,7 +11,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -39,7 +38,8 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(1, 1, 0, 1);
-        this.attachment = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        this.attachment = ModelFactory.generateAttachment(null);
+        this.attachment.setLink("files/temp/example.txt");
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");
@@ -107,6 +107,23 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         this.attachment = attachmentRepository.findById(this.attachment.getId()).get();
         assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
         assertThat(this.attachment.getAttachmentUnit()).isEqualTo(this.attachmentUnit);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateAttachmentUnit_asInstructor_shouldKeepOrdering() throws Exception {
+        persistAttachmentUnitWithLecture();
+
+        // Add a second lecture unit
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
+        lecture1.addLectureUnit(attachmentUnit);
+        lectureRepository.save(lecture1);
+
+        // Updating the lecture unit should not change order attribute
+        request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class, HttpStatus.OK);
+
+        AttachmentUnit updatedAttachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).orElseThrow();
+        assertThat(updatedAttachmentUnit.getOrder()).isEqualTo(1);
     }
 
     private void persistAttachmentUnitWithLecture() {

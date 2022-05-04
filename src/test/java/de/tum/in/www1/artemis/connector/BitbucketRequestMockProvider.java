@@ -44,7 +44,6 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Component
 @Profile("bitbucket")
@@ -55,15 +54,6 @@ public class BitbucketRequestMockProvider {
 
     @Value("${artemis.user-management.external.admin-group-name}")
     private String adminGroupName;
-
-    @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    private Optional<String> userPrefixEdx;
-
-    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
-    private Optional<String> userPrefixU4I;
-
-    @Autowired
-    private PasswordService passwordService;
 
     @Autowired
     private UrlService urlService;
@@ -102,6 +92,13 @@ public class BitbucketRequestMockProvider {
         if (mockServer != null) {
             mockServer.reset();
         }
+    }
+
+    /**
+     * Verify that the mocked REST-calls were called
+     */
+    public void verifyMocks() {
+        mockServer.verify();
     }
 
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws IOException, URISyntaxException {

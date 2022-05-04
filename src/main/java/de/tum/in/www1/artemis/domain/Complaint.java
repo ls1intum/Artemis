@@ -177,6 +177,17 @@ public class Complaint extends DomainObject {
         setParticipant(null);
     }
 
+    /**
+     * Filters out the reviewer, if the user was not the reviewer
+     * @param user - the user for which the reviewer should not be deleted
+     */
+    public void filterForeignReviewer(User user) {
+        User assessor = result.getAssessor();
+        if (!assessor.equals(user)) {
+            result.setAssessor(null);
+        }
+    }
+
     @Override
     public String toString() {
         return "Complaint{" + "id=" + getId() + ", complaintText='" + getComplaintText() + "'" + ", accepted='" + isAccepted() + "'" + ", submittedTime='" + getSubmittedTime()

@@ -137,7 +137,7 @@ public class TokenProvider {
      * @return UsernamePasswordAuthenticationToken
      */
     public Authentication getAuthentication(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        Claims claims = parseClaims(token);
         var authorityClaim = claims.get(AUTHORITIES_KEY);
         if (authorityClaim == null) {
             // leads to a 401 unauthorized error
@@ -163,7 +163,7 @@ public class TokenProvider {
             return false;
         }
         try {
-            String fileNameToken = (String) Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody().get(FILENAME_KEY);
+            String fileNameToken = (String) parseClaims(authToken).get(FILENAME_KEY);
             return fileNameToken.contains(downloadFileKey + fileName);
         }
         catch (Exception e) {
@@ -184,7 +184,7 @@ public class TokenProvider {
             return false;
         }
         try {
-            Long courseIdToken = ((Integer) Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody().get(COURSE_ID_KEY)).longValue();
+            Long courseIdToken = ((Integer) parseClaims(authToken).get(COURSE_ID_KEY)).longValue();
             return courseIdToken.equals(courseId);
         }
         catch (Exception e) {
@@ -209,7 +209,7 @@ public class TokenProvider {
      */
     private boolean validateJwsToken(String authToken) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken);
+            parseClaims(authToken);
             return true;
         }
         catch (ExpiredJwtException e) {
@@ -233,5 +233,9 @@ public class TokenProvider {
         }
         log.info("Invalid JWT token: {}", authToken);
         return false;
+    }
+
+    public Claims parseClaims(String authToken) {
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody();
     }
 }

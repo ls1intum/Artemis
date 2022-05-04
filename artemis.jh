@@ -49,6 +49,7 @@ entity Course (course) {
     endDate ZonedDateTime,
     onlineCourse Boolean,
     maxComplaints Integer,
+    defaultProgrammingLanguage String,
     color String,
     courseIcon String,
     registrationEnabled Boolean

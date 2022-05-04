@@ -1,10 +1,9 @@
 {
     "export": {
+        "dialogTitle": "Export Options",
         "csvFile": {
-            "options": {
-                "dialogTitle": "CSV-Export Options",
-                "introText": "Select the options used for generating the .csv file."
-            },
+            "introText": "Select the options used for generating the .csv file.",
+            "buttonText": "Export as CSV",
             "fieldSeparator": {
                 "label": "Field Separator",
                 "comma": "Comma",
@@ -18,7 +17,16 @@
                 "quotes_single": "'",
                 "quotes_double": "\"",
                 "none": "None"
+            },
+            "decimalSeparator": {
+                "label": "Decimal Separator",
+                "comma": "Comma (1,42)",
+                "period": "Period (1.42)"
             }
+        },
+        "excelFile": {
+            "introText": "Export course scores as an Excel file (.xlsx).",
+            "buttonText": "Export as Excel"
         }
     }
 }

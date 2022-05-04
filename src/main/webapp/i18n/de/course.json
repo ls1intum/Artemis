@@ -74,6 +74,7 @@
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für den Kurs aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl"
             },
             "accuracyOfScores": "Anzahl der Nachkommastellen bei der Berechnung von Punktzahlen",
+            "defaultProgrammingLanguage": "Standard-Programmiersprache",
             "gradingSystem": "Notenschlüssel",
             "testCourse": {
                 "title": "Testkurs",
@@ -179,7 +180,8 @@
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
                 "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden"
             },
-            "activeStudents": "Aktive Studierende: {{ students }}"
+            "activeStudents": "Aktive Studierende: {{ students }}",
+            "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:"
         },
         "courseStatistics": {
             "statistics": "Statistiken",

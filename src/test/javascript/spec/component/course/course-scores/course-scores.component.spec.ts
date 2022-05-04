@@ -38,8 +38,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
-import { CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
-import { CsvExportButtonComponent } from 'app/shared/export/csv-export-button.component';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
+import { ExportButtonComponent } from 'app/shared/export/export-button.component';
+import { CommonSpreadsheetCellObject } from 'app/course/course-scores/course-scores-excel-row-builder';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -240,7 +241,7 @@ describe('CourseScoresComponent', () => {
             declarations: [
                 CourseScoresComponent,
                 MockComponent(ParticipantScoresDistributionComponent),
-                MockComponent(CsvExportButtonComponent),
+                MockComponent(ExportButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(OrionFilterDirective),
@@ -399,6 +400,53 @@ describe('CourseScoresComponent', () => {
         expect(component.exportReady).toBeTrue();
     });
 
+    it('should generate excel row correctly', () => {
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        fixture.detectChanges();
+        const exportAsExcelStub = jest.spyOn(component, 'exportAsExcel').mockImplementation();
+        component.exportResults();
+        const generatedRows = exportAsExcelStub.mock.calls[0][1];
+        const user1Row = generatedRows[0];
+        validateUserExportRow(
+            user1Row,
+            user1.name!,
+            user1.login!,
+            user1.email!,
+            { t: 'n', v: 0 },
+            { t: 'n', v: 0, z: '0%' },
+            { t: 'n', v: 10 },
+            { t: 'n', v: 10 },
+            { t: 'n', v: 1, z: '0%' },
+            { t: 'n', v: 20 },
+            { t: 'n', v: 2, z: '0%' },
+            { t: 'n', v: 10 },
+            { t: 'n', v: 0, z: '0%' },
+            { t: 'n', v: 40 },
+            { t: 'n', v: 1.333, z: '0.0%' },
+        );
+        const user2Row = generatedRows[1];
+        validateUserExportRow(
+            user2Row,
+            user2.name!,
+            user2.login!,
+            user2.email!,
+            { t: 'n', v: 0 },
+            { t: 'n', v: 0, z: '0%' },
+            { t: 'n', v: 5 },
+            { t: 'n', v: 5 },
+            { t: 'n', v: 0.5, z: '0%' },
+            { t: 'n', v: 0 },
+            { t: 'n', v: 0, z: '0%' },
+            { t: 'n', v: 10 },
+            { t: 'n', v: 0, z: '0%' },
+            { t: 'n', v: 15 },
+            { t: 'n', v: 0.5, z: '0%' },
+        );
+        const maxRow = generatedRows[3];
+        expect(maxRow[OVERALL_COURSE_POINTS_KEY]).toEqual({ t: 'n', v: 30 });
+    });
+
     it('should generate csv correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
@@ -407,11 +455,12 @@ describe('CourseScoresComponent', () => {
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
             quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
         };
         component.exportResults(testOptions);
         const generatedRows = exportAsCsvStub.mock.calls[0][1];
         const user1Row = generatedRows[0];
-        validateUserRow(
+        validateUserExportRow(
             user1Row,
             user1.name!,
             user1.login!,
@@ -429,7 +478,7 @@ describe('CourseScoresComponent', () => {
             roundScorePercentSpecifiedByCourseSettings(40 / 30, course).toLocaleString() + '%',
         );
         const user2Row = generatedRows[1];
-        validateUserRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
+        validateUserExportRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
         expect(maxRow[OVERALL_COURSE_POINTS_KEY]).toEqual('30');
     });
@@ -481,22 +530,22 @@ describe('CourseScoresComponent', () => {
         expect(component.valueToHighlight).toBe(55.5);
     });
 
-    function validateUserRow(
+    function validateUserExportRow(
         userRow: any,
         expectedName: string,
         expectedUsername: string,
         expectedEmail: string,
-        expectedQuizPoints: string,
-        expectedQuizScore: string,
-        expectedScoreModelingExercise: string,
-        expectedModelingPoints: string,
-        expectedModelingScore: string,
-        expectedTextPoints: string,
-        expectedTextScore: string,
-        expectedFileUploadPoints: string,
-        expectedFileUploadScore: string,
-        expectedOverallCoursePoints: string,
-        expectedOverallCourseScore: string,
+        expectedQuizPoints: string | CommonSpreadsheetCellObject,
+        expectedQuizScore: string | CommonSpreadsheetCellObject,
+        expectedScoreModelingExercise: string | CommonSpreadsheetCellObject,
+        expectedModelingPoints: string | CommonSpreadsheetCellObject,
+        expectedModelingScore: string | CommonSpreadsheetCellObject,
+        expectedTextPoints: string | CommonSpreadsheetCellObject,
+        expectedTextScore: string | CommonSpreadsheetCellObject,
+        expectedFileUploadPoints: string | CommonSpreadsheetCellObject,
+        expectedFileUploadScore: string | CommonSpreadsheetCellObject,
+        expectedOverallCoursePoints: string | CommonSpreadsheetCellObject,
+        expectedOverallCourseScore: string | CommonSpreadsheetCellObject,
     ) {
         expect(userRow[NAME_KEY]).toEqual(expectedName);
         expect(userRow[USERNAME_KEY]).toEqual(expectedUsername);

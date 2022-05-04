@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -114,6 +115,9 @@ public class CourseTestService {
 
     @Autowired
     private GroupNotificationService groupNotificationService;
+
+    @Autowired
+    private ParticipationService participationService;
 
     private final static int numberOfStudents = 8;
 
@@ -530,7 +534,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
@@ -566,7 +570,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboard() throws Exception {
-        database.createCoursesWithExercisesAndLecturesAndLectureUnits(true);
+        database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
 
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
@@ -1458,7 +1462,7 @@ public class CourseTestService {
     // Test
     public void testCleanupCourseAsInstructor() throws Exception {
         // Generate a course that has an archive
-        var course = database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         course.setCourseArchivePath("some-archive-path");
         courseRepo.save(course);
 
@@ -1574,9 +1578,11 @@ public class CourseTestService {
         instructor.setGroups(groups);
         userRepo.save(instructor);
 
-        // Get a student
+        // Get two students
         var student = ModelFactory.generateActivatedUser("user1");
         userRepo.save(student);
+        var student2 = ModelFactory.generateActivatedUser("user2");
+        userRepo.save(student2);
 
         // Add a team exercise which was just released but not due
         var releaseDate = ZonedDateTime.now().minusDays(4);
@@ -1590,8 +1596,7 @@ public class CourseTestService {
         var teamStudents = new HashSet<User>();
         teamStudents.add(student);
         var team = database.createTeam(teamStudents, instructor, teamExerciseNotEnded, "team");
-        database.addTeamParticipationForExercise(teamExerciseNotEnded, team.getId());
-
+        database.createSubmissionForTextExercise(teamExerciseNotEnded, team, "Team Text");
         instructorsCourse.addExercises(teamExerciseNotEnded);
 
         // Create an exercise which has passed the due and assessment due date
@@ -1612,11 +1617,17 @@ public class CourseTestService {
         exerciseInAssessment.setMaxPoints(15.0);
         exerciseInAssessment = exerciseRepo.save(exerciseInAssessment);
 
-        // Add a single participation to that exercise
+        // Add a participation and submission to that exercise
         final var exerciseIdInAssessment = exerciseInAssessment.getId();
         var resultToSetAssessorFor = database.createParticipationSubmissionAndResult(exerciseIdInAssessment, student, 15.0, 0.0, 30, true);
+        resultToSetAssessorFor.getSubmission().setSubmissionDate(dueDate.minusHours(1));
+        resultToSetAssessorFor.getSubmission().setSubmitted(true);
         resultToSetAssessorFor.setAssessor(instructor);
         resultRepo.saveAndFlush(resultToSetAssessorFor);
+        submissionRepository.saveAndFlush(resultToSetAssessorFor.getSubmission());
+
+        // Add a participation without submission to that exercise (just starting)
+        participationService.startExercise(exerciseInAssessment, student2, false);
 
         instructorsCourse.addExercises(exerciseInAssessment);
 
@@ -1627,6 +1638,7 @@ public class CourseTestService {
         assertThat(courseDtos).hasSize(1);
         var dto = courseDtos.get(0);
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+        assertThat(dto.getActiveStudents()).as("course was only active for 3 days").hasSize(1);
 
         // Expect our three created exercises
         var exerciseDTOS = dto.getExerciseDTOS();
@@ -1725,6 +1737,7 @@ public class CourseTestService {
         // add courses with exercises
 
         var course = database.createCoursesWithExercisesAndLectures(true).get(0);
+        course.setStartDate(now.minusWeeks(2));
 
         var student1 = ModelFactory.generateActivatedUser("user1");
         var student2 = ModelFactory.generateActivatedUser("user2");
@@ -1752,11 +1765,11 @@ public class CourseTestService {
         var result2 = database.createParticipationSubmissionAndResult(exerciseId, student2, 5.0, 0.0, 40, true);
 
         Submission submission1 = result1.getSubmission();
-        submission1.setSubmissionDate(now.minusDays(3));
+        submission1.setSubmissionDate(now);
         submissionRepository.save(submission1);
 
         Submission submission2 = result2.getSubmission();
-        submission2.setSubmissionDate(now.minusDays(3));
+        submission2.setSubmissionDate(now.minusWeeks(2));
         submissionRepository.save(submission2);
 
         result1.setAssessor(instructor);
@@ -1827,7 +1840,7 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        assertThat(courseDTO.getActiveStudents()).hasSize(17);
+        assertThat(courseDTO.getActiveStudents()).hasSize(3);
 
         // number of users in course
         assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
@@ -1855,6 +1868,15 @@ public class CourseTestService {
         assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(30);
 
+        course.setEndDate(now.minusWeeks(1));
+        courseRepo.save(course);
+
+        // API call
+        courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+
+        var expectedActiveStudentDistribution = List.of(1, 0);
+        assertThat(courseDTO.getActiveStudents()).as("submission today should not be included").isEqualTo(expectedActiveStudentDistribution);
+
         // Active Users
         int periodIndex = 0;
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -1863,7 +1885,8 @@ public class CourseTestService {
         var activeStudents = request.get("/api/courses/" + course.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
-        assertThat(activeStudents).hasSize(17);
+        assertThat(activeStudents).hasSize(3);
+
     }
 
     // Test

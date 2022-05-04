@@ -181,7 +181,7 @@ public class RepositoryService {
             throw new FileAlreadyExistsException("file already exists");
         }
 
-        File file = new File(Paths.get(repository.getLocalPath().toString(), filename).toFile(), repository);
+        File file = new File(Path.of(repository.getLocalPath().toString(), filename).toFile(), repository);
         if (!repository.isValidFile(file)) {
             throw new IllegalArgumentException();
         }
@@ -284,7 +284,7 @@ public class RepositoryService {
      */
     public void commitChanges(Repository repository, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, "Changes by Online Editor", user);
+        gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
     }
 
     /**

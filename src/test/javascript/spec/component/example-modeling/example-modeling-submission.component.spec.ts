@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { delay, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
@@ -9,7 +9,7 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -26,6 +26,11 @@ import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { FormsModule } from '@angular/forms';
 
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;
@@ -60,6 +65,7 @@ describe('Example Modeling Submission Component', () => {
     } as Feedback;
     const mockFeedbackWithoutReference = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
     const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
+    const mockFeedbackCorrectionError = { reference: 'reference', type: FeedbackCorrectionErrorType.INCORRECT_SCORE } as FeedbackCorrectionError;
 
     beforeEach(() => {
         route = {
@@ -70,16 +76,20 @@ describe('Example Modeling Submission Component', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ArtemisExampleModelingSubmissionRoutingModule), TranslateTestingModule],
+            imports: [ArtemisTestModule, MockModule(ArtemisExampleModelingSubmissionRoutingModule), TranslateTestingModule, FormsModule],
             declarations: [
                 ExampleModelingSubmissionComponent,
+                ModelingAssessmentComponent,
                 MockComponent(ModelingEditorComponent),
                 MockTranslateValuesDirective,
                 MockComponent(FaLayersComponent),
                 MockComponent(CollapsableAssessmentInstructionsComponent),
+                MockComponent(UnreferencedFeedbackComponent),
+                MockComponent(ScoreDisplayComponent),
             ],
             providers: [
                 MockProvider(ChangeDetectorRef),
+                MockProvider(ArtemisTranslatePipe),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -142,11 +152,15 @@ describe('Example Modeling Submission Component', () => {
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.saveSuccessful');
     });
 
-    it('should upsert an existing modeling submission', () => {
+    it('should upsert an existing modeling submission', fakeAsync(() => {
         // GIVEN
         jest.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
         const alertSpy = jest.spyOn(alertService, 'success');
-        const serviceSpy = jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        const serviceSpy = jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })).pipe(delay(1)));
+
+        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const modelingAssessmentServiceSpy = jest.spyOn(modelingAssessmentService, 'saveExampleAssessment');
+
         comp.isNewSubmission = false;
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
@@ -155,12 +169,21 @@ describe('Example Modeling Submission Component', () => {
         fixture.detectChanges();
         comp.upsertExampleModelingSubmission();
 
+        // Ensure calls are not concurrent, new one should start after first one ends.
+        expect(serviceSpy).toHaveBeenCalledTimes(1);
+        tick(1);
+
+        // This service request should also start after the previous one ends.
+        expect(modelingAssessmentServiceSpy).toHaveBeenCalledTimes(0);
+        tick(1);
+
         // THEN
         expect(comp.isNewSubmission).toBe(false);
         expect(serviceSpy).toHaveBeenCalledTimes(2);
+        expect(modelingAssessmentServiceSpy).toHaveBeenCalledTimes(1);
         expect(alertSpy).toHaveBeenCalledTimes(1);
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.saveSuccessful');
-    });
+    }));
 
     it('should check assessment', () => {
         // GIVEN
@@ -254,6 +277,143 @@ describe('Example Modeling Submission Component', () => {
         expect(comp.feedbackChanged).toBe(false);
         expect(comp.assessmentMode).toBe(false);
         expect(comp.totalScore).toBe(mockFeedbackWithReference.credits);
+    });
+
+    it('should create error alert if assessment is invalid', () => {
+        // GIVEN
+        const alertSpy = jest.spyOn(alertService, 'error');
+        comp.exercise = exercise;
+        comp.exampleSubmission = exampleSubmission;
+        comp.referencedFeedback = [mockFeedbackInvalid];
+
+        // WHEN
+        comp.saveExampleAssessment();
+
+        // THEN
+        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledWith('modelingAssessment.invalidAssessments');
+    });
+
+    it('should update assessment explanation and example assessment', () => {
+        // GIVEN
+        comp.exercise = exercise;
+        comp.exampleSubmission = { ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' };
+        comp.referencedFeedback = [mockFeedbackWithReference];
+        comp.unreferencedFeedback = [mockFeedbackWithoutReference];
+
+        const result = { id: 1 } as Result;
+        const alertSpy = jest.spyOn(alertService, 'success');
+        jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        jest.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(of(result));
+
+        // WHEN
+        comp.saveExampleAssessment();
+
+        // THEN
+        expect(comp.result).toBe(result);
+        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveSuccessful');
+    });
+
+    it('should update assessment explanation but create error message on example assessment update failure', () => {
+        // GIVEN
+        comp.exercise = exercise;
+        comp.exampleSubmission = { ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' };
+        comp.referencedFeedback = [mockFeedbackWithReference, mockFeedbackWithoutReference];
+
+        const alertSpy = jest.spyOn(alertService, 'error');
+        jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
+        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        jest.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(throwError(() => ({ status: 404 })));
+
+        // WHEN
+        comp.saveExampleAssessment();
+
+        // THEN
+        expect(comp.result).toBe(undefined);
+        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveFailed');
+    });
+
+    it('should mark all feedback correct', () => {
+        // GIVEN
+        comp.exercise = exercise;
+        comp.exampleSubmission = exampleSubmission;
+        comp.referencedFeedback = [mockFeedbackInvalid];
+        comp.assessmentMode = true;
+
+        // WHEN
+        comp.showAssessment();
+        fixture.detectChanges();
+        const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
+
+        comp.markAllFeedbackToCorrect();
+        fixture.detectChanges();
+
+        // THEN
+        expect(comp.referencedFeedback.every((feedback) => feedback.correctionStatus === 'CORRECT')).toBeTrue();
+        expect(resultFeedbacksSetterSpy).toHaveBeenCalledTimes(1);
+        expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+    });
+
+    it('should mark all feedback wrong', () => {
+        // GIVEN
+        comp.exercise = exercise;
+        comp.exampleSubmission = exampleSubmission;
+        comp.referencedFeedback = [mockFeedbackInvalid];
+        comp.assessmentMode = true;
+
+        // WHEN
+        comp.showAssessment();
+        fixture.detectChanges();
+        const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
+
+        comp.markWrongFeedback([mockFeedbackCorrectionError]);
+        fixture.detectChanges();
+
+        // THEN
+        expect(comp.referencedFeedback[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
+        expect(resultFeedbacksSetterSpy).toHaveBeenCalledTimes(1);
+        expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+    });
+
+    it('should create success alert on example assessment update', () => {
+        // GIVEN
+        const result = { id: 1 } as Result;
+        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        jest.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(of(result));
+        const alertSpy = jest.spyOn(alertService, 'success');
+
+        comp.exercise = exercise;
+        comp.exampleSubmission = exampleSubmission;
+        comp.referencedFeedback = [mockFeedbackWithReference];
+
+        // WHEN
+        comp.saveExampleAssessment();
+
+        // THEN
+        comp.result = result;
+        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveSuccessful');
+    });
+
+    it('should create error alert on example assessment update failure', () => {
+        // GIVEN
+        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        jest.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(throwError(() => ({ status: 404 })));
+        const alertSpy = jest.spyOn(alertService, 'error');
+
+        comp.exercise = exercise;
+        comp.exampleSubmission = exampleSubmission;
+        comp.referencedFeedback = [mockFeedbackWithReference];
+
+        // WHEN
+        comp.saveExampleAssessment();
+
+        // THEN
+        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveFailed');
     });
 
     it('should handle explanation change', () => {

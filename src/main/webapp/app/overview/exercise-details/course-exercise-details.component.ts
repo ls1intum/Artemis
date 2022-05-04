@@ -22,7 +22,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
@@ -47,7 +46,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { SafeHtml } from '@angular/platform-browser';
-import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
@@ -90,6 +89,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isExamExercise: boolean;
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
+    exampleSolutionCollapsed: boolean;
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
@@ -115,6 +115,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faSignal = faSignal;
     faExternalLinkAlt = faExternalLinkAlt;
     faFileSignature = faFileSignature;
+    faAngleDown = faAngleDown;
+    faAngleUp = faAngleUp;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -267,6 +269,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const exercise = newExercise as ProgrammingExercise;
             this.isProgrammingExerciseExampleSolutionPublished = exercise.exampleSolutionPublished || false;
         }
+        // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
+        this.exampleSolutionCollapsed = !!this.exercise?.isAtLeastTutor;
     }
 
     /**
@@ -461,31 +465,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    publishBuildPlanUrl() {
-        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
-    }
-
-    buildPlanActive() {
-        return (
-            !!this.exercise &&
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
-        );
-    }
-
-    buildPlanUrl(participation: StudentParticipation) {
-        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
-    }
-
-    projectKey(): string {
-        return (this.exercise as ProgrammingExercise).projectKey!;
-    }
-
-    buildPlanId(participation: Participation) {
-        return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
-    }
-
     /**
      * Returns the status of the exercise if it is a quiz exercise or undefined otherwise.
      */
@@ -556,6 +535,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.alertService.error('artemisApp.exercise.resultCreationUnsuccessful');
             },
         });
+    }
+
+    /**
+     * Used to change the boolean value for the example solution dropdown menu
+     */
+    changeExampleSolution() {
+        this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
