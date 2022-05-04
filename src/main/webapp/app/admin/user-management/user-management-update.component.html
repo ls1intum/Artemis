@@ -113,6 +113,7 @@
                         [maxLength]="PASSWORD_MAX_LENGTH"
                         [(ngModel)]="user.password"
                         formControlName="passwordInput"
+                        [required]="!editPassword.checked"
                     />
                     <div *ngIf="editForm.get('passwordInput')!.dirty && editForm.get('passwordInput')!.invalid">
                         <small
