@@ -279,7 +279,7 @@ public class QuizScheduleService {
         // reload from database to make sure there are no proxy objects
         final var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (quizExercise != null && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-            // TODO: QQQ Scheduled quiz batches
+            // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
             var quizBatch = quizExercise.getQuizBatches().stream().findAny();
             if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null && quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
                 // schedule sending out filtered quiz over websocket

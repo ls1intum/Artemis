@@ -50,7 +50,7 @@ public class QuizBatchService {
         return quizBatchRepository.saveAndFlush(quizBatch);
     }
 
-    // TODO: QQQ attempt at lazy loading batches but doesn't work with how lazy loading actually works
+    // TODO: quiz cleanup: attempt at lazy loading batches but doesn't work; check it lazy loading makes any sense and how to implement it properly
     public void loadBatchesIfMissing(QuizExercise quizExercise) {
         if (quizExercise.getQuizBatches() == null) {
             quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExercise(quizExercise));

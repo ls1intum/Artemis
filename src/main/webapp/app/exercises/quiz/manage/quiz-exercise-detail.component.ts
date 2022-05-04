@@ -963,7 +963,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
         // Release Date valid but lies in the past
         if (false /*this.quizExercise.isPlannedToStart*/) {
-            // TODO: QQQ
+            // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
             if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',

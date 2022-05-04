@@ -360,7 +360,7 @@ public class QuizExerciseResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
 
-        // TODO: QQQ configuration to limit the number of batches a tutor can create
+        // TODO: quiz cleanup: it should be possible to limit the number of batches a tutor can create
 
         var quizBatch = quizBatchService.createBatch(quizExercise, user);
         quizBatch = quizBatchService.save(quizBatch);

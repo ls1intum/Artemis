@@ -210,7 +210,7 @@ export abstract class QuizExerciseValidationDirective {
             });
         }
 
-        // TODO: QQQ
+        // TODO: quiz cleanup: properly validate start (and due) date and deduplicate the checks (see isValidQuiz)
         /** We only verify the releaseDate if the checkbox is activated **/
         // if (this.quizExercise.isPlannedToStart) {
         //     if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
