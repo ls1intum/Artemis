@@ -114,4 +114,19 @@ public class LearningGoal extends DomainObject {
     public void setConsecutiveCourses(Set<Course> consecutiveCourses) {
         this.consecutiveCourses = consecutiveCourses;
     }
+
+    public enum LearningGoalSearchColumn {
+
+        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
+
+        private final String mappedColumnName;
+
+        LearningGoalSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
+    }
 }

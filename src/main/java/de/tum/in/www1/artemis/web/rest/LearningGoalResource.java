@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -263,6 +265,19 @@ public class LearningGoalResource {
     }
 
     /**
+     * Search for all learning goals by title and course title. The result is pageable.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("learning-goals")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<LearningGoal>> getAllLecturesOnPage(PageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(learningGoalService.getAllOnPageWithSize(search, user));
+    }
+
+    /**
      * GET /courses/:courseId/prerequisites
      * @param courseId the id of the course for which the learning goals should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
@@ -276,7 +291,7 @@ public class LearningGoalResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         Set<LearningGoal> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(courseId);
-        // Remove all lecture units as
+        // Remove all lecture units as not needed for now
         for (LearningGoal prerequisite : prerequisites) {
             prerequisite.setLectureUnits(Collections.emptySet());
         }

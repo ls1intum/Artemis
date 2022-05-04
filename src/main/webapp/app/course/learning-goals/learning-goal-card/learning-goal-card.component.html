@@ -6,7 +6,8 @@
         <div *ngIf="isProgressAvailable; else elseBlock">
             <jhi-circular-progress-bar [progressInPercent]="progressInPercent" [progressText]="progressText"></jhi-circular-progress-bar>
         </div>
-        <ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.progressUnavailable' | artemisTranslate }}</ng-template>
+        <ng-template #elseBlock>{{ learningGoal.description }}</ng-template>
+        <!--<ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.progressUnavailable' | artemisTranslate }}</ng-template>-->
     </div>
     <div class="card-footer course-goal-card-footer" (click)="$event.stopPropagation()">
         <ng-content></ng-content>
