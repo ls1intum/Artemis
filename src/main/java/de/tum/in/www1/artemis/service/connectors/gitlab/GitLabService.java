@@ -478,6 +478,13 @@ public class GitLabService extends AbstractVersionControlService {
         return health(gitlabServerUrl, shortTimeoutRestTemplate);
     }
 
+    /**
+     * Creating a ConnectorHealth object for a GitLab server.
+     *
+     * @param gitlabServerUrl          The URL of the GitLab server
+     * @param shortTimeoutRestTemplate RestTemplate with a shorter timeout than for other requests
+     * @return a ConnectorHealth object storing whether the server is up and the URL
+     */
     public static ConnectorHealth health(URL gitlabServerUrl, RestTemplate shortTimeoutRestTemplate) {
         try {
             final var uri = Endpoints.HEALTH.buildEndpoint(gitlabServerUrl.toString()).build().toUri();
