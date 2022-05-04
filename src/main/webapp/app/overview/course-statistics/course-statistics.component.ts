@@ -13,10 +13,11 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeDTO } from 'app/entities/grade-step.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 import { GraphColors } from 'app/entities/statistics.model';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -27,6 +28,10 @@ const FILE_UPLOAD_EXERCISE_COLOR = '#2D9C88';
 type ExerciseTypeMap = {
     [type in ExerciseType]: number;
 };
+
+interface YourOverallPointsEntry extends NgxChartsSingleSeriesDataEntry {
+    label: string;
+}
 
 enum ChartBarTitle {
     NO_DUE_DATE = 'No due date',
@@ -115,7 +120,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     };
 
     // ngx-charts
-    ngxDoughnutData: any[] = [];
+    ngxDoughnutData: YourOverallPointsEntry[] = [];
 
     // Labels for the different parts in Your overall points chart
     programmingPointLabel = 'programmingPointLabel';
@@ -124,12 +129,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     textPointLabel = 'textPointLabel';
     fileUploadPointLabel = 'fileUploadPointLabel';
     missingPointsLabel = 'missingPointsLabel';
+    labels = [this.programmingPointLabel, this.quizPointLabel, this.modelingPointLabel, this.textPointLabel, this.fileUploadPointLabel, this.missingPointsLabel];
 
     ngxDoughnutColor = {
         name: 'Your overall points color',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: this.doughnutChartColors, // colors: orange, turquoise, violet, bordeaux, green, red
+        domain: [], // colors: orange, turquoise, violet, bordeaux, green, red
     } as Color;
 
     // arrays representing each exercise group
@@ -154,9 +160,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     } as Color;
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly legendPosition = LegendPosition;
     readonly barChartTitle = ChartBarTitle;
-    readonly chartHeight = 45;
-    readonly barPadding = 6;
+    readonly chartHeight = 25;
+    readonly barPadding = 4;
     readonly defaultSize = 50; // additional space for the x axis and its labels
 
     // array containing every non-empty exercise group
@@ -185,7 +192,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
         private router: Router,
-    ) {}
+    ) {
+        this.translateService.onLangChange.subscribe(() => {
+            this.updateDoughnutChartLegend();
+        });
+    }
 
     ngOnInit() {
         // Note: due to lazy loading and router outlet, we use parent 2x here
@@ -404,6 +415,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
         }
+        const scores = [programmingExerciseTotalScore, quizzesTotalScore, modelingExerciseTotalScore, textExerciseTotalScore, fileUploadExerciseTotalScore, totalMissedPoints];
         const absoluteScores = {} as ExerciseTypeMap;
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
@@ -411,12 +423,29 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
         absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.overallPointsPerExercise = absoluteScores;
-        this.ngxDoughnutData.push({ name: this.programmingPointLabel, value: programmingExerciseTotalScore });
+        /*this.ngxDoughnutData.push({ name: this.programmingPointLabel, value: programmingExerciseTotalScore });
         this.ngxDoughnutData.push({ name: this.quizPointLabel, value: quizzesTotalScore });
         this.ngxDoughnutData.push({ name: this.modelingPointLabel, value: modelingExerciseTotalScore });
         this.ngxDoughnutData.push({ name: this.textPointLabel, value: textExerciseTotalScore });
         this.ngxDoughnutData.push({ name: this.fileUploadPointLabel, value: fileUploadExerciseTotalScore });
         this.ngxDoughnutData.push({ name: this.missingPointsLabel, value: totalMissedPoints });
+        this.includeIfNotZero(this.programmingPointLabel, programmingExerciseTotalScore);
+        this.includeIfNotZero(this.quizPointLabel, quizzesTotalScore);
+        this.includeIfNotZero(this.modelingPointLabel, modelingExerciseTotalScore);
+        this.includeIfNotZero(this.textPointLabel, textExerciseTotalScore);
+        this.includeIfNotZero(this.fileUploadPointLabel, fileUploadExerciseTotalScore);
+        this.includeIfNotZero(this.missingPointsLabel, totalMissedPoints);*/
+        scores.forEach((score, index) => {
+            if (score > 0) {
+                this.ngxDoughnutData.push({
+                    name: this.translateService.instant('artemisApp.courseOverview.statistics.' + this.labels[index]),
+                    value: score,
+                    label: this.labels[index],
+                });
+                this.ngxDoughnutColor.domain.push(this.doughnutChartColors[index]);
+            }
+        });
+
         this.ngxDoughnutData = [...this.ngxDoughnutData];
     }
 
@@ -848,5 +877,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         Finally, we need to add space for the x axis and its ticks
          */
         return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
+    }
+
+    private updateDoughnutChartLegend(): void {
+        this.ngxDoughnutData.forEach((dataEntry) => {
+            dataEntry.name = this.translateService.instant('artemisApp.courseOverview.statistics.' + dataEntry.label);
+        });
+        this.ngxDoughnutData = [...this.ngxDoughnutData];
     }
 }
