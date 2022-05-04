@@ -19,12 +19,16 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CourseScoresCsvRow, CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
+import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
-import { CsvDecimalSeparator, CsvExportOptions } from 'app/shared/export/csv-export-modal.component';
+import { CsvExportOptions } from 'app/shared/export/export-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
+import * as XLSX from 'xlsx';
+import { VERSION } from 'app/app.constants';
+import { CourseScoresExcelRowBuilder } from 'app/course/course-scores/course-scores-excel-row-builder';
+import { CourseScoresRowBuilder, CourseScoresExportRow } from 'app/course/course-scores/course-scores-row-builder';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
@@ -510,36 +514,59 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Method for exporting the csv with the needed data
      */
-    exportResults(customOptions: CsvExportOptions) {
+    exportResults(customCsvOptions?: CsvExportOptions) {
         if (!this.exportReady || this.students.length === 0) {
             return;
         }
 
-        const rows: CourseScoresCsvRow[] = [];
+        const rows: CourseScoresExportRow[] = [];
         const keys = this.generateCsvColumnNames();
-        // required because the currently used library for exporting to csv does not quote the header fields (keys)
-        const quotedKeys = keys.map((key) => customOptions.quoteStrings + key + customOptions.quoteStrings);
 
-        this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student, customOptions.decimalSeparator)));
+        this.students.forEach((student) => rows.push(this.generateStudentStatisticsCsvRow(student, customCsvOptions)));
 
         // empty row as separator
-        rows.push(this.prepareEmptyCsvRow('', customOptions.decimalSeparator).build());
+        rows.push(this.prepareEmptyCsvRow('', customCsvOptions).build());
 
-        rows.push(this.generateCsvRowMaxValues(customOptions.decimalSeparator));
-        rows.push(this.generateCsvRowAverageValues(customOptions.decimalSeparator));
-        rows.push(this.generateCsvRowParticipation(customOptions.decimalSeparator));
-        rows.push(this.generateCsvRowSuccessfulParticipation(customOptions.decimalSeparator));
+        rows.push(this.generateCsvRowMaxValues(customCsvOptions));
+        rows.push(this.generateCsvRowAverageValues(customCsvOptions));
+        rows.push(this.generateCsvRowParticipation(customCsvOptions));
+        rows.push(this.generateCsvRowSuccessfulParticipation(customCsvOptions));
 
-        this.exportAsCsv(quotedKeys, rows, customOptions);
+        if (customCsvOptions) {
+            // required because the currently used library for exporting to csv does not quote the header fields (keys)
+            const quotedKeys = keys.map((key) => customCsvOptions.quoteStrings + key + customCsvOptions.quoteStrings);
+            this.exportAsCsv(quotedKeys, rows, customCsvOptions);
+        } else {
+            this.exportAsExcel(keys, rows);
+        }
+    }
+
+    /**
+     * Builds an Excel workbook and starts the download.
+     * @param keys The column names used for the export.
+     * @param rows The data rows that should be part of the Excel file.
+     */
+    exportAsExcel(keys: string[], rows: CourseScoresExportRow[]) {
+        const workbook = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows, { header: keys });
+        const worksheetName = 'Course Scores';
+        XLSX.utils.book_append_sheet(workbook, ws, worksheetName);
+
+        const workbookProps = {
+            Title: `${this.course.title} Scores`,
+            Author: `Artemis ${VERSION ?? ''}`,
+        };
+        const fileName = `${this.course.title} Scores.xlsx`;
+        XLSX.writeFile(workbook, fileName, { Props: workbookProps, compression: true });
     }
 
     /**
      * Builds the CSV from the rows and starts the download.
      * @param keys The column names of the CSV.
      * @param rows The data rows that should be part of the CSV.
-     * @param customOptions Custom csv options that should be used for export
+     * @param customOptions Custom csv options that should be used for export.
      */
-    exportAsCsv(keys: string[], rows: CourseScoresCsvRow[], customOptions: CsvExportOptions) {
+    exportAsCsv(keys: string[], rows: CourseScoresExportRow[], customOptions: CsvExportOptions) {
         const generalExportOptions = {
             showLabels: true,
             showTitle: false,
@@ -556,11 +583,15 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Constructs a new builder for a new CSV row.
-     * @param decimalSeparator that is used for number values
+     * @param csvExportOptions If present, constructs a CSV row builder with these options, otherwise an Excel row builder is returned.
      * @private
      */
-    private newCsvRowBuilder(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRowBuilder {
-        return new CourseScoresCsvRowBuilder(decimalSeparator, this.course.accuracyOfScores);
+    private newRowBuilder(csvExportOptions?: CsvExportOptions): CourseScoresRowBuilder {
+        if (csvExportOptions) {
+            return new CourseScoresCsvRowBuilder(csvExportOptions.decimalSeparator, this.course.accuracyOfScores);
+        } else {
+            return new CourseScoresExcelRowBuilder(this.course.accuracyOfScores);
+        }
     }
 
     /**
@@ -592,11 +623,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Generates a row for the exported csv with the statistics for the given student.
      * @param student The student for which a row in the CSV should be created.
-     * @param decimalSeparator that is used for number values
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
-    private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics, decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
-        const rowData = this.newCsvRowBuilder(decimalSeparator);
+    private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics, csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
+        const rowData = this.newRowBuilder(csvExportOptions);
+
         rowData.setUserInformation(student);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
@@ -634,11 +666,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the maximum values of the various statistics.
-     * @param decimalSeparator that is used for number values
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
-    private generateCsvRowMaxValues(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Max', decimalSeparator);
+    private generateCsvRowMaxValues(csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Max', csvExportOptions);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -663,11 +695,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported csv with the average values of the various statistics.
-     * @param decimalSeparator that is used for number values
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
-    private generateCsvRowAverageValues(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Average', decimalSeparator);
+    private generateCsvRowAverageValues(csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Average', csvExportOptions);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -700,11 +732,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of participants.
-     * @param decimalSeparator that is used for number values
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
-    private generateCsvRowParticipation(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Number of Participations', decimalSeparator);
+    private generateCsvRowParticipation(csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Number of Participations', csvExportOptions);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -721,11 +753,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Generates a row for the exported Csv with information about the number of successful participants.
-     * @param decimalSeparator that is used for number values
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */
-    private generateCsvRowSuccessfulParticipation(decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRow {
-        const rowData = this.prepareEmptyCsvRow('Number of Successful Participations', decimalSeparator);
+    private generateCsvRowSuccessfulParticipation(csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
+        const rowData = this.prepareEmptyCsvRow('Number of Successful Participations', csvExportOptions);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
@@ -743,10 +775,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     /**
      * Prepares an empty row (except for the first column) with an empty column for each exercise type.
      * @param firstValue The value that should be placed in the first column of the row.
-     * @param decimalSeparator that is used for number values
+     * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      */
-    private prepareEmptyCsvRow(firstValue: string, decimalSeparator: CsvDecimalSeparator): CourseScoresCsvRowBuilder {
-        const emptyLine = this.newCsvRowBuilder(decimalSeparator);
+    private prepareEmptyCsvRow(firstValue: string, csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
+        const emptyLine = this.newRowBuilder(csvExportOptions);
 
         emptyLine.set(NAME_KEY, firstValue);
         emptyLine.set(USERNAME_KEY, '');
@@ -774,17 +806,17 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Puts the given value into the grading scale column of the CSV row.
-     * @param csvRow The row in which the value should be stored.
+     * Puts the given value into the grading scale column of the Export row.
+     * @param exportRow The row in which the value should be stored.
      * @param value The value that should be stored in the row.
      * @private
      */
-    private setCsvRowGradeValue(csvRow: CourseScoresCsvRowBuilder, value: string | number | undefined) {
+    private setCsvRowGradeValue(exportRow: CourseScoresExportRow, value: string | number | undefined) {
         if (this.gradingScaleExists) {
             if (this.isBonus) {
-                csvRow.set(BONUS_KEY, value);
+                exportRow.set(BONUS_KEY, value);
             } else {
-                csvRow.set(GRADE_KEY, value);
+                exportRow.set(GRADE_KEY, value);
             }
         }
     }
