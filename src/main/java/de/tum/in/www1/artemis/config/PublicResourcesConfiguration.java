@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -14,7 +14,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
         // Static assets, accessible without authorization.
         // Allowed locations are under $artemisRunDir/public/** and resource/public/**
         final var userDir = System.getProperty("user.dir");
-        final var publicFiles = Paths.get(userDir, "public");
+        final var publicFiles = Path.of(userDir, "public");
         registry.addResourceHandler("/public/**").addResourceLocations("file:" + publicFiles + "/", "classpath:public/");
     }
 }

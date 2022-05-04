@@ -1,6 +1,7 @@
+from typing import List
+
 from testUtils.AbstractProgramTest import AbstractProgramTest
 
-from typing import List
 
 class TestUBSan(AbstractProgramTest):
     """
@@ -14,7 +15,7 @@ class TestUBSan(AbstractProgramTest):
     def __init__(self, executionDirectory: str, makeTarget: str = "ubsan", requirements: List[str] = None, name: str = "TestCompileUBSan"):
         super(TestUBSan, self).__init__(name, executionDirectory, "make", requirements, timeoutSec=5)
         self.makeTarget = makeTarget
-    
+
     def _run(self):
         # Start the program:
         self.pWrap = self._createPWrap([self.executable, "-C", self.executionDirectory, self.makeTarget])
@@ -25,6 +26,6 @@ class TestUBSan(AbstractProgramTest):
         retCode: int = self.pWrap.getReturnCode()
         if retCode != 0:
             self._failWith(f"Make for directory {str(self.executionDirectory)} failed. Returncode is {retCode}.")
-        
+
         # Always cleanup to make sure all threads get joined:
         self.pWrap.cleanup()

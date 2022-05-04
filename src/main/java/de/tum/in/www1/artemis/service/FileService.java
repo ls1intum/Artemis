@@ -7,7 +7,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -154,7 +153,7 @@ public class FileService implements DisposableBean {
         if (newFilePath != null && newFilePath.contains("files/temp")) {
             // rename and move file
             try {
-                Path source = Paths.get(actualPathForPublicPath(newFilePath));
+                Path source = Path.of(actualPathForPublicPath(newFilePath));
                 File targetFile = generateTargetFile(newFilePath, targetFolder, keepFileName);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
@@ -180,24 +179,24 @@ public class FileService implements DisposableBean {
 
         // check for known path to convert
         if (publicPath.contains("files/temp")) {
-            return Paths.get(FilePathService.getTempFilePath(), filename).toString();
+            return Path.of(FilePathService.getTempFilePath(), filename).toString();
         }
         if (publicPath.contains("files/drag-and-drop/backgrounds")) {
-            return Paths.get(FilePathService.getDragAndDropBackgroundFilePath(), filename).toString();
+            return Path.of(FilePathService.getDragAndDropBackgroundFilePath(), filename).toString();
         }
         if (publicPath.contains("files/drag-and-drop/drag-items")) {
-            return Paths.get(FilePathService.getDragItemFilePath(), filename).toString();
+            return Path.of(FilePathService.getDragItemFilePath(), filename).toString();
         }
         if (publicPath.contains("files/course/icons")) {
-            return Paths.get(FilePathService.getCourseIconFilePath(), filename).toString();
+            return Path.of(FilePathService.getCourseIconFilePath(), filename).toString();
         }
         if (publicPath.contains("files/attachments/lecture")) {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
-            return Paths.get(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
+            return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
         }
         if (publicPath.contains("files/attachments/attachment-unit")) {
             String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
-            return Paths.get(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
+            return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -208,7 +207,7 @@ public class FileService implements DisposableBean {
             }
             final var exerciseId = Long.parseLong(shouldBeExerciseId);
             final var submissionId = Long.parseLong(shouldBeSubmissionId);
-            return Paths.get(FileUploadSubmission.buildFilePath(exerciseId, submissionId), filename).toString();
+            return Path.of(FileUploadSubmission.buildFilePath(exerciseId, submissionId), filename).toString();
         }
 
         // path is unknown => cannot convert
@@ -224,7 +223,7 @@ public class FileService implements DisposableBean {
      */
     public String publicPathForActualPath(String actualPath, @Nullable Long entityId) {
         // first extract filename
-        String filename = Paths.get(actualPath).getFileName().toString();
+        String filename = Path.of(actualPath).getFileName().toString();
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
@@ -249,7 +248,7 @@ public class FileService implements DisposableBean {
             return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
         }
         if (actualPath.contains(FilePathService.getFileUploadExercisesFilePath())) {
-            final var path = Paths.get(actualPath);
+            final var path = Path.of(actualPath);
             final long exerciseId;
             try {
                 // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
@@ -320,7 +319,7 @@ public class FileService implements DisposableBean {
                 filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
-            var path = Paths.get(targetFolder, filename).toString();
+            var path = Path.of(targetFolder, filename).toString();
 
             newFile = new File(path);
             if (keepFileName && newFile.exists()) {
@@ -356,7 +355,7 @@ public class FileService implements DisposableBean {
                 continue;
             }
 
-            Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
+            Path copyPath = Path.of(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();
             if (!parentFolder.exists()) {
                 Files.createDirectories(parentFolder.toPath());
@@ -536,7 +535,7 @@ public class FileService implements DisposableBean {
 
         if (subDirectories != null) {
             for (String subDirectory : subDirectories) {
-                replaceVariablesInDirectoryName(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), targetString, replacementString);
+                replaceVariablesInDirectoryName(Path.of(directory.getAbsolutePath(), subDirectory).toString(), targetString, replacementString);
             }
         }
     }
@@ -605,7 +604,7 @@ public class FileService implements DisposableBean {
             // filter out files that should be ignored
             files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
             for (String file : files) {
-                replaceVariablesInFile(Paths.get(directory.getAbsolutePath(), file).toString(), replacements);
+                replaceVariablesInFile(Path.of(directory.getAbsolutePath(), file).toString(), replacements);
             }
         }
 
@@ -617,7 +616,7 @@ public class FileService implements DisposableBean {
                     // ignore files in the '.git' folder
                     continue;
                 }
-                replaceVariablesInFileRecursive(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), replacements, filesToIgnore);
+                replaceVariablesInFileRecursive(Path.of(directory.getAbsolutePath(), subDirectory).toString(), replacements, filesToIgnore);
             }
         }
     }
@@ -633,7 +632,7 @@ public class FileService implements DisposableBean {
     public void replaceVariablesInFile(String filePath, Map<String, String> replacements) throws IOException {
         log.debug("Replacing {} in file {}", replacements, filePath);
         // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
-        Path replaceFilePath = Paths.get(filePath);
+        Path replaceFilePath = Path.of(filePath);
         Charset charset = StandardCharsets.UTF_8;
 
         String fileContent = Files.readString(replaceFilePath, charset);
@@ -679,7 +678,7 @@ public class FileService implements DisposableBean {
     public void normalizeLineEndings(String filePath) throws IOException {
         log.debug("Normalizing line endings in file {}", filePath);
         // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
-        Path replaceFilePath = Paths.get(filePath);
+        Path replaceFilePath = Path.of(filePath);
         Charset charset = StandardCharsets.UTF_8;
 
         String fileContent = Files.readString(replaceFilePath, charset);
@@ -721,7 +720,7 @@ public class FileService implements DisposableBean {
      */
     public void convertToUTF8(String filePath) throws IOException {
         log.debug("Converting file {} to UTF-8", filePath);
-        Path replaceFilePath = Paths.get(filePath);
+        Path replaceFilePath = Path.of(filePath);
         byte[] contentArray = Files.readAllBytes(replaceFilePath);
 
         Charset charset = detectCharset(contentArray);
@@ -810,7 +809,7 @@ public class FileService implements DisposableBean {
      * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
      */
     public Path getUniquePath(String path) {
-        var uniquePath = Paths.get(path, String.valueOf(System.currentTimeMillis()));
+        var uniquePath = Path.of(path, String.valueOf(System.currentTimeMillis()));
         if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
             try {
                 Files.createDirectories(uniquePath);
