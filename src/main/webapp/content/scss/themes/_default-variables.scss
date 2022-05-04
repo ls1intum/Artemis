@@ -256,6 +256,10 @@ $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
 $sa-question-container-input-background: white;
 $sa-question-container-input-border: #ced4da;
+$sa-question-input-invalid-background: lightgray;
+$sa-question-input-wrong-backgroud: red;
+$sa-question-input-correct-backgroud: orange;
+$sa-question-input-completely-correct-backgroud: lightgreen;
 
 $mc-question-answer-option-border: lightgrey;
 $mc-question-answer-option-hover-background: #fafafa;

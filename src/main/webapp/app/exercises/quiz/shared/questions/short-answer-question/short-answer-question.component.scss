@@ -29,19 +29,19 @@
             }
 
             &__input.invalid {
-                background: lightgray;
+                background: var(--sa-question-input-invalid-background);
             }
 
             &__input.wrong {
-                background: red;
+                background: var(--sa-question-input-wrong-background);
             }
 
             &__input.correct {
-                background: orange;
+                background: var(--sa-question-input-correct-background);
             }
 
             &__input.completely-correct {
-                background: lightgreen;
+                background: var(--sa-question-input-completely-correct-background);
             }
         }
     }

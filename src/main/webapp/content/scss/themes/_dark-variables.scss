@@ -338,6 +338,10 @@ $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
 $sa-question-container-input-background: transparentize(#fff, 0.95);
 $sa-question-container-input-border: transparentize(#fff, 0.9);
+$sa-question-input-invalid-background: $gray-700;
+$sa-question-input-wrong-background: $danger;
+$sa-question-input-correct-background: $warning;
+$sa-question-input-completely-correct-background: $success;
 
 $mc-question-answer-option-border: transparentize(#fff, 0.8);
 $mc-question-answer-option-hover-background: transparentize(#fff, 0.97);
