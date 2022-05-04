@@ -19,6 +19,7 @@ Using docker-compose we can start a MySQL database and the Artemis server locall
 .. figure:: cypress/cypress_bamboo_deployment_diagram.svg
    :align: center
    :alt: Artemis Deployment on Bamboo Build Agent for Cypress
+
    Artemis Deployment on Bamboo Build Agent for Cypress
 
 In total there are three Docker containers started in the Bamboo build agent:

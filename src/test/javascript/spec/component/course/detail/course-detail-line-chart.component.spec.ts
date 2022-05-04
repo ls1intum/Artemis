@@ -10,6 +10,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import dayjs from 'dayjs/esm';
 
 describe('CourseDetailLineChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailLineChartComponent>;
@@ -72,5 +73,69 @@ describe('CourseDetailLineChartComponent', () => {
         for (let i = 0; i < 17; i++) {
             expect(component.absoluteSeries[i]['absoluteValue']).toBe(0);
         }
+    });
+
+    it('should show lettering if course did not start yet', () => {
+        component.course = { startDate: dayjs().add(1, 'week') };
+        component.initialStats = [];
+
+        component.ngOnChanges();
+
+        expect(component.startDateAlreadyPassed).toBe(false);
+    });
+
+    it('should show only 2 weeks if start date is 1 week ago', () => {
+        component.course = { startDate: dayjs().subtract(1, 'week') };
+        component.initialStats = initialStats.slice(15);
+
+        component.ngOnChanges();
+
+        expect(component.data[0].series).toHaveLength(2);
+        expect(component.data[0].series[0].value).toBe(24);
+        expect(component.data[0].series[1].value).toBe(84);
+    });
+
+    it('should adapt labels if end date is passed', () => {
+        const endDate = dayjs().subtract(1, 'week');
+        component.course = { endDate };
+        component.initialStats = initialStats;
+
+        component.ngOnChanges();
+
+        expect(component.data[0].series[16].name).toBe('calendar_week ' + endDate.isoWeek());
+    });
+
+    it('should adapt if course phase is smaller than 4 weeks', () => {
+        const endDate = dayjs().subtract(1, 'weeks');
+        component.course = { startDate: dayjs().subtract(2, 'weeks'), endDate };
+        component.initialStats = initialStats.slice(15);
+
+        component.ngOnChanges();
+
+        expect(component.data[0].series).toHaveLength(2);
+        expect(component.data[0].series[0].value).toBe(24);
+        expect(component.data[0].series[1].value).toBe(84);
+        expect(component.data[0].series[1].name).toBe('calendar_week ' + endDate.isoWeek());
+        expect(component.startDateDisplayed).toBe(true);
+    });
+
+    it('should limit the next view if start date is reached', () => {
+        const getStatisticsDataMock = jest.spyOn(service, 'getStatisticsData').mockReturnValue(of(initialStats.slice(16)));
+        const startDate = dayjs().subtract(17, 'weeks');
+        component.course = { id: 42, startDate };
+        component.initialStats = initialStats;
+
+        component.ngOnChanges();
+
+        expect(component.data[0].series).toHaveLength(17);
+
+        // we switch back in time
+        component.switchTimeSpan(false);
+
+        expect(component.data[0].series).toHaveLength(1);
+        expect(component.data[0].series[0].value).toBe(84);
+        expect(component.data[0].series[0].name).toBe('calendar_week ' + startDate.isoWeek());
+        expect(getStatisticsDataMock).toHaveBeenCalledTimes(1);
+        expect(getStatisticsDataMock).toHaveBeenCalledWith(42, -1);
     });
 });
