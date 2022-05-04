@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 
 /**
- * This service is only needed for TESTS that neither provide the bamboo nor jenkins profile (but the dev profile).
- * It will NEVER be available in prod OR when bamboo OR jenkins is used.
+ * This service is only needed for TESTS that neither provide the bamboo nor jenkins nor gitlabci profile (but the dev profile).
+ * It will NEVER be available in prod OR when bamboo OR jenkins OR gitlabci is used.
  */
 @Service
 @Profile("dev & !bamboo & !jenkins & !gitlabci")
