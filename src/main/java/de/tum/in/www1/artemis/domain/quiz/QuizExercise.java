@@ -690,7 +690,7 @@ public class QuizExercise extends Exercise {
     @JsonIgnore
     @NotNull
     public Class<?> viewForStudentsInQuizExercise(@Nullable QuizBatch batch) {
-        if (!isQuizEnded()) {
+        if (isQuizEnded()) {
             return QuizView.After.class;
         }
         else if (batch != null && batch.isSubmissionAllowed()) {

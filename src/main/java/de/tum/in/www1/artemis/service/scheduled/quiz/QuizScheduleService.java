@@ -348,7 +348,13 @@ public class QuizScheduleService {
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
             throw new IllegalStateException();
         }
-        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, null, "start-now");
+
+        // TODO: quiz cleanup: We create a batch that has just started here because we can't access QuizBatchService here because of dependencies
+        var quizBatch = new QuizBatch();
+        quizBatch.setQuizExercise(quizExercise);
+        quizBatch.setStartTime(ZonedDateTime.now());
+        quizExercise.setQuizBatches(Set.of(quizBatch));
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, "start-now");
     }
 
     /**

@@ -479,8 +479,10 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizScheduleService.updateQuizExercise(quizExercise);
 
+        var quizBatch = quizBatchService.getQuizBatchForStudent(quizExercise, userRepository.getUser()).orElse(null);
+
         // notify websocket channel of changes to the quiz exercise
-        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, null, action);
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);
         return new ResponseEntity<>(quizExercise, HttpStatus.OK);
     }
 
