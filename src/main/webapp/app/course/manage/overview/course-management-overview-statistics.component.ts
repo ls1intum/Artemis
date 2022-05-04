@@ -5,6 +5,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import * as shape from 'd3-shape';
+import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { map, Subscription } from 'rxjs';
 
@@ -13,7 +14,7 @@ import { map, Subscription } from 'rxjs';
     templateUrl: './course-management-overview-statistics.component.html',
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
 })
-export class CourseManagementOverviewStatisticsComponent implements OnInit, OnChanges, OnDestroy {
+export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart implements OnInit, OnChanges, OnDestroy {
     @Input()
     amountOfStudentsInCourse: number;
 
@@ -43,7 +44,9 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private translateService: TranslateService, private themeService: ThemeService) {}
+    constructor(private translateService: TranslateService, private themeService: ThemeService) {
+        super();
+    }
 
     ngOnInit() {
         this.themeSubscription = this.themeService
@@ -51,9 +54,12 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
             .pipe(map((theme) => getGraphColorForTheme(theme, GraphColors.BLACK)))
             .subscribe((color) => (this.chartColor = { ...this.chartColor, domain: [color] }));
 
-        for (let i = 0; i < 4; i++) {
-            this.lineChartLabels[i] = this.translateService.instant(`overview.${3 - i}_weeks_ago`);
-        }
+        this.translateService.onLangChange.subscribe(() => {
+            this.updateTranslation();
+        });
+        this.determineDisplayedPeriod(this.course, 4);
+        this.createChartLabels(this.currentOffsetToEndDate);
+        this.createChartData();
     }
 
     ngOnChanges() {
@@ -75,8 +81,12 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
         const set: any[] = [];
         this.ngxData = [];
         if (this.amountOfStudentsInCourse > 0 && !!this.initialStats) {
-            this.initialStats.forEach((value, index) => {
-                set.push({ name: this.lineChartLabels[index], value: (value * 100) / this.amountOfStudentsInCourse, absoluteValue: value });
+            this.initialStats.forEach((absoluteValue, index) => {
+                set.push({
+                    name: this.lineChartLabels[index],
+                    value: (absoluteValue * 100) / this.amountOfStudentsInCourse,
+                    absoluteValue,
+                });
             });
         } else {
             this.lineChartLabels.forEach((label) => {
@@ -92,5 +102,35 @@ export class CourseManagementOverviewStatisticsComponent implements OnInit, OnCh
      */
     formatYAxis(value: any): string {
         return value.toLocaleString() + ' %';
+    }
+
+    private createChartLabels(weekOffset: number): void {
+        for (let i = 0; i < this.currentSpanSize; i++) {
+            let translatePath: string;
+            const week = Math.min(this.currentSpanSize - 1, 3) - i + weekOffset;
+            switch (week) {
+                case 0: {
+                    translatePath = 'overview.currentWeek';
+                    break;
+                }
+                case 1: {
+                    translatePath = 'overview.weekAgo';
+                    break;
+                }
+                default: {
+                    translatePath = 'overview.weeksAgo';
+                }
+            }
+            this.lineChartLabels[i] = this.translateService.instant(translatePath, { amount: week });
+        }
+    }
+
+    /**
+     * Auxiliary method that ensures that the chart is translated directly when user selects a new language
+     * @private
+     */
+    private updateTranslation(): void {
+        this.createChartLabels(this.currentOffsetToEndDate);
+        this.createChartData();
     }
 }

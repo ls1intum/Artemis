@@ -27,6 +27,22 @@
                 line-height: 35px;
                 margin-bottom: 10px;
             }
+
+            &__input.invalid {
+                background: lightgray;
+            }
+
+            &__input.wrong {
+                background: red;
+            }
+
+            &__input.correct {
+                background: orange;
+            }
+
+            &__input.completely-correct {
+                background: lightgreen;
+            }
         }
     }
 }

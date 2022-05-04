@@ -10,13 +10,15 @@ import * as shape from 'd3-shape';
 import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
 import { Subscription } from 'rxjs';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
+import { mean } from 'simple-statistics';
 
 @Component({
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
 })
-export class CourseDetailLineChartComponent implements OnChanges, OnDestroy {
+export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnChanges, OnDestroy {
     @Input()
     course: Course;
     @Input()
@@ -28,7 +30,7 @@ export class CourseDetailLineChartComponent implements OnChanges, OnDestroy {
 
     LEFT = false;
     RIGHT = true;
-    displayedNumberOfWeeks = 17;
+    readonly displayedNumberOfWeeks = 17;
     showsCurrentWeek = true;
 
     // Chart related
@@ -66,6 +68,7 @@ export class CourseDetailLineChartComponent implements OnChanges, OnDestroy {
     curve: any = shape.curveMonotoneX;
     average = { name: 'Average', value: 0 };
     showAverage = true;
+    startDateDisplayed = false;
 
     themeSubscription: Subscription;
 
@@ -75,6 +78,7 @@ export class CourseDetailLineChartComponent implements OnChanges, OnDestroy {
     faArrowRight = faArrowRight;
 
     constructor(private service: CourseManagementService, private translateService: TranslateService, private themeService: ThemeService) {
+        super();
         this.themeSubscription = this.themeService
             .getCurrentThemeObservable()
             .subscribe((theme) => (this.chartColor = { ...this.chartColor, domain: [getGraphColorForTheme(theme, GraphColors.DARK_BLUE)] }));
@@ -88,6 +92,7 @@ export class CourseDetailLineChartComponent implements OnChanges, OnDestroy {
             return;
         }
         this.initialStatsReceived = true;
+        this.determineDisplayedPeriod(this.course, this.displayedNumberOfWeeks);
         this.createLabels();
         this.processDataAndCreateChart(this.initialStats);
         this.data = this.dataCopy;
@@ -120,7 +125,7 @@ export class CourseDetailLineChartComponent implements OnChanges, OnDestroy {
                 this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
-            const currentAverage = this.computeAverage(allValues);
+            const currentAverage = allValues.length > 0 ? mean(allValues) : 0;
             this.average.name = currentAverage.toFixed(2) + '%';
             this.average.value = currentAverage;
         } else {
@@ -133,13 +138,26 @@ export class CourseDetailLineChartComponent implements OnChanges, OnDestroy {
     }
 
     private createLabels() {
+        this.dataCopy[0].series = [{}];
+        this.absoluteSeries = [{}];
         const prefix = this.translateService.instant('calendar_week');
-        const startDate = dayjs().subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks');
-        const endDate = this.currentPeriod !== 0 ? dayjs().subtract(this.displayedNumberOfWeeks * -this.currentPeriod, 'weeks') : dayjs();
+        /*
+        This variable contains the number of weeks between the last displayed week in the chart and the current date.
+        If the end date is already passed, currentOffsetToEndDate represents the number of weeks between the course end date and the current date.
+        displayedNumberOfWeeks determines the normal scope of the chart (usually 17 weeks).
+        currentPeriod indicates how many times the observer shifted the scope in the past (by pressing the arrow)
+         */
+        const diffToLastChartWeek = this.currentOffsetToEndDate - this.displayedNumberOfWeeks * this.currentPeriod;
+        const endDate = dayjs().subtract(diffToLastChartWeek, 'weeks');
+        const remainingWeeksTillStartDate = this.course.startDate ? this.determineDifferenceBetweenIsoWeeks(this.course.startDate, endDate) + 1 : this.displayedNumberOfWeeks;
+        this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks);
+        // for the start date, we subtract the currently possible span size - 1 from the end date in addition
+        const startDate = dayjs().subtract(diffToLastChartWeek + this.currentSpanSize - 1, 'weeks');
+        this.startDateDisplayed = !!this.course.startDate && remainingWeeksTillStartDate <= this.displayedNumberOfWeeks;
         let currentWeek;
-        for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
+        for (let i = 0; i < this.currentSpanSize; i++) {
             currentWeek = dayjs()
-                .subtract(this.displayedNumberOfWeeks - 1 + this.displayedNumberOfWeeks * -this.currentPeriod - i, 'weeks')
+                .subtract(this.currentOffsetToEndDate + this.currentSpanSize - 1 - this.displayedNumberOfWeeks * this.currentPeriod - i, 'weeks')
                 .isoWeekday(1)
                 .isoWeek();
             this.dataCopy[0].series[i] = {};
@@ -171,17 +189,6 @@ export class CourseDetailLineChartComponent implements OnChanges, OnDestroy {
     findAbsoluteValue(model: any) {
         const result: any = this.absoluteSeries.find((entry: any) => entry.name === model.name);
         return result ? result.absoluteValue : '/';
-    }
-
-    /**
-     * Computes the average of the given number array
-     * @param array of numbers the average should be returned
-     * @returns average of the number array
-     * @private
-     */
-    private computeAverage(array: number[]): number {
-        const sum = array.reduce((num1, num2) => num1 + num2, 0);
-        return sum / array.length;
     }
 
     /**
