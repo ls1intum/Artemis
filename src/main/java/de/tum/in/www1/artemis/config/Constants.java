@@ -213,6 +213,10 @@ public final class Constants {
 
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
+    public static final String HAZELCAST_MONITORING_PREFIX = "monitoring-";
+
+    public static final String HAZELCAST_EXAM_MONITORING_CACHE = HAZELCAST_MONITORING_PREFIX + "exam-activity-cache";
+
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
