@@ -93,9 +93,8 @@
                     <span class="me-2">
                         {{ 'artemisApp.courseOverview.exerciseDetails.complaintsEnabled' | artemisTranslate }}
                         {{
-                            'global.generic.' + (exercise.assessmentType !== AssessmentType.AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments)
-                                ? 'yes'
-                                : ('no' | artemisTranslate)
+                            (exercise.assessmentType !== AssessmentType.AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments ? 'global.generic.yes' : 'global.generic.no')
+                                | artemisTranslate
                         }}
                     </span>
                 </h4>
