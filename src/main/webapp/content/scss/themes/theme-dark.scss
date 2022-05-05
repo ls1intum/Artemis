@@ -10,6 +10,9 @@ html {
 
 @import '../global';
 
+// Needed for highlighting code in the markdown editor
+@import '~highlight.js/styles/monokai.css';
+
 .blockquote {
     &-footer {
         color: $gray-600;

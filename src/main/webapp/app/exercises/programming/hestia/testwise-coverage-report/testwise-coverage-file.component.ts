@@ -32,7 +32,9 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges, OnDestr
     ngOnInit(): void {
         this.setupEditor();
         this.renderFile();
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.editor.getEditor().setTheme(theme.codeAceTheme));
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
+            this.editor.setTheme(theme.codeAceTheme);
+        });
     }
 
     ngOnChanges(changes: SimpleChanges): void {

@@ -9,3 +9,6 @@ html {
 }
 
 @import '../global';
+
+// Needed for highlighting code in the markdown editor
+@import '~highlight.js/styles/vs.css';
