@@ -87,14 +87,14 @@ describe('QuizExercise Management Detail Component', () => {
         const question = new MultipleChoiceQuestion();
         question.title = 'test';
         const answerOption1 = new AnswerOption();
-        answerOption1.text = 'wrong answer';
-        answerOption1.explanation = 'wrong explanation';
-        answerOption1.hint = 'wrong hint';
-        answerOption1.isCorrect = false;
-        const answerOption2 = new AnswerOption();
         answerOption1.text = 'right answer';
         answerOption1.explanation = 'right explanation';
         answerOption1.isCorrect = true;
+        const answerOption2 = new AnswerOption();
+        answerOption2.text = 'wrong answer';
+        answerOption2.explanation = 'wrong explanation';
+        answerOption2.hint = 'wrong hint';
+        answerOption2.isCorrect = false;
         question.answerOptions = [answerOption1, answerOption2];
         question.points = 10;
         return { question, answerOption1, answerOption2 };
@@ -999,6 +999,23 @@ describe('QuizExercise Management Detail Component', () => {
             it('should not be valid if MC answer option explanation has more than 1000 characters', () => {
                 const { question } = createValidMCQuestion();
                 question.answerOptions![0]!.explanation = 'f'.repeat(500 + 1);
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBe(false);
+            });
+
+            it('should be valid if MC question has scoring type single choice', () => {
+                const { question } = createValidMCQuestion();
+                question.singleChoice = true;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBe(true);
+            });
+
+            it('should not be valid if MC single choice question has multiple correct answers', () => {
+                const { question } = createValidMCQuestion();
+                question.singleChoice = true;
+                question.answerOptions![1]!.isCorrect = true;
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBe(false);

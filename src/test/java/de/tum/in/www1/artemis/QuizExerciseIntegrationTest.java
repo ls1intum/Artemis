@@ -377,6 +377,45 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditQuizExercise_SingleChoiceMC_AllOrNothing() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setSingleChoice(true);
+        mc.setScoringType(ScoringType.ALL_OR_NOTHING);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        assertThat(quizExercise.getQuizQuestions().get(0).getScoringType()).as("Scoring type was changed").isEqualTo(ScoringType.ALL_OR_NOTHING);
+
+        // multiple correct answers are not allowed
+        mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.getAnswerOptions().get(1).setIsCorrect(true);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditQuizExercise_SingleChoiceMC_Proportional() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setSingleChoice(true);
+        mc.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditQuizExercise_SingleChoiceMC_ProportionalPenalty() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setSingleChoice(true);
+        mc.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditQuizExerciseForExam() throws Exception {
         quizExercise = createQuizOnServerForExam();
 
