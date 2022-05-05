@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 
@@ -98,6 +99,7 @@ public class QuizScheduleService {
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         // activate Quiz Schedule Service
+        SecurityUtils.setAuthorizationObject();
         startSchedule(5 * 1000);                          // every 5 seconds
     }
 
@@ -277,7 +279,7 @@ public class QuizScheduleService {
         // reload from database to make sure there are no proxy objects
         final var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (quizExercise != null && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-            // TODO: Scheduled quiz batches
+            // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
             var quizBatch = quizExercise.getQuizBatches().stream().findAny();
             if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null && quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
                 // schedule sending out filtered quiz over websocket
@@ -306,9 +308,7 @@ public class QuizScheduleService {
      * @param quizExerciseId the quiz exercise for which the quiz start should be canceled
      */
     public void cancelScheduledQuizStart(Long quizExerciseId) {
-        log.debug("try cancel schedule");
         quizCache.getReadCacheFor(quizExerciseId).getQuizStart().forEach(taskHandler -> {
-            log.debug("cancel schedule actual");
             IScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(taskHandler);
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
@@ -348,7 +348,13 @@ public class QuizScheduleService {
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
             throw new IllegalStateException();
         }
-        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, null, "start-now");
+
+        // TODO: quiz cleanup: We create a batch that has just started here because we can't access QuizBatchService here because of dependencies
+        var quizBatch = new QuizBatch();
+        quizBatch.setQuizExercise(quizExercise);
+        quizBatch.setStartTime(ZonedDateTime.now());
+        quizExercise.setQuizBatches(Set.of(quizBatch));
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, "start-now");
     }
 
     /**

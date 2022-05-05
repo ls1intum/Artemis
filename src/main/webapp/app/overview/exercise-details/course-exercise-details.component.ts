@@ -22,7 +22,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
@@ -464,31 +463,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
             this.latestRatedResult = latestResult;
         }
-    }
-
-    publishBuildPlanUrl() {
-        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
-    }
-
-    buildPlanActive() {
-        return (
-            !!this.exercise &&
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
-        );
-    }
-
-    buildPlanUrl(participation: StudentParticipation) {
-        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
-    }
-
-    projectKey(): string {
-        return (this.exercise as ProgrammingExercise).projectKey!;
-    }
-
-    buildPlanId(participation: Participation) {
-        return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }
 
     /**

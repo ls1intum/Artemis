@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.byLessThan;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.security.Principal;
@@ -683,6 +684,42 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_Finished);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSetQuizBatchStartTimeForNonSyncronizedQuizExercises_asStudent() throws Exception {
+
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuizWithQuizBatchedExercises(course, ZonedDateTime.now().minusHours(5), null, QuizMode.INDIVIDUAL);
+        quizExercise.setDuration(400);
+        // get started exercise for students
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        // when exercise due date is null
+        QuizExercise quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        assertThat(quizExerciseForStudent.getQuizBatches().stream().allMatch(quizBatch -> quizBatch.getStartTime() != null)).isTrue();
+
+        // when exercise due date is later than now
+        quizExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        quizExerciseService.save(quizExercise);
+        quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        assertThat(quizExerciseForStudent.getQuizBatches().stream().allMatch(quizBatch -> quizBatch.getStartTime() != null)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateQuizExerciseWithoutQuizBatchForSynchronizedQuiz_asStudent() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(4), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(400);
+        quizExercise.setQuizBatches(null);
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        QuizExercise quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        assertThat(quizExerciseForStudent.getQuizBatches()).hasSize(1);
+        checkQuizExerciseForStudent(quizExerciseForStudent);
     }
 
     @Test

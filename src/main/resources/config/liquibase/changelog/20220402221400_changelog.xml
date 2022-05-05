@@ -37,19 +37,24 @@
     </changeSet>
     <!--<changeSet id="20220402221401" author="bottbenj">
         <sql>
+            UPDATE exercise
+            SET allowed_number_of_attempts = 1
+            WHERE discriminator = 'Q' AND course_id IS NOT NULL
+        </sql>
+        <sql>
             INSERT INTO quiz_batch (quiz_id, start_date)
             SELECT id, release_date FROM exercise
-            WHERE discriminator = 'Q'
+            WHERE discriminator = 'Q' AND is_planned_to_start = 1 AND course_id IS NOT NULL
         </sql>
         <sql>
             UPDATE exercise
             SET due_date = DATE_ADD(DATE_ADD(release_date, INTERVAL duration SECOND), INTERVAL 5 SECOND)
-            WHERE discriminator = 'Q'
+            WHERE discriminator = 'Q' AND is_planned_to_start = 1 AND course_id IS NOT NULL
         </sql>
         <sql>
             UPDATE exercise
-            SET release_date = IF(is_visible_before_start = 1, '2000-01-01 00:00:00', '3000-01-01 00:00:00')
-            WHERE discriminator = 'Q'
+            SET release_date = IF(is_visible_before_start = 1, CURRENT_DATE, IF(is_planned_to_start = 1, release_date, DATE_ADD(CURRENT_DATE, INTERVAL 10 YEAR)))
+            WHERE discriminator = 'Q' AND course_id IS NOT NULL
         </sql>
     </changeSet>-->
 </databaseChangeLog>

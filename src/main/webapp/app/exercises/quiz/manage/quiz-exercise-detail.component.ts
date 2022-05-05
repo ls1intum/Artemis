@@ -240,7 +240,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     cacheValidation() {
-        this.exerciseService.validateDate(this.quizExercise);
+        // TODO: quiz cleanup: this makes the exercise dirty and attempts to prevent leaving
+        // this.exerciseService.validateDate(this.quizExercise);
 
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
             if (this.scheduleQuizStart) {
@@ -963,7 +964,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
         // Release Date valid but lies in the past
         if (false /*this.quizExercise.isPlannedToStart*/) {
-            // TODO: QQQ
+            // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
             if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.invalidStartTime',

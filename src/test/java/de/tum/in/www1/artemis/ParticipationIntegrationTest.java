@@ -5,7 +5,10 @@ import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -859,6 +862,15 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
         assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
         assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipation_quizBatchNotPresent() throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), QuizMode.INDIVIDUAL, course).duration(360);
+        quizEx = exerciseRepo.save(quizEx);
+        var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

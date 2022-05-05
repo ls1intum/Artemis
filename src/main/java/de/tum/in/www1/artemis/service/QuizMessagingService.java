@@ -53,7 +53,7 @@ public class QuizMessagingService {
                 }
                 // Send quiz via websocket.
                 String destination = "/topic/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quizExercises";
-                if (quizBatch != null) {
+                if ("start-batch".equals(quizChange)) {
                     destination = destination + "/" + quizBatch.getId();
                 }
                 messagingTemplate.send(destination, MessageBuilder.withPayload(payload).build());

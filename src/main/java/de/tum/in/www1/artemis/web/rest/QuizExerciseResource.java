@@ -202,9 +202,7 @@ public class QuizExerciseResource {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException();
-        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
 
         for (QuizExercise quizExercise : quizExercises) {
@@ -265,6 +263,7 @@ public class QuizExerciseResource {
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             throw new AccessForbiddenException();
         }
+        quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, userRepository.getUser().getId()));
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -360,11 +359,9 @@ public class QuizExerciseResource {
         log.debug("REST request to add batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, user)) {
-            throw new AccessForbiddenException();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
 
-        // TODO: QQQ configuration to limit the number of batches a tutor can create
+        // TODO: quiz cleanup: it should be possible to limit the number of batches a tutor can create
 
         var quizBatch = quizBatchService.createBatch(quizExercise, user);
         quizBatch = quizBatchService.save(quizBatch);
@@ -385,12 +382,10 @@ public class QuizExerciseResource {
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(batch.getQuizExercise().getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(quizExercise, user)) {
-            throw new AccessForbiddenException();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
 
-        if (!user.getId().equals(batch.getCreator()) && !authCheckService.isAtLeastInstructorForExercise(quizExercise, user)) {
-            throw new AccessForbiddenException();
+        if (!user.getId().equals(batch.getCreator())) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
         }
 
         batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, ZonedDateTime.now()));
@@ -484,8 +479,10 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizScheduleService.updateQuizExercise(quizExercise);
 
+        var quizBatch = quizBatchService.getQuizBatchForStudent(quizExercise, userRepository.getUser()).orElse(null);
+
         // notify websocket channel of changes to the quiz exercise
-        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, null, action);
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);
         return new ResponseEntity<>(quizExercise, HttpStatus.OK);
     }
 

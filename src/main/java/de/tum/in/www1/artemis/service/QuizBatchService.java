@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -19,6 +20,14 @@ import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 
 @Service
 public class QuizBatchService {
+
+    // copied from tech.jhipster.security.RandomUtil
+    private static final SecureRandom SECURE_RANDOM;
+
+    static {
+        SECURE_RANDOM = new SecureRandom();
+        SECURE_RANDOM.nextBytes(new byte[64]);
+    }
 
     private final Logger log = LoggerFactory.getLogger(QuizBatchService.class);
 
@@ -41,7 +50,7 @@ public class QuizBatchService {
         return quizBatchRepository.saveAndFlush(quizBatch);
     }
 
-    // TODO: QQQ attempt at lazy loading batches but doesn't work with how lazy loading actually works
+    // TODO: quiz cleanup: attempt at lazy loading batches but doesn't work; check it lazy loading makes any sense and how to implement it properly
     public void loadBatchesIfMissing(QuizExercise quizExercise) {
         if (quizExercise.getQuizBatches() == null) {
             quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExercise(quizExercise));
@@ -102,7 +111,7 @@ public class QuizBatchService {
     public String createBatchPassword(QuizExercise quizExercise) {
         loadBatchesIfMissing(quizExercise);
         for (int i = 0; i < 1000; i++) {
-            var password = RandomStringUtils.randomNumeric(8);
+            var password = RandomStringUtils.random(8, 0, 0, false, true, null, SECURE_RANDOM);
             if (quizExercise.getQuizBatches().stream().noneMatch(batch -> password.equals(batch.getPassword()))) {
                 return password;
             }
