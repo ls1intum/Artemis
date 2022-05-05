@@ -26,8 +26,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.context.SpringManagedContext;
 
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -158,7 +157,8 @@ public class CacheConfiguration {
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
 
         QuizScheduleService.configureHazelcast(config);
-        ExamActivityService.configureHazelcast(config);
+        // TODO: Fix issue with invalid class name due to serialisation
+        // ExamMonitoringScheduleService.configureHazelcast(config);
 
         return Hazelcast.newHazelcastInstance(config);
     }

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.exam.monitoring;
+package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.util.Map;
 import java.util.Objects;
@@ -52,7 +52,7 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
     }
 
     @Override
-    void clear() {
+    public void clear() {
         int activitiesSize = activities.size();
         if (activitiesSize > 0) {
             log.warn("Cache for Exam {} destroyed with {} activities cached", getExamId(), activitiesSize);

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.exam.monitoring;
+package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.util.Map;
 
@@ -35,12 +35,12 @@ public class EmptyExamMonitoringCache extends ExamMonitoringCache {
     }
 
     @Override
-    void clear() {
+    public void clear() {
         log.error("EmptyExamMonitoringCache cannot be cleared");
         throwModificationAttemptException();
     }
 
-    private static void throwModificationAttemptException() {
+    private void throwModificationAttemptException() {
         throw new UnsupportedOperationException("EmptyExamMonitoringCache cannot be modified");
     }
 }

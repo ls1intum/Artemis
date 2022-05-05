@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.exam.monitoring;
+package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.util.Map;
 import java.util.Objects;
@@ -7,8 +7,9 @@ import com.hazelcast.config.Config;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
+import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
-abstract class ExamMonitoringCache {
+abstract class ExamMonitoringCache implements Cache {
 
     private final Long examId;
 
@@ -16,10 +17,7 @@ abstract class ExamMonitoringCache {
         this.examId = examId;
     }
 
-    /**
-     * The id of the Exam, only <code>null</code> for the {@linkplain EmptyExamMonitoringCache empty cache}.
-     */
-    final Long getExamId() {
+    public Long getExamId() {
         return examId;
     }
 
@@ -39,13 +37,6 @@ abstract class ExamMonitoringCache {
      * ExamActivity by student exam id
      */
     abstract Map<Long, ExamActivity> getActivities();
-
-    /**
-     * Releases all (Hazelcast) resources, all cached objects will be lost.
-     * <p>
-     * This should only be used for exceptional cases, such as deleting or resetting the exercise or for testing.
-     */
-    abstract void clear();
 
     @Override
     public final int hashCode() {
