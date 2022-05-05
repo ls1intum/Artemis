@@ -52,11 +52,22 @@ html {
         text-decoration: underline;
     }
 
+    // Do defaults for all colors
     @each $color, $value in $theme-colors {
         $blackened: darken($value, 20%);
         &-#{$color} {
             background: $blackened;
             border-color: $value;
+        }
+    }
+
+    // For some alerts, we specified own overrides
+    $custom-alerts: 'info', 'danger', 'warning', 'success', 'neutral';
+    @each $type in $custom-alerts {
+        &-#{$type} {
+            background: var(--artemis-alert-#{$type}-background);
+            border-color: var(--artemis-alert-#{$type}-border);
+            color: var(--artemis-alert-#{$type}-color);
         }
     }
 }

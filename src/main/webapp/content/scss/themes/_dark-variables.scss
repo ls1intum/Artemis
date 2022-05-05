@@ -358,6 +358,10 @@ $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 $edit-sqi-grading-instructions-update-border: $border-color;
 $edit-sqi-criterion-title-row-background: lighten($neutral-dark, 5%);
 
+$sgi-assessment-layout-zero-background: darken($warning, 40);
+$sgi-assessment-layout-positive-background: darken($success, 30);
+$sgi-assessment-layout-negative-background: darken($danger, 45);
+
 // Code Editor
 $code-editor-file-browser-header-background: lighten($neutral-dark, 5%);
 $code-editor-file-browser-header-border: lighten($neutral-dark, 10%);
@@ -451,12 +455,13 @@ $textblock-assessment-text-feedback-neutral-active-decoration: $gray-100;
 $textblock-assessment-text-feedback-conflicting-color: $gray-100;
 $textblock-assessment-text-feedback-conflicting-background: $warning;
 $textblock-assessment-text-feedback-conflicting-active-decoration: $gray-100;
-$textblock-assessment-textblock-feedback-editor-active-border: $gray-500;
+$textblock-assessment-textblock-feedback-editor-active-border: $gray-600;
 $textblock-feedback-editor-feedback-positive-color: #3579b2;
 $textblock-feedback-editor-feedback-positive-background-color: $gray-800;
 $textblock-feedback-editor-feedback-neutral-color: $gray-100;
 $textblock-feedback-editor-feedback-neutral-background-color: $gray-900;
 $textblock-feedback-editor-reused-feedback-preview-border: rgba(228, 228, 228, 0.87);
+$textblock-feedback-editor-dropdown-hover: $gray-700;
 
 // Guided tour
 $gt-tour-step-bg-color: $gray-700;
@@ -481,7 +486,7 @@ $gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
 
 // Alerts
 $artemis-alert-info-color: lighten($info, 15);
-$artemis-alert-info-background: darken($info, 40);
+$artemis-alert-info-background: darken($info, 30);
 $artemis-alert-info-border: darken($info, 5);
 $artemis-alert-danger-color: lighten($danger, 15);
 $artemis-alert-danger-background: darken($danger, 45);

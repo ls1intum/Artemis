@@ -61,7 +61,7 @@ label {
         text-decoration-style: double;
         text-decoration-color: var(--textblock-feedback-editor-feedback-positive-color);
         color: var(--textblock-feedback-editor-feedback-positive-color);
-        background-color: #d8e8f5;
+        background-color: var(--textblock-feedback-editor-feedback-positive-background-color);
     }
 
     &.neutral-feedback {
@@ -115,7 +115,7 @@ label {
         position: relative;
 
         &:hover {
-            background-color: #e9ecef;
+            background-color: var(--textblock-feedback-editor-dropdown-hover);
         }
 
         &:hover > .dropdown-submenu {
@@ -130,5 +130,5 @@ label {
 
 a:hover {
     text-decoration: none !important;
-    color: black;
+    color: var(--bs-body-color);
 }
