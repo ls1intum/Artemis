@@ -1,26 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { CsvDecimalSeparator, CsvExportModalComponent, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/csv-export-modal.component';
+import { CsvDecimalSeparator, ExportModalComponent, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { By } from '@angular/platform-browser';
 
-describe('CsvExportModalComponent', () => {
-    let component: CsvExportModalComponent;
-    let fixture: ComponentFixture<CsvExportModalComponent>;
+describe('ExportModalComponent', () => {
+    let component: ExportModalComponent;
+    let fixture: ComponentFixture<ExportModalComponent>;
     let ngbActiveModal: NgbActiveModal;
     let translateService: TranslateService;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [CsvExportModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            imports: [NgbNavModule],
+            declarations: [ExportModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
             providers: [MockProvider(NgbActiveModal), MockProvider(TranslateService)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CsvExportModalComponent);
+                fixture = TestBed.createComponent(ExportModalComponent);
                 component = fixture.componentInstance;
                 ngbActiveModal = TestBed.inject(NgbActiveModal);
                 translateService = TestBed.inject(TranslateService);
@@ -57,13 +59,34 @@ describe('CsvExportModalComponent', () => {
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
-    it('should return the export options on finish', () => {
+    it('should dismiss modal if close or cancel button are clicked', () => {
+        const dismissSpy = jest.spyOn(ngbActiveModal, 'dismiss');
+        const closeButton = fixture.debugElement.query(By.css('button.btn-close'));
+        expect(closeButton).not.toBeNull();
+        closeButton.nativeElement.click();
+        expect(dismissSpy).toHaveBeenCalledTimes(1);
+
+        const cancelButton = fixture.debugElement.query(By.css('button.cancel'));
+        expect(cancelButton).not.toBeNull();
+        cancelButton.nativeElement.click();
+        expect(dismissSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return empty on finish when excel export is active', () => {
+        component.activeTab = 1;
+        const activeModalStub = jest.spyOn(ngbActiveModal, 'close');
+        component.onFinish();
+        expect(activeModalStub).toHaveBeenCalledWith();
+    });
+
+    it('should return the csv export options on finish when csv export is active', () => {
         const testOptions: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.SEMICOLON,
             quoteStrings: CsvQuoteStrings.QUOTES_SINGLE,
             decimalSeparator: CsvDecimalSeparator.COMMA,
         };
         component.options = testOptions;
+        component.activeTab = 2;
         const activeModalStub = jest.spyOn(ngbActiveModal, 'close');
         component.onFinish();
         expect(activeModalStub).toHaveBeenCalledWith(testOptions);

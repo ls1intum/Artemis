@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-included-in-score-badge',
     templateUrl: './included-in-score-badge.component.html',
-    styles: [],
+    styleUrls: ['./included-in-score-badge.component.scss'],
 })
 export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChanges {
     @Input() includedInOverallScore: IncludedInOverallScore | undefined;

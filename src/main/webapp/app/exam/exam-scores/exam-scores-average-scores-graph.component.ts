@@ -5,9 +5,9 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { navigateToExamExercise } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
@@ -38,7 +38,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     lookup: NameToValueMap = {};
 
     constructor(
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
         private activatedRoute: ActivatedRoute,
         private service: StatisticsService,
         private translateService: TranslateService,
@@ -84,7 +84,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      * We navigate to the exercise scores page when the user clicks on a data point
      */
     navigateToExercise(exerciseId: number, exerciseType: ExerciseType) {
-        navigateToExamExercise(this.router, this.courseId, this.examId, this.averageScores.exerciseGroupId, exerciseType, exerciseId, 'scores');
+        navigateToExamExercise(this.navigationUtilService, this.courseId, this.examId, this.averageScores.exerciseGroupId, exerciseType, exerciseId, 'scores');
     }
 
     /**

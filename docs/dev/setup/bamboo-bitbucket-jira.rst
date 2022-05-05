@@ -70,6 +70,7 @@ under ``localhost:7990``.
    - Jira: Select ``Jira Service Management (formerly Service Desk) (Data Center)`` and ``not installed yet``
 
 #. Provide the just created license key during the setup and create an admin user with the same credentials in all 3 applications.
+   For the Bamboo database you can choose H2.
    Also, you can select the evaluation/internal/test/dev setups if you are asked.
    Follow the additional steps for Jira and Bitbucket.
 
@@ -192,12 +193,14 @@ under ``localhost:7990``.
 
                 Adding Crowd Server in **Bamboo**
 
+#. Give the test users User access on Bitbucket: Configure → Global permissions
 
 #. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
    as the secret. The value of this variable should be then stored in
    ``src/main/resources/config/application-artemis.yml`` as the value of
    ``artemis-authentication-token-value``.
+   You can create a global variable from settings on Bamboo.
 
 #. Download the
    `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
@@ -212,6 +215,8 @@ under ``localhost:7990``.
 
    -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK17``
       as JDK label → insert ``/usr/lib/jvm/java-17-oracle`` as Java home.
+
+#. Create a Bamboo agent. Configure → Agents → Add local agent
 
 #. Generate a personal access token
 
