@@ -508,11 +508,11 @@ public class QuizScheduleService {
 
     public void joinQuizBatch(QuizExercise quizExercise, QuizBatch quizBatch, User user) {
         log.debug("join user {} to batch {} for quiz {}", user, quizBatch, quizExercise.getId());
-        quizCache.getTransientWriteCacheFor(quizExercise.getId()).getBatches().put(user.getLogin(), quizBatch.getId());
+        ((QuizExerciseCache)quizCache.getTransientWriteCacheFor(quizExercise.getId())).getBatches().put(user.getLogin(), quizBatch.getId());
     }
 
     public Optional<Long> getQuizBatchForStudent(QuizExercise quizExercise, User user) {
-        return Optional.ofNullable(quizCache.getReadCacheFor(quizExercise.getId()).getBatches().get(user.getLogin()));
+        return Optional.ofNullable(((QuizExerciseCache)quizCache.getReadCacheFor(quizExercise.getId())).getBatches().get(user.getLogin()));
     }
 
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {
