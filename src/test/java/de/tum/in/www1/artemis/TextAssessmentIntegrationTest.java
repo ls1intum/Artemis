@@ -93,9 +93,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @Autowired
     private TextBlockService textBlockService;
 
-    @Autowired
-    private TextExerciseRepository textExerciseRepository;
-
     private TextExercise textExercise;
 
     private Course course;
