@@ -35,10 +35,8 @@ const quizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(2, 'minutes'),
-    adjustedReleaseDate: dayjs(now).subtract(2, 'minutes'),
     dueDate: dayjs(now).add(2, 'minutes'),
-    adjustedDueDate: dayjs(now).add(2, 'minutes'),
-    started: true,
+    quizStarted: true,
 } as QuizExercise;
 
 describe('QuizExercise Generator', () => {
