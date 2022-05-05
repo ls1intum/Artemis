@@ -3,6 +3,7 @@ import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http
 import { Cacheable } from 'ts-cacheable';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
@@ -13,7 +14,7 @@ export class ProgrammingExercisePlantUmlService {
      * Cacheable configuration
      */
 
-    constructor(private http: HttpClient) {
+    constructor(private http: HttpClient, private themeService: ThemeService) {
         this.encoder = new HttpUrlCustomEncoder();
     }
 
@@ -32,7 +33,7 @@ export class ProgrammingExercisePlantUmlService {
     getPlantUmlImage(plantUml: string) {
         return this.http
             .get(`${this.resourceUrl}/png`, {
-                params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
+                params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.getCurrentTheme() === Theme.DARK),
                 responseType: 'arraybuffer',
             })
             .pipe(map((res) => this.convertPlantUmlResponseToBase64(res)));
@@ -52,7 +53,7 @@ export class ProgrammingExercisePlantUmlService {
     })
     getPlantUmlSvg(plantUml: string): Observable<string> {
         return this.http.get(`${this.resourceUrl}/svg`, {
-            params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
+            params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.getCurrentTheme() === Theme.DARK),
             responseType: 'text',
         });
     }

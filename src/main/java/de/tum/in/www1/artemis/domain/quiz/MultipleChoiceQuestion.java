@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.quiz.scoring.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
@@ -30,12 +31,24 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
+    @Column(name = "single_choice")
+    @JsonView(QuizView.Before.class)
+    private boolean singleChoice = false;
+
     public List<AnswerOption> getAnswerOptions() {
         return answerOptions;
     }
 
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
         this.answerOptions = answerOptions;
+    }
+
+    public boolean isSingleChoice() {
+        return singleChoice;
+    }
+
+    public void setSingleChoice(boolean singleChoice) {
+        this.singleChoice = singleChoice;
     }
 
     /**
@@ -173,17 +186,23 @@ public class MultipleChoiceQuestion extends QuizQuestion {
             return false;
         }
 
+        // if there is only a single correct answer only ALL_OR_NOTHING scoring makes sense
+        if (isSingleChoice() && getScoringType() != ScoringType.ALL_OR_NOTHING) {
+            return false;
+        }
+
+        int correctAnswerCount = 0;
+
         // check answer options
         if (getAnswerOptions() != null) {
             for (AnswerOption answerOption : getAnswerOptions()) {
                 if (answerOption.isIsCorrect()) {
-                    // at least one correct answer option exists
-                    return true;
+                    correctAnswerCount++;
                 }
             }
         }
-        // no correct answer option exists
-        return false;
+
+        return isSingleChoice() ? correctAnswerCount == 1 : correctAnswerCount > 0;
     }
 
     /**

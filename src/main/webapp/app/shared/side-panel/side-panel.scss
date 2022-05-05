@@ -1,7 +1,5 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 .panel-wrapper {
-    border: 1px solid $primary;
+    border: 1px solid var(--overview-blue-border-color);
     border-radius: 3px;
 
     .panel-header {
@@ -15,6 +13,6 @@
 
     .vertLine {
         height: 1px;
-        background-color: $primary;
+        background-color: var(--overview-blue-border-color);
     }
 }

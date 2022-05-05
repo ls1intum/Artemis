@@ -310,7 +310,7 @@ public class BambooBuildPlanService {
             finalTasks.add(new MavenTask().goal(command).jdk("JDK").executableLabel("Maven 3").description("Static Code Analysis").hasTests(false));
         }
         else {
-            finalTasks.add(new ScriptTask().inlineBody("./gradlew check").description("Static Code Analysis"));
+            finalTasks.add(new ScriptTask().inlineBody("./gradlew check -x test").description("Static Code Analysis"));
         }
         artifacts.addAll(scaArtifacts);
     }

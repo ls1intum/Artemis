@@ -14,6 +14,9 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -60,6 +63,7 @@ describe('GradeKeyOverviewComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
                 MockProvider(ArtemisNavigationUtilService),
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
             .compileComponents()
@@ -94,12 +98,12 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should print PDF', fakeAsync(() => {
-        const windowSpy = jest.spyOn(window, 'print').mockImplementation();
+        const printSpy = jest.spyOn(TestBed.inject(ThemeService), 'print').mockImplementation();
 
         comp.printPDF();
 
         tick();
-        expect(windowSpy).toHaveBeenCalled();
+        expect(printSpy).toHaveBeenCalled();
     }));
 
     it('should properly determine that points are not set', () => {

@@ -5,8 +5,8 @@
     left: 0;
     right: 0;
     z-index: 10;
-    background: white;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+    background: var(--quiz-participation-footer-background);
+    box-shadow: 0 0 3px var(--quiz-participation-footer-box-shadow);
 
     .container {
         height: 100%;
@@ -27,4 +27,8 @@
             }
         }
     }
+}
+
+#remaining-time > * {
+    width: 100%;
 }

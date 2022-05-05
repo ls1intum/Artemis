@@ -1,0 +1,142 @@
+$size: 1.5rem;
+$ease-default: cubic-bezier(0.25, 0, 0.3, 1);
+$ease-out: cubic-bezier(0.9, 0, 0.1, 1);
+
+.wrapper,
+.toggle-popover-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.wrapper {
+    .toggle-popover-wrapper {
+        .theme-toggle {
+            background: none;
+            border: none;
+            padding: 0;
+            inline-size: $size;
+            block-size: $size;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            outline-offset: 5px;
+            transform: translateY(-0.5px);
+
+            & > svg {
+                inline-size: 100%;
+                block-size: 100%;
+                stroke-linecap: round;
+            }
+
+            .sun-and-moon {
+                & > :is(.moon, .sun, .sun-beams) {
+                    transform-origin: center center;
+                }
+
+                & > :is(.moon, .sun) {
+                    fill: var(--navbar-dark-color);
+                }
+
+                & > .sun-beams {
+                    stroke: var(--navbar-dark-color);
+                    stroke-width: 2px;
+                    transition: transform 1s $ease-default, opacity 0.5s $ease-default;
+                }
+
+                & > .sun {
+                    transition: transform 0.5s $ease-default;
+                }
+
+                & > .moon > circle {
+                    transition: transform 0.25s $ease-out;
+
+                    @supports (cx: 1) {
+                        transition: cx 0.25s $ease-out;
+                    }
+                }
+            }
+
+            &.dark {
+                .sun-and-moon {
+                    & > .sun-beams {
+                        opacity: 0;
+                        transform: rotateZ(-90deg);
+                        transition-duration: 0.15s;
+                    }
+
+                    & > .moon > circle {
+                        transform: translateX(-7px);
+                        transition-duration: 0.8s;
+
+                        @supports (cx: 1) {
+                            transform: translateX(0);
+                            cx: 17;
+                        }
+                    }
+
+                    & > .sun {
+                        transform: scale(1.5);
+                        transition-timing-function: $ease-default;
+                        transition-duration: 0.25s;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.popover-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    max-width: 300px;
+    width: 250px;
+    min-width: fit-content;
+    text-align: center;
+
+    .head {
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--warning);
+
+        span {
+            padding: 0 5px;
+            color: var(--bs-body-color);
+        }
+    }
+
+    .experimental {
+        color: var(--warning);
+        font-weight: bold;
+    }
+
+    .description {
+        margin-top: 10px;
+    }
+
+    .switch-box {
+        border: 1px solid var(--theme-switch-box-border-color);
+        margin: 1em 0.5em 0.5em;
+        padding: 0.3em 0.5em;
+        width: 100%;
+        min-width: fit-content;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        white-space: nowrap;
+
+        .form-switch {
+            font-size: 16px;
+            margin: 0;
+
+            > * {
+                cursor: pointer;
+            }
+        }
+    }
+}
