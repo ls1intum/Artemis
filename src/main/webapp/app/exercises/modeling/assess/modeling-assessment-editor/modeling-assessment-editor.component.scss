@@ -30,9 +30,10 @@ $textareaHeight: 200px;
     width: 100%;
     height: $textareaHeight;
     padding: 10px 12px;
-    border: 1px solid #d5d5d5;
+    border: 1px solid var(--text-editor-border-color);
     border-radius: 2px;
-    background-color: #f9f9f9;
+    background-color: var(--text-editor-background);
+    color: var(--text-editor-color);
     resize: none;
     margin: 0 15px;
 }

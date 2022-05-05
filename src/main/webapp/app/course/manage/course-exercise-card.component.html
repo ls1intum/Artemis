@@ -1,7 +1,7 @@
 <div class="question card">
     <div class="question-options card-header question-card-header">
         <h5><span [jhiTranslate]="headingJhiTranslate"></span></h5>
-        <button class="btn btn-light question-collapse" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
+        <button class="btn question-collapse" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
             <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown"></fa-icon>
         </button>
     </div>

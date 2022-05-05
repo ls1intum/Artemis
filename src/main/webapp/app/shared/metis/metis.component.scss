@@ -1,9 +1,3 @@
-$metis-light-gray: #979797;
-$metis-gray: #6a737d;
-$metis-blue: #0f6ab4;
-$metis-light-blue: #e3ecf3;
-$metis-green: #33cd32;
-
 .post-result-information {
     font-size: small;
     font-style: italic;
@@ -11,11 +5,11 @@ $metis-green: #33cd32;
 
 .post-separation-line {
     height: 1px;
-    background: $metis-light-gray;
+    background: var(--metis-light-gray);
 }
 
 .icon {
-    color: $metis-gray;
+    color: var(--metis-gray);
 }
 
 .posting-header {
@@ -23,11 +17,11 @@ $metis-green: #33cd32;
 }
 
 .resolved {
-    color: $metis-green;
+    color: var(--metis-green);
 }
 
 .reference-hash {
     font-weight: 200;
-    color: $metis-light-gray;
+    color: var(--metis-light-gray);
     display: inline-flex;
 }
