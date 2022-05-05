@@ -5,6 +5,7 @@
             "codeHint": "Code hint",
             "entry": "Entry",
             "removeEntryQuestion": "Are you sure you want to remove this entry?",
+            "noEntries": "This code hint has no solution entries.",
             "entries": "Entries",
             "home": {
                 "title": "Exercise Hints",
