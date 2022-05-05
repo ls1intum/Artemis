@@ -29,6 +29,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { of } from 'rxjs';
 import dayjs from 'dayjs';
 import { Result } from 'app/entities/result.model';
+import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -43,6 +44,7 @@ describe('TextblockFeedbackEditorComponent', () => {
             declarations: [
                 TextblockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
+                MockComponent(TextblockFeedbackDropdownComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ConfirmIconComponent),
                 MockComponent(FaIconComponent),
@@ -276,7 +278,15 @@ describe('TextblockFeedbackEditorComponent', () => {
         tick();
 
         expect(participationStub).toHaveBeenCalledTimes(1);
-        expect(component.listOfBlocksWithFeedback).toEqual([{ text: 'First text.', feedback: 'text', credits: 1.5, reusedCount: 3, type: 'MANUAL' }]);
+        expect(component.listOfBlocksWithFeedback).toEqual([
+            {
+                text: 'First text.',
+                feedback: 'text',
+                credits: 1.5,
+                reusedCount: 3,
+                type: 'MANUAL',
+            },
+        ]);
     }));
 
     it('should show link icon when feedback is associated with grading instruction', () => {

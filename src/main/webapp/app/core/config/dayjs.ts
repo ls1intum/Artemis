@@ -9,6 +9,8 @@ import isSameOrAfter from 'dayjs/esm/plugin/isSameOrAfter';
 import isBetween from 'dayjs/esm/plugin/isBetween';
 import minMax from 'dayjs/esm/plugin/minMax';
 import localizedFormat from 'dayjs/esm/plugin/localizedFormat';
+import isoWeeksInYear from 'dayjs/esm/plugin/isoWeeksInYear';
+import isLeapYear from 'dayjs/esm/plugin/isLeapYear';
 
 import 'dayjs/esm/locale/en';
 import 'dayjs/esm/locale/de';
@@ -23,3 +25,5 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(isBetween);
 dayjs.extend(minMax);
 dayjs.extend(localizedFormat);
+dayjs.extend(isoWeeksInYear);
+dayjs.extend(isLeapYear);
