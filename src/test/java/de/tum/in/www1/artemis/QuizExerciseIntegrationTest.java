@@ -378,7 +378,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditQuizExercise_SingleChoiceMC_AllOrNothing() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.setSingleChoice(true);
@@ -395,7 +395,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditQuizExercise_SingleChoiceMC_Proportional() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.setSingleChoice(true);
@@ -406,7 +406,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditQuizExercise_SingleChoiceMC_ProportionalPenalty() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.setSingleChoice(true);
