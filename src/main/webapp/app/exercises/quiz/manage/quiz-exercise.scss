@@ -16,12 +16,13 @@
         justify-content: space-evenly;
         margin: 6px 0;
         width: 100%;
-        background: white !important;
+        background: var(--quiz-drag-items-background) !important;
 
         /* The drag item component is not used here but a modified one that is why we have to define these styles here */
         .drag-item {
-            border: 1px solid #696969;
-            background: #fafafa;
+            border: 1px solid var(--quiz-drag-item-border);
+            background: var(--quiz-drag-item-background);
+            color: var(--quiz-drag-item-color);
             height: 160px;
             position: relative;
             min-width: 160px;
@@ -38,6 +39,8 @@
                 text-align: center;
                 border: none;
                 resize: none;
+                background: var(--quiz-drag-item-background);
+                color: var(--quiz-drag-item-color);
 
                 &:focus {
                     z-index: 3;

@@ -9,11 +9,10 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
+import { CanBecomeInvalid, DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { captureException } from '@sentry/browser';
-import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
 import { ValidationReason } from 'app/entities/exercise.model';
 
 type InvalidFlaggedQuestions = {
@@ -84,19 +83,18 @@ export abstract class QuizExerciseValidationDirective {
             switch (question.type) {
                 case QuizQuestionType.MULTIPLE_CHOICE: {
                     const mcQuestion = question as MultipleChoiceQuestion;
-                    if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
-                        return (
-                            question.title &&
-                            question.title !== '' &&
-                            question.title.length < this.maxLengthThreshold &&
-                            mcQuestion.answerOptions!.every(
-                                (answerOption) =>
-                                    (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
-                                    (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
-                            )
-                        );
-                    }
-                    break;
+                    const correctOptions = mcQuestion.answerOptions!.filter((answerOption) => answerOption.isCorrect).length;
+                    return (
+                        (mcQuestion.singleChoice ? correctOptions === 1 : correctOptions > 0) &&
+                        question.title &&
+                        question.title !== '' &&
+                        question.title.length < this.maxLengthThreshold &&
+                        mcQuestion.answerOptions!.every(
+                            (answerOption) =>
+                                (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
+                                (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
+                        )
+                    );
                 }
                 case QuizQuestionType.DRAG_AND_DROP: {
                     const dndQuestion = question as DragAndDropQuestion;
@@ -231,9 +229,16 @@ export abstract class QuizExerciseValidationDirective {
             }
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (!mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
+                const correctOptions = mcQuestion.answerOptions!.filter((answerOption) => answerOption.isCorrect).length;
+                if (correctOptions === 0) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
+                        translateValues: { index: index + 1 },
+                    });
+                }
+                if (mcQuestion.singleChoice && correctOptions > 1) {
+                    invalidReasons.push({
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.questionSingleChoiceCorrectAnswerOptions',
                         translateValues: { index: index + 1 },
                     });
                 }

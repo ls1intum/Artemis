@@ -40,6 +40,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { NgbCollapse, NgbDropdown, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PieChartModule } from '@swimlane/ngx-charts';
+import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -89,6 +90,7 @@ describe('Guided tour integration', () => {
                 MockDirective(NgbTooltip),
                 MockDirective(NgbCollapse),
                 MockDirective(NgbDropdown),
+                MockComponent(JhiConnectionWarningComponent),
             ],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },

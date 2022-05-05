@@ -6,8 +6,8 @@
     bottom: 0;
     left: 0;
     z-index: 10;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-    background: white;
+    box-shadow: 0 0 3px var(--exam-participation-footer-box-shadow);
+    background: var(--exam-participation-footer-background);
 
     .container {
         height: 100%;
@@ -27,8 +27,8 @@
     }
 }
 .connected {
-    background-color: #d1ecf1;
+    background-color: var(--exam-participation-footer-connected-background);
 }
 .disconnected {
-    background-color: #fff2cc;
+    background-color: var(--exam-participation-footer-disconnected-background);
 }

@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "theme": {
+            "darkMode": "Dark Mode",
+            "experimental": "EXPERIMENTAL",
+            "tryDarkMode": "Try the dark mode and relieve your eyes.",
+            "darkModeAutoEnabled": "The dark mode has been automatically enabled based on your operating system preferences.",
+            "clickAnyTime": {
+                "partA": "You can click this icon at any time to disable",
+                "partB": {
+                    "autoDetected": "it",
+                    "manual": "the dark mode"
+                },
+                "partC": "if you experience problems."
+            },
+            "enableNow": "Enable now",
+            "noThanks": "No, thanks",
+            "gotIt": "Got it!",
+            "sync": "Sync with Operating System"
+        }
+    }
+}

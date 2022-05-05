@@ -96,20 +96,10 @@
                     </div>
                 </div>
                 <div class="form-check mb-2">
-                    <div class="d-flex align-items-center">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            name="randomPassword"
-                            id="randomPassword"
-                            (change)="shouldRandomizePassword($event)"
-                            checked
-                            #editPassword
-                        />
-                        <label class="form-check-label" for="randomPassword" [jhiTranslate]="user.id ? 'userManagement.keepPassword' : 'userManagement.randomPassword'"
-                            >Random password / Keep old password</label
-                        >
-                    </div>
+                    <input type="checkbox" class="form-check-input" name="randomPassword" id="randomPassword" (change)="shouldRandomizePassword($event)" checked #editPassword />
+                    <label class="form-check-label" for="randomPassword" [jhiTranslate]="user.id ? 'userManagement.keepPassword' : 'userManagement.randomPassword'"
+                        >Random password / Keep old password</label
+                    >
                 </div>
                 <div class="form-group" [hidden]="editPassword.checked">
                     <input

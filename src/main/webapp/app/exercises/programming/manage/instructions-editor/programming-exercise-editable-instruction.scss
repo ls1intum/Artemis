@@ -23,13 +23,13 @@
     }
 
     .instructions__content__markdown {
-        background-color: white;
+        background-color: var(--markdown-preview-editor-background);
     }
 
     .card-second-header {
         padding: 10px 15px;
-        background-color: #f5f5f5;
-        border-bottom: 1px solid #ddd;
+        background-color: var(--programming-exercise-instruction-step-wizard-card-header-background);
+        border-bottom: 1px solid var(--programming-exercise-instruction-step-wizard-card-header-border);
     }
 
     &__save {

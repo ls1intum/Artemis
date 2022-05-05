@@ -35,14 +35,14 @@
 
         <!-- Filter settings -->
         <div class="d-flex align-items-center align-content-center mb-2">
-            <label class="radio-inline mb-0 d-flex align-items-center">
-                <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                <span class="ms-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</span>
-            </label>
-            <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                <span class="ms-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
-            </label>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                <label class="form-check-label">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
+                <span class="form-check-label">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
+            </div>
         </div>
 
         <!-- Exam Point Statistics -->
@@ -257,9 +257,9 @@
         </table>
 
         <div class="d-block">
-            <label *ngIf="gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null" class="d-flex align-items-center">
-                <input type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
-                <span class="ms-1">
+            <div *ngIf="gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null" class="form-check">
+                <input class="form-check-input" type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
+                <label class="form-check-label">
                     {{
                         'artemisApp.examScores.highlightPassedMedian'
                             | artemisTranslate
@@ -269,14 +269,14 @@
                                           : 0
                                   }
                     }}
-                </span>
-            </label>
-            <label class="d-flex align-items-center">
-                <input type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
-                <span class="ms-1">
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
+                <label class="form-check-label">
                     {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
-                </span>
-            </label>
+                </label>
+            </div>
             <!-- Histogram -->
             <jhi-participant-scores-distribution
                 [scores]="scores"
