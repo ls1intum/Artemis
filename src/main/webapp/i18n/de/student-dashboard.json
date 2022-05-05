@@ -162,6 +162,7 @@
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
                     "title": "Aktionen für Lehrende:",
+                    "titleTutor": "Aktionen für Tutor:innen",
                     "scores": "Bewertungen",
                     "submissions": "Einreichungen",
                     "statistics": "Statistiken"

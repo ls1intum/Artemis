@@ -598,7 +598,7 @@ public class DatabaseUtilService {
     public VideoUnit createVideoUnit() {
         VideoUnit videoUnit = new VideoUnit();
         videoUnit.setDescription("Lorem Ipsum");
-        videoUnit.setSource("Some URL");
+        videoUnit.setSource("http://video.fake");
         return videoUnitRepository.save(videoUnit);
     }
 

@@ -1,10 +1,14 @@
 # IDE:
 .vscode/
 .pytest_cache/
-__pycache__
+__pycache__/
+.mypy_cache/
 
 # Test:
 test-reports/
 *.xml
 *.c
 main*
+
+# Include the shadow C file:
+!testUtils/c/shadow_exec.c
