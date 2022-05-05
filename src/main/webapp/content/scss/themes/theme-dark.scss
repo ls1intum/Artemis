@@ -161,6 +161,10 @@ html {
     background: transparentize(white, 0.95) !important;
 }
 
+.form-select option {
+    background-color: $neutral-dark !important;
+}
+
 // ==================
 // NGX CHARTS STYLING
 // ==================
