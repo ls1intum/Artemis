@@ -29,8 +29,6 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseResource.class);
 
-    private static final String ENTITY_NAME = "programmingExerciseTestCase";
-
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
