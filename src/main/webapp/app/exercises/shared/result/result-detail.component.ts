@@ -130,7 +130,7 @@ export class ResultDetailComponent implements OnInit {
         translateService: TranslateService,
         private profileService: ProfileService,
     ) {
-        const pointsLabel = translateService.instant('artemisApp.result.chart.po ints');
+        const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
         this.labels = [pointsLabel, deductionsLabel];
     }
