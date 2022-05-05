@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../course-management.service';
@@ -7,9 +7,7 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import { Course } from 'app/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import * as shape from 'd3-shape';
-import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
-import { Subscription } from 'rxjs';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { GraphColors } from 'app/entities/statistics.model';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 import { mean } from 'simple-statistics';
 
@@ -18,7 +16,7 @@ import { mean } from 'simple-statistics';
     templateUrl: './course-detail-line-chart.component.html',
     styleUrls: ['./course-detail-line-chart.component.scss'],
 })
-export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnChanges, OnDestroy {
+export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnChanges {
     @Input()
     course: Course;
     @Input()
@@ -45,7 +43,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [],
+        domain: [GraphColors.DARK_BLUE],
     };
     legend = false;
     xAxis = true;
@@ -70,18 +68,13 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     showAverage = true;
     startDateDisplayed = false;
 
-    themeSubscription: Subscription;
-
     // Icons
     faSpinner = faSpinner;
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(private service: CourseManagementService, private translateService: TranslateService, private themeService: ThemeService) {
+    constructor(private service: CourseManagementService, private translateService: TranslateService) {
         super();
-        this.themeSubscription = this.themeService
-            .getCurrentThemeObservable()
-            .subscribe((theme) => (this.chartColor = { ...this.chartColor, domain: [getGraphColorForTheme(theme, GraphColors.DARK_BLUE)] }));
     }
 
     ngOnChanges() {
@@ -96,10 +89,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.createLabels();
         this.processDataAndCreateChart(this.initialStats);
         this.data = this.dataCopy;
-    }
-
-    ngOnDestroy() {
-        this.themeSubscription?.unsubscribe();
     }
 
     /**

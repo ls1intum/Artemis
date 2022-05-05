@@ -1,20 +1,18 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { getGraphColorForTheme, GraphColors, Graphs } from 'app/entities/statistics.model';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { GraphColors, Graphs } from 'app/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import * as shape from 'd3-shape';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
-import { ThemeService } from 'app/core/theme/theme.service';
-import { map, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
 })
-export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart implements OnInit, OnChanges, OnDestroy {
+export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart implements OnInit, OnChanges {
     @Input()
     amountOfStudentsInCourse: number;
 
@@ -35,25 +33,18 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [],
+        domain: [GraphColors.BLACK],
     };
     curve: any = shape.curveMonotoneX;
-
-    themeSubscription: Subscription;
 
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private translateService: TranslateService, private themeService: ThemeService) {
+    constructor(private translateService: TranslateService) {
         super();
     }
 
     ngOnInit() {
-        this.themeSubscription = this.themeService
-            .getCurrentThemeObservable()
-            .pipe(map((theme) => getGraphColorForTheme(theme, GraphColors.BLACK)))
-            .subscribe((color) => (this.chartColor = { ...this.chartColor, domain: [color] }));
-
         this.translateService.onLangChange.subscribe(() => {
             this.updateTranslation();
         });
@@ -67,10 +58,6 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
             this.loading = false;
             this.createChartData();
         }
-    }
-
-    ngOnDestroy(): void {
-        this.themeSubscription?.unsubscribe();
     }
 
     /**

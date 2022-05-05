@@ -16,8 +16,7 @@ import { GradeDTO } from 'app/entities/grade-step.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
-import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { GraphColors } from 'app/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
@@ -129,7 +128,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         name: 'Your overall points color',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [],
+        domain: [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, GraphColors.RED],
     } as Color;
 
     // arrays representing each exercise group
@@ -150,7 +149,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         name: 'Score per exercise group',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [],
+        domain: [GraphColors.LIGHT_GREY, GraphColors.GREEN, GraphColors.LIGHT_GREY, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.RED],
     } as Color;
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
@@ -165,8 +164,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     gradingScaleExists = false;
     isBonus = false;
     gradeDTO?: GradeDTO;
-
-    themeSubscription: Subscription;
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -187,25 +184,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
         private navigationUtilService: ArtemisNavigationUtilService,
-        private themeService: ThemeService,
     ) {}
 
     ngOnInit() {
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
-            this.ngxDoughnutColor.domain = [
-                PROGRAMMING_EXERCISE_COLOR,
-                QUIZ_EXERCISE_COLOR,
-                MODELING_EXERCISE_COLOR,
-                TEXT_EXERCISE_COLOR,
-                FILE_UPLOAD_EXERCISE_COLOR,
-                getGraphColorForTheme(theme, GraphColors.RED),
-            ];
-
-            this.ngxBarColor.domain = [GraphColors.LIGHT_GREY, GraphColors.GREEN, GraphColors.LIGHT_GREY, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.RED].map((color) =>
-                getGraphColorForTheme(theme, color),
-            );
-        });
-
         // Note: due to lazy loading and router outlet, we use parent 2x here
         this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
@@ -261,7 +242,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.translateSubscription.unsubscribe();
         this.courseUpdatesSubscription.unsubscribe();
         this.paramSubscription?.unsubscribe();
-        this.themeSubscription?.unsubscribe();
     }
 
     private calculateCourseGrade(): void {

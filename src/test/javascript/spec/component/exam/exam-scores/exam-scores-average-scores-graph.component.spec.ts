@@ -11,9 +11,8 @@ import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exa
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { Theme } from 'app/core/theme/theme.service';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
@@ -80,13 +79,13 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
             { name: '3 BridgePattern', value: 40 },
             { name: '4 ProxyPattern', value: 20 },
         ];
-        const expectedColorDomain = [GraphColors.BLUE, GraphColors.DARK_BLUE, GraphColors.YELLOW, GraphColors.RED].map((color) => getGraphColorForTheme(Theme.LIGHT, color));
+        const expectedColorDomain = [GraphColors.BLUE, GraphColors.DARK_BLUE, GraphColors.YELLOW, GraphColors.RED];
 
         executeExpectStatements(expectedData, expectedColorDomain);
 
-        adaptExpectedData(3, getGraphColorForTheme(Theme.LIGHT, GraphColors.YELLOW), expectedColorDomain, expectedData);
+        adaptExpectedData(3, GraphColors.YELLOW, expectedColorDomain, expectedData);
 
-        adaptExpectedData(2, getGraphColorForTheme(Theme.LIGHT, GraphColors.RED), expectedColorDomain, expectedData);
+        adaptExpectedData(2, GraphColors.RED, expectedColorDomain, expectedData);
     });
 
     const adaptExpectedData = (averagePoints: number, newColor: string, expectedColorDomain: string[], expectedData: NgxChartsSingleSeriesDataEntry[]) => {

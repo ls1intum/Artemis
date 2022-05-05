@@ -1,17 +1,15 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { round } from 'app/shared/util/utils';
-import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { Subscription } from 'rxjs';
-import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
     templateUrl: './statistics-score-distribution-graph.component.html',
     styleUrls: ['../chart/vertical-bar-chart.scss'],
 })
-export class StatisticsScoreDistributionGraphComponent implements OnInit, OnDestroy {
+export class StatisticsScoreDistributionGraphComponent implements OnInit {
     @Input()
     averageScoreOfExercise: number | undefined;
     @Input()
@@ -30,28 +28,16 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit, OnDest
         name: 'Statistics',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [],
+        domain: [GraphColors.DARK_BLUE],
     };
     yAxisTickFormatting = axisTickFormattingWithPercentageSign;
-
-    themeSubscription: Subscription;
 
     // Data
     barChartLabels: string[] = [];
     relativeChartData: number[] = [];
 
-    constructor(private themeService: ThemeService) {
-        this.themeSubscription = this.themeService
-            .getCurrentThemeObservable()
-            .subscribe((theme) => (this.ngxColor = { ...this.ngxColor, domain: [getGraphColorForTheme(theme, GraphColors.DARK_BLUE)] }));
-    }
-
     ngOnInit(): void {
         this.initializeChart();
-    }
-
-    ngOnDestroy() {
-        this.themeSubscription?.unsubscribe();
     }
 
     private initializeChart(): void {

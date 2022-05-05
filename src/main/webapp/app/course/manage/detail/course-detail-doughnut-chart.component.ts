@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router } from '@angular/router';
@@ -6,16 +6,14 @@ import { Course } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
-import { ThemeService } from 'app/core/theme/theme.service';
-import { Subscription } from 'rxjs';
+import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
 })
-export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit, OnDestroy {
+export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     @Input() contentType: DoughnutChartType;
     @Input() currentPercentage: number | undefined;
     @Input() currentAbsolute: number | undefined;
@@ -27,12 +25,10 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit, On
     stats: number[];
     titleLink: string | undefined;
 
-    themeSubscription: Subscription;
-
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private router: Router, private themeService: ThemeService) {}
+    constructor(private router: Router) {}
 
     // ngx-charts
     ngxData: NgxChartsSingleSeriesDataEntry[] = [
@@ -43,7 +39,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit, On
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [],
+        domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
     bindFormatting = this.valueFormatting.bind(this);
 
@@ -64,10 +60,6 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit, On
      * Depending on the information we want to display in the doughnut chart, we need different titles and links
      */
     ngOnInit(): void {
-        this.themeSubscription = this.themeService
-            .getCurrentThemeObservable()
-            .subscribe((theme) => (this.ngxColor = { ...this.ngxColor, domain: [getGraphColorForTheme(theme, GraphColors.GREEN), getGraphColorForTheme(theme, GraphColors.RED)] }));
-
         switch (this.contentType) {
             case DoughnutChartType.ASSESSMENT:
                 this.doughnutChartTitle = 'assessments';
@@ -94,10 +86,6 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit, On
                 this.titleLink = undefined;
         }
         this.ngxData = [...this.ngxData];
-    }
-
-    ngOnDestroy(): void {
-        this.themeSubscription?.unsubscribe();
     }
 
     /**

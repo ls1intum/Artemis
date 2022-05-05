@@ -5,8 +5,7 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { TranslateService } from '@ngx-translate/core';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { GraphColors } from 'app/entities/statistics.model';
 
 interface NgxClickEvent {
     name: string;
@@ -59,7 +58,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     } as Color;
     backupDomain: string[];
 
-    constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService, private themeService: ThemeService) {}
+    constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService) {}
 
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
@@ -213,21 +212,19 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * @private
      */
     private getGradeStepColor(gradeStep: GradeStep): string {
-        let baseColor: GraphColors;
         if (this.isBonus) {
             if (gradeStep.gradeName === '0') {
-                baseColor = GraphColors.YELLOW;
+                return GraphColors.YELLOW;
             } else {
-                baseColor = GraphColors.GREY;
+                return GraphColors.GREY;
             }
         } else {
             if (gradeStep.isPassingGrade) {
-                baseColor = GraphColors.GREY;
+                return GraphColors.GREY;
             } else {
-                baseColor = GraphColors.RED;
+                return GraphColors.RED;
             }
         }
-        return getGraphColorForTheme(this.themeService.getCurrentTheme(), baseColor);
     }
 
     /**
@@ -243,9 +240,9 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         if (!this.gradingScaleExists) {
             for (let i = 0; i < 100 / this.binWidth; i++) {
                 if (i < 40 / this.binWidth) {
-                    this.ngxColor.domain.push(getGraphColorForTheme(this.themeService.getCurrentTheme(), GraphColors.YELLOW));
+                    this.ngxColor.domain.push(GraphColors.YELLOW);
                 } else {
-                    this.ngxColor.domain.push(getGraphColorForTheme(this.themeService.getCurrentTheme(), GraphColors.GREY));
+                    this.ngxColor.domain.push(GraphColors.GREY);
                 }
             }
         } else {
@@ -311,7 +308,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         const bar = this.ngxData[index];
 
         if (bar.value > 0) {
-            this.ngxColor.domain[index] = getGraphColorForTheme(this.themeService.getCurrentTheme(), GraphColors.LIGHT_BLUE);
+            this.ngxColor.domain[index] = GraphColors.LIGHT_BLUE;
             this.ngxData = [...this.ngxData];
         }
     }

@@ -16,8 +16,8 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { Observable, of, Subscription } from 'rxjs';
-import { finalize, map, skip } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -44,10 +44,9 @@ import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faExclamationTriangle, faFolderOpen, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { GraphColors } from 'app/entities/statistics.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -161,8 +160,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
     @ContentChild('overrideOpenAssessmentButton') overrideOpenAssessmentButton: TemplateRef<any>;
 
-    themeSubscription: Subscription;
-
     // Icons
     faSpinner = faSpinner;
     faQuestionCircle = faQuestionCircle;
@@ -190,7 +187,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
         private navigationUtilService: ArtemisNavigationUtilService,
-        private themeService: ThemeService,
     ) {}
 
     /**
@@ -212,10 +208,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
-        this.themeSubscription = this.themeService
-            .getCurrentThemeObservable()
-            .pipe(skip(1))
-            .subscribe(() => this.setupGraph());
     }
 
     setupGraph() {
@@ -224,10 +216,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (this.programmingExercise && this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC && this.programmingExercise.allowComplaintsForAutomaticAssessments) {
             const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
             const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
-            this.customColors = this.convertCustomColors([
+            this.customColors = [
                 { name: numberOfComplaintsLabel, value: GraphColors.YELLOW },
                 { name: numberOfResolvedComplaintsLabel, value: GraphColors.GREEN },
-            ]);
+            ];
             this.assessments = [
                 {
                     name: numberOfComplaintsLabel,
@@ -242,11 +234,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             const numberOfUnassessedSubmissionLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
             const numberOfAutomaticAssistedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
             const numberOfManualAssessedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
-            this.customColors = this.convertCustomColors([
+            this.customColors = [
                 { name: numberOfUnassessedSubmissionLabel, value: GraphColors.RED },
                 { name: numberOfManualAssessedSubmissionsLabel, value: GraphColors.BLUE },
                 { name: numberOfAutomaticAssistedSubmissionsLabel, value: GraphColors.YELLOW },
-            ]);
+            ];
             this.assessments = [
                 {
                     name: numberOfUnassessedSubmissionLabel,
@@ -262,11 +254,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 },
             ];
         }
-    }
-
-    convertCustomColors(colors: { name: string; value: GraphColors }[]): { name: string; value: string }[] {
-        const theme = this.themeService.getCurrentTheme();
-        return colors.map((def) => ({ ...def, value: getGraphColorForTheme(theme, def.value) }));
     }
 
     setupLinks() {

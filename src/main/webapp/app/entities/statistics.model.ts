@@ -1,5 +1,3 @@
-import { Theme } from 'app/core/theme/theme.service';
-
 export enum SpanType {
     DAY = 'DAY',
     WEEK = 'WEEK',
@@ -39,71 +37,19 @@ export enum StatisticsView {
 }
 
 /**
- * Graph colors, defined as colors to use in the default theme.
+ * Graph colors using CSS variables.
+ * See theme variables scss files for exact colors.
+ * Color names refer to the default theme; might not return what you expect in other themes
+ * to account for background colors etc.
  */
 export enum GraphColors {
-    LIGHT_GREY = 'LIGHT_GREY',
-    GREY = 'GREY',
-    DARK_BLUE = 'DARK_BLUE',
-    BLUE = 'BLUE',
-    LIGHT_BLUE = 'LIGHT_BLUE',
-    GREEN = 'GREEN',
-    RED = 'RED',
-    YELLOW = 'YELLOW',
-    BLACK = 'BLACK',
-}
-
-/**
- * Returns the correct color to use in a graph.
- * Might return a different color definition than the GraphColors name might suggest to fit the theme, especially the background color of the page.
- * @param theme the current theme
- * @param color the default color
- */
-export function getGraphColorForTheme(theme: Theme, color: GraphColors): string {
-    switch (theme) {
-        case Theme.LIGHT:
-            switch (color) {
-                case 'LIGHT_GREY':
-                    return 'rgba(153,153,153,1)';
-                case 'GREY':
-                    return 'rgba(127,127,127,255)';
-                case 'DARK_BLUE':
-                    return 'rgba(53,61,71,1)';
-                case 'BLUE':
-                    return 'rgba(93,138,201,1)';
-                case 'LIGHT_BLUE':
-                    return 'rgba(135, 206, 250, 1)';
-                case 'GREEN':
-                    return 'rgba(40,164,40,1)';
-                case 'RED':
-                    return 'rgba(204,0,0,1)';
-                case 'YELLOW':
-                    return 'rgba(230, 174, 6, 1)';
-                case 'BLACK':
-                    return 'rgba(53,61,71,1)';
-            }
-            break;
-        case Theme.DARK:
-            switch (color) {
-                case 'LIGHT_GREY':
-                    return 'rgb(182,182,182)';
-                case 'GREY':
-                    return 'rgb(150,150,150)';
-                case 'DARK_BLUE':
-                    return 'rgb(159,186,248)';
-                case 'BLUE':
-                    return 'rgba(93,138,201,1)';
-                case 'LIGHT_BLUE':
-                    return 'rgba(135, 206, 250, 1)';
-                case 'GREEN':
-                    return 'rgba(40,164,40,1)';
-                case 'RED':
-                    return 'rgba(204,0,0,1)';
-                case 'YELLOW':
-                    return 'rgba(230, 174, 6, 1)';
-                case 'BLACK':
-                    return 'rgb(229,229,229)';
-            }
-    }
-    throw new Error(`Unknown combination of theme and color: ${theme?.identifier} ${color}`);
+    LIGHT_GREY = 'var(--graph-light-grey)',
+    GREY = 'var(--graph-grey)',
+    DARK_BLUE = 'var(--graph-dark-blue)',
+    BLUE = 'var(--graph-blue)',
+    LIGHT_BLUE = 'var(--graph-light-blue)',
+    GREEN = 'var(--graph-green)',
+    RED = 'var(--graph-red)',
+    YELLOW = 'var(--graph-yellow)',
+    BLACK = 'var(--graph-black)',
 }

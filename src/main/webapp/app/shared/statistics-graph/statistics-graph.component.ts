@@ -1,20 +1,18 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { getGraphColorForTheme, GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { yAxisTickFormatting } from 'app/shared/statistics-graph/statistics-graph.utils';
-import { Subscription } from 'rxjs';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',
     styleUrls: ['../chart/vertical-bar-chart.scss'],
 })
-export class StatisticsGraphComponent implements OnChanges, OnDestroy {
+export class StatisticsGraphComponent implements OnChanges {
     @Input()
     graphType: Graphs;
     @Input()
@@ -44,7 +42,7 @@ export class StatisticsGraphComponent implements OnChanges, OnDestroy {
         name: 'Statistics',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [],
+        domain: [GraphColors.DARK_BLUE],
     };
     tooltipTranslation: string;
     yScaleMax: number;
@@ -53,17 +51,11 @@ export class StatisticsGraphComponent implements OnChanges, OnDestroy {
     // Left arrow -> decrease, right arrow -> increase
     private currentPeriod = 0;
 
-    themeSubscription: Subscription;
-
     // Icons
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(private service: StatisticsService, private translateService: TranslateService, private themeService: ThemeService) {
-        this.themeSubscription = this.themeService
-            .getCurrentThemeObservable()
-            .subscribe((theme) => (this.ngxColor = { ...this.ngxColor, domain: [getGraphColorForTheme(theme, GraphColors.DARK_BLUE)] }));
-    }
+    constructor(private service: StatisticsService, private translateService: TranslateService) {}
 
     /**
      * Life cycle hook to indicate component changes
@@ -76,10 +68,6 @@ export class StatisticsGraphComponent implements OnChanges, OnDestroy {
         this.chartName = `statistics.${this.graphType.toString().toLowerCase()}`;
         this.tooltipTranslation = `statistics.${this.graphType.toString().toLowerCase()}Title`;
         this.initializeChart();
-    }
-
-    ngOnDestroy() {
-        this.themeSubscription?.unsubscribe();
     }
 
     private initializeChart(): void {

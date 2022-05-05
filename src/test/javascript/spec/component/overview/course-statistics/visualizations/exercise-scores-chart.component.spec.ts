@@ -15,9 +15,8 @@ import { LineChartModule } from '@swimlane/ngx-charts';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/entities/statistics.model';
 import { ArtemisTestModule } from '../../../../test.module';
-import { Theme } from 'app/core/theme/theme.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 class MockActivatedRoute {
@@ -140,7 +139,7 @@ describe('ExerciseScoresChartComponent', () => {
         expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([0, 0]);
 
         component.onSelect(legendClickEvent);
-        expect(component.ngxColor.domain[2]).toBe(getGraphColorForTheme(Theme.LIGHT, GraphColors.GREEN));
+        expect(component.ngxColor.domain[2]).toBe(GraphColors.GREEN);
         expect(component.ngxData[2].series.map((exercise: any) => exercise.value)).toEqual([61, 71]);
     });
 

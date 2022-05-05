@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { getGraphColorForTheme, GraphColors, SpanType } from 'app/entities/statistics.model';
+import { GraphColors, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
@@ -107,15 +107,12 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      * @private
      */
     private determineColor(score: number): string {
-        let baseColor: GraphColors;
         if (score > this.bestThirdLowerBoundary) {
-            baseColor = GraphColors.GREEN;
+            return GraphColors.GREEN;
         } else if (score < this.weakestThirdUpperBoundary) {
-            baseColor = GraphColors.RED;
-        } else {
-            baseColor = GraphColors.GREY;
+            return GraphColors.RED;
         }
-        return getGraphColorForTheme(this.themeService.getCurrentTheme(), baseColor);
+        return GraphColors.GREY;
     }
 
     /**

@@ -515,3 +515,14 @@ $apollon-background: $neutral-dark;
 $apollon-background-variant: lighten($neutral-dark, 10);
 $apollon-gray: lighten($neutral-dark, 5);
 $apollon-gray-variant: $gray-100;
+
+// NGX Graph Colors
+$graph-light-grey: rgb(182, 182, 182);
+$graph-grey: rgb(150, 150, 150);
+$graph-dark-blue: rgb(159, 186, 248);
+$graph-blue: rgba(93, 138, 201, 1);
+$graph-light-blue: rgb(58, 96, 141);
+$graph-green: rgba(40, 164, 40, 1);
+$graph-red: rgba(204, 0, 0, 1);
+$graph-yellow: rgba(230, 174, 6, 1);
+$graph-black: rgb(229, 229, 229);

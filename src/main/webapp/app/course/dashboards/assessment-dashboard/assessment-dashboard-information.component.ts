@@ -2,8 +2,7 @@ import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
-import { getGraphColorForTheme, GraphColors } from 'app/entities/statistics.model';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { GraphColors } from 'app/entities/statistics.model';
 import { Subscription } from 'rxjs';
 
 export class AssessmentDashboardInformationEntry {
@@ -68,7 +67,7 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
 
     themeSubscription: Subscription;
 
-    constructor(private translateService: TranslateService, private themeService: ThemeService) {}
+    constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
         this.setup();
@@ -76,19 +75,16 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
             this.setupGraph();
         });
 
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe(
-            (theme) =>
-                (this.customColors = [
-                    {
-                        name: this.openedAssessmentsTitle,
-                        value: getGraphColorForTheme(theme, GraphColors.RED),
-                    },
-                    {
-                        name: this.completedAssessmentsTitle,
-                        value: getGraphColorForTheme(theme, GraphColors.BLUE),
-                    },
-                ]),
-        );
+        this.customColors = [
+            {
+                name: this.openedAssessmentsTitle,
+                value: GraphColors.RED,
+            },
+            {
+                name: this.completedAssessmentsTitle,
+                value: GraphColors.BLUE,
+            },
+        ];
     }
 
     ngOnChanges(): void {
