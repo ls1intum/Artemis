@@ -1,13 +1,13 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.prerequisite.home.importLabel">Select Prerequisite</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.learningGoal.prerequisite.import.title">Select Prerequisite</h4>
         <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
     </div>
     <div class="modal-body">
         <div class="form-group form-inline">
-            <span jhiTranslate="artemisApp.prerequisite.import.searchLearningGoal">Search for learning goal:</span>
+            <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.searchLearningGoal">Search for learning goal:</span>
             <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLearningGoal" type="text" />
-            <span *ngIf="loading" class="ms-3" jhiTranslate="artemisApp.prerequisite.import.loading">Loading...</span>
+            <span *ngIf="loading" class="ms-3" jhiTranslate="artemisApp.learningGoal.prerequisite.import.loading">Loading...</span>
         </div>
         <table class="table table-striped align-middle flex">
             <thead class="thead-dark">
@@ -17,15 +17,15 @@
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.TITLE }}">
-                        <span jhiTranslate="artemisApp.prerequisite.import.table.title">Title</span>
+                        <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.table.title">Title</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.COURSE_TITLE }}">
-                        <span jhiTranslate="artemisApp.prerequisite.import.table.course">Course</span>
+                        <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.table.course">Course</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-2" jhiSortBy="{{ column.SEMESTER }}">
-                        <span jhiTranslate="artemisApp.prerequisite.import.table.semester">Semester</span>
+                        <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.table.semester">Semester</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-1"></th>
@@ -49,7 +49,7 @@
                         <jhi-button
                             (onClick)="selectImport(learningGoal)"
                             [disabled]="disabledIds.includes(learningGoal.id!)"
-                            [title]="'artemisApp.prerequisite.import.table.doImport'"
+                            [title]="'artemisApp.learningGoal.prerequisite.import.table.doSelect'"
                         ></jhi-button>
                     </td>
                 </tr>

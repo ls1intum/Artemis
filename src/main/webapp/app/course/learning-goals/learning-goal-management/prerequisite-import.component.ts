@@ -7,7 +7,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { LearningGoalPagingService } from 'app/course/learning-goals/learning-goal-management/learning-goal-paging.service';
+import { LearningGoalPagingService } from 'app/course/learning-goals/learning-goal-paging.service';
 
 export enum TableColumn {
     ID = 'ID',

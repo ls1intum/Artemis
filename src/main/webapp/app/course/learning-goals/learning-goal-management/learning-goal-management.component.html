@@ -49,7 +49,7 @@
     <div class="container">
         <div class="row">
             <div class="col-6 offset-3 my-auto">
-                <h3 class="text-center">{{ 'artemisApp.prerequisite.managePrerequisites.title' | artemisTranslate }}</h3>
+                <h3 class="text-center">{{ 'artemisApp.learningGoal.prerequisite.managePrerequisites.title' | artemisTranslate }}</h3>
             </div>
             <div class="col-3 align-self-start">
                 <a class="btn btn-primary btn-circle grow center-link" (click)="openImportModal()">
@@ -59,7 +59,7 @@
         </div>
     </div>
     <div class="row row-cols-auto" style="min-height: 100px">
-        <jhi-learning-goal-card class="mx-auto col" *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify" [learningGoal]="prerequisite">
+        <jhi-learning-goal-card class="mx-auto col" *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify" [learningGoal]="prerequisite" [isPrerequisite]="true">
             <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" id="lockButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
                 <fa-icon [icon]="faTimes"></fa-icon> {{ 'artemisApp.learningGoal.learningGoalCard.remove' | artemisTranslate }}
             </button>

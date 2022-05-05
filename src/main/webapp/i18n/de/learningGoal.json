@@ -57,22 +57,23 @@
                 "connectedLearningGoals": "Verbundene Lernziele",
                 "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Lernziele: ",
                 "noLearningGoals": "Keine Lernziele verbunden mit dieser Vorlesungseinheit! "
-            }
-        },
-        "prerequisite": {
-            "managePrerequisites": {
-                "title": "Voraussetzungen Management"
             },
-            "import": {
-                "title": "Voraussetzungen hinzufügen",
-                "table": {
-                    "title": "Titel",
-                    "course": "Kurs",
-                    "semester": "Semester",
-                    "doImport": "Importieren"
+            "prerequisite": {
+                "title": "Voraussetzungen",
+                "managePrerequisites": {
+                    "title": "Voraussetzungen verwalten"
                 },
-                "searchLearningGoal": "Nach Lernziel suchen:",
-                "loading": "Lade..."
+                "import": {
+                    "title": "Voraussetzungen hinzufügen",
+                    "table": {
+                        "title": "Titel",
+                        "course": "Kurs",
+                        "semester": "Semester",
+                        "doSelect": "Auswählen"
+                    },
+                    "searchLearningGoal": "Nach Lernziel suchen:",
+                    "loading": "Lade..."
+                }
             }
         }
     }
