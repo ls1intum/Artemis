@@ -12,8 +12,7 @@ class TestLSan(AbstractProgramTest):
 
     makeTarget: str
 
-    def __init__(self, executionDirectory: str, makeTarget: str = "lsan", requirements: List[str] = None,
-                 name: str = "TestCompileLeak"):
+    def __init__(self, executionDirectory: str, makeTarget: str = "lsan", requirements: List[str] = None, name: str = "TestCompileLeak"):
         super(TestLSan, self).__init__(name, executionDirectory, "make", requirements, timeoutSec=5)
         self.makeTarget = makeTarget
 
@@ -26,8 +25,7 @@ class TestLSan(AbstractProgramTest):
 
         retCode: int = self.pWrap.getReturnCode()
         if retCode != 0:
-            self._failWith(
-                f"Make for directory {str(self.executionDirectory)} failed. Returncode is {retCode}.")
+            self._failWith(f"Make for directory {str(self.executionDirectory)} failed. Returncode is {retCode}.")
 
         # Always cleanup to make sure all threads get joined:
         self.pWrap.cleanup()

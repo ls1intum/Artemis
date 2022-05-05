@@ -678,7 +678,9 @@ public class CourseResource {
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4, ZonedDateTime.now()));
+            var endDate = this.courseService.determineEndDateForActiveStudents(course);
+            var timeSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate));
             courseDTOs.add(courseDTO);
         }
 
@@ -1126,7 +1128,12 @@ public class CourseResource {
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 17, ZonedDateTime.now()));
+        var spanEndDate = now().plusWeeks(17 * periodIndex);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var returnedSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, now());
+        // We omit data concerning the time before the start date
+        return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
     }
 
     /**

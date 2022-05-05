@@ -5,7 +5,7 @@ import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { of } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -15,8 +15,8 @@ import { LineChartModule } from '@swimlane/ngx-charts';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 class MockActivatedRoute {
     parent: any;
@@ -46,8 +46,8 @@ describe('ExerciseScoresChartComponent', () => {
             declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(AlertService),
+                MockProvider(ArtemisNavigationUtilService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
                 MockProvider(ExerciseScoresChartService),
 
                 {
@@ -147,19 +147,19 @@ describe('ExerciseScoresChartComponent', () => {
         const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 2, 43, 31, 70, dayjs(), 'second exercise');
 
         setUpServiceAndStartComponent([firstExercise, secondExercise]);
-        const routerMock = TestBed.inject(Router);
-        const routerSpy = jest.spyOn(routerMock, 'navigate');
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
+        const routingStub = jest.spyOn(routingService, 'routeInNewTab');
         const pointClickEvent = { exerciseId: 2 };
 
         component.onSelect(pointClickEvent);
 
-        expect(routerSpy).toHaveBeenCalledWith(['courses', 1, 'exercises', 2]);
+        expect(routingStub).toHaveBeenCalledWith(['courses', 1, 'exercises', 2]);
 
         pointClickEvent.exerciseId = 1;
 
         component.onSelect(pointClickEvent);
 
-        expect(routerSpy).toHaveBeenCalledWith(['courses', 1, 'exercises', 1]);
+        expect(routingStub).toHaveBeenCalledWith(['courses', 1, 'exercises', 1]);
     });
 
     it('should setup and execute exercise type filter correctly', () => {

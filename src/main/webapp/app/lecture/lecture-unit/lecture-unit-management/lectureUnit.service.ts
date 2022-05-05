@@ -20,16 +20,11 @@ export class LectureUnitService {
     constructor(private httpClient: HttpClient, private attachmentService: AttachmentService) {}
 
     updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
-        // need to remove participations from exercise units to prevent circular structure failure
-        lectureUnits = lectureUnits.map((lectureUnit) => {
-            if (lectureUnit.type === LectureUnitType.EXERCISE && (lectureUnit as ExerciseUnit).exercise) {
-                (lectureUnit as ExerciseUnit).exercise!.studentParticipations = undefined;
-                (lectureUnit as ExerciseUnit).exercise!.tutorParticipations = undefined;
-            }
-            return lectureUnit;
-        });
+        // Send an ordered list of ids of the lecture units
+        // This also overcomes circular structure issues with participations and categories in exercise units
+        const lectureUnitIds = lectureUnits.map((lectureUnit) => lectureUnit.id);
         return this.httpClient
-            .put<LectureUnit[]>(`${this.resourceURL}/lectures/${lectureId}/lecture-units-order`, lectureUnits, { observe: 'response' })
+            .put<LectureUnit[]>(`${this.resourceURL}/lectures/${lectureId}/lecture-units-order`, lectureUnitIds, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServerResponse(res)));
     }
 
@@ -46,6 +41,7 @@ export class LectureUnitService {
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
                 (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertDateFromClient((<ExerciseUnit>lectureUnit).exercise!);
+                (<ExerciseUnit>lectureUnit).exercise!.categories = ExerciseService.stringifyExerciseCategories((<ExerciseUnit>lectureUnit).exercise!);
                 return lectureUnit;
             }
         }
@@ -72,6 +68,7 @@ export class LectureUnitService {
             } else if (res.body.type === LectureUnitType.EXERCISE) {
                 if ((<ExerciseUnit>res.body).exercise) {
                     (<ExerciseUnit>res.body).exercise = ExerciseService.convertExerciseDateFromServer((<ExerciseUnit>res.body).exercise);
+                    ExerciseService.parseExerciseCategories((<ExerciseUnit>res.body).exercise);
                 }
             } else {
                 res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
@@ -88,6 +85,7 @@ export class LectureUnitService {
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
                 (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertExerciseDateFromServer((<ExerciseUnit>lectureUnit).exercise);
+                ExerciseService.parseExerciseCategories((<ExerciseUnit>lectureUnit).exercise);
             }
         } else {
             lectureUnit.releaseDate = lectureUnit.releaseDate ? dayjs(lectureUnit.releaseDate) : undefined;
