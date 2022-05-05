@@ -433,7 +433,6 @@ public class CourseResource {
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
-        courseService.fetchPlagiarismCasesForCourses(courses, user);
         return courses;
     }
 

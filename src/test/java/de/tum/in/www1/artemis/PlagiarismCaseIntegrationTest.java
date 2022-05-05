@@ -15,12 +15,13 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
+import de.tum.in.www1.artemis.domain.plagiarism.*;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 
 public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -36,6 +37,9 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     private static Course course;
 
@@ -55,6 +59,21 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
         User student1 = database.getUserByLogin("student1");
         plagiarismCase1.setStudent(student1);
         plagiarismCase1 = plagiarismCaseRepository.save(plagiarismCase1);
+        PlagiarismResult<TextSubmissionElement> textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
+        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
+        plagiarismComparison = plagiarismComparisonRepository.save(plagiarismComparison);
+        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission1 = new PlagiarismSubmission<>();
+        plagiarismSubmission1.setStudentLogin("student1");
+        plagiarismSubmission1.setPlagiarismCase(plagiarismCase1);
+        plagiarismSubmission1.setPlagiarismComparison(plagiarismComparison);
+        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission2 = new PlagiarismSubmission<>();
+        plagiarismSubmission2.setStudentLogin("student2");
+        plagiarismSubmission2.setPlagiarismCase(plagiarismCase1);
+        plagiarismSubmission2.setPlagiarismComparison(plagiarismComparison);
+        plagiarismComparison.setSubmissionA(plagiarismSubmission1);
+        plagiarismComparison.setSubmissionB(plagiarismSubmission2);
+        plagiarismComparisonRepository.save(plagiarismComparison);
         plagiarismCase2 = new PlagiarismCase();
         plagiarismCase2.setExercise(textExercise);
         User student2 = database.getUserByLogin("student2");
@@ -148,15 +167,28 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSavePlagiarismCaseVerdict() throws Exception {
+    public void testSavePlagiarismCaseVerdict_warning() throws Exception {
         var plagiarismVerdictDTO = new PlagiarismVerdictDTO();
         plagiarismVerdictDTO.setVerdict(PlagiarismVerdict.WARNING);
         plagiarismVerdictDTO.setVerdictMessage("This is a warning!");
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO, HttpStatus.OK);
         var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
-        assertThat(updatedPlagiarismCase.getVerdict()).as("should update plagiarism case verdict").isEqualTo(PlagiarismVerdict.WARNING);
+        assertThat(updatedPlagiarismCase.getVerdict()).as("should update plagiarism case verdict warning").isEqualTo(PlagiarismVerdict.WARNING);
         assertThat(updatedPlagiarismCase.getVerdictMessage()).as("should update plagiarism case verdict message").isEqualTo("This is a warning!");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSavePlagiarismCaseVerdict_pointDeduction() throws Exception {
+        var plagiarismVerdictDTO = new PlagiarismVerdictDTO();
+        plagiarismVerdictDTO.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
+        plagiarismVerdictDTO.setVerdictPointDeduction(90);
+
+        request.put("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO, HttpStatus.OK);
+        var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
+        assertThat(updatedPlagiarismCase.getVerdict()).as("should update plagiarism case verdict point deduction").isEqualTo(PlagiarismVerdict.POINT_DEDUCTION);
+        assertThat(updatedPlagiarismCase.getVerdictPointDeduction()).as("should update plagiarism case verdict point deduction").isEqualTo(90);
     }
 
     @Test
@@ -175,6 +207,17 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
         var plagiarismCases = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-student", HttpStatus.OK, PlagiarismCase.class);
         plagiarismCases.get(0).getPost().setPlagiarismCase(null);
         assertThat(plagiarismCases.get(0)).as("should get plagiarism cases for student").isEqualTo(plagiarismCase1);
+        for (var submission : plagiarismCases.get(0).getPlagiarismSubmissions()) {
+            assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isEqualTo(null);
+            assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isEqualTo(null);
+            assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isEqualTo(null);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testGetPlagiarismCaseForStudent_forbidden() throws Exception {
+        request.get("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-student", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
@@ -182,5 +225,10 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
     public void testGetPlagiarismCaseForStudent() throws Exception {
         var plagiarismCase = request.get("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-student", HttpStatus.OK, PlagiarismCase.class);
         assertThat(plagiarismCase).as("should get plagiarism case for student").isEqualTo(plagiarismCase1);
+        for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
+            assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isEqualTo(null);
+            assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isEqualTo(null);
+            assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isEqualTo(null);
+        }
     }
 }

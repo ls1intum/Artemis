@@ -104,12 +104,12 @@ public class PlagiarismCaseService {
         var plagiarismCase = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismSubmission.getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCase.isPresent()) {
-            // add submission to existing PlagiarismCase for student B
+            // add submission to existing PlagiarismCase for student
             plagiarismSubmission.setPlagiarismCase(plagiarismCase.get());
             plagiarismComparisonRepository.save(plagiarismComparison);
         }
         else {
-            // create new PlagiarismCase for student B
+            // create new PlagiarismCase for student
             var student = userRepository.getUserByLoginElseThrow(plagiarismSubmission.getStudentLogin());
             PlagiarismCase newPlagiarismCase = new PlagiarismCase();
             newPlagiarismCase.setExercise(plagiarismComparison.getPlagiarismResult().getExercise());

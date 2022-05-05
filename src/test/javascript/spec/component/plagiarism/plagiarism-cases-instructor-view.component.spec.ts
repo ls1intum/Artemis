@@ -10,6 +10,12 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import * as DownloadUtil from 'app/shared/util/download.util';
+import dayjs from 'dayjs/esm';
+
+jest.mock('app/shared/util/download.util', () => ({
+    downloadFile: jest.fn(),
+}));
 
 describe('Plagiarism Cases Student View Component', () => {
     let component: PlagiarismCasesInstructorViewComponent;
@@ -18,18 +24,26 @@ describe('Plagiarism Cases Student View Component', () => {
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1 }) } } as any as ActivatedRoute;
 
+    const date = dayjs();
+
     const exercise1 = {
         id: 1,
+        title: 'Test Exercise 1',
     } as TextExercise;
     const exercise2 = {
         id: 2,
+        title: 'Test Exercise 2',
     } as TextExercise;
 
     const plagiarismCase1 = {
         id: 1,
         exercise: exercise1,
-        student: { id: 1 },
+        student: { id: 1, login: 'Student 1' },
         verdict: PlagiarismVerdict.PLAGIARISM,
+        verdictBy: {
+            name: 'Test Instructor 1',
+        },
+        verdictDate: date,
         post: {
             id: 1,
             answers: [
@@ -54,7 +68,7 @@ describe('Plagiarism Cases Student View Component', () => {
     } as PlagiarismCase;
     const plagiarismCase4 = {
         id: 4,
-        student: { id: 4 },
+        student: { id: 4, login: 'Student 2' },
         exercise: exercise2,
     } as PlagiarismCase;
 
@@ -128,5 +142,18 @@ describe('Plagiarism Cases Student View Component', () => {
         expect(component.hasStudentAnswer(plagiarismCase1)).toBe(true);
         expect(component.hasStudentAnswer(plagiarismCase2)).toBe(false);
         expect(component.hasStudentAnswer(plagiarismCase3)).toBe(false);
+    });
+
+    it('should export plagiarism cases as CSV', () => {
+        const downloadSpy = jest.spyOn(DownloadUtil, 'downloadFile');
+        component.plagiarismCases = [plagiarismCase1, plagiarismCase4];
+        const expectedBlob = [
+            'Student Login,Exercise,Verdict, Verdict Date\n',
+            `Student 1, Test Exercise 1, PLAGIARISM, ${date}, Test Instructor 1\n`,
+            'Student 2, Test Exercise 2, No verdict yet, -, -\n',
+        ];
+        component.exportPlagiarismCases();
+        expect(downloadSpy).toHaveBeenCalledTimes(1);
+        expect(downloadSpy).toHaveBeenCalledWith(new Blob(expectedBlob, { type: 'text/csv' }), 'plagiarism-cases.csv');
     });
 });

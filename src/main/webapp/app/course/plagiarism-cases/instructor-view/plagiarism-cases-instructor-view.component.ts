@@ -124,7 +124,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
                     `${plagiarismCase.student?.login},${exerciseTitleCSVSanitized},${plagiarismCase.verdict},${plagiarismCase.verdictDate},${plagiarismCase.verdictBy!.name}\n`,
                 );
             } else {
-                blobParts.push(`${plagiarismCase.student?.login},${exerciseTitleCSVSanitized},No verdict yet, -, -\n`);
+                blobParts.push(`${plagiarismCase.student?.login},${exerciseTitleCSVSanitized}, No verdict yet, -, -\n`);
             }
         });
         downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
