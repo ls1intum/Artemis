@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +13,9 @@ import com.hazelcast.config.SerializerConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.map.IMap;
+import com.hazelcast.nio.ObjectDataInput;
+import com.hazelcast.nio.ObjectDataOutput;
+import com.hazelcast.nio.serialization.StreamSerializer;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -70,9 +75,31 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
         activities = hazelcastInstance.getMap(Constants.HAZELCAST_MONITORING_PREFIX + getExamId() + HAZELCAST_CACHE_ACTIVITIES);
     }
 
+    // TODO - Check why is this also needed in this case -> java.lang.IllegalArgumentException: argument 'className' can't be null
+    static class ExamMonitoringDistributedCacheStreamSerializer implements StreamSerializer<ExamMonitoringDistributedCache> {
+
+        @Override
+        public int getTypeId() {
+            return Constants.HAZELCAST_MONITORING_CACHE_SERIALIZER_ID;
+        }
+
+        @Override
+        public void write(ObjectDataOutput out, ExamMonitoringDistributedCache examMonitoringDistributedCache) throws IOException {
+            out.writeLong(examMonitoringDistributedCache.getExamId());
+        }
+
+        @Override
+        public @NotNull ExamMonitoringDistributedCache read(ObjectDataInput in) throws IOException {
+            Long examId = in.readLong();
+            // see class JavaDoc why the exercise is null here.
+            return new ExamMonitoringDistributedCache(examId, null);
+        }
+    }
+
     static void registerSerializer(Config config) {
         SerializerConfig serializerConfig = new SerializerConfig();
         serializerConfig.setTypeClass(ExamMonitoringDistributedCache.class);
+        serializerConfig.setImplementation(new ExamMonitoringDistributedCacheStreamSerializer());
         config.getSerializationConfig().addSerializerConfig(serializerConfig);
     }
 }
