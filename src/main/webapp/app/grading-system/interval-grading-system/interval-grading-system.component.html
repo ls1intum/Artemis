@@ -61,13 +61,13 @@
                             {{ 'artemisApp.gradingSystem.intervalTab.title' | artemisTranslate }}
                         </span>
                     </th>
-                    <th *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
+                    <th>
                         <span>
                             {{ 'artemisApp.gradingSystem.min' | artemisTranslate }}
                             - {{ 'artemisApp.gradingSystem.max' | artemisTranslate }}
                         </span>
                     </th>
-                    <th *ngIf="gradeEditMode === GradeEditMode.POINTS">
+                    <th>
                         <span>
                             {{ 'artemisApp.gradingSystem.minPoints' | artemisTranslate }}
                             - {{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }}
@@ -106,7 +106,10 @@
                         </td>
                     </ng-template>
                     <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: gradeEditMode:last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
+                    </td>
+                    <td>
+                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
                     </td>
                     <td *ngIf="gradingScale.gradeType !== GradeType.BONUS">
                         <input [(ngModel)]="gradeStep.gradeName" type="text" required />
