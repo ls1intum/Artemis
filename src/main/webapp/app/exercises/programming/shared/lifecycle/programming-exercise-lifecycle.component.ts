@@ -64,6 +64,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
         if (this.exercise.dueDate && newReleaseDate && dayjs(newReleaseDate).isAfter(this.exercise.dueDate)) {
             this.updateDueDate(newReleaseDate);
         }
+        this.updateExampleSolutionPublicationDate(newReleaseDate);
         this.exercise.releaseDate = newReleaseDate;
     }
 
@@ -80,6 +81,21 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
         if (afterDue && dayjs(dueDate).isAfter(afterDue)) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
+        }
+    }
+
+    /**
+     * Updates the example solution publication date of the programming exercise if it is set and not after release or due date.
+     * @param newReleaseOrDueDate the new exampleSolutionPublicationDate if it is after the current exampleSolutionPublicationDate
+     */
+    updateExampleSolutionPublicationDate(newReleaseOrDueDate?: dayjs.Dayjs) {
+        if (this.exercise.exampleSolutionPublicationDate && newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isAfter(this.exercise.exampleSolutionPublicationDate)) {
+            const message =
+                this.exercise.dueDate != undefined
+                    ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
+                    : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
+            alert(this.translator.instant(message));
+            this.exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
         }
     }
 }

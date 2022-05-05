@@ -294,6 +294,8 @@ public class ProgrammingExerciseResource {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
         }
 
+        updatedProgrammingExercise.validateGeneralSettings();
+
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         validateStaticCodeAnalysisSettings(updatedProgrammingExercise);

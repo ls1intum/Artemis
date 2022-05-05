@@ -22,6 +22,7 @@
             <jhi-programming-exercise-test-schedule-date-picker
                 *ngIf="!isExamMode"
                 [(ngModel)]="exercise.dueDate"
+                (ngModelChange)="updateExampleSolutionPublicationDate($event)"
                 (onDateReset)="exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined"
                 [startAt]="exercise.releaseDate"
                 [min]="exercise.releaseDate"

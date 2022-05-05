@@ -739,6 +739,7 @@ public class ProgrammingExerciseService {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
+        programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
