@@ -25,17 +25,6 @@ describe('CourseMessagesComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-
-        expect(component).not.toBeNull();
-        expect(component.selectedConversation).toBeUndefined();
-
-        const postOverviewComponent = getElement(fixture.debugElement, 'jhi-messages');
-        expect(postOverviewComponent.isCourseMessagesPage).toBeTrue();
-        expect(postOverviewComponent.activeConversation).toBe(component.selectedConversation);
-    });
-
     it('should trigger selectedConversation on selectConversation event', () => {
         const selectConversationSpy = jest.spyOn(component, 'selectConversation');
 

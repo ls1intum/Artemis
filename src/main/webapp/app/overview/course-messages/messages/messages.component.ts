@@ -32,7 +32,7 @@ export class MessagesComponent extends PostOverviewDirective implements AfterVie
      * @param activeConversation selectedConversation
      */
     @Input() set activeConversation(activeConversation: Conversation) {
-        if (this.isCourseMessagesPage && activeConversation) {
+        if (activeConversation) {
             this.conversation = activeConversation;
             if (this.course) {
                 this.onSelectContext();

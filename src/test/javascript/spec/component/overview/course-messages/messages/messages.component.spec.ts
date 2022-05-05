@@ -96,6 +96,12 @@ describe('MessagesComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should initialize', () => {
+        fixture.detectChanges();
+        expect(component).not.toBeNull();
+        expect(component.isCourseMessagesPage).toBeTrue();
+    });
+
     it('if user has no conversation, no call should be made to fetch posts', fakeAsync(() => {
         component.itemsPerPage = 5;
         component.isCourseMessagesPage = true;
