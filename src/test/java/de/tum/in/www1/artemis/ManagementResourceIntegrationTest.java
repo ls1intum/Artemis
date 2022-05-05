@@ -90,6 +90,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         bambooRequestMockProvider.enableMockingOfRequests(true);
         mockTriggerFailedBuild(participation);
         jmsMessageMockProvider.mockRemoveExerciseUnits();
+        mockGrantReadAccess(participation);
 
         // Try to access 5 different endpoints with programming feature toggle enabled
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.OK);

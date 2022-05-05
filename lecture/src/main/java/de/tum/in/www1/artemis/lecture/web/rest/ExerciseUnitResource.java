@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.BadRequestException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -61,17 +62,13 @@ public class ExerciseUnitResource {
     public ResponseEntity<ExerciseUnit> createExerciseUnit(@PathVariable Long lectureId, @RequestBody ExerciseUnit exerciseUnit) throws URISyntaxException {
         log.debug("REST request to create ExerciseUnit : {}", exerciseUnit);
         if (exerciseUnit.getId() != null) {
-            throw new BadRequestAlertException("An exercise unit must have an ID to be updated", ENTITY_NAME, "idnull");
+            throw new BadRequestException();
         }
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
-        if (lectureOptional.isEmpty()) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "not found");
-        }
-        Lecture lecture = lectureOptional.get();
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         exerciseUnit.setLecture(null);
@@ -82,8 +79,7 @@ public class ExerciseUnitResource {
         ExerciseUnit persistedExerciseUnit = (ExerciseUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 
         return ResponseEntity.created(new URI("/api/exercise-units/" + persistedExerciseUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedExerciseUnit);
-
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedExerciseUnit);
     }
 
     /**
@@ -96,19 +92,13 @@ public class ExerciseUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ExerciseUnit>> getAllExerciseUnitsOfLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all exercise units for lecture : {}", lectureId);
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
-        if (lectureOptional.isEmpty()) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "not found");
-        }
-        Lecture lecture = lectureOptional.get();
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
         List<ExerciseUnit> exerciseUnitsOfLecture = exerciseUnitRepository.findByLectureId(lectureId);
-
         return ResponseEntity.ok().body(exerciseUnitsOfLecture);
-
     }
 
 }

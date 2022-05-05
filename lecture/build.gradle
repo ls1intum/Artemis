@@ -252,9 +252,6 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-undertow:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:${spring_ldap_core_version}"
-    implementation "org.springframework.data:spring-data-ldap:${spring_data_ldap_version}"
-
     implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations"
     implementation "javax.annotation:javax.annotation-api"
     implementation "io.dropwizard.metrics:metrics-core"

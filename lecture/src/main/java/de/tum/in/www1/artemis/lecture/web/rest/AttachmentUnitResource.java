@@ -20,6 +20,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
+import javax.ws.rs.BadRequestException;
+
 @RestController
 @RequestMapping("api/")
 public class AttachmentUnitResource {
@@ -55,9 +57,14 @@ public class AttachmentUnitResource {
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
-        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+
+        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "AttachmentUnit", "lectureOrCourseMissing");
         }
+        if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "AttachmentUnit", "lectureIdMismatch");
+        }
+
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(attachmentUnit);
     }
@@ -74,16 +81,20 @@ public class AttachmentUnitResource {
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         if (attachmentUnit.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "id is null");
+            throw new BadRequestException();
         }
-        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "AttachmentUnit", "lectureOrCourseMissing");
+        }
+        if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "AttachmentUnit", "lectureIdMismatch");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
 
         // Make sure that the original references are preserved.
         AttachmentUnit originalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).get();
         attachmentUnit.setAttachment(originalAttachmentUnit.getAttachment());
+        attachmentUnit.setOrder(originalAttachmentUnit.getOrder());
 
         AttachmentUnit result = attachmentUnitRepository.save(attachmentUnit);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachmentUnit.getId().toString())).body(result);
@@ -102,26 +113,26 @@ public class AttachmentUnitResource {
     public ResponseEntity<AttachmentUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) throws URISyntaxException {
         log.debug("REST request to create AttachmentUnit : {}", attachmentUnit);
         if (attachmentUnit.getId() != null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "id is null");
+            throw new BadRequestException();
         }
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
+            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         attachmentUnit.setLecture(null);
-        AttachmentUnit persistedAttachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
-        persistedAttachmentUnit.setLecture(lecture);
-        lecture.addLectureUnit(persistedAttachmentUnit);
+        attachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
+        attachmentUnit.setLecture(lecture);
+        lecture.addLectureUnit(attachmentUnit);
         lectureRepository.save(lecture);
 
         // cleanup before sending to client
-        persistedAttachmentUnit.getLecture().setLectureUnits(null);
-        persistedAttachmentUnit.getLecture().setAttachments(null);
-        persistedAttachmentUnit.getLecture().setPosts(null);
-        return ResponseEntity.created(new URI("/api/attachment-units/" + persistedAttachmentUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(attachmentUnit);
+        attachmentUnit.getLecture().setLectureUnits(null);
+        attachmentUnit.getLecture().setAttachments(null);
+        attachmentUnit.getLecture().setPosts(null);
+        return ResponseEntity.created(new URI("/api/attachment-units/" + attachmentUnit.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(attachmentUnit);
     }
 }

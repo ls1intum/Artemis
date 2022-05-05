@@ -62,7 +62,7 @@ public class TextUnitResource {
         }
         TextUnit textUnit = optionalTextUnit.get();
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
         return ResponseEntity.ok().body(textUnit);
@@ -83,9 +83,12 @@ public class TextUnitResource {
             throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idnull");
         }
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
+
+        TextUnit existingUnit = textUnitRepository.findById(textUnit.getId()).orElseThrow();
+        textUnit.setOrder(existingUnit.getOrder());
 
         TextUnit result = textUnitRepository.save(textUnit);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textUnit.getId().toString())).body(result);
@@ -112,7 +115,7 @@ public class TextUnitResource {
         }
         Lecture lecture = lectureOptional.get();
         if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
@@ -120,7 +123,7 @@ public class TextUnitResource {
         textUnit.setLecture(null);
         TextUnit savedTextUnit = textUnitRepository.saveAndFlush(textUnit);
         savedTextUnit.setLecture(lecture);
-        lecture.addLectureUnit(textUnit);
+        lecture.addLectureUnit(savedTextUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
         TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 

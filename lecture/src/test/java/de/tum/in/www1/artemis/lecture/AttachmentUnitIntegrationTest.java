@@ -81,7 +81,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringDevelopmentTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createAttachmentUnit_asInstructor_shouldCreateAttachmentUnit() throws Exception {
         var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
-                HttpStatus.CREATED);
+            HttpStatus.CREATED);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).get();
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachmentUnit.getAttachment());
@@ -109,13 +109,30 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringDevelopmentTest
         assertThat(this.attachment.getAttachmentUnit()).isEqualTo(this.attachmentUnit);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateAttachmentUnit_asInstructor_shouldKeepOrdering() throws Exception {
+        persistAttachmentUnitWithLecture();
+
+        // Add a second lecture unit
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
+        lecture1.addLectureUnit(attachmentUnit);
+        lectureRepository.save(lecture1);
+
+        // Updating the lecture unit should not change order attribute
+        request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class, HttpStatus.OK);
+
+        AttachmentUnit updatedAttachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).orElseThrow();
+        assertThat(updatedAttachmentUnit.getOrder()).isEqualTo(1);
+    }
+
     private void persistAttachmentUnitWithLecture() {
         this.attachmentUnit = attachmentUnitRepository.save(this.attachmentUnit);
         lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
         lecture1.addLectureUnit(this.attachmentUnit);
         lecture1 = lectureRepository.save(lecture1);
         this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst()
-                .get();
+            .get();
     }
 
     @Test
@@ -126,7 +143,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringDevelopmentTest
         this.attachment = attachmentRepository.save(attachment);
         this.attachmentUnit.setDescription("Changed");
         this.attachmentUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units", this.attachmentUnit, AttachmentUnit.class,
-                HttpStatus.FORBIDDEN);
+            HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -139,7 +156,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringDevelopmentTest
         this.attachmentUnit.setDescription("Changed");
         this.attachmentUnit.setId(null);
         this.attachmentUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units", this.attachmentUnit, AttachmentUnit.class,
-                HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -165,7 +182,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringDevelopmentTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteAttachmentUnit_withAttachment_shouldDeleteAttachment() throws Exception {
         var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
-                HttpStatus.CREATED);
+            HttpStatus.CREATED);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);

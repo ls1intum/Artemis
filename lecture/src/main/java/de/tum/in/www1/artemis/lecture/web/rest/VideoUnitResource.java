@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.ws.rs.BadRequestException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -61,17 +62,12 @@ public class VideoUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<VideoUnit> getVideoUnit(@PathVariable Long videoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
-        Optional<VideoUnit> optionalVideoUnit = videoUnitRepository.findById(videoUnitId);
-        if (optionalVideoUnit.isEmpty()) {
-            throw new EntityNotFoundException("There isn't such video unit");
-
-        }
-        VideoUnit videoUnit = optionalVideoUnit.get();
+        var videoUnit = videoUnitRepository.findById(videoUnitId).orElseThrow(() -> new EntityNotFoundException("VideoUnit", videoUnitId));
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "VideoUnit", "lectureOrCourseMissing");
         }
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "VideoUnit", "lectureIdMismatch");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(videoUnit);
@@ -83,18 +79,17 @@ public class VideoUnitResource {
      * @param lectureId      the id of the lecture to which the video unit belongs to update
      * @param videoUnit the video unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated videoUnit
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("lectures/{lectureId}/video-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
+    public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) {
         log.debug("REST request to update an video unit : {}", videoUnit);
         if (videoUnit.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
 
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "VideoUnit", "lectureOrCourseMissing");
         }
 
         // Validate the URL
@@ -108,15 +103,18 @@ public class VideoUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "VideoUnit", "lectureIdMismatch");
         }
+
+        VideoUnit existingUnit = videoUnitRepository.findById(videoUnit.getId()).orElseThrow();
+        videoUnit.setOrder(existingUnit.getOrder());
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, videoUnit.getId().toString())).body(result);
     }
 
     /**
-     * POST /lectures/:lectureId/video-units : creates a new video unit.
+     * POST lectures/:lectureId/video-units : creates a new video unit.
      *
      * @param lectureId      the id of the lecture to which the video unit should be added
      * @param videoUnit the video unit that should be created
@@ -139,27 +137,22 @@ public class VideoUnitResource {
             throw new BadRequestAlertException("The URL is not valid", ENTITY_NAME, "invalidurl");
         }
 
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
-        if (lectureOptional.isEmpty()) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
-        }
-        Lecture lecture = lectureOptional.get();
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+            throw new ConflictException("Specified lecture is not part of a course", "VideoUnit", "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         videoUnit.setLecture(null);
-        VideoUnit savedVideoUnit = videoUnitRepository.saveAndFlush(videoUnit);
-        savedVideoUnit.setLecture(lecture);
-        lecture.addLectureUnit(savedVideoUnit);
+        videoUnit = videoUnitRepository.saveAndFlush(videoUnit);
+        videoUnit.setLecture(lecture);
+        lecture.addLectureUnit(videoUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
         VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 
         return ResponseEntity.created(new URI("/api/video-units/" + persistedVideoUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedVideoUnit);
-
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedVideoUnit);
     }
 
 }

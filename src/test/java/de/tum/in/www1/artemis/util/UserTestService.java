@@ -273,7 +273,7 @@ public class UserTestService {
     }
 
     // Test
-    public void createExternalUser_asAdmin_isSuccessful() throws Exception {
+    public User createExternalUser_asAdmin_isSuccessful() throws Exception {
         String password = "foobar1234";
         student.setId(null);
         student.setLogin("batman");
@@ -294,6 +294,14 @@ public class UserTestService {
 
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
+
+        return userInDB;
+    }
+
+    // Test
+    public void createExternalUser_asAdmin_withVcsToken_isSuccessful() throws Exception {
+        var user = this.createExternalUser_asAdmin_isSuccessful();
+        assertThat(user.getVcsAccessToken()).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
     }
 
     // Test

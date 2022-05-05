@@ -102,6 +102,23 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void updateTextUnit_asEditor_shouldKeepOrdering() throws Exception {
+        persistTextUnitWithLecture();
+
+        // Add a second lecture unit
+        TextUnit textUnit = database.createTextUnit();
+        lecture.addLectureUnit(textUnit);
+        lectureRepository.save(lecture);
+
+        // Updating the lecture unit should not change order attribute
+        request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
+
+        TextUnit updatedTextUnit = textUnitRepository.findById(textUnit.getId()).orElseThrow();
+        assertThat(updatedTextUnit.getOrder()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
         persistTextUnitWithLecture();
         TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);

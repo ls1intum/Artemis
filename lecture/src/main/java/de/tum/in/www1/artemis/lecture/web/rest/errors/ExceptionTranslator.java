@@ -10,7 +10,10 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.BadRequestException;
 
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -21,10 +24,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.NativeWebRequest;
-import org.zalando.problem.DefaultProblem;
-import org.zalando.problem.Problem;
-import org.zalando.problem.ProblemBuilder;
-import org.zalando.problem.StatusType;
+import org.zalando.problem.*;
 import org.zalando.problem.spring.web.advice.ProblemHandling;
 import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
@@ -103,6 +103,25 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     @ExceptionHandler
     public ResponseEntity<Problem> handleBadRequestAlertException(BadRequestAlertException exception, NativeWebRequest request) {
         return create(exception, request, HeaderUtil.createFailureAlert(applicationName, true, exception.getEntityName(), exception.getErrorKey(), exception.getMessage()));
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleConflictException(ConflictException ex, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.CONFLICT).with(MESSAGE_KEY, ex.getMessage()).with("X-" + applicationName + "-error", "error." + ex.getErrorKey())
+            .with("X-" + applicationName + "-params", ex.getEntityName()).build();
+        return create(ex, problem, request);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleEntityNotFoundException(EntityNotFoundException ex, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.NOT_FOUND).with(MESSAGE_KEY, de.tum.in.www1.artemis.web.rest.errors.ErrorConstants.REQ_404_REASON).build();
+        return create(ex, problem, request);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleBadRequest(BadRequestException exception, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.BAD_REQUEST).with(MESSAGE_KEY, de.tum.in.www1.artemis.web.rest.errors.ErrorConstants.REQ_400_REASON).build();
+        return create(exception, problem, request);
     }
 
     @Override
