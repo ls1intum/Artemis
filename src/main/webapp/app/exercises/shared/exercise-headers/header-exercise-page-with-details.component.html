@@ -20,27 +20,27 @@
                     <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
                 </span>
             </h4>
-            <h4 class="row" *ngIf="exercise.includedInOverallScore != undefined && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY">
+            <h4 class="row" *ngIf="exercise.includedInOverallScore && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY">
                 <span>
                     {{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}:
                     <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
                 </span>
             </h4>
             <h4 class="d-md-flex" *ngIf="exercise.categories || exercise.difficulty">
-                <h4 class="me-1">{{ 'artemisApp.courseOverview.exerciseDetails.tags' | artemisTranslate }}</h4>
-                <h4 *ngFor="let category of exerciseCategories">
+                {{ 'artemisApp.courseOverview.exerciseDetails.tags' | artemisTranslate }}
+                <span *ngFor="let category of exerciseCategories">
                     <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-                </h4>
-                <h4 *ngIf="exercise.difficulty">
+                </span>
+                <span *ngIf="exercise.difficulty">
                     <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
-                </h4>
+                </span>
             </h4>
             <h4 class="row" *ngIf="submissionPolicy != undefined">
                 <span>
                     {{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:
                     {{
                         submissionPolicy.submissionLimit +
-                            (submissionPolicy.exceedingPenalty != undefined
+                            (submissionPolicy.exceedingPenalty
                                 ? ' (' +
                                   ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate) +
                                   ': ' +
@@ -98,7 +98,7 @@
                     <span class="me-2">
                         {{ 'artemisApp.courseOverview.exerciseDetails.complaintsEnabled' | artemisTranslate }}
                         {{
-                            'global.generic.' + exercise.assessmentType !== AssessmentType.AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments
+                            'global.generic.' + (exercise.assessmentType !== AssessmentType.AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments)
                                 ? 'yes'
                                 : ('no' | artemisTranslate)
                         }}
