@@ -18,11 +18,6 @@
                     {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
                     {{ exercise.maxPoints }}
                     <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
-                </span>
-            </h4>
-            <h4 class="row" *ngIf="exercise.includedInOverallScore && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY">
-                <span>
-                    {{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}:
                     <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
                 </span>
             </h4>
