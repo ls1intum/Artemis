@@ -9,6 +9,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -49,7 +50,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
-    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
+    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService, private themeService: ThemeService) {}
 
     /**
      * Initialise the courseId from the current url
@@ -85,7 +86,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     printPDF() {
         // expand all exercises before printing
         this.collapsedExerciseIds = [];
-        setTimeout(() => window.print());
+        setTimeout(() => this.themeService.print());
     }
 
     public generateLink(exercise: Exercise) {

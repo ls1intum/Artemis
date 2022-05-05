@@ -158,6 +158,8 @@
 
             <jhi-notification-sidebar [ngClass]="'nav-item'" *ngIf="currAccount && !examModeActive()"></jhi-notification-sidebar>
 
+            <jhi-theme-switch [ngClass]="'nav-item'"></jhi-theme-switch>
+
             <li
                 *ngSwitchCase="true"
                 ngbDropdown

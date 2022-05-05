@@ -47,8 +47,8 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
         selectable: true,
         group: ScaleType.Ordinal,
         domain: [GraphColors.BLUE, GraphColors.YELLOW, GraphColors.GREEN],
-    } as Color; // colors: blue, red, green
-    backUpColor = cloneDeep(this.ngxColor);
+    } as Color;
+    colorBase = [GraphColors.BLUE, GraphColors.YELLOW, GraphColors.GREEN];
     yourScoreLabel: string;
     averageScoreLabel: string;
     maximumScoreLabel: string;
@@ -178,7 +178,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
                 this.ngxColor.domain[index] = 'rgba(255,255,255,0)';
             } else {
                 // if the line is currently hidden, the color and the values are reset
-                this.ngxColor.domain[index] = this.backUpColor.domain[index];
+                this.ngxColor.domain[index] = this.colorBase[index];
                 this.ngxData[index] = this.backUpData[index];
             }
             // trigger a chart update

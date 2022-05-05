@@ -1,17 +1,15 @@
-@import 'src/main/webapp/app/overview/overview-vars';
-
 .unit-card {
     border-radius: 8px;
-    box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 4px 0 var(--lecture-unit-card-shadow);
     min-width: 100%;
 }
 
 .unit-card:hover {
-    box-shadow: 0 2px 4px 0 $primary;
+    box-shadow: 0 2px 4px 0 var(--lecture-unit-card-hover-shadow);
 }
 
 .unit-card-body {
-    background-color: white;
+    background-color: var(--lecture-unit-card-body-background);
     border-radius: 0 0 8px 8px;
 }
 
@@ -19,7 +17,7 @@
     min-height: 50px;
     min-width: 100%;
     border-radius: 8px 8px 0 0;
-    background-color: $light-background-color;
+    background-color: var(--lecture-unit-card-header-background);
     cursor: pointer;
 }
 

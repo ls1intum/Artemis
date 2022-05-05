@@ -5,7 +5,7 @@
             <span *ngIf="!quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.new.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
             <span class="badge bg-info align-text-top float-end">
                 <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
-                <span class="badge text-dark bg-light">{{ calculateMaxExerciseScore() }}</span>
+                <span class="badge max-score">{{ calculateMaxExerciseScore() }}</span>
                 <span class="sr-only" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
             </span>
         </h4>
@@ -370,7 +370,7 @@
                             <label class="form-check-label" for="cbShortAnswerFilter" jhiTranslate="artemisApp.quizExercise.filter.sa"></label>
                         </div>
                     </div>
-                    <button class="btn btn-outline-dark" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
+                    <button class="btn btn-outline-secondary" (click)="applyFilter()" jhiTranslate="artemisApp.quizExercise.filter.applyFilter"></button>
                 </div>
                 <div *ngIf="allExistingQuestions.length === 0 && selectedCourseId != null">
                     <div>&nbsp;</div>
