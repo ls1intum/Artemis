@@ -3,6 +3,12 @@
     <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
     <ng-container *ngIf="!busy"></ng-container>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
+    <h4>
+        <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 ? { color: '#5cb85c' } : { color: '#d86b1f' }">
+            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of
+            {{ submissions.length }} submitted models assessed)
+        </small>
+    </h4>
     <div *ngIf="submissions && submissions.length > 0; else emptyTable" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>

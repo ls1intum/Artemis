@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result.model';
 import { TextAssessmentService } from '../text-assessment.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -33,6 +33,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
     exerciseId: number;
     examId: number;
     exerciseGroupId: number;
+    assessedSubmissions: number;
 
     private cancelConfirmationText: string;
 
@@ -88,7 +89,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
     }
 
-    private getSubmissions(): void {
+    private getSubmissions() {
         this.textSubmissionService
             .getTextSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
             .pipe(
@@ -109,6 +110,12 @@ export class TextAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
+                this.filteredSubmissions = this.submissions;
+                this.assessedSubmissions = this.submissions.filter((submission) => {
+                    const result = getLatestSubmissionResult(submission);
+                    setLatestSubmissionResult(submission, result);
+                    return result?.rated;
+                }).length;
                 this.filteredSubmissions = submissions;
                 this.busy = false;
             });

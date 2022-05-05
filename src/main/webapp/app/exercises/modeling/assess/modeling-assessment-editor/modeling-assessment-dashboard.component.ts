@@ -143,7 +143,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.assessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
-                    return !!result;
+                    return result?.rated;
                 }).length;
             });
     }
