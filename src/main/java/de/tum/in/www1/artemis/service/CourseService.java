@@ -723,9 +723,10 @@ public class CourseService {
             var amountOfWeeksBetween = course.getStartDate().until(endDate.plusWeeks(1), ChronoUnit.WEEKS);
             spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
         }
+
         return spanTime;
     }
-  
+
     /**
      * Helper method which removes some values from the user entity which are not needed in the client
      *
