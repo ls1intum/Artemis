@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -174,7 +173,7 @@ public class ProgrammingPlagiarismDetectionService {
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         final var projectKey = programmingExercise.getProjectKey();
-        final var repoFolder = Paths.get(targetPath, projectKey).toString();
+        final var repoFolder = Path.of(targetPath, projectKey).toString();
         final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
@@ -231,7 +230,7 @@ public class ProgrammingPlagiarismDetectionService {
      */
     public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) throws ExitException, IOException {
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        final var outputFolder = Paths.get(targetPath, programmingExercise.getProjectKey() + "-output").toString();
+        final var outputFolder = Path.of(targetPath, programmingExercise.getProjectKey() + "-output").toString();
         final var outputFolderFile = new File(outputFolder);
 
         // Create directories.
@@ -265,7 +264,7 @@ public class ProgrammingPlagiarismDetectionService {
         log.info("JPlag report zipping to {}", targetPath);
         final var courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         final var filename = courseShortName + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip";
-        final var zipFilePath = Paths.get(targetPath, filename);
+        final var zipFilePath = Path.of(targetPath, filename);
         zipFileService.createZipFileWithFolderContent(zipFilePath, outputFolderPath, null);
         log.info("JPlag report zipped. Schedule deletion of zip file in 1 minute");
         fileService.scheduleForDeletion(zipFilePath, 1);
