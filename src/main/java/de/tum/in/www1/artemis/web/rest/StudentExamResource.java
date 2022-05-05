@@ -472,7 +472,12 @@ public class StudentExamResource {
 
         // 3rd fetch participations, submissions and results and connect them to the studentExam
         fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
-
+        for (var exercise : studentExam.getExercises()) {
+            for (var participation : exercise.getStudentParticipations()) {
+                // remove inner exercise from participation
+                participation.setExercise(null);
+            }
+        }
         // 4th create new exam session
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
         final String browserFingerprint = !fingerprintingEnabled ? null : request.getHeader("X-Artemis-Client-Fingerprint");
@@ -538,8 +543,6 @@ public class StudentExamResource {
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
-            // remove inner exercise from participation
-            participation.setExercise(null);
             // only include the latest submission
             Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
             if (optionalLatestSubmission.isPresent()) {
@@ -585,6 +588,10 @@ public class StudentExamResource {
             }
             lastSubmission.setResults(null);
             participation.setSubmissions(Set.of(lastSubmission));
+        }
+        else {
+            // To prevent LazyInitializationException.
+            participation.setResults(Set.of());
         }
     }
 
