@@ -151,7 +151,10 @@
             },
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
+                "runTestsAfterDueDate": "Testdurchlauf nach Einreichungsfrist:",
+                "complaintsEnabled": "Beschwerde nach Einreichung möglich:",
                 "categories": "Kategorien:",
+                "tags": "Tags:",
                 "type": "Typ:",
                 "difficulty": "Schwierigkeit:",
                 "exerciseStatus": "Aufgabenstatus:",

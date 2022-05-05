@@ -153,7 +153,10 @@
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",
+                "runTestsAfterDueDate": "Tests run after due date:",
+                "complaintsEnabled": "Complaint after due date possible:",
                 "categories": "Categories:",
+                "tags": "Tags:",
                 "type": "Type:",
                 "difficulty": "Difficulty:",
                 "exerciseStatus": "Exercise status:",
