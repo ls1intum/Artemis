@@ -399,7 +399,7 @@ public class ProgrammingSubmissionResource {
         // prepare programming submission for response
         programmingSubmissionService.hideDetails(programmingSubmission, user);
         // remove automatic results before sending to client
-        programmingSubmission.setResults(programmingSubmission.getManualResults());
+        programmingSubmission.setResults(List.of(programmingSubmission.getManualResults().get(correctionRound)));
         programmingSubmission.getParticipation().setResults(new HashSet<>(programmingSubmission.getResults()));
         return ResponseEntity.ok(programmingSubmission);
     }
