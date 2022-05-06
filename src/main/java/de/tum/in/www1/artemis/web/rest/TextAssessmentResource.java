@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.*;
@@ -113,7 +112,8 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         Result result = resultRepository.findByIdElseThrow(resultId);
         if (!result.getParticipation().getId().equals(participationId)) {
-            return badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
+            throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "feedbackList",
+                    "participationIdMismatch");
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getParticipation().getExercise(), null);
         final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
@@ -144,7 +144,8 @@ public class TextAssessmentResource extends AssessmentResource {
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
             if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-                return badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
+                throw new BadRequestAlertException("exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + " doesn't match the paths exerciseId!",
+                        "exerciseId", "exerciseIdMismatch");
             }
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
         }
@@ -179,7 +180,8 @@ public class TextAssessmentResource extends AssessmentResource {
         Exercise exercise = exampleSubmission.getExercise();
         checkAuthorization(exercise, user);
         if (!exercise.getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400", "exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + "doesn't match the paths exerciseId!");
+            throw new BadRequestAlertException("exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + " doesn't match the paths exerciseId!",
+                    "exerciseId", "exerciseIdMismatch");
         }
 
         if (!(submission instanceof TextSubmission)) {
@@ -222,10 +224,10 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         Result result = resultRepository.findByIdElseThrow(resultId);
         if (!(result.getParticipation().getExercise() instanceof final TextExercise exercise)) {
-            return badRequest("Exercise", "400", "This exercise isn't a TextExercise!");
+            throw new BadRequestAlertException("This exercise isn't a TextExercise!", "Exercise", "wrongExerciseType");
         }
         else if (!result.getParticipation().getId().equals(participationId)) {
-            return badRequest("participationId", "400", "participationId in Result of resultId " + resultId + "doesn't match the paths participationId!");
+            throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "participationId", "participationIdMismatch");
         }
         checkAuthorization(exercise, null);
         final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
@@ -262,7 +264,8 @@ public class TextAssessmentResource extends AssessmentResource {
         TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         if (!studentParticipation.getId().equals(participationId)) {
-            return badRequest("participationId", "400", "participationId in Submission of submissionId " + submissionId + "doesn't match the paths participationId!");
+            throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
+                    "participationIdMismatch");
         }
         long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
@@ -290,7 +293,8 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long participationId, @PathVariable Long submissionId) {
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         if (!submission.getParticipation().getId().equals(participationId)) {
-            return badRequest("participationId", "400", "The Submission with Id " + submissionId + " doesnt belong to Participation with Id " + participationId + " !");
+            throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
+                    "participationIdMismatch");
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
         return super.cancelAssessment(submissionId);
@@ -333,8 +337,8 @@ public class TextAssessmentResource extends AssessmentResource {
         final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            return badRequest("participationId", "400",
-                    "Submission with submissionId " + submissionId + "doesnt fit to participation with participationId" + participationId + " !");
+            throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
+                    "participationIdMismatch");
         }
         final var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -418,7 +422,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         final var textExercise = exampleSubmission.getExercise();
         if (!textExercise.getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400", "Exercise to submission with submissionId " + submissionId + "doesnt have the exerciseId " + exerciseId + " !");
+            throw new BadRequestAlertException("Exercise to submission with submissionId " + submissionId + " doesn't have the exerciseId " + exerciseId + " !", "exerciseId", "exerciseIdMismatch");
         }
 
         // If the user is not at least a tutor for this exercise, return error
@@ -468,7 +472,8 @@ public class TextAssessmentResource extends AssessmentResource {
         final Result result = textSubmission.getLatestResult();
 
         if (!textSubmission.getParticipation().getId().equals(participationId)) {
-            return badRequest("participationId", "400", "The participationId in the path doesnt match the participationId to the submission " + submissionId + " !");
+            throw new BadRequestAlertException("The participationId in the path doesnt match the participationId to the submission " + submissionId + " !", "participationId",
+                    "participationIdMismatch");
         }
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -511,7 +516,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
         final FeedbackConflict feedbackConflict = feedbackConflictRepository.findByFeedbackConflictIdElseThrow(feedbackConflictId);
         if (!feedbackConflict.getFirstFeedback().getResult().getParticipation().getExercise().getId().equals(exerciseId)) {
-            return badRequest("exerciseId", "400", "The exerciseId in the path doesnt match the exerciseId to the feedbackConflict " + feedbackConflictId + " !");
+            throw new BadRequestAlertException("The exerciseId in the path doesnt match the exerciseId to the feedbackConflict " + feedbackConflictId + " !", "exerciseId",
+                    "exerciseIdMismatch");
         }
         final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         final User firstAssessor = feedbackConflict.getFirstFeedback().getResult().getAssessor();
@@ -560,12 +566,16 @@ public class TextAssessmentResource extends AssessmentResource {
                 tb.setFeedback(feedbackMap.get(tb.getId()));
                 tb.setKnowledge(exercise.getKnowledge());
             }).collect(toSet());
-            textBlockService.saveAll(updatedTextBlocks);
             // Update the feedback_id for existing text blocks
             if (!existingTextBlockIds.isEmpty()) {
                 final var blocksToUpdate = textSubmission.getBlocks();
                 blocksToUpdate.forEach(tb -> tb.setFeedback(feedbackMap.get(tb.getId())));
-                textBlockService.saveAll(blocksToUpdate);
+                updatedTextBlocks.addAll(blocksToUpdate);
+            }
+            if (!updatedTextBlocks.isEmpty()) {
+                // Reload text blocks to avoid trying to delete already removed referenced feedback.
+                textBlockService.findAllBySubmissionId(textSubmission.getId());
+                textBlockService.saveAll(updatedTextBlocks);
             }
         }
     }

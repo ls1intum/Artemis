@@ -121,7 +121,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringDevelopmentTest {
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        request.postWithResponseBody("/api/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.NOT_FOUND);
     }
 
     @Test

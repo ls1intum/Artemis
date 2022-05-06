@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -234,7 +235,7 @@ public class DatabaseUtilService {
         programmingExercise.getCategories().add("Programming");
         course1.addExercises(programmingExercise);
 
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, course1);
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED, course1);
         programmingExercise.getCategories().add("Quiz");
         course1.addExercises(quizExercise);
 
@@ -355,7 +356,7 @@ public class DatabaseUtilService {
     public VideoUnit createVideoUnit() {
         VideoUnit videoUnit = new VideoUnit();
         videoUnit.setDescription("Lorem Ipsum");
-        videoUnit.setSource("Some URL");
+        videoUnit.setSource("http://video.fake");
         return videoUnitRepository.save(videoUnit);
     }
 

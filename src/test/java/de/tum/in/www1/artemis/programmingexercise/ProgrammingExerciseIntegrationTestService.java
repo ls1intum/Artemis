@@ -15,7 +15,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -189,7 +188,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // so that e.g. addStudentIdToProjectName in ProgrammingExerciseExportService is tested properly as well
 
         // the following 2 lines prepare the generation of the structural test oracle
-        var testjsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
+        var testjsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
         localGit.commit().setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
@@ -373,8 +372,8 @@ public class ProgrammingExerciseIntegrationTestService {
         List<Path> entries = unzipExportedFile();
 
         // Make sure both repositories are present
-        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))
-                .anyMatch(entry -> entry.toString().endsWith(Paths.get("student2", ".git").toString()));
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
+                .anyMatch(entry -> entry.toString().endsWith(Path.of("student2", ".git").toString()));
     }
 
     public void testExportSubmissionAnonymizationCombining() throws Exception {
@@ -404,7 +403,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Checks
         assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
-        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString())).findFirst();
+        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
@@ -420,7 +419,7 @@ public class ProgrammingExerciseIntegrationTestService {
      */
     private List<Path> unzipExportedFile() throws Exception {
         (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        Path extractedZipDir = Path.of(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
         try (var files = Files.walk(extractedZipDir)) {
             return files.toList();
         }

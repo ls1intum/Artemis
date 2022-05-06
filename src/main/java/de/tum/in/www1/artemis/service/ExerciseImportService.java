@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -18,6 +19,8 @@ public abstract class ExerciseImportService {
 
     protected final TextBlockRepository textBlockRepository;
 
+    private final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
+
     public ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             TextBlockRepository textBlockRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
@@ -26,7 +29,7 @@ public abstract class ExerciseImportService {
         this.textBlockRepository = textBlockRepository;
     }
 
-    void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise) {
+    void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         if (importedExercise.isCourseExercise()) {
             newExercise.setCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember());
         }
@@ -47,7 +50,7 @@ public abstract class ExerciseImportService {
         newExercise.validateDates();
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
-        newExercise.setGradingCriteria(importedExercise.copyGradingCriteria());
+        newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
         if (newExercise.getExerciseGroup() != null) {
             newExercise.setMode(ExerciseMode.INDIVIDUAL);
         }
@@ -64,14 +67,16 @@ public abstract class ExerciseImportService {
 
     abstract Submission copySubmission(final Submission originalSubmission);
 
-    /** This helper method does a hard copy of the result of a submission.
-     * To copy the feedback, it calls {@link #copyFeedback(List, Result)}
+    /**
+     * This helper method does a hard copy of the result of a submission.
+     * To copy the feedback, it calls {@link #copyFeedback(List, Result, Map)}
      *
-     * @param originalResult The original result to be copied
-     * @param newSubmission The submission in which we link the result clone
+     * @param originalResult      The original result to be copied
+     * @param newSubmission       The submission in which we link the result clone
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned result
      */
-    Result copyExampleResult(Result originalResult, Submission newSubmission) {
+    Result copyExampleResult(Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Result newResult = new Result();
         newResult.setAssessmentType(originalResult.getAssessmentType());
         newResult.setAssessor(originalResult.getAssessor());
@@ -81,7 +86,7 @@ public abstract class ExerciseImportService {
         newResult.setResultString(originalResult.getResultString());
         newResult.setHasFeedback(originalResult.getHasFeedback());
         newResult.setScore(originalResult.getScore());
-        newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult));
+        newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult, gradingInstructionCopyTracker));
         // Cut relationship to parent because result is an ordered collection
         newResult.setSubmission(null);
 
@@ -93,13 +98,15 @@ public abstract class ExerciseImportService {
         return newResult;
     }
 
-    /** This helper functions does a hard copy of the feedbacks.
+    /**
+     * This helper functions does a hard copy of the feedbacks.
      *
-     * @param originalFeedbacks The original list of feedbacks to be copied
-     * @param newResult The result in which we link the new feedback
+     * @param originalFeedbacks             The original list of feedbacks to be copied
+     * @param newResult                     The result in which we link the new feedback
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned list of feedback
      */
-    private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult) {
+    private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         List<Feedback> newFeedbacks = new ArrayList<>();
         for (final var originalFeedback : originalFeedbacks) {
             Feedback newFeedback = new Feedback();
@@ -110,6 +117,16 @@ public abstract class ExerciseImportService {
             newFeedback.setType(originalFeedback.getType());
             newFeedback.setText(originalFeedback.getText());
             newFeedback.setResult(newResult);
+
+            // Original GradingInstructions should be replaced with copied GradingInstructions before save.
+            GradingInstruction originalGradingInstruction = originalFeedback.getGradingInstruction();
+            if (originalGradingInstruction != null) {
+                GradingInstruction newGradingInstruction = gradingInstructionCopyTracker.get(originalGradingInstruction.getId());
+                if (newGradingInstruction == null) {
+                    log.warn("New Grading Instruction is not found for original Grading Instruction with id {}", originalGradingInstruction.getId());
+                }
+                newFeedback.setGradingInstruction(newGradingInstruction);
+            }
             newFeedbacks.add(newFeedback);
         }
         return newFeedbacks;

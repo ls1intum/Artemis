@@ -1,4 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
 .course-detail-parent-container {
     flex-direction: column;
     width: 100% !important;
@@ -35,10 +34,6 @@
     position: absolute;
 }
 
-.checkbox-label {
-    margin-left: 0.25rem;
-}
-
 :host ::ng-deep .refline-label {
     font-size: larger !important;
     font-weight: bolder;
@@ -48,5 +43,5 @@
     stroke-width: 2 !important;
     stroke-dasharray: 10 !important;
     stroke-dashoffset: 0 !important;
-    stroke: $primary !important;
+    stroke: var(--primary) !important;
 }

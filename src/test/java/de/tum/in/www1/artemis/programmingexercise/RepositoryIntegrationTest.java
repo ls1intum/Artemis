@@ -21,6 +21,8 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
@@ -425,6 +427,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = "student1", roles = "USER")
     public void testPullChanges() throws Exception {
         String fileName = "remoteFile";
@@ -458,6 +461,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = "student1", roles = "USER")
     public void testResetToLastCommit() throws Exception {
         String fileName = "testFile";
@@ -645,7 +649,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         var result = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "tutor1");
         database.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
 
-        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.BAD_REQUEST, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
+        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
     }
 
     @Test

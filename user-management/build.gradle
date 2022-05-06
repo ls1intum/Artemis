@@ -132,6 +132,8 @@ sourceSets {
             include 'de/tum/in/www1/artemis/service/connectors/gitlab/GitLabUserDoesNotExistException.*'
             include 'de/tum/in/www1/artemis/service/connectors/gitlab/GitLabException.*'
             include 'de/tum/in/www1/artemis/service/connectors/gitlab/GitlabInfoContributor.*'
+            include 'de/tum/in/www1/artemis/service/connectors/gitlab/dto/GitLabPersonalAccessTokenRequestDTO.*'
+            include 'de/tum/in/www1/artemis/service/connectors/gitlab/dto/GitLabPersonalAccessTokenResponseDTO.*'
 
             // CIUserManagementService related dependencies
             include 'de/tum/in/www1/artemis/service/connectors/CIUserManagementService.*'

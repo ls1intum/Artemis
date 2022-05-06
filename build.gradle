@@ -18,7 +18,7 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.2.1"
     id "com.github.node-gradle.node" version "3.2.1"
-    id "com.diffplug.spotless" version "6.5.0"
+    id "com.diffplug.spotless" version "6.5.1"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
@@ -27,7 +27,7 @@ plugins {
 group = "de.tum.in.www1.artemis"
 
 allprojects {
-    version = "5.7.4"
+    version = "5.8.0"
     description = "Interactive Learning with Individual Feedback"
 }
 

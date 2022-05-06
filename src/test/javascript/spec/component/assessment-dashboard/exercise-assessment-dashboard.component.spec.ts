@@ -53,7 +53,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -202,6 +202,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     const lockLimitErrorResponse = new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } });
 
     let navigateSpy: jest.SpyInstance;
+    let routingStub: jest.SpyInstance;
     const route = {
         snapshot: {
             paramMap: convertToParamMap({
@@ -212,7 +213,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             }),
         },
     } as any as ActivatedRoute;
-
     const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule)];
 
     const declarations = [
@@ -253,6 +253,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(GuidedTourService),
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
+        MockProvider(ArtemisNavigationUtilService),
     ];
 
     beforeEach(() => {
@@ -319,6 +320,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 comp.submissionsWithComplaints = [submissionWithComplaintDTO];
 
                 accountService = TestBed.inject(AccountService);
+                const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
+
+                routingStub = jest.spyOn(navigationUtilService, 'routeInNewTab');
 
                 translateService = TestBed.inject(TranslateService);
             });
@@ -720,7 +724,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             comp.navigateToExerciseSubmissionOverview(event);
 
-            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(routingStub).not.toHaveBeenCalled();
         });
 
         it('should not navigate if user is instructor but clicked the chart legend', () => {
@@ -729,7 +733,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             comp.navigateToExerciseSubmissionOverview(event);
 
-            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(routingStub).not.toHaveBeenCalled();
         });
 
         it('should navigate if user is instructor and clicked pie part', () => {
@@ -745,7 +749,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.navigateToExerciseSubmissionOverview(event);
 
-                expect(navigateSpy).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions']);
+                expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions']);
             });
         });
     });

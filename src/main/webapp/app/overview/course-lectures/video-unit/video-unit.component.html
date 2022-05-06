@@ -14,7 +14,7 @@
             </h5>
         </div>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
-            <div class="ratio ratio-16x9">
+            <div class="ratio ratio-16x9" *ngIf="!isCollapsed">
                 <iframe id="videoFrame" class="rounded" [src]="videoUrl | safeResourceUrl" allow="fullscreen"></iframe>
             </div>
             {{ videoUnit?.description }}

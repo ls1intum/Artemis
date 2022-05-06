@@ -37,11 +37,11 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     setInstrColour(instr: GradingInstruction) {
         let colour;
         if (instr.credits === 0) {
-            colour = '#fff2cc';
+            colour = 'var(--sgi-assessment-layout-zero-background)';
         } else if (instr.credits < 0) {
-            colour = '#fbe5d6';
+            colour = 'var(--sgi-assessment-layout-negative-background)';
         } else {
-            colour = '#e3f0da';
+            colour = 'var(--sgi-assessment-layout-positive-background)';
         }
         return colour;
     }

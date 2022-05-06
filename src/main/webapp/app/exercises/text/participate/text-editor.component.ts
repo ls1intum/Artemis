@@ -56,7 +56,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     answer: string;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
-    private examMode = false;
+    examMode = false;
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;

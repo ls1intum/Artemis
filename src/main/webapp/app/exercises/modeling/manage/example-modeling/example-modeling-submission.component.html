@@ -8,9 +8,9 @@
     </div>
 
     <div class="col-12 col-lg-4 text-end" *ngIf="exercise.isAtLeastEditor && !readOnly && !toComplete">
-        <div class="d-flex justify-content-end flex-wrap" *ngIf="!assessmentMode">
+        <div class="d-flex justify-content-end flex-wrap align-items-center" *ngIf="!assessmentMode">
             <div class="form-check align-baseline">
-                <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
+                <input class="form-check-input" type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
                 <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></label>
             </div>
 

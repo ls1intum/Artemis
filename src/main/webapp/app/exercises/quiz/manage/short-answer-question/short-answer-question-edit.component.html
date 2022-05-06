@@ -1,7 +1,7 @@
 <div class="edit-sa-question">
     <div class="question-options card-header question-card-header" *ngIf="!reEvaluationInProgress">
         <button
-            class="btn btn-light question-collapse"
+            class="btn question-collapse"
             (click)="isQuestionCollapsed = !isQuestionCollapsed"
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex"

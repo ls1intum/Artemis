@@ -1,0 +1,20 @@
+<li *ngFor="let instruction of criterion.structuredGradingInstructions">
+    <a (click)="updateAssessmentWithDropdown(instruction)" class="dropdown-item" [style.background-color]="getInstrColour(instruction)">
+        <table class="table layout-table">
+            <tbody>
+                <tr>
+                    <td class="td-score fw-bold">{{ instruction!.credits }}P</td>
+                    <td>
+                        <span class="td-instruction">{{ instruction!.instructionDescription }}</span>
+                    </td>
+                    <td class="td-usage-count">
+                        <span *ngIf="instruction!.usageCount; else usageCountInfinity">{{ instruction!.usageCount }}</span>
+                        <!-- if the usage count has no limit, the infinity symbol is displayed (= &#8734) -->
+                        <ng-template #usageCountInfinity>&#8734;</ng-template>
+                        <jhi-help-icon placement="top" text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </a>
+</li>
