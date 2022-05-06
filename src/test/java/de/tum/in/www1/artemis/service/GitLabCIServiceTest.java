@@ -6,7 +6,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
-import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationGitLabCIGitLabTest;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 
 public class GitLabCIServiceTest extends AbstractSpringIntegrationGitLabCIGitLabTest {
 
@@ -118,18 +116,18 @@ public class GitLabCIServiceTest extends AbstractSpringIntegrationGitLabCIGitLab
         assertThat(result).isNull();
     }
 
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testTriggerBuildSuccess() throws GitLabApiException {
-        gitlabRequestMockProvider.mockCreateTrigger(false);
-        gitlabRequestMockProvider.mockTriggerPipeline(false);
-        gitlabRequestMockProvider.mockDeleteTrigger(false);
-
-        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
-        continuousIntegrationService.triggerBuild(participation);
-    }
-
+    // @Test
+    // @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    // public void testTriggerBuildSuccess() throws GitLabApiException {
+    // gitlabRequestMockProvider.mockCreateTrigger(false);
+    // gitlabRequestMockProvider.mockTriggerPipeline(false);
+    // gitlabRequestMockProvider.mockDeleteTrigger(false);
+    //
+    // ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+    // participation.setRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
+    // continuousIntegrationService.triggerBuild(participation);
+    // }
+    //
     // @Test
     // @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
     // public void testTriggerBuildFails() throws GitLabApiException {
