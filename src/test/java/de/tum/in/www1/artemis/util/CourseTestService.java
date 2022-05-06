@@ -1645,6 +1645,7 @@ public class CourseTestService {
         assertThat(courseDtos).hasSize(1);
         var dto = courseDtos.get(0);
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
+        assertThat(dto.getActiveStudents()).as("course was only active for 3 days").hasSize(1);
 
         // Expect our three created exercises
         var exerciseDTOS = dto.getExerciseDTOS();
@@ -1743,6 +1744,7 @@ public class CourseTestService {
         // add courses with exercises
 
         var course = database.createCoursesWithExercisesAndLectures(true).get(0);
+        course.setStartDate(now.minusWeeks(2));
 
         var student1 = ModelFactory.generateActivatedUser("user1");
         var student2 = ModelFactory.generateActivatedUser("user2");
@@ -1770,11 +1772,11 @@ public class CourseTestService {
         var result2 = database.createParticipationSubmissionAndResult(exerciseId, student2, 5.0, 0.0, 40, true);
 
         Submission submission1 = result1.getSubmission();
-        submission1.setSubmissionDate(now.minusDays(3));
+        submission1.setSubmissionDate(now);
         submissionRepository.save(submission1);
 
         Submission submission2 = result2.getSubmission();
-        submission2.setSubmissionDate(now.minusDays(3));
+        submission2.setSubmissionDate(now.minusWeeks(2));
         submissionRepository.save(submission2);
 
         result1.setAssessor(instructor);
@@ -1845,7 +1847,7 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        assertThat(courseDTO.getActiveStudents()).hasSize(17);
+        assertThat(courseDTO.getActiveStudents()).hasSize(3);
 
         // number of users in course
         assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
@@ -1873,6 +1875,15 @@ public class CourseTestService {
         assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(30);
 
+        course.setEndDate(now.minusWeeks(1));
+        courseRepo.save(course);
+
+        // API call
+        courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+
+        var expectedActiveStudentDistribution = List.of(1, 0);
+        assertThat(courseDTO.getActiveStudents()).as("submission today should not be included").isEqualTo(expectedActiveStudentDistribution);
+
         // Active Users
         int periodIndex = 0;
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -1881,7 +1892,8 @@ public class CourseTestService {
         var activeStudents = request.get("/api/courses/" + course.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
-        assertThat(activeStudents).hasSize(17);
+        assertThat(activeStudents).hasSize(3);
+
     }
 
     // Test

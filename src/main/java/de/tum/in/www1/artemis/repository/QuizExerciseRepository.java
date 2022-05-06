@@ -28,6 +28,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @Query("""
             SELECT DISTINCT e FROM QuizExercise e
             LEFT JOIN FETCH e.categories
+            LEFT JOIN FETCH e.quizBatches
             WHERE e.course.id = :#{#courseId}
             """)
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -39,12 +40,18 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
             """)
     List<QuizExercise> findByExamId(Long examId);
 
-    List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
+    @Query("""
+            SELECT DISTINCT qe
+            FROM QuizExercise qe
+            LEFT JOIN qe.quizBatches b
+            WHERE b.startTime > :#{#earliestReleaseDate}
+            """)
+    List<QuizExercise> findAllPlannedToStartAfter(ZonedDateTime earliestReleaseDate);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
 
     @NotNull
@@ -95,12 +102,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
         return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
-    /**
-     * Get all quiz exercises that are planned to start in the future
-     *
-     * @return the list of quiz exercises
-     */
     default List<QuizExercise> findAllPlannedToStartInTheFuture() {
-        return findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
+        return findAllPlannedToStartAfter(ZonedDateTime.now());
     }
 }

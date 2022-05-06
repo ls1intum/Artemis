@@ -1,7 +1,7 @@
 @import 'src/main/webapp/content/scss/data-table-icons';
 
 .datatable-icon-right {
-    color: white !important;
+    color: var(--data-table-icon-right) !important;
 }
 
 .datatable-scroll {
@@ -31,7 +31,7 @@
     transition: 0.05s ease-out opacity;
 
     &.active {
-        background-color: rgba(255, 255, 255, 0.5);
+        background-color: var(--data-table-transitioning-container-active-background-color);
 
         opacity: 1;
         pointer-events: auto;
@@ -72,7 +72,7 @@ ngb-typeahead-window.dropdown-menu.show {
 }
 
 .dropdown-item.selected {
-    background-color: #3e8acc;
+    background-color: var(--data-table-dropdown-item-selected-background-color);
 }
 
 .datatable-body-cell-label {

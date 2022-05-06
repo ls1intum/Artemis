@@ -35,6 +35,7 @@ export enum CollapsableCodeEditorElement {
 @Component({
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
+    styleUrls: ['./code-editor-container.component.scss'],
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readonly CommitState = CommitState;

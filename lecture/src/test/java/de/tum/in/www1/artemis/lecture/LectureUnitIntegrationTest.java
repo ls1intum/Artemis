@@ -44,11 +44,6 @@ public class LectureUnitIntegrationTest extends AbstractSpringDevelopmentTest {
 
     private TextUnit textUnit3;
 
-    // needed for correct jackson subtype serialization: see https://github.com/FasterXML/jackson-databind/issues/336#issuecomment-27228643
-    static class TextUnitList extends ArrayList<TextUnit> {
-
-    }
-
     @AfterEach
     public void resetDatabase() {
         database.resetDatabase();
@@ -105,15 +100,12 @@ public class LectureUnitIntegrationTest extends AbstractSpringDevelopmentTest {
     public void updateLectureUnitOrder_asInstructor_shouldUpdateLectureUnitOrder() throws Exception {
         long idOfOriginalFirstPosition = lecture1.getLectureUnits().get(0).getId();
         long idOfOriginalSecondPosition = lecture1.getLectureUnits().get(1).getId();
-        TextUnitList newlyOrderedList = new TextUnitList();
-        newlyOrderedList.add(textUnit);
-        newlyOrderedList.add(textUnit2);
-        for (TextUnit textUnit : newlyOrderedList) {
-            textUnit.setLecture(null);
-        }
+        List<Long> newlyOrderedList = new ArrayList<>();
+        newlyOrderedList.add(idOfOriginalFirstPosition);
+        newlyOrderedList.add(idOfOriginalSecondPosition);
         Collections.swap(newlyOrderedList, 0, 1);
         List<TextUnit> returnedList = request.putWithResponseBodyList("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, TextUnit.class,
-                HttpStatus.OK);
+            HttpStatus.OK);
         assertThat(returnedList.get(0).getId()).isEqualTo(idOfOriginalSecondPosition);
         assertThat(returnedList.get(1).getId()).isEqualTo(idOfOriginalFirstPosition);
     }
@@ -121,14 +113,11 @@ public class LectureUnitIntegrationTest extends AbstractSpringDevelopmentTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateLectureUnitOrder_asInstructorNewTextUnitInOrderedList_shouldReturnConflict() throws Exception {
-        TextUnitList newlyOrderedList = new TextUnitList();
-        newlyOrderedList.add(textUnit);
-        newlyOrderedList.add(textUnit2);
-        newlyOrderedList.add(textUnit3);
-        for (TextUnit textUnit : newlyOrderedList) {
-            textUnit.setLecture(null);
-        }
-        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.CONFLICT);
+        List<Long> newlyOrderedList = new ArrayList<>();
+        newlyOrderedList.add(textUnit.getId());
+        newlyOrderedList.add(textUnit2.getId());
+        newlyOrderedList.add(textUnit3.getId());
+        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.CONFLICT);
     }
 
     @Test

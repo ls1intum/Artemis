@@ -1,5 +1,5 @@
 .timer {
-    color: #212529;
+    color: var(--exam-timer-label-color);
     margin-right: 2px;
 }
 .text-overflow {
@@ -9,11 +9,11 @@
 }
 .remaining-time {
     min-width: 140px;
-    background: white;
+    background: var(--exam-timer-remaining-time-background);
     text-align: center;
 }
 .critical {
-    background: #fedc56;
+    background: var(--exam-timer-critical-background);
 }
 
 :host {

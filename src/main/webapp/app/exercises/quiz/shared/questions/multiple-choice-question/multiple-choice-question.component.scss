@@ -1,6 +1,6 @@
 .mc-question {
-    background: #fefefe;
-    border: 1px solid lightgrey;
+    background: var(--quiz-question-background);
+    border: 1px solid var(--quiz-question-border-color);
     box-sizing: border-box;
     margin-bottom: 18px;
     padding: 20px;
@@ -15,7 +15,7 @@
         display: flex;
         align-items: center;
         outline: none !important;
-        border: 1px solid lightgrey;
+        border: 1px solid var(--mc-question-answer-option-border);
         margin: 4px 0;
         padding: 6px 10px;
 
@@ -44,7 +44,7 @@
         }
 
         &:hover {
-            background: #fafafa;
+            background: var(--mc-question-answer-option-hover-background);
         }
 
         &.click-disabled {
@@ -78,7 +78,7 @@
 
         .result-symbol {
             padding: 0;
-            color: orange;
+            color: var(--warning);
             width: 50px;
         }
 
@@ -88,11 +88,11 @@
         }
 
         .correct {
-            color: green;
+            color: var(--success);
         }
 
         .wrong {
-            color: red;
+            color: var(--danger);
         }
     }
 }

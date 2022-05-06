@@ -88,17 +88,32 @@ public class ModelFactory {
         return attachment;
     }
 
-    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
+    public static QuizBatch generateQuizBatch(QuizExercise quizExercise, ZonedDateTime startTime) {
+        var quizBatch = new QuizBatch();
+        quizBatch.setQuizExercise(quizExercise);
+        quizBatch.setStartTime(startTime);
+        return quizBatch;
+    }
+
+    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
         var quizExercise = (QuizExercise) populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setIsOpenForPractice(false);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
         quizExercise.setRandomizeQuestionOrder(true);
+        quizExercise.setQuizMode(quizMode);
+        if (quizMode == QuizMode.SYNCHRONIZED) {
+            quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, releaseDate)));
+        }
+        return quizExercise;
+    }
+
+    public static QuizExercise generateQuizExerciseWithQuizBatches(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
+        var quizExercise = generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, releaseDate)));
         return quizExercise;
     }
 
@@ -108,8 +123,6 @@ public class ModelFactory {
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setIsOpenForPractice(false);
-        quizExercise.setIsPlannedToStart(false);
-        quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
