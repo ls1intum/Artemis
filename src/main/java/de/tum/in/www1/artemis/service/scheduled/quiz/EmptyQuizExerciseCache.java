@@ -43,6 +43,11 @@ final class EmptyQuizExerciseCache extends QuizExerciseCache {
     }
 
     @Override
+    Map<String, Long> getBatches() {
+        return Map.of();
+    }
+
+    @Override
     Map<String, QuizSubmission> getSubmissions() {
         return Map.of();
     }

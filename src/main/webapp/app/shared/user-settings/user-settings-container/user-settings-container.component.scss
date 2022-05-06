@@ -1,5 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 #avatar {
     padding-top: 8px;
     padding-right: 15px;
@@ -8,19 +6,13 @@
 #user-header {
     font-size: x-large;
     font-weight: 600;
-    color: $artemis-dark;
+    color: var(--bs-body-color);
 }
 
 #login {
-    color: gray;
+    color: var(--bs-secondary);
     font-size: medium;
     font-weight: normal;
-}
-
-#account-information {
-    border-style: solid;
-    border-color: red;
-    border-radius: 25px;
 }
 
 #navigation-bar {

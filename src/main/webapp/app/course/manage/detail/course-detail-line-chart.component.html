@@ -61,11 +61,11 @@
                 [ngClass]="{ 'hide-arrow': showsCurrentWeek }"
             ></fa-icon>
         </div>
-        <div class="col-md-10 offset-md-1 text-center mt-4 justify-content-center">
+        <div class="col-md-10 offset-md-1 mt-4 justify-content-center d-flex align-items-center flex-column">
             <h5>{{ chartTime }}</h5>
-            <div class="d-flex align-items-center justify-content-center">
-                <input type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
-                <label class="checkbox-label">{{ 'artemisApp.courseStatistics.averageReferenceLineCheckboxLabel' | artemisTranslate }}</label>
+            <div class="form-check flex-grow-0">
+                <input class="form-check-input" type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
+                <label class="form-check-label">{{ 'artemisApp.courseStatistics.averageReferenceLineCheckboxLabel' | artemisTranslate }}</label>
             </div>
         </div>
     </ng-container>

@@ -8,8 +8,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -103,11 +106,20 @@ public final class SecurityUtils {
      */
     public static void setAuthorizationObject() {
         SecurityContext context = SecurityContextHolder.getContext();
-        Authentication authentication = new Authentication() {
+        context.setAuthentication(makeAuthorizationObject(null));
+    }
+
+    /**
+     * Create an Authentication object to impersonate the specified user
+     * @param login The login of the user to impersonate
+     * @return A new Authentication object
+     */
+    public static Authentication makeAuthorizationObject(@Nullable String login) {
+        return new Authentication() {
 
             @Override
             public Collection<? extends GrantedAuthority> getAuthorities() {
-                return null;
+                return Set.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
             }
 
             @Override
@@ -122,7 +134,7 @@ public final class SecurityUtils {
 
             @Override
             public Object getPrincipal() {
-                return null;
+                return login;
             }
 
             @Override
@@ -140,7 +152,6 @@ public final class SecurityUtils {
                 return null;
             }
         };
-        context.setAuthentication(authentication);
     }
 
     /**

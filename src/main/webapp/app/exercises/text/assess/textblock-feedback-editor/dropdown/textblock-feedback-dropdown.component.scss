@@ -4,7 +4,7 @@
 
 a:hover {
     text-decoration: none !important;
-    color: black;
+    color: var(--bs-body-color);
 }
 
 .table > :not(caption) > * > * {

@@ -342,7 +342,7 @@ export class CourseManagementRequests {
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         quizQuestions: [any],
         title = 'Cypress quiz exercise' + generateUUID(),
-        releaseDate = day(),
+        releaseDate = day().add(1, 'year'),
         duration = 600,
     ) {
         const quizExercise: any = {
