@@ -58,7 +58,7 @@
                 "explanation": "This lecture unit helps you to achieve the following learning goals: ",
                 "noLearningGoals": "No learning goals are connected with this lecture unit! "
             },
-            "prerequisites": {
+            "prerequisite": {
                 "title": "Prerequisite",
                 "managePrerequisites": {
                     "title": "Prerequisite Management"
