@@ -1,0 +1,199 @@
+package de.tum.in.www1.artemis.service.metis;
+
+import java.util.List;
+import java.util.Objects;
+
+import javax.validation.Valid;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.Service;
+
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.Conversation;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
+
+@Service
+public class MessagePostService extends PostingService {
+
+    private final UserRepository userRepository;
+
+    private final PostRepository postRepository;
+
+    private final ConversationService conversationService;
+
+    protected MessagePostService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, PostRepository postRepository,
+            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository, PostRepository postRepository1,
+            PostRepository postRepository2, ConversationService conversationService) {
+        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
+        this.userRepository = userRepository;
+        this.postRepository = postRepository2;
+        this.conversationService = conversationService;
+    }
+
+    /**
+     * Checks course, user and post message validity,
+     * determines the post's author, persists the post,
+     * and sends a notification to affected user groups
+     *
+     * @param courseId id of the course the post belongs to
+     * @param messagePost     message post to create
+     * @return created message post that was persisted
+     */
+    public Post createMessage(Long courseId, Post messagePost) {
+        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        if (messagePost.getId() != null) {
+            throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
+        }
+        final Course course = preCheckUserAndCourse(user, courseId);
+
+        // set author to current user
+        messagePost.setAuthor(user);
+        // set default value display priority -> NONE
+        messagePost.setDisplayPriority(DisplayPriority.NONE);
+
+        if (messagePost.getConversation() != null) {
+            if (messagePost.getConversation().getId() == null) {
+                // persist conversation for post if provided
+                messagePost.setConversation(conversationService.createConversation(courseId, messagePost.getConversation()));
+            }
+            conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
+        }
+
+        Post savedMessage = postRepository.save(messagePost);
+        broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
+
+        return savedMessage;
+    }
+
+    /**
+     * @param pagingEnabled     fetches single page instead of all entities
+     * @param pageable          requested page and page size
+     * @param postContextFilter request object to fetch posts
+     * @return page of posts that match the given context
+     */
+    public Page<Post> getMessages(boolean pagingEnabled, Pageable pageable, @Valid PostContextFilter postContextFilter) {
+
+        List<Post> postsInCourse;
+
+        if (postContextFilter.getConversationId() != null) {
+            final User user = userRepository.getUserWithGroupsAndAuthorities();
+            Conversation conversation = conversationService.getConversationById(postContextFilter.getConversationId());
+
+            conversationService.mayInteractWithConversationElseThrow(conversation.getId(), user);
+
+            List<Post> conversationPosts = postRepository.findPostsByConversationId(postContextFilter.getConversationId());
+
+            // protect sample solution, grading instructions, etc.
+            conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+            postsInCourse = this.getPostsByConversation(postContextFilter.getConversationId());
+        }
+        else {
+            throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
+        }
+
+        return orderAndPaginatePosts(pagingEnabled, pageable, postContextFilter, postsInCourse);
+    }
+
+    /**
+     * fetch posts from database by conversationId
+     *
+     * @param conversationId    id of conversation to retrieve associated posts
+     * @return                  retrieved posts
+     */
+    public List<Post> getPostsByConversation(Long conversationId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        Conversation conversation = conversationService.getConversationById(conversationId);
+
+        conversationService.mayInteractWithConversationElseThrow(conversation.getId(), user);
+
+        List<Post> conversationPosts = postRepository.findPostsByConversationId(conversationId);
+
+        // protect sample solution, grading instructions, etc.
+        conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+        return conversationPosts;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * updates non-restricted field of the post, persists the post,
+     * and ensures that sensitive information is filtered out
+     *
+     * @param courseId      id of the course the post belongs to
+     * @param postId        id of the post to update
+     * @param messagePost   post to update
+     * @return updated post that was persisted
+     */
+    public Post updateMessage(Long courseId, Long postId, Post messagePost) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        // check
+        if (messagePost.getId() == null || !Objects.equals(messagePost.getId(), postId)) {
+            throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
+        }
+        final Course course = preCheckUserAndCourse(user, courseId);
+
+        Post existingPost = postRepository.findMessagePostByIdElseThrow(postId);
+        mayUpdateOrDeleteMessageElseThrow(existingPost, user);
+
+        // update: allow overwriting of values only for depicted fields
+        existingPost.setContent(messagePost.getContent());
+
+        Post updatedPost = postRepository.save(existingPost);
+
+        // emit a post update via websocket
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+
+        return updatedPost;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * determines authority to delete post and deletes the post
+     *
+     * @param courseId id of the course the post belongs to
+     * @param postId   id of the message post to delete
+     */
+    public void deleteMessageById(Long courseId, Long postId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        final Course course = preCheckUserAndCourse(user, courseId);
+        Post post = postRepository.findMessagePostByIdElseThrow(postId);
+        mayUpdateOrDeleteMessageElseThrow(post, user);
+
+        // delete
+        postRepository.deleteById(postId);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
+    }
+
+    // TODO share code snippet for answerPost checks
+    private void mayUpdateOrDeleteMessageElseThrow(Post existingMessagePost, User user) {
+        // non-message posts should not be manipulated from this endpoint and only the author of a message post should edit or delete the entity
+        if (existingMessagePost.getConversation() == null || !existingMessagePost.getAuthor().getId().equals(user.getId())) {
+            throw new AccessForbiddenException("Post", existingMessagePost.getId());
+        }
+    }
+
+    @Override
+    String getEntityName() {
+        return METIS_POST_ENTITY_NAME;
+    }
+}

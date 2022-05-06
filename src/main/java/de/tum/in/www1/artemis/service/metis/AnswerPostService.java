@@ -74,7 +74,7 @@ public class AnswerPostService extends PostingService {
         }
 
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
+        Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 
         if (answerPost.getPost().getConversation() != null) {
             conversationService.mayInteractWithConversationElseThrow(answerPost.getPost().getConversation().getId(), user);

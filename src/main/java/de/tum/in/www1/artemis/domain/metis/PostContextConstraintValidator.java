@@ -12,22 +12,22 @@ public class PostContextConstraintValidator implements ConstraintValidator<PostC
 
     @Override
     public boolean isValid(Post post, ConstraintValidatorContext ctx) {
-        return exercisePost(post) || lecturePost(post) || courseWidePost(post) || chatPost(post);
+        return exercisePost(post) || lecturePost(post) || courseWidePost(post) || messagePost(post);
     }
 
     private static boolean courseWidePost(Post post) {
-        return post.getExercise() == null && post.getLecture() == null && post.getCourseWideContext() != null && post.getCourse() != null;
+        return post.getExercise() == null && post.getLecture() == null && post.getCourseWideContext() != null && post.getCourse() != null && post.getConversation() == null;
     }
 
     private static boolean lecturePost(Post post) {
-        return post.getExercise() == null && post.getLecture() != null && post.getCourseWideContext() == null;
+        return post.getExercise() == null && post.getLecture() != null && post.getCourseWideContext() == null && post.getConversation() == null;
     }
 
     private static boolean exercisePost(Post post) {
-        return post.getExercise() != null && post.getLecture() == null && post.getCourseWideContext() == null;
+        return post.getExercise() != null && post.getLecture() == null && post.getCourseWideContext() == null && post.getConversation() == null;
     }
 
-    private static boolean chatPost(Post post) {
-        return post.getConversation() != null && post.getCourse() != null;
+    private static boolean messagePost(Post post) {
+        return post.getConversation() != null && post.getCourse() != null && post.getExercise() == null && post.getLecture() == null && post.getCourseWideContext() == null;
     }
 }

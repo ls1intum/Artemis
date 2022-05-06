@@ -95,7 +95,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             """)
     List<Post> findPostsByConversationId(@Param("conversationId") Long conversationId);
 
-    default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
-        return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));
+    default Post findPostByIdElseThrow(Long postId) throws EntityNotFoundException {
+        return findById(postId).filter(post -> post.getConversation() == null).orElseThrow(() -> new EntityNotFoundException("Post", postId));
+    }
+
+    default Post findMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
+        return findById(postId).filter(post -> post.getConversation() != null).orElseThrow(() -> new EntityNotFoundException("Post", postId));
     }
 }

@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -13,7 +12,6 @@ import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -26,7 +24,10 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
+import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -45,27 +46,22 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 @Service
 public class PostService extends PostingService {
 
-    private static final String METIS_POST_ENTITY_NAME = "metis.post";
-
     public static final int TOP_K_SIMILARITY_RESULTS = 5;
 
     private final UserRepository userRepository;
 
     private final PostRepository postRepository;
 
-    private final ConversationService conversationService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
-            ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
+            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
             PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
-        this.conversationService = conversationService;
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
     }
@@ -104,14 +100,6 @@ public class PostService extends PostingService {
             return savedPost;
         }
 
-        if (post.getConversation() != null) {
-            if (post.getConversation().getId() == null) {
-                // persist conversation for post if provided
-                post.setConversation(conversationService.createConversation(courseId, post.getConversation()));
-            }
-            conversationService.mayInteractWithConversationElseThrow(post.getConversation().getId(), user);
-        }
-
         Post savedPost = postRepository.save(post);
 
         broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
@@ -139,9 +127,9 @@ public class PostService extends PostingService {
         final Course course = preCheckUserAndCourse(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
 
-        Post existingPost = postRepository.findByIdElseThrow(postId);
+        Post existingPost = postRepository.findPostByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
-        mayUpdateOrDeletePostElseThrow(existingPost, user, course);
+        mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
         boolean contextHasChanged = !existingPost.hasSameContext(post);
         // depending on if there is a context change we need to broadcast different information
@@ -196,7 +184,7 @@ public class PostService extends PostingService {
      * @return updated post that was persisted
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
-        Post post = postRepository.findByIdElseThrow(postId);
+        Post post = postRepository.findPostByIdElseThrow(postId);
         post.setDisplayPriority(displayPriority);
         return updatePost(courseId, postId, post);
     }
@@ -222,11 +210,15 @@ public class PostService extends PostingService {
      * @return page of posts that match the given context
      */
     public Page<Post> getPostsInCourse(boolean pagingEnabled, Pageable pageable, @Valid PostContextFilter postContextFilter) {
+        if (postContextFilter.getConversationId() != null) {
+            // we throw general exception without details to malicious requests that try to fetch messages, to not leak implementation details
+            // message posts should rather be fetched via the MessagePostService
+            throw new AccessForbiddenException();
+        }
 
         List<Post> postsInCourse;
         // no filter -> get all posts in course
-        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
-                && postContextFilter.getConversationId() == null) {
+        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
             postsInCourse = this.getAllCoursePosts(postContextFilter);
         }
         // filter by course-wide context
@@ -241,38 +233,11 @@ public class PostService extends PostingService {
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null) {
             postsInCourse = this.getAllLecturePosts(postContextFilter);
         }
-        else if (postContextFilter.getConversationId() != null) {
-            postsInCourse = this.getPostsByConversation(postContextFilter.getConversationId());
-        }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
-        // search by text or #post
-        if (postContextFilter.getSearchText() != null) {
-            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
-        }
-
-        final Page<Post> postsPage;
-        if (pagingEnabled) {
-            int startIndex = pageable.getPageNumber() * pageable.getPageSize();
-            int endIndex = Math.min(startIndex + pageable.getPageSize(), postsInCourse.size());
-
-            // sort (only used by CourseDiscussionsPage, which has pagination enabled)
-            postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
-
-            try {
-                postsPage = new PageImpl<>(postsInCourse.subList(startIndex, endIndex), pageable, postsInCourse.size());
-            }
-            catch (IllegalArgumentException ex) {
-                throw new BadRequestAlertException("Not enough posts to fetch " + pageable.getPageNumber() + "'th page", METIS_POST_ENTITY_NAME, "invalidPageRequest");
-            }
-        }
-        else {
-            postsPage = new PageImpl<>(postsInCourse);
-        }
-
-        return postsPage;
+        return orderAndPaginatePosts(pagingEnabled, pageable, postContextFilter, postsInCourse);
     }
 
     /**
@@ -409,23 +374,20 @@ public class PostService extends PostingService {
      *
      * @param courseId id of the course the post belongs to
      * @param postId   id of the post to delete
-     * @return deleted post to check if an entity deletion alert must be created
      */
-    public Post deletePostById(Long courseId, Long postId) {
+    public void deletePostById(Long courseId, Long postId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post post = postRepository.findByIdElseThrow(postId);
+        Post post = postRepository.findPostByIdElseThrow(postId);
         mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
-        mayUpdateOrDeletePostElseThrow(post, user, course);
+        mayUpdateOrDeletePostingElseThrow(post, user, course);
 
         // delete
         postRepository.deleteById(postId);
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
-
-        return post;
     }
 
     /**
@@ -542,26 +504,7 @@ public class PostService extends PostingService {
      * @return retrieved post
      */
     public Post findById(Long postId) {
-        return postRepository.findByIdElseThrow(postId);
-    }
-
-    /**
-     * fetch posts from database by conversationId
-     *
-     * @param conversationId    id of conversation to retrieve associated posts
-     * @return                  retrieved posts
-     */
-    public List<Post> getPostsByConversation(Long conversationId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        Conversation conversation = conversationService.getConversationById(conversationId);
-
-        conversationService.mayInteractWithConversationElseThrow(conversation.getId(), user);
-
-        List<Post> conversationPosts = postRepository.findPostsByConversationId(conversationId);
-
-        // protect sample solution, grading instructions, etc.
-        conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-        return conversationPosts;
+        return postRepository.findPostByIdElseThrow(postId);
     }
 
     /**
@@ -590,15 +533,6 @@ public class PostService extends PostingService {
     private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-        }
-    }
-
-    private void mayUpdateOrDeletePostElseThrow(Post existingPost, User user, Course course) {
-        mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
-
-        // only the author of a post with conversation context should edit or delete the entity
-        if (existingPost.getConversation() != null && !existingPost.getAuthor().getId().equals(user.getId())) {
-            throw new AccessForbiddenException("Post", existingPost.getId());
         }
     }
 

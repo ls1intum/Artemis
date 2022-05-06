@@ -45,8 +45,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private List<Post> existingPosts;
 
-    private List<Post> existingConversationPosts;
-
     private List<Post> existingExercisePosts;
 
     private List<Post> existingLecturePosts;
@@ -82,9 +80,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         existingPostsAndConversationPosts = database.createPostsWithinCourse();
 
         existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
-
-        // filters existing posts with conversation
-        existingConversationPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).toList();
 
         // filter existing posts with exercise context
         existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList());
@@ -173,31 +168,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 .filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewCoursePost(createdPost, course);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateConversationPost() throws Exception {
-        Post postToSave = createPostWithConversation();
-
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-        checkCreatedPost(postToSave, createdPost);
-        assertThat(createdPost.getConversation().getId()).isNotNull();
-        assertThat(postRepository.findPostsByConversationId(createdPost.getConversation().getId())).hasSize(1);
-    }
-
-    @Test
-    @WithMockUser(username = "student3", roles = "USER")
-    public void testCreateConversationPost_forbidden() throws Exception {
-        // only participants of a conversation can create posts for it
-
-        Post postToSave = createPostWithConversation();
-        // attempt to save new post under someone elses conversation
-        postToSave.setConversation(existingConversationPosts.get(0).getConversation());
-
-        Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
-        assertThat(notCreatedPost).isNull();
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
     }
 
     @Test
@@ -559,64 +529,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testGetConversationPost() throws Exception {
-        // conversation set will fetch all posts of conversation if the user is involved
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("conversationId", existingConversationPosts.get(0).getConversation().getId().toString());
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        // get amount of posts with that certain
-        assertThat(returnedPosts).hasSize(existingConversationPosts.size());
-    }
-
-    @Test
-    @WithMockUser(username = "student1")
-    public void testEditConversationPost() throws Exception {
-        // conversation post of student1 must be editable by them
-        Post conversationPostToUpdate = existingConversationPosts.get(0);
-        conversationPostToUpdate.setContent("User changes one of their conversation posts");
-
-        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
-                HttpStatus.OK);
-
-        assertThat(conversationPostToUpdate).isEqualTo(updatedPost);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testEditConversationPost_forbidden() throws Exception {
-        // conversation post of student1 must not be editable by tutors
-        Post conversationPostToUpdate = existingConversationPosts.get(0);
-        conversationPostToUpdate.setContent("Tutor attempts to change some other user's conversation post");
-
-        Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
-                HttpStatus.FORBIDDEN);
-
-        assertThat(notUpdatedPost).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = "student1")
-    public void testDeleteConversationPost() throws Exception {
-        // conversation post of student1 must be deletable by them
-        Post conversationPostToDelete = existingConversationPosts.get(0);
-        request.delete("/api/courses/" + courseId + "/posts/" + conversationPostToDelete.getId(), HttpStatus.OK);
-
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size() - 1);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteConversationPost_forbidden() throws Exception {
-        // conversation post of student1 must not be deletable by tutors
-        Post conversationPostToDelete = existingConversationPosts.get(0);
-        request.delete("/api/courses/" + courseId + "/posts/" + conversationPostToDelete.getId(), HttpStatus.FORBIDDEN);
-
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
-    }
-
-    @Test
     @WithMockUser(username = "tutor1", roles = "USER")
     public void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
         // request param courseWideContext will fetch all course posts that match this context filter
@@ -819,15 +731,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         return post;
     }
 
-    private Post createPostWithConversation() {
-        Post post = new Post();
-        post.setAuthor(database.getUserByLogin("student1"));
-        post.setCourse(course);
-        post.setDisplayPriority(DisplayPriority.NONE);
-        post.setConversation(ConversationIntegrationTest.conversationToCreate(course, database.getUserByLogin("student2")));
-        return post;
-    }
-
     private Post editExistingPost(Post postToUpdate) {
         postToUpdate.setTitle("New Title");
         postToUpdate.setContent("New Test Post");
@@ -841,7 +744,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(createdPost).isNotNull();
         assertThat(createdPost.getId()).isNotNull();
 
-        // check if title, content, creation data, and tags are set correctly on creation
+        // check if title, content, creation date, and tags are set correctly on creation
         assertThat(createdPost.getTitle()).isEqualTo(expectedPost.getTitle());
         assertThat(createdPost.getContent()).isEqualTo(expectedPost.getContent());
         assertThat(createdPost.getCreationDate()).isNotNull();
