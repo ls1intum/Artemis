@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
-public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;

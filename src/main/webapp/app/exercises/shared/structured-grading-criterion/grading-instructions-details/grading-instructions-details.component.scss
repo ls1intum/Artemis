@@ -4,7 +4,7 @@
         border-radius: 0.1em;
         border-width: 1px;
         border-style: solid;
-        border-color: lightgray;
+        border-color: var(--edit-sqi-grading-instructions-update-border);
         height: auto;
     }
 
@@ -57,6 +57,6 @@
     }
 
     .criterion-title-row {
-        background-color: rgb(242 242 242);
+        background-color: var(--edit-sqi-criterion-title-row-background);
     }
 }

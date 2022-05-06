@@ -7,6 +7,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-exam-checklist-exercisegroup-table',
     templateUrl: './exam-checklist-exercisegroup-table.component.html',
+    styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
 })
 export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
     @Input() exerciseGroups: ExerciseGroup[];

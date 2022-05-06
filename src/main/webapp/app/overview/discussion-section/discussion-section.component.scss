@@ -1,4 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
 @import 'src/main/webapp/app/shared/metis/metis.component';
 
 $draggable-width: 15px;
@@ -33,7 +32,7 @@ $discussion-section-card-min-width: 360px;
             display: inline-flex;
             justify-content: space-between;
             align-items: center;
-            background-color: $artemis-dark;
+            background-color: var(--artemis-dark);
             cursor: pointer;
 
             .card-title {
@@ -53,7 +52,7 @@ $discussion-section-card-min-width: 360px;
     width: 38px;
     justify-content: space-between;
     flex-flow: column nowrap;
-    background-color: $artemis-dark;
+    background-color: var(--artemis-dark);
     margin-left: auto;
     cursor: pointer;
 
