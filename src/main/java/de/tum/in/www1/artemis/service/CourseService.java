@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -100,14 +99,12 @@ public class CourseService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final PlagiarismCaseRepository plagiarismCaseRepository;
-
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
             UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
             ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
-            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
+            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -128,7 +125,6 @@ public class CourseService {
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
     }
 
     /**
@@ -160,27 +156,6 @@ public class CourseService {
         int noOfTeamExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM)).orElse(List.of()).size();
         log.info("/courses/for-dashboard.done in {}ms for {} courses with {} individual exercises and {} team exercises for user {}",
                 System.currentTimeMillis() - startTimeInMillis, courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
-    }
-
-    /**
-     * Fetch the plagiarism cases for a user for course.
-     *
-     * @param courses   the courses for which the plagiarism cases should be fetched
-     * @param user      the user for which the plagiarism cases should be fetched
-     */
-    public void fetchPlagiarismCasesForCourses(List<Course> courses, User user) {
-        for (Course course : courses) {
-            var plagiarismCases = plagiarismCaseRepository.findByStudentIdAndCourseIdWithPlagiarismSubmissionsAndComparison(user.getId(), course.getId());
-            for (var plagiarismCase : plagiarismCases) {
-                for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
-                    submission.setPlagiarismCase(null);
-                    submission.getPlagiarismComparison().getPlagiarismResult().setExercise(null);
-                    submission.getPlagiarismComparison().setSubmissionA(null);
-                    submission.getPlagiarismComparison().setSubmissionB(null);
-                }
-            }
-            course.setPlagiarismCases(plagiarismCases);
-        }
     }
 
     /**

@@ -58,7 +58,6 @@ export class Course implements BaseEntity {
     public exams?: Exam[];
     public tutorGroups?: TutorGroup[];
     public organizations?: Organization[];
-    public plagiarismCases?: PlagiarismCase[];
 
     // helper attributes
     public isAtLeastTutor?: boolean;

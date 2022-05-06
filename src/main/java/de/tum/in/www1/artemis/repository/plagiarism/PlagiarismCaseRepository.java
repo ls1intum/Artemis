@@ -39,16 +39,11 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
-            LEFT JOIN FETCH plagiarismCase.post
-            LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
-            LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
-            LEFT JOIN FETCH plagiarismComparison.submissionA submissionA
-            LEFT JOIN FETCH plagiarismComparison.submissionB submissionB
-            WHERE plagiarismCase.exercise.course.id = :courseId
+            WHERE plagiarismCase.exercise.id = :exerciseId
             AND plagiarismCase.student.id = :userId
             AND (plagiarismCase.post IS NOT NULL OR plagiarismCase.verdict IS NOT NULL)
             """)
-    List<PlagiarismCase> findByStudentIdAndCourseIdWithPlagiarismSubmissionsAndComparison(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    Optional<PlagiarismCase> findByStudentIdAndExerciseId(@Param("userId") Long userId, @Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase

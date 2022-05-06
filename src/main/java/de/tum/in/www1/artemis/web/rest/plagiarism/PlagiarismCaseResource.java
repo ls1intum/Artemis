@@ -114,27 +114,30 @@ public class PlagiarismCaseResource {
     }
 
     /**
-     * Retrieves all plagiarismCases related to a course for the student view.
+     * Retrieves the plagiarismCase related to an exercise for the student.
      *
      * @param courseId the id of the course
-     * @return all plagiarism cases of the course
+     * @param exerciseId the id of the exercise
+     * @return the plagiarism case for the exercise and student
      */
-    @GetMapping("courses/{courseId}/plagiarism-cases/for-student")
+    @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-case")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForCourseForStudent(@PathVariable long courseId) {
-        log.debug("REST request to get all plagiarism cases for student in course with id: {}", courseId);
+    public ResponseEntity<PlagiarismCase> getPlagiarismCaseForExerciseForStudent(@PathVariable long courseId, @PathVariable long exerciseId) {
+        log.debug("REST request to all plagiarism cases for student and exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
         }
-        var plagiarismCases = plagiarismCaseRepository.findByStudentIdAndCourseIdWithPlagiarismSubmissionsAndComparison(user.getId(), courseId);
-        for (var plagiarismCase : plagiarismCases) {
-            if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
-                throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
-            }
+        var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseId(user.getId(), exerciseId);
+        if (plagiarismCaseOptional.isPresent()) {
+            var plagiarismCase = plagiarismCaseOptional.get();
+            plagiarismCase.setPost(null);
+            return ResponseEntity.ok(plagiarismCase);
         }
-        return getPlagiarismCasesResponseEntity(plagiarismCases);
+        else {
+            return ResponseEntity.ok().build();
+        }
     }
 
     private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {
