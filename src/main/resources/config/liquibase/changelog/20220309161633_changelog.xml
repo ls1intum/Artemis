@@ -91,4 +91,14 @@
         <dropColumn tableName="plagiarism_comparison" columnName="instructor_statement_a"/>
         <dropColumn tableName="plagiarism_comparison" columnName="instructor_statement_b"/>
     </changeSet>
+    <changeSet author="filipgregurevic" id="20220309161633-4">
+        <dropForeignKeyConstraint
+            baseTableName="plagiarism_case"
+            baseColumnNames="post_id"
+            constraintName="fk_plagiarism_case_post_id"
+            referencedColumnNames="id"
+            referencedTableName="post"
+        />
+        <dropColumn tableName="plagiarism_case" columnName="post_id" />
+    </changeSet>
 </databaseChangeLog>
