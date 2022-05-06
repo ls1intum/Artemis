@@ -47,7 +47,7 @@ export class UnorderedListCommand extends Command {
             this.replace(range, element);
             this.focus();
         } else {
-            /** case 3: formate existing text into an unformed list */
+            /** case 3: format existing text into an unformed list */
             const range = this.getRange();
             element = `- ${element}\n`;
             this.replace(range, element);

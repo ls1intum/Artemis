@@ -383,7 +383,7 @@ Exercise Creation
       git clone "$BASE-solution.git" "$NAME/solution"
 
       # hardlink the various assignment interfaces to ensure they stay in sync
-      # the version in the solution repositiory is authoritive in case of conflict
+      # the version in the solution repository is authoritative in case of conflict
       rm "$NAME/template/src/assignment.mli"
       rm "$NAME/tests/assignment/assignment.mli"
       rm "$NAME/tests/solution/solution.mli"

@@ -53,7 +53,7 @@ export class OrderedListCommand extends Command {
             this.replace(range, element);
             this.focus();
         } else {
-            /** case 3: formate existing text into an ordered list by inserting the position of the array before the text*/
+            /** case 3: format existing text into an ordered list by inserting the position of the array before the text*/
             element = `${position}. ${element}\n`;
             this.insertText(element);
         }

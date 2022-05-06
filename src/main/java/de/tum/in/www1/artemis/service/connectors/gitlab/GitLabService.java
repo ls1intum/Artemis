@@ -233,7 +233,7 @@ public class GitLabService extends AbstractVersionControlService {
         final var projectKey = exercise.getProjectKey();
 
         // Optional webhook from the version control system to the continuous integration system
-        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
+        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
         final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
         final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
         if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
@@ -249,7 +249,7 @@ public class GitLabService extends AbstractVersionControlService {
             super.addWebHookForParticipation(participation);
 
             // Optional webhook from the version control system to the continuous integration system
-            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
+            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
             getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
                     .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getVcsRepositoryUrl(), hookUrl, "Artemis trigger to CI", ciToken));
         }
@@ -279,7 +279,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getGroupApi().deleteGroup(projectKey);
         }
         catch (GitLabApiException e) {
-            // Do not throw an exception if we try to delete a non-existant repository.
+            // Do not throw an exception if we try to delete a non-existent repository.
             if (e.getHttpStatus() != 404) {
                 throw new GitLabException("Unable to delete group in GitLab: " + projectKey, e);
             }
@@ -294,7 +294,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getProjectApi().deleteProject(repositoryPath);
         }
         catch (GitLabApiException e) {
-            // Do not throw an exception if we try to delete a non-existant repository.
+            // Do not throw an exception if we try to delete a non-existent repository.
             if (e.getHttpStatus() != HttpStatus.SC_NOT_FOUND) {
                 throw new GitLabException("Error trying to delete repository on GitLab: " + repositoryName, e);
             }
@@ -456,7 +456,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     /**
-     * Updates the acess level of the user if it's a member of the repository.
+     * Updates the access level of the user if it's a member of the repository.
      *
      * @param repositoryUrl The url of the repository
      * @param username      the username of the gitlab user

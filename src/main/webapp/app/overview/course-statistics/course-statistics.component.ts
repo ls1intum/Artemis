@@ -574,7 +574,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Depending on the type of the exercise, it adds a new object containing
-     * the different scores of the correspnding exercise group of the chart
+     * the different scores of the corresponding exercise group of the chart
      * @param exercise an arbitrary exercise of a course
      * @param series an array of dedicated objects containing the students' performance in this exercise that is visualized by the chart
      * @private
