@@ -75,7 +75,7 @@ export class PostService extends PostingService<Post> {
             params = params.set('size', postContextFilter.pageSize!);
         }
         return this.http
-            .get<Post[]>(`${this.resourceUrl}${courseId}/posts`, {
+            .get<Post[]>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(postContextFilter)}`, {
                 params,
                 observe: 'response',
             })
@@ -99,7 +99,9 @@ export class PostService extends PostingService<Post> {
      */
     update(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(post);
-        return this.http.put<Post>(`${this.resourceUrl}${courseId}/posts/${post.id}`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+        return this.http
+            .put<Post>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(post)}/${post.id}`, copy, { observe: 'response' })
+            .pipe(map(this.convertDateFromServer));
     }
 
     /**
@@ -122,7 +124,7 @@ export class PostService extends PostingService<Post> {
      * @return {Observable<HttpResponse<void>>}
      */
     delete(courseId: number, post: Post): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}${courseId}/posts/${post.id}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(post)}/${post.id}`, { observe: 'response' });
     }
 
     /**
@@ -148,5 +150,13 @@ export class PostService extends PostingService<Post> {
             });
         }
         return res;
+    }
+
+    private static getResourceEndpoint(param: PostContextFilter | Post): string {
+        if ((param instanceof Post && param.conversation) || (!(param instanceof Post) && param.conversationId)) {
+            return '/messages';
+        } else {
+            return '/posts';
+        }
     }
 }
