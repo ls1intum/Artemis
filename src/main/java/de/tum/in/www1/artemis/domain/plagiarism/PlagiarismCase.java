@@ -22,8 +22,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     @ManyToOne
     private User student;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JoinColumn(name = "post_id")
+    @OneToOne(mappedBy = "plagiarismCase", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Post post;
 
     @JsonIgnoreProperties("plagiarismCase")
