@@ -36,8 +36,6 @@ public class MessagePostIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private List<Post> existingPostsAndConversationPosts;
 
-    private List<Post> existingPosts;
-
     private List<Post> existingConversationPosts;
 
     private List<Post> existingExercisePosts;
@@ -61,7 +59,7 @@ public class MessagePostIntegrationTest extends AbstractSpringIntegrationBambooB
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
         existingPostsAndConversationPosts = database.createPostsWithinCourse();
 
-        existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
+        List<Post> existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
 
         // filters existing posts with conversation
         existingConversationPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).toList();

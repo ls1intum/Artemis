@@ -56,29 +56,31 @@ public abstract class PostingService {
     }
 
     @NotNull
-    protected Page<Post> orderAndPaginatePosts(boolean pagingEnabled, Pageable pageable, PostContextFilter postContextFilter, List<Post> postsInCourse) {
+    protected Page<Post> orderAndPaginatePosts(boolean pagingEnabled, Pageable pageable, PostContextFilter postContextFilter, List<Post> posts) {
+        List<Post> processedPosts = posts;
+
         // search by text or #post
         if (postContextFilter.getSearchText() != null) {
-            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
+            processedPosts = processedPosts.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
         }
 
         final Page<Post> postsPage;
         if (pagingEnabled) {
             int startIndex = pageable.getPageNumber() * pageable.getPageSize();
-            int endIndex = Math.min(startIndex + pageable.getPageSize(), postsInCourse.size());
+            int endIndex = Math.min(startIndex + pageable.getPageSize(), processedPosts.size());
 
             // sort (only used by CourseDiscussions and CourseMessages Page, which has pagination enabled)
-            postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
+            processedPosts.sort((postA, postB) -> postComparator(postA, postB, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
 
             try {
-                postsPage = new PageImpl<>(postsInCourse.subList(startIndex, endIndex), pageable, postsInCourse.size());
+                postsPage = new PageImpl<>(processedPosts.subList(startIndex, endIndex), pageable, processedPosts.size());
             }
             catch (IllegalArgumentException ex) {
                 throw new BadRequestAlertException("Not enough posts to fetch " + pageable.getPageNumber() + "'th page", METIS_POST_ENTITY_NAME, "invalidPageRequest");
             }
         }
         else {
-            postsPage = new PageImpl<>(postsInCourse);
+            postsPage = new PageImpl<>(processedPosts);
         }
         return postsPage;
     }

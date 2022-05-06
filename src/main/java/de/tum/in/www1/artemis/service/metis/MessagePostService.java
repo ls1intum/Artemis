@@ -33,16 +33,13 @@ public class MessagePostService extends PostingService {
 
     private final UserRepository userRepository;
 
-    private final PostRepository postRepository;
-
     private final ConversationService conversationService;
 
     protected MessagePostService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, PostRepository postRepository,
-            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository, PostRepository postRepository1,
-            PostRepository postRepository2, ConversationService conversationService) {
+            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
+            ConversationService conversationService) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
-        this.postRepository = postRepository2;
         this.conversationService = conversationService;
     }
 
