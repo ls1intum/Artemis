@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -631,6 +632,23 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
         learningGoal.setLectureUnits(connectedLectureUnits);
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    public void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
+        final var search = database.configureSearch("");
+        final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        final var search = database.configureSearch(learningGoal.getTitle());
+        final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
     @Test
