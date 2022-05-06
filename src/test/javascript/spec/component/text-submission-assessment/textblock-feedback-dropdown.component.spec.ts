@@ -1,10 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import {
-    NEGATIVE_RED,
-    NEUTRAL_YELLOW,
-    POSITIVE_GREEN,
-    TextblockFeedbackDropdownComponent,
-} from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
+import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
@@ -58,12 +53,12 @@ describe('TextblockFeedbackDropdownComponent', () => {
     });
 
     it('should display correct background colors for dropdown elements', () => {
-        expect(component.getInstrColour(gradingInstruction)).toBe(POSITIVE_GREEN);
+        expect(component.getInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
         gradingInstruction.credits = 0;
         fixture.detectChanges();
-        expect(component.getInstrColour(gradingInstruction)).toBe(NEUTRAL_YELLOW);
+        expect(component.getInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
         gradingInstruction.credits = -1;
         fixture.detectChanges();
-        expect(component.getInstrColour(gradingInstruction)).toBe(NEGATIVE_RED);
+        expect(component.getInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
     });
 });

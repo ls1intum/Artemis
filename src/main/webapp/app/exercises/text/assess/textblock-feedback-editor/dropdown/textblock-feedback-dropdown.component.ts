@@ -3,10 +3,6 @@ import { Feedback } from 'app/entities/feedback.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
-export const POSITIVE_GREEN = '#e3f0da';
-export const NEUTRAL_YELLOW = '#fff2cc';
-export const NEGATIVE_RED = '#fbe5d6';
-
 @Component({
     selector: 'jhi-textblock-feedback-dropdown',
     templateUrl: './textblock-feedback-dropdown.component.html',
@@ -33,11 +29,11 @@ export class TextblockFeedbackDropdownComponent {
      */
     getInstrColour(instr: GradingInstruction): string | undefined {
         if (instr.credits === 0) {
-            return NEUTRAL_YELLOW;
+            return 'var(--sgi-assessment-layout-zero-background)';
         } else if (instr.credits < 0) {
-            return NEGATIVE_RED;
+            return 'var(--sgi-assessment-layout-negative-background)';
         } else if (instr.credits > 0) {
-            return POSITIVE_GREEN;
+            return 'var(--sgi-assessment-layout-positive-background)';
         }
         return undefined;
     }

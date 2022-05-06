@@ -2,24 +2,11 @@
 
 // Variables
 $tour-zIndex: 1081 !default;
-$tour-step-color: #ffffff !default;
-$tour-text-color: #231f1f !default;
-$tour-border-color: #17a2b8 !default;
-$tour-next-button-color: #17a2b8 !default;
-$tour-next-button-hover: #117a8b !default;
-$tour-back-button-color: #17a2b8 !default;
-$tour-back-button-hover: #117a8b !default;
-$tour-restart-button-color: #28a745 !default;
-$tour-restart-button-hover: #1e7e34 !default;
-$tour-button-color-disabled: #f2f2f2 !default;
-$tour-button-text-color: #ffffff !default;
-$tour-button-text-disabled: #a3a3a3 !default;
-$tour-shadow-color: #4c4c4c !default;
 
 // Mixins
 @mixin tour-button($background-color, $hover-background-color, $position) {
     background-color: $background-color;
-    color: $tour-button-text-color;
+    color: var(--gt-tour-button-text-color);
 
     $opposite-pos: left;
     @if $position==right {
@@ -31,7 +18,7 @@ $tour-shadow-color: #4c4c4c !default;
 
     &:hover {
         background-color: $hover-background-color;
-        color: $tour-button-text-color;
+        color: var(--gt-tour-button-text-color);
     }
 
     fa-icon {
@@ -87,7 +74,7 @@ body.tour-open {
 }
 
 .guided-tour-button {
-    background-color: $tour-next-button-color;
+    background-color: var(--gt-tour-next-button-color);
     border-radius: 50%;
     cursor: pointer;
     float: right;
@@ -97,13 +84,13 @@ body.tour-open {
     padding: 11px;
 
     &:hover {
-        background-color: $tour-next-button-hover;
+        background-color: var(--gt-tour-next-button-hover);
     }
 }
 
 jhi-guided-tour {
     .guided-tour-overlay {
-        background: #000;
+        background: var(--gt-overlay-background);
         opacity: 0.5;
         text-align: center;
         display: block;
@@ -117,7 +104,7 @@ jhi-guided-tour {
 
     .guided-tour-element-overlay {
         background: none;
-        border: 5px $tour-border-color solid;
+        border: 5px var(--gt-tour-border-color) solid;
         display: block;
         position: fixed;
         z-index: $tour-zIndex;
@@ -175,9 +162,9 @@ jhi-guided-tour {
         }
 
         .tour-block {
-            background-color: $tour-step-color;
-            box-shadow: 0 0.4rem 0.6rem $tour-shadow-color;
-            color: $tour-text-color;
+            background-color: var(--gt-tour-step-bg-color);
+            box-shadow: 0 0.4rem 0.6rem var(--gt-tour-shadow-color);
+            color: var(--gt-tour-text-color);
             padding: 20px;
             border-radius: 5px;
             -webkit-border-radius: 5px;
@@ -210,7 +197,7 @@ jhi-guided-tour {
 
                     &:before,
                     &:after {
-                        background-color: #231f1f;
+                        background-color: var(--gt-tour-block-after-background);
                         content: ' ';
                         height: 20px;
                         width: 2px;
@@ -242,7 +229,7 @@ jhi-guided-tour {
                 }
 
                 tt {
-                    background-color: #f2f2f2;
+                    background-color: var(--gt-tour-block-content-tt-background);
                     padding: 4px;
                 }
 
@@ -255,7 +242,7 @@ jhi-guided-tour {
                 }
 
                 .red {
-                    color: #ca2024;
+                    color: var(--gt-tour-block-content-red);
                 }
 
                 div > .btn,
@@ -275,11 +262,11 @@ jhi-guided-tour {
                     padding: 8px;
 
                     &:not(.interaction) {
-                        background: #f0f0f0;
+                        background: var(--gt-tour-block-step-hint-not-interaction-background);
                     }
 
                     &.interaction:not(.alert-success) {
-                        background: rgb(23, 162, 184, 0.3);
+                        background: var(--gt-tour-block-step-hint-interaction-background);
                     }
 
                     &__icon {
@@ -325,25 +312,25 @@ jhi-guided-tour {
                     white-space: nowrap;
 
                     &:disabled {
-                        color: $tour-button-text-disabled !important;
-                        background-color: $tour-button-color-disabled !important;
+                        color: var(--gt-tour-button-text-disabled) !important;
+                        background-color: var(--gt-tour-button-color-disabled) !important;
                         cursor: default;
 
                         fa-icon {
-                            color: $tour-button-text-disabled !important;
+                            color: var(--gt-tour-button-text-disabled) !important;
                         }
                     }
 
                     &.back-button {
-                        @include tour-button($tour-back-button-color, $tour-back-button-hover, left);
+                        @include tour-button(var(--gt-tour-back-button-color), var(--gt-tour-back-button-hover), left);
                     }
 
                     &.next-button {
-                        @include tour-button($tour-next-button-color, $tour-next-button-hover, right);
+                        @include tour-button(var(--gt-tour-next-button-color), var(--gt-tour-next-button-hover), right);
                     }
 
                     &.restart-button {
-                        @include tour-button($tour-restart-button-color, $tour-restart-button-hover, left);
+                        @include tour-button(var(--gt-tour-restart-button-color), var(--gt-tour-restart-button-hover), left);
                     }
                 }
             }
@@ -353,7 +340,7 @@ jhi-guided-tour {
         &.tour-bottom-right,
         &.tour-bottom-left {
             .tour-arrow::before {
-                @include tour-triangle(top, $tour-step-color);
+                @include tour-triangle(top, var(--gt-tour-step-bg-color));
                 position: absolute;
             }
             .tour-block {
@@ -365,7 +352,7 @@ jhi-guided-tour {
         &.tour-top-right,
         &.tour-top-left {
             .tour-arrow::before {
-                @include tour-triangle(bottom, $tour-step-color);
+                @include tour-triangle(bottom, var(--gt-tour-step-bg-color));
                 position: absolute;
                 bottom: 0;
             }
@@ -399,7 +386,7 @@ jhi-guided-tour {
 
         &.tour-left {
             .tour-arrow::before {
-                @include tour-triangle(right, $tour-step-color);
+                @include tour-triangle(right, var(--gt-tour-step-bg-color));
                 position: absolute;
                 left: 100%;
                 transform: translateX(-100%);
@@ -412,7 +399,7 @@ jhi-guided-tour {
 
         &.tour-right {
             .tour-arrow::before {
-                @include tour-triangle(left, $tour-step-color);
+                @include tour-triangle(left, var(--gt-tour-step-bg-color));
                 position: absolute;
                 left: 0;
                 top: 15px;

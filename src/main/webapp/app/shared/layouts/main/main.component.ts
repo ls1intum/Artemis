@@ -4,13 +4,20 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
 })
 export class JhiMainComponent implements OnInit {
-    constructor(private jhiLanguageHelper: JhiLanguageHelper, private router: Router, private profileService: ProfileService, private sentryErrorHandler: SentryErrorHandler) {
+    constructor(
+        private jhiLanguageHelper: JhiLanguageHelper,
+        private router: Router,
+        private profileService: ProfileService,
+        private sentryErrorHandler: SentryErrorHandler,
+        private themeService: ThemeService,
+    ) {
         this.setupErrorHandling().then(null);
     }
 
@@ -39,5 +46,7 @@ export class JhiMainComponent implements OnInit {
                 this.router.navigate(['/404']);
             }
         });
+
+        this.themeService.initialize();
     }
 }

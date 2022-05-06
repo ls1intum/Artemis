@@ -807,28 +807,34 @@ public abstract class Exercise extends BaseExercise {
     }
 
     /** Helper method which does a hard copy of the Grading Criteria
+     * Also fills {@code gradingInstructionCopyTracker}.
+     *
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      *
      * @return A clone of the grading criteria list
      */
-    public List<GradingCriterion> copyGradingCriteria() {
+    public List<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         List<GradingCriterion> newGradingCriteria = new ArrayList<>();
         for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
             newGradingCriterion.setExercise(this);
             newGradingCriterion.setTitle(originalGradingCriterion.getTitle());
-            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion));
+            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion, gradingInstructionCopyTracker));
             newGradingCriteria.add(newGradingCriterion);
         }
         return newGradingCriteria;
     }
 
     /** Helper method which does a hard copy of the Grading Instructions
+     * Also fills {@code gradingInstructionCopyTracker}.
      *
      * @param originalGradingCriterion The original grading criterion which contains the grading instructions
      * @param newGradingCriterion The cloned grading criterion in which we insert the grading instructions
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
-    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion) {
+    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
+            Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         List<GradingInstruction> newGradingInstructions = new ArrayList<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
             GradingInstruction newGradingInstruction = new GradingInstruction();
@@ -840,6 +846,7 @@ public abstract class Exercise extends BaseExercise {
             newGradingInstruction.setGradingCriterion(newGradingCriterion);
 
             newGradingInstructions.add(newGradingInstruction);
+            gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
     }

@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { Graphs } from 'app/entities/statistics.model';
+import { GraphColors, Graphs } from 'app/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -33,7 +33,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['rgba(53,61,71,1)'], // color: black
+        domain: [GraphColors.BLACK],
     };
     curve: any = shape.curveMonotoneX;
 
