@@ -135,15 +135,14 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         submissionA.setSubmissionId(this.textSubmission.getId());
         plagiarismComparison.setSubmissionA(submissionA);
         PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         Post post = new Post();
         post.setAuthor(userRepository.getUserByLoginElseThrow("instructor1"));
         post.setTitle("Title Plagiarism Case Post");
         post.setContent("Content Plagiarism Case Post");
         post.setVisibleForStudents(true);
-        post.setExercise(finishedTextExercise);
-        post = postRepository.save(post);
-        plagiarismCase.setPost(post);
-        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        post.setPlagiarismCase(plagiarismCase);
+        postRepository.save(post);
         submissionA.setPlagiarismCase(plagiarismCase);
         plagiarismComparisonRepository.save(plagiarismComparison);
 
