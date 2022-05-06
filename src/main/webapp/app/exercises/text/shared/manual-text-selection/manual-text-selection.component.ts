@@ -1,12 +1,19 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { SelectionRectangle, TextSelectEvent } from 'app/exercises/text/shared/text-select.directive';
-import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextBlockRefGroup } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
+
+export type wordSelection = {
+    word: string;
+    index: number;
+};
+
+const LINEBREAK = /\n/g;
+const SPACE = ' ';
 
 @Component({
     selector: 'jhi-manual-text-selection',
@@ -14,53 +21,54 @@ import { TranslateService } from '@ngx-translate/core';
     styleUrls: ['./manual-text-selection.component.scss'],
 })
 export class ManualTextSelectionComponent {
-    @Input() public disabled = false;
-    @Input() public positionRelative = false;
-    @Output() public assess = new EventEmitter<string>();
+    @Input() public textBlockRefGroup: TextBlockRefGroup;
+    @Input() submission: TextSubmission;
+    @Output() public didSelectWord = new EventEmitter<wordSelection[]>();
+    @Input() set words(textBlockRefGroup: TextBlockRefGroup) {
+        // Since some words are only separated through linebreaks, the linebreaks are replaced by a linebreak with an additional space, in order to split the words by spaces.
+        this.submissionWords = textBlockRefGroup.getText(this.submission).replace(LINEBREAK, '\n ').split(SPACE);
+    }
+    public submissionWords: string[] | undefined;
+    public currentWordIndex: number;
+    public selectedWords = new Array<wordSelection>();
+    public ready: Boolean = false;
 
-    public hostRectangle: SelectionRectangle | undefined;
-    public selectedText: string | undefined;
-
-    assessText: string;
-
-    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute, translateService: TranslateService) {
+    constructor(public textAssessmentAnalytics: TextAssessmentAnalytics, protected route: ActivatedRoute) {
         textAssessmentAnalytics.setComponentRoute(route);
-        this.assessText = translateService.instant('artemisApp.textAssessment.editor.assess');
     }
 
-    /**
-     * Handle user's selection of solution text.
-     * @param event fired on text selection of type {TextSelectEvent}
-     */
-    didSelectSolutionText(event: TextSelectEvent): void {
-        if (this.disabled) {
-            return;
+    calculateIndex(index: number): void {
+        let result = this.textBlockRefGroup.startIndex!;
+        for (let i = 0; i < index; i++) {
+            const space = 1;
+            result += this.submissionWords![i].length + space;
+
+            const wordContainsLinebreak = this.submissionWords![i].search(/\n+/g) !== -1;
+            if (wordContainsLinebreak) {
+                result--;
+            }
+        }
+        this.currentWordIndex = result;
+    }
+
+    selectWord(word: string): void {
+        const canSelectWord = this.selectedWords.length < 2;
+        if (canSelectWord) {
+            this.selectedWords.push({ word, index: this.currentWordIndex });
         }
 
-        // If a new selection has been created, the viewport and host rectangles will
-        // exist. Or, if a selection is being removed, the rectangles will be null.
-        if (event.hostRectangle) {
-            this.hostRectangle = event.hostRectangle;
-            this.selectedText = convertToHtmlLinebreaks(event.text);
-        } else {
-            this.hostRectangle = undefined;
-            this.selectedText = undefined;
+        const textBlockSelected = this.selectedWords.length === 2;
+        if (textBlockSelected) {
+            this.ready = true;
+
+            const lastWordClickedFirst = this.selectedWords[0].index > this.selectedWords[1].index;
+            if (lastWordClickedFirst) {
+                this.selectedWords.reverse();
+            }
         }
-    }
 
-    /**
-     * Remove selection from text.
-     */
-    deselectText(): void {
-        document.getSelection()!.removeAllRanges();
-        this.hostRectangle = undefined;
-        this.selectedText = undefined;
-    }
-
-    assessAction(): void {
-        if (this.selectedText) {
-            this.assess.emit(this.selectedText);
-            this.deselectText();
+        if (this.ready) {
+            this.didSelectWord.emit(this.selectedWords);
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
         }
     }

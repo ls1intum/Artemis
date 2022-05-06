@@ -1,5 +1,18 @@
+@import 'node_modules/bootstrap/scss/functions';
+@import 'node_modules/bootstrap/scss/variables';
+
 .manual-text-selection-area {
     white-space: pre-wrap;
+}
+
+span {
+    &:hover,
+    &:focus {
+        background: $gray-300;
+        padding: 2px 4px;
+        border-radius: 4px;
+        cursor: default;
+    }
 }
 
 .indicator {
