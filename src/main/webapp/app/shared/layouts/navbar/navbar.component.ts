@@ -62,8 +62,6 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 export class NavbarComponent implements OnInit, OnDestroy {
     readonly SERVER_API_URL = SERVER_API_URL;
 
-    readonly Themes = Theme;
-
     inProduction: boolean;
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;

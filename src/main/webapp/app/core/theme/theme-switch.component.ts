@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { fromEvent } from 'rxjs';
@@ -19,6 +19,8 @@ export const THEME_SWITCH_HAS_SHOWN_INITIAL_KEY = 'artemisApp.theme.hasShownInit
 })
 export class ThemeSwitchComponent implements OnInit {
     @ViewChild('popover') popover: NgbPopover;
+
+    @Input() popoverPlacement: string;
 
     isDark = false;
     isSynced = false;
