@@ -168,6 +168,14 @@ html {
     background-color: $neutral-dark !important;
 }
 
+.cdk-overlay-container .tag-option {
+    background: mix($neutral-dark, $white, 90%);
+
+    &:hover {
+        background: mix($neutral-dark, $white, 80%);
+    }
+}
+
 // ==================
 // NGX CHARTS STYLING
 // ==================
