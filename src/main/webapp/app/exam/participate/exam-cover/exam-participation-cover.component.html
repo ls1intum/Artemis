@@ -40,7 +40,7 @@
                 id="confirmBox"
                 (click)="updateConfirmation()"
                 class="form-check-input"
-                [class.ms-0]="(this.exam.confirmationStartText?.length ?? '') == 0"
+                [class.ms-0]="((startView ? this.exam.confirmationStartText?.length : this.exam.confirmationEndText?.length) ?? 0) == 0"
                 [required]="inserted"
                 [disabled]="startView ? waitingForExamStart : false"
             />
