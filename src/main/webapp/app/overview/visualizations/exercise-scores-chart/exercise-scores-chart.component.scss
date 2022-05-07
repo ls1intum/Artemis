@@ -1,5 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 .chart-wrapper {
     width: 90%;
 }
@@ -25,10 +23,10 @@
     }
 
     .legend-label {
-        color: $artemis-dark;
+        color: var(--artemis-dark);
 
         :hover {
-            color: $primary !important;
+            color: var(--primary) !important;
         }
     }
 

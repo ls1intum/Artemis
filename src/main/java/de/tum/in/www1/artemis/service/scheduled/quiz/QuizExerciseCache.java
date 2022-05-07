@@ -36,6 +36,11 @@ abstract class QuizExerciseCache {
     abstract QuizExercise getExercise();
 
     /**
+     * QuizBatch ids by username
+     */
+    abstract Map<String, Long> getBatches();
+
+    /**
      * QuizSubmissions by user name
      */
     abstract Map<String, QuizSubmission> getSubmissions();

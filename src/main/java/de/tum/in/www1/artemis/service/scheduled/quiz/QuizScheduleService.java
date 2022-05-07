@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -27,12 +28,15 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 
@@ -95,6 +99,7 @@ public class QuizScheduleService {
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
         // activate Quiz Schedule Service
+        SecurityUtils.setAuthorizationObject();
         startSchedule(5 * 1000);                          // every 5 seconds
     }
 
@@ -273,20 +278,24 @@ public class QuizScheduleService {
         cancelScheduledQuizStart(quizExerciseId);
         // reload from database to make sure there are no proxy objects
         final var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
-        if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            // schedule sending out filtered quiz over websocket
-            try {
-                long delay = Duration.between(ZonedDateTime.now(), quizExercise.getReleaseDate()).toMillis();
-                var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
-                // save scheduled future in HashMap
-                quizCache.performCacheWrite(quizExercise.getId(), quizExerciseCache -> {
-                    quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
-                    return quizExerciseCache;
-                });
-            }
-            catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-                log.debug("Quiz {} task already redistered", quizExerciseId);
-                // this is expected if we run on multiple nodes
+        if (quizExercise != null && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+            // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
+            var quizBatch = quizExercise.getQuizBatches().stream().findAny();
+            if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null && quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
+                // schedule sending out filtered quiz over websocket
+                try {
+                    long delay = Duration.between(ZonedDateTime.now(), quizBatch.get().getStartTime()).toMillis();
+                    var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
+                    // save scheduled future in HashMap
+                    quizCache.performCacheWrite(quizExerciseId, quizExerciseCache -> {
+                        quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
+                        return quizExerciseCache;
+                    });
+                }
+                catch (@SuppressWarnings("unused") DuplicateTaskException e) {
+                    log.debug("Quiz {} task already registered", quizExerciseId);
+                    // this is expected if we run on multiple nodes
+                }
             }
         }
         // Do that at the end because this runs asynchronously and could interfere with the cache write above
@@ -336,7 +345,16 @@ public class QuizScheduleService {
         log.debug("Sending quiz {} start", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
         updateQuizExercise(quizExercise);
-        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now");
+        if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
+            throw new IllegalStateException();
+        }
+
+        // TODO: quiz cleanup: We create a batch that has just started here because we can't access QuizBatchService here because of dependencies
+        var quizBatch = new QuizBatch();
+        quizBatch.setQuizExercise(quizExercise);
+        quizBatch.setStartTime(ZonedDateTime.now());
+        quizExercise.setQuizBatches(Set.of(quizBatch));
+        quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, "start-now");
     }
 
     /**
@@ -387,8 +405,20 @@ public class QuizScheduleService {
                     continue;
                 }
 
+                // Update cached exercise object (use the expensive operation upfront)
+                quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
+                var batchCache = quizExercise.getQuizBatches().stream().collect(Collectors.toUnmodifiableMap(QuizBatch::getId, b -> b));
+
+                // ensure that attempts that were never submitted get committed to the database and saved
+                // this is required to ensure that students cannot gain extra attempts this way
+                for (var batch : cachedQuiz.getBatches().entrySet()) {
+                    if (batchCache.get(batch.getValue()).isEnded()) {
+                        cachedQuiz.getSubmissions().putIfAbsent(batch.getKey(), new QuizSubmission());
+                    }
+                }
+
                 // (Boolean wrapper is safe to auto-unbox here)
-                boolean hasEnded = quizExercise.isEnded();
+                boolean hasEnded = quizExercise.isQuizEnded();
                 // Note that those might not be true later on due to concurrency and a distributed system,
                 // do not rely on that for actions upon the whole set, such as clear()
                 boolean hasNewSubmissions = !cachedQuiz.getSubmissions().isEmpty();
@@ -404,9 +434,6 @@ public class QuizScheduleService {
                     continue;
                 }
 
-                // Update cached exercise object (use the expensive operation upfront)
-                quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
-
                 // Save cached Submissions (this will also generate results and participations and place them in the cache)
                 long start = System.nanoTime();
 
@@ -415,8 +442,9 @@ public class QuizScheduleService {
                 if (hasNewSubmissions) {
                     // Create Participations and Results if the submission was submitted or if the quiz has ended and save them to Database (DB Write)
                     Map<String, QuizSubmission> submissions = cachedQuiz.getSubmissions();
+                    Map<String, Long> batches = cachedQuiz.getBatches();
                     // This call will remove the processed Submission map entries itself
-                    int numberOfSubmittedSubmissions = saveQuizSubmissionWithParticipationAndResultToDatabase(quizExercise, submissions);
+                    int numberOfSubmittedSubmissions = saveQuizSubmissionWithParticipationAndResultToDatabase(quizExercise, submissions, batches, batchCache);
                     // .. and likely generate new participations and results
                     if (numberOfSubmittedSubmissions > 0) {
                         // .. so we set the boolean variables here again if some were submitted
@@ -476,6 +504,15 @@ public class QuizScheduleService {
         }
     }
 
+    public void joinQuizBatch(QuizExercise quizExercise, QuizBatch quizBatch, User user) {
+        log.debug("join user {} to batch {} for quiz {}", user, quizBatch, quizExercise.getId());
+        quizCache.getTransientWriteCacheFor(quizExercise.getId()).getBatches().put(user.getLogin(), quizBatch.getId());
+    }
+
+    public Optional<Long> getQuizBatchForStudent(QuizExercise quizExercise, User user) {
+        return Optional.ofNullable(quizCache.getReadCacheFor(quizExercise.getId()).getBatches().get(user.getLogin()));
+    }
+
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {
         cancelScheduledQuizStart(cachedQuiz.getExerciseId());
         quizCache.remove(cachedQuiz.getExerciseId());
@@ -520,9 +557,11 @@ public class QuizScheduleService {
      *
      * @param quizExercise      the quiz which should be checked
      * @param userSubmissionMap a Map with all submissions for the given quizExercise mapped by the username
+     * @param userBatchMap      a Map of the username to quiz batch id for the given quizExercise
+     * @param batchCache        a Map of all the batches for the given quizExercise
      * @return the number of processed submissions (submit or timeout)
      */
-    private int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
+    private int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap, Map<String, Long> userBatchMap, Map<Long, QuizBatch> batchCache) {
 
         int count = 0;
 
@@ -530,12 +569,13 @@ public class QuizScheduleService {
             try {
                 // first case: the user submitted the quizSubmission
                 QuizSubmission quizSubmission = userSubmissionMap.get(username);
+                QuizBatch quizBatch = batchCache.get(userBatchMap.getOrDefault(username, 0L));
                 if (quizSubmission.isSubmitted()) {
                     if (quizSubmission.getType() == null) {
                         quizSubmission.setType(SubmissionType.MANUAL);
                     }
-                } // second case: the quiz has ended
-                else if (quizExercise.isEnded()) {
+                } // second case: the quiz or batch has ended
+                else if (quizExercise.isQuizEnded() || quizBatch != null && quizBatch.isEnded()) {
                     quizSubmission.setSubmitted(true);
                     quizSubmission.setType(SubmissionType.TIMEOUT);
                     quizSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -544,6 +584,9 @@ public class QuizScheduleService {
                     // the quiz is running and the submission was not yet submitted.
                     continue;
                 }
+
+                // record which batch the submission belongs to
+                quizSubmission.setQuizBatch(quizBatch);
 
                 count++;
                 // Create Participation and Result and save to Database (DB Write)
@@ -590,12 +633,17 @@ public class QuizScheduleService {
                 result.setSubmission(savedQuizSubmission);
                 result.setParticipation(participation);
 
-                // add the participation to the participationHashMap for the send out at the end of the quiz
-                addParticipation(quizExercise.getId(), participation);
+                // no point in keeping the participation around for non-synchronized modes where the due date may only be in a week
+                if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+                    // add the participation to the participationHashMap for the send out at the end of the quiz
+                    addParticipation(quizExercise.getId(), participation);
+                }
 
                 // remove the submission only after the participation has been added to the participation hashmap to avoid duplicated key exceptions for multiple participations for
                 // the same user
                 userSubmissionMap.remove(username);
+                // clean up the batch association
+                userBatchMap.remove(username);
 
                 // add the result of the participation resultHashMap for the statistic-Update
                 addResultForStatisticUpdate(quizExercise.getId(), result);

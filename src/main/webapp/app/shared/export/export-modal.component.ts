@@ -30,14 +30,15 @@ export interface CsvExportOptions {
 
 @Component({
     selector: 'jhi-csv-export-modal',
-    templateUrl: './csv-export-modal.component.html',
-    styleUrls: ['./csv-export-modal.component.scss'],
+    templateUrl: './export-modal.component.html',
+    styleUrls: ['./export-modal.component.scss'],
 })
-export class CsvExportModalComponent implements OnInit {
+export class ExportModalComponent implements OnInit {
     readonly CsvFieldSeparator = CsvFieldSeparator;
     readonly CsvQuoteStrings = CsvQuoteStrings;
     readonly CsvDecimalSeparator = CsvDecimalSeparator;
 
+    activeTab = 1;
     options: CsvExportOptions;
 
     // Icons
@@ -97,9 +98,15 @@ export class CsvExportModalComponent implements OnInit {
     }
 
     /**
-     * Closes the csv export modal and passes the selected options back
+     * Closes the export modal and passes the selected csv options back in case the active page is not set to 1.
      */
     onFinish() {
-        this.activeModal.close(this.options);
+        if (this.activeTab === 1) {
+            // Excel export
+            this.activeModal.close();
+        } else {
+            // CSV export
+            this.activeModal.close(this.options);
+        }
     }
 }

@@ -180,7 +180,8 @@
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
                 "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden"
             },
-            "activeStudents": "Aktive Studierende: {{ students }}"
+            "activeStudents": "Aktive Studierende: {{ students }}",
+            "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:"
         },
         "courseStatistics": {
             "statistics": "Statistiken",

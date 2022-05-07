@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -105,7 +106,7 @@ public class ExampleSubmissionService {
             checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), modelingSubmission.getParticipation().getExercise().getId());
             // example submission does not need participation
             modelingSubmission.setParticipation(null);
-            newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission));
+            newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission, new HashMap<>()));
         }
         if (exercise instanceof TextExercise) {
             TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(submissionId);

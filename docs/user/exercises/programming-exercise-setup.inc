@@ -160,7 +160,7 @@ Exercise Creation
       Refer to the :ref:`programming exercise features <programming_features>` for an overview of the supported features for each template.
     - **Project Type:** Determines the project structure of the template. Not available for all programming languages.
     - **With exemplary dependency:** Adds an external Apache commons-lang dependency to the generated project as an example
-    how maven dependencies should be used with Artemis exercises. Only available for Java exercises.
+      how maven dependencies should be used with Artemis exercises. Only available for Java exercises.
     - **Package Name:** The package name used for this exercise. Not available for all programming languages.
 
     |

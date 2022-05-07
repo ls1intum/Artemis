@@ -1,6 +1,6 @@
 .sa-question {
-    background: #fefefe;
-    border: 1px solid lightgrey;
+    background: var(--quiz-question-background);
+    border: 1px solid var(--quiz-question-border-color);
     box-sizing: border-box;
     margin-bottom: 18px;
     padding: 20px;
@@ -21,9 +21,27 @@
             position: relative;
 
             &__input {
-                border: 1px solid #ced4da;
+                border: 1px solid var(--sa-question-container-input-border);
+                background-color: var(--sa-question-container-input-background);
+                color: var(--bs-body-color);
                 line-height: 35px;
                 margin-bottom: 10px;
+            }
+
+            &__input.invalid {
+                background: var(--sa-question-input-invalid-background);
+            }
+
+            &__input.wrong {
+                background: var(--sa-question-input-wrong-background);
+            }
+
+            &__input.correct {
+                background: var(--sa-question-input-correct-background);
+            }
+
+            &__input.completely-correct {
+                background: var(--sa-question-input-completely-correct-background);
             }
         }
     }

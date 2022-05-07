@@ -15,7 +15,7 @@
                     <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeStandardCategories' | artemisTranslate }}</b>
                 </li>
                 <li>
-                    <input class="ms-2" (change)="toggleNotIncludedInScoreExercises()" [checked]="currentlyHidingNotIncludedInScoreExercises" type="checkbox" />
+                    <input class="ms-2 form-check-input" (change)="toggleNotIncludedInScoreExercises()" [checked]="currentlyHidingNotIncludedInScoreExercises" type="checkbox" />
                     <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises">Hide Optional</span>
                 </li>
                 <li class="mt-1 mb-1">
@@ -23,19 +23,19 @@
                 </li>
                 <li>
                     <label class="mb-1">
-                        <input class="ms-2" (change)="toggleAllCategories()" [checked]="allCategoriesSelected" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="allCategoriesSelected" type="checkbox" />
                         <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
                     </label>
                 </li>
                 <li>
                     <label>
-                        <input class="ms-2" (change)="toggleExercisesWithNoCategory()" [checked]="includeExercisesWithNoCategory" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleExercisesWithNoCategory()" [checked]="includeExercisesWithNoCategory" type="checkbox" />
                         <span class="ms-2">{{ 'artemisApp.courseOverview.statistics.exercisesWithNoCategories' | artemisTranslate }}</span>
                     </label>
                 </li>
                 <li *ngFor="let category of exerciseCategories">
                     <label>
-                        <input class="ms-2" (change)="toggleCategory(category)" [checked]="exerciseCategoryFilters.get(category)" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleCategory(category)" [checked]="exerciseCategoryFilters.get(category)" type="checkbox" />
                         <span class="ms-2">{{ category }}</span>
                     </label>
                 </li>

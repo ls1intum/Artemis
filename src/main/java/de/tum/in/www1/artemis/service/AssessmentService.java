@@ -259,9 +259,8 @@ public class AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userRepository.getUser();
         result.setAssessor(user);
-        // first save the feedback (that is not yet in the database) to prevent null index exception
-        var savedFeedbackList = feedbackRepository.saveFeedbacks(feedbackList);
-        result.updateAllFeedbackItems(savedFeedbackList, false);
+
+        result.updateAllFeedbackItems(feedbackList, false);
         // Note: this boolean flag is only used for programming exercises
         result.setHasFeedback(false);
         result.determineAssessmentType();

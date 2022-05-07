@@ -49,6 +49,7 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/submission-policy.model';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -98,6 +99,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockDirective(CustomMaxDirective),
                 MockDirective(TranslateDirective),
                 MockDirective(NgbTooltip),
+                MockComponent(ModePickerComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
