@@ -104,7 +104,7 @@ jobs:
       matrix:
         include:
         - image_name: "artemis-service"
-          dockerfile_path: "src/main/docker"
+          dockerfile_path: "src/main/docker/microservices"
           war_name: "Artemis.war"
         - image_name: "artemis-gateway"
           dockerfile_path: "gateway/src/main/docker"
