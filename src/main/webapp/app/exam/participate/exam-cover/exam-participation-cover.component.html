@@ -39,7 +39,8 @@
                 type="checkbox"
                 id="confirmBox"
                 (click)="updateConfirmation()"
-                class="form-check-input ms-0"
+                class="form-check-input"
+                [class.ms-0]="(this.exam.confirmationStartText?.length ?? '') == 0"
                 [required]="inserted"
                 [disabled]="startView ? waitingForExamStart : false"
             />
