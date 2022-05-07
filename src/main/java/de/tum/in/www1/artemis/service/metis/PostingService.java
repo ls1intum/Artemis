@@ -15,6 +15,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 public abstract class PostingService {
@@ -83,6 +85,22 @@ public abstract class PostingService {
             postsPage = new PageImpl<>(processedPosts);
         }
         return postsPage;
+    }
+
+    /**
+     * Helper method to prepare the post included in the websocket message and initiate the broadcasting
+     *
+     * @param updatedAnswerPost answer post that was updated
+     * @param course            course the answer post belongs to
+     */
+    protected void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
+        // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
+        Post updatedPost = updatedAnswerPost.getPost();
+        // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
+        // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
+        updatedPost.removeAnswerPost(updatedAnswerPost);
+        updatedPost.addAnswerPost(updatedAnswerPost);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
     }
 
     /**

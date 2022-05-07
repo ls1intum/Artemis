@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.message;
+package de.tum.in.www1.artemis.web.rest.metis;
 
 import java.net.URI;
 import java.net.URISyntaxException;

@@ -63,6 +63,7 @@ public class ReactionService {
         // we query the repository dependent on the type of posting and update this posting
         Reaction savedReaction;
         if (posting instanceof Post) {
+            // TODO extend for messages
             Post post = postService.findById(posting.getId());
             reaction.setPost(post);
             // save reaction
@@ -71,6 +72,7 @@ public class ReactionService {
             postService.updateWithReaction(post, reaction, courseId);
         }
         else {
+            // TODO extend for answerMessages
             AnswerPost answerPost = answerPostService.findById(posting.getId());
             reaction.setAnswerPost(answerPost);
             // save reaction

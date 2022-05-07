@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 
-public class MessagePostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private PostRepository postRepository;
