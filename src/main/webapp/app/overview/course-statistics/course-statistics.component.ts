@@ -31,7 +31,7 @@ type ExerciseTypeMap = {
 };
 
 interface YourOverallPointsEntry extends NgxChartsSingleSeriesDataEntry {
-    label: string;
+    color: string;
 }
 
 enum ChartBarTitle {
@@ -94,6 +94,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     // presentation score
     overallPresentationScore = 0;
     presentationScoresPerExercise: ExerciseTypeMap;
+
+    doughnutChartColors: string[] = [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, GraphColors.RED];
 
     public exerciseTitles: object = {
         quiz: {
@@ -191,11 +193,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
         private navigationUtilService: ArtemisNavigationUtilService,
-    ) {
-        this.translateService.onLangChange.subscribe(() => {
-            this.updateDoughnutChartLegend();
-        });
-    }
+    ) {}
 
     ngOnInit() {
         // Note: due to lazy loading and router outlet, we use parent 2x here
@@ -425,9 +423,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         scores.forEach((score, index) => {
             if (score > 0) {
                 this.ngxDoughnutData.push({
-                    name: this.translateService.instant('artemisApp.courseOverview.statistics.' + this.labels[index]),
+                    name: 'artemisApp.courseOverview.statistics.' + this.labels[index],
                     value: score,
-                    label: this.labels[index],
+                    color: this.doughnutChartColors[index],
                 });
                 this.ngxDoughnutColor.domain.push(this.doughnutChartColors[index]);
             }
@@ -864,17 +862,5 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         Finally, we need to add space for the x axis and its ticks
          */
         return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
-    }
-
-    /**
-     * Helper method to ensure translation sensitivity of chart legend
-     * Updates the name of every chart entity to the current language settings if changes occur.
-     * @private
-     */
-    private updateDoughnutChartLegend(): void {
-        this.ngxDoughnutData.forEach((dataEntry) => {
-            dataEntry.name = this.translateService.instant('artemisApp.courseOverview.statistics.' + dataEntry.label);
-        });
-        this.ngxDoughnutData = [...this.ngxDoughnutData];
     }
 }

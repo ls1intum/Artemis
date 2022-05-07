@@ -10,6 +10,10 @@
     height: 350px;
 }
 
+.line-chart-container {
+    width: 75%;
+}
+
 :host::ng-deep .ngx-charts-axis-label {
     font-weight: bolder;
 }
@@ -28,12 +32,17 @@
         :hover {
             color: var(--primary) !important;
         }
+
+        .legend-label-color {
+            width: 20px;
+            height: 20px;
+        }
     }
 
     .legend-label-text {
         font-weight: bolder;
-        font-size: 13px;
-        line-height: 17px;
+        font-size: 1.125rem;
+        line-height: 21px;
     }
 }
 
@@ -44,6 +53,10 @@
 }
 
 @media (max-width: 1300px) {
+    .line-chart-container {
+        width: 100% !important;
+    }
+
     :host::ng-deep.ngx-charts-outer {
         display: flex;
         flex-direction: column;

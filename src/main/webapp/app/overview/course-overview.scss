@@ -153,12 +153,22 @@ Course Info Bar
     .chart-container {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-end;
         margin-bottom: 20px;
 
         .chart-text {
-            margin-top: -30px;
+            margin-right: 130px;
             position: absolute;
+        }
+    }
+
+    .color-legend-container {
+        margin-bottom: 40px;
+
+        .color-legend-entry {
+            display: inline-flex;
+            align-items: center;
+            width: 100%;
         }
     }
 }
@@ -211,12 +221,13 @@ Course Info Bar
 }
 
 .color-indicator {
-    height: 25px;
-    width: 25px;
+    height: 20px;
+    width: 20px;
     background-color: #0f6ab4;
     position: relative;
-    top: -3px;
-    margin-right: 15px;
+    top: -4px;
+    margin-right: 5px;
+    border-radius: 3px;
 }
 
 canvas#complete-chart {
@@ -249,36 +260,6 @@ canvas#complete-chart {
 .btn-success,
 .btn-success:hover {
     color: #fff;
-}
-
-:host::ng-deep.legend-wrap {
-    display: flex;
-    justify-content: center;
-
-    .legend-labels {
-        max-width: 350px;
-        background-color: transparent !important;
-
-        .legend-label {
-            color: $artemis-dark;
-
-            :hover {
-                color: $primary !important;
-            }
-
-            .legend-label-color {
-                height: 1.2rem;
-                width: 1.2rem;
-            }
-
-            .legend-label-text {
-                font-weight: bolder;
-                font-size: 1.125rem;
-                overflow: visible;
-                line-height: 1.2rem;
-            }
-        }
-    }
 }
 
 @media (max-width: 768px) {
