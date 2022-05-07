@@ -56,7 +56,7 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
     }
 
     public ExamMonitoringDistributedCache(Long examId) {
-        this(examId, getEmptyExamActivitySaveHandler(), null);
+        this(examId, getEmptyExamActivitySaveHandler());
     }
 
     @Override
@@ -81,7 +81,12 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
 
     @Override
     void setExamActivitySaveHandler(List<ScheduledTaskHandler> examActivitySaveHandler) {
-        this.examActivitySaveHandler = examActivitySaveHandler;
+        if (SUPPORTED_LIST_CLASSES.contains(examActivitySaveHandler.getClass())) {
+            this.examActivitySaveHandler = examActivitySaveHandler;
+        }
+        else {
+            this.examActivitySaveHandler = new ArrayList<>(examActivitySaveHandler);
+        }
     }
 
     @Override
@@ -113,7 +118,7 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
         @Override
         public void write(ObjectDataOutput out, ExamMonitoringDistributedCache examMonitoringDistributedCache) throws IOException {
             out.writeLong(examMonitoringDistributedCache.getExamId());
-            out.writeObject(examMonitoringDistributedCache.getExamActivitySaveHandler());
+            out.writeObject(examMonitoringDistributedCache.examActivitySaveHandler);
         }
 
         @Override

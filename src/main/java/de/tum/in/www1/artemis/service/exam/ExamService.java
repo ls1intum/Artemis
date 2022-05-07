@@ -804,8 +804,8 @@ public class ExamService {
                 .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
     }
 
-    public List<Exam> findAllExamsNotStartedOrEnded() {
-        return examRepository.findAll().stream().filter(exam -> !exam.isStarted() || !exam.isAfterLatestStudentExamEnd()).toList();
+    public List<Exam> findAllCurrentAndUpcomingExams() {
+        return examRepository.findAllCurrentAndUpcomingExams();
     }
 
     public Exam findByIdOrElseThrow(Long examId) {

@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.Config;
@@ -18,6 +20,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
@@ -57,6 +60,13 @@ public class ExamMonitoringScheduleService {
         config.getScheduledExecutorConfig(Constants.HAZELCAST_MONITORING_SCHEDULER).setPoolSize(16).setCapacity(1000).setDurability(1);
     }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // activate Exam Monitoring Service
+        SecurityUtils.setAuthorizationObject();
+        startSchedule(5 * 1000); // every 5 seconds
+    }
+
     public void updateExamActivity(Long examId, long studentExamId, ExamActivity examActivity) {
         if (examActivity != null) {
             ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().put(studentExamId, examActivity);
@@ -87,7 +97,7 @@ public class ExamMonitoringScheduleService {
             }
 
             // TODO: Add filter for Exams
-            List<Exam> exams = examService.findAllExamsNotStartedOrEnded();
+            List<Exam> exams = examService.findAllCurrentAndUpcomingExams();
             log.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
             for (Exam exam : exams) {
                 scheduleExamActivitySave(exam.getId());
@@ -130,21 +140,19 @@ public class ExamMonitoringScheduleService {
         cancelExamActivitySave(examId);
         // reload from database to make sure there are no proxy objects
         final var exam = examService.findByIdOrElseThrow(examId);
-        if (!exam.isAfterLatestStudentExamEnd() || !exam.isStarted()) {
-            try {
-                // TODO: Add longest possible working time
-                long delay = Duration.between(ZonedDateTime.now(), exam.getEndDate()).toMillis();
-                var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamActivitySaveTask(examId), delay, TimeUnit.MILLISECONDS);
-                // save scheduled future in HashMap
-                examCache.performCacheWrite(examId, examMonitoringCache -> {
-                    ((ExamMonitoringCache) examMonitoringCache).setExamActivitySaveHandler(List.of(scheduledFuture.getHandler()));
-                    return examMonitoringCache;
-                });
-            }
-            catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-                log.debug("Exam {} monitoring save task already registered", examId);
-                // this is expected if we run on multiple nodes
-            }
+        try {
+            // TODO: Add longest possible working time
+            long delay = Duration.between(ZonedDateTime.now(), exam.getEndDate()).toMillis();
+            var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamActivitySaveTask(examId), delay, TimeUnit.MILLISECONDS);
+            // save scheduled future in HashMap
+            examCache.performCacheWrite(examId, examMonitoringCache -> {
+                ((ExamMonitoringCache) examMonitoringCache).setExamActivitySaveHandler(List.of(scheduledFuture.getHandler()));
+                return examMonitoringCache;
+            });
+        }
+        catch (@SuppressWarnings("unused") DuplicateTaskException e) {
+            log.debug("Exam {} monitoring save task already registered", examId);
+            // this is expected if we run on multiple nodes
         }
     }
 
