@@ -314,6 +314,12 @@
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"
             },
+            "monitoring": {
+                "enable": {
+                    "title": "Enable Exam Monitoring",
+                    "description": "TODO: Exam Monitoring (English)"
+                }
+            },
             "testRun": {
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",

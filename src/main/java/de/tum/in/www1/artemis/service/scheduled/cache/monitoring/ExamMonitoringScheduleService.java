@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.IAtomicReference;
 import com.hazelcast.scheduledexecutor.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -34,16 +33,11 @@ public class ExamMonitoringScheduleService {
 
     private final IScheduledExecutorService threadPoolTaskScheduler;
 
-    private final IAtomicReference<ScheduledTaskHandler> scheduledProcessExamActivity;
-
     private final ExamService examService;
 
     private final ExamActivityService examActivityService;
 
-    private static final String HAZELCAST_PROCESS_CACHE_HANDLER = ExamProcessCacheTask.HAZELCAST_PROCESS_CACHE_TASK + "-handler";
-
     public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamService examService, ExamActivityService examActivityService) {
-        this.scheduledProcessExamActivity = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_MONITORING_SCHEDULER);
         this.examCache = new ExamCache(hazelcastInstance);
         this.examService = examService;
@@ -64,7 +58,7 @@ public class ExamMonitoringScheduleService {
     public void applicationReady() {
         // activate Exam Monitoring Service
         SecurityUtils.setAuthorizationObject();
-        startSchedule(5 * 1000); // every 5 seconds
+        startSchedule();
     }
 
     public void updateExamActivity(Long examId, long studentExamId, ExamActivity examActivity) {
@@ -84,60 +78,28 @@ public class ExamMonitoringScheduleService {
         }
     }
 
-    public void startSchedule(long delayInMillis) {
-        if (scheduledProcessExamActivity.isNull()) {
-            try {
-                var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamProcessCacheTask(), delayInMillis, TimeUnit.MILLISECONDS);
-                scheduledProcessExamActivity.set(scheduledFuture.getHandler());
-                log.info("ExamMonitoringScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
-            }
-            catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-                log.warn("Exam process cache task already registered");
-                // this is expected if we run on multiple nodes
-            }
-
-            // TODO: Add filter for Exams
-            List<Exam> exams = examService.findAllCurrentAndUpcomingExams();
-            log.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
-            for (Exam exam : exams) {
+    public void startSchedule() {
+        // TODO: Add filter for Exams
+        List<Exam> exams = examService.findAllCurrentAndUpcomingExams();
+        log.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
+        for (Exam exam : exams) {
+            cancelExamActivitySave(exam.getId());
+            if (exam.isMonitoring()) {
                 scheduleExamActivitySave(exam.getId());
             }
-        }
-        else {
-            log.info("Cannot start exam monitoring schedule service, it is already RUNNING");
         }
     }
 
     public void stopSchedule() {
-        if (!scheduledProcessExamActivity.isNull()) {
-            log.info("Try to stop Exam Monitoring Schedule Service");
-            var scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(scheduledProcessExamActivity.get());
-            try {
-                // if the task has been disposed, this will throw a StaleTaskException
-                boolean cancelSuccess = scheduledFuture.cancel(false);
-                scheduledFuture.dispose();
-                scheduledProcessExamActivity.set(null);
-                log.info("Stop Exam Monitoring Schedule Service was successful: {}", cancelSuccess);
-            }
-            catch (@SuppressWarnings("unused") StaleTaskException e) {
-                log.info("Stop Exam Monitoring Schedule Service already disposed/cancelled");
-                // has already been disposed (sadly there is no method to check that)
-            }
-            for (Cache cachedExamMonitoring : examCache.getAllCaches()) {
-                if (((ExamMonitoringCache) cachedExamMonitoring).getExamActivitySaveHandler() != null)
-                    cancelExamActivitySave(((ExamMonitoringCache) cachedExamMonitoring).getExamId());
-            }
-            threadPoolTaskScheduler.shutdown();
-            threadPoolTaskScheduler.destroy();
+        for (Cache cachedExamMonitoring : examCache.getAllCaches()) {
+            if (((ExamMonitoringCache) cachedExamMonitoring).getExamActivitySaveHandler() != null)
+                cancelExamActivitySave(((ExamMonitoringCache) cachedExamMonitoring).getExamId());
         }
-        else {
-            log.debug("Cannot stop Exam Monitoring Schedule Service, it was already STOPPED");
-        }
+        threadPoolTaskScheduler.shutdown();
+        threadPoolTaskScheduler.destroy();
     }
 
     public void scheduleExamActivitySave(final long examId) {
-        // first remove and cancel old scheduledFuture if it exists
-        cancelExamActivitySave(examId);
         // reload from database to make sure there are no proxy objects
         final var exam = examService.findByIdOrElseThrow(examId);
         try {

@@ -36,6 +36,12 @@ public class Exam extends DomainObject {
     private boolean testExam;
 
     /**
+     * This boolean indicates weather monitoring is enabled
+     */
+    @Column(name = "monitoring")
+    private boolean monitoring;
+
+    /**
      * student can see the exam in the UI from this date onwards
      */
     @Column(name = "visible_date", nullable = false)
@@ -157,6 +163,14 @@ public class Exam extends DomainObject {
 
     public void setTestExam(boolean testExam) {
         this.testExam = testExam;
+    }
+
+    public boolean isMonitoring() {
+        return monitoring;
+    }
+
+    public void setMonitoring(boolean monitoring) {
+        this.monitoring = monitoring;
     }
 
     @NotNull

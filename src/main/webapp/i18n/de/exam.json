@@ -313,6 +313,12 @@
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
             },
+            "monitoring": {
+                "enable": {
+                    "title": "Aktiviere die Klausur Überwachung",
+                    "description": "TODO: Exam Monitoring (German)"
+                }
+            },
             "testRun": {
                 "testRun": "Testlauf",
                 "title": "Testlaufverwaltung: ",
