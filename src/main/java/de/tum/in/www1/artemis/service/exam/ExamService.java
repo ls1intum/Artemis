@@ -803,4 +803,12 @@ public class ExamService {
         exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ModelingExercise).map(Exercise::getId)
                 .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
     }
+
+    public List<Exam> findAllExamsNotStartedOrEnded() {
+        return examRepository.findAll().stream().filter(exam -> !exam.isStarted() || !exam.isAfterLatestStudentExamEnd()).toList();
+    }
+
+    public Exam findByIdOrElseThrow(Long examId) {
+        return examRepository.findByIdElseThrow(examId);
+    }
 }

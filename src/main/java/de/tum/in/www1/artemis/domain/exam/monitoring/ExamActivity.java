@@ -27,7 +27,7 @@ public class ExamActivity extends DomainObject {
     @JsonBackReference
     private StudentExam studentExam;
 
-    @OneToMany(mappedBy = "examActivity", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "examActivity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference
     private Set<ExamAction> examActions = new HashSet<>();

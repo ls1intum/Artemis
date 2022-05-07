@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam.monitoring;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
@@ -16,5 +18,9 @@ public class ExamActivityService {
 
     public ExamActivity save(ExamActivity examActivity) {
         return this.examActivityRepository.save(examActivity);
+    }
+
+    public List<ExamActivity> saveAll(Iterable<ExamActivity> entities) {
+        return examActivityRepository.saveAll(entities);
     }
 }

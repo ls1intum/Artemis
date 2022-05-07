@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
@@ -32,6 +35,17 @@ public class EmptyExamMonitoringCache extends ExamMonitoringCache {
     @Override
     Map<Long, ExamActivity> getActivities() {
         return Map.of();
+    }
+
+    @Override
+    List<ScheduledTaskHandler> getExamActivitySaveHandler() {
+        return List.of();
+    }
+
+    @Override
+    void setExamActivitySaveHandler(List<ScheduledTaskHandler> examActivitySaveHandler) {
+        log.error("EmptyExamMonitoringCache cannot have tasks");
+        throwModificationAttemptException();
     }
 
     @Override

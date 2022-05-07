@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -12,10 +12,12 @@ import com.hazelcast.config.Config;
 import com.hazelcast.config.SerializerConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
+import com.hazelcast.internal.serialization.impl.SerializationServiceV1;
 import com.hazelcast.map.IMap;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.StreamSerializer;
+import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -27,18 +29,34 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
 
     private static final String HAZELCAST_CACHE_ACTIVITIES = "-activities";
 
+    /**
+     * All {@link List} classes that are supported by Hazelcast {@link SerializationServiceV1}
+     */
+    private static final Set<Class<?>> SUPPORTED_LIST_CLASSES = Set.of(ArrayList.class, LinkedList.class, CopyOnWriteArrayList.class);
+
+    /**
+     * Make sure this is a class of SUPPORTED_LIST_CLASSES to make easy serialization possible, see
+     * {@link SerializationServiceV1}
+     */
+    List<ScheduledTaskHandler> examActivitySaveHandler;
+
     private transient Exam exam;
 
     private transient IMap<Long, ExamActivity> activities;
 
-    public ExamMonitoringDistributedCache(Long examId, Exam exam) {
+    public ExamMonitoringDistributedCache(Long examId, List<ScheduledTaskHandler> examActivitySaveHandler, Exam exam) {
         super(Objects.requireNonNull(examId, "examId must not be null"));
         setExam(exam);
+        setExamActivitySaveHandler(examActivitySaveHandler);
         log.debug("Creating new ExamMonitoringDistributedCache, id {}", getExamId());
     }
 
+    public ExamMonitoringDistributedCache(Long examId, List<ScheduledTaskHandler> examActivitySaveHandler) {
+        this(examId, examActivitySaveHandler, null);
+    }
+
     public ExamMonitoringDistributedCache(Long examId) {
-        this(examId, null);
+        this(examId, getEmptyExamActivitySaveHandler(), null);
     }
 
     @Override
@@ -54,6 +72,16 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
     @Override
     Map<Long, ExamActivity> getActivities() {
         return activities;
+    }
+
+    @Override
+    List<ScheduledTaskHandler> getExamActivitySaveHandler() {
+        return examActivitySaveHandler;
+    }
+
+    @Override
+    void setExamActivitySaveHandler(List<ScheduledTaskHandler> examActivitySaveHandler) {
+        this.examActivitySaveHandler = examActivitySaveHandler;
     }
 
     @Override
@@ -75,7 +103,6 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
         activities = hazelcastInstance.getMap(Constants.HAZELCAST_MONITORING_PREFIX + getExamId() + HAZELCAST_CACHE_ACTIVITIES);
     }
 
-    // TODO - Check why is this also needed in this case -> java.lang.IllegalArgumentException: argument 'className' can't be null
     static class ExamMonitoringDistributedCacheStreamSerializer implements StreamSerializer<ExamMonitoringDistributedCache> {
 
         @Override
@@ -86,13 +113,16 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
         @Override
         public void write(ObjectDataOutput out, ExamMonitoringDistributedCache examMonitoringDistributedCache) throws IOException {
             out.writeLong(examMonitoringDistributedCache.getExamId());
+            out.writeObject(examMonitoringDistributedCache.getExamActivitySaveHandler());
         }
 
         @Override
         public @NotNull ExamMonitoringDistributedCache read(ObjectDataInput in) throws IOException {
             Long examId = in.readLong();
+            List<ScheduledTaskHandler> examActivitySaveHandler = in.readObject();
+
             // see class JavaDoc why the exercise is null here.
-            return new ExamMonitoringDistributedCache(examId, null);
+            return new ExamMonitoringDistributedCache(examId, examActivitySaveHandler, null);
         }
     }
 
