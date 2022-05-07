@@ -52,7 +52,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-navbar',
