@@ -158,7 +158,6 @@ public class CacheConfiguration {
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
 
         QuizScheduleService.configureHazelcast(config);
-        // TODO: Fix issue with invalid class name due to serialisation
         ExamMonitoringScheduleService.configureHazelcast(config);
 
         return Hazelcast.newHazelcastInstance(config);

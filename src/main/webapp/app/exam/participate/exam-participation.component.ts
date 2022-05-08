@@ -200,7 +200,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
             // Monitor connection update
             if (this.studentExam !== undefined) {
-                this.examMonitoringService.handleActionEvent(this.studentExam, new ConnectionUpdatedAction(status.connected));
+                this.examMonitoringService.handleActionEvent(this.studentExam, new ConnectionUpdatedAction(status.connected), this.exam.monitoring!);
             }
         });
     }
@@ -244,7 +244,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExam = studentExam;
 
             // Monitor exam start
-            this.examMonitoringService.handleActionEvent(studentExam, new StartedExamAction(studentExam.examSessions?.last()?.id));
+            this.examMonitoringService.handleActionEvent(studentExam, new StartedExamAction(studentExam.examSessions?.last()?.id), this.exam.monitoring!);
 
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
             const exercises: Exercise[] = this.studentExam.exercises!;
@@ -405,7 +405,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * called when exam ended because the working time is over
      */
     examEnded() {
-        this.examMonitoringService.handleActionEvent(this.studentExam, new EndedExamAction());
+        this.examMonitoringService.handleActionEvent(this.studentExam, new EndedExamAction(), this.exam.monitoring!);
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
@@ -421,11 +421,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
-            this.examMonitoringService.handleActionEvent(this.studentExam, new HandedInEarlyAction());
+            this.examMonitoringService.handleActionEvent(this.studentExam, new HandedInEarlyAction(), this.exam.monitoring!);
         } else if (this.studentExam?.exercises && this.activeExamPage) {
             const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
-            this.examMonitoringService.handleActionEvent(this.studentExam, new ContinueAfterHandedInEarlyAction());
+            this.examMonitoringService.handleActionEvent(this.studentExam, new ContinueAfterHandedInEarlyAction(), this.exam.monitoring!);
         }
     }
 
@@ -496,7 +496,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
-        this.examMonitoringService.handleActionEvent(this.studentExam, new SwitchedExerciseAction(exerciseChange.exercise?.id));
+        this.examMonitoringService.handleActionEvent(this.studentExam, new SwitchedExerciseAction(exerciseChange.exercise?.id), this.exam.monitoring!);
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -638,7 +638,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // based on the submissions that need to be saved and the exercise, we perform different actions
         if (forceSave || !this.disconnected) {
             // We synchronize the user actions with the server and then delete them on the client, as they are no longer used
-            if (this.studentExam.examActivity !== undefined) {
+            if (this.exam.monitoring && this.studentExam.examActivity !== undefined) {
                 const actionsToSync = this.studentExam.examActivity.examActions;
                 this.examMonitoringService.syncActions(actionsToSync, this.courseId, this.examId, this.studentExam.id!).subscribe({
                     // After successful synchronization we can delete the actions -> filter in case of new actions during the synchronization
@@ -685,14 +685,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     private onSaveSubmissionSuccess(submission: Submission, lastSavedForced: boolean, lastSavedAutomatically: boolean) {
         this.examParticipationService.setLastSaveFailed(false, this.courseId, this.examId);
-        this.examMonitoringService.handleActionEvent(this.studentExam, new SavedExerciseAction(lastSavedForced, submission.id, false, lastSavedAutomatically));
+        this.examMonitoringService.handleActionEvent(
+            this.studentExam,
+            new SavedExerciseAction(lastSavedForced, submission.id, false, lastSavedAutomatically),
+            this.exam.monitoring!,
+        );
         submission.isSynced = true;
         submission.submitted = true;
     }
 
     private onSaveSubmissionError(error: HttpErrorResponse, lastSavedForced: boolean, lastSavedAutomatically: boolean) {
         this.examParticipationService.setLastSaveFailed(true, this.courseId, this.examId);
-        this.examMonitoringService.handleActionEvent(this.studentExam, new SavedExerciseAction(lastSavedForced, undefined, true, lastSavedAutomatically));
+        this.examMonitoringService.handleActionEvent(this.studentExam, new SavedExerciseAction(lastSavedForced, undefined, true, lastSavedAutomatically), this.exam.monitoring!);
 
         if (error.status === 401) {
             // Unauthorized means the user needs to login to resume
