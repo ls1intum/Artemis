@@ -94,16 +94,16 @@
             .drop-location {
                 align-items: center;
                 border: 1px dashed mediumpurple;
-                background: rgba(255, 255, 255, 0.5);
                 cursor: move;
                 display: flex;
                 flex-direction: row;
                 justify-content: center;
                 position: absolute;
-                background: white;
+                background: var(--edit-quiz-q-dnd-drop-location-background);
+                color: var(--edit-quiz-q-dnd-drop-location-color);
 
                 &:hover {
-                    background: rgba(255, 255, 255, 0.8);
+                    background: var(--edit-quiz-q-dnd-drop-location-hover-bg);
                 }
             }
 

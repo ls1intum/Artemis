@@ -1,6 +1,6 @@
 <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.selectTests">Select the tests for which the covered lines are displayed:</span>
 <div *ngFor="let entry of displayedTestCaseNames | keyvalue" class="mt-2">
-    <input type="checkbox" [ngModel]="entry.value" (change)="changeReportsBySelectedTestCases(entry.key)" />
+    <input class="form-check-input" type="checkbox" [ngModel]="entry.value" (change)="changeReportsBySelectedTestCases(entry.key)" />
     <span>{{ entry.key }}</span>
 </div>
 <hr class="mt-2 mb-3" />

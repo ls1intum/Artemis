@@ -52,6 +52,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -60,6 +61,8 @@ import { Exercise } from 'app/entities/exercise.model';
 })
 export class NavbarComponent implements OnInit, OnDestroy {
     readonly SERVER_API_URL = SERVER_API_URL;
+
+    readonly Themes = Theme;
 
     inProduction: boolean;
     isNavbarCollapsed: boolean;
@@ -125,6 +128,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private lectureService: LectureService,
         private examService: ExamManagementService,
         private organisationService: OrganizationManagementService,
+        public themeService: ThemeService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;

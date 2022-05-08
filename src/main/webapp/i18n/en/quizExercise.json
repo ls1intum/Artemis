@@ -63,6 +63,7 @@
             "openForPractice": "Release For Practice",
             "startNow": "Start Now",
             "showNow": "Set Visible",
+            "endNow": "End Now",
             "duration": "Duration",
             "minutes": "minutes",
             "seconds": "seconds",
@@ -101,7 +102,11 @@
                 "wait": "Please wait until the quiz has ended to see your results.",
                 "result": "You completed the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
                 "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
-                "timeUntilPlannedStart": "Time until planned start:"
+                "timeUntilPlannedStart": "Time until planned start:",
+                "enterPassword": "Enter the password to join the quiz:",
+                "startNow": "Start your quiz run now",
+                "noMoreAttempts": "You have already used all your allowed attempts at this quiz.",
+                "alreadyAttempted": "You have already participated in this quiz."
             },
             "isSaving": "Saving answers...",
             "lastSaved": "Saved",
@@ -254,7 +259,18 @@
                 "explanationTitle": "Similarity",
                 "explanation": "Determines the required similarity between predefined solutions and student solutions in the evaluation for each spot. The value (between 50% and 100%) indicates whether only exactly correct answers (100%) are treated as correct or whether students can have typo(s) in their solutions. The lower the value is, the more typos are allowed in the student solutions (based on the Levenshtein distance https://en.wikipedia.org/wiki/Levenshtein_distance). Example: a value of 85% would allow 1 typo in a word with 5 characters and 2 typos in a word with 10 characters. Please use the preview feature for the quiz if you would like to try out different values."
             },
-            "matchingInfoModalTitle": "Answer Matching Options"
+            "matchingInfoModalTitle": "Answer Matching Options",
+            "quizMode": {
+                "title": "Batch Mode",
+                "synchronized": "Synchronized",
+                "batched": "Batched",
+                "individual": "Individual",
+                "explanation": "Batch Mode controls how students can participate in the quiz.\n\nSynchronized: There is exactly opportunity for all students to participate in the quiz at once.\nBatched: There are multiple opportunities for students to participate in the quiz by using a password.\nIndividual: Students can participate in the quiz by themselves at any time while it is released."
+            },
+            "addBatch": "Add Batch",
+            "join": "Join",
+            "joinFailed": "Unable to join the quiz.",
+            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date."
         }
     }
 }
