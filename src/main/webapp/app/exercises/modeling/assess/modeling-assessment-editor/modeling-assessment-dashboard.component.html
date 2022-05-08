@@ -5,7 +5,7 @@
     <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <h4>
-        <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 ? { color: '#5cb85c' } : { color: '#d86b1f' }">
+        <small [ngClass]="assessedSubmissions === submissions.length && submissions.length > 0 ? 'text-success' : 'text-warning'">
             <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of
             {{ submissions.length }} submitted models assessed)
         </small>
