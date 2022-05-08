@@ -84,12 +84,6 @@ FROM plagiarism_case pc
          LEFT JOIN jhi_user u on pc.created_by = u.login
 WHERE npc.post IS NOT NULL;
 
--- UPDATE PLAGIARISM CASES WITH RELATION TO POSTS
-UPDATE plagiarism_case
-    INNER JOIN post p on plagiarism_case.id = p.plagiarism_case_id
-    SET post_id = p.id
-WHERE plagiarism_case_id IS NOT NULL;
-
 -- MIGRATE OLD STUDENT STATEMENTS TO ANSWER POSTS
 INSERT INTO answer_post (post_id, author_id, content, creation_date, resolves_post)
 SELECT p.id as post_id, pc.student_id as author_id, npc.answer as content, current_date as creation_date, false as resolves_post
