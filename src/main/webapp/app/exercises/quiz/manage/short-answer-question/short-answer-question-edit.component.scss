@@ -34,12 +34,13 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 45%;
+        width: 60%;
+        border: 1px solid var(--sa-question-container-input-border);
 
         .slider-container {
             display: flex;
             justify-content: center;
-            width: 65%;
+            width: 20%;
 
             .slider-with-label {
                 width: 70%;
