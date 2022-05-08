@@ -10,7 +10,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
@@ -32,6 +32,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     examId: number;
     exerciseGroupId: number;
     private cancelConfirmationText: string;
+    assessedSubmissions: number;
 
     // Icons
     faSort = faSort;
@@ -105,6 +106,13 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
             .subscribe((submissions: FileUploadSubmission[]) => {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
+                this.assessedSubmissions = this.submissions.filter((submission) => {
+                    const result = getLatestSubmissionResult(submission);
+                    setLatestSubmissionResult(submission, result);
+                    return result?.rated;
+                }).length;
+                this.filteredSubmissions = submissions;
+                this.busy = false;
             });
     }
 
