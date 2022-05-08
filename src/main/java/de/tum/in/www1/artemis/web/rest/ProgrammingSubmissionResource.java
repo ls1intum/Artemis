@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -400,10 +397,10 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.hideDetails(programmingSubmission, user);
         // remove automatic results before sending to client
         if (correctionRound >= programmingSubmission.getManualResults().size()) {
-            programmingSubmission.setResults(List.of());
+            programmingSubmission.setResults(Collections.emptyList());
         }
         else {
-            programmingSubmission.setResults(List.of(programmingSubmission.getManualResults().get(correctionRound)));
+            programmingSubmission.setResults(Collections.singletonList(programmingSubmission.getManualResults().get(correctionRound)));
         }
         programmingSubmission.getParticipation().setResults(new HashSet<>(programmingSubmission.getResults()));
         return ResponseEntity.ok(programmingSubmission);
