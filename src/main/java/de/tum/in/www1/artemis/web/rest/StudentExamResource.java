@@ -271,8 +271,7 @@ public class StudentExamResource {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
-        StudentExam studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExamId, false)
-                .orElseThrow(() -> new EntityNotFoundException("StudentExam with id:" + studentExamId + "does not exist"));
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
 
@@ -285,8 +284,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("The requested exam does not belong to the requesting user");
         }
 
-        List<StudentParticipation> studentParticipations = studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
-        prepareStudentExamForConductionWithParticipations(request, user, studentExam, studentParticipations);
+        prepareStudentExamForConductionWithParticipations(request, user, studentExam);
 
         log.info("getStudentExamForTestExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 user.getLogin());
@@ -602,17 +600,22 @@ public class StudentExamResource {
      * @param request               the http request for the conduction
      * @param currentUser           the current user
      * @param studentExam           the student exam to be prepared
-     * @param studentParticipations the studentParticipations beloning to the exercises of the StudentExam
      */
-    private void prepareStudentExamForConductionWithParticipations(HttpServletRequest request, User currentUser, StudentExam studentExam,
-            List<StudentParticipation> studentParticipations) {
-        // 1st: Reload the Quiz-Exercises
+    private void prepareStudentExamForConductionWithParticipations(HttpServletRequest request, User currentUser, StudentExam studentExam) {
+        // 1st: Fix startedDate
+        ZonedDateTime startedDate = ZonedDateTime.now();
+
+        // 2nd: Set up new participations for the Exercises and set initialisationDate to the startedDate
+        List<StudentParticipation> studentParticipations = studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
+
+        // 3rd: Reload the Quiz-Exercises
+        // TODO: Replace
         loadExercisesForStudentExam(studentExam);
 
-        // 2nd: mark the student exam as started
+        // 4th: mark the student exam as started
         studentExam.setStarted(true);
         if (studentExam.getStartedDate() == null) {
-            studentExam.setStartedDate(ZonedDateTime.now());
+            studentExam.setStartedDate(startedDate);
         }
         studentExamRepository.save(studentExam);
 

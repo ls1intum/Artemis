@@ -413,14 +413,29 @@ public class StudentExamService {
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
-    public List<StudentParticipation> setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam) {
+    /**
+     * Method to set up new participations for a StudentExam of a TestExam.
+     *
+     * @param studentExam the studentExam for which the new participations should be set up
+     * @param startedDate the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
+     * @return a List with all generated participations
+     */
+    public List<StudentParticipation> setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        setUpExerciseParticipationsAndSubmissionsForTestExam(studentExam, generatedParticipations);
+        setUpExerciseParticipationsAndSubmissionsForTestExam(studentExam, generatedParticipations, startedDate);
         studentParticipationRepository.saveAll(generatedParticipations);
         return generatedParticipations;
     }
 
-    private void setUpExerciseParticipationsAndSubmissionsForTestExam(StudentExam studentExam, List<StudentParticipation> generatedParticipations) {
+    /**
+     * Helper-Method for the Set up process of an StudentExam for a TestExam. The method forces a new participation for every exercise,
+     * unlocks the Repository in case the StudentExam starts in less than 5mins and returns the generated participations
+     *
+     * @param studentExam             the studentExam for which the new participations should be set up
+     * @param generatedParticipations the list where the newly generated participations should be added
+     * @param startedDate             the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
+     */
+    private void setUpExerciseParticipationsAndSubmissionsForTestExam(StudentExam studentExam, List<StudentParticipation> generatedParticipations, ZonedDateTime startedDate) {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {
@@ -432,7 +447,7 @@ public class StudentExamService {
                     programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
                 }
                 // this will also create initial (empty) submissions for quiz, text, modeling and file upload
-                var participation = participationService.startExerciseWithNewParticipation(exercise, student, true);
+                var participation = participationService.startExerciseWithNewParticipation(exercise, student, true, startedDate);
                 generatedParticipations.add(participation);
                 // Unlock Repositories if the exam starts within 5 minutes
                 if (exercise instanceof ProgrammingExercise programmingExercise

@@ -96,8 +96,8 @@ public class ParticipationService {
      * This method is triggered when a student starts an exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
      * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
-     * @param exercise the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
-     * @param participant the user or team who starts the exercise
+     * @param exercise                the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
+     * @param participant             the user or team who starts the exercise
      * @param createInitialSubmission whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
      * @return the participation connecting the given exercise and user
      */
@@ -154,14 +154,26 @@ public class ParticipationService {
         return studentParticipationRepository.saveAndFlush(participation);
     }
 
-    public StudentParticipation startExerciseWithNewParticipation(Exercise exercise, Participant participant, boolean createInitialSubmission) {
+    /**
+     * This method is called when an StudentExam for a TestExam is set up for conduction. It creates a new Participation which connects the corresponding
+     * student and exercise. If an old participation for the given exercise and student exists, the old participation is set to ARCHIVED.
+     * Additionally, it configures repository / build plan related stuff for programming exercises. In the case of modeling or text exercises,
+     * it also initializes and stores the corresponding submission.
+     *
+     * @param exercise - the exercise for which a new participation is to be created
+     * @param participant - the user for which the new participation is to be created
+     * @param createInitialSubmission - whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
+     * @param startedDate - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
+     * @return a new participation for the given exercise and user
+     */
+    public StudentParticipation startExerciseWithNewParticipation(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime startedDate) {
         // common for all exercises
-        // Check if participation already exists
+        // Check if participation already exists and if yes, set existing participation to ARCHIVED
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+        optionalStudentParticipation.ifPresent(studentParticipation -> studentParticipation.setInitializationState(ARCHIVED));
+
+        // Create new Participation depending on exerciseType
         StudentParticipation participation;
-        // optionalStudentParticipation.ifPresent(studentParticipation -> studentParticipation.setInitializationState(ARCHIVED));
-        // if (optionalStudentParticipation.isEmpty()) {
-        // create a new participation only if no participation can be found
         if (exercise instanceof ProgrammingExercise) {
             participation = new ProgrammingExerciseStudentParticipation();
         }
@@ -171,27 +183,21 @@ public class ParticipationService {
         participation.setInitializationState(UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
+        // The initializationDate is set to the startedDate of the StudentExam, in order to link studentExam <-> participation
+        participation.setInitializationDate(startedDate);
         participation = studentParticipationRepository.saveAndFlush(participation);
-        /*
-         * } else { // make sure participation and exercise are connected participation = optionalStudentParticipation.get(); participation.setExercise(exercise); }
-         */
 
         if (exercise instanceof ProgrammingExercise) {
             // fetch again to get additional objects
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
             participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
         }
-        else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
+        else {
+            // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED) {
-                // || participation.getInitializationState() == FINISHED && !(exercise instanceof QuizExercise)) {
-                // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side.
-                // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
                 participation.setInitializationState(INITIALIZED);
             }
 
-            if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
-                participation.setInitializationDate(ZonedDateTime.now());
-            }
             // TODO: load submission with exercise for exam edge case:
             // clients creates missing participation for exercise, call on server succeeds, but response to client is lost
             // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
@@ -210,7 +216,7 @@ public class ParticipationService {
      * Start a programming exercise participation (which does not exist yet) by creating and configuring a student git repository (step 1) and a student build plan (step 2)
      * based on the templates in the given programming exercise
      *
-     * @param exercise the programming exercise that the currently active user (student) wants to start
+     * @param exercise      the programming exercise that the currently active user (student) wants to start
      * @param participation inactive participation
      * @return started participation
      */
@@ -240,8 +246,8 @@ public class ParticipationService {
      * If the participation had to be newly created or there were no submissions yet for the existing participation, a new submission is created with the given submission type.
      * For external submissions, the submission is assumed to be submitted immediately upon creation.
      *
-     * @param exercise the exercise for which to create a participation and submission
-     * @param participant the user/team for which to create a participation and submission
+     * @param exercise       the exercise for which to create a participation and submission
+     * @param participant    the user/team for which to create a participation and submission
      * @param submissionType the type of submission to create if none exist yet
      * @return the participation connecting the given exercise and user
      */
@@ -490,7 +496,7 @@ public class ParticipationService {
     /**
      * Get one participation (in any state) by its participant and exercise.
      *
-     * @param exercise the exercise for which to find a participation
+     * @param exercise    the exercise for which to find a participation
      * @param participant the short name of the team
      * @return the participation of the given team and exercise in any state
      */
@@ -510,7 +516,7 @@ public class ParticipationService {
      * Get one participation (in any state) by its student and exercise with all its results.
      *
      * @param exercise the exercise for which to find a participation
-     * @param username   the username of the student
+     * @param username the username of the student
      * @return the participation of the given student and exercise in any state
      */
     public Optional<StudentParticipation> findOneByExerciseAndStudentLoginAnyStateWithEagerResults(Exercise exercise, String username) {
@@ -530,7 +536,7 @@ public class ParticipationService {
      * Get one participation (in any state) by its student and exercise with eager submissions.
      *
      * @param exercise the exercise for which to find a participation
-     * @param username   the username of the student
+     * @param username the username of the student
      * @return the participation of the given student and exercise with eager submissions in any state
      */
     public Optional<StudentParticipation> findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
@@ -627,7 +633,7 @@ public class ParticipationService {
      * Only sets individual due dates if the exercise has a due date and the
      * individual due date is after this regular due date.
      *
-     * @param exercise the {@code participations} belong to.
+     * @param exercise       the {@code participations} belong to.
      * @param participations for which the individual due date should be updated.
      * @return all participations where the individual due date actually changed.
      */
@@ -730,8 +736,8 @@ public class ParticipationService {
     /**
      * Delete all participations belonging to the given exercise
      *
-     * @param exerciseId the id of the exercise
-     * @param deleteBuildPlan specify if build plan should be deleted
+     * @param exerciseId       the id of the exercise
+     * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
     @Transactional // ok
@@ -746,8 +752,8 @@ public class ParticipationService {
     /**
      * Delete all participations belonging to the given team
      *
-     * @param teamId the id of the team
-     * @param deleteBuildPlan specify if build plan should be deleted
+     * @param teamId           the id of the team
+     * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
     @Transactional // ok
