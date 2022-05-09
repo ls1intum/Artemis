@@ -152,7 +152,7 @@
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
                 "runTestsAfterDueDate": "Testdurchlauf nach Einreichungsfrist:",
-                "complaintsEnabled": "Beschwerde nach Einreichung möglich:",
+                "complaintDeadline": "Beschwerdefrist:",
                 "categories": "Kategorien:",
                 "tags": "Tags:",
                 "type": "Typ:",

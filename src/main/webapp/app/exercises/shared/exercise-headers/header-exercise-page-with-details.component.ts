@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, getCourseFromExercise, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
@@ -16,7 +16,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
 })
-export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit {
+export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly getIcon = getIcon;
@@ -37,19 +37,13 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public dueDate?: dayjs.Dayjs;
     public programmingExercise?: ProgrammingExercise;
     public course: Course;
+    public individualComplaintDeadline?: dayjs.Dayjs;
 
     icon: IconProp;
 
     // Icons
     faArrowLeft = faArrowLeft;
     faQuestionCircle = faQuestionCircle;
-
-    ngOnInit(): void {
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.programmingExercise = this.exercise as ProgrammingExercise;
-        }
-        this.course = getCourseFromExercise(this.exercise)!;
-    }
 
     /**
      * Sets the status badge and categories of the exercise on changes
@@ -70,6 +64,11 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         }
 
         this.setExerciseStatusBadge();
+
+        this.programmingExercise = this.exercise.type === ExerciseType.PROGRAMMING ? (this.exercise as ProgrammingExercise) : undefined;
+
+        this.course = getCourseFromExercise(this.exercise)!;
+        this.individualComplaintDeadline = this.getIndividualComplaintDueDate();
     }
 
     private setExerciseStatusBadge(): void {
@@ -86,5 +85,23 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         if (exerciseType) {
             this.icon = getIcon(exerciseType) as IconProp;
         }
+    }
+
+    private getIndividualComplaintDueDate(): dayjs.Dayjs | undefined {
+        const assessmentDueDate = this.exercise.assessmentDueDate;
+        if (!assessmentDueDate) {
+            return undefined;
+        }
+        const lastResult = this.studentParticipation?.results?.last();
+        const now = dayjs();
+
+        let complaintDueDate;
+        if (!lastResult || !lastResult?.rated) {
+            complaintDueDate = assessmentDueDate.isBefore(now) ? now : assessmentDueDate;
+        } else {
+            complaintDueDate = assessmentDueDate.isBefore(lastResult.completionDate) ? lastResult.completionDate! : assessmentDueDate;
+        }
+
+        return complaintDueDate.add(this.course.maxComplaintTimeDays!, 'days');
     }
 }

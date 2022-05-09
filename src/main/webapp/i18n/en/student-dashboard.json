@@ -154,7 +154,7 @@
             "exerciseDetails": {
                 "dueDate": "Due date:",
                 "runTestsAfterDueDate": "Tests run after due date:",
-                "complaintsEnabled": "Complaint after due date possible:",
+                "complaintDeadline": "Complaint deadline:",
                 "categories": "Categories:",
                 "tags": "Tags:",
                 "type": "Type:",
