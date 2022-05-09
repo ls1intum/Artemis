@@ -124,11 +124,10 @@ public class NotificationResource {
      * @param notification the notification to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated notification, or with status 400 (Bad Request) if the notification is not valid, or with status 500
      *         (Internal Server Error) if the notification couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("notifications")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Notification> updateNotification(@RequestBody Notification notification) throws URISyntaxException {
+    public ResponseEntity<Notification> updateNotification(@RequestBody Notification notification) {
         log.debug("REST request to update Notification : {}", notification);
         if (notification.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");

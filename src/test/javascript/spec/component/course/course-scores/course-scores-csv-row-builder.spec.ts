@@ -1,12 +1,13 @@
-import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { CsvDecimalSeparator } from 'app/shared/export/csv-export-modal.component';
+import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
+import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
+import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
 
 describe('The CourseScoresCsvRowBuilder', () => {
-    let csvRow: CourseScoresCsvRowBuilder;
+    let csvRow: CourseScoresRowBuilder;
 
     beforeEach(() => {
         csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.PERIOD);
@@ -89,6 +90,8 @@ describe('The CourseScoresCsvRowBuilder', () => {
             expect(csvRow.build()['n']).toBe('5.123%');
             csvRow.setLocalizedPercent('n', 99.9999);
             expect(csvRow.build()['n']).toBe('100%');
+            csvRow.setLocalizedPercent('n', 51.9999);
+            expect(csvRow.build()['n']).toBe('52%');
             csvRow.setLocalizedPercent('n', 25.5678);
             expect(csvRow.build()['n']).toBe('25.568%');
         });

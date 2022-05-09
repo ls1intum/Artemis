@@ -4,6 +4,7 @@ import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reaction
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-answer-post-reactions-bar',
@@ -14,8 +15,8 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     // Icons
     farSmile = faSmile;
 
-    constructor(metisService: MetisService) {
-        super(metisService);
+    constructor(metisService: MetisService, themeService: ThemeService) {
+        super(metisService, themeService);
     }
 
     /**

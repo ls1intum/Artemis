@@ -1,10 +1,11 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { Graphs, ngxColor, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { yAxisTickFormatting } from 'app/shared/statistics-graph/statistics-graph.utils';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-statistics-graph',
@@ -37,7 +38,12 @@ export class StatisticsGraphComponent implements OnChanges {
 
     // ngx
     ngxData: any[] = [];
-    readonly ngxColor = ngxColor;
+    ngxColor: Color = {
+        name: 'Statistics',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [GraphColors.DARK_BLUE],
+    };
     tooltipTranslation: string;
     yScaleMax: number;
     yAxisTickFormatting = yAxisTickFormatting;

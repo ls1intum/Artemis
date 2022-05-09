@@ -1,5 +1,3 @@
-@import 'src/main/webapp/app/overview/overview-vars';
-
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
@@ -11,14 +9,14 @@ Course Info Bar
     $padding-y: 11px;
     padding-top: $padding-y;
     padding-bottom: $padding-y;
-    border-bottom: 1px solid $border-color;
+    border-bottom: 1px solid var(--overview-border-color);
 
     .tab-item {
         cursor: pointer;
         margin: 0 0.5em;
 
         &.active {
-            box-shadow: 0 2px 0 $artemis-dark;
+            box-shadow: 0 2px 0 var(--overview-tab-active-border-color);
         }
     }
 }
@@ -123,7 +121,7 @@ Course Info Bar
     transition: 0.1s ease-out opacity;
 
     &.active {
-        background-color: rgba(255, 255, 255, 0.6);
+        background-color: var(--overview-refresh-overlay-bg-color);
         opacity: 1;
         pointer-events: auto;
         transition: 0.2s ease-in opacity;
@@ -133,7 +131,7 @@ Course Info Bar
         position: relative;
         top: calc(50vh - 150px - 2.5vh);
         transform: translateY(-50%);
-        color: $artemis-dark;
+        color: var(--overview-refresh-overlay-color);
     }
 }
 
@@ -144,7 +142,7 @@ Course Info Bar
 .current-week-row {
     ::ng-deep {
         > div {
-            background-color: $light-primary-background-color;
+            background-color: var(--overview-light-primary-background-color);
         }
     }
 }
@@ -173,7 +171,7 @@ Course Info Bar
         margin-top: 16px;
         margin-left: -12px;
         margin-right: -12px;
-        border-bottom: 1px solid $light-border-color;
+        border-bottom: 1px solid var(--overview-light-border-color);
     }
 }
 
@@ -185,9 +183,9 @@ Course Info Bar
             cursor: pointer;
             border-radius: 3px;
             &:hover {
-                background-color: $light-background-color;
+                background-color: var(--overview-light-background-color);
                 .icon {
-                    color: $primary;
+                    color: var(--primary);
                 }
             }
         }
@@ -208,7 +206,7 @@ Course Info Bar
     height: 0;
     width: 100%;
     margin: 1rem 0 0.5rem 0;
-    border-top: 1px solid $light-border-color;
+    border-top: 1px solid var(--overview-light-border-color);
 }
 
 .color-indicator {
@@ -232,7 +230,7 @@ canvas#complete-chart {
         background-color: #0f6ab4;
     }
     &:active {
-        box-shadow: 0 2px 0 $artemis-dark;
+        box-shadow: 0 2px 0 var(--artemis-dark);
     }
     &:disabled {
         background-color: gray;

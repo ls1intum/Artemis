@@ -420,7 +420,7 @@ public class ProgrammingExerciseImportService {
         newExercise.setPosts(null);
         newExercise.setStudentParticipations(null);
         // copy the grading instructions to avoid issues with references to the original exercise
-        newExercise.setGradingCriteria(newExercise.copyGradingCriteria());
+        newExercise.setGradingCriteria(newExercise.copyGradingCriteria(new HashMap<>()));
         // only copy the config for team programming exercise in courses
         if (newExercise.getMode() == ExerciseMode.TEAM && newExercise.isCourseExercise()) {
             newExercise.setTeamAssignmentConfig(newExercise.getTeamAssignmentConfig().copyTeamAssignmentConfig());

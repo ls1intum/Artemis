@@ -14,8 +14,8 @@ import {
  */
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
-    private readonly TEST_CASE_REGEX = new RegExp('.*?\\((.*)\\)');
-    private readonly HINT_REGEX = new RegExp('.*{(.*)}');
+    private readonly TEST_CASE_REGEX = /.*?\[.*]\((.*)\)/;
+    private readonly HINT_REGEX = /.*{(.*)}/;
     private readonly INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
     private readonly INVALID_HINT_TRANSLATION = 'artemisApp.programmingExercise.hintsAnalysis.invalidHint';
 
@@ -23,7 +23,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
 
     /**
      * Given a programming exercise's problem statement, analyze the test cases and hints contained (or not contained!) in it.
-     * Will give out a mixed object that contains singular analysis for test cases / hints and a accumulated analysis object.
+     * Will give out a mixed object that contains singular analysis for test cases / hints and an accumulated analysis object.
      *
      * @param problemStatement  multiline string.
      * @param taskRegex         identifies tasks in a problem statement.

@@ -2,15 +2,13 @@
 @import 'node_modules/bootstrap/scss/variables';
 @import 'node_modules/bootstrap/scss/mixins';
 
-@import 'src/main/webapp/app/overview/overview-vars';
-
 :host {
     cursor: pointer;
 
     > div {
         padding: 5px 0;
-        border: 1px solid $blue-border-color;
-        background-color: $light-background-color;
+        border: 1px solid var(--overview-blue-border-color);
+        background-color: var(--overview-light-background-color);
         border-radius: 3px;
         transition: box-shadow 0.1s linear;
         .row {
@@ -18,17 +16,22 @@
             align-items: center;
         }
         &:hover {
-            box-shadow: 0 2px 4px 0 #3e8acc;
+            box-shadow: 0 2px 4px 0 var(--primary);
         }
         .exercise-link {
-            color: $gray-900;
+            color: #212529;
         }
     }
     .exercise-row-icon {
+        color: var(--bs-body-color);
         display: flex;
         justify-content: center;
         align-items: center;
         min-width: 40px;
+
+        > fa-icon {
+            z-index: 1;
+        }
     }
 
     .result {

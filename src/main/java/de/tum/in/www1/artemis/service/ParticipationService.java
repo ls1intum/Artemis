@@ -320,7 +320,7 @@ public class ParticipationService {
      * @return the found or created participation with a result
      */
     public StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
-        if (quizExercise.isEnded()) {
+        if (quizExercise.isQuizEnded()) {
             // try getting participation from database
             Optional<StudentParticipation> optionalParticipation = findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 

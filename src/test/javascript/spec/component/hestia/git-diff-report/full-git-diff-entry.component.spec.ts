@@ -4,7 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 
 describe('ProgrammingExerciseFullGitDiffEntry Component', () => {
     let comp: FullGitDiffEntryComponent;
@@ -13,7 +14,7 @@ describe('ProgrammingExerciseFullGitDiffEntry Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [FullGitDiffEntryComponent, AceEditorComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [FullGitDiffEntryComponent, AceEditorComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(FullGitDiffEntryComponent);

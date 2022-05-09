@@ -64,14 +64,25 @@
     <div class="container-fluid table-responsive">
         <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
         <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
-            <input type="checkbox" name="hideFinishedExercise" id="field_hideFinishedExercise" [ngModel]="hideFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
-            <label class="form-check-label" for="field_hideFinishedExercise">
-                {{ 'artemisApp.assessmentDashboard.hideFinishedExercises' | artemisTranslate }}
-            </label>
-            <input type="checkbox" name="hideOptional" id="field_hideOptional" [ngModel]="hideOptional" (ngModelChange)="triggerOptionalExercises()" />
-            <label class="form-check-label" for="field_hideOptional">
-                {{ 'artemisApp.assessmentDashboard.hideOptional' | artemisTranslate }}
-            </label>
+            <div class="form-check form-check-inline">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="hideFinishedExercise"
+                    id="field_hideFinishedExercise"
+                    [ngModel]="hideFinishedExercises"
+                    (ngModelChange)="triggerFinishedExercises()"
+                />
+                <label class="form-check-label" for="field_hideFinishedExercise">
+                    {{ 'artemisApp.assessmentDashboard.hideFinishedExercises' | artemisTranslate }}
+                </label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="hideOptional" id="field_hideOptional" [ngModel]="hideOptional" (ngModelChange)="triggerOptionalExercises()" />
+                <label class="form-check-label" for="field_hideOptional">
+                    {{ 'artemisApp.assessmentDashboard.hideOptional' | artemisTranslate }}
+                </label>
+            </div>
         </div>
         <table class="table exercise-table guided-tour-exercise-table">
             <thead>

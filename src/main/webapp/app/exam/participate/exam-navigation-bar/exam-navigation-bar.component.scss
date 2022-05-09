@@ -1,5 +1,5 @@
 .exam-navigation {
-    background: #ecebe7;
+    background: var(--exam-navigation-bar-background-color);
     margin: -1.25rem -1.25rem 1.25rem -1.25rem;
     z-index: 50;
 }
@@ -16,21 +16,21 @@
     white-space: nowrap;
 }
 .synced {
-    color: white;
-    background-color: #3e8acc;
+    color: var(--exam-navigation-bar-synced-color);
+    background-color: var(--exam-navigation-bar-synced-background-color);
 }
 .notSynced {
-    color: #1a1a1a;
-    background-color: #e8bf48;
+    color: var(--exam-navigation-bar-synced-color);
+    background-color: var(--exam-navigation-bar-synced-background-color);
 }
 .inactive {
-    background-color: gray;
+    background-color: var(--exam-navigation-bar-inactive-background);
 }
 .active {
-    background-color: #276091;
+    background-color: var(--exam-navigation-bar-active-background);
 }
 .exerciseIndex {
-    color: black;
+    color: var(--exam-navigation-bar-exercise-index-color);
     text-align: center;
     font-size: 18px;
     font-weight: bold;
