@@ -395,14 +395,17 @@ public class ProgrammingSubmissionResource {
         participation.setExercise(programmingExercise);
         // prepare programming submission for response
         programmingSubmissionService.hideDetails(programmingSubmission, user);
+
         // remove automatic results before sending to client
-        if (correctionRound >= programmingSubmission.getManualResults().size()) {
+        var manualResults = programmingSubmission.getManualResults();
+        if (correctionRound >= manualResults.size()) {
             programmingSubmission.setResults(Collections.emptyList());
         }
         else {
-            programmingSubmission.setResults(Collections.singletonList(programmingSubmission.getManualResults().get(correctionRound)));
+            programmingSubmission.setResults(Collections.singletonList(manualResults.get(correctionRound)));
         }
         programmingSubmission.getParticipation().setResults(new HashSet<>(programmingSubmission.getResults()));
+
         return ResponseEntity.ok(programmingSubmission);
     }
 
