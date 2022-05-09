@@ -330,8 +330,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
-        // TODO Add Monitoring logic
-        console.log('onExamEndConfirmed');
+        this.examMonitoringService.handleActionEvent(this.studentExam, new EndedExamAction(), this.exam.monitoring!);
         // temporary lock the submit button in order to protect against spam
         this.handInPossible = false;
         this.submitInProgress = true;
@@ -339,7 +338,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             window.clearInterval(this.autoSaveInterval);
         }
 
-        // TODO: Submit Student Activity
+        this.examMonitoringService.saveActions(this.exam, this.studentExam, this.courseId);
+
         // Submit the exam with a timeout of 20s = 20000ms
         // If we don't receive a response within that time throw an error the subscription can then handle
         this.examParticipationService
@@ -637,16 +637,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions
         if (forceSave || !this.disconnected) {
-            // We synchronize the user actions with the server and then delete them on the client, as they are no longer used
-            if (this.exam.monitoring && this.studentExam.examActivity !== undefined) {
-                const actionsToSync = this.studentExam.examActivity.examActions;
-                this.examMonitoringService.syncActions(actionsToSync, this.courseId, this.examId, this.studentExam.id!).subscribe({
-                    // After successful synchronization we can delete the actions -> filter in case of new actions during the synchronization
-                    next: () => this.studentExam.examActivity!.examActions.filter((action) => actionsToSync.includes(action)),
-                    // We do not delete the client actions, because they are not synchronized yet
-                    error: () => {},
-                });
-            }
+            // Save collected actions
+            this.examMonitoringService.saveActions(this.exam, this.studentExam, this.courseId);
 
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
