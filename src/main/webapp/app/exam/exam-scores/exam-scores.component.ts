@@ -853,7 +853,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @private
      */
     private determineSubmittedAndNonEmptyValues(): void {
-        // If one value is not undefined, all other values have been computed as well and we take the cached results instead of recalcuating every time
+        // If one value is not undefined, all other values have been computed as well and we take the cached results instead of recalculating every time
         if (this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty) {
             return;
         }

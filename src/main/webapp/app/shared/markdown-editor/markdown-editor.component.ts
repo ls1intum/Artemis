@@ -112,7 +112,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
         new UnorderedListCommand(),
     ];
 
-    /** {array} containing all header commands accessible for the markdown editor per defaulT*/
+    /** {array} containing all header commands accessible for the markdown editor per default*/
     @Input() headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
 
     /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */

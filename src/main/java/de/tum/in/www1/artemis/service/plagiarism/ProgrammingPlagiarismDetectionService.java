@@ -208,7 +208,7 @@ public class ProgrammingPlagiarismDetectionService {
     }
 
     /**
-     * Sorts and limits the text plagarism result amount to 500 and saves it into the database.
+     * Sorts and limits the text plagiarism result amount to 500 and saves it into the database.
      * Removes the previously saved result.
      *
      * @param textPlagiarismResult the plagiarism result to save
@@ -235,7 +235,7 @@ public class ProgrammingPlagiarismDetectionService {
 
         // Create directories.
         if (!outputFolderFile.mkdirs()) {
-            log.error("Cannot generate JPlag report because directorries couldn't be created: {}", outputFolder);
+            log.error("Cannot generate JPlag report because directories couldn't be created: {}", outputFolder);
             return null;
         }
 

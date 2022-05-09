@@ -416,7 +416,7 @@ public class ParticipationResource {
             resultCount += participation.getResults().size();
         }
         long end = System.currentTimeMillis();
-        log.info("Found {} particpations with {} results in {}ms", participations.size(), resultCount, end - start);
+        log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
         return ResponseEntity.ok().body(participations);
     }
 

@@ -156,7 +156,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
      * @param data the event sent by the framework
      */
     onSelect(data: any): void {
-        // delegate to the corresponding exericse if chart node is clicked
+        // delegate to the corresponding exercise if chart node is clicked
         if (data.exerciseId) {
             this.navigateToExercise(data.exerciseId);
         } else {

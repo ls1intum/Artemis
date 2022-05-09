@@ -430,7 +430,7 @@ public class FileResource {
 
     /**
      * Helper method which handles the file creation for both normal file uploads and for markdown
-     * @param file The file to be uplaoded
+     * @param file The file to be uploaded
      * @param keepFileName specifies if original file name should be kept
      * @param markdown boolean which is set to true, when we are uploading a file within the markdown editor
      * @return The path of the file

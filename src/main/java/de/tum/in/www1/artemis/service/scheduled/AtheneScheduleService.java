@@ -124,7 +124,7 @@ public class AtheneScheduleService {
     }
 
     /**
-     * Checks if Athene is currently proccessing submissions of given exercise.
+     * Checks if Athene is currently processing submissions of given exercise.
      * @param exercise Exercise to check state
      * @return currently computing Athene?
      */

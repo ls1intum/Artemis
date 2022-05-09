@@ -117,7 +117,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
     /**
      * Updates categories for file upload exercise
-     * @param categories list of exercies categories
+     * @param categories list of exercise categories
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.fileUploadExercise.categories = categories;

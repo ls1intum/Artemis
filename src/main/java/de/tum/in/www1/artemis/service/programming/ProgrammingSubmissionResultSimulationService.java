@@ -62,7 +62,7 @@ public class ProgrammingSubmissionResultSimulationService {
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param programmingExercise the used programmingExercise
      * @param participant the participant object of the user
-     * @param user the user who wants to particpate
+     * @param user the user who wants to participate
      * @return the newly created and stored participation
      */
     public ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, Participant participant, User user) {
