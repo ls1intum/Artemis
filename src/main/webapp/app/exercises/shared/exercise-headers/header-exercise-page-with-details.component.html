@@ -1,6 +1,6 @@
 <div class="course-info-bar" *ngIf="exercise" id="exercise-header">
     <div class="row">
-        <div class="col general-info">
+        <div class="col-xs-4 col-md-5 general-info">
             <h3>
                 <fa-icon *ngIf="displayBackButton" [icon]="faArrowLeft" (click)="onBackClick()" class="back-button me-2"></fa-icon>
                 <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
@@ -46,7 +46,7 @@
                 </span>
             </h4>
         </div>
-        <div class="col-12 col-md-6 col-lg-4 row">
+        <div class="col-xs-auto col-md row">
             <ng-template [ngIf]="isExamMode" [ngIfElse]="courseMode">
                 <div class="col-auto">
                     <h4 *ngIf="!isTestRun">{{ 'artemisApp.exam.endDate' | artemisTranslate }}:</h4>
@@ -68,51 +68,57 @@
                 </div>
             </ng-template>
             <ng-template #courseMode>
-                <div class="col-auto">
-                    <h4 *ngIf="dueDate" class="badge-row">
+                <h4 *ngIf="dueDate" class="row">
+                    <div class="col-4">
                         {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}
-                    </h4>
-                    <h4 *ngIf="programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate" class="badge-row">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.runTestsAfterDueDate' | artemisTranslate }}
-                    </h4>
-                    <h4 *ngIf="exercise.assessmentDueDate" class="badge-row">{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}:</h4>
-                    <h4 *ngIf="exercise.exampleSolutionPublicationDate" class="badge-row">{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}:</h4>
-                    <h4 *ngIf="individualComplaintDeadline" class="badge-row">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.complaintDeadline' | artemisTranslate }}
-                    </h4>
-                </div>
-                <div class="col">
-                    <h4 *ngIf="dueDate">
+                    </div>
+                    <div class="col-8">
                         {{ dueDate | artemisDate }}
                         <span [ngClass]="exerciseStatusBadge" class="badge">
                             {{ dueDate | artemisTimeAgo }}
                         </span>
-                    </h4>
-                    <h4 *ngIf="programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate">
+                    </div>
+                </h4>
+                <h4 *ngIf="programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate" class="row">
+                    <div class="col-4">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.runTestsAfterDueDate' | artemisTranslate }}
+                    </div>
+                    <div class="col-8">
                         {{ programmingExercise!.buildAndTestStudentSubmissionsAfterDueDate | artemisDate }}
                         <span [ngClass]="exerciseStatusBadge" class="badge">
                             {{ programmingExercise!.buildAndTestStudentSubmissionsAfterDueDate | artemisTimeAgo }}
                         </span>
-                    </h4>
-                    <h4 *ngIf="exercise.assessmentDueDate">
+                    </div>
+                </h4>
+                <h4 *ngIf="exercise.assessmentDueDate" class="row">
+                    <div class="col-4">{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}:</div>
+                    <div class="col-8">
                         {{ exercise.assessmentDueDate | artemisDate }}
                         <span [ngClass]="exerciseStatusBadge" class="badge">
                             {{ exercise.assessmentDueDate | artemisTimeAgo }}
                         </span>
-                    </h4>
-                    <h4 *ngIf="exercise.exampleSolutionPublicationDate">
+                    </div>
+                </h4>
+                <h4 *ngIf="exercise.exampleSolutionPublicationDate" class="row">
+                    <div class="col-4">{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}:</div>
+                    <div class="col-8">
                         {{ exercise.exampleSolutionPublicationDate | artemisDate }}
                         <span [ngClass]="exerciseStatusBadge" class="badge">
                             {{ exercise.exampleSolutionPublicationDate | artemisTimeAgo }}
                         </span>
-                    </h4>
-                    <h4 *ngIf="individualComplaintDeadline">
+                    </div>
+                </h4>
+                <h4 *ngIf="individualComplaintDeadline" class="row">
+                    <div class="col-4">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.complaintDeadline' | artemisTranslate }}
+                    </div>
+                    <div class="col-8">
                         {{ individualComplaintDeadline | artemisDate }}
                         <span [ngClass]="exerciseStatusBadge" class="badge">
                             {{ individualComplaintDeadline | artemisTimeAgo }}
                         </span>
-                    </h4>
-                </div>
+                    </div>
+                </h4>
             </ng-template>
         </div>
     </div>
