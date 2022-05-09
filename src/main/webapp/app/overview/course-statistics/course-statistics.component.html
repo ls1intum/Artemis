@@ -131,7 +131,7 @@
         </div>
         <jhi-exercise-scores-chart class="col-12" [filteredExerciseIDs]="filteredExerciseIDs"></jhi-exercise-scores-chart>
         <hr />
-        <div class="col-12">
+        <div class="col-12 mb-3">
             <h2>{{ 'artemisApp.courseOverview.statistics.pointsPerExercise' | artemisTranslate }}</h2>
             <div class="row mt-3 d-flex justify-content-end" *ngFor="let exerciseGroup of ngxExerciseGroups" id="{{ exerciseGroup[0].type }}-wrapper">
                 <div class="col-12 mb-1 d-flex align-items-center">
