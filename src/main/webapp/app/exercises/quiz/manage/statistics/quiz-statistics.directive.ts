@@ -51,7 +51,7 @@ export abstract class QuizStatisticsDirective {
 
     /**
      * Creates dedicated objects of type NgxChartsSingleSeriesDataEntry that can be processed by ngx-charts
-     * in order to visualize the scores and calculates the maximum value on the y axis
+     * in order to visualize the scores and calculates the maximum value on the y-axis
      * in order to ensure a shapely display.
      * @protected
      */
@@ -92,7 +92,7 @@ export abstract class QuizStatisticsDirective {
     }
 
     /**
-     * Calculates the maximum value on the y axis on a chart depending on the data to display
+     * Calculates the maximum value on the y-axis on a chart depending on the data to display
      * @param data the array of data that is to display by the chart
      * @returns height of the chart
      * @private
@@ -114,8 +114,8 @@ export abstract class QuizStatisticsDirective {
 
     /**
      * Sets the axis labels given the translation paths
-     * @param xAxisLabel translation path for x axis label
-     * @param yAxisLabel translation path for y axis label
+     * @param xAxisLabel translation path for x-axis label
+     * @param yAxisLabel translation path for y-axis label
      */
     setAxisLabels(xAxisLabel: string, yAxisLabel: string): void {
         this.xAxisLabel = this.translateService.instant(xAxisLabel);

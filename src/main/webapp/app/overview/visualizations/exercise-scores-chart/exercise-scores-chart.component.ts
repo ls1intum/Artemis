@@ -127,7 +127,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
                 exerciseId: exerciseScoreDTO.exerciseId,
                 exerciseType: exerciseScoreDTO.exerciseType,
             };
-            // adapt the y axis max
+            // adapt the y-axis max
             this.maxScale = Math.max(
                 round(exerciseScoreDTO.scoreOfStudent!),
                 round(exerciseScoreDTO.averageScoreAchieved!),

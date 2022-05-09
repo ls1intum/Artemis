@@ -156,7 +156,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     readonly barChartTitle = ChartBarTitle;
     readonly chartHeight = 45;
     readonly barPadding = 6;
-    readonly defaultSize = 50; // additional space for the x axis and its labels
+    readonly defaultSize = 50; // additional space for the x-axis and its labels
 
     // array containing every non-empty exercise group
     ngxExerciseGroups: any[] = [];
@@ -688,7 +688,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Sets the maximum scale on the x axis if there are exercises with > 100%
+     * Sets the maximum scale on the x-axis if there are exercises with > 100%
      * @param exerciseGroup the exercise group
      * @private
      * @returns maximum value visible on xAxis
@@ -844,7 +844,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         /*
         Each chart bar should have a height of 45px
         Furthermore we have to take the bar padding between the bars into account
-        Finally, we need to add space for the x axis and its ticks
+        Finally, we need to add space for the x-axis and its ticks
          */
         return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
     }

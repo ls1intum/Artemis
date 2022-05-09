@@ -180,7 +180,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     }
 
     /**
-     * Determines and returns the maximum value displayed on the Y axis
+     * Determines and returns the maximum value displayed on the y-axis
      * @private
      */
     private calculateTickMax(): number {
