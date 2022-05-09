@@ -69,17 +69,15 @@
             </ng-template>
             <ng-template #courseMode>
                 <div class="col-auto">
-                    <h4 *ngIf="dueDate">
+                    <h4 *ngIf="dueDate" class="badge-row">
                         {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }}
                     </h4>
-                    <h4 *ngIf="programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate">
+                    <h4 *ngIf="programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate" class="badge-row">
                         {{ 'artemisApp.courseOverview.exerciseDetails.runTestsAfterDueDate' | artemisTranslate }}
                     </h4>
-                    <h4 *ngIf="exercise.assessmentDueDate">{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}:</h4>
-                    <h4 *ngIf="exercise.exampleSolutionPublicationDate">
-                        {{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}
-                    </h4>
-                    <h4 *ngIf="individualComplaintDeadline">
+                    <h4 *ngIf="exercise.assessmentDueDate" class="badge-row">{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}:</h4>
+                    <h4 *ngIf="exercise.exampleSolutionPublicationDate" class="badge-row">{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}:</h4>
+                    <h4 *ngIf="individualComplaintDeadline" class="badge-row">
                         {{ 'artemisApp.courseOverview.exerciseDetails.complaintDeadline' | artemisTranslate }}
                     </h4>
                 </div>

@@ -15,6 +15,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
+    styleUrls: ['./header-exercise-page-with-details.component.scss'],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
