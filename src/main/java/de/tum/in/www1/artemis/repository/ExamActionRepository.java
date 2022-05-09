@@ -7,4 +7,6 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 @Repository
 public interface ExamActionRepository extends JpaRepository<ExamAction, Long> {
+
+    ExamAction findByExamActivityId(Long examActivityId);
 }

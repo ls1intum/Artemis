@@ -196,7 +196,7 @@ public class ExamMonitoringScheduleService {
      * Saves the exam activities and actions into the database (after the end of the exam) for a specific exam.
      * @param examId specific exam
      */
-    void executeExamActivitySaveTask(Long examId) {
+    public void executeExamActivitySaveTask(Long examId) {
         examCache.performCacheWriteIfPresent(examId, examMonitoringCache -> {
             ((ExamMonitoringCache) examMonitoringCache).getExamActivitySaveHandler().clear();
             log.debug("Removed exam {} monitoring save tasks", examId);
@@ -208,5 +208,14 @@ public class ExamMonitoringScheduleService {
         // TODO: Check if this is enough or we need to handle this in different ways
         examActivityService.saveAll(cache.getActivities().values());
         cache.getActivities().clear();
+    }
+
+    /**
+     * Clears all cached exam monitoring data.
+     * <p>
+     * This will cause cached exam activity to be lost.
+     */
+    public void clearAllExamMonitoringData() {
+        examCache.clear();
     }
 }

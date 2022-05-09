@@ -26,11 +26,21 @@ public class ExamActivityService {
     }
 
     /**
-     * To avoid direct access to the {@link ExamActivityRepository}, we use delegation save all {@link ExamActivity}s.
+     * To avoid direct access to the {@link ExamActivityRepository}, we use delegation to save all {@link ExamActivity}s.
      * @param examActivities {@link ExamActivity}s to save
      * @return saved {@link ExamActivity}s
      */
     public List<ExamActivity> saveAll(Iterable<ExamActivity> examActivities) {
         return examActivityRepository.saveAll(examActivities);
     }
+
+    /**
+     * To avoid direct access to the {@link ExamActivityRepository}, we use delegation to find the {@link ExamActivity} by the student exam id.
+     * @param studentExamId linked to {@link ExamActivity}
+     * @return found {@link ExamActivity}
+     */
+    public ExamActivity findByStudentExamId(Long studentExamId) {
+        return examActivityRepository.findByStudentExamId(studentExamId);
+    }
+
 }
