@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.hazelcast.config.*;
 import com.hazelcast.core.HazelcastInstance;
 
@@ -11,8 +8,6 @@ import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 import de.tum.in.www1.artemis.service.scheduled.cache.CacheHandler;
 
 final class ExamCache extends CacheHandler<Long> {
-
-    private static final Logger log = LoggerFactory.getLogger(ExamCache.class);
 
     public ExamCache(HazelcastInstance hazelcastInstance) {
         super(hazelcastInstance, Constants.HAZELCAST_MONITORING_CACHE);

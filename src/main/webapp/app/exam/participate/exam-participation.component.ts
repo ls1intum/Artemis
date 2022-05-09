@@ -37,7 +37,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { ExamMonitoringService } from 'app/exam/monitor/exam-monitoring.service';
 import {
     ConnectionUpdatedAction,
-    ContinueAfterHandedInEarlyAction,
+    ContinuedAfterHandedInEarlyAction,
     EndedExamAction,
     HandedInEarlyAction,
     SavedExerciseAction,
@@ -425,7 +425,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         } else if (this.studentExam?.exercises && this.activeExamPage) {
             const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
-            this.examMonitoringService.handleActionEvent(this.studentExam, new ContinueAfterHandedInEarlyAction(), this.exam.monitoring!);
+            this.examMonitoringService.handleActionEvent(this.studentExam, new ContinuedAfterHandedInEarlyAction(), this.exam.monitoring!);
         }
     }
 

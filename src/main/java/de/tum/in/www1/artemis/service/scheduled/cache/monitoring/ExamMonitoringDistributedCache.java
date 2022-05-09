@@ -23,6 +23,11 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 
+/**
+ * This class represents the cache for a single exam monitoring.
+ * <p>
+ * This includes the exam activities and handlers for the save task {@link ExamActivitySaveTask}.
+ */
 public class ExamMonitoringDistributedCache extends ExamMonitoringCache implements HazelcastInstanceAware {
 
     private static final Logger log = LoggerFactory.getLogger(ExamMonitoringDistributedCache.class);
@@ -42,6 +47,10 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
 
     private transient Exam exam;
 
+    /**
+     * This IMap is a distributed Hazelcast object and must not be (de-)serialized, it is set in the
+     * setHazelcastInstance method.
+     */
     private transient IMap<Long, ExamActivity> activities;
 
     public ExamMonitoringDistributedCache(Long examId, List<ScheduledTaskHandler> examActivitySaveHandler, Exam exam) {
@@ -126,7 +135,7 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
             Long examId = in.readLong();
             List<ScheduledTaskHandler> examActivitySaveHandler = in.readObject();
 
-            // see class JavaDoc why the exercise is null here.
+            // see class JavaDoc why the exam is null here.
             return new ExamMonitoringDistributedCache(examId, examActivitySaveHandler, null);
         }
     }

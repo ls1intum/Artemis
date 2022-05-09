@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -88,15 +87,12 @@ public class ExamResource {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExamActivityService examActivityService;
-
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
             ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
-            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, ExamActivityService examActivityService,
-            ExamMonitoringScheduleService examMonitoringScheduleService) {
+            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, ExamMonitoringScheduleService examMonitoringScheduleService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -110,7 +106,6 @@ public class ExamResource {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
-        this.examActivityService = examActivityService;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
     }
 
@@ -656,15 +651,9 @@ public class ExamResource {
             studentExam.getExam().setRegisteredUsers(null);
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
-
-            // Add ExamActivity
-            /*
-             * if(exam.isMonitoring()) { ExamActivity examActivity = new ExamActivity(); examActivity.setStudentExam(studentExam);
-             * studentExam.setExamActivity(examActivityService.save(examActivity)); }
-             */
         }
 
-        // Reschedule after creation (possible longer wrking time)
+        // Reschedule after creation (possible longer working time)
         examMonitoringScheduleService.scheduleExamActivitySave(examId);
 
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
@@ -698,13 +687,10 @@ public class ExamResource {
             studentExam.getExam().setRegisteredUsers(null);
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
-
-            // Add ExamActivity
-            /*
-             * if(exam.isMonitoring()) { ExamActivity examActivity = new ExamActivity(); examActivity.setStudentExam(studentExam);
-             * studentExam.setExamActivity(examActivityService.save(examActivity)); }
-             */
         }
+
+        // Reschedule after creation (possible longer working time)
+        examMonitoringScheduleService.scheduleExamActivitySave(examId);
 
         log.info("Generated {} missing student exams for exam {}", studentExams.size(), examId);
         return ResponseEntity.ok().body(studentExams);

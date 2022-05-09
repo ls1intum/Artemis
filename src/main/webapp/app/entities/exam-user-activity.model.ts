@@ -1,6 +1,9 @@
 import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
+/**
+ * Defines the available actions a student can perform.
+ */
 export enum ExamActionType {
     STARTED_EXAM = 'STARTED_EXAM',
     ENDED_EXAM = 'ENDED_EXAM',
@@ -11,6 +14,9 @@ export enum ExamActionType {
     CONNECTION_UPDATED = 'CONNECTION_UPDATED',
 }
 
+/**
+ * A container/wrapper for the exam actions.
+ */
 export class ExamActivity {
     public examActions: ExamAction[];
 
@@ -23,6 +29,9 @@ export class ExamActivity {
     }
 }
 
+/**
+ * Each action has some common values: id, timestamp and type.
+ */
 export abstract class ExamAction implements BaseEntity {
     public id?: number;
     public timestamp?: dayjs.Dayjs;
@@ -33,6 +42,9 @@ export abstract class ExamAction implements BaseEntity {
     }
 }
 
+/**
+ * This action indicates whether a student started or restarted the exam.
+ */
 export class StartedExamAction extends ExamAction {
     public sessionId?: number;
 
@@ -42,24 +54,36 @@ export class StartedExamAction extends ExamAction {
     }
 }
 
+/**
+ * This action indicates when a student has ended his exam.
+ */
 export class EndedExamAction extends ExamAction {
     constructor() {
         super(ExamActionType.ENDED_EXAM);
     }
 }
 
+/**
+ * This action indicates whether a student wants to hand in early or not.
+ */
 export class HandedInEarlyAction extends ExamAction {
     constructor() {
         super(ExamActionType.HANDED_IN_EARLY);
     }
 }
 
-export class ContinueAfterHandedInEarlyAction extends ExamAction {
+/**
+ * This action indicates whether a student has continued after visiting the handed in early page or not.
+ */
+export class ContinuedAfterHandedInEarlyAction extends ExamAction {
     constructor() {
         super(ExamActionType.CONTINUED_AFTER_HAND_IN_EARLY);
     }
 }
 
+/**
+ * This action indicates whether a student switched to another exercise or to the overview page.
+ */
 export class SwitchedExerciseAction extends ExamAction {
     public exerciseId?: number;
 
@@ -69,6 +93,9 @@ export class SwitchedExerciseAction extends ExamAction {
     }
 }
 
+/**
+ * This action indicates whether a student saved an exercise manually or automatically.
+ */
 export class SavedExerciseAction extends ExamAction {
     public forced?: boolean;
     public submissionId?: number;
@@ -84,6 +111,9 @@ export class SavedExerciseAction extends ExamAction {
     }
 }
 
+/**
+ * This action shows whether a student has a connection update during the exam or not.
+ */
 export class ConnectionUpdatedAction extends ExamAction {
     public connected?: boolean;
 

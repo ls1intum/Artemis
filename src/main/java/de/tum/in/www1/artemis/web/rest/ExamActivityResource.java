@@ -29,10 +29,8 @@ public class ExamActivityResource {
 
     private final StudentExamAccessService studentExamAccessService;
 
-    // TODO replace with Service
     private final StudentExamRepository studentExamRepository;
 
-    // TODO replace with Service
     private final UserRepository userRepository;
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
@@ -71,9 +69,8 @@ public class ExamActivityResource {
         boolean isTestRun = studentExam.isTestRun();
         this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, studentExamId, currentUser, isTestRun);
 
-        // TODO: Add array
         actions.forEach(action -> examMonitoringScheduleService.addExamAction(examId, studentExamId, action));
-        log.info("REST request by user: {} for exam with id {} to add {} actions to student-exam {}", currentUser.getLogin(), examId, 5, studentExamId);
+        log.info("REST request by user: {} for exam with id {} to add {} actions for student-exam {}", currentUser.getLogin(), examId, actions.size(), studentExamId);
 
         return ResponseEntity.ok().build();
     }

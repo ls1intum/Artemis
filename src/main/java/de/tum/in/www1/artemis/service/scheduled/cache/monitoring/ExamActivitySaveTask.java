@@ -29,6 +29,7 @@ final class ExamActivitySaveTask implements Runnable, Serializable, NamedTask {
 
     @Override
     public void run() {
+        // Saves the performed action after the exam (to avoid any issues with the database during the exam)
         examMonitoringScheduleService.executeExamActivitySaveTask(examId);
     }
 

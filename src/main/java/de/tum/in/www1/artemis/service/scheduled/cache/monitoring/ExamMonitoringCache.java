@@ -12,14 +12,24 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
+/**
+ * Represents the cache for one specific exam.
+ */
 abstract class ExamMonitoringCache implements Cache {
 
+    /**
+     * Exam id which works as an identifier for the cache.
+     */
     private final Long examId;
 
     ExamMonitoringCache(Long examId) {
         this.examId = examId;
     }
 
+    /**
+     * Returns the exam id.
+     * @return the exam id (key)
+     */
     public Long getExamId() {
         return examId;
     }
@@ -83,7 +93,7 @@ abstract class ExamMonitoringCache implements Cache {
         ExamMonitoringDistributedCache.registerSerializer(config);
     }
 
-    static ArrayList<ScheduledTaskHandler> getEmptyExamActivitySaveHandler() {
+    static List<ScheduledTaskHandler> getEmptyExamActivitySaveHandler() {
         return new ArrayList<>(0);
     }
 }

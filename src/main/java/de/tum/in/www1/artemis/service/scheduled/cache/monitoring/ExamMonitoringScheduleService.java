@@ -68,12 +68,24 @@ public class ExamMonitoringScheduleService {
         startSchedule();
     }
 
+    /**
+     * Used to set the exam activity fort a specific student exam in the cache.
+     * @param examId identifies the cache
+     * @param studentExamId identifies the exam activity
+     * @param examActivity new or updated exam activity in the cache
+     */
     public void updateExamActivity(Long examId, long studentExamId, ExamActivity examActivity) {
         if (examActivity != null) {
             ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().put(studentExamId, examActivity);
         }
     }
 
+    /**
+     * Used to handle the received actions.
+     * @param examId identifies the cache
+     * @param studentExamId identifies the exam activity
+     * @param examAction new exam action
+     */
     public void addExamAction(Long examId, long studentExamId, ExamAction examAction) {
         if (examAction != null) {
             ExamActivity examActivity = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().get(studentExamId);
@@ -90,6 +102,9 @@ public class ExamMonitoringScheduleService {
         }
     }
 
+    /**
+     * This method schedules all exam activity save tasks after a server (re-)start.
+     */
     public void startSchedule() {
         List<Exam> exams = examService.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
         log.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
@@ -101,6 +116,9 @@ public class ExamMonitoringScheduleService {
         }
     }
 
+    /**
+     * Stops the exam activity save for all exams.
+     */
     public void stopSchedule() {
         for (Cache cachedExamMonitoring : examCache.getAllCaches()) {
             if (((ExamMonitoringCache) cachedExamMonitoring).getExamActivitySaveHandler() != null)
@@ -110,6 +128,10 @@ public class ExamMonitoringScheduleService {
         threadPoolTaskScheduler.destroy();
     }
 
+    /**
+     * Schedules the exam activity save task for a specific exam.
+     * @param examId specific exam
+     */
     public void scheduleExamActivitySave(final long examId) {
         this.cancelExamActivitySave(examId);
         // reload from database to make sure there are no proxy objects
@@ -140,6 +162,10 @@ public class ExamMonitoringScheduleService {
         }
     }
 
+    /**
+     * Cancels the exam activity save task for a specific exam.
+     * @param examId specific exam
+     */
     public void cancelExamActivitySave(final long examId) {
         ((ExamMonitoringCache) examCache.getReadCacheFor(examId)).getExamActivitySaveHandler().forEach(taskHandler -> {
             IScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(taskHandler);
@@ -166,6 +192,10 @@ public class ExamMonitoringScheduleService {
         });
     }
 
+    /**
+     * Saves the exam activities and actions into the database (after the end of the exam) for a specific exam.
+     * @param examId specific exam
+     */
     void executeExamActivitySaveTask(Long examId) {
         examCache.performCacheWriteIfPresent(examId, examMonitoringCache -> {
             ((ExamMonitoringCache) examMonitoringCache).getExamActivitySaveHandler().clear();
