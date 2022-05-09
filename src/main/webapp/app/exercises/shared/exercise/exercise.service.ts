@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Exercise, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
+import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -182,12 +182,13 @@ export class ExerciseService {
      */
     getNextExerciseForHours(exercises?: Exercise[], delayInHours = 12, student?: User) {
         // check for quiz exercise in order to prioritize before other exercise types
-        const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.type === ExerciseType.QUIZ && !exercise.ended);
+        // but only if the quiz is synchronized as quizzes in other modes are generally longer running and would just clog up the display all the time
+        const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.quizMode === QuizMode.SYNCHRONIZED && !exercise.quizEnded);
         return (
             // 1st priority is an active quiz
             nextQuizExercises?.find((exercise: QuizExercise) => this.isActiveQuiz(exercise)) ||
             // 2nd priority is a visible quiz
-            nextQuizExercises?.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
+            nextQuizExercises?.find((exercise: QuizExercise) => exercise.visibleToStudents) ||
             // 3rd priority is the next due exercise
             exercises?.find((exercise) => {
                 const studentParticipation = student ? exercise.studentParticipations?.find((participation) => participation.student?.id === student?.id) : undefined;

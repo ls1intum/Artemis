@@ -35,6 +35,8 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseDistributedCache.class);
 
+    private static final String HAZELCAST_CACHE_BATCH = "-batches";
+
     private static final String HAZELCAST_CACHE_PARTICIPATIONS = "-participations";
 
     private static final String HAZELCAST_CACHE_SUBMISSIONS = "-submissions";
@@ -59,6 +61,8 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     /*
      * All three IMaps are distributed Hazelcast objects and must not be (de-)serialized, they are all set in the setHazelcastInstance method.
      */
+
+    private transient IMap<String, Long> batches;
 
     private transient IMap<String, StudentParticipation> participations;
 
@@ -87,6 +91,11 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     @Override
     QuizExercise getExercise() {
         return exercise;
+    }
+
+    @Override
+    Map<String, Long> getBatches() {
+        return batches;
     }
 
     @Override
@@ -127,9 +136,13 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
     @Override
     void clear() {
+        int batchesSize = batches.size();
         int participationsSize = participations.size();
         int submissionsSize = submissions.size();
         int resultsSize = results.size();
+        if (batchesSize > 0) {
+            log.warn("Cache for Quiz {} destroyed with {} batches cached", getExerciseId(), participationsSize);
+        }
         if (participationsSize > 0) {
             log.warn("Cache for Quiz {} destroyed with {} participations cached", getExerciseId(), participationsSize);
         }
@@ -139,6 +152,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
         if (resultsSize > 0) {
             log.warn("Cache for Quiz {} destroyed with {} results cached", getExerciseId(), resultsSize);
         }
+        batches.destroy();
         participations.destroy();
         submissions.destroy();
         results.destroy();
@@ -151,6 +165,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
          * Distributed Hazelcast objects will be automatically created and set up by Hazelcast, and are cached by the Hazelcast instance itself globally. This is a relatively
          * lightweight operation.
          */
+        batches = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_BATCH);
         participations = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_PARTICIPATIONS);
         submissions = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_SUBMISSIONS);
         results = hazelcastInstance.getMap(Constants.HAZELCAST_QUIZ_PREFIX + getExerciseId() + HAZELCAST_CACHE_RESULTS);

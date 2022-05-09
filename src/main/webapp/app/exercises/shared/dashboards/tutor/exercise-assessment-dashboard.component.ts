@@ -44,7 +44,7 @@ import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faExclamationTriangle, faFolderOpen, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
 

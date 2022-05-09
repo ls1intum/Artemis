@@ -1,9 +1,11 @@
-import { Directive, Input, OnChanges, OnInit } from '@angular/core';
+import { Directive, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PLACEHOLDER_USER_REACTED } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { Subscription } from 'rxjs';
 
 const PIN_EMOJI_ID = 'pushpin';
 const PIN_EMOJI_UNICODE = '1F4CC';
@@ -36,7 +38,7 @@ interface ReactionMetaDataMap {
 }
 
 @Directive()
-export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges {
+export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges, OnDestroy {
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     /*
@@ -51,6 +53,8 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     @Input() posting: T;
     showReactionSelector = false;
     currentUserIsAtLeastTutor: boolean;
+    darkModeEmojiPicker = false;
+    themeSubscription: Subscription;
 
     /**
      * currently predefined fixed set of emojis that should be used within a course,
@@ -64,7 +68,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      */
     reactionMetaDataMap: ReactionMetaDataMap = {};
 
-    constructor(protected metisService: MetisService) {
+    constructor(protected metisService: MetisService, protected themeService: ThemeService) {
         this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
     }
 
@@ -87,6 +91,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     ngOnInit(): void {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => (this.darkModeEmojiPicker = theme === Theme.DARK));
     }
 
     /**
@@ -96,6 +101,10 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     ngOnChanges(): void {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
+    }
+
+    ngOnDestroy(): void {
+        this.themeSubscription?.unsubscribe();
     }
 
     abstract buildReaction(emojiId: string): Reaction;

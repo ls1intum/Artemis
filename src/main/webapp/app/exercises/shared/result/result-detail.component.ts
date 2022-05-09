@@ -5,11 +5,11 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import {
+    checkSubsequentFeedbackInAssessment,
     Feedback,
     FeedbackType,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
-    checkSubsequentFeedbackInAssessment,
 } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';

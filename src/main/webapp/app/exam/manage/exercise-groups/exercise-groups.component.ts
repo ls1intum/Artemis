@@ -28,6 +28,7 @@ import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard
 @Component({
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
+    styleUrls: ['./exercise-groups.component.scss'],
 })
 export class ExerciseGroupsComponent implements OnInit {
     participationType = ProgrammingExerciseParticipationType;

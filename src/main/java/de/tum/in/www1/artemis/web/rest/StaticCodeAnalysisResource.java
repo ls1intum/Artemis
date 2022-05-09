@@ -96,7 +96,7 @@ public class StaticCodeAnalysisResource {
     /**
      * Reset the static code analysis categories of the given exercise to their default configuration.
      *
-     * @param exerciseId if of the exercise for which the categories should be reseted
+     * @param exerciseId if of the exercise for which the categories should be reset
      * @return static code analysis categories with the default configuration
      */
     @PatchMapping(Endpoints.RESET)

@@ -6,6 +6,7 @@ import {
     EventEmitter,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     Output,
     SimpleChanges,
@@ -28,6 +29,8 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -35,7 +38,7 @@ import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, f
     styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy, QuizQuestionEdit {
     @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer', { static: false })
@@ -85,6 +88,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     backupQuestion: ShortAnswerQuestion;
 
+    themeSubscription: Subscription;
+
     // Icons
     faBan = faBan;
     faTrash = faTrash;
@@ -101,6 +106,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
+        private themeService: ThemeService,
     ) {}
 
     ngOnInit(): void {
@@ -138,6 +144,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!this.reEvaluationInProgress) {
             requestAnimationFrame(this.setupQuestionEditor.bind(this));
         }
+    }
+
+    ngOnDestroy(): void {
+        this.themeSubscription?.unsubscribe();
     }
 
     /**
@@ -180,7 +190,12 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.numberOfSpot = this.shortAnswerQuestion.spots!.length + 1;
 
         // Default editor settings for inline markup editor
-        this.questionEditor.setTheme('chrome');
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme: Theme) => {
+            if (!this.questionEditor) {
+                return;
+            }
+            this.questionEditor.setTheme(theme.markdownAceTheme);
+        });
         this.questionEditor.getEditor().renderer.setShowGutter(false);
         this.questionEditor.getEditor().renderer.setPadding(10);
         this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);

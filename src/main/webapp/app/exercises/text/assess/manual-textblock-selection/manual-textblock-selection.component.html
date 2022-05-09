@@ -6,6 +6,7 @@
         (didSelect)="selectedRef = $event; selectedRefChange.emit($event)"
         (didChange)="textBlockRefsChangeEmit()"
         [readOnly]="readOnly"
+        [criteria]="criteria"
     ></jhi-textblock-assessment-card>
     <ng-template #selectionInterface>
         <!-- DO NOT ADD LINEBREAKS INSIDE <jhi-manual-text-selection> -->

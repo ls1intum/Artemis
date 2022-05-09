@@ -20,6 +20,8 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -366,6 +368,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testPullChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
@@ -399,6 +402,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testResetToLastCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);

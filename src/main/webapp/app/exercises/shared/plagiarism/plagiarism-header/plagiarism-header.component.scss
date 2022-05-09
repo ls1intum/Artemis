@@ -1,8 +1,6 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 .plagiarism-header {
     align-items: center;
-    border-bottom: 1px solid $body-bg;
+    border-bottom: 1px solid var(--body-bg);
     display: flex;
     justify-content: space-between;
     padding: 1rem;
@@ -30,7 +28,7 @@
         }
 
         .vertical-divider {
-            background-color: $body-bg;
+            background-color: var(--body-bg);
             height: 24px;
             width: 1px;
         }
@@ -41,6 +39,6 @@
     }
 
     .plagiarism-warning {
-        color: darken($body-bg, 20);
+        color: white;
     }
 }

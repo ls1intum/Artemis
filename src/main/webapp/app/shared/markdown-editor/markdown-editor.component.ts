@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 // Note: this import has to be before the 'brace' imports
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
@@ -33,6 +33,8 @@ import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorde
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -62,7 +64,7 @@ const getAceMode = (mode: EditorMode) => {
     styleUrls: ['./markdown-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class MarkdownEditorComponent implements AfterViewInit {
+export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     // This ref is used for entering the fullscreen mode.
@@ -155,11 +157,18 @@ export class MarkdownEditorComponent implements AfterViewInit {
     enableFileUpload = true;
     acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf';
 
+    themeSubscription: Subscription;
+
     // Icons
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private fileUploaderService: FileUploaderService,
+        private alertService: AlertService,
+        private themeService: ThemeService,
+    ) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -217,6 +226,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
             });
         }
         this.setupMarkdownEditor();
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme: Theme) => {
+            if (!this.aceEditorContainer) {
+                return;
+            }
+            this.aceEditorContainer.setTheme(theme.markdownAceTheme);
+        });
 
         const selectedAceMode = getAceMode(this.editorMode);
         if (selectedAceMode) {
@@ -228,12 +243,15 @@ export class MarkdownEditorComponent implements AfterViewInit {
         }
     }
 
+    ngOnDestroy() {
+        this.themeSubscription?.unsubscribe();
+    }
+
     /**
      * @function setupQuestionEditor
      * @desc Initializes the ace editor
      */
     setupMarkdownEditor(): void {
-        this.aceEditorContainer.setTheme('chrome');
         this.aceEditorContainer.getEditor().renderer.setShowGutter(this.showLineNumbers);
         this.aceEditorContainer.getEditor().renderer.setPadding(10);
         this.aceEditorContainer.getEditor().renderer.setScrollMargin(8, 8);

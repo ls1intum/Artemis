@@ -94,18 +94,17 @@ public class UserJWTController {
 
         final boolean rememberMe = Boolean.parseBoolean(body);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Saml2AuthenticatedPrincipal)) {
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof final Saml2AuthenticatedPrincipal principal)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
         log.debug("SAML2 authentication: {}", authentication);
 
-        final Saml2AuthenticatedPrincipal principal = (Saml2AuthenticatedPrincipal) authentication.getPrincipal();
         try {
             authentication = saml2Service.get().handleAuthentication(principal);
         }
         catch (UserNotActivatedException e) {
-            // If the exception is not catched a 401 is returned.
+            // If the exception is not caught a 401 is returned.
             // That does not match the actual reason and would trigger authentication in the client
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
         }
@@ -123,11 +122,14 @@ public class UserJWTController {
 
         private String idToken;
 
+        /**
+         * Make Jackson happy
+         */
         JWTToken() {
         }
 
         JWTToken(String idToken) {
-            this.idToken = idToken;
+            this.setIdToken(idToken);
         }
 
         @JsonProperty("id_token")

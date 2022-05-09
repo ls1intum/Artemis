@@ -39,7 +39,7 @@ describe('Notification Service', () => {
     const course: Course = new Course();
     course.id = 42;
 
-    const quizExercise: QuizExercise = { course, title: 'test quiz', started: true, visibleToStudents: true, id: 27 } as QuizExercise;
+    const quizExercise: QuizExercise = { course, title: 'test quiz', quizStarted: true, visibleToStudents: true, id: 27 } as QuizExercise;
 
     const generateQuizNotification = () => {
         const generatedNotification = {

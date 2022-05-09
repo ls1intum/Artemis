@@ -211,7 +211,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * @returns the color that the given grade step should receive in the chart
      * @private
      */
-    private getGradeStepColor(gradeStep: GradeStep): GraphColors {
+    private getGradeStepColor(gradeStep: GradeStep): string {
         if (this.isBonus) {
             if (gradeStep.gradeName === '0') {
                 return GraphColors.YELLOW;

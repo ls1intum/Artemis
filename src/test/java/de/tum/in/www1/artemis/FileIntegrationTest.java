@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
@@ -106,7 +107,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetDragAndDropBackgroundFile() throws Exception {
         Course course = database.addEmptyCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         quizExerciseRepository.save(quizExercise);
 
@@ -127,7 +128,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetDragItemFile() throws Exception {
         Course course = database.addEmptyCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         quizExerciseRepository.save(quizExercise);
 

@@ -26,9 +26,9 @@
             </jhi-progress-bar>
         </div>
     </div>
-    <div class="mt-3 mb-2">
-        <input id="hideDone" type="checkbox" [(ngModel)]="hideFinished" />
-        <label for="hideDone">
+    <div class="mt-3 mb-2 form-check">
+        <input id="hideDone" class="form-check-input" type="checkbox" [(ngModel)]="hideFinished" />
+        <label for="hideDone" class="form-check-label">
             <span>{{ 'artemisApp.plagiarism.cases.hideFinished' | artemisTranslate }}</span>
         </label>
     </div>
