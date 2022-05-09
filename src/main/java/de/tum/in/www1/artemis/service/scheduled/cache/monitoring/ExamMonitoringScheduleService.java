@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -17,8 +18,10 @@ import com.hazelcast.scheduledexecutor.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
@@ -35,12 +38,16 @@ public class ExamMonitoringScheduleService {
 
     private final ExamService examService;
 
+    private final StudentExamRepository studentExamRepository;
+
     private final ExamActivityService examActivityService;
 
-    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamService examService, ExamActivityService examActivityService) {
+    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamService examService, StudentExamRepository studentExamRepository,
+            ExamActivityService examActivityService) {
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_MONITORING_SCHEDULER);
         this.examCache = new ExamCache(hazelcastInstance);
         this.examService = examService;
+        this.studentExamRepository = studentExamRepository;
         this.examActivityService = examActivityService;
     }
 
@@ -69,18 +76,22 @@ public class ExamMonitoringScheduleService {
 
     public void addExamAction(Long examId, long studentExamId, ExamAction examAction) {
         if (examAction != null) {
-            ExamActivity activity = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().get(studentExamId);
-            if (activity == null) {
-                activity = new ExamActivity();
-                updateExamActivity(examId, studentExamId, activity);
+            ExamActivity examActivity = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().get(studentExamId);
+
+            if (examActivity == null) {
+                examActivity = new ExamActivity();
+                examActivity.setStudentExamId(studentExamId);
+                examActivity = examActivityService.save(examActivity);
             }
-            activity.addExamAction(examAction);
+
+            examAction.setExamActivity(examActivity);
+            examActivity.addExamAction(examAction);
+            updateExamActivity(examId, studentExamId, examActivity);
         }
     }
 
     public void startSchedule() {
-        // TODO: Add filter for Exams
-        List<Exam> exams = examService.findAllCurrentAndUpcomingExams();
+        List<Exam> exams = examService.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
         log.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
         for (Exam exam : exams) {
             cancelExamActivitySave(exam.getId());
@@ -100,11 +111,22 @@ public class ExamMonitoringScheduleService {
     }
 
     public void scheduleExamActivitySave(final long examId) {
+        this.cancelExamActivitySave(examId);
         // reload from database to make sure there are no proxy objects
         final var exam = examService.findByIdOrElseThrow(examId);
         try {
-            // TODO: Add longest possible working time
-            long delay = Duration.between(ZonedDateTime.now(), exam.getEndDate()).toMillis();
+            // Check if there is a student exam with longer working time
+            var studentExams = studentExamRepository.findByExamId(examId);
+            var studentExam = studentExams.stream().max(Comparator.comparingLong(StudentExam::getWorkingTime));
+            var duration = Duration.between(ZonedDateTime.now(), exam.getEndDate());
+            long delay = duration.toMillis();
+            if (studentExam.isPresent()) {
+                var durationWithTimeExtension = Duration.between(ZonedDateTime.now(), exam.getStartDate()).toSeconds() + studentExam.get().getWorkingTime();
+                if (duration.toSeconds() < durationWithTimeExtension) {
+                    delay = durationWithTimeExtension * 1000;
+                }
+            }
+
             var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamActivitySaveTask(examId), delay, TimeUnit.MILLISECONDS);
             // save scheduled future in HashMap
             examCache.performCacheWrite(examId, examMonitoringCache -> {

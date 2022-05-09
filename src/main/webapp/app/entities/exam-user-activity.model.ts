@@ -34,11 +34,11 @@ export abstract class ExamAction implements BaseEntity {
 }
 
 export class StartedExamAction extends ExamAction {
-    public examSessionId?: number;
+    public sessionId?: number;
 
     constructor(sessionId: number | undefined) {
         super(ExamActionType.STARTED_EXAM);
-        this.examSessionId = sessionId;
+        this.sessionId = sessionId;
     }
 }
 

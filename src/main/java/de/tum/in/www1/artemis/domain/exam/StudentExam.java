@@ -11,12 +11,10 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 
 @Entity
 @Table(name = "student_exam")
@@ -63,14 +61,6 @@ public class StudentExam extends AbstractAuditingEntity {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("studentExam")
     private Set<ExamSession> examSessions = new HashSet<>();
-
-    /**
-     * Each {@link StudentExam} has a relation to exactly one {@link ExamActivity} containing all performed actions.
-     */
-    @OneToOne(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonManagedReference
-    private ExamActivity examActivity;
 
     public Boolean isSubmitted() {
         return submitted;
@@ -160,14 +150,6 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public void setExamSessions(Set<ExamSession> examSessions) {
         this.examSessions = examSessions;
-    }
-
-    public ExamActivity getExamActivity() {
-        return examActivity;
-    }
-
-    public void setExamActivity(ExamActivity examActivity) {
-        this.examActivity = examActivity;
     }
 
     /**

@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -187,7 +186,6 @@ public class ExamResource {
         Exam result = examRepository.save(updatedExam);
 
         if (updatedExam.isMonitoring()) {
-            examMonitoringScheduleService.cancelExamActivitySave(updatedExam.getId());
             examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
         }
 
@@ -660,10 +658,15 @@ public class ExamResource {
             studentExam.getExam().setStudentExams(null);
 
             // Add ExamActivity
-            ExamActivity examActivity = new ExamActivity();
-            examActivity.setStudentExam(studentExam);
-            studentExam.setExamActivity(examActivityService.save(examActivity));
+            /*
+             * if(exam.isMonitoring()) { ExamActivity examActivity = new ExamActivity(); examActivity.setStudentExam(studentExam);
+             * studentExam.setExamActivity(examActivityService.save(examActivity)); }
+             */
         }
+
+        // Reschedule after creation (possible longer wrking time)
+        examMonitoringScheduleService.scheduleExamActivitySave(examId);
+
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }
@@ -697,9 +700,10 @@ public class ExamResource {
             studentExam.getExam().setStudentExams(null);
 
             // Add ExamActivity
-            ExamActivity examActivity = new ExamActivity();
-            examActivity.setStudentExam(studentExam);
-            studentExam.setExamActivity(examActivityService.save(examActivity));
+            /*
+             * if(exam.isMonitoring()) { ExamActivity examActivity = new ExamActivity(); examActivity.setStudentExam(studentExam);
+             * studentExam.setExamActivity(examActivityService.save(examActivity)); }
+             */
         }
 
         log.info("Generated {} missing student exams for exam {}", studentExams.size(), examId);
@@ -879,7 +883,6 @@ public class ExamResource {
         log.debug("REST request to get exam {} for conduction", examId);
 
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
-        exam.setExamActivity(null);
         return ResponseEntity.ok(exam);
     }
 

@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.*;
+import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -73,13 +74,16 @@ public class StudentExamResource {
 
     private final ExamService examService;
 
+    private final ExamMonitoringScheduleService examMonitoringScheduleService;
+
     @Value("${info.browser-fingerprints-enabled:#{true}}")
     private boolean fingerprintingEnabled;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService) {
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
+            ExamMonitoringScheduleService examMonitoringScheduleService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -93,6 +97,7 @@ public class StudentExamResource {
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
+        this.examMonitoringScheduleService = examMonitoringScheduleService;
     }
 
     /**
@@ -179,7 +184,11 @@ public class StudentExamResource {
         }
 
         studentExam.setWorkingTime(workingTime);
-        return ResponseEntity.ok(studentExamRepository.save(studentExam));
+        var savedStudentExam = studentExamRepository.save(studentExam);
+
+        examMonitoringScheduleService.scheduleExamActivitySave(examId);
+
+        return ResponseEntity.ok(savedStudentExam);
     }
 
     /**
@@ -476,7 +485,6 @@ public class StudentExamResource {
 
         // not needed
         studentExam.getExam().setCourse(null);
-        studentExam.setExamActivity(null);
     }
 
     /**

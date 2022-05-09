@@ -1638,14 +1638,4 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExam.isSubmitted()).isFalse();
         assertThat(studentExam.getSubmissionDate()).isNull();
     }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateStudentExamWithExamActivity() throws Exception {
-        final var studentExams = prepareStudentExamsForConduction(false);
-        var studentExam = studentExams.get(0);
-
-        studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
-        assertThat(studentExam.getExamActivity()).isNotNull();
-    }
 }

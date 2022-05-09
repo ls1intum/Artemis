@@ -9,12 +9,10 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
 @Entity
 @Table(name = "exam_activity")
@@ -22,22 +20,20 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamActivity extends DomainObject {
 
-    @OneToOne
-    @JoinColumn(name = "student_exam_id")
-    @JsonBackReference
-    private StudentExam studentExam;
+    @Column(name = "student_exam_id")
+    private Long studentExamId;
 
-    @OneToMany(mappedBy = "examActivity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "examActivity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference
     private Set<ExamAction> examActions = new HashSet<>();
 
-    public StudentExam getStudentExam() {
-        return studentExam;
+    public Long getStudentExamId() {
+        return studentExamId;
     }
 
-    public void setStudentExam(StudentExam studentExam) {
-        this.studentExam = studentExam;
+    public void setStudentExamId(Long studentExamId) {
+        this.studentExamId = studentExamId;
     }
 
     public Set<ExamAction> getExamActions() {
@@ -58,6 +54,6 @@ public class ExamActivity extends DomainObject {
 
     @Override
     public String toString() {
-        return "ExamActivity{" + "studentExam=" + studentExam + '}';
+        return "ExamActivity{" + "studentExam=" + studentExamId + '}';
     }
 }

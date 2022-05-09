@@ -6,26 +6,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamAccessService;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActionService;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
+import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
+/**
+ * REST controller for managing ExamActivityResource.
+ */
+@RestController
+@RequestMapping("/api")
 public class ExamActivityResource {
 
     private final Logger log = LoggerFactory.getLogger(ExamActivityResource.class);
-
-    private final ExamActionService examActionService;
-
-    private final ExamActivityService examActivityService;
 
     private final StudentExamAccessService studentExamAccessService;
 
@@ -35,13 +35,17 @@ public class ExamActivityResource {
     // TODO replace with Service
     private final UserRepository userRepository;
 
-    public ExamActivityResource(ExamActionService examActionService, ExamActivityService examActivityService, StudentExamAccessService studentExamAccessService,
-            StudentExamRepository studentExamRepository, UserRepository userRepository) {
-        this.examActionService = examActionService;
-        this.examActivityService = examActivityService;
+    private final ExamMonitoringScheduleService examMonitoringScheduleService;
+
+    private final ExamService examService;
+
+    public ExamActivityResource(StudentExamAccessService studentExamAccessService, StudentExamRepository studentExamRepository, UserRepository userRepository,
+            ExamMonitoringScheduleService examMonitoringScheduleService, ExamService examService) {
+        this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.studentExamAccessService = studentExamAccessService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
+        this.examService = examService;
     }
 
     /**
@@ -58,20 +62,17 @@ public class ExamActivityResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody List<ExamAction> actions) {
+        Exam exam = examService.findByIdOrElseThrow(examId);
+        if (!exam.isMonitoring())
+            return ResponseEntity.badRequest().build();
+
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         boolean isTestRun = studentExam.isTestRun();
         this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, studentExamId, currentUser, isTestRun);
 
-        // TODO: Filter not valid actions
-        // List<ExamAction> examActions = actions.stream().map(examActionService::mapExamAction).toList();
-        actions.forEach(action -> action.setExamActivity(studentExam.getExamActivity()));
-        examActionService.saveAll(actions);
-
-        studentExam.getExamActivity().addExamActions(actions);
-        examActivityService.save(studentExam.getExamActivity());
-
-        // TODO: Update log
+        // TODO: Add array
+        actions.forEach(action -> examMonitoringScheduleService.addExamAction(examId, studentExamId, action));
         log.info("REST request by user: {} for exam with id {} to add {} actions to student-exam {}", currentUser.getLogin(), examId, 5, studentExamId);
 
         return ResponseEntity.ok().build();

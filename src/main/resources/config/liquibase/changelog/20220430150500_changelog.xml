@@ -54,19 +54,19 @@
             </column>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="session_id" baseTableName="exam_action"
-                                 constraintName="TODO_2" deferrable="false" onDelete="CASCADE"
+                                 constraintName="fk_exam_action_exam_session" deferrable="false" onDelete="CASCADE"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="exam_session"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exam_action"
-                                 constraintName="TODO_3" deferrable="false" onDelete="CASCADE"
+                                 constraintName="fk_exam_action_exercise" deferrable="false" onDelete="CASCADE"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="exercise"/>
         <addForeignKeyConstraint baseColumnNames="submission_id" baseTableName="exam_action"
-                                 constraintName="TODO_4" deferrable="false" onDelete="CASCADE"
+                                 constraintName="fk_exam_action_submission" deferrable="false" onDelete="CASCADE"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="submission"/>
         <addForeignKeyConstraint baseColumnNames="exam_activity_id" baseTableName="exam_action"
-                                 constraintName="TODO_5" deferrable="false" onDelete="CASCADE"
+                                 constraintName="fk_exam_action_exam_activity" deferrable="false" onDelete="CASCADE"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="exam_activity"/>
     </changeSet>
