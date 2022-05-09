@@ -46,7 +46,7 @@
             },
             "quizStatus": {
                 "closed": "Closed",
-                "hidden": "Hidden",
+                "invisible": "Invisible",
                 "openForPractice": "Open for practice",
                 "active": "Active",
                 "visible": "Visible"
@@ -61,7 +61,8 @@
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
             "openForPractice": "Release For Practice",
-            "startNow": "Start Now",
+            "startQuiz": "Start Quiz",
+            "startBatch": "Start Batch",
             "showNow": "Set Visible",
             "endNow": "End Now",
             "duration": "Duration",

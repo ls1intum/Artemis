@@ -10,7 +10,7 @@ export enum QuizStatus {
     OPEN_FOR_PRACTICE,
     ACTIVE,
     VISIBLE,
-    HIDDEN,
+    INVISIBLE,
 }
 
 export enum QuizMode {

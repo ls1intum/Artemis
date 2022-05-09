@@ -58,7 +58,7 @@
                     <td>{{ quizExercise.title }}</td>
                     <td>
                         <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.HIDDEN">{{ 'artemisApp.quizExercise.quizStatus.hidden' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.INVISIBLE">{{ 'artemisApp.quizExercise.quizStatus.invisible' | artemisTranslate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.VISIBLE">{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
@@ -90,10 +90,16 @@
                                 type="submit"
                                 (click)="startQuiz(quizExercise.id!)"
                                 class="btn btn-warning btn-sm me-1 mb-1"
-                                *ngIf="quizExercise.status === QuizStatus.VISIBLE && quizExercise.quizMode === QuizMode.SYNCHRONIZED && quizExercise.isAtLeastEditor"
+                                *ngIf="
+                                    (quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE ||
+                                        quizExercise.status === QuizStatus.VISIBLE ||
+                                        quizExercise.status === QuizStatus.INVISIBLE) &&
+                                    quizExercise.quizMode === QuizMode.SYNCHRONIZED &&
+                                    quizExercise.isAtLeastEditor
+                                "
                             >
                                 <fa-icon [icon]="faPlayCircle"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startNow">Start Now</span>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
                             </button>
                             <ng-container
                                 *ngIf="(quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.ACTIVE) && quizExercise.quizMode == QuizMode.BATCHED"
@@ -111,7 +117,7 @@
                                         *ngIf="!batch.started"
                                     >
                                         <fa-icon [icon]="faPlayCircle"></fa-icon>
-                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startNow">Start Now</span>
+                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
                                     </button>
                                 </div>
                                 <div>
@@ -145,7 +151,7 @@
                                 type="submit"
                                 (click)="showQuiz(quizExercise.id!)"
                                 class="btn btn-warning btn-sm me-1 mb-1"
-                                *ngIf="quizExercise.status === QuizStatus.HIDDEN && quizExercise.isAtLeastEditor"
+                                *ngIf="quizExercise.status === QuizStatus.INVISIBLE && quizExercise.isAtLeastEditor"
                             >
                                 <fa-icon [icon]="faEye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow">Set Visible</span>

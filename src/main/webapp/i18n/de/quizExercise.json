@@ -46,7 +46,7 @@
             },
             "quizStatus": {
                 "closed": "Geschlossen",
-                "hidden": "Verborgen",
+                "invisible": "Unsichtbar",
                 "openForPractice": "Zur Übung freigegeben",
                 "active": "Aktiv",
                 "visible": "Sichtbar"
@@ -61,7 +61,8 @@
             "isOpenForPractice": "Zum Üben freigegeben",
             "isPlannedToStart": "Geplante Startzeit",
             "openForPractice": "Zum Üben Freigeben",
-            "startNow": "Jetzt Starten",
+            "startQuiz": "Quiz Starten",
+            "startBatch": "Ladung Starten",
             "endNow": "Jetzt Beenden",
             "showNow": "Für Studierende Anzeigen",
             "duration": "Dauer",

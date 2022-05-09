@@ -143,7 +143,7 @@
                                 <div *ngFor="let quizBatch of quizExercise.quizBatches; let first = first">
                                     <jhi-date-time-picker
                                         class="form-element"
-                                        name="dueDate"
+                                        name="startTime"
                                         [shouldDisplayTimeZoneWarning]="first"
                                         [error]="quizBatch.startDateError ?? false"
                                         (valueChange)="cacheValidation()"
@@ -260,27 +260,6 @@
             <div class="edit-quiz-footer">
                 <div class="container">
                     <div class="edit-quiz-footer-content">
-                        <div class="form-group" *ngIf="!isExamMode" style="width: max-content !important">
-                            <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix me-1" style="align-self: center"></span>
-                            <select
-                                *ngIf="showDropdown === 'isOpenForPractice'"
-                                class="form-select"
-                                [(ngModel)]="quizExercise.isOpenForPractice"
-                                (ngModelChange)="cacheValidation()"
-                                title="status"
-                            >
-                                <option *ngFor="let option of statusOptionsPractice" [value]="option.key">
-                                    <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
-                                    <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
-                                </option>
-                            </select>
-                            <select *ngIf="showDropdown === 'active'" class="form-select" title="status" disabled>
-                                <option *ngFor="let option of statusOptionsActive" [value]="option.key">
-                                    {{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}
-                                </option>
-                            </select>
-                        </div>
-
                         <div class="form-group flex-fill ms-3" *ngIf="!isExamMode && quizExercise.id">
                             <div class="form-group flex-fill">
                                 <input

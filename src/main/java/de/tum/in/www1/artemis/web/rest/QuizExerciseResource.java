@@ -210,12 +210,7 @@ public class QuizExerciseResource {
             // not required in the returned json body
             quizExercise.setStudentParticipations(null);
             quizExercise.setCourse(null);
-            Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
-                case SYNCHRONIZED -> quizBatchRepository.findAllByQuizExercise(quizExercise);
-                case BATCHED -> quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, user.getId());
-                case INDIVIDUAL -> Set.of();
-            };
-            quizExercise.setQuizBatches(batches);
+            setQuizBatches(user, quizExercise);
         }
 
         return quizExercises;
@@ -255,15 +250,16 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             throw new AccessForbiddenException();
         }
-        quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, userRepository.getUser().getId()));
+        setQuizBatches(user, quizExercise);
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -546,5 +542,14 @@ public class QuizExerciseResource {
 
         quizExercise.validateScoreSettings();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
+    }
+
+    private void setQuizBatches(User user, QuizExercise quizExercise) {
+        Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
+            case SYNCHRONIZED -> quizBatchRepository.findAllByQuizExercise(quizExercise);
+            case BATCHED -> quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, user.getId());
+            case INDIVIDUAL -> Set.of();
+        };
+        quizExercise.setQuizBatches(batches);
     }
 }
