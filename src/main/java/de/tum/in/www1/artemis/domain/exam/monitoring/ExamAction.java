@@ -16,6 +16,9 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 
+/**
+ * Defines an action performed by a student during an exam.
+ */
 @Entity
 @Table(name = "exam_action")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -32,21 +35,26 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamAction extends DomainObject {
 
+    /**
+     * Multiple ExamActions is part of an ExamActivity.
+     */
     @ManyToOne
     @JoinColumn(name = "exam_activity_id")
     @JsonBackReference
     protected ExamActivity examActivity;
 
+    /**
+     * Define the time when this action was performed.
+     */
     @Column(name = "timestamp", nullable = false)
     protected ZonedDateTime timestamp;
 
+    /**
+     * Defines the type of the performed action (necessary to avoid DTOs)
+     */
     @Column(name = "type", nullable = false, insertable = false, updatable = false)
     @Enumerated(EnumType.STRING)
     protected ExamActionType type;
-
-    public ExamActivity getExamActivity() {
-        return examActivity;
-    }
 
     public void setExamActivity(ExamActivity examActivity) {
         this.examActivity = examActivity;

@@ -46,6 +46,10 @@ public abstract class CacheHandler<KEY> {
         return cache.get(key);
     }
 
+    /**
+     * Returns an empty cache.
+     * @return empty {@link Cache}
+     */
     protected abstract Cache emptyCacheValue();
 
     /**
@@ -58,6 +62,11 @@ public abstract class CacheHandler<KEY> {
         return cache.getOrDefault(key, emptyCacheValue());
     }
 
+    /**
+     * Creates a distributed cache.
+     * @param key identifier of the cache
+     * @return created {@link Cache}
+     */
     protected abstract Cache createDistributedCacheValue(KEY key);
 
     /**

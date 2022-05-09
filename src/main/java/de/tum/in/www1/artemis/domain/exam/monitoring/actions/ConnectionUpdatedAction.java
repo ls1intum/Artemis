@@ -6,19 +6,18 @@ import javax.persistence.Entity;
 
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
+/**
+ * This action shows whether a student has a connection update during the exam or not.
+ */
 @Entity
 @DiscriminatorValue("CONNECTION_UPDATED")
 public class ConnectionUpdatedAction extends ExamAction {
 
+    /**
+     * Connected is true if the connection is available again, and false if the student has lost his connection.
+     */
     @Column(name = "connected")
     private boolean connected;
-
-    public ConnectionUpdatedAction(boolean connected) {
-        this.connected = connected;
-    }
-
-    public ConnectionUpdatedAction() {
-    }
 
     public boolean isConnected() {
         return connected;

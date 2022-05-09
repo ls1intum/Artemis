@@ -16,11 +16,21 @@ public class ExamActivityService {
         this.examActivityRepository = examActivityRepository;
     }
 
+    /**
+     * To avoid direct access to the {@link ExamActivityRepository}, we use delegation save the {@link ExamActivity}.
+     * @param examActivity {@link ExamActivity} to save
+     * @return saved {@link ExamActivity}
+     */
     public ExamActivity save(ExamActivity examActivity) {
         return this.examActivityRepository.save(examActivity);
     }
 
-    public List<ExamActivity> saveAll(Iterable<ExamActivity> entities) {
-        return examActivityRepository.saveAll(entities);
+    /**
+     * To avoid direct access to the {@link ExamActivityRepository}, we use delegation save all {@link ExamActivity}s.
+     * @param examActivities {@link ExamActivity}s to save
+     * @return saved {@link ExamActivity}s
+     */
+    public List<ExamActivity> saveAll(Iterable<ExamActivity> examActivities) {
+        return examActivityRepository.saveAll(examActivities);
     }
 }

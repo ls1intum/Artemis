@@ -6,10 +6,16 @@ import javax.persistence.JoinColumn;
 
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
+/**
+ * This action indicates whether a student switched to another exercise or to the overview page.
+ */
 @Entity
 @DiscriminatorValue("SWITCHED_EXERCISE")
 public class SwitchedExerciseAction extends ExamAction {
 
+    /**
+     * Corresponding exercise id or null (overview page).
+     */
     @JoinColumn(name = "exercise_id")
     private Long exerciseId;
 

@@ -804,10 +804,18 @@ public class ExamService {
                 .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
     }
 
+    /**
+     * To avoid direct access to the {@link ExamRepository}, we use delegation to find all current and upcoming exams.
+     * @return List<Exam>
+     */
     public List<Exam> findAllCurrentAndUpcomingExams() {
         return examRepository.findAllCurrentAndUpcomingExams();
     }
 
+    /**
+     * To avoid direct access to the {@link ExamRepository}, we use delegation to find the {@link Exam} based on its id or esle throw an exception.
+     * @return Exam
+     */
     public Exam findByIdOrElseThrow(Long examId) {
         return examRepository.findByIdElseThrow(examId);
     }
