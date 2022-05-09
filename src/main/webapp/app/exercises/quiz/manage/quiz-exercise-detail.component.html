@@ -107,6 +107,7 @@
                                     id="release-date"
                                     class="form-element"
                                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
+                                    labelTooltip="{{ getReleaseDateExplanation(quizExercise.quizMode) | artemisTranslate }}"
                                     [(ngModel)]="quizExercise.releaseDate"
                                     (valueChange)="cacheValidation()"
                                     [error]="false"
@@ -134,6 +135,7 @@
                                     (ngModelChange)="cacheValidation()"
                                 />
                                 <label class="form-check-label custom-control-label" for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.startTime"> </label>
+                                <jhi-help-icon placement="auto" text="artemisApp.quizExercise.startTimeExplanation"></jhi-help-icon>
                             </div>
                             <div class="form-check custom-control custom-checkbox" *ngIf="quizExercise.quizMode === QuizMode.BATCHED && false">
                                 <!-- no scheduled batched mode yet -->

@@ -268,10 +268,16 @@
                 "individual": "Individual",
                 "explanation": "Batch Mode controls how students can participate in the quiz.\n\nSynchronized: There is exactly opportunity for all students to participate in the quiz at once.\nBatched: There are multiple opportunities for students to participate in the quiz by using a password.\nIndividual: Students can participate in the quiz by themselves at any time while it is released."
             },
+            "releaseDateExplanation": {
+                "synchronized": "Synchronized: The date when the exercise becomes visible to students. Students cannot see the questions until the start date.",
+                "batched": "Batched: The date when the exercise becomes visible to students. Students cannot see the questions until a batch is started and they enter the password for it.",
+                "individual": "Individual: The date when the exercise becomes visible to students. Students can see the questions at the time they choose."
+            },
+            "startTimeExplanation": "The time when the students are able to see the questions and start answering.",
             "addBatch": "Add Batch",
             "join": "Join",
             "joinFailed": "Unable to join the quiz.",
-            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date."
+            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date"
         }
     }
 }
