@@ -121,7 +121,11 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
-        if (!studentExam.isTestRun()) {
+        if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
+            // immediately evaluate quiz participations for test runs and TestExams
+            examQuizService.evaluateQuizParticipationsForTestRun(studentExam);
+        }
+        else if (!studentExam.isTestRun()) {
             try {
                 // lock the programming exercise repository access (important in case of early exam submissions)
                 lockStudentRepositories(currentUser, existingStudentExam);
@@ -129,10 +133,6 @@ public class StudentExamService {
             catch (Exception e) {
                 log.error("lockStudentRepositories threw an exception", e);
             }
-        }
-        else {
-            // immediately evaluate quiz participations for test runs
-            examQuizService.evaluateQuizParticipationsForTestRun(studentExam);
         }
 
         return ResponseEntity.ok(studentExam);

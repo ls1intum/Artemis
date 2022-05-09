@@ -199,6 +199,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.examParticipationService.loadStudentExamForTestExamById(this.courseId, this.examId, this.studentExamId).subscribe({
                     next: (studentExam) => {
                         this.studentExam = studentExam;
+                        this.exam = studentExam.exam!;
                         this.testExamStartTime = dayjs();
                         this.initIndividualEndDates(this.testExamStartTime);
 

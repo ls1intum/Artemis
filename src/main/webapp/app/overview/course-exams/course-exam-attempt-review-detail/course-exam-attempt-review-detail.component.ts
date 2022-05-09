@@ -40,9 +40,9 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
         if (this.studentExam.started && this.studentExam.submitted && this.studentExam.startedDate && this.studentExam.submissionDate) {
             this.individualWorkingTime = dayjs(this.studentExam.submissionDate).diff(dayjs(this.studentExam.startedDate), 'seconds');
             this.withinWorkingTime = false;
-        } else {
+        } else if (this.index === 0) {
             this.individualWorkingTime = 0;
-            // A subscription is used here to limit the number of calls
+            // A subscription is used here to limit the number of calls for the countdown of the remaining workingTime.
             this.studentExamState = interval(1000).subscribe(() => {
                 this.isWithinWorkingTime();
                 // If the StudentExam is no longer within the working time, the subscription can be unsubscribed, as the state will not change anymore
@@ -50,6 +50,9 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
                     this.unsubscribeFromExamStateSubscription();
                 }
             });
+        } else {
+            this.individualWorkingTime = 0;
+            this.withinWorkingTime = false;
         }
     }
 
@@ -91,7 +94,7 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
      * Used to open the corresponding studentExam
      */
     openStudentExam(): void {
-        if (this.studentExam.submitted) {
+        if (this.studentExam.submitted || this.withinWorkingTime) {
             this.router.navigate(['courses', this.courseId, 'exams', this.exam.id, 'test-exam', this.studentExam.id]);
         }
     }

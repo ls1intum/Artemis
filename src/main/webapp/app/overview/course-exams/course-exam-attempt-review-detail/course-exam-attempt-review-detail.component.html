@@ -1,6 +1,12 @@
 <div *ngIf="studentExam" (click)="openStudentExam()">
     <!-- To clearly indicate a StudentExam within the working time, which can be resumed, the card should be displayed in blue -->
-    <div [class]="'row card-body justify-content-center card-general-settings ' + (withinWorkingTime ? 'bg-primary text-white' : '')">
+    <div
+        [class]="
+            'row card-body justify-content-center card-general-settings ' +
+            (withinWorkingTime ? 'bg-primary text-white' : '') +
+            (withinWorkingTime || studentExam.submitted ? ' clickable' : '')
+        "
+    >
         <div class="row">
             <!-- Two variants: Play-Icon, if the studentExam is still within the working time and thus can be resumed.
             Magnifying Class for finished StudentExams, to indicate the possibility to review the exam -->

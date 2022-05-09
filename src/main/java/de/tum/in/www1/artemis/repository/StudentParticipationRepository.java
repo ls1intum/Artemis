@@ -353,30 +353,30 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions submission
-            LEFT JOIN FETCH submission.results result
-            LEFT JOIN FETCH result.feedbacks feedbacks
-            LEFT JOIN FETCH result.assessor
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
-            AND 0L = (SELECT COUNT(r2)
-                             FROM Result r2 WHERE r2.assessor IS NOT NULL
-                                 AND (r2.rated IS NULL OR r2.rated = FALSE)
-                                 AND r2.submission = submission)
-            AND
-              :#{#correctionRound} = (SELECT COUNT(r)
-                             FROM Result r WHERE r.assessor IS NOT NULL
-                                 AND r.rated = TRUE
-                                 AND r.submission = submission
-                                 AND r.completionDate IS NOT NULL
-                                 AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
-                                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate))
-            AND :#{#correctionRound} = (SELECT COUNT (prs)
-                            FROM p.results prs
-                            WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
-            AND submission.submitted = true
-            AND submission.id = (SELECT max(id) FROM p.submissions)
+                SELECT DISTINCT p FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions submission
+                LEFT JOIN FETCH submission.results result
+                LEFT JOIN FETCH result.feedbacks feedbacks
+                LEFT JOIN FETCH result.assessor
+                WHERE p.exercise.id = :#{#exerciseId}
+                AND p.testRun = FALSE
+                AND 0L = (SELECT COUNT(r2)
+                                 FROM Result r2 WHERE r2.assessor IS NOT NULL
+                                     AND (r2.rated IS NULL OR r2.rated = FALSE)
+                                     AND r2.submission = submission)
+                AND
+                  :#{#correctionRound} = (SELECT COUNT(r)
+                                 FROM Result r WHERE r.assessor IS NOT NULL
+                                     AND r.rated = TRUE
+                                     AND r.submission = submission
+                                     AND r.completionDate IS NOT NULL
+                                     AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                     AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate))
+                AND :#{#correctionRound} = (SELECT COUNT (prs)
+                                FROM p.results prs
+                                WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
+                AND submission.submitted = true
+                AND submission.id = (SELECT max(id) FROM p.submissions)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") Long exerciseId,
             @Param("correctionRound") long correctionRound);

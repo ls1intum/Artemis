@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUT
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -283,8 +284,8 @@ public class StudentExamResource {
         if (!user.getId().equals(studentExam.getUser().getId())) {
             throw new AccessForbiddenException("The requested exam does not belong to the requesting user");
         }
-
-        prepareStudentExamForConductionWithParticipations(request, user, studentExam);
+        // In case the studentExam is not yet started, new participations need to be set up.
+        prepareStudentExamForConductionWithParticipations(request, user, studentExam, !studentExam.isStarted());
 
         log.info("getStudentExamForTestExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 user.getLogin());
@@ -344,11 +345,6 @@ public class StudentExamResource {
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
         if (!studentExam.isSubmitted()) {
-            throw new AccessForbiddenException();
-        }
-
-        // For TestExams, /student-exams/{studentExamId}/summary must be used, as multiple StudentExams per User exist.
-        if (studentExam.getExam().isTestExam()) {
             throw new AccessForbiddenException();
         }
 
@@ -423,8 +419,16 @@ public class StudentExamResource {
 
         loadExercisesForStudentExam(studentExam);
 
-        // 3rd fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user);
+        // 3rd fetch participations, submissions and results.
+        List<StudentParticipation> participations = studentParticipationRepository.findArchivedParticipationsByStudentExamWithEagerSubmissionsResultWithoutAssessor(studentExam);
+
+        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
+
+        // connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
+        // available
+        for (Exercise exercise : studentExam.getExercises()) {
+            filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
+        }
 
         log.info("getStudentExamForTestExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 user.getLogin());
@@ -597,37 +601,44 @@ public class StudentExamResource {
     /**
      * Prepares a Student Exam for conduction with the studentParticipations as argument, instead of fetching them from the database.
      *
-     * @param request               the http request for the conduction
-     * @param currentUser           the current user
-     * @param studentExam           the student exam to be prepared
+     * @param request                the http request for the conduction
+     * @param currentUser            the current user
+     * @param studentExam            the student exam to be prepared
+     * @param createNewParticipation if a new participation should be created or an existing participation should be fetched from the database
      */
-    private void prepareStudentExamForConductionWithParticipations(HttpServletRequest request, User currentUser, StudentExam studentExam) {
-        // 1st: Fix startedDate
-        ZonedDateTime startedDate = ZonedDateTime.now();
+    private void prepareStudentExamForConductionWithParticipations(HttpServletRequest request, User currentUser, StudentExam studentExam, boolean createNewParticipation) {
 
-        // 2nd: Set up new participations for the Exercises and set initialisationDate to the startedDate
-        List<StudentParticipation> studentParticipations = studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
+        if (createNewParticipation) {
+            // 1st: Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms (initializationDate is stored with
+            // ms)
+            ZonedDateTime startedDate = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 
-        // 3rd: Reload the Quiz-Exercises
-        // TODO: Replace
+            // 2nd: Set up new participations for the Exercises and set initialisationDate to the startedDate
+            List<StudentParticipation> studentParticipations = studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
+
+            // 3rd: mark the student exam as started
+            studentExam.setStarted(true);
+            studentExam.setStartedDate(startedDate);
+
+            boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
+
+            // 4th: connect & filter the exercises and student participations including the latest submission
+            // and results where necessary, to make sure all relevant associations are available
+            for (Exercise exercise : studentExam.getExercises()) {
+                filterParticipationForExercise(studentExam, exercise, studentParticipations, isAtLeastInstructor);
+            }
+        }
+        else {
+            fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
+        }
+
+        // 5th: Reload the Quiz-Exercises
         loadExercisesForStudentExam(studentExam);
 
-        // 4th: mark the student exam as started
-        studentExam.setStarted(true);
-        if (studentExam.getStartedDate() == null) {
-            studentExam.setStartedDate(startedDate);
-        }
+        // 6th: Save StudentExam
         studentExamRepository.save(studentExam);
 
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
-
-        // 3rd: connect & filter the exercises and student participations including the latest submission
-        // and results where necessary, to make sure all relevant associations are available
-        for (Exercise exercise : studentExam.getExercises()) {
-            filterParticipationForExercise(studentExam, exercise, studentParticipations, isAtLeastInstructor);
-        }
-
-        // 4th create new exam session
+        // 7th create new exam session
         createNewExamSession(request, studentExam);
 
         // not needed

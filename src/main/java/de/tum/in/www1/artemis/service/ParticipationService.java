@@ -170,7 +170,10 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists and if yes, set existing participation to ARCHIVED
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-        optionalStudentParticipation.ifPresent(studentParticipation -> studentParticipation.setInitializationState(ARCHIVED));
+        optionalStudentParticipation.ifPresent(studentParticipation -> {
+            studentParticipation.setInitializationState(ARCHIVED);
+            studentParticipationRepository.saveAndFlush(studentParticipation);
+        });
 
         // Create new Participation depending on exerciseType
         StudentParticipation participation;
