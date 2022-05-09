@@ -37,7 +37,9 @@
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="startTime"><span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="includedInOverallScore">
@@ -63,7 +65,9 @@
                         <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
                     </td>
+                    <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate: 'long':true) : '-' }}</td>
                     <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long':true) : '-' }}</td>
+                    <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate: 'long':true) : '-' }}</td>
                     <td>
                         {{ fullMinutesForSeconds(quizExercise.duration!) }}
                         <span jhiTranslate="{{ quizExercise.duration! % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes' }}"></span>
