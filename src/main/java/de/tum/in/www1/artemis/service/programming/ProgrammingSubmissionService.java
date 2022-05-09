@@ -649,8 +649,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Before returning the submissions we strip away all automatic results, to be able to correctly display them in the client.
      *
      * Not exam mode:
-     * In this case the query that returns the participations returns the contained sumbissions in a different way:
-     * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the subissions'
+     * In this case the query that returns the participations returns the contained submissions in a different way:
+     * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the submissions'
      * single result.
      *
      * @param exerciseId      - the id of the exercise we are looking for
