@@ -1185,7 +1185,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant create quiz exercises
+     * test non-instructors cant create quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1201,7 +1201,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant get all quiz exercises
+     * test non-instructors cant get all quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1218,7 +1218,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors can't perform start-now, set-visible or open-for-practice on quiz exercises
+     * test non-instructors can't perform start-now, set-visible or open-for-practice on quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1237,7 +1237,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors can't see the exercise if it is not set to visible
+     * test non-instructors can't see the exercise if it is not set to visible
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1253,7 +1253,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant delete an exercise
+     * test non-instructors cant delete an exercise
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1298,7 +1298,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors in this course cant re-evaluate quiz exercises
+     * test non-instructors in this course cant re-evaluate quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
