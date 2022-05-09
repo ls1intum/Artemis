@@ -784,6 +784,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(quizExerciseGet).as("Quiz exercise was retrieved").isEqualTo(quizExercise).isNotNull();
         assertThat(quizExerciseGet.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExerciseGet.getId());
+        assertThat(quizExerciseGet.getQuizBatches()).isEmpty();
     }
 
     @Test

@@ -546,11 +546,13 @@ public class QuizExerciseResource {
     }
 
     private void setQuizBatches(User user, QuizExercise quizExercise) {
-        Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
-            case SYNCHRONIZED -> quizBatchRepository.findAllByQuizExercise(quizExercise);
-            case BATCHED -> quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, user.getId());
-            case INDIVIDUAL -> Set.of();
-        };
-        quizExercise.setQuizBatches(batches);
+        if (quizExercise.getQuizMode() != null) {
+            Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
+                case SYNCHRONIZED -> quizBatchRepository.findAllByQuizExercise(quizExercise);
+                case BATCHED -> quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, user.getId());
+                case INDIVIDUAL -> Set.of();
+            };
+            quizExercise.setQuizBatches(batches);
+        }
     }
 }
