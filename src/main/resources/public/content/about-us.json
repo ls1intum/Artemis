@@ -273,6 +273,10 @@
         {
             "fullName": "Lorena Schlesinger",
             "photoDirectory": "public/images/about/Lorena_Schlesinger.jpg"
+        },
+        {
+            "fullName": "Patrick Bassner",
+            "photoDirectory": "public/images/about/Patrick_Bassner.jpg"
         }
     ]
 }
