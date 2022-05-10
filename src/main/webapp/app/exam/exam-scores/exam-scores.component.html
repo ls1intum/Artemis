@@ -10,7 +10,13 @@
             <h2 class="font-weigth-bold" *ngIf="examScoreDTO.title">
                 {{ examScoreDTO.title }}
             </h2>
-            <jhi-csv-export-button class="ms-auto" title="entity.action.export" [icon]="faDownload" (onExport)="exportExamResults($event)"></jhi-csv-export-button>
+            <jhi-csv-export-button
+                class="ms-auto"
+                title="entity.action.export"
+                [icon]="faDownload"
+                [buttonSize]="ButtonSize.SMALL"
+                (onExport)="exportExamResults($event)"
+            ></jhi-csv-export-button>
         </div>
 
         <div class="d-flex mb-1">
