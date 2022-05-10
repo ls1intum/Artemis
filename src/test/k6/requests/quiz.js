@@ -236,7 +236,13 @@ export function waitForQuizStartAndStart(artemis, exerciseId, timeout, currentUs
                 let receivedPayload = extractMessageContent(message);
                 let parsedQuiz = JSON.parse(receivedPayload);
 
-                if (parsedQuiz.started) {
+                if (parsedQuiz.quizMode !== 'SYNCHRONIZED') {
+                    fail('The k6 tests currently only support SYNCHRONIZED quizzes');
+                    return;
+                }
+
+                const defaultBatch = parsedQuiz.quizBatches[0];
+                if (defaultBatch.started) {
                     // Quiz started
                     console.log(`Quiz start received for user ${currentUsername}, will send answers`);
                     const questions = parsedQuiz.quizQuestions;

@@ -95,7 +95,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer);
+        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService);
         super.resetSpyBeans();
     }
 

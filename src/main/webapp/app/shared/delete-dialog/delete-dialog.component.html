@@ -15,11 +15,10 @@
         <div *ngIf="additionalChecks">
             <div *ngFor="let checkKey of objectKeys(additionalChecks); let i = index">
                 <div class="checkbox" *ngIf="additionalChecks[checkKey]">
-                    <label class="control-label text-danger">
-                        <input id="additional-check-{{ i }}" type="checkbox" name="checkbox" [(ngModel)]="additionalChecksValues[checkKey]" />&nbsp;{{
-                            additionalChecks[checkKey] | artemisTranslate
-                        }}
-                    </label>
+                    <div class="control-label text-danger form-check">
+                        <input id="additional-check-{{ i }}" type="checkbox" name="checkbox" class="form-check-input" [(ngModel)]="additionalChecksValues[checkKey]" />
+                        <label class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
+                    </div>
                 </div>
             </div>
         </div>

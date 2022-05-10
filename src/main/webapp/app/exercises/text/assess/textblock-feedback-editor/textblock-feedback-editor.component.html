@@ -60,50 +60,77 @@
         </div>
     </div>
     <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
-        <div class="form-group col-md-10">
-            <textarea
-                class="form-control"
-                rows="1"
-                [placeholder]="
-                    feedback.gradingInstruction!
-                        ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
-                        : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
-                "
-                id="feedback-editor-text-input"
-                [(ngModel)]="feedback.detailText"
-                #detailText
-                (keyup)="textareaAutogrow()"
-                (keydown.escape)="escKeyup()"
-                (focus)="inFocus()"
-                [readOnly]="readOnly && !isConflictingFeedbackEditable"
-                (ngModelChange)="didChange()"
-            ></textarea>
-            <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
-                <fa-icon [icon]="faInfoCircle" size="1x" class="text-info" placement="left"></fa-icon>
-                <span
-                    jhiTranslate="artemisApp.textAssessment.feedbackEditor.impactWarning"
-                    [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.impactWarningTooltip' | artemisTranslate"
-                    placement="bottom"
-                    class="impactWarningLabel"
-                    (mouseenter)="mouseEnteredWarningLabel()"
-                    [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"
-                    >This feedback might affect <b>{{ textBlock.numberOfAffectedSubmissions }}</b> other similar submission/s.</span
-                >
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <div *ngIf="criteria" class="dropdown" ngbDropdown>
+                    <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
+                    <!--if there is only one criterion, dropdown-menu contains its instructions-->
+                    <ul ngbDropdownMenu *ngIf="criteria.length === 1; else multipleCriteria">
+                        <jhi-textblock-feedback-dropdown [criterion]="criteria[0]" [feedback]="feedback" (didChange)="didChange()"></jhi-textblock-feedback-dropdown>
+                    </ul>
+                    <!--if there is more than one criterion, the dropdown-menu contains the criteria titles with submenus of the corresponding instructions-->
+                    <ng-template #multipleCriteria>
+                        <ul class="dropdown-menu" ngbDropdownMenu>
+                            <li *ngFor="let criterion of criteria">
+                                <a class="dropdown-item" *ngIf="criterion.title; else withoutTitle">
+                                    {{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight"></fa-icon>
+                                </a>
+                                <ng-template #withoutTitle>
+                                    <a class="dropdown-item">(No title) <fa-icon class="float-end" [icon]="faAngleRight"></fa-icon></a>
+                                </ng-template>
+                                <ul class="dropdown-menu dropdown-submenu">
+                                    <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback" (didChange)="didChange()"></jhi-textblock-feedback-dropdown>
+                                </ul>
+                            </li>
+                        </ul>
+                    </ng-template>
+                </div>
             </div>
-        </div>
-        <div class="form-group col-md-1 text-end">
-            <input
-                class="form-control"
-                type="number"
-                step="0.5"
-                [(ngModel)]="feedback.credits"
-                id="feedback-editor-points-input"
-                (keydown.escape)="escKeyup()"
-                (click)="onScoreClick($event)"
-                (focus)="inFocus()"
-                (ngModelChange)="didChange()"
-                [readOnly]="feedback.gradingInstruction || (readOnly && !isConflictingFeedbackEditable)"
-            />
+            <div class="form-group col-md-10">
+                <textarea
+                    class="form-control"
+                    rows="1"
+                    [placeholder]="
+                        feedback.gradingInstruction!
+                            ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
+                            : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
+                    "
+                    id="feedback-editor-text-input"
+                    [(ngModel)]="feedback.detailText"
+                    #detailText
+                    (keyup)="textareaAutogrow()"
+                    (keydown.escape)="escKeyup()"
+                    (focus)="inFocus()"
+                    [readOnly]="readOnly && !isConflictingFeedbackEditable"
+                    (ngModelChange)="didChange()"
+                ></textarea>
+                <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
+                    <fa-icon [icon]="faInfoCircle" size="1x" class="text-info" placement="left"></fa-icon>
+                    <span
+                        jhiTranslate="artemisApp.textAssessment.feedbackEditor.impactWarning"
+                        [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.impactWarningTooltip' | artemisTranslate"
+                        placement="bottom"
+                        class="impactWarningLabel"
+                        (mouseenter)="mouseEnteredWarningLabel()"
+                        [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"
+                        >This feedback might affect <b>{{ textBlock.numberOfAffectedSubmissions }}</b> other similar submission/s.</span
+                    >
+                </div>
+            </div>
+            <div class="form-group col-md-1 text-end">
+                <input
+                    class="form-control"
+                    type="number"
+                    step="0.5"
+                    [(ngModel)]="feedback.credits"
+                    id="feedback-editor-points-input"
+                    (keydown.escape)="escKeyup()"
+                    (click)="onScoreClick($event)"
+                    (focus)="inFocus()"
+                    (ngModelChange)="didChange()"
+                    [readOnly]="feedback.gradingInstruction || (readOnly && !isConflictingFeedbackEditable)"
+                />
+            </div>
         </div>
     </div>
 

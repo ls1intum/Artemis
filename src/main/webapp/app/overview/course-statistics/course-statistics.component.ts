@@ -90,8 +90,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     overallPresentationScore = 0;
     presentationScoresPerExercise: ExerciseTypeMap;
 
-    doughnutChartColors: string[] = [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, GraphColors.RED];
-
     public exerciseTitles: object = {
         quiz: {
             name: this.translateService.instant('artemisApp.course.quizExercises'),
@@ -130,7 +128,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         name: 'Your overall points color',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: this.doughnutChartColors, // colors: orange, turquoise, violet, bordeaux, green, red
+        domain: [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, GraphColors.RED],
     } as Color;
 
     // arrays representing each exercise group

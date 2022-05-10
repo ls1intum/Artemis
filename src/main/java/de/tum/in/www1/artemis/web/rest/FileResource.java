@@ -447,7 +447,7 @@ public class FileResource {
             throw new IllegalArgumentException("Filename cannot be null");
         }
         // sanitize the filename and replace all invalid characters with "_"
-        filename = filename.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
         String fileExtension = FilenameUtils.getExtension(filename);
         if (this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
             return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));

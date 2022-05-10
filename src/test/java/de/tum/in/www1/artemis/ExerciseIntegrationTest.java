@@ -332,10 +332,6 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     assertThat(participation.getResults()).hasSize(1);
                     assertThat(participation.getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
                 }
-                // Quiz exercises should only have one automatic result
-                else if (exercise instanceof QuizExercise) {
-                    assertThat(participation.getResults()).hasSize(1);
-                }
                 else {
                     // All other exercises should not display a result at all
                     assertThat(participation.getResults()).isEmpty();
@@ -384,9 +380,6 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
             if (exercise instanceof ProgrammingExercise) {
                 assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
                 assertThat(exercise.getStudentParticipations().iterator().next().getResults().iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
-            }
-            else if (exercise instanceof QuizExercise) {
-                assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
             }
             else {
                 // All other exercises have only one visible result now
