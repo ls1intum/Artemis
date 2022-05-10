@@ -42,7 +42,6 @@ export class AboutUsComponent implements OnInit {
             // Sort by last name
             // Either the last "word" in the name, or the dedicated sortBy field, if present
             this.data?.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
-            console.log(this.data.contributors);
         });
 
         this.profileService
