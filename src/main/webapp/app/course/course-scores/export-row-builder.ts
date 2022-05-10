@@ -1,12 +1,12 @@
 import { ExerciseType } from 'app/entities/exercise.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
-export type CourseScoresExportRow = any;
+export type ExportRow = any;
 
 /**
  * Builds rows for the course scores export.
  */
-export abstract class CourseScoresRowBuilder {
+export abstract class ExportRowBuilder {
     private exportRow = {};
 
     readonly accuracyOfScores: number;
@@ -22,7 +22,7 @@ export abstract class CourseScoresRowBuilder {
     /**
      * Constructs and returns the actual row data.
      */
-    build(): CourseScoresExportRow {
+    build(): ExportRow {
         return this.exportRow;
     }
 
@@ -69,7 +69,7 @@ export abstract class CourseScoresRowBuilder {
      * @param points The number of points for this exercise type, alternatively already converted to its localized format.
      */
     setExerciseTypePoints(exerciseType: ExerciseType, points: number | string) {
-        const key = CourseScoresRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY);
+        const key = ExportRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY);
         if (typeof points === 'number') {
             this.setLocalized(key, points);
         } else {
@@ -83,7 +83,7 @@ export abstract class CourseScoresRowBuilder {
      * @param score The score for this exercise type, alternatively already converted to its localized percentage format.
      */
     setExerciseTypeScore(exerciseType: ExerciseType, score: number | string) {
-        const key = CourseScoresRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY);
+        const key = ExportRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY);
         if (typeof score === 'number') {
             this.setLocalizedPercent(key, score);
         } else {
@@ -97,7 +97,7 @@ export abstract class CourseScoresRowBuilder {
      * @param suffix A suffix that should be appended to the key.
      */
     static getExerciseTypeKey(exerciseType: ExerciseType, suffix: string): string {
-        const exerciseTypeName = CourseScoresRowBuilder.capitalizeFirstLetter(exerciseType);
+        const exerciseTypeName = ExportRowBuilder.capitalizeFirstLetter(exerciseType);
         return `${exerciseTypeName} ${suffix}`;
     }
 

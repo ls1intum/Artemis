@@ -1,4 +1,4 @@
-import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
+import { ExportRowBuilder } from 'app/course/course-scores/export-row-builder';
 import { round } from 'app/shared/util/utils';
 
 /**
@@ -14,7 +14,7 @@ export interface CommonSpreadsheetCellObject {
 /**
  * Builds Excel rows for the course scores export.
  */
-export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
+export class ExcelExportRowBuilder extends ExportRowBuilder {
     /**
      * Creates a new empty Excel row.
      */

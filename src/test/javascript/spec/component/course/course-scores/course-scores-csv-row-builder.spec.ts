@@ -2,15 +2,15 @@ import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-s
 import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
-import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
+import { ExportRowBuilder } from 'app/course/course-scores/export-row-builder';
+import { CsvExportRowBuilder } from 'app/course/course-scores/csv-export-row-builder';
 import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
 
-describe('The CourseScoresCsvRowBuilder', () => {
-    let csvRow: CourseScoresRowBuilder;
+describe('The CsvExportRowBuilder', () => {
+    let csvRow: ExportRowBuilder;
 
     beforeEach(() => {
-        csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.PERIOD);
+        csvRow = new CsvExportRowBuilder(CsvDecimalSeparator.PERIOD);
     });
 
     it('should set a string', () => {
@@ -47,9 +47,9 @@ describe('The CourseScoresCsvRowBuilder', () => {
         expect(csvRow.build()['p']).toBe('-');
     });
 
-    describe('Test the CourseScoresCsvRowBuilder with a comma as a decimal separator', () => {
+    describe('Test the CsvExportRowBuilder with a comma as a decimal separator', () => {
         beforeEach(() => {
-            csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.COMMA);
+            csvRow = new CsvExportRowBuilder(CsvDecimalSeparator.COMMA);
         });
 
         it('should convert numbers to their localized format', () => {
@@ -69,9 +69,9 @@ describe('The CourseScoresCsvRowBuilder', () => {
         });
     });
 
-    describe('Test the CourseScoresCsvRowBuilder with a specific accuracyOfScores', () => {
+    describe('Test the CsvExportRowBuilder with a specific accuracyOfScores', () => {
         beforeEach(() => {
-            csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.PERIOD, 3);
+            csvRow = new CsvExportRowBuilder(CsvDecimalSeparator.PERIOD, 3);
         });
 
         it('should convert numbers to their localized format respecting the accuracyOfScores', () => {

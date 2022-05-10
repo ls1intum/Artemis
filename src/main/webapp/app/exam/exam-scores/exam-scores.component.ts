@@ -34,10 +34,10 @@ import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
-import { CourseScoresExcelRowBuilder } from 'app/course/course-scores/course-scores-excel-row-builder';
+import { CsvExportRowBuilder } from 'app/course/course-scores/csv-export-row-builder';
+import { ExcelExportRowBuilder } from 'app/course/course-scores/excel-export-row-builder';
 import { CsvExportOptions } from 'app/shared/export/export-modal.component';
-import { CourseScoresExportRow, CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
+import { ExportRow, ExportRowBuilder } from 'app/course/course-scores/export-row-builder';
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
 import {
@@ -619,7 +619,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @param keys The column names used for the export.
      * @param rows The data rows that should be part of the Excel file.
      */
-    exportAsExcel(keys: string[], rows: CourseScoresExportRow[]) {
+    exportAsExcel(keys: string[], rows: ExportRow[]) {
         const workbook = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(rows, { header: keys });
         const worksheetName = 'Exam Scores';
@@ -690,11 +690,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @param csvExportOptions If present, constructs a CSV row builder with these options, otherwise an Excel row builder is returned.
      * @private
      */
-    private newRowBuilder(csvExportOptions?: CsvExportOptions): CourseScoresRowBuilder {
+    private newRowBuilder(csvExportOptions?: CsvExportOptions): ExportRowBuilder {
         if (csvExportOptions) {
-            return new CourseScoresCsvRowBuilder(csvExportOptions.decimalSeparator, this.course?.accuracyOfScores);
+            return new CsvExportRowBuilder(csvExportOptions.decimalSeparator, this.course?.accuracyOfScores);
         } else {
-            return new CourseScoresExcelRowBuilder(this.course?.accuracyOfScores);
+            return new ExcelExportRowBuilder(this.course?.accuracyOfScores);
         }
     }
 

@@ -1,13 +1,13 @@
 import { POINTS_KEY, SCORE_KEY } from 'app/shared/export/export-constants';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
-import { CourseScoresExcelRowBuilder } from 'app/course/course-scores/course-scores-excel-row-builder';
+import { ExportRowBuilder } from 'app/course/course-scores/export-row-builder';
+import { ExcelExportRowBuilder } from 'app/course/course-scores/excel-export-row-builder';
 
-describe('The CourseScoresExcelRowBuilder', () => {
-    let excelRowBuilder: CourseScoresRowBuilder;
+describe('The ExcelExportRowBuilder', () => {
+    let excelRowBuilder: ExportRowBuilder;
 
     beforeEach(() => {
-        excelRowBuilder = new CourseScoresExcelRowBuilder();
+        excelRowBuilder = new ExcelExportRowBuilder();
     });
 
     it('should convert numbers to their common spreadsheet format', () => {
@@ -32,9 +32,9 @@ describe('The CourseScoresExcelRowBuilder', () => {
         expect(excelRowBuilder.build()['p']).toBe('-');
     });
 
-    describe('Test the CourseScoresExcelRowBuilder with a specific accuracyOfScores', () => {
+    describe('Test the ExcelExportRowBuilder with a specific accuracyOfScores', () => {
         beforeEach(() => {
-            excelRowBuilder = new CourseScoresExcelRowBuilder(3);
+            excelRowBuilder = new ExcelExportRowBuilder(3);
         });
 
         it('should convert numbers to their localized format respecting the accuracyOfScores', () => {

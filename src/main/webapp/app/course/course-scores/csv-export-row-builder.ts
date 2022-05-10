@@ -1,11 +1,11 @@
-import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
+import { ExportRowBuilder } from 'app/course/course-scores/export-row-builder';
 import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
 import { round } from 'app/shared/util/utils';
 
 /**
  * Builds CSV rows for the course scores export.
  */
-export class CourseScoresCsvRowBuilder extends CourseScoresRowBuilder {
+export class CsvExportRowBuilder extends ExportRowBuilder {
     private readonly decimalSeparator: CsvDecimalSeparator;
 
     /**
