@@ -19,7 +19,7 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CsvExportRowBuilder } from 'app/course/course-scores/csv-export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
@@ -27,8 +27,8 @@ import { CsvExportOptions } from 'app/shared/export/export-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
-import { ExcelExportRowBuilder } from 'app/course/course-scores/excel-export-row-builder';
-import { ExportRowBuilder, ExportRow } from 'app/course/course-scores/export-row-builder';
+import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
+import { ExportRowBuilder, ExportRow } from 'app/shared/export/export-row-builder';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import {
     BONUS_KEY,

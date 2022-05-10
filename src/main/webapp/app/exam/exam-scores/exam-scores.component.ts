@@ -34,10 +34,10 @@ import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { CsvExportRowBuilder } from 'app/course/course-scores/csv-export-row-builder';
-import { ExcelExportRowBuilder } from 'app/course/course-scores/excel-export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
+import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
 import { CsvExportOptions } from 'app/shared/export/export-modal.component';
-import { ExportRow, ExportRowBuilder } from 'app/course/course-scores/export-row-builder';
+import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
 import {

@@ -33,7 +33,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
-import { CommonSpreadsheetCellObject } from 'app/course/course-scores/excel-export-row-builder';
+import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-builder';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;

@@ -2,8 +2,8 @@ import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-s
 import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ExportRowBuilder } from 'app/course/course-scores/export-row-builder';
-import { CsvExportRowBuilder } from 'app/course/course-scores/csv-export-row-builder';
+import { ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
 
 describe('The CsvExportRowBuilder', () => {
