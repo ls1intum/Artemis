@@ -135,6 +135,10 @@ public class StudentExamService {
             }
         }
 
+        if (studentExam.getExam().isTestExam()) {
+            setParticipationsForStudentExamToArchived(studentExam, currentUser);
+        }
+
         return ResponseEntity.ok(studentExam);
     }
 
@@ -142,6 +146,20 @@ public class StudentExamService {
         studentExam.setSubmitted(true);
         studentExam.setSubmissionDate(ZonedDateTime.now());
         studentExamRepository.save(studentExam);
+    }
+
+    /**
+     * Helper Method to set, for a given studentExam and user, all participations for the included exercises to ARCHIVED
+     * ATTENTION: Only use for TestExams!
+     *
+     * @param studentExam studentExam with loaded exercises
+     * @param currentUser the user linked to the studentExam
+     */
+    private void setParticipationsForStudentExamToArchived(StudentExam studentExam, User currentUser) {
+        if (!studentExam.getExam().isTestExam()) {
+            throw new AccessForbiddenException("Only participations for a TestExam can be set to ARCHIVED");
+        }
+        participationService.setParticipationsForStudentExamToArchived(studentExam, currentUser);
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {

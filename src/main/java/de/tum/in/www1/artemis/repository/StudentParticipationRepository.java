@@ -595,6 +595,19 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
+            WHERE p.testRun = FALSE
+            AND p.initializationDate = :#{#initializationDate}
+            AND p.initializationState <> 'ARCHIVED'
+                AND p.student.id = :#{#studentId}
+                AND p.exercise in :#{#exercises}
+            """)
+    List<StudentParticipation> findArchivedParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
+            @Param("exercises") List<Exercise> exercises, @Param("initializationDate") ZonedDateTime initializationDate);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
             WHERE p.testRun = true
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
@@ -788,6 +801,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
         }
+    }
+
+    /**
+     * Gets all participation for the given studentExam for a TestExam with their submissions and result.
+     * As multiple participations for a TestExam can exists, the link is established with studentExam.startedDate <-> participation.InitializationDate
+     *
+     * @param studentExam studentExam with exercises loaded
+     * @return student's participations with submissions and results.
+     */
+    default List<StudentParticipation> findArchivedParticipationsByStudentExamWithEagerSubmissionsResultWithoutAssessor(StudentExam studentExam) {
+        return findArchivedParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises(),
+                studentExam.getStartedDate());
     }
 
     /**

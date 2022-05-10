@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -160,10 +161,10 @@ public class ParticipationService {
      * Additionally, it configures repository / build plan related stuff for programming exercises. In the case of modeling or text exercises,
      * it also initializes and stores the corresponding submission.
      *
-     * @param exercise - the exercise for which a new participation is to be created
-     * @param participant - the user for which the new participation is to be created
+     * @param exercise                - the exercise for which a new participation is to be created
+     * @param participant             - the user for which the new participation is to be created
      * @param createInitialSubmission - whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
-     * @param startedDate - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
+     * @param startedDate             - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
      * @return a new participation for the given exercise and user
      */
     public StudentParticipation startExerciseWithNewParticipation(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime startedDate) {
@@ -213,6 +214,24 @@ public class ParticipationService {
             }
         }
         return studentParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * The Method sets, for a given user, all participations for all exercises of a StudentExam to ARCHIVED.
+     * ATTENTION: Currently only used for TestExams!
+     *
+     * @param studentExam the studentExam with loaded Exercises
+     * @param participant the participant of the studentExam
+     */
+    public void setParticipationsForStudentExamToArchived(StudentExam studentExam, Participant participant) {
+        studentExam.getExercises().forEach(exercise -> {
+            Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+            optionalStudentParticipation.ifPresent(studentParticipation -> {
+                studentParticipation.setInitializationState(ARCHIVED);
+                studentParticipationRepository.saveAndFlush(studentParticipation);
+            });
+        });
+
     }
 
     /**

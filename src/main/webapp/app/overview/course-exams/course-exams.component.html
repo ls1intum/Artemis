@@ -33,10 +33,12 @@
                     <div class="control-label" *ngIf="i === 4 && !expandAttemptsMap.get(exam!.id!)" (click)="changeExpandAttemptList(exam!.id!)">
                         <fa-icon class="pe-3" [icon]="faAngleDown"></fa-icon>
                         <span class="pe-2">{{ 'artemisApp.exam.overview.testExam.showMoreAttempts' | artemisTranslate }}</span>
+                        <hr />
                     </div>
                     <div class="control-label" *ngIf="i === cnt - 1 && cnt > 4 && expandAttemptsMap.get(exam!.id!)" (click)="changeExpandAttemptList(exam.id!)">
                         <fa-icon class="pe-3" [icon]="faAngleUp"></fa-icon>
                         <span class="pe-2"> {{ 'artemisApp.exam.overview.testExam.showLessAttempts' | artemisTranslate }}</span>
+                        <hr />
                     </div>
                     <hr *ngIf="i === cnt - 1 && cnt <= 4" />
                 </ng-container>

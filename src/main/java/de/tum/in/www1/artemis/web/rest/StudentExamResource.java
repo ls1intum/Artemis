@@ -284,8 +284,8 @@ public class StudentExamResource {
         if (!user.getId().equals(studentExam.getUser().getId())) {
             throw new AccessForbiddenException("The requested exam does not belong to the requesting user");
         }
-        // In case the studentExam is not yet started, new participations need to be set up.
-        prepareStudentExamForConductionWithParticipations(request, user, studentExam, !studentExam.isStarted());
+        // In case the studentExam is not yet started, new participations need to be set up - isStarted uses Boolean
+        prepareStudentExamForConductionWithParticipations(request, user, studentExam, (studentExam.isStarted() == null || !studentExam.isStarted()));
 
         log.info("getStudentExamForTestExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 user.getLogin());
@@ -402,9 +402,11 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExamForTestExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get the student exam of user {} for TestExam {}", user.getLogin(), examId);
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+
+        log.debug("REST request to get the student exam of user {} for TestExam {} and StudentExam {}", user.getLogin(), examId, studentExam.getId());
+
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
