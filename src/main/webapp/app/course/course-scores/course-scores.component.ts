@@ -30,18 +30,19 @@ import { VERSION } from 'app/app.constants';
 import { CourseScoresExcelRowBuilder } from 'app/course/course-scores/course-scores-excel-row-builder';
 import { CourseScoresRowBuilder, CourseScoresExportRow } from 'app/course/course-scores/course-scores-row-builder';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-
-export const PRESENTATION_SCORE_KEY = 'Presentation Score';
-export const NAME_KEY = 'Name';
-export const USERNAME_KEY = 'Username';
-export const EMAIL_KEY = 'Email';
-export const REGISTRATION_NUMBER_KEY = 'Registration Number';
-export const OVERALL_COURSE_POINTS_KEY = 'Overall Course Points';
-export const OVERALL_COURSE_SCORE_KEY = 'Overall Course Score';
-export const POINTS_KEY = 'Points';
-export const SCORE_KEY = 'Score';
-export const GRADE_KEY = 'Grades';
-export const BONUS_KEY = 'Bonus Points';
+import {
+    BONUS_KEY,
+    EMAIL_KEY,
+    GRADE_KEY,
+    NAME_KEY,
+    COURSE_OVERALL_POINTS_KEY,
+    COURSE_OVERALL_SCORE_KEY,
+    POINTS_KEY,
+    PRESENTATION_SCORE_KEY,
+    REGISTRATION_NUMBER_KEY,
+    SCORE_KEY,
+    USERNAME_KEY,
+} from 'app/shared/export/export-constants';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -518,7 +519,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         if (!this.exportReady || this.students.length === 0) {
             return;
         }
-
+        // remove csv from functions
         const rows: CourseScoresExportRow[] = [];
         const keys = this.generateCsvColumnNames();
 
@@ -607,7 +608,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             keys.push(CourseScoresCsvRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY));
         }
 
-        keys.push(OVERALL_COURSE_POINTS_KEY, OVERALL_COURSE_SCORE_KEY);
+        keys.push(COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY);
 
         if (this.course.presentationScore) {
             keys.push(PRESENTATION_SCORE_KEY);
@@ -629,7 +630,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private generateStudentStatisticsCsvRow(student: CourseScoresStudentStatistics, csvExportOptions?: CsvExportOptions): CourseScoresExportRow {
         const rowData = this.newRowBuilder(csvExportOptions);
 
-        rowData.setUserInformation(student);
+        rowData.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisePointsPerType = student.sumPointsPerExerciseType.get(exerciseType)!;
@@ -652,8 +653,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
 
         const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
-        rowData.setLocalized(OVERALL_COURSE_POINTS_KEY, student.overallPoints);
-        rowData.setLocalizedPercent(OVERALL_COURSE_SCORE_KEY, overallScore);
+        rowData.setLocalized(COURSE_OVERALL_POINTS_KEY, student.overallPoints);
+        rowData.setLocalizedPercent(COURSE_OVERALL_SCORE_KEY, overallScore);
 
         if (this.course.presentationScore) {
             rowData.setLocalized(PRESENTATION_SCORE_KEY, student.presentationScore);
@@ -681,8 +682,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             rowData.setExerciseTypeScore(exerciseType, 100);
         }
 
-        rowData.setLocalized(OVERALL_COURSE_POINTS_KEY, this.maxNumberOfOverallPoints);
-        rowData.setLocalizedPercent(OVERALL_COURSE_SCORE_KEY, 100);
+        rowData.setLocalized(COURSE_OVERALL_POINTS_KEY, this.maxNumberOfOverallPoints);
+        rowData.setLocalizedPercent(COURSE_OVERALL_SCORE_KEY, 100);
 
         if (this.course.presentationScore) {
             rowData.set(PRESENTATION_SCORE_KEY, '');
@@ -718,8 +719,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
 
         const averageOverallScore = roundScorePercentSpecifiedByCourseSettings(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints, this.course);
-        rowData.setLocalized(OVERALL_COURSE_POINTS_KEY, this.averageNumberOfOverallPoints);
-        rowData.setLocalizedPercent(OVERALL_COURSE_SCORE_KEY, averageOverallScore);
+        rowData.setLocalized(COURSE_OVERALL_POINTS_KEY, this.averageNumberOfOverallPoints);
+        rowData.setLocalizedPercent(COURSE_OVERALL_SCORE_KEY, averageOverallScore);
 
         if (this.course.presentationScore) {
             rowData.set(PRESENTATION_SCORE_KEY, '');
@@ -785,8 +786,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         emptyLine.set(EMAIL_KEY, '');
         emptyLine.set(REGISTRATION_NUMBER_KEY, '');
 
-        emptyLine.set(OVERALL_COURSE_POINTS_KEY, '');
-        emptyLine.set(OVERALL_COURSE_SCORE_KEY, '');
+        emptyLine.set(COURSE_OVERALL_POINTS_KEY, '');
+        emptyLine.set(COURSE_OVERALL_SCORE_KEY, '');
 
         for (const exerciseType of this.exerciseTypesWithExercises) {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;

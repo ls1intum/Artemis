@@ -534,7 +534,7 @@ describe('ExamScoresComponent', () => {
 
         const exportAsCsvStub = jest.spyOn(comp, 'exportAsCsv');
         // create csv
-        comp.exportToCsv();
+        comp.exportExamResults();
 
         const generatedRows = exportAsCsvStub.mock.calls[0][0];
         expect(generatedRows.length).toBe(noOfSubmittedExercises);
@@ -586,7 +586,7 @@ describe('ExamScoresComponent', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
 
-        comp.exportToCsv();
+        comp.exportExamResults();
     });
 
     it('should set grading scale properties', () => {

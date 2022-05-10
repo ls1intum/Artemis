@@ -1,6 +1,6 @@
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { User } from 'app/core/user/user.model';
-import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
+import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
 import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
@@ -105,7 +105,7 @@ describe('The CourseScoresCsvRowBuilder', () => {
         user.visibleRegistrationNumber = ' 123456789  ';
         const student = new CourseScoresStudentStatistics(user);
 
-        csvRow.setUserInformation(student);
+        csvRow.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
 
         const row = csvRow.build();
         expect(row[NAME_KEY]).toBe('Testuser');
@@ -118,7 +118,7 @@ describe('The CourseScoresCsvRowBuilder', () => {
         const user = new User();
         const student = new CourseScoresStudentStatistics(user);
 
-        csvRow.setUserInformation(student);
+        csvRow.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
 
         const row = csvRow.build();
         expect(row[NAME_KEY]).toBe('');

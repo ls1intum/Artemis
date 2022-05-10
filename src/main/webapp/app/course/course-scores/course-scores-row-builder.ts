@@ -1,6 +1,5 @@
 import { ExerciseType } from 'app/entities/exercise.model';
-import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
-import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
+import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
 export type CourseScoresExportRow = any;
 
@@ -41,24 +40,27 @@ export abstract class CourseScoresRowBuilder {
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
-    abstract setLocalized(key: string, value: number): void;
+    abstract setLocalized(key: string, value: number | undefined): void;
 
     /**
      * Stores the given value under the key in the row after converting it to the localized percentage format.
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
-    abstract setLocalizedPercent(key: string, value: number): void;
+    abstract setLocalizedPercent(key: string, value: number | undefined): void;
 
     /**
      * Adds information about the student user to the row.
-     * @param student A student of which the data should be saved.
+     * @param name The name of the student that should be saved.
+     * @param username The username of the student that should be saved.
+     * @param email The email of the student that should be saved.
+     * @param registrationNumber The registration number of the student that should be saved.
      */
-    setUserInformation(student: CourseScoresStudentStatistics) {
-        this.set(NAME_KEY, student.user.name?.trim());
-        this.set(USERNAME_KEY, student.user.login?.trim());
-        this.set(EMAIL_KEY, student.user.email?.trim());
-        this.set(REGISTRATION_NUMBER_KEY, student.user.visibleRegistrationNumber?.trim());
+    setUserInformation(name?: string, username?: string, email?: string, registrationNumber?: string) {
+        this.set(NAME_KEY, name?.trim());
+        this.set(USERNAME_KEY, username?.trim());
+        this.set(EMAIL_KEY, email?.trim());
+        this.set(REGISTRATION_NUMBER_KEY, registrationNumber?.trim());
     }
 
     /**

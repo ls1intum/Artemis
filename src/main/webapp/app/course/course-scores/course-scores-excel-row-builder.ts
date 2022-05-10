@@ -27,8 +27,8 @@ export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
-    setLocalized(key: string, value: number) {
-        if (isNaN(value)) {
+    setLocalized(key: string, value: number | undefined) {
+        if (value == undefined || isNaN(value)) {
             this.set(key, '-');
         } else {
             const numberCell: CommonSpreadsheetCellObject = {
@@ -44,8 +44,8 @@ export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
-    setLocalizedPercent(key: string, value: number) {
-        if (isNaN(value)) {
+    setLocalizedPercent(key: string, value: number | undefined) {
+        if (value == undefined || isNaN(value)) {
             this.set(key, '-');
         } else {
             const roundedScore = round(value, this.accuracyOfScores);

@@ -1,4 +1,4 @@
-import { POINTS_KEY, SCORE_KEY } from 'app/course/course-scores/course-scores.component';
+import { POINTS_KEY, SCORE_KEY } from 'app/shared/export/export-constants';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
 import { CourseScoresExcelRowBuilder } from 'app/course/course-scores/course-scores-excel-row-builder';

@@ -23,8 +23,8 @@ export class CourseScoresCsvRowBuilder extends CourseScoresRowBuilder {
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
-    setLocalized(key: string, value: number) {
-        if (isNaN(value)) {
+    setLocalized(key: string, value: number | undefined) {
+        if (value == undefined || isNaN(value)) {
             this.set(key, '-');
         } else {
             this.set(key, round(value, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator));
@@ -36,8 +36,8 @@ export class CourseScoresCsvRowBuilder extends CourseScoresRowBuilder {
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row.
      */
-    setLocalizedPercent(key: string, value: number) {
-        if (isNaN(value)) {
+    setLocalizedPercent(key: string, value: number | undefined) {
+        if (value == undefined || isNaN(value)) {
             this.set(key, '-');
         } else {
             this.set(key, `${round(value, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator)}%`);

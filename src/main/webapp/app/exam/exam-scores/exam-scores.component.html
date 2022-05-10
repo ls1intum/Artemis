@@ -10,10 +10,7 @@
             <h2 class="font-weigth-bold" *ngIf="examScoreDTO.title">
                 {{ examScoreDTO.title }}
             </h2>
-            <button class="ms-auto btn btn-primary btn-sm" (click)="exportToCsv()">
-                <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
-                <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
-            </button>
+            <jhi-csv-export-button class="ms-auto" title="entity.action.export" [icon]="faDownload" (onExport)="exportExamResults($event)"></jhi-csv-export-button>
         </div>
 
         <div class="d-flex mb-1">
