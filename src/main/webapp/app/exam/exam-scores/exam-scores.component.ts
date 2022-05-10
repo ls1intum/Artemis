@@ -602,7 +602,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const headers = this.generateExportColumnNames();
 
         const rows = this.studentResults.map((studentResult) => {
-            return this.convertToExportRow(studentResult);
+            return this.convertToExportRow(studentResult, customCsvOptions);
         });
 
         if (customCsvOptions) {
