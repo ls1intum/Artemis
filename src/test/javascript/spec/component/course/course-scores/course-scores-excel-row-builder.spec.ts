@@ -11,14 +11,14 @@ describe('The ExcelExportRowBuilder', () => {
     });
 
     it('should convert numbers to their common spreadsheet format', () => {
-        excelRowBuilder.setLocalized('n', 100);
+        excelRowBuilder.setPoints('n', 100);
         const rowObject = excelRowBuilder.build()['n'];
         expect(rowObject['t']).toBe('n');
         expect(rowObject['v']).toBe(100);
     });
 
     it('should convert percentage numbers to their common spreadsheet format', () => {
-        excelRowBuilder.setLocalizedPercent('n', 5);
+        excelRowBuilder.setScore('n', 5);
         const rowObject = excelRowBuilder.build()['n'];
         expect(rowObject['t']).toBe('n');
         expect(rowObject['v']).toBe(0.05);
@@ -26,9 +26,9 @@ describe('The ExcelExportRowBuilder', () => {
     });
 
     it('should return a hyphen for NaN values', () => {
-        excelRowBuilder.setLocalized('n', NaN);
+        excelRowBuilder.setPoints('n', NaN);
         expect(excelRowBuilder.build()['n']).toBe('-');
-        excelRowBuilder.setLocalizedPercent('p', NaN);
+        excelRowBuilder.setScore('p', NaN);
         expect(excelRowBuilder.build()['p']).toBe('-');
     });
 
@@ -38,40 +38,40 @@ describe('The ExcelExportRowBuilder', () => {
         });
 
         it('should convert numbers to their localized format respecting the accuracyOfScores', () => {
-            excelRowBuilder.setLocalized('n', 100.12345);
+            excelRowBuilder.setPoints('n', 100.12345);
             expect(excelRowBuilder.build()['n']['t']).toBe('n');
             expect(excelRowBuilder.build()['n']['v']).toBe(100.123);
 
-            excelRowBuilder.setLocalized('n', 99.9999);
+            excelRowBuilder.setPoints('n', 99.9999);
             expect(excelRowBuilder.build()['n']['t']).toBe('n');
             expect(excelRowBuilder.build()['n']['v']).toBe(100);
 
-            excelRowBuilder.setLocalized('n', 25.5678);
+            excelRowBuilder.setPoints('n', 25.5678);
             expect(excelRowBuilder.build()['n']['t']).toBe('n');
             expect(excelRowBuilder.build()['n']['v']).toBe(25.568);
 
-            excelRowBuilder.setLocalized('n', 1000.2345);
+            excelRowBuilder.setPoints('n', 1000.2345);
             expect(excelRowBuilder.build()['n']['t']).toBe('n');
             expect(excelRowBuilder.build()['n']['v']).toBe(1000.235);
         });
 
         it('should convert percentage numbers to their localized format', () => {
-            excelRowBuilder.setLocalizedPercent('n', 5.12345);
+            excelRowBuilder.setScore('n', 5.12345);
             expect(excelRowBuilder.build()['n']['t']).toBe('n');
             expect(excelRowBuilder.build()['n']['v']).toBe(0.05123);
             expect(excelRowBuilder.build()['n']['z']).toBe('0.000%');
 
-            excelRowBuilder.setLocalizedPercent('n', 99.9999);
+            excelRowBuilder.setScore('n', 99.9999);
             expect(excelRowBuilder.build()['n']['t']).toBe('n');
             expect(excelRowBuilder.build()['n']['v']).toBe(1);
             expect(excelRowBuilder.build()['n']['z']).toBe('0%');
 
-            excelRowBuilder.setLocalizedPercent('n', 51.9999);
+            excelRowBuilder.setScore('n', 51.9999);
             expect(excelRowBuilder.build()['n']['t']).toBe('n');
             expect(excelRowBuilder.build()['n']['v']).toBe(0.52);
             expect(excelRowBuilder.build()['n']['z']).toBe('0%');
 
-            excelRowBuilder.setLocalizedPercent('n', 25.5678);
+            excelRowBuilder.setScore('n', 25.5678);
             expect(excelRowBuilder.build()['n']['t']).toBe('n');
             expect(excelRowBuilder.build()['n']['v']).toBe(0.25568);
             expect(excelRowBuilder.build()['n']['z']).toBe('0.000%');

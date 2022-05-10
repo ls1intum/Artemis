@@ -645,7 +645,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             const exercisesForType = this.exercisesPerType.get(exerciseType)!;
             exercisesForType.forEach((exercise) => {
                 const points = roundValueSpecifiedByCourseSettings(student.pointsPerExerciseType.getValue(exerciseType, exercise), this.course);
-                rowData.setLocalized(exercise.title!, points);
+                rowData.setPoints(exercise.title!, points);
             });
 
             rowData.setExerciseTypePoints(exerciseType, exercisePointsPerType);
@@ -653,11 +653,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
 
         const overallScore = roundScorePercentSpecifiedByCourseSettings(student.overallPoints / this.maxNumberOfOverallPoints, this.course);
-        rowData.setLocalized(COURSE_OVERALL_POINTS_KEY, student.overallPoints);
-        rowData.setLocalizedPercent(COURSE_OVERALL_SCORE_KEY, overallScore);
+        rowData.setPoints(COURSE_OVERALL_POINTS_KEY, student.overallPoints);
+        rowData.setScore(COURSE_OVERALL_SCORE_KEY, overallScore);
 
         if (this.course.presentationScore) {
-            rowData.setLocalized(PRESENTATION_SCORE_KEY, student.presentationScore);
+            rowData.setPoints(PRESENTATION_SCORE_KEY, student.presentationScore);
         }
 
         this.setExportRowGradeValue(rowData, student.gradeStep?.gradeName);

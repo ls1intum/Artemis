@@ -711,8 +711,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             const exerciseResult = studentResult.exerciseGroupIdToExerciseResult?.[exerciseGroup.id];
             if (exerciseResult) {
                 rowData.set(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`, exerciseResult.title);
-                rowData.setLocalized(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, exerciseResult.achievedPoints);
-                rowData.setLocalizedPercent(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`, exerciseResult.achievedScore);
+                rowData.setPoints(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, exerciseResult.achievedPoints);
+                rowData.setScore(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`, exerciseResult.achievedScore);
             } else {
                 rowData.set(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`, '');
                 rowData.set(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, '');
@@ -720,8 +720,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
         });
 
-        rowData.setLocalized(EXAM_OVERALL_POINTS_KEY, studentResult.overallPointsAchieved);
-        rowData.setLocalizedPercent(EXAM_OVERALL_SCORE_KEY, studentResult.overallScoreAchieved);
+        rowData.setPoints(EXAM_OVERALL_POINTS_KEY, studentResult.overallPointsAchieved);
+        rowData.setScore(EXAM_OVERALL_SCORE_KEY, studentResult.overallScoreAchieved);
         if (this.gradingScaleExists) {
             if (this.isBonus) {
                 rowData.set(BONUS_KEY, studentResult.overallGrade);

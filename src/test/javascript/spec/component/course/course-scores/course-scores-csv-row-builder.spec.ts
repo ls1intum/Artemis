@@ -25,25 +25,25 @@ describe('The CsvExportRowBuilder', () => {
     });
 
     it('should convert numbers to their localized format', () => {
-        csvRow.setLocalized('n', 100);
+        csvRow.setPoints('n', 100);
         expect(csvRow.build()['n']).toBe('100');
-        csvRow.setLocalized('n', 25.5);
+        csvRow.setPoints('n', 25.5);
         expect(csvRow.build()['n']).toBe('25.5');
-        csvRow.setLocalized('n', 1000.23);
+        csvRow.setPoints('n', 1000.23);
         expect(csvRow.build()['n']).toBe('1000.2');
     });
 
     it('should convert percentage numbers to their localized format', () => {
-        csvRow.setLocalizedPercent('n', 5);
+        csvRow.setScore('n', 5);
         expect(csvRow.build()['n']).toBe('5%');
-        csvRow.setLocalizedPercent('n', 5.5);
+        csvRow.setScore('n', 5.5);
         expect(csvRow.build()['n']).toBe('5.5%');
     });
 
     it('should return a hyphen for NaN values', () => {
-        csvRow.setLocalized('n', NaN);
+        csvRow.setPoints('n', NaN);
         expect(csvRow.build()['n']).toBe('-');
-        csvRow.setLocalizedPercent('p', NaN);
+        csvRow.setScore('p', NaN);
         expect(csvRow.build()['p']).toBe('-');
     });
 
@@ -53,18 +53,18 @@ describe('The CsvExportRowBuilder', () => {
         });
 
         it('should convert numbers to their localized format', () => {
-            csvRow.setLocalized('n', 100);
+            csvRow.setPoints('n', 100);
             expect(csvRow.build()['n']).toBe('100');
-            csvRow.setLocalized('n', 25.5);
+            csvRow.setPoints('n', 25.5);
             expect(csvRow.build()['n']).toBe('25,5');
-            csvRow.setLocalized('n', 1000.23);
+            csvRow.setPoints('n', 1000.23);
             expect(csvRow.build()['n']).toBe('1000,2');
         });
 
         it('should convert percentage numbers to their localized format', () => {
-            csvRow.setLocalizedPercent('n', 5);
+            csvRow.setScore('n', 5);
             expect(csvRow.build()['n']).toBe('5%');
-            csvRow.setLocalizedPercent('n', 5.5);
+            csvRow.setScore('n', 5.5);
             expect(csvRow.build()['n']).toBe('5,5%');
         });
     });
@@ -75,24 +75,24 @@ describe('The CsvExportRowBuilder', () => {
         });
 
         it('should convert numbers to their localized format respecting the accuracyOfScores', () => {
-            csvRow.setLocalized('n', 100.12345);
+            csvRow.setPoints('n', 100.12345);
             expect(csvRow.build()['n']).toBe('100.123');
-            csvRow.setLocalized('n', 99.9999);
+            csvRow.setPoints('n', 99.9999);
             expect(csvRow.build()['n']).toBe('100');
-            csvRow.setLocalized('n', 25.5678);
+            csvRow.setPoints('n', 25.5678);
             expect(csvRow.build()['n']).toBe('25.568');
-            csvRow.setLocalized('n', 1000.2345);
+            csvRow.setPoints('n', 1000.2345);
             expect(csvRow.build()['n']).toBe('1000.235');
         });
 
         it('should convert percentage numbers to their localized format', () => {
-            csvRow.setLocalizedPercent('n', 5.12345);
+            csvRow.setScore('n', 5.12345);
             expect(csvRow.build()['n']).toBe('5.123%');
-            csvRow.setLocalizedPercent('n', 99.9999);
+            csvRow.setScore('n', 99.9999);
             expect(csvRow.build()['n']).toBe('100%');
-            csvRow.setLocalizedPercent('n', 51.9999);
+            csvRow.setScore('n', 51.9999);
             expect(csvRow.build()['n']).toBe('52%');
-            csvRow.setLocalizedPercent('n', 25.5678);
+            csvRow.setScore('n', 25.5678);
             expect(csvRow.build()['n']).toBe('25.568%');
         });
     });

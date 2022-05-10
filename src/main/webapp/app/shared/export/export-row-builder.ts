@@ -36,18 +36,18 @@ export abstract class ExportRowBuilder {
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized format.
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
+     * Stores the given points under the key in the row after converting it to the localized format.
+     * @param key Which should be associated with the given points.
+     * @param points That should be placed in the row.
      */
-    abstract setLocalized(key: string, value: number | undefined): void;
+    abstract setPoints(key: string, points: number | undefined): void;
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized percentage format.
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
+     * Stores the given score under the key in the row after converting it to the localized percentage format.
+     * @param key Which should be associated with the given score.
+     * @param score That should be placed in the row.
      */
-    abstract setLocalizedPercent(key: string, value: number | undefined): void;
+    abstract setScore(key: string, score: number | undefined): void;
 
     /**
      * Adds information about the student user to the row.
@@ -71,7 +71,7 @@ export abstract class ExportRowBuilder {
     setExerciseTypePoints(exerciseType: ExerciseType, points: number | string) {
         const key = ExportRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY);
         if (typeof points === 'number') {
-            this.setLocalized(key, points);
+            this.setPoints(key, points);
         } else {
             this.set(key, points);
         }
@@ -85,7 +85,7 @@ export abstract class ExportRowBuilder {
     setExerciseTypeScore(exerciseType: ExerciseType, score: number | string) {
         const key = ExportRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY);
         if (typeof score === 'number') {
-            this.setLocalizedPercent(key, score);
+            this.setScore(key, score);
         } else {
             this.set(key, score);
         }

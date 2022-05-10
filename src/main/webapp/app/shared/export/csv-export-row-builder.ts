@@ -19,28 +19,28 @@ export class CsvExportRowBuilder extends ExportRowBuilder {
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the format using the specified decimal separator.
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
+     * Stores the given points under the key in the row after converting it to the format using the specified decimal separator.
+     * @param key Which should be associated with the given points.
+     * @param points That should be placed in the row.
      */
-    setLocalized(key: string, value: number | undefined) {
-        if (value == undefined || isNaN(value)) {
+    setPoints(key: string, points: number | undefined) {
+        if (points == undefined || isNaN(points)) {
             this.set(key, '-');
         } else {
-            this.set(key, round(value, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator));
+            this.set(key, round(points, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator));
         }
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the percentage format using the specified decimal separator.
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
+     * Stores the given score under the key in the row after converting it to the percentage format using the specified decimal separator.
+     * @param key Which should be associated with the given score.
+     * @param score That should be placed in the row.
      */
-    setLocalizedPercent(key: string, value: number | undefined) {
-        if (value == undefined || isNaN(value)) {
+    setScore(key: string, score: number | undefined) {
+        if (score == undefined || isNaN(score)) {
             this.set(key, '-');
         } else {
-            this.set(key, `${round(value, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator)}%`);
+            this.set(key, `${round(score, this.accuracyOfScores).toString().replace(/\./, this.decimalSeparator)}%`);
         }
     }
 }
